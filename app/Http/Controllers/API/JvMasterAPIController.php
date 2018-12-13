@@ -54,6 +54,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\Storage;
 use Response;
 
 /**
@@ -494,7 +495,7 @@ class JvMasterAPIController extends AppBaseController
                         $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
 
                         if ($chartOfAccount->controlAccountsSystemID == 1) {
-                            if ($item['clientContractID'] == '' || $item['clientContractID'] == 0) {
+                            if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
                                 array_push($finalError['contract_check'], $item->glAccount);
                                 $error_count++;
                             }
@@ -515,7 +516,7 @@ class JvMasterAPIController extends AppBaseController
                 ->sum('creditAmount');
 
             if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
-                return $this->sendError('Debit total not matching with credit total ', 500);
+                return $this->sendError('Debit amount total and credit amount total is not matching', 500);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -899,30 +900,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public function exportStandardJVFormat()
+    public function exportStandardJVFormat(Request $request)
     {
-
-        $data = array();
-        $type = 'csv';
-        $x = 0;
-        $data[$x]['Gl Account'] = '';
-        $data[$x]['Gl Account Description'] = '';
-        $data[$x]['Department'] = '';
-        $data[$x]['Client Contract'] = '';
-        $data[$x]['Comments'] = '';
-        $data[$x]['Debit Amount'] = '';
-        $data[$x]['Credit Amount'] = '';
-        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), 'successfully export');
+        $input = $request->all();
+        if ($exists = Storage::disk('public')->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
+            return Storage::disk('public')->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
     }
 
     public function getJournalVoucherMasterApproval(Request $request)
@@ -1157,6 +1142,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function journalVoucherForPOAccrualJVDetail(Request $request)
     {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $companySystemID = $request['companyId'];
         $jvMasterAutoId = $request['jvMasterAutoId'];
 
@@ -1165,7 +1158,16 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendError('Jv Master not found');
         }
 
-        $output = DB::select("SELECT
+        $filter='';
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = " AND ( pomaster.purchaseOrderCode LIKE '%{$search}%') OR ( podetail.itemPrimaryCode LIKE '%{$search}%') OR ( podetail.itemDescription LIKE '%{$search}%') OR ( pomaster.supplierName LIKE '%{$search}%')";
+        }
+
+        $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
+
+        $qry = "SELECT
 	pomaster.purchaseOrderID,
 	pomaster.poType,
 	pomaster.purchaseOrderCode,
@@ -1221,31 +1223,52 @@ LEFT JOIN (
 	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 	WHERE
 		grvTypeID = 2
-	AND DATE(grvDate) <= '$jvMasterData->JVdate'
+	AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
 	GROUP BY
 		purchaseOrderMastertID,
 		itemCode
 ) AS grvdetail ON grvdetail.purchaseOrderMastertID = pomaster.purchaseOrderID
 INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
 WHERE
-	pomaster.companySystemID = 11
+	pomaster.companySystemID = $companySystemID
 AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
-AND pomaster.poType_N <> 6
+AND pomaster.poType_N <> 5
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
 AND date(pomaster.approvedDate) >= '2016-05-01'
 AND date(
 	pomaster.expectedDeliveryDate
-) <= '$jvMasterData->JVdate'
+) <= '$formattedJVdate'
+{$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 GROUP BY
 	podetail.itemCode
 HAVING
-	round(balanceCost, 2) > 0");
+	round(balanceCost, 2) > 0";
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        $invMaster = DB::select($qry);
+
+        $col[0] = $input['order'][0]['column'];
+        $col[1] = $input['order'][0]['dir'];
+        $request->request->remove('order');
+        $data['order'] = [];
+        /*  $data['order'][0]['column'] = '';
+          $data['order'][0]['dir'] = '';*/
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $depAmountLocal = collect($invMaster)->pluck('balanceCost')->toArray();
+        $depAmountLocal = array_sum($depAmountLocal);
+
+        $request->request->remove('search.value');
+
+        return \DataTables::of($invMaster)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->with('balanceTotal', $depAmountLocal)
+            ->make(true);
     }
 
     public function journalVoucherReopen(Request $request)
@@ -1413,5 +1436,114 @@ HAVING
 
 
         return $this->sendResponse($jvMasterData->toArray(), 'Journal Voucher Amend successfully');
+    }
+
+    public function standardJvExcelUpload(request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['assetExcelUpload'];
+            $input = array_except($request->all(), 'assetExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+
+            Storage::disk('local')->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            })->first();
+            $formatChk2 = '';
+
+            if (!$formatChk) {
+                return $this->sendError('No records found', 500);
+            } else {
+                $formatChk2 = collect($formatChk)->toArray();
+            }
+
+            if (count($formatChk2) > 0) {
+                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['department']) || !isset($formatChk['client_contract']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
+                    return $this->sendError('Uploaded data format is invalid', 500);
+                }
+            }
+
+            $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+
+            if (count($record) > 0) {
+
+                $jvMasterData = JvMaster::find($input['jvMasterAutoId']);
+
+                if (empty($jvMasterData)) {
+                    return $this->sendError('Journal Voucher not found');
+                }
+
+                foreach ($record as $val) {
+
+                    $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
+                        ->where('companySystemID', $jvMasterData->companySystemID)
+                        ->first();
+                    $serviceLineSystemID = 0;
+                    $chartOfAccountSystemID = 0;
+                    $debitAmount = 0;
+                    $creditAmount = 0;
+                    if ($segmentData) {
+                        $serviceLineSystemID = $segmentData['serviceLineSystemID'];
+                    }
+                    $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
+                        ->where('companySystemID', $jvMasterData->companySystemID)
+                        ->first();
+
+                    if ($chartOfAccountData) {
+                       $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
+                    }
+                    if($val['debit_amount'] != ''){
+                        $debitAmount = $val['debit_amount'];
+                    }
+                    if($val['credit_amount'] != ''){
+                        $creditAmount = $val['credit_amount'];
+                    }
+                    $data = [];
+                    $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
+                    $data['documentSystemID'] = $jvMasterData->documentSystemID;
+                    $data['documentID'] = $jvMasterData->documentID;
+                    $data['companySystemID'] = $jvMasterData->companySystemID;
+                    $data['companyID'] = $jvMasterData->companyID;
+                    $data['serviceLineSystemID'] = $serviceLineSystemID;
+                    $data['serviceLineCode'] = $val['department'];
+                    $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
+                    $data['glAccount'] = $val['gl_account'];
+                    $data['glAccountDescription'] = $val['gl_account_description'];
+                    $data['clientContractID'] = $val['client_contract'];
+                    $data['comments'] = $val['comments'];
+                    $data['currencyID'] = $jvMasterData->currencyID;
+                    $data['currencyER'] = $jvMasterData->currencyER;
+                    $data['debitAmount'] = $debitAmount;
+                    $data['creditAmount'] = $creditAmount;
+                    $data['createdPcID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $finalData[] = $data;
+                }
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            if (count($finalData) > 0) {
+                foreach (array_chunk($finalData, 500) as $t) {
+                    JvDetail::insert($t);
+                }
+            }
+            Storage::disk('local')->delete($originalFileName);
+            DB::commit();
+            return $this->sendResponse([], 'JV Details uploaded successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+        //Storage::disk('local')->delete($originalFileName);
+
     }
 }

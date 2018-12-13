@@ -18,6 +18,7 @@ namespace App\helper;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
+use App\Jobs\CreateGRVSupplierInvoice;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -1445,6 +1446,7 @@ class Helper
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
+                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                 }
                             }
 
@@ -1835,6 +1837,18 @@ class Helper
                     $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 64: // Payment bank transfer
+                    $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                    $docInforArr["modelName"] = 'PaymentBankTransfer';
+                    $docInforArr["primarykey"] = 'paymentBankTransferID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 62: // Bank Reconciliation
+                    $docInforArr["tableName"] = 'erp_bankrecmaster';
+                    $docInforArr["modelName"] = 'BankReconciliation';
+                    $docInforArr["primarykey"] = 'bankRecAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1850,7 +1864,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

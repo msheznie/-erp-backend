@@ -1763,7 +1763,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(debitAmount) as debitAmountTot, SUM(creditAmount) as creditAmountTot,jvMasterAutoId');
                         }], 'financeperiod_by', 'company')->find($masterModel["autoID"]);
 
-                        $detailRecords = JvDetail::selectRaw("sum(debitAmount) as debitAmountTot, sum(creditAmount) as creditAmountTot, clientContractID, comments, chartOfAccountSystemID, serviceLineSystemID,serviceLineCode,currencyID,currencyER")->WHERE('jvMasterAutoId', $masterModel["autoID"])->groupBy('chartOfAccountSystemID', 'serviceLineSystemID', 'comments')->get();
+                        $detailRecords = JvDetail::selectRaw("sum(debitAmount) as debitAmountTot, sum(creditAmount) as creditAmountTot, contractUID, clientContractID, comments, chartOfAccountSystemID, serviceLineSystemID,serviceLineCode,currencyID,currencyER")->WHERE('jvMasterAutoId', $masterModel["autoID"])->groupBy('chartOfAccountSystemID', 'serviceLineSystemID', 'comments', 'contractUID')->get();
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
                         if ($masterData->financeperiod_by->isActive == -1) {
@@ -1808,6 +1808,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentTransCurrencyID'] = $item->currencyID;
                                 $data['documentTransCurrencyER'] = $item->currencyER;
 
+                                $data['createdUserSystemID'] = $empID->empID;
+                                $data['createdDateTime'] = $time;
+                                $data['createdUserID'] = $empID->employeeSystemID;
+                                $data['createdUserPC'] = getenv('COMPUTERNAME');
+
 
                                 if ($item->debitAmountTot > 0) {
                                     $currencyConvertionDebit = \Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->debitAmountTot);
@@ -1819,8 +1824,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
                                     $data['documentRptCurrencyER'] = \Helper::roundValue($currencyConvertionDebit['trasToRptER']);
                                     $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionDebit['reportingAmount']);
-
-                                } else if ($item->creditAmountTot > 0) {
+                                    array_push($finalData, $data);
+                                }
+                                if ($item->creditAmountTot > 0) {
                                     $currencyConvertionCredit = \Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->creditAmountTot);
 
                                     $data['documentTransAmount'] = $item->creditAmountTot * -1;
@@ -1830,15 +1836,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
                                     $data['documentRptCurrencyER'] = \Helper::roundValue(ABS($currencyConvertionCredit['trasToRptER']));
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionCredit['reportingAmount'])) * -1;
+                                    array_push($finalData, $data);
                                 }
 
-                                /*  $data['isCustomer'] = 1;*/
-                                // $data['documentType'] = 11;
-                                $data['createdUserSystemID'] = $empID->empID;
-                                $data['createdDateTime'] = $time;
-                                $data['createdUserID'] = $empID->employeeSystemID;
-                                $data['createdUserPC'] = getenv('COMPUTERNAME');
-                                array_push($finalData, $data);
                             }
                         }
                         break;

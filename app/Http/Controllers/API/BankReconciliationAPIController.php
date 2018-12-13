@@ -15,6 +15,7 @@
  * -- Date: 05 - October 2018 By: Fayas Description: Added new functions named as getTreasuryManagementFilterData(),validateTMReport(),
  *                                                      generateTMReport(),exportTMReport()
  * -- Date: 23-November 2018 By: Fayas Description: Added new functions named as bankRecReopen()
+ * -- Date: 11-December 2018 By: Fayas Description: Added new functions named as bankReconciliationReferBack()
  *
  */
 namespace App\Http\Controllers\API;
@@ -25,11 +26,14 @@ use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
+use App\Models\BankReconciliationRefferedBack;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\YesNoSelection;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
@@ -416,7 +420,7 @@ class BankReconciliationAPIController extends AppBaseController
             $checkItems = BankLedger::where('bankRecAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every bank reconciliation should have at least one cleared item', 500);
+                //return $this->sendError('Every bank reconciliation should have at least one cleared item', 500);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -1095,4 +1099,64 @@ class BankReconciliationAPIController extends AppBaseController
         return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation reopened successfully');
     }
 
+    public function bankReconciliationReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $bankReconciliation = $this->bankReconciliationRepository->find($id);
+        if (empty($bankReconciliation)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+        if ($bankReconciliation->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this bank reconciliation');
+        }
+
+        $bankReconciliationArray = $bankReconciliation->toArray();
+
+        $storeHistory = BankReconciliationRefferedBack::insert($bankReconciliationArray);
+
+        $fetchDetails = BankLedger::where('bankRecAutoID', $id)->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $bankReconciliation->timesReferred;
+            }
+        }
+
+        $bankReconciliationDetailArray = $fetchDetails->toArray();
+
+        $storeDetailHistory = PaymentBankTransferDetailRefferedBack::insert($bankReconciliationDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('documentSystemID', $bankReconciliation->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $bankReconciliation->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('documentSystemID', $bankReconciliation->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->bankReconciliationRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation Amend successfully');
+    }
 }

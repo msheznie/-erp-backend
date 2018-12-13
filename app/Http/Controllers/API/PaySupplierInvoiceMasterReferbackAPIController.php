@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PaySupplierInvoiceMasterReferbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  PaySupplierInvoiceMaster
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 26 - Novemeber 2018
+ * -- Description : This file contains the all CRUD for Pay Supplier Invoice Master Referback
+ * -- REVISION HISTORY
+ * -- Date: 26 - Novemeber 2018 By:Mubashir Description: Added new functions named as getAllPaymentVoucherAmendHistory(),paymentVoucherHistoryByPVID()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterReferbackAPIRequest;
