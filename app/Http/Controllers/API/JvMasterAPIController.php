@@ -1220,7 +1220,7 @@ AND pomaster.approved = - 1
 AND pomaster.poType_N <> 6
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
-AND date(pomaster.approvedDate) >= '2016-05-01'
+AND date(pomaster.approvedDate) >= '$jvMasterData->JVdate'
 AND date(
 	pomaster.expectedDeliveryDate
 ) <= '$jvMasterData->JVdate'

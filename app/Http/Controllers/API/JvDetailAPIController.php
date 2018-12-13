@@ -466,7 +466,6 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['createdUserID'] = $user->employee['empID'];
             $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-
             if ($new['DebitAmount'] != 0) {
                 $detail_arr['debitAmount'] = $new['DebitAmount'];
                 $detail_arr['creditAmount'] = 0;
