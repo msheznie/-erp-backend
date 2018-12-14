@@ -8,11 +8,15 @@
 -- Create date : 14 - March 2018
 -- Description : This file contains assigning navigation from company to user group
 -- REVISION HISTORY
- */
+-- Date: 05-September 2018 By: Fayas Description: Added new function getDetailsByDebitNote()
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUserGroupAssignAPIRequest;
 use App\Http\Requests\API\UpdateUserGroupAssignAPIRequest;
+use App\Models\Company;
+use App\Models\DocumentRestrictionAssign;
+use App\Models\DocumentRestrictionPolicy;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\UserGroupAssign;
@@ -96,6 +100,34 @@ class UserGroupAssignAPIController extends AppBaseController
         }
         $userGroupAssigns = UserGroupAssign::insert($navigation);
 
+
+        DocumentRestrictionAssign::where('companySystemID', '=', $input["companyID"])
+                                  ->where('userGroupID', '=', $input["userGroupID"])
+                                  ->delete();
+
+        $documentRestriction = array();
+
+        $company = Company::find($input["companyID"]);
+        $input["companyCode"] = null;
+        if(!empty($company)){
+            $input["companyCode"] = $company->CompanyID;
+        }
+
+        if ($input["restrictionPolicy"]) {
+            foreach ($input["restrictionPolicy"] as $val) {
+                if ($val["isChecked"]) {
+                    $documentRestriction[] = array("documentRestrictionPolicyID" => $val["id"],
+                                          "documentSystemID" => $val["documentSystemID"],
+                                          "documentID" => $val["documentID"],
+                                          "companySystemID" => $input["companyID"],
+                                          "companyID" => $input["companyCode"],
+                                          "userGroupID" => $input["userGroupID"]
+                                         );
+                }
+            }
+
+            DocumentRestrictionAssign::insert($documentRestriction);
+        }
         return $this->sendResponse(array(), 'User Group Assign saved successfully');
     }
 
@@ -171,15 +203,32 @@ class UserGroupAssignAPIController extends AppBaseController
         $companyID = $request['companyID'];
         $userGroupID = $request['userGroupID'];
         //DB::enableQueryLog();
-        $navigationMenu = DB::table('srp_erp_companynavigationmenus')->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1,1,0) as accessRightAll'))
+        $navigationMenu = DB::table('srp_erp_companynavigationmenus')
+            ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1,1,0) as accessRightAll'))
             ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
                 $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
                     ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID);
-            })->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
+            })
+            ->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
         //dd(DB::getQueryLog());
         $tree = buildTree($navigationMenu);
+
+        $subMenus = DocumentRestrictionPolicy::with(['assign' => function($q)  use ($companyID, $userGroupID){
+              $q->where('companySystemID',$companyID)
+                 ->where('userGroupID',$userGroupID);
+        }])->get();
+
+        foreach ($subMenus as $subMenu){
+            $subMenu->isChecked = false;
+            if(count($subMenu['assign']) > 0){
+                $subMenu->isChecked = true;
+            }
+            //$subMenu->count = count($subMenu['assign']);
+        }
+
+        $array = array('mainMenus' => $tree,'subMenus' => $subMenus);
         //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-        return $this->sendResponse($tree, 'Record retrieved successfully');
+        return $this->sendResponse($array, 'Record retrieved successfully');
     }
 
 

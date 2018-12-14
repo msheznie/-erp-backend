@@ -1251,6 +1251,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
     Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
 
+    Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
+    Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
+    Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
 });
 
 
@@ -1307,6 +1310,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
 
 

@@ -5,3 +5,7 @@ Route::resource('paymentBankTransferRefferedBacks', 'PaymentBankTransferReffered
 Route::resource('paymentBankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackController');
 
 Route::resource('bankReconciliationRefferedBacks', 'BankReconciliationRefferedBackController');
+
+Route::resource('documentRestrictionAssigns', 'DocumentRestrictionAssignController');
+
+Route::resource('documentRestrictionPolicies', 'DocumentRestrictionPolicyController');
