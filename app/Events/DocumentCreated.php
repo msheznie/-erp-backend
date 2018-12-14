@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Models\ItemIssueMaster;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -20,7 +19,7 @@ class DocumentCreated
      *
      * @return void
      */
-    public function __construct(ItemIssueMaster $document)
+    public function __construct($document)
     {
         $this->document = $document;
     }

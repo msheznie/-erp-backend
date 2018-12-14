@@ -5348,7 +5348,6 @@ ORDER BY
 
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
-
         $qry = 'SELECT
 			erp_generalledger.companyID,
 			erp_generalledger.documentID,
@@ -5376,8 +5375,11 @@ ORDER BY
 	        currencymaster.CurrencyCode,
 	        currencymaster.DecimalPlaces,
 	        matchMaster.matchingDocCode,
-	        matchMaster.matchingDocdate,
-	        matchMaster.detailSum
+	        DATE_FORMAT(matchMaster.matchingDocdate, "%d/%m/%Y") as matchingDocdate,
+	        matchMaster.detailSum,
+	        custReciptMaster.detailSum AS custReceiptSum,
+	        custReciptMaster.custPaymentReceiveCode AS custReceiptCode,
+	        DATE_FORMAT(custReciptMaster.custPaymentReceiveDate, "%d/%m/%Y") AS custReceiptDate
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
@@ -5407,8 +5409,30 @@ LEFT JOIN (
 	WHERE
 		matchingConfirmedYN = 1
 	ORDER BY
-		matchDocumentMasterAutoID DESC
+		matchDocumentMasterAutoID
 ) AS matchMaster ON erp_generalledger.documentSystemCode = matchMaster.PayMasterAutoId AND erp_generalledger.companySystemID = matchMaster.companySystemID AND erp_generalledger.documentSystemID = matchMaster.documentSystemID
+LEFT JOIN (
+	SELECT
+		erp_custreceivepaymentdet.custReceivePaymentAutoID,
+		erp_custreceivepaymentdet.bookingInvCodeSystem,
+		erp_custreceivepaymentdet.companySystemID,
+		erp_custreceivepaymentdet.addedDocumentSystemID,
+		erp_customerreceivepayment.custPaymentReceiveCode,
+		erp_customerreceivepayment.custPaymentReceiveDate,
+		(SUM(
+			erp_custreceivepaymentdet.receiveAmountRpt
+		) * -1) AS detailSum
+	FROM
+		erp_custreceivepaymentdet
+	INNER JOIN erp_customerreceivepayment ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID
+WHERE matchingDocID = 0 AND erp_customerreceivepayment.confirmedYN = 1 AND erp_customerreceivepayment.approved = -1
+GROUP BY
+		bookingInvCodeSystem,
+		companySystemID,
+		addedDocumentSystemID
+) AS custReciptMaster ON erp_generalledger.documentSystemCode = custReciptMaster.bookingInvCodeSystem
+AND erp_generalledger.companySystemID = custReciptMaster.companySystemID
+AND erp_generalledger.documentSystemID = custReciptMaster.addedDocumentSystemID
 WHERE erp_generalledger.documentSystemID = 19 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
 

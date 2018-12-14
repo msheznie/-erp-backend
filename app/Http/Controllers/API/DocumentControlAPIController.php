@@ -1,47 +1,85 @@
 <?php
 
-namespace App\Listeners;
+/**
+ * =============================================
+ * -- File Name : DocumentControlAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Document Control
+ * -- Author : Fayas
+ * -- Create date : 13-December
+ * -- Description : This file contains the all the report generation
+ * -- REVISION HISTORY
+ * -- Date: 13-December 2018 By: Fayas Description: Added new functions named as getDocumentControlFilterFormData(),generateDocumentControlReport()
+ */
+namespace App\Http\Controllers\API;
 
-use App\Models\Alert;
+use App\Http\Controllers\AppBaseController;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-class AfterDocumentCreated
+class DocumentControlAPIController extends AppBaseController
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function getDocumentControlFilterFormData(Request $request)
     {
-        //
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+
+        $listOfDocuments = [3,7,8,10,12,13,24,61,4,11,15,19,20,21,17 ];
+        $documents = DocumentMaster::whereIn('documentSystemID',$listOfDocuments)->get();
+
+        $years = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,DATE_FORMAT(bigginingDate, '%Y') as financeYear"))
+                                     ->where('companySystemID', '=', $selectedCompanyId)
+                                     ->orderby('companyFinanceYearID', 'desc')->get();
+
+        $output = array(
+            'documents' => $documents,
+            'years' => $years,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param  object $event
-     * @return void
-     */
-    public function handle($event)
+    public function generateDocumentControlReport(Request $request)
     {
-        $document = $event->document;
 
-        Log::useFiles(storage_path() . '/logs/after_document_created.log');
-        Log::info('Successfully start  after_document_created' . date('H:i:s'));
-        if (!empty($document)) {
-            Log::info($document);
+        $validator = \Validator::make($request->all(), [
+            'yearID' => 'required',
+            'documents' => 'required',
+            'companySystemID' => 'required',
+            'reportTypeID' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $request = $this->convertArrayToSelectedValue($request,array('yearID','reportTypeID'));
+
+        $selectedCompanyId = $request['companySystemID'];
+        $documents = (array)$request->documents;
+        $financialYearID = $request->yearID;
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $finalArray = array();
+        foreach ($documents as $document){
             $documentArray = array(
                 'modelName' => '',
                 'primaryKey' => '',
                 'documentCodeColumnName' => '',
                 'companyFinanceYearID' => '',
                 'documentExist' => 0,
-              );
-
+            );
             switch ($document["documentSystemID"]) { // check the document id and set relevant parameters
                 case 3: // GRV
                     $documentArray["modelName"] = 'GRVMaster';
@@ -149,113 +187,80 @@ class AfterDocumentCreated
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    Log::info('Document ID Not Found' . date('H:i:s'));
+                    //Log::info('Document ID Not Found' . date('H:i:s'));
             }
 
-
-            if($documentArray['documentExist'] == 1){
+            if($documentArray['documentExist'] == 1) {
                 $nameSpacedModel = 'App\Models\\' . $documentArray["modelName"];
-                $document = $document->toArray();
-                $missingRecodes  = array();
-                $range = "";
-                $previousDoc =  $nameSpacedModel::where('companySystemID',$document['companySystemID'])
-                    ->where('documentSystemID',$document['documentSystemID'])
-                    ->where($documentArray["primaryKey"],'!=',$document[$documentArray["primaryKey"]])
-                    ->where($documentArray['companyFinanceYearID'],$document[$documentArray['companyFinanceYearID']])
-                    ->selectRaw($documentArray["primaryKey"].",".$documentArray['documentCodeColumnName'].",RIGHT(".$documentArray['documentCodeColumnName'].",6) as 'serialNo'")
-                    ->orderBy($documentArray['documentCodeColumnName'],'desc')
-                    ->first();
+                if ($request['reportTypeID'] == 1) {
+                    $dataRange = array();
+                    $finalRange = array();
+                    $previousDoc = null;
+                    $listOfDoc = $nameSpacedModel::where('companySystemID', $selectedCompanyId)
+                        ->where('documentSystemID', $document['documentSystemID'])
+                        ->where($documentArray['companyFinanceYearID'], $financialYearID)
+                        ->selectRaw($documentArray["primaryKey"] . "," . $documentArray['documentCodeColumnName'] . ",RIGHT(" . $documentArray['documentCodeColumnName'] . ",6) as 'serialNo'")
+                        ->orderBy($documentArray['documentCodeColumnName'], 'ASC')
+                        ->get();
 
-                Log::info('Previous Doc: ');
-                Log::info($previousDoc);
+                    $count = 0;
+                    $calTotal = 0;
+                    $totalCount = count($listOfDoc);
+                    foreach ($listOfDoc as $doc) {
 
+                        if ($count == 0 && !$previousDoc) {
+                            $dataRange['start'] = $doc[$documentArray['documentCodeColumnName']];
+                            $dataRange['start_serialNo'] = $doc['serialNo'];
+                        }
 
-                if(!empty($previousDoc)){
-                    $different  = (((int)substr($document[$documentArray["documentCodeColumnName"]], -6)) - ((int)$previousDoc['serialNo']));
+                        $count = $count + 1;
+                        if ($previousDoc) {
+                            if ((((int)$doc['serialNo']) - ((int)$previousDoc['serialNo'])) != 1) {
+                                $dataRange['end'] = $previousDoc[$documentArray['documentCodeColumnName']];
+                                $dataRange['end_serialNo'] = $previousDoc['serialNo'];
+                                $dataRange['count'] = $count - 1;
+                                array_push($finalRange, $dataRange);
+                                $calTotal = $calTotal + $dataRange['count'];
+                                $count = 1;
+                                $dataRange = array();
+                                $dataRange['start'] = $doc[$documentArray['documentCodeColumnName']];
+                                $dataRange['start_serialNo'] = $doc['serialNo'];
+                            }
+                        }
+                        $previousDoc = $doc;
+                        $totalCount = $totalCount - 1;
 
-                    if( $different != 1 ){
-
-                        array_push($missingRecodes,array('start' => $previousDoc[$documentArray['documentCodeColumnName']],'end' => $document[$documentArray['documentCodeColumnName']]));
-                        Log::info('Test: ');
-                        Log::info($document[$documentArray['documentCodeColumnName']]);
-
-                        if($different != 0){
-                            $range = $range.'<br> This document is getting jumped from '.$previousDoc[$documentArray['documentCodeColumnName']].' to '. $document[$documentArray['documentCodeColumnName']];
-                        }else{
-                            $range = $range.'<br> This document is getting duplicated '. $document[$documentArray['documentCodeColumnName']];
+                        if ($totalCount == 0) {
+                            $dataRange['end'] = $previousDoc[$documentArray['documentCodeColumnName']];
+                            $dataRange['end_serialNo'] = $previousDoc['serialNo'];
+                            $dataRange['count'] = $count;
+                            $calTotal = $calTotal + $dataRange['count'];
+                            array_push($finalRange, $dataRange);
                         }
                     }
+
+                    $temArray = array('document' => $document,
+                        'analysisData' => $finalRange,
+                        'total' => count($listOfDoc),
+                        'calTotal' => $calTotal);
+                    array_push($finalArray, $temArray);
+                }else if($request['reportTypeID'] == 2){
+                    $finalRange = $nameSpacedModel::where('companySystemID', $selectedCompanyId)
+                        ->where('documentSystemID', $document['documentSystemID'])
+                        ->where($documentArray['companyFinanceYearID'], $financialYearID)
+                        ->selectRaw($documentArray["primaryKey"] . "," . $documentArray['documentCodeColumnName']." as documentCode,COUNT(".$documentArray['documentCodeColumnName'].") as count")
+                        ->groupBy($documentArray['documentCodeColumnName'])
+                        ->orderBy($documentArray['documentCodeColumnName'], 'ASC')
+                        ->havingRaw('count > 1')
+                        ->get();
+
+                    $temArray = array('document' => $document,
+                        'analysisData' => $finalRange);
+                    array_push($finalArray, $temArray);
                 }
-
-                /*$listOfDoc  = $nameSpacedModel::where('companySystemID',$document['companySystemID'])
-                                                ->where('documentSystemID',$document['documentSystemID'])
-                                                ->where($documentArray['companyFinanceYearID'],$document[$documentArray['companyFinanceYearID']])
-                                                ->selectRaw($documentArray["primaryKey"].",".$documentArray['documentCodeColumnName'].",RIGHT(".$documentArray['documentCodeColumnName'].",6) as 'serialNo'")
-                                                ->orderBy($documentArray['documentCodeColumnName'],'ASC')
-                                                ->get();
-
-                $previousDoc = null;
-                $missingRecodes  = array();
-                $range  = "";
-                foreach ($listOfDoc as $doc){
-                    if($previousDoc){
-                        if((((int)$doc['serialNo']) - ((int)$previousDoc['serialNo'])) != 1 ){
-                            array_push($missingRecodes,array('start' => $previousDoc[$documentArray['documentCodeColumnName']],'end' => $doc[$documentArray['documentCodeColumnName']]));
-                            Log::info('Test: ');
-                            Log::info($doc[$documentArray['documentCodeColumnName']]);
-
-                            $range = $range.'<br>'.$previousDoc[$documentArray['documentCodeColumnName']].' - '. $doc[$documentArray['documentCodeColumnName']];
-                        }
-                    }
-                    $previousDoc = $doc;
-                }
-                Log::info('List count: ' . count($listOfDoc));
-                Log::info($listOfDoc);*/
-                if($range) {
-
-                    $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
-                    $email_id = 'gearssupport@pbs-int.net';
-                    $empName  = 'Admin';
-                    $employeeSystemID = 11;
-                    $empID = '8888';
-
-                    $systemDocument = DocumentMaster::find($document["documentSystemID"]);
-
-                    $dataEmail = array();
-                    $dataEmail['empName'] = $empName;
-                    $dataEmail['empEmail'] = $email_id;
-                    $dataEmail['empSystemID'] = $employeeSystemID;
-                    $dataEmail['empID'] = $empID;
-                    $dataEmail['companySystemID'] = $document['companySystemID'];
-                    $dataEmail['companyID'] = $document['companyID'];
-                    $dataEmail['docID'] = $systemDocument->documentID;
-                    $dataEmail['docSystemID'] = $document["documentSystemID"];
-                    $dataEmail['docSystemCode'] = null;
-                    $dataEmail['docApprovedYN'] = 0;
-                    $dataEmail['docCode'] = null;
-                    $dataEmail['ccEmailID'] = $email_id;
-
-                    $temp = "Following document is jumped/duplicated for " . $systemDocument->documentDescription . " - " .  $document['companyID']."<p>".$range."<p>" . $footer;
-
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = null;
-                    $dataEmail['alertMessage'] = $systemDocument->documentDescription . " - " . $document['companyID'] . " (Document code Jumped/Duplicated)";
-                    $dataEmail['emailAlertMessage'] = $temp;
-
-                    Alert::create($dataEmail);
-                    Log::info('Email array:');
-                    Log::info($dataEmail);
-
-                }
-                Log::info('Mising count: ' . count($missingRecodes));
-                Log::info($range);
-                Log::info($missingRecodes);
             }
-
-        } else {
-            Log::info('Document Not Found' . date('H:i:s'));
         }
-        Log::info('Successfully end  after_document_created' . date('H:i:s'));
+        return $this->sendResponse($finalArray, 'successfully generated report');
     }
 
 }

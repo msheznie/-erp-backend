@@ -1247,6 +1247,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
     Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
+
+    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
+    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
+
 });
 
 
