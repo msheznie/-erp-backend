@@ -258,15 +258,16 @@
                                 </td>
                             </tr>
                             <tr>
-
+                                echo  $customerInvoice->approved_by[0]->employee->details->designation->designation;
                                 @foreach ($request->approved_by as $det)
                                     <td style="padding-right: 25px" class="text-center">
                                         @if($det->employee)
                                             {{$det->employee->empFullName }}
                                         @endif
                                         <br>
-                                        @if($det->employee)
-                                            {{$det->employee->details->designation}}
+
+                                    @if($det->employee->details->designation)
+                                            {{$det->employee->details->designation->designation}}
                                         @endif
                                         <br><br>
                                         @if($det->employee)
@@ -593,7 +594,7 @@
                 {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalEndDate)}}</b>
         </div>
         <div class="row" style="">
-            <b>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span> {{$request->invoicedetail->billmaster->ticketmaster->regNo}}</b>
+            <b><span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span> {{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></b>
         </div>
         @else
     <div class="row" style="">

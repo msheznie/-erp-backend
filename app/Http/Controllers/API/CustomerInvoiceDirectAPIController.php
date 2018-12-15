@@ -1485,6 +1485,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
 
 
+
             } else {
 
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
@@ -1572,7 +1573,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             case 42: /*MOS*/
             case 60: /*WMS*/
             case 63: /*WSS*/
-
+            case 43: /*Makamen*/
                 if ($companySystemID == 31) {
                     $linefooterAddress = false;
                 } else {
@@ -1701,6 +1702,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->line_rentalPeriod = $line_rentalPeriod;
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
+
+
 
 
         $array = array('request' => $customerInvoice);

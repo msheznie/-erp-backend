@@ -512,6 +512,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
     Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
+    Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
     Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
@@ -977,7 +978,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
-    Route::get('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
+    Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
     Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
@@ -1247,6 +1248,18 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
     Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
+
+    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
+    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
+
+    Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
+    Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
+    Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory');
+    Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory');
+    Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
+    Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
+    Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
+
 });
 
 
@@ -1303,6 +1316,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
 
 
