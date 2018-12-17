@@ -4301,7 +4301,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 customermaster.CutomerCode,
                 customermaster.CustomerName,
                 CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS concatCustomerName,
-                 IF(erp_custinvoicedirect.isPerforma = 0,"PROFORMA","DIRECT") AS invoiceType
+                 IF(erp_custinvoicedirect.isPerforma = 1,"PROFORMA","DIRECT") AS invoiceType
             FROM
                 erp_generalledger
                 INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem

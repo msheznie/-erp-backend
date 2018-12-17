@@ -212,16 +212,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['documentSystemID'] = 8;
         $input['documentID'] = 'MI';
 
-        $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('serialNo', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-        }
-
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
@@ -239,9 +229,25 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
-        $input['serialNo'] = $lastSerialNumber;
-        $input['RollLevForApp_curr'] = 1;
+        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
+        if (!empty($customer)) {
+            $input["customerID"] = $customer->CutomerCode;
+        }
+
+        // get last serial number by company financial year
+        $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('serialNo', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+        // get document code
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -255,16 +261,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
-
-        if (!empty($customer)) {
-            $input["customerID"] = $customer->CutomerCode;
-        }
-
-        if ($documentMaster) {
+        if ($documentMaster) { // generate document code
             $itemIssueCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['itemIssueCode'] = $itemIssueCode;
         }
+
+        $input['RollLevForApp_curr'] = 1;
 
         $itemIssueMasters = $this->itemIssueMasterRepository->create($input);
 
