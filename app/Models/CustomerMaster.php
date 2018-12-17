@@ -120,7 +120,9 @@ class CustomerMaster extends Model
         'createdPcID',
         'modifiedPc',
         'modifiedUser',
-        'timeStamp'
+        'timeStamp',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -170,7 +172,9 @@ class CustomerMaster extends Model
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

@@ -187,6 +187,7 @@ class BankMemoSupplierAPIController extends AppBaseController
 
         $input['updatedByUserID'] = $empId;
         $input['updatedByUserName'] = $empName;
+        $input['timestamp'] = now();
 
         if (array_key_exists('bankMemoID', $input)) {
             $bankMemoSuppliers = $this->bankMemoSupplierRepository->update($input, $input['bankMemoID']);
@@ -236,7 +237,6 @@ class BankMemoSupplierAPIController extends AppBaseController
         if (empty($bankMemoSupplier)) {
             return $this->sendError('Bank Memo Supplier not found');
         }
-
         $bankMemoSupplier = $this->bankMemoSupplierRepository->update($input, $id);
 
         return $this->sendResponse($bankMemoSupplier->toArray(), 'BankMemoSupplier updated successfully');
