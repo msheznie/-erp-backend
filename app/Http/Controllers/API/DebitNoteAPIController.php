@@ -169,6 +169,16 @@ class DebitNoteAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
+            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('supplierID', $input['supplierID'])
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
+            }
+        }
+
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -370,6 +380,17 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError('Debit Note not found');
         }
 
+        if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
+            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('supplierID', $input['supplierID'])
+                ->where('debitNoteAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
+            }
+        }
+
         $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
 
         if (!empty($supplier)) {
@@ -413,7 +434,7 @@ class DebitNoteAPIController extends AppBaseController
         $monthEnd = $input['FYPeriodDateTo'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-           // return $this->sendError('Document date is not within the selected financial period !', 500);
+            // return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -440,7 +461,7 @@ class DebitNoteAPIController extends AppBaseController
             }
 
             $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
-                                           ->count();
+                ->count();
 
             if ($checkItems == 0) {
                 return $this->sendError('Every debit note should have at least one item', 500);
@@ -1119,9 +1140,9 @@ INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMaste
 LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID
 INNER JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
 WHERE
-	erp_paysupplierinvoicemaster.companySystemID = '.$companySystemID.'
-AND erp_paysupplierinvoicedetail.addedDocumentSystemID = '.$debitNoteMaster->documentSystemID.'
-AND erp_paysupplierinvoicedetail.bookingInvSystemCode = '.$debitNoteAutoID.'
+	erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+AND erp_paysupplierinvoicedetail.addedDocumentSystemID = ' . $debitNoteMaster->documentSystemID . '
+AND erp_paysupplierinvoicedetail.bookingInvSystemCode = ' . $debitNoteAutoID . '
 UNION ALL
 	SELECT
 		erp_matchdocumentmaster.PayMasterAutoId,
@@ -1138,9 +1159,9 @@ UNION ALL
 		erp_matchdocumentmaster
 	INNER JOIN currencymaster ON erp_matchdocumentmaster.supplierTransCurrencyID = currencymaster.currencyID
 	WHERE
-		erp_matchdocumentmaster.PayMasterAutoId = '.$debitNoteAutoID.'
-	AND erp_matchdocumentmaster.companySystemID = '.$companySystemID.'
-	AND erp_matchdocumentmaster.documentSystemID = '.$debitNoteMaster->documentSystemID.'');
+		erp_matchdocumentmaster.PayMasterAutoId = ' . $debitNoteAutoID . '
+	AND erp_matchdocumentmaster.companySystemID = ' . $companySystemID . '
+	AND erp_matchdocumentmaster.documentSystemID = ' . $debitNoteMaster->documentSystemID . '');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
