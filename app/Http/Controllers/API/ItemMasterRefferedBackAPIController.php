@@ -316,7 +316,7 @@ class ItemMasterRefferedBackAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                        $query->orderBy('itemCodeSystemRefferedback', $input['order'][0]['dir']);
                     }
                 }
             })
