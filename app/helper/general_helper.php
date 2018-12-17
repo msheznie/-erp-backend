@@ -498,7 +498,7 @@ class Helper
                     $docInforArr["documentCodeColumnName"] = 'monthlyAdditionsCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedby';
-                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedby';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
                     $docInforArr["tableName"] = 'hrms_monthlyadditionsmaster';
@@ -1849,10 +1849,28 @@ class Helper
                     $docInforArr["primarykey"] = 'bankRecAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 57: // Item Master
+                    $docInforArr["tableName"] = 'itemmaster';
+                    $docInforArr["modelName"] = 'ItemMaster';
+                    $docInforArr["primarykey"] = 'itemCodeSystem';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 case 3: // Good Receipt Voucher
                     $docInforArr["tableName"] = 'erp_grvmaster';
                     $docInforArr["modelName"] = 'GRVMaster';
                     $docInforArr["primarykey"] = 'grvAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 56: // Supplier master
+                    $docInforArr["tableName"] = 'suppliermaster';
+                    $docInforArr["modelName"] = 'SupplierMaster';
+                    $docInforArr["primarykey"] = 'supplierCodeSystem';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 58: // Customer master
+                    $docInforArr["tableName"] = 'customermaster';
+                    $docInforArr["modelName"] = 'CustomerMaster';
+                    $docInforArr["primarykey"] = 'customerCodeSystem';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
@@ -1870,7 +1888,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3,57,56,58])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

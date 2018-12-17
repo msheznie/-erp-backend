@@ -175,7 +175,7 @@ class DebitNoteAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
+                return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
             }
         }
 
@@ -387,7 +387,7 @@ class DebitNoteAPIController extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
+                return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
             }
         }
 
@@ -690,8 +690,10 @@ class DebitNoteAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $debitNotes = $debitNotes->where(function ($query) use ($search) {
                 $query->where('debitNoteCode', 'LIKE', "%{$search}%")
+                    ->orWhere('invoiceNumber', 'LIKE', "%{$search}%")
                     ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%");
+                        $query->where('supplierName', 'like', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
                     });
             });
         }

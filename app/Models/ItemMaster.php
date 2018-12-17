@@ -109,7 +109,9 @@ class ItemMaster extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -153,7 +155,9 @@ class ItemMaster extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
