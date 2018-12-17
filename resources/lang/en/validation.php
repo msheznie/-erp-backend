@@ -170,7 +170,9 @@ return [
         'templateMasterID' => 'Template',
         'processPeriod' => 'Month',
         'empType' => 'Type',
-        'expenseClaimCategoriesAutoID' => 'Category'
+        'expenseClaimCategoriesAutoID' => 'Category',
+        'yearID' => 'Year',
+        'reportTypeID' => 'Report Type'
     ],
 
 ];

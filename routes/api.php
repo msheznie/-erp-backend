@@ -122,6 +122,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
+    Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
 
     Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
     Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
@@ -512,6 +513,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
     Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
+    Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
     Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
@@ -928,6 +930,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
     Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
     Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
+    Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
 
     Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
@@ -976,18 +979,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
-    Route::get('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
+    Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
     Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
     Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
     Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
     Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
-    Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
+    Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
+    Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1243,6 +1247,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
     Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
 
+    Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
+    Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
+
+    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
+    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
+
+    Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
+    Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
+    Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory');
+    Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory');
+    Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
+    Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
+    Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
+
+    Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
 });
 
 
@@ -1299,4 +1318,10 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
+
+
+
+
 

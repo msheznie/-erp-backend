@@ -1185,6 +1185,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
+            ->leftJoin('erp_bankledger', function($join) {
+                $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
+                $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
+                $join->on('erp_bankledger.documentSystemID', '=', 'erp_customerreceivepayment.documentSystemID');
+            })
             ->where('erp_customerreceivepayment.documentSystemID', $input['documentId']);
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -1216,7 +1221,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
         if (array_key_exists('trsClearedYN', $input)) {
             if ($input['trsClearedYN'] && !is_null($input['trsClearedYN'])) {
-                $master->where('trsClearedYN', '=', $input['trsClearedYN']);
+                $master->where('erp_bankledger.trsClearedYN', '=', $input['trsClearedYN']);
             }
         }
 
@@ -1240,7 +1245,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'customermaster.CutomerCode',
             'customermaster.CustomerName',
             'receivedAmount as receivedAmount',
-            'bankAmount as bankAmount'
+            'bankAmount as bankAmount',
+            'erp_bankledger.trsClearedYN as trsClearedYN'
         ]);
 
         $search = $request->input('search.value');

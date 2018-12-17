@@ -18,6 +18,7 @@
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as rejectGoodReceiptVoucher() For Reject GRV Master
  * -- Date: 17-august 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherReopen() For Reopen GRV Master
  * -- Date: 20-September 2018 By: Nazir Description: Added new functions named as getSupplierInvoiceStatusHistoryForGRV()
+ * -- Date: 14-November 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherAmend()
  */
 
 namespace App\Http\Controllers\API;
@@ -26,9 +27,12 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GrvDetailsRefferedback;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\GrvMasterRefferedback;
 use App\Models\ItemAssigned;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -524,7 +528,6 @@ class GRVMasterAPIController extends AppBaseController
             $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
 
             //updating logistic details in grv details table
-
             $fetchAllGrvDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])
                 ->get();
 
@@ -684,6 +687,7 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.grvConfirmedYN',
                 'erp_grvmaster.approved',
                 'erp_grvmaster.grvLocation',
+                'erp_grvmaster.refferedBackYN',
                 'erp_grvmaster.grvTypeID'
             ]);
 
@@ -1317,6 +1321,73 @@ WHERE
 AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+
+    public function getGoodReceiptVoucherAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMasterData = GRVMaster::find($grvAutoID);
+        if (empty($grvMasterData)) {
+            return $this->sendError('Good receipt voucher not found');
+        }
+
+        if ($grvMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this good receipt voucher');
+        }
+
+        $grvMasterDataArray = $grvMasterData->toArray();
+
+        $storeGoodReceiptHistory = GrvMasterRefferedback::insert($grvMasterDataArray);
+
+        $fetchGoodReceiptDetails = GRVDetails::where('grvAutoID', $grvAutoID)
+            ->get();
+
+        if (!empty($fetchGoodReceiptDetails)) {
+            foreach ($fetchGoodReceiptDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $grvMasterData->timesReferred;
+            }
+        }
+
+        $GoodReceiptVoucherDetailArray = $fetchGoodReceiptDetails->toArray();
+
+        $storeGoodReceiptVoucherDetailHistory = GrvDetailsRefferedback::insert($GoodReceiptVoucherDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $grvAutoID)
+            ->where('companySystemID', $grvMasterData->companySystemID)
+            ->where('documentSystemID', $grvMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $grvMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $grvAutoID)
+            ->where('companySystemID', $grvMasterData->companySystemID)
+            ->where('documentSystemID', $grvMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $grvMasterData->refferedBackYN = 0;
+            $grvMasterData->grvConfirmedYN = 0;
+            $grvMasterData->grvConfirmedByEmpSystemID = null;
+            $grvMasterData->grvConfirmedByEmpID = null;
+            $grvMasterData->grvConfirmedByName = null;
+            $grvMasterData->grvConfirmedDate = null;
+            $grvMasterData->RollLevForApp_curr = 1;
+            $grvMasterData->save();
+        }
+
+        return $this->sendResponse($grvMasterData->toArray(), 'Good receipt voucher amend successfully');
     }
 
 }
