@@ -129,12 +129,6 @@ class GRVMasterAPIController extends AppBaseController
 
         unset($inputParam);
 
-        /*$companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
-        }*/
         $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
@@ -170,15 +164,7 @@ class GRVMasterAPIController extends AppBaseController
         $input['documentSystemID'] = '3';
         $input['documentID'] = 'GRV';
 
-        $lastSerial = GRVMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('grvSerialNo', 'desc')
-            ->first();
 
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
-        }
 
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
         if ($grvType) {
@@ -203,7 +189,6 @@ class GRVMasterAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
-        $input['grvSerialNo'] = $lastSerialNumber;
         $input['supplierTransactionER'] = 1;
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -215,7 +200,18 @@ class GRVMasterAPIController extends AppBaseController
             $input['supplierFax'] = $supplier->fax;
             $input['supplierEmail'] = $supplier->supEmail;
         }
+        // get last serial number by company financial year
+        $lastSerial = GRVMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('grvSerialNo', 'desc')
+            ->first();
 
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
+        }
+        $input['grvSerialNo'] = $lastSerialNumber;
+        // get document code
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -229,7 +225,7 @@ class GRVMasterAPIController extends AppBaseController
         } else {
             $finYear = date("Y");
         }
-        if ($documentMaster) {
+        if ($documentMaster) { // generate document code
             $grvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['grvPrimaryCode'] = $grvCode;
         }
