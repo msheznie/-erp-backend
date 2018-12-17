@@ -9,3 +9,5 @@ Route::resource('bankReconciliationRefferedBacks', 'BankReconciliationRefferedBa
 Route::resource('documentRestrictionAssigns', 'DocumentRestrictionAssignController');
 
 Route::resource('documentRestrictionPolicies', 'DocumentRestrictionPolicyController');
+
+Route::resource('itemMasterRefferedBacks', 'ItemMasterRefferedBackController');
