@@ -122,6 +122,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
+    Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
 
     Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
     Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
@@ -1260,6 +1261,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
     Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
 
+    Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
 });
 
 
@@ -1316,6 +1318,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
 
 
