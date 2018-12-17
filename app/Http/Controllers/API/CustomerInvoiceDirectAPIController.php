@@ -1013,6 +1013,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
+        $output['collectionType'] = \DB::select("SELECT * FROM erp_customerinvoicestatustype");
 
         if ($id) {
             if ($master->customerID != '') {

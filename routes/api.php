@@ -1263,6 +1263,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
     Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
+
+    Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
+    Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
 });
 
 
@@ -1319,6 +1322,7 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
 
 
 
