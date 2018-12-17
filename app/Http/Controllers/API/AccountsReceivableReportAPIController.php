@@ -1493,6 +1493,30 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $x = 0;
                     foreach ($output as $val) {
                         $x++;
+                        $matchingDocdate = '';
+                        $matchingDocCode = '';
+                        if($val->custReceiptDate == null && $val->matchingDocdate == null){
+                            $matchingDocCode = $val->matchingDocCode;
+                        }else if($val->custReceiptDate != null && $val->matchingDocdate == null){
+                            $matchingDocCode = $val->custReceiptCode;
+                        }else if($val->custReceiptDate == null && $val->matchingDocdate != null){
+                            $matchingDocCode = $val->matchingDocCode;
+                        }else if($val->custReceiptDate > $val->matchingDocdate){
+                            $matchingDocCode = $val->custReceiptCode;
+                        }else if($val->matchingDocdate > $val->custReceiptDate){
+                            $matchingDocCode = $val->matchingDocCode;
+                        }
+                        if($val->custReceiptDate == null && $val->matchingDocdate == null){
+                            $matchingDocdate = $val->matchingDocdate;
+                        }else if($val->custReceiptDate != null && $val->matchingDocdate == null){
+                            $matchingDocdate = $val->custReceiptDate;
+                        }else if($val->custReceiptDate == null && $val->matchingDocdate != null){
+                            $matchingDocdate = $val->matchingDocdate;
+                        }else if($val->custReceiptDate > $val->matchingDocdate){
+                            $matchingDocdate = $val->custReceiptDate;
+                        }else if($val->matchingDocdate > $val->custReceiptDate){
+                            $matchingDocdate = $val->matchingDocdate;
+                        }
                         $data[$x]['Company ID'] = $val->companyID;
                         $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Customer Short Code'] = $val->CutomerCode;
@@ -1504,10 +1528,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$x]['GL Code'] = $val->AccountCode;
                         $data[$x]['GL Description'] = $val->AccountDescription;
                         $data[$x]['Currency'] = $val->CurrencyCode;
-                        $data[$x]['Credit Note Total Amount'] = round($val->documentTransAmount, $val->DecimalPlaces);
-                        $data[$x]['Receipt Matching Code'] = $val->matchingDocCode;
-                        $data[$x]['Receipt Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
-                        $data[$x]['Receipt Amount'] = round($val->detailSum, $val->DecimalPlaces);
+                        $data[$x]['Credit Note Total Amount'] = round($val->documentRptAmount, $val->DecimalPlaces);
+                        $data[$x]['Receipt Matching Code'] = $matchingDocCode ;
+                        $data[$x]['Receipt Matching Date'] = $matchingDocdate;
+                        $data[$x]['Receipt Amount'] = round(($val->detailSum + $val->custReceiptSum), $val->DecimalPlaces);
                     }
                 }
 
