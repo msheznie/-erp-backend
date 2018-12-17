@@ -1478,29 +1478,39 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companySystemID = $master->companySystemID;
 
 
+
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
-        $customerInvoice = [];
+        $customerInvoice = (object)[];
+
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-
-
-
             } else {
-
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
-
             }
-            $customerInvoice->companySystemID = $companySystemID;
+
         }
+
+
+
+
         $company = Company::where('companySystemID', $companySystemID)->first();
-        $customerInvoice->companyLogo = $company->companyLogo;
-        $customerInvoice->CompanyName = $company->CompanyName;
+        $companyLogo='';
+        $CompanyName='';
+        if($company){
+            $companyLogo = $company->companyLogo;
+            $CompanyName = $company->CompanyName;
+        }
+
         if ($master->secondaryLogoCompanySystemID > 0) {
             $company = Company::where('companySystemID', $master->secondaryLogoCompanySystemID)->first();
-            $customerInvoice->CompanyName = $company->CompanyName;
-            $customerInvoice->companyLogo = $company->companyLogo;
+            if($company){
+                $CompanyName = $company->CompanyName;
+                $companyLogo = $company->companyLogo;
+            }
+
         }
+
 
 
         $line_invoiceNO = true;
@@ -1666,10 +1676,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
         }
 
-
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found.');
+        $custom = (array) $customerInvoice;
+        if (empty($custom)) {
+            return $this->sendError('Customer Invoice detail not found.');
         }
+        $customerInvoice->companySystemID = $companySystemID;
+        $customerInvoice->CompanyName =$CompanyName;
+        $customerInvoice->companyLogo =$companyLogo;
 
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);

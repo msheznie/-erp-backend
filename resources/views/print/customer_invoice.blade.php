@@ -192,7 +192,9 @@
             @else
                 <div class="" style="">
                     @endif
-                    <table>
+
+
+                    <table >
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
                             <td></td>
@@ -258,21 +260,27 @@
                                 </td>
                             </tr>
                             <tr>
-                                echo  $customerInvoice->approved_by[0]->employee->details->designation->designation;
+
                                 @foreach ($request->approved_by as $det)
                                     <td style="padding-right: 25px" class="text-center">
                                         @if($det->employee)
                                             {{$det->employee->empFullName }}
-                                        @endif
-                                        <br>
+                                            <br>
 
-                                    @if($det->employee->details->designation)
-                                            {{$det->employee->details->designation->designation}}
+                                            @if($det->employee->details)
+                                                @if($det->employee->details->designation)
+                                                {{$det->employee->details->designation->designation}}
+                                                @endif
+                                            @endif
+                                            <br><br>
+                                            @if($det->employee)
+                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                            @endif
                                         @endif
-                                        <br><br>
-                                        @if($det->employee)
-                                            {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                        @endif
+
+
+
+
                                     </td>
                                 @endforeach
                             </tr>

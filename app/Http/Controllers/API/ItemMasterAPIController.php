@@ -15,6 +15,7 @@
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllItemsMaster() to handle filters from local storage
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getItemMasterAudit()
  * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as exportItemMaster()
+ * -- Date: 14-December 2018 By: Fayas Description: Added new functions named as itemReferBack()
  */
 
 
@@ -23,12 +24,14 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DocumentApproved;
+use App\Models\DocumentReferedHistory;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
+use App\Models\ItemMasterRefferedBack;
 use App\Models\Unit;
 use App\Models\WarehouseBinLocation;
 use App\Models\YesNoSelection;
@@ -719,18 +722,18 @@ class ItemMasterAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $materielRequest = $this->itemMasterRepository
+        $itemMaster = $this->itemMasterRepository
             ->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 57);
             }])
             ->findWithoutFail($id);
 
-        if (empty($materielRequest)) {
-            return $this->sendError('Materiel Issue not found');
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
         }
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($itemMaster->toArray(), 'Item Master retrieved successfully');
     }
 
     public function getAllFixedAssetItems(Request $request)
@@ -755,5 +758,54 @@ class ItemMasterAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function itemReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $item = $this->itemMasterRepository->find($id);
+        if (empty($item)) {
+            return $this->sendError('Item Master not found');
+        }
+
+        if ($item->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this item');
+        }
+
+        $itemArray = $item->toArray();
+
+        $storeHistory = ItemMasterRefferedBack::insert($itemArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $item->primaryCompanySystemID)
+            ->where('documentSystemID', $item->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $item->timesReferred;
+            }
+        }
+
+        $documentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($documentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $item->primaryCompanySystemID)
+            ->where('documentSystemID', $item->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'itemConfirmedYN' => 0,'itemConfirmedByEMPSystemID' => null,
+                'itemConfirmedByEMPID' => null,'itemConfirmedByEMPName' => null,'itemConfirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->itemMasterRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($item->toArray(), 'Item Master Amend successfully');
     }
 }

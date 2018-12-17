@@ -14,6 +14,7 @@
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getSupplierMasterAudit()
  * -- Date: 18-July 2018 By: Fayas Description: Added new functions named as exportSupplierMaster()
  * -- Date: 04-November 2018 By: Fayas Description: Added new functions named as printSuppliers()
+ * -- Date: 17-December 2018 By: Fayas Description: Added new functions named as supplierReferBack()
  */
 
 namespace App\Http\Controllers\API;
@@ -22,6 +23,7 @@ use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -29,6 +31,7 @@ use App\Models\DocumentApproved;
 use App\Models\SupplierMaster;
 use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
+use App\Models\SupplierMasterRefferedBack;
 use App\Repositories\SupplierMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -95,22 +98,22 @@ class SupplierMasterAPIController extends AppBaseController
     public function getSupplierMasterByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'isCriticalYN', 'isActive','supplierConfirmedYN','approvedYN'));
+        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'isCriticalYN', 'isActive', 'supplierConfirmedYN', 'approvedYN'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
         $supplierId = 'supplierCodeSytem';
-        if($request['type'] == 'all'){
+        if ($request['type'] == 'all') {
             $supplierId = 'supplierCodeSystem';
         }
 
         $search = $request->input('search.value');
-        $supplierMasters = $this->getSuppliersByFilterQry($input,$search);
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search);
 
         return \DataTables::eloquent($supplierMasters)
-            ->order(function ($query) use ($input,$supplierId) {
+            ->order(function ($query) use ($input, $supplierId) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
                         $query->orderBy($supplierId, $input['order'][0]['dir']);
@@ -142,10 +145,10 @@ class SupplierMasterAPIController extends AppBaseController
         }
         $search = $request->input('search.value');
         $supplierId = 'supplierCodeSytem';
-        if($request['type'] == 'all'){
+        if ($request['type'] == 'all') {
             $supplierId = 'supplierCodeSystem';
         }
-        $supplierMasters = $this->getSuppliersByFilterQry($input,$search)->orderBy($supplierId,$sort)->get();
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search)->orderBy($supplierId, $sort)->get();
         $data = array();
         $x = 0;
         foreach ($supplierMasters as $val) {
@@ -154,25 +157,25 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['Supplier Name'] = $val->supplierName;
             $currency = "";
             $country = "";
-            if(count($val['supplierCurrency']) > 0){
-                if($val['supplierCurrency'][0]['currencyMaster']) {
+            if (count($val['supplierCurrency']) > 0) {
+                if ($val['supplierCurrency'][0]['currencyMaster']) {
                     $currency = $val['supplierCurrency'][0]['currencyMaster']['CurrencyCode'];
                 }
             }
 
-            if($val['country']){
+            if ($val['country']) {
                 $country = $val['country']['countryName'];
             }
 
-             $data[$x]['Country'] = $country;
-             $data[$x]['Currency'] = $currency;
-             $data[$x]['Address'] = $val->address;
-             $data[$x]['Telephone'] = $val->telephone;
-             $data[$x]['Fax'] = $val->fax;
-             $data[$x]['Email'] = $val->supEmail;
-             $data[$x]['Website'] = $val->webAddress;
-             $data[$x]['Credit Limit'] = $val->creditLimit;
-             $data[$x]['Credit Period'] = $val->creditPeriod;
+            $data[$x]['Country'] = $country;
+            $data[$x]['Currency'] = $currency;
+            $data[$x]['Address'] = $val->address;
+            $data[$x]['Telephone'] = $val->telephone;
+            $data[$x]['Fax'] = $val->fax;
+            $data[$x]['Email'] = $val->supEmail;
+            $data[$x]['Website'] = $val->webAddress;
+            $data[$x]['Credit Limit'] = $val->creditLimit;
+            $data[$x]['Credit Period'] = $val->creditPeriod;
         }
 
         $csv = \Excel::create('supplier_master', function ($excel) use ($data) {
@@ -200,30 +203,31 @@ class SupplierMasterAPIController extends AppBaseController
         }
         $search = $request->input('search.value');
         $supplierId = 'supplierCodeSytem';
-        if($request['type'] == 'all'){
+        if ($request['type'] == 'all') {
             $supplierId = 'supplierCodeSystem';
         }
-        $supplierMasters = $this->getSuppliersByFilterQry($input,$search)->orderBy($supplierId,$sort)->get();
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search)->orderBy($supplierId, $sort)->get();
 
-        $company = Company::find( $request['companyId']);
+        $company = Company::find($request['companyId']);
 
-        if(empty($company)){
+        if (empty($company)) {
             return $this->sendError('Company not found');
         }
 
-        $docRefNo = \Helper::getCompanyDocRefNo( $request['companyId'], 56);
+        $docRefNo = \Helper::getCompanyDocRefNo($request['companyId'], 56);
 
-        $array = array('entities' => $supplierMasters,'docRefNo' => $docRefNo,'company' => $company);
+        $array = array('entities' => $supplierMasters, 'docRefNo' => $docRefNo, 'company' => $company);
         $time = strtotime("now");
-        $fileName = 'suppliers_'. $time . '.pdf';
+        $fileName = 'suppliers_' . $time . '.pdf';
         $html = view('print.suppliers', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4','landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
-    public function getSuppliersByFilterQry($request,$search){
+    public function getSuppliersByFilterQry($request, $search)
+    {
 
         $input = $request;
         $companyId = $request['companyId'];
@@ -236,17 +240,17 @@ class SupplierMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        if($request['type'] == 'all'){
-            $supplierMasters = SupplierMaster::with(['categoryMaster','critical','country','supplierCurrency' => function ($query) {
+        if ($request['type'] == 'all') {
+            $supplierMasters = SupplierMaster::with(['categoryMaster', 'critical', 'country', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }]);
-        }else{
+        } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['categoryMaster','critical','country','supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'critical', 'country', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
-            }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned',-1);
+            }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
 
         }
 
@@ -275,7 +279,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if (array_key_exists('supplierNatureID', $input)) {
-            if ($input['supplierNatureID']  && !is_null($input['supplierNatureID'])) {
+            if ($input['supplierNatureID'] && !is_null($input['supplierNatureID'])) {
                 $supplierMasters->where('supplierNatureID', '=', $input['supplierNatureID']);
             }
         }
@@ -463,12 +467,12 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
-            'supplierConfirmedEmpName','supplierConfirmedDate','final_approved_by']);
+            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
-        $input['modifiedPc']   = gethostname();
+        $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
-        $input['modifiedUserSystemID'] =  $employee->employeeSystemID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
@@ -630,7 +634,6 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reject["message"]);
         }
-
     }
 
     public function getSuppliersByCompany(Request $request)
@@ -706,17 +709,71 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $materielRequest = $this->supplierMasterRepository
+        $supplierMaster = $this->supplierMasterRepository
             ->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 56);
             }])
             ->findWithoutFail($id);
 
-        if (empty($materielRequest)) {
+        if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');
         }
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($supplierMaster->toArray(), 'Materiel Issue retrieved successfully');
+    }
+
+    public function supplierReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $supplier = $this->supplierMasterRepository->find($id);
+        if (empty($supplier)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        if ($supplier->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this supplier');
+        }
+
+        $supplierArray = $supplier->toArray();
+
+        $storeHistory = SupplierMasterRefferedBack::insert($supplierArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $supplier->primaryCompanySystemID)
+            ->where('documentSystemID', $supplier->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $supplier->timesReferred;
+            }
+        }
+
+        $documentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($documentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $supplier->primaryCompanySystemID)
+            ->where('documentSystemID', $supplier->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,
+                'supplierConfirmedYN' => 0,
+                'supplierConfirmedEmpSystemID' => null,
+                'supplierConfirmedEmpID' => null,
+                'supplierConfirmedEmpName' => null,
+                'supplierConfirmedDate' => null,
+                'RollLevForApp_curr' => 1];
+
+            $this->supplierMasterRepository->update($updateArray, $id);
+        }
+
+        return $this->sendResponse($supplier->toArray(), 'Supplier Master Amend successfully');
     }
 }
