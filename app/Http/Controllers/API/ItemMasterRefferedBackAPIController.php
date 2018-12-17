@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : ItemMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Master Reffered Back
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - December 2018
+ * -- Description : This file contains the all CRUD for Item Master Reffered Back
+ * -- REVISION HISTORY
+ * -- Date: 14-December 2018 By: Fayas Description: Added new functions named as referBackHistoryByItemsMaster()
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -278,4 +289,41 @@ class ItemMasterRefferedBackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Item Master Reffered Back deleted successfully');
     }
+
+
+    public function referBackHistoryByItemsMaster(Request $request)
+    {
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+
+        $itemMasters = ItemMasterRefferedBack::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+                                              ->where('itemCodeSystem',$input['id']);
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
 }

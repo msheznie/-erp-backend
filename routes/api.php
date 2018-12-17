@@ -1262,6 +1262,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
 
     Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
+    Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
 });
 
 
