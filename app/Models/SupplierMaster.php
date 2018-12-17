@@ -147,7 +147,9 @@ class SupplierMaster extends Model
         'modifiedUserSystemID',
         'supCategoryICVMasterID',
         'supCategorySubICVID',
-        'isLCCYN'
+        'isLCCYN',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -215,7 +217,9 @@ class SupplierMaster extends Model
         'vatPercentage' => 'integer',
         'supCategoryICVMasterID' => 'integer',
         'supCategorySubICVID' => 'integer',
-        'isLCCYN' => 'integer'
+        'isLCCYN' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

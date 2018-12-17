@@ -37,6 +37,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
     Route::resource('supplier/masters', 'SupplierMasterAPIController');
+    Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack');
 
     Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster');
 
@@ -325,7 +326,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
 
     Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
-    Route::post('rejectSugetAssetManagementFilterDatapplier', 'SupplierMasterAPIController@rejectSupplier');
+    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
 
     Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
     Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
@@ -1263,6 +1264,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
     Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
+
+    Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
+    Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
 });
 
 
@@ -1319,6 +1323,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
 
 
