@@ -1177,8 +1177,26 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 	pomaster.approvedDate,
 	podetail.itemPrimaryCode,
 	podetail.itemDescription,
-	podetail.financeGLcodePL AS glCode,
-	podetail.financeGLcodePLSystemID AS glCodeSystemID,
+	(
+		CASE podetail.financeGLcodePL
+		WHEN podetail.financeGLcodePL IS NULL THEN
+			podetail.financeGLcodebBS
+		WHEN podetail.financeGLcodePL = '' THEN
+			podetail.financeGLcodebBS
+		ELSE
+			podetail.financeGLcodePL
+		END
+	) AS glCode,
+	(
+		CASE podetail.financeGLcodePL
+		WHEN podetail.financeGLcodePL IS NULL THEN
+			podetail.financeGLcodebBSSystemID
+		WHEN podetail.financeGLcodePL = '' THEN
+			podetail.financeGLcodebBSSystemID
+		ELSE
+			podetail.financeGLcodePLSystemID
+		END
+	) AS glCodeSystemID,
 	pomaster.supplierName,
 	pomaster.poTotalComRptCurrency AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
@@ -1200,7 +1218,9 @@ INNER JOIN (
 		itemPrimaryCode,
 		itemDescription,
 		financeGLcodePL,
-		financeGLcodePLSystemID
+		financeGLcodePLSystemID,
+		financeGLcodebBS,
+		financeGLcodebBSSystemID
 	FROM
 		erp_purchaseorderdetails
 	GROUP BY
@@ -1243,11 +1263,11 @@ AND date(
 ) <= '$formattedJVdate'
 {$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
-GROUP BY
-	podetail.itemCode
 HAVING
-	round(balanceCost, 2) > 0";
+	round(balanceCost, 2) <> 0";
 
+        //echo $qry;
+        //exit();
         $invMaster = DB::select($qry);
 
         $col[0] = $input['order'][0]['column'];

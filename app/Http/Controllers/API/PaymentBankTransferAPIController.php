@@ -30,6 +30,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\PaymentBankTransfer;
 use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\PaymentBankTransferRefferedBack;
+use App\Models\SupplierMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
 use Carbon\Carbon;
@@ -685,6 +686,30 @@ class PaymentBankTransferAPIController extends AppBaseController
         return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
     }
 
+    function getSupplierBankMemoByCurrency ($row){
+
+        /*'supplier_by' => function ($q3) use ($bankId) {
+            $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
+                $q4->where('currencyID', $bankId)
+                    ->with(['bankMemo_by']);
+            }]);
+        },*/
+
+        $bankMemo = SupplierMaster::where('supplierCodeSystem',$row->payeeID)
+            ->with(['supplierCurrency' => function ($q4) use ($row) {
+                $q4->where('currencyID', $row->supplierTransCurrencyID)
+                    ->with(['bankMemo_by']);
+            }])->first();
+        if(!empty($bankMemo)){
+           // $bankMemo = $bankMemo->toArray();
+        }else{
+            $bankMemo = array();
+        }
+
+        return $bankMemo;
+
+    }
+
     public function exportPaymentBankTransfer(Request $request)
     {
 
@@ -749,12 +774,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
             })
-            ->with(['supplier_by' => function ($q3) use ($bankId) {
-                $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
-                    $q4->where('currencyID', $bankId)
-                        ->with(['bankMemo_by']);
-                }]);
-            },'payee_bank_memos']);
+            ->with(['payee_bank_memos']);
 
         $search = $request->input('search.value');
 
@@ -766,6 +786,13 @@ class PaymentBankTransferAPIController extends AppBaseController
             });
         }
         $bankLedger = $bankLedger->orderBy('bankLedgerAutoID', 'desc')->get();
+
+
+        foreach ($bankLedger as $row){
+            $row->supplier_by = $this->getSupplierBankMemoByCurrency($row);
+        }
+
+
         $data = array();
         $x = 0;
 

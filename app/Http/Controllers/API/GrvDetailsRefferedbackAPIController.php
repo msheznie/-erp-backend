@@ -298,7 +298,7 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
 
         $items = GrvDetailsRefferedback::where('grvAutoID', $grvAutoID)
             ->where('timesReferred', $timesReferred)
-            ->with(['unit'])
+            ->with(['unit','po_master'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Grv Details Refferedback retrieved successfully');

@@ -10,6 +10,7 @@
  * -- Description : This file contains the all CRUD for Chart Of Account.
  * -- REVISION HISTORY
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getChartOfAccount() to handle filters from local storage
+ * -- Date: 18-December 2018 By: Fayas Description:  Added new function chartOfAccountReferBack()
  */
 
 namespace App\Http\Controllers\API;
@@ -18,10 +19,12 @@ use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChartOfAccountsRefferedBack;
 use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\AccountsType;
 use App\Models\DocumentApproved;
+use App\Models\DocumentReferedHistory;
 use App\Models\YesNoSelection;
 use App\Repositories\ChartOfAccountRepository;
 use Illuminate\Http\Request;
@@ -497,5 +500,57 @@ class ChartOfAccountAPIController extends AppBaseController
 
     }
 
+    public function chartOfAccountReferBack(Request $request)
+    {
+        $input = $request->all();
 
+        $id = $input['id'];
+
+        $chartOfAccount = $this->chartOfAccountRepository->find($id);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart Of Account not found');
+        }
+
+        if ($chartOfAccount->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Chart Of Account');
+        }
+
+        $chartOfAccountArray = $chartOfAccount->toArray();
+
+        $storeHistory = ChartOfAccountsRefferedBack::insert($chartOfAccountArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $chartOfAccount->primaryCompanySystemID)
+            ->where('documentSystemID', $chartOfAccount->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $chartOfAccount->timesReferred;
+            }
+        }
+
+        $documentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($documentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $chartOfAccount->primaryCompanySystemID)
+            ->where('documentSystemID', $chartOfAccount->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,
+                            'confirmedYN' => 0,
+                            'confirmedEmpSystemID' => null,
+                            'confirmedEmpID' => null,
+                            'confirmedEmpName' => null,
+                            'confirmedEmpDate' => null,
+                            'RollLevForApp_curr' => 1];
+
+            $this->chartOfAccountRepository->update($updateArray, $id);
+        }
+
+        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account Amend successfully');
+    }
 }

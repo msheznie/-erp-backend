@@ -780,7 +780,7 @@ class ItemMasterAPIController extends AppBaseController
         $storeHistory = ItemMasterRefferedBack::insert($itemArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
-            ->where('companySystemID', $item->companySystemID)
+            ->where('companySystemID', $item->primaryCompanySystemID)
             ->where('documentSystemID', $item->documentSystemID)
             ->get();
 
