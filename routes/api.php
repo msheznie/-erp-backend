@@ -218,13 +218,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
     Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
 
-    /** Warehouse master Created by Fayas  */
+    /** Customer master Created by Fayas  */
     Route::resource('customer_masters', 'CustomerMasterAPIController');
     Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
     Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
     Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
     Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
     Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
+    Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
 
@@ -1265,8 +1266,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
     Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
 
+    Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
+    Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
     Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
     Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
+
+    Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
+    Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
+    Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
+    Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
+    Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
 });
 
 
@@ -1323,12 +1332,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-
-
-
-
-
-
-
-

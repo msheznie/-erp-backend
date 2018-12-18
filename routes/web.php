@@ -1,3 +1,3 @@
 
 
-Route::resource('supplierMasterRefferedBacks', 'SupplierMasterRefferedBackController');
+Route::resource('chartOfAccountsRefferedBacks', 'ChartOfAccountsRefferedBackController');
