@@ -2865,8 +2865,8 @@ class Helper
                         foreach ($dpdetails as $val) {
                             $receivePayment['companySystemID'] = $pvMaster->companySystemID;
                             $receivePayment['companyID'] = $pvMaster->companyID;
-                            $receivePayment['documentSystemID'] = 21;
-                            $receivePayment['documentID'] = 'BRV';
+                            $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
+                            $receivePayment['documentID'] = $pvMaster->documentID;
 
                             $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
 
