@@ -251,6 +251,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceCollectionDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['modified_by']);
         $input = $this->convertArrayToValue($input);
         /** @var CustomerInvoiceCollectionDetail $customerInvoiceCollectionDetail */
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);
@@ -337,6 +338,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
         $invoiceID = $input['invoiceID'];
 
         $items = CustomerInvoiceCollectionDetail::where('customerInvoiceID', $invoiceID)
+            ->with(['modified_by'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Customer invoice collection details retrieved successfully');
