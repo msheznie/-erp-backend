@@ -1273,7 +1273,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
     Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
-
+    Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
+    Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
+    Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
 });
 
 
