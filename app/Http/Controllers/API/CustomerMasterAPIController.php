@@ -13,6 +13,7 @@
  * -- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
  * -- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
  * -- Date: 19-November 2018 By: Fayas Description: Added new functions named as getJobsByContractAndCustomer()
+ * -- Date: 18-December 2018 By: Fayas Description: Added new functions named as customerReferBack()
  */
 
 namespace App\Http\Controllers\API;
@@ -23,8 +24,10 @@ use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\CustomerMasterRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\TicketMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
@@ -558,5 +561,57 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');
     }
 
+    public function customerReferBack(Request $request)
+    {
+        $input = $request->all();
 
+        $id = $input['id'];
+
+        $customer = $this->customerMasterRepository->find($id);
+        if (empty($customer)) {
+            return $this->sendError('Customer Master not found');
+        }
+
+        if ($customer->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this customer');
+        }
+
+        $customerArray = $customer->toArray();
+
+        $storeHistory = CustomerMasterRefferedBack::insert($customerArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $customer->primaryCompanySystemID)
+            ->where('documentSystemID', $customer->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $customer->timesReferred;
+            }
+        }
+
+        $documentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($documentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $customer->primaryCompanySystemID)
+            ->where('documentSystemID', $customer->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,
+                'confirmedYN' => 0,
+                'confirmedEmpSystemID' => null,
+                'confirmedEmpID' => null,
+                'confirmedEmpName' => null,
+                'confirmedDate' => null,
+                'RollLevForApp_curr' => 1];
+
+            $this->customerMasterRepository->update($updateArray, $id);
+        }
+
+        return $this->sendResponse($customer->toArray(), 'Customer Master Amend successfully');
+    }
 }
