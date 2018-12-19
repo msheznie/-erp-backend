@@ -93,7 +93,9 @@ class ChartOfAccount extends Model
         'createdDateTime',
         'modifiedPc',
         'modifiedUser',
-        'timestamp'
+        'timestamp',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -134,7 +136,9 @@ class ChartOfAccount extends Model
         'createdUserGroup' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

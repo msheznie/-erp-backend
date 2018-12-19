@@ -24,6 +24,7 @@ use App\Models\Alert;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
+use App\Models\BankMemoSupplier;
 use App\Models\BankReconciliation;
 use App\Models\BankReconciliationRefferedBack;
 use App\Models\Company;
@@ -35,6 +36,7 @@ use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierContactDetails;
+use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
@@ -597,9 +599,9 @@ class BankLedgerAPIController extends AppBaseController
 
 
                 if($bankLedger->payeeID){
-                    $checkBankAccount =  $checkBankAccount->whereHas('supplier_by', function ($q3) use ($bankId) {
-                        $q3->whereHas('supplierCurrency', function ($q4) use ($bankId) {
-                            $q4->where('currencyID', $bankId)
+                    $checkBankAccount =  $checkBankAccount->whereHas('supplier_by', function ($q3) use ($bankLedger) {
+                        $q3->whereHas('supplierCurrency', function ($q4) use ($bankLedger) {
+                            $q4->where('currencyID', $bankLedger->supplierTransCurrencyID)
                                 ->whereHas('bankMemo_by', function ($q) {
                                     $q->where('bankMemoTypeID', 4);
                                 });
@@ -1081,14 +1083,7 @@ class BankLedgerAPIController extends AppBaseController
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
             })
-            ->with(['supplier_by' => function ($q3) use ($bankId) {
-                $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
-                    $q4->where('currencyID', $bankId)
-                        ->with(['bankMemo_by' => function ($q) {
-                            $q->where('bankMemoTypeID', 4);
-                        }]);
-                }]);
-            },'payee_bank_memos' => function ($q) {
+            ->with(['payee_bank_memos' => function ($q) {
                 $q->where('bankMemoTypeID', 4);
             }]);
 
@@ -1115,8 +1110,39 @@ class BankLedgerAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('supplier_by', function ($row) {
+                return $this->getSupplierBankMemoByCurrency($row);
+            })
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    function getSupplierBankMemoByCurrency ($row){
+
+        /*'supplier_by' => function ($q3) use ($bankId) {
+            $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
+                $q4->where('currencyID', $bankId)
+                    ->with(['bankMemo_by' => function ($q) {
+                        $q->where('bankMemoTypeID', 4);
+                    }]);
+            }]);
+        },*/
+        $bankMemo = SupplierMaster::where('supplierCodeSystem',$row->payeeID)
+                                    ->with(['supplierCurrency' => function ($q4) use ($row) {
+                                        $q4->where('currencyID', $row->supplierTransCurrencyID)
+                                            ->with(['bankMemo_by' => function ($q) {
+                                                $q->where('bankMemoTypeID', 4);
+                                            }]);
+                                    }])->first();
+        if(!empty($bankMemo)){
+            $bankMemo = $bankMemo->toArray();
+        }else{
+            $bankMemo = array();
+        }
+
+        return $bankMemo;
+
     }
 
     public function getChequePrintingItems(Request $request)

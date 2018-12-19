@@ -1886,7 +1886,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year','financeCategory'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1918,7 +1918,6 @@ class PurchaseRequestAPIController extends AppBaseController
                     $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
                 } elseif ($input['selectedForPO'] == 2) {
                     $purchaseRequests = $purchaseRequests->whereHas('po_details', function ($q) {
-
                     });
                 }
             }
@@ -1927,6 +1926,12 @@ class PurchaseRequestAPIController extends AppBaseController
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('financeCategory', $input)) {
+            if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
+                $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
             }
         }
 
@@ -2028,6 +2033,12 @@ class PurchaseRequestAPIController extends AppBaseController
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('financeCategory', $input)) {
+            if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
+                $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
             }
         }
 

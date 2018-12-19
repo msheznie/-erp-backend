@@ -1277,7 +1277,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
     Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
     Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
-
+    Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
+    Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
+    Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
+    Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
 });
 
 
