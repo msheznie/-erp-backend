@@ -181,10 +181,11 @@ class StockTransferDetailsRefferedBack extends Model
 {
 
     public $table = 'erp_stocktransferdetailsrefferedback';
-    
-    const CREATED_AT = NULL;
-    const UPDATED_AT = NULL;
-    protected $primaryKey  = 'stockTransferDetailsID';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+
+    protected $primaryKey = 'stockTransferDetailsRefferedID';
 
 
     public $fillable = [

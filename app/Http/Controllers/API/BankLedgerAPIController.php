@@ -599,9 +599,9 @@ class BankLedgerAPIController extends AppBaseController
 
 
                 if($bankLedger->payeeID){
-                    $checkBankAccount =  $checkBankAccount->whereHas('supplier_by', function ($q3) use ($bankId) {
-                        $q3->whereHas('supplierCurrency', function ($q4) use ($bankId) {
-                            $q4->where('currencyID', $bankId)
+                    $checkBankAccount =  $checkBankAccount->whereHas('supplier_by', function ($q3) use ($bankLedger) {
+                        $q3->whereHas('supplierCurrency', function ($q4) use ($bankLedger) {
+                            $q4->where('currencyID', $bankLedger->supplierTransCurrencyID)
                                 ->whereHas('bankMemo_by', function ($q) {
                                     $q->where('bankMemoTypeID', 4);
                                 });
