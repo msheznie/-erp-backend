@@ -244,5 +244,39 @@ class DocumentReferedHistory extends Model
         
     ];
 
+    public function employeesdepartment(){
+        return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID');
+    }
+
+    public function supplier(){
+        return $this->HasOne('App\Models\SupplierMaster','supplierCodeSystem','documentSystemCode');
+    }
+
+    public function item(){
+        return $this->HasOne('App\Models\ItemMaster','itemCodeSystem','documentSystemCode');
+    }
+
+    public function customer(){
+        return $this->HasOne('App\Models\CustomerMaster','customerCodeSystem','documentSystemCode');
+    }
+
+    public function account(){
+        return $this->HasOne('App\Models\ChartOfAccount','chartOfAccountSystemID','documentSystemCode');
+    }
+
+    public function employee(){
+        return $this->HasOne('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+
+    public function employee_department_approve(){
+        return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID')
+            ->where('documentSystemID',$this->documentSystemID)
+            ->where('companySystemID',$this->companySystemID);
+    }
     
 }

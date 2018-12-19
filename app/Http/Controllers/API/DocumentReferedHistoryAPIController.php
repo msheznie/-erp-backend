@@ -1,10 +1,22 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DocumentReferedHistoryAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Document Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 18 - December 2018
+ * -- Description : This file contains the all CRUD for Document Master
+ * -- REVISION HISTORY
+ * -- Date: 18 December 2018 By: Fayas Description: Added new function getReferBackApprovedDetails()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDocumentReferedHistoryAPIRequest;
 use App\Http\Requests\API\UpdateDocumentReferedHistoryAPIRequest;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentReferedHistory;
+use App\Models\EmployeesDepartment;
 use App\Repositories\DocumentReferedHistoryRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -277,5 +289,51 @@ class DocumentReferedHistoryAPIController extends AppBaseController
         $documentReferedHistory->delete();
 
         return $this->sendResponse($id, 'Document Refered History deleted successfully');
+    }
+
+    public function getReferBackApprovedDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+        $documentSystemID = $input['documentSystemID'];
+        $refTimes = $input['refTimes'];
+
+        $approveDetails = DocumentReferedHistory::where('documentSystemID', $documentSystemID)
+            ->where('documentSystemCode', $documentSystemCode)
+            ->where('companySystemID', $companySystemID)
+            ->where('refTimes', $refTimes)
+            ->with(['approved_by'])
+            ->get();
+
+        foreach ($approveDetails as $value) {
+
+            if ($value['approvedYN'] == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return $this->sendError('Policy not found');
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID);
+                //->get();
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
+                }
+
+                $approvalList = $approvalList->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+                $value['approval_list'] = $approvalList;
+            }
+        }
+
+        return $this->sendResponse($approveDetails, 'Record retrieved successfully');
     }
 }

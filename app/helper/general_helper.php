@@ -1729,13 +1729,13 @@ class Helper
                     $docInforArr["primarykey"] = 'purchaseRequestID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-                case 20:
+                case 20://Customer Invoice
                     $docInforArr["tableName"] = 'erp_custinvoicedirect';
                     $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                     $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-                case 11:
+                case 11: //Booking Supplier Invoice
                     $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
                     $docInforArr["modelName"] = 'BookInvSuppMaster';
                     $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';

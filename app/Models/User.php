@@ -42,6 +42,8 @@ class User extends Authenticatable
 
 
     public $fillable = [
+        'employee_id',
+        'empID',
         'name',
         'email',
         'password',
@@ -56,6 +58,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'id' => 'integer',
+        'employee_id' => 'integer',
+        'empID' => 'string',
         'name' => 'string',
         'email' => 'string',
         'password' => 'string',

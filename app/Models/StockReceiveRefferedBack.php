@@ -235,9 +235,9 @@ class StockReceiveRefferedBack extends Model
 {
 
     public $table = 'erp_stockreceiverefferedback';
-    
-    const CREATED_AT = NULL;
-    const UPDATED_AT = NULL;
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'stockReceiveRefferedID';
 
 
