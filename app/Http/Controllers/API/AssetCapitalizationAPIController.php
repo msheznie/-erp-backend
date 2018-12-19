@@ -999,7 +999,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
             $deleteApproval = DocumentApproved::where('documentSystemCode', $capitalizationID)
                 ->where('companySystemID', $capitalization->companySystemID)

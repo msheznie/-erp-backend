@@ -1428,7 +1428,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
             $deleteApproval = DocumentApproved::where('documentSystemCode', $faID)
                 ->where('companySystemID', $fixedAsset->companySystemID)
