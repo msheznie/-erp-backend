@@ -40,7 +40,7 @@ class AfterDocumentCreated
                 'documentCodeColumnName' => '',
                 'companyFinanceYearID' => '',
                 'documentExist' => 0,
-              );
+            );
 
             switch ($document["documentSystemID"]) { // check the document id and set relevant parameters
                 case 3: // GRV
@@ -104,7 +104,11 @@ class AfterDocumentCreated
                     $documentArray["primaryKey"] = 'PayMasterAutoId';
                     $documentArray["documentCodeColumnName"] = 'BPVcode';
                     $documentArray["companyFinanceYearID"] = 'companyFinanceYearID';
-                    $documentArray["documentExist"] = 1;
+                    if (array_key_exists('BPVcode', $document)) {
+                        $documentArray["documentExist"] = 1;
+                    } else {
+                        $documentArray["documentExist"] = 0;
+                    }
                     break;
                 case 11: // supplier invoice
                     $documentArray["modelName"] = 'BookInvSuppMaster';
@@ -153,36 +157,36 @@ class AfterDocumentCreated
             }
 
 
-            if($documentArray['documentExist'] == 1){
+            if ($documentArray['documentExist'] == 1) {
                 $nameSpacedModel = 'App\Models\\' . $documentArray["modelName"];
                 $document = $document->toArray();
-                $missingRecodes  = array();
+                $missingRecodes = array();
                 $range = "";
-                $previousDoc =  $nameSpacedModel::where('companySystemID',$document['companySystemID'])
-                    ->where('documentSystemID',$document['documentSystemID'])
-                    ->where($documentArray["primaryKey"],'!=',$document[$documentArray["primaryKey"]])
-                    ->where($documentArray['companyFinanceYearID'],$document[$documentArray['companyFinanceYearID']])
-                    ->selectRaw($documentArray["primaryKey"].",".$documentArray['documentCodeColumnName'].",RIGHT(".$documentArray['documentCodeColumnName'].",6) as 'serialNo'")
-                    ->orderBy($documentArray['documentCodeColumnName'],'desc')
+                $previousDoc = $nameSpacedModel::where('companySystemID', $document['companySystemID'])
+                    ->where('documentSystemID', $document['documentSystemID'])
+                    ->where($documentArray["primaryKey"], '!=', $document[$documentArray["primaryKey"]])
+                    ->where($documentArray['companyFinanceYearID'], $document[$documentArray['companyFinanceYearID']])
+                    ->selectRaw($documentArray["primaryKey"] . "," . $documentArray['documentCodeColumnName'] . ",RIGHT(" . $documentArray['documentCodeColumnName'] . ",6) as 'serialNo'")
+                    ->orderBy($documentArray['documentCodeColumnName'], 'desc')
                     ->first();
 
                 Log::info('Previous Doc: ');
                 Log::info($previousDoc);
 
 
-                if(!empty($previousDoc)){
-                    $different  = (((int)substr($document[$documentArray["documentCodeColumnName"]], -6)) - ((int)$previousDoc['serialNo']));
+                if (!empty($previousDoc)) {
+                    $different = (((int)substr($document[$documentArray["documentCodeColumnName"]], -6)) - ((int)$previousDoc['serialNo']));
 
-                    if( $different != 1 ){
+                    if ($different != 1) {
 
-                        array_push($missingRecodes,array('start' => $previousDoc[$documentArray['documentCodeColumnName']],'end' => $document[$documentArray['documentCodeColumnName']]));
+                        array_push($missingRecodes, array('start' => $previousDoc[$documentArray['documentCodeColumnName']], 'end' => $document[$documentArray['documentCodeColumnName']]));
                         Log::info('Test: ');
                         Log::info($document[$documentArray['documentCodeColumnName']]);
 
-                        if($different != 0){
-                            $range = $range.'<br> This document is getting jumped from '.$previousDoc[$documentArray['documentCodeColumnName']].' to '. $document[$documentArray['documentCodeColumnName']];
-                        }else{
-                            $range = $range.'<br> This document is getting duplicated '. $document[$documentArray['documentCodeColumnName']];
+                        if ($different != 0) {
+                            $range = $range . '<br> This document is getting jumped from ' . $previousDoc[$documentArray['documentCodeColumnName']] . ' to ' . $document[$documentArray['documentCodeColumnName']];
+                        } else {
+                            $range = $range . '<br> This document is getting duplicated ' . $document[$documentArray['documentCodeColumnName']];
                         }
                     }
                 }
@@ -211,11 +215,11 @@ class AfterDocumentCreated
                 }
                 Log::info('List count: ' . count($listOfDoc));
                 Log::info($listOfDoc);*/
-                if($range) {
+                if ($range) {
 
                     $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
                     $email_id = 'gearssupport@pbs-int.net';
-                    $empName  = 'Admin';
+                    $empName = 'Admin';
                     $employeeSystemID = 11;
                     $empID = '8888';
 
@@ -235,7 +239,7 @@ class AfterDocumentCreated
                     $dataEmail['docCode'] = null;
                     $dataEmail['ccEmailID'] = $email_id;
 
-                    $temp = "Following document is jumped/duplicated for " . $systemDocument->documentDescription . " - " .  $document['companyID']."<p>".$range."<p>" . $footer;
+                    $temp = "Following document is jumped/duplicated for " . $systemDocument->documentDescription . " - " . $document['companyID'] . "<p>" . $range . "<p>" . $footer;
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = null;
