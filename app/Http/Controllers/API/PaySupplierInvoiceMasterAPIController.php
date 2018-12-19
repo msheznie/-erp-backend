@@ -2031,6 +2031,7 @@ HAVING
                 ->where('documentSystemID', $paymentVoucher->documentSystemID)
                 ->get();
 
+
             if (!empty($fetchDocumentApproved)) {
                 foreach ($fetchDocumentApproved as $DocumentApproved) {
                     $DocumentApproved['refTimes'] = $paymentVoucher->timesReferred;
@@ -2039,7 +2040,7 @@ HAVING
 
             $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
             $deleteApproval = DocumentApproved::where('documentSystemCode', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucher->companySystemID)

@@ -808,7 +808,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
             $deleteApproval = DocumentApproved::where('documentSystemCode', $depMasterAutoID)
                 ->where('companySystemID', $fixedAssetDep->companySystemID)
