@@ -2311,7 +2311,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             default:
                                 Log::warning('Posted date document id not found ' . date('H:i:s'));
                         }
-                        if (in_array($masterModel["documentSystemID"], [15, 11, 4])) {
+                        if (in_array($masterModel["documentSystemID"], [15, 11, 4, 24])) {
                             $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                         }
                         if (in_array($masterModel["documentSystemID"], [19, 20, 21])) {

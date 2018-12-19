@@ -1321,7 +1321,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 20,'autoID' => 53829, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 24,'autoID' => 91, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1331,6 +1331,7 @@ Route::get('runQueue', function () {
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
+    //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {
