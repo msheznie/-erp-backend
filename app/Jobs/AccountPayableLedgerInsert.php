@@ -8,6 +8,7 @@ use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\Employee;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PurchaseReturn;
 use App\Models\Taxdetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -240,6 +241,49 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                 $data['timeStamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
+                        }
+                        break;
+                    case 24: // Purchase return
+                        $masterData = PurchaseReturn::with(['details' => function ($query) {
+                            $query->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,purhaseReturnAutoID");
+                            $query->groupBy("purhaseReturnAutoID");
+                        }])->find($masterModel["autoID"]);
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->purchaseReturnCode;
+                            $data['documentDate'] = $masterDocumentDate;
+                            $data['supplierCodeSystem'] = $masterData->supplierID;
+                            $data['supplierInvoiceNo'] = 'NA';
+                            $data['supplierInvoiceDate'] = $masterData->purchaseReturnDate;
+                            $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                            $data['supplierTransER'] = $masterData->supplierTransactionER;
+                            $data['supplierInvoiceAmount'] = ABS($masterData->details[0]->transAmount) * -1;
+                            $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                            $data['supplierDefaultCurrencyER'] = $masterData->supplierTransactionER;
+                            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->details[0]->transAmount) * -1);
+                            $data['localCurrencyID'] = $masterData->localCurrencyID;
+                            $data['localER'] = $masterData->localCurrencyER;
+                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount) * -1);
+                            $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                            $data['comRptER'] = $masterData->companyReportingER;
+                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount) * -1);
+                            $data['isInvoiceLockedYN'] = 0;
+                            $data['invoiceType'] = 7;
+                            $data['selectedToPaymentInv'] = 0;
+                            $data['fullyInvoice'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdPcID'] = gethostname();
+                            $data['timeStamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
                         }
                         break;
                     default:

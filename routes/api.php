@@ -17,6 +17,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
+    Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
     Route::resource('navigation_menuses', 'NavigationMenusAPIController');
@@ -1273,6 +1274,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
     Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
+    Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
+    Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
+    Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
     Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
     Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
     Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
@@ -1317,7 +1321,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 20,'autoID' => 53829, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 24,'autoID' => 91, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1327,6 +1331,7 @@ Route::get('runQueue', function () {
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
+    //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {
