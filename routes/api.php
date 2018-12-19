@@ -17,6 +17,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
+    Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
     Route::resource('navigation_menuses', 'NavigationMenusAPIController');
@@ -1273,6 +1274,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
     Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
+    Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
+    Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
+    Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
     Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
     Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
     Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
