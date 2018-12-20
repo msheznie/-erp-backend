@@ -109,6 +109,7 @@ class EmployeeAPIController extends AppBaseController
     public function update($id, UpdateEmployeeAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['desi_master','manager','emp_company']);
         $input = $this->convertArrayToValue($input);
 
         /** @var Employee $employee */
@@ -210,28 +211,45 @@ class EmployeeAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $empMaster = DB::table('employees as master')
-            ->leftjoin('companymaster', 'empCompanySystemID', '=', 'companySystemID')
-            ->leftjoin('employees as e2', 'master.empManagerAttached', '=', 'e2.empID')
-            ->leftjoin('hrms_employeedetails', 'master.employeeSystemID', '=', 'hrms_employeedetails.employeeSystemID')
-            ->leftjoin('hrms_designation', 'hrms_employeedetails.designationID', '=', 'hrms_designation.designationID')
-            ->whereIn('master.empCompanySystemID', $childCompanies);
+        $empMaster = Employee::whereIn('empCompanySystemID', $childCompanies);
+        $empMaster->with(['emp_company', 'manager', 'desi_master' => function ($query) {
+            $query->with('designation');
+        }]);
+
+        $empMaster = $empMaster->select(
+            ['employees.employeeSystemID',
+                'employees.empID',
+                'employees.empName',
+                'employees.empUserName',
+                'employees.designation',
+                'employees.empCompanyID',
+                'employees.empEmail',
+                'employees.empManagerAttached',
+                'employees.isBasicUser',
+                'employees.isManager',
+                'employees.isApproval',
+                'employees.isAdmin',
+                'employees.isSuperAdmin',
+                'employees.discharegedYN',
+                'employees.empLoginActive',
+                'employees.empActive',
+                'employees.ActivationFlag',
+                'employees.isSupportAdmin',
+                'employees.isLock',
+            ]);
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $empMaster = $empMaster->where(function ($query) use ($search) {
-                $query->where('master.empID', 'LIKE', "%{$search}%")
-                    ->orWhere('master.empName', 'LIKE', "%{$search}%")
-                    ->orWhere('master.empUserName', 'LIKE', "%{$search}%")
-                    ->orWhere('master.empEmail', 'LIKE', "%{$search}%")
-                    ->orWhere('hrms_designation.designation', 'LIKE', "%{$search}%");
+                $query->where('empID', 'LIKE', "%{$search}%")
+                    ->orWhere('empName', 'LIKE', "%{$search}%")
+                    ->orWhere('empUserName', 'LIKE', "%{$search}%")
+                    ->orWhere('empEmail', 'LIKE', "%{$search}%");
             });
         }
 
         $request->request->remove('search.value');
-        $empMaster->select('master.employeeSystemID', 'master.empID', 'master.empName', 'master.empUserName', 'master.empPassword', 'master.empEmail', 'e2.empName as manager', 'companymaster.CompanyID', 'companymaster.CompanyName', 'hrms_designation.designation as empDesignation', 'master.isBasicUser', 'master.isManager', 'master.isApproval', 'master.isAdmin', 'master.isSuperAdmin', 'master.discharegedYN', 'master.empLoginActive', 'master.empActive', 'master.isSupportAdmin', 'master.ActivationFlag', 'master.isLock');
-
         return \DataTables::of($empMaster)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
