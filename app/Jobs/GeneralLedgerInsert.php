@@ -1802,8 +1802,14 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                                 $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                                 $data['documentNarration'] = $item->comments;
-                                $data['clientContractID'] = $item->clientContractID;
-                                //$data['supplierCodeSystem'] = $item->customerID;
+
+                                if ($item->clientContractID) {
+                                    $data['clientContractID'] = $item->clientContractID;
+                                    $data['contractUID'] = $item->contractUID;
+                                } else {
+                                    $data['clientContractID'] = 'X';
+                                    $data['contractUID'] = 159;
+                                }
 
                                 $data['documentTransCurrencyID'] = $item->currencyID;
                                 $data['documentTransCurrencyER'] = $item->currencyER;
