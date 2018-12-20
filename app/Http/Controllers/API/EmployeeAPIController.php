@@ -117,28 +117,28 @@ class EmployeeAPIController extends AppBaseController
         if (empty($employee)) {
             return $this->sendError('Employee not found');
         }
-        if(isset($input['isBasicUser']) && $input['isBasicUser']){
+        if (isset($input['isBasicUser']) && $input['isBasicUser']) {
             $input['isBasicUser'] = -1;
         }
-        if(isset($input['isManager']) && $input['isManager']){
+        if (isset($input['isManager']) && $input['isManager']) {
             $input['isManager'] = -1;
         }
-        if(isset($input['isApproval']) && $input['isApproval']){
+        if (isset($input['isApproval']) && $input['isApproval']) {
             $input['isApproval'] = -1;
         }
-        if(isset($input['isAdmin']) && $input['isAdmin']){
+        if (isset($input['isAdmin']) && $input['isAdmin']) {
             $input['isAdmin'] = -1;
         }
-        if(isset($input['isSuperAdmin']) && $input['isSuperAdmin']){
+        if (isset($input['isSuperAdmin']) && $input['isSuperAdmin']) {
             $input['isSuperAdmin'] = -1;
         }
-        if(isset($input['discharegedYN']) && $input['discharegedYN']){
+        if (isset($input['discharegedYN']) && $input['discharegedYN']) {
             $input['discharegedYN'] = -1;
         }
-        if(isset($input['activationflag']) && $input['activationflag']){
-            $input['activationflag'] = -1;
+        if (isset($input['ActivationFlag']) && $input['ActivationFlag']) {
+            $input['ActivationFlag'] = -1;
         }
-        if(isset($input['isSupportAdmin']) && $input['isSupportAdmin']){
+        if (isset($input['isSupportAdmin']) && $input['isSupportAdmin']) {
             $input['isSupportAdmin'] = -1;
         }
 
@@ -204,9 +204,9 @@ class EmployeeAPIController extends AppBaseController
 
         $companyId = $request['empCompanySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
 
@@ -224,12 +224,13 @@ class EmployeeAPIController extends AppBaseController
                 $query->where('master.empID', 'LIKE', "%{$search}%")
                     ->orWhere('master.empName', 'LIKE', "%{$search}%")
                     ->orWhere('master.empUserName', 'LIKE', "%{$search}%")
-                    ->orWhere('master.empEmail', 'LIKE', "%{$search}%");
+                    ->orWhere('master.empEmail', 'LIKE', "%{$search}%")
+                    ->orWhere('hrms_designation.designation', 'LIKE', "%{$search}%");
             });
         }
 
         $request->request->remove('search.value');
-        $empMaster->select('master.employeeSystemID', 'master.empID', 'master.empName', 'master.empUserName', 'master.empPassword', 'master.empEmail', 'e2.empName as manager', 'companymaster.CompanyID', 'companymaster.CompanyName', 'hrms_designation.designation as empDesignation', 'master.isBasicUser', 'master.isManager', 'master.isApproval', 'master.isAdmin', 'master.isSuperAdmin', 'master.discharegedYN', 'master.empLoginActive', 'master.empActive', 'master.isSupportAdmin', 'master.isLock');
+        $empMaster->select('master.employeeSystemID', 'master.empID', 'master.empName', 'master.empUserName', 'master.empPassword', 'master.empEmail', 'e2.empName as manager', 'companymaster.CompanyID', 'companymaster.CompanyName', 'hrms_designation.designation as empDesignation', 'master.isBasicUser', 'master.isManager', 'master.isApproval', 'master.isAdmin', 'master.isSuperAdmin', 'master.discharegedYN', 'master.empLoginActive', 'master.empActive', 'master.isSupportAdmin', 'master.ActivationFlag', 'master.isLock');
 
         return \DataTables::of($empMaster)
             ->order(function ($query) use ($input) {
@@ -257,14 +258,18 @@ class EmployeeAPIController extends AppBaseController
         }
 
         // updating fields
+        $employeeMasterData->isLock = 0;
         $employeeMasterData->empPassword = $password;
         $employeeMasterData->save();
 
         //updating users table
-        $usersMaster = User::where('employee_id', $employeeSystemID)
-            ->update([
-                'password' => bcrypt($password)
-            ]);
+        $usersMasterData = User::where('employee_id', $employeeSystemID)->first();
+        if (!empty($usersMasterData)) {
+            $usersMasterUpdate = User::where('employee_id', $employeeSystemID)
+                ->update([
+                    'password' => bcrypt($password)
+                ]);
+        }
 
         //sending emails
         $subject = 'GEARS Password Reset';
