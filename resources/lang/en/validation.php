@@ -172,7 +172,9 @@ return [
         'empType' => 'Type',
         'expenseClaimCategoriesAutoID' => 'Category',
         'yearID' => 'Year',
-        'reportTypeID' => 'Report Type'
+        'reportTypeID' => 'Report Type',
+        'chartOfAccountSystemID' => 'GL Code',
+        'accountCurrencyID' => 'Currency'
     ],
 
 ];

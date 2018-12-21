@@ -2,27 +2,31 @@
 
 namespace App\Repositories;
 
-use App\Models\BankAccount;
+use App\Models\BankAccountRefferedBack;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
- * Class BankAccountRepository
+ * Class BankAccountRefferedBackRepository
  * @package App\Repositories
- * @version March 30, 2018, 9:40 am UTC
+ * @version December 21, 2018, 12:04 pm UTC
  *
- * @method BankAccount findWithoutFail($id, $columns = ['*'])
- * @method BankAccount find($id, $columns = ['*'])
- * @method BankAccount first($columns = ['*'])
+ * @method BankAccountRefferedBack findWithoutFail($id, $columns = ['*'])
+ * @method BankAccountRefferedBack find($id, $columns = ['*'])
+ * @method BankAccountRefferedBack first($columns = ['*'])
 */
-class BankAccountRepository extends BaseRepository
+class BankAccountRefferedBackRepository extends BaseRepository
 {
     /**
      * @var array
      */
     protected $fieldSearchable = [
+        'bankAccountAutoID',
         'bankAssignedAutoID',
         'bankmasterAutoID',
+        'companySystemID',
         'companyID',
+        'documentSystemID',
+        'documentID',
         'bankShortCode',
         'bankName',
         'bankBranch',
@@ -40,22 +44,34 @@ class BankAccountRepository extends BaseRepository
         'isManualActive',
         'chquePrintedStartingNo',
         'isPrintedActive',
+        'chartOfAccountSystemID',
         'glCodeLinked',
         'extraNote',
         'isAccountActive',
         'isDefault',
         'approvedYN',
         'approvedByEmpID',
+        'approvedByUserSystemID',
         'approvedEmpName',
         'approvedDate',
         'approvedComments',
         'createdDateTime',
+        'createdUserSystemID',
         'createdEmpID',
         'createdPCID',
         'modifedDateTime',
+        'modifiedUserSystemID',
         'modifiedByEmpID',
         'modifiedPCID',
-        'timeStamp'
+        'timeStamp',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'RollLevForApp_curr',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -63,16 +79,6 @@ class BankAccountRepository extends BaseRepository
      **/
     public function model()
     {
-        return BankAccount::class;
+        return BankAccountRefferedBack::class;
     }
-
-    public function getAudit($id)
-    {
-        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'approved_by' => function ($query) {
-            $query->with(['employee' => function ($q) {
-                $q->with(['details.designation']);
-            }])->where('documentSystemID', 66);
-        }])->findWithoutFail($id);
-    }
-
 }

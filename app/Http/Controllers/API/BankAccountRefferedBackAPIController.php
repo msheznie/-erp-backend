@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateBankAccountRefferedBackAPIRequest;
+use App\Http\Requests\API\UpdateBankAccountRefferedBackAPIRequest;
+use App\Models\BankAccountRefferedBack;
+use App\Repositories\BankAccountRefferedBackRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class BankAccountRefferedBackController
+ * @package App\Http\Controllers\API
+ */
+
+class BankAccountRefferedBackAPIController extends AppBaseController
+{
+    /** @var  BankAccountRefferedBackRepository */
+    private $bankAccountRefferedBackRepository;
+
+    public function __construct(BankAccountRefferedBackRepository $bankAccountRefferedBackRepo)
+    {
+        $this->bankAccountRefferedBackRepository = $bankAccountRefferedBackRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/bankAccountRefferedBacks",
+     *      summary="Get a listing of the BankAccountRefferedBacks.",
+     *      tags={"BankAccountRefferedBack"},
+     *      description="Get all BankAccountRefferedBacks",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/BankAccountRefferedBack")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->bankAccountRefferedBackRepository->pushCriteria(new RequestCriteria($request));
+        $this->bankAccountRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $bankAccountRefferedBacks = $this->bankAccountRefferedBackRepository->all();
+
+        return $this->sendResponse($bankAccountRefferedBacks->toArray(), 'Bank Account Reffered Backs retrieved successfully');
+    }
+
+    /**
+     * @param CreateBankAccountRefferedBackAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/bankAccountRefferedBacks",
+     *      summary="Store a newly created BankAccountRefferedBack in storage",
+     *      tags={"BankAccountRefferedBack"},
+     *      description="Store BankAccountRefferedBack",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="BankAccountRefferedBack that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/BankAccountRefferedBack")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BankAccountRefferedBack"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateBankAccountRefferedBackAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $bankAccountRefferedBacks = $this->bankAccountRefferedBackRepository->create($input);
+
+        return $this->sendResponse($bankAccountRefferedBacks->toArray(), 'Bank Account Reffered Back saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/bankAccountRefferedBacks/{id}",
+     *      summary="Display the specified BankAccountRefferedBack",
+     *      tags={"BankAccountRefferedBack"},
+     *      description="Get BankAccountRefferedBack",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of BankAccountRefferedBack",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BankAccountRefferedBack"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var BankAccountRefferedBack $bankAccountRefferedBack */
+        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
+
+        if (empty($bankAccountRefferedBack)) {
+            return $this->sendError('Bank Account Reffered Back not found');
+        }
+
+        return $this->sendResponse($bankAccountRefferedBack->toArray(), 'Bank Account Reffered Back retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateBankAccountRefferedBackAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/bankAccountRefferedBacks/{id}",
+     *      summary="Update the specified BankAccountRefferedBack in storage",
+     *      tags={"BankAccountRefferedBack"},
+     *      description="Update BankAccountRefferedBack",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of BankAccountRefferedBack",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="BankAccountRefferedBack that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/BankAccountRefferedBack")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BankAccountRefferedBack"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateBankAccountRefferedBackAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var BankAccountRefferedBack $bankAccountRefferedBack */
+        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
+
+        if (empty($bankAccountRefferedBack)) {
+            return $this->sendError('Bank Account Reffered Back not found');
+        }
+
+        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->update($input, $id);
+
+        return $this->sendResponse($bankAccountRefferedBack->toArray(), 'BankAccountRefferedBack updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/bankAccountRefferedBacks/{id}",
+     *      summary="Remove the specified BankAccountRefferedBack from storage",
+     *      tags={"BankAccountRefferedBack"},
+     *      description="Delete BankAccountRefferedBack",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of BankAccountRefferedBack",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var BankAccountRefferedBack $bankAccountRefferedBack */
+        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
+
+        if (empty($bankAccountRefferedBack)) {
+            return $this->sendError('Bank Account Reffered Back not found');
+        }
+
+        $bankAccountRefferedBack->delete();
+
+        return $this->sendResponse($id, 'Bank Account Reffered Back deleted successfully');
+    }
+}
