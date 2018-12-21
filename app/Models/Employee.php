@@ -95,7 +95,7 @@ class Employee extends Model
      *
      * @var array
      */
-    protected $hidden = ['empUserName', 'empPassword'];
+    protected $hidden = ['empPassword'];
 
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
@@ -257,6 +257,18 @@ class Employee extends Model
 
     public function details(){
         return $this->hasOne('App\Models\EmployeeDetails', 'employeeSystemID','employeeSystemID');
+    }
+
+    public function emp_company(){
+        return $this->belongsTo('App\Models\Company', 'empCompanySystemID','companySystemID');
+    }
+
+    public function manager(){
+        return $this->belongsTo('App\Models\Employee', 'empManagerAttached','empID');
+    }
+
+    public function desi_master(){
+        return $this->belongsTo('App\Models\EmployeeDetails', 'designation','designationID');
     }
     
 }

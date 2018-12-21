@@ -12,6 +12,7 @@
  * -- Date: 27-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherContracts()
  * -- Date: 05-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllAJ()
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllPOAJ()
+ * -- Date: 20-December 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -143,14 +144,16 @@ class JvDetailAPIController extends AppBaseController
         if (empty($jvMaster)) {
             return $this->sendError('Journal Voucher not found');
         }
-
+        $messages = [
+            'currencyID' => 'Currency is required',
+        ];
         $validator = \Validator::make($jvMaster->toArray(), [
             'jvType' => 'required|numeric',
             'currencyID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
+            return $this->sendError($messages, 422);
         }
 
         $input['documentSystemID'] = $jvMaster->documentSystemID;
@@ -500,6 +503,33 @@ class JvDetailAPIController extends AppBaseController
 
         return $this->sendResponse('', 'JV Details saved successfully');
 
+    }
+
+    public function journalVoucherDeleteAllDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $jvMaster = JvMaster::find($jvMasterAutoId);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+            $deleteDetails = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->delete();
+        }
+
+
+        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
     }
 
     public function journalVoucherDeleteAllSJ(Request $request)
