@@ -1255,6 +1255,7 @@ AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
 AND pomaster.poType_N <> 5
+AND pomaster.grvRecieved <> 2
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
 AND date(pomaster.approvedDate) >= '2016-05-01'
