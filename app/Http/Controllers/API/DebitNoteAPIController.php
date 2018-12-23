@@ -14,11 +14,13 @@
  *                ,debitNoteReopen(),printDebitNote()
  * -- Date: 08-October 2018 By: Nazir Description: Added new function getDebitNotePaymentStatusHistory()
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
+ * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
+use App\Models\AccountsPayableLedger;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
@@ -30,7 +32,10 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
+use App\Models\MatchDocumentMaster;
 use App\Models\Months;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -1231,6 +1236,122 @@ UNION ALL
         }
 
         return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend successfully');
+    }
+
+    public function amendDebitNoteReview(Request $request)
+    {
+        $input = $request->all();
+
+        $debitNoteAutoID = $input['debitNoteAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
+
+        if (empty($debitNoteMasterData)) {
+            return $this->sendError('Debit note not found');
+        }
+
+        if ($debitNoteMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this debit note, it is not confirmed');
+        }
+
+        // checking document matched in machmaster
+        $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
+            ->where('companySystemID', $debitNoteMasterData->companySystemID)
+            ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. debit note is added to matching');
+        }
+
+        // checking document matched in machmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $debitNoteAutoID)
+            ->where('companySystemID', $debitNoteMasterData->companySystemID)
+            ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. debit note is added to matching');
+        }
+
+        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName;
+        $emailSubject = $debitNoteMasterData->debitNoteCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($debitNoteMasterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $debitNoteMasterData->confirmedByEmpSystemID,
+                    'companySystemID' => $debitNoteMasterData->companySystemID,
+                    'docSystemID' => $debitNoteMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $debitNoteMasterData->debitNoteCode);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemCode', $debitNoteAutoID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $debitNoteMasterData->companySystemID,
+                    'docSystemID' => $debitNoteMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $debitNoteMasterData->debitNoteCode);
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            //deleting records from accounts payable
+            $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $debitNoteMasterData->confirmedYN = 0;
+            $debitNoteMasterData->confirmedByEmpSystemID = null;
+            $debitNoteMasterData->confirmedByEmpID = null;
+            $debitNoteMasterData->confirmedByName = null;
+            $debitNoteMasterData->confirmedDate = null;
+            $debitNoteMasterData->RollLevForApp_curr = 1;
+
+            $debitNoteMasterData->approved = 0;
+            $debitNoteMasterData->approvedByUserSystemID = null;
+            $debitNoteMasterData->approvedByUserID = null;
+            $debitNoteMasterData->approvedDate = null;
+            $debitNoteMasterData->postedDate = null;
+            $debitNoteMasterData->save();
+
+
+            DB::commit();
+            return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 
