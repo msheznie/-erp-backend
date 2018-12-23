@@ -29,6 +29,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
+use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\BookInvSuppMaster;
@@ -1759,6 +1760,9 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
 
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
         $bookInvSuppMasterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMasterData)) {
@@ -1775,11 +1779,47 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             ->where('addedDocumentSystemID', $bookInvSuppMasterData->documentSystemID)
             ->first();
 
-        if($checkDetailExistMatch){
-            return $this->sendError('Cannot return back to amend. Document is matched');
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. Supplier Invoice is added to payment');
         }
+
+        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName;
+        $emailSubject = $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend';
+
         DB::beginTransaction();
         try {
+
+            //sending email to relevant party
+            if ($bookInvSuppMasterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $bookInvSuppMasterData->confirmedByEmpSystemID,
+                    'companySystemID' => $bookInvSuppMasterData->companySystemID,
+                    'docSystemID' => $bookInvSuppMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $bookInvSuppMasterData->companySystemID,
+                    'docSystemID' => $bookInvSuppMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
             //deleting from approval table
             $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
@@ -1788,6 +1828,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
             //deleting from general ledger table
             $deleteGLData = GeneralLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            //deleting records from accounts payable
+            $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
@@ -1805,8 +1851,9 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMasterData->approvedByUserID = null;
             $bookInvSuppMasterData->approvedDate = null;
             $bookInvSuppMasterData->postedDate = null;
-
             $bookInvSuppMasterData->save();
+
+
             DB::commit();
             return $this->sendResponse($bookInvSuppMasterData->toArray(), 'Supplier Invoice amend saved successfully');
         } catch (\Exception $exception) {
