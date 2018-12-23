@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalMaster;
+use App\Models\BankAccount;
 use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetMaster;
@@ -319,6 +320,13 @@ class email
                     if (!empty($monthlyAddition)) {
                         $data['docApprovedYN'] = $monthlyAddition->approvedYN;
                         $data['docCode'] = $monthlyAddition->monthlyAdditionsCode;
+                    }
+                    break;
+                case 66:
+                    $bankAccount = BankAccount::find($data['docSystemCode']);
+                    if (!empty($bankAccount)) {
+                        $data['docApprovedYN'] = $bankAccount->approvedYN;
+                        $data['docCode'] = $bankAccount->AccountNo;
                     }
                     break;
                 default:

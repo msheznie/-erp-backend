@@ -1284,6 +1284,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
     Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
     Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
+
+    Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
+    Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+    Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
+    Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
+    Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
+    Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
+    Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
+    Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
+    Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
+
 });
 
 
