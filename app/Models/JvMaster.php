@@ -366,5 +366,10 @@ class JvMaster extends Model
         return $this->hasMany('App\Models\JvDetail', 'jvMasterAutoId', 'jvMasterAutoId');
     }
 
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'jvMasterAutoId');
+    }
+
 
 }

@@ -19,6 +19,7 @@
  * -- Date: 14-October 2018 By: Nazir Description: Added new functions named as journalVoucherForPOAccrualJVDetail()
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherReopen()
  * -- Date: 05-December 2018 By: Nazir Description: Added new functions named as getJournalVoucherAmend()
+ * -- Date: 23-December 2018 By: Nazir Description: Added new functions named as printJournalVoucher()
  */
 
 namespace App\Http\Controllers\API;
@@ -728,7 +729,12 @@ class JvMasterAPIController extends AppBaseController
     {
         $id = $request->get('matchDocumentMasterAutoID');
         /** @var JvMaster $jvMaster */
-        $jvMasterData = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'modified_by'])->findWithoutFail($id);
+        $jvMasterData = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
+            $query->with('segment');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 17);
+        }])->findWithoutFail($id);
 
         if (empty($jvMasterData)) {
             return $this->sendError('Jv Master not found');
@@ -1158,9 +1164,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendError('Jv Master not found');
         }
 
-        $filter='';
+        $filter = '';
         $search = $request->input('search.value');
-        if($search){
+        if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
             $filter = " AND ( pomaster.purchaseOrderCode LIKE '%{$search}%') OR ( podetail.itemPrimaryCode LIKE '%{$search}%') OR ( podetail.itemDescription LIKE '%{$search}%') OR ( pomaster.supplierName LIKE '%{$search}%')";
         }
@@ -1207,12 +1213,8 @@ FROM
 	erp_purchaseordermaster AS pomaster
 INNER JOIN (
 	SELECT
-		COALESCE (
-			SUM(
-				GRVcostPerUnitComRptCur * noQty
-			),
-			0
-		) AS poSum,
+        GRVcostPerUnitComRptCur * noQty AS poSum,
+        purchaseOrderDetailsID,
 		purchaseOrderMasterID,
 		itemCode,
 		itemPrimaryCode,
@@ -1223,31 +1225,20 @@ INNER JOIN (
 		financeGLcodebBSSystemID
 	FROM
 		erp_purchaseorderdetails
-	GROUP BY
-		purchaseOrderMasterID,
-		itemCode
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
-		COALESCE (
-			SUM(
-				GRVcostPerUnitComRptCur * noQty
-			),
-			0
-		) AS grvSum,
 		purchaseOrderMastertID,
-		erp_grvmaster.grvTypeID,
-		erp_grvmaster.grvAutoID
+		purchaseOrderDetailsID,
+		sum(GRVcostPerUnitComRptCur * noQty) as GRVSum
 	FROM
 		erp_grvdetails
 	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 	WHERE
 		grvTypeID = 2
 	AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
-	GROUP BY
-		purchaseOrderMastertID,
-		itemCode
-) AS grvdetail ON grvdetail.purchaseOrderMastertID = pomaster.purchaseOrderID
+    group by purchaseOrderDetailsID
+) AS grvdetail ON grvdetail.purchaseOrderDetailsID = podetail.purchaseOrderDetailsID
 INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
 WHERE
 	pomaster.companySystemID = $companySystemID
@@ -1518,12 +1509,12 @@ HAVING
                         ->first();
 
                     if ($chartOfAccountData) {
-                       $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
+                        $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
                     }
-                    if($val['debit_amount'] != ''){
+                    if ($val['debit_amount'] != '') {
                         $debitAmount = $val['debit_amount'];
                     }
-                    if($val['credit_amount'] != ''){
+                    if ($val['credit_amount'] != '') {
                         $creditAmount = $val['credit_amount'];
                     }
                     $data = [];
@@ -1566,5 +1557,57 @@ HAVING
         }
         //Storage::disk('local')->delete($originalFileName);
 
+    }
+
+
+    public function printJournalVoucher(Request $request)
+    {
+        $id = $request->get('jvMasterAutoId');
+
+        $jvMasterData = jvMaster::find($id);
+        if (empty($jvMasterData)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        $jvMasterDataLine = jvMaster::where('jvMasterAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
+            $query->with('segment');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 17);
+        }])->first();
+
+        if (empty($jvMasterDataLine)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        $refernaceDoc = \Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
+
+        $transDecimal = 2;
+
+        if ($jvMasterDataLine->transactioncurrency) {
+            $transDecimal = $jvMasterDataLine->transactioncurrency->DecimalPlaces;
+        }
+
+        $debitTotal = JvDetail::where('jvMasterAutoId', $id)
+            ->sum('debitAmount');
+
+        $creditTotal = JvDetail::where('jvMasterAutoId', $id)
+            ->sum('creditAmount');
+
+        $order = array(
+            'masterdata' => $jvMasterDataLine,
+            'docRef' => $refernaceDoc,
+            'transDecimal' => $transDecimal,
+            'debitTotal' => $debitTotal,
+            'creditTotal' => $creditTotal
+        );
+
+        $time = strtotime("now");
+        $fileName = 'journal_voucher_' . $id . '_' . $time . '.pdf';
+        $html = view('print.journal_voucher', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 }

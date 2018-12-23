@@ -773,6 +773,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
+    Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
@@ -1311,6 +1312,7 @@ Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printRece
 Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
 Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
+Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
