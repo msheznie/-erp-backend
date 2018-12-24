@@ -505,6 +505,17 @@ class Helper
                     $docInforArr["modelName"] = 'MonthlyAdditionsMaster';
                     $docInforArr["primarykey"] = 'monthlyAdditionsMasterID';
                     break;
+                case 66: // Bank Account
+                    $docInforArr["documentCodeColumnName"] = 'bankAccountAutoID';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_bankaccount';
+                    $docInforArr["modelName"] = 'BankAccount';
+                    $docInforArr["primarykey"] = 'bankAccountAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1250,6 +1261,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confimedByEmpSystemID";
                 break;
+            case 66: // Bank Account
+                $docInforArr["tableName"] = 'erp_bankaccount';
+                $docInforArr["modelName"] = 'BankAccount';
+                $docInforArr["primarykey"] = 'bankAccountAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1879,6 +1902,12 @@ class Helper
                     $docInforArr["primarykey"] = 'chartOfAccountSystemID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 66: // Bank Account
+                    $docInforArr["tableName"] = 'erp_bankaccount';
+                    $docInforArr["modelName"] = 'BankAccount';
+                    $docInforArr["primarykey"] = 'bankAccountAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1894,7 +1923,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3,57,56,58,59])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3,57,56,58,59,66])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

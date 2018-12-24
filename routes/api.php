@@ -774,6 +774,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
+    Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
@@ -883,6 +884,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
+    Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
@@ -988,6 +990,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
     Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
+    Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
     Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
     Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
@@ -1291,6 +1294,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
     Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+
+    Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
+    Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+    Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
+    Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
+    Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
+    Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
+    Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
+    Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
+    Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
+
 });
 
 
@@ -1319,6 +1333,7 @@ Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printRece
 Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
 Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
+Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');

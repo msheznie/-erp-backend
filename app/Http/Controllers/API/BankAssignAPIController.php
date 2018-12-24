@@ -11,6 +11,7 @@
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getCompanyById()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateBankAssingCompany()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateBankAssingCompany()
+-- Date: 20 - Decemmber 2018 By: Pasan Description: Added a new function named as getBankMasterByCompany()
  */
 
 namespace App\Http\Controllers\API;
@@ -198,5 +199,50 @@ class BankAssignAPIController extends AppBaseController
         $bankAssignUpdated = BankAssign::where('bankAssignedAutoID', $request['bankAssignedAutoID'])->update($data);
 
         return $this->sendResponse($bankAssignUpdated, 'Bank Assign updated successfully');
+    }
+
+
+    public function getBankMasterByCompany(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $bankMasters = BankAssign::whereIn('companySystemID',$childCompanies)
+                                 ->where('isAssigned',-1);
+
+        $search = $request->input('search.value');
+        if($search){
+            $bankMasters =   $bankMasters->where('bankShortCode','LIKE',"%{$search}%")
+                                         ->orWhere('bankName', 'LIKE', "%{$search}%");
+        }
+
+        $bankMasters =   $bankMasters->groupBy('bankmasterAutoID');
+
+        return \DataTables::eloquent($bankMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('bankAssignedAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

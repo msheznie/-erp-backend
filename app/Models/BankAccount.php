@@ -100,7 +100,20 @@ class BankAccount extends Model
         'modifedDateTime',
         'modifiedByEmpID',
         'modifiedPCID',
-        'timeStamp'
+        'timeStamp',
+        'approvedByUserSystemID',
+        'createdUserSystemID' ,
+        'modifiedUserSystemID',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'RollLevForApp_curr',
+        'documentSystemID',
+        'documentID',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -144,7 +157,21 @@ class BankAccount extends Model
         'createdPCID' => 'string',
         'modifedDateTime' => 'string',
         'modifiedByEmpID' => 'string',
-        'modifiedPCID' => 'string'
+        'modifiedPCID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'createdUserSystemID' => 'integer',
+        'modifiedUserSystemID' => 'integer',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByName'  => 'string',
+        'confirmedDate'    => 'string',
+        'RollLevForApp_curr' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
+
     ];
 
     /**
@@ -173,4 +200,30 @@ class BankAccount extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'accountCurrencyID','currencyID');
     }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankAccountAutoID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }

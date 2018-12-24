@@ -22,12 +22,14 @@
  * -- Date: 12-September 2018 By: Nazir Description: Added new function getSupplierInvoiceStatusHistory(),
  * -- Date: 28-September 2018 By: Nazir Description: Added new function getSupplierInvoiceAmend(),
  * -- Date: 17-October 2018 By: Nazir Description: Added new function supplierInvoiceTaxPercentage(),
+ * -- Date: 20-December 2018 By: Nazir Description: Added new function amendSupplierInvoiceReview(),
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
+use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\BookInvSuppMaster;
@@ -43,8 +45,10 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\Months;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
@@ -603,26 +607,26 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             }
 
-/*            //checking Supplier Invoice amount is greater than PO Amount validations
-            if ($input['documentType'] == 0) {
-                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->with(['pomaster'])
-                    ->get();
-                if ($checktotalExceed) {
-                    foreach ($checktotalExceed as $exc) {
+            /*            //checking Supplier Invoice amount is greater than PO Amount validations
+                        if ($input['documentType'] == 0) {
+                            $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                                ->with(['pomaster'])
+                                ->get();
+                            if ($checktotalExceed) {
+                                foreach ($checktotalExceed as $exc) {
 
-                        $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
+                                    $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
 
-                        $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $exc->purchaseOrderID)
-                            ->where('supplierID', $exc->supplierID)
-                            ->sum('totTransactionAmount');
+                                    $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $exc->purchaseOrderID)
+                                        ->where('supplierID', $exc->supplierID)
+                                        ->sum('totTransactionAmount');
 
-                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > $poMasterTotal->poTotalSupplierTransactionCurrency) {
-                            return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
-                        }
-                    }
-                }
-            }*/
+                                    if (round($checkPreTotal, $documentCurrencyDecimalPlace) > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                                        return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
+                                    }
+                                }
+                            }
+                        }*/
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
             if ($input['documentType'] == 0) {
@@ -683,9 +687,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
                             $poMasterTableTotal->invoicedBooked = 2;
-                        } else if(round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)){
+                        } else if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)) {
                             $poMasterTableTotal->invoicedBooked = 2;
-                        }else if ($getTotal != 0) {
+                        } else if ($getTotal != 0) {
                             $poMasterTableTotal->invoicedBooked = 1;
                         } else if ($getTotal == 0) {
                             $poMasterTableTotal->invoicedBooked = 0;
@@ -1748,6 +1752,114 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $taxMaster = DB::select('SELECT taxPercent FROM erp_taxmaster WHERE taxMasterAutoID = ' . $taxMasterAutoID . '');
 
         return $this->sendResponse($taxMaster, 'Data retrieved successfully');
+    }
+
+    public function amendSupplierInvoiceReview(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $bookInvSuppMasterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMasterData)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($bookInvSuppMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this Supplier Invoice, it is not confirmed');
+        }
+
+        // checking document matched in machmaster
+        $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+            ->where('addedDocumentSystemID', $bookInvSuppMasterData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. Supplier Invoice is added to payment');
+        }
+
+        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName;
+        $emailSubject = $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($bookInvSuppMasterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $bookInvSuppMasterData->confirmedByEmpSystemID,
+                    'companySystemID' => $bookInvSuppMasterData->companySystemID,
+                    'docSystemID' => $bookInvSuppMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $bookInvSuppMasterData->companySystemID,
+                    'docSystemID' => $bookInvSuppMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            //deleting records from accounts payable
+            $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $bookInvSuppMasterData->confirmedYN = 0;
+            $bookInvSuppMasterData->confirmedByEmpSystemID = null;
+            $bookInvSuppMasterData->confirmedByEmpID = null;
+            $bookInvSuppMasterData->confirmedByName = null;
+            $bookInvSuppMasterData->confirmedDate = null;
+            $bookInvSuppMasterData->RollLevForApp_curr = 1;
+
+            $bookInvSuppMasterData->approved = 0;
+            $bookInvSuppMasterData->approvedByUserSystemID = null;
+            $bookInvSuppMasterData->approvedByUserID = null;
+            $bookInvSuppMasterData->approvedDate = null;
+            $bookInvSuppMasterData->postedDate = null;
+            $bookInvSuppMasterData->save();
+
+
+            DB::commit();
+            return $this->sendResponse($bookInvSuppMasterData->toArray(), 'Supplier Invoice amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 
