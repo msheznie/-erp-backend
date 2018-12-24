@@ -1,0 +1,175 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="ReportTemplateLinks",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="linkID",
+ *          description="linkID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="templateMasterID",
+ *          description="templateMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="templateDetailID",
+ *          description="templateDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="sortOrder",
+ *          description="sortOrder",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="glAutoID",
+ *          description="glAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="subCategory",
+ *          description="subCategory",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCID",
+ *          description="createdPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPCID",
+ *          description="modifiedPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserID",
+ *          description="modifiedUserID",
+ *          type="string"
+ *      )
+ * )
+ */
+class ReportTemplateLinks extends Model
+{
+
+    public $table = 'erp_companyreporttemplatelinks';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'linkID';
+
+    public $fillable = [
+        'templateMasterID',
+        'templateDetailID',
+        'sortOrder',
+        'glAutoID',
+        'glCode',
+        'glDescription',
+        'subCategory',
+        'companySystemID',
+        'companyID',
+        'createdPCID',
+        'createdUserSystemID',
+        'createdUserID',
+        'createdDateTime',
+        'modifiedPCID',
+        'modifiedUserSystemID',
+        'modifiedUserID',
+        'modifiedDateTime',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'linkID' => 'integer',
+        'templateMasterID' => 'integer',
+        'templateDetailID' => 'integer',
+        'sortOrder' => 'integer',
+        'glAutoID' => 'integer',
+        'glCode' => 'string',
+        'glDescription' => 'string',
+        'subCategory' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'createdPCID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedPCID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUserID' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfTemplate($query, $templateMasterID)
+    {
+        return $query->where('templateMasterID',  $templateMasterID);
+    }
+
+
+    public function subcategory()
+    {
+        return $this->belongsTo('App\Models\ReportTemplateDetails','subCategory','detID');
+    }
+    
+}

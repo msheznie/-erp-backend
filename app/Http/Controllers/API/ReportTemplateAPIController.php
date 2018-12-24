@@ -1,0 +1,381 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : ReportTemplateAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Report Template
+ * -- Author : Mubashir
+ * -- Create date : 20 - December 2018
+ * -- Description :  This file contains the all CRUD for Report template
+ * -- REVISION HISTORY
+ * -- Date: 20 - December 2018 By: Mubashir Description: Added new functions named as getAllReportTemplate(),getReportTemplateFormData()
+ */
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateReportTemplateAPIRequest;
+use App\Http\Requests\API\UpdateReportTemplateAPIRequest;
+use App\Models\AccountsType;
+use App\Models\Company;
+use App\Models\ReportTemplate;
+use App\Models\ReportTemplateDetails;
+use App\Models\ReportTemplateLinks;
+use App\Repositories\ReportTemplateRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ReportTemplateController
+ * @package App\Http\Controllers\API
+ */
+class ReportTemplateAPIController extends AppBaseController
+{
+    /** @var  ReportTemplateRepository */
+    private $reportTemplateRepository;
+
+    public function __construct(ReportTemplateRepository $reportTemplateRepo)
+    {
+        $this->reportTemplateRepository = $reportTemplateRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/reportTemplates",
+     *      summary="Get a listing of the ReportTemplates.",
+     *      tags={"ReportTemplate"},
+     *      description="Get all ReportTemplates",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ReportTemplate")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->reportTemplateRepository->pushCriteria(new RequestCriteria($request));
+        $this->reportTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $reportTemplates = $this->reportTemplateRepository->all();
+
+        return $this->sendResponse($reportTemplates->toArray(), 'Report Templates retrieved successfully');
+    }
+
+    /**
+     * @param CreateReportTemplateAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/reportTemplates",
+     *      summary="Store a newly created ReportTemplate in storage",
+     *      tags={"ReportTemplate"},
+     *      description="Store ReportTemplate",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ReportTemplate that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ReportTemplate")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ReportTemplate"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateReportTemplateAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+                'description' => 'required',
+                'reportID' => 'required',
+            ]);
+
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $accountsType = AccountsType::find($input['reportID']);
+            if ($accountsType) {
+                $input['categoryBLorPL'] = $accountsType->code;
+            }
+
+            $input['isActive'] = 1;
+            $input['createdPCID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $reportTemplates = $this->reportTemplateRepository->create($input);
+            DB::commit();
+            return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/reportTemplates/{id}",
+     *      summary="Display the specified ReportTemplate",
+     *      tags={"ReportTemplate"},
+     *      description="Get ReportTemplate",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ReportTemplate",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ReportTemplate"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ReportTemplate $reportTemplate */
+        $reportTemplate = $this->reportTemplateRepository->findWithoutFail($id);
+
+        if (empty($reportTemplate)) {
+            return $this->sendError('Report Template not found');
+        }
+
+        return $this->sendResponse($reportTemplate->toArray(), 'Report Template retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateReportTemplateAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/reportTemplates/{id}",
+     *      summary="Update the specified ReportTemplate in storage",
+     *      tags={"ReportTemplate"},
+     *      description="Update ReportTemplate",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ReportTemplate",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ReportTemplate that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ReportTemplate")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ReportTemplate"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateReportTemplateAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['template_type', 'Actions', 'DT_Row_Index']);
+        $input = $this->convertArrayToValue($input);
+
+        /** @var ReportTemplate $reportTemplate */
+        $reportTemplate = $this->reportTemplateRepository->findWithoutFail($id);
+
+        if (empty($reportTemplate)) {
+            return $this->sendError('Report Template not found');
+        }
+
+        $reportTemplate = $this->reportTemplateRepository->update($input, $id);
+
+        return $this->sendResponse($reportTemplate->toArray(), 'ReportTemplate updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/reportTemplates/{id}",
+     *      summary="Remove the specified ReportTemplate from storage",
+     *      tags={"ReportTemplate"},
+     *      description="Delete ReportTemplate",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ReportTemplate",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ReportTemplate $reportTemplate */
+        DB::beginTransaction();
+        try {
+            $reportTemplate = $this->reportTemplateRepository->findWithoutFail($id);
+
+            if (empty($reportTemplate)) {
+                return $this->sendError('Report Template not found');
+            }
+
+            $templateDetail = ReportTemplateDetails::ofMaster($id)->delete();
+            $templateDetailLink = ReportTemplateLinks::ofTemplate($id)->delete();
+            $reportTemplate->delete();
+
+            DB::commit();
+            return $this->sendResponse($id, 'Report Template deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    public function getAllReportTemplate(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyID = $input['companyID'];
+        $reportTemplate = ReportTemplate::with(['template_type'])->OfCompany($companyID);
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $reportTemplate = $reportTemplate->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($reportTemplate)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('companyReportTemplateID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    function getReportTemplateFormData(Request $request)
+    {
+        $companySystemID = $request['companySystemID'];
+        $accountType = AccountsType::all();
+        $output = ['accountType' => $accountType];
+        return $this->sendResponse($output, 'Report Template retrieved successfully');
+    }
+
+
+}

@@ -219,6 +219,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $input['disposalDocumentCode'] = $documentCode;
         }
         $input['serialNo'] = $lastSerialNumber;
+        $input['revenuePercentage'] = (float)$input['revenuePercentage'];
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
@@ -428,21 +429,23 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
                 }
 
-                $finalError = array(
-                    'itemcode_not_exist' => array(),
-                );
-                $error_count = 0;
+                if($assetDisposalMaster->disposalType == 1) {
+                    $finalError = array(
+                        'itemcode_not_exist' => array(),
+                    );
+                    $error_count = 0;
 
-                foreach ($disposalDetailExist as $val) {
-                    if (empty($val->itemCode) || $val->itemCode == 0) {
-                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
-                        $error_count++;
+                    foreach ($disposalDetailExist as $val) {
+                        if (empty($val->itemCode) || $val->itemCode == 0) {
+                            array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
+                            $error_count++;
+                        }
                     }
-                }
 
-                $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
-                if ($error_count > 0) {
-                    return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                    $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                    }
                 }
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
@@ -731,7 +734,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return $this->sendError('Policy not found for this document');
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
