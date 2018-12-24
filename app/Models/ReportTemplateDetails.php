@@ -1,0 +1,193 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : ReportTemplateDetails.php
+ * -- Project Name : ERP
+ * -- Module Name : Configuration
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 20- December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="ReportTemplateDetails",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="detID",
+ *          description="detID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyReportTemplateID",
+ *          description="companyReportTemplateID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="description",
+ *          description="description",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemType",
+ *          description="itemType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="sortOrder",
+ *          description="sortOrder",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="masterID",
+ *          description="masterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="accountType",
+ *          description="accountType",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCID",
+ *          description="createdPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPCID",
+ *          description="modifiedPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserID",
+ *          description="modifiedUserID",
+ *          type="string"
+ *      )
+ * )
+ */
+class ReportTemplateDetails extends Model
+{
+
+    public $table = 'erp_companyreporttemplatedetails';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'detID';
+
+    public $fillable = [
+        'companyReportTemplateID',
+        'description',
+        'itemType',
+        'sortOrder',
+        'masterID',
+        'accountType',
+        'bgColor',
+        'companySystemID',
+        'companyID',
+        'createdPCID',
+        'createdUserSystemID',
+        'createdUserID',
+        'createdDateTime',
+        'modifiedPCID',
+        'modifiedUserSystemID',
+        'modifiedUserID',
+        'modifiedDateTime',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'detID' => 'integer',
+        'companyReportTemplateID' => 'integer',
+        'description' => 'string',
+        'itemType' => 'integer',
+        'sortOrder' => 'integer',
+        'masterID' => 'integer',
+        'accountType' => 'string',
+        'bgColor' => 'string',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'createdPCID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedPCID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUserID' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfMaster($query, $companyReportTemplateID)
+    {
+        return $query->where('companyReportTemplateID',  $companyReportTemplateID);
+    }
+
+    public function subcategory()
+    {
+        return $this->hasMany(ReportTemplateDetails::class,'masterID','detID');
+    }
+
+    public function gllink()
+    {
+        return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
+    }
+
+    
+}

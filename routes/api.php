@@ -197,6 +197,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
     Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
     Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
+    Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
 
 
     Route::resource('erp_locations', 'ErpLocationAPIController');
@@ -1281,6 +1282,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
     Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
     Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
+
+    Route::resource('report_templates', 'ReportTemplateAPIController');
+    Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+    Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
+    Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
+    Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
+    Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
+    Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
+    Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
 });
 
 
