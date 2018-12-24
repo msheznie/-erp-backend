@@ -254,4 +254,30 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
     }
+
+    public function getAssignedChartOfAccounts(request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+
+        if (isset($input['controllAccountYN'])) {
+            $items = $items->where('controllAccountYN', $input['controllAccountYN']);
+        }
+
+        if (isset($input['isBank'])) {
+            $items = $items->where('isBank', $input['isBank']);
+        }
+
+        if (isset($input['catogaryBLorPL'])) {
+            $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+        }
+
+        $items = $items->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
 }
