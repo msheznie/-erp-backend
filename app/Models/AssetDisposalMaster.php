@@ -198,7 +198,7 @@ class AssetDisposalMaster extends Model
         'documentID' => 'string',
         'disposalDocumentCode' => 'string',
         'narration' => 'string',
-        'revenuePercentage' => 'integer',
+        'revenuePercentage' => 'float',
         'confirmedYN' => 'integer',
         'confimedByEmpSystemID' => 'integer',
         'confimedByEmpID' => 'string',

@@ -191,8 +191,16 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRVDet['prvRecievedQty'] = 1;
                     $directGRVDet['poQty'] = 1;
 
-                    $directGRVDet['unitCost'] = $val->costUnitRpt;
-                    $directGRVDet['netAmount'] = $val->costUnitRpt;
+                    $comRptAmountDetail = 0;
+
+                    if (round($val->netBookValueRpt, 2) == 0) {
+                        $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
+                    } else {
+                        $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
+                    }
+
+                    $directGRVDet['unitCost'] = $comRptAmountDetail;
+                    $directGRVDet['netAmount'] = $comRptAmountDetail;
                     //$directGRVDet['comment'] = $comment;
                     if ($supplierCurrency) {
                         $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
@@ -202,7 +210,7 @@ class CreateDirectGRV implements ShouldQueue
                         }
                     }
 
-                    $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $val->costUnitRpt);
+                    $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $comRptAmountDetail);
 
                     $directGRVDet['supplierDefaultCurrencyID'] = $grvMaster['supplierDefaultCurrencyID'];
                     $directGRVDet['supplierDefaultER'] = $grvMaster['supplierDefaultER'];
@@ -215,10 +223,10 @@ class CreateDirectGRV implements ShouldQueue
 
                     $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
                     $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-                    $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($val->costUnitRpt);
+                    $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comRptAmountDetail);
                     $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
                     $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-                    $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($val->costUnitRpt);
+                    $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail);
                     $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
 
                     $directGRVDet['createdPcID'] = gethostname();

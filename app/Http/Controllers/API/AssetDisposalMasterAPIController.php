@@ -28,6 +28,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetMaster;
+use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -219,6 +220,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $input['disposalDocumentCode'] = $documentCode;
         }
         $input['serialNo'] = $lastSerialNumber;
+        $input['revenuePercentage'] = (float)$input['revenuePercentage'];
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
@@ -422,27 +424,38 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
                 }
 
-                $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
 
-                if (empty($disposalDetailExist)) {
-                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
-                }
+                if($assetDisposalMaster->disposalType == 1) {
+                    $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
 
-                $finalError = array(
-                    'itemcode_not_exist' => array(),
-                );
-                $error_count = 0;
-
-                foreach ($disposalDetailExist as $val) {
-                    if (empty($val->itemCode) || $val->itemCode == 0) {
-                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
-                        $error_count++;
+                    if (empty($disposalDetailExist)) {
+                        return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
-                }
 
-                $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
-                if ($error_count > 0) {
-                    return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                    $itemAssignToCompany = ItemAssigned::where('companySystemID',$assetDisposalMaster->toCompanySystemID)->where('isActive',1)->where('isAssigned',-1)->pluck('itemCodeSystem')->toArray();
+
+                    $finalError = array(
+                        'itemcode_not_exist' => array(),
+                        'itemcode_not_assigned_to_company' => array(),
+                    );
+                    $error_count = 0;
+
+                    foreach ($disposalDetailExist as $val) {
+                        if (empty($val->itemCode) || $val->itemCode == 0) {
+                            array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
+                            $error_count++;
+                        }else{
+                            if(!in_array($val->itemCode, $itemAssignToCompany)){
+                                array_push($finalError['itemcode_not_assigned_to_company'], 'FA' . ' | ' . $val->faCode);
+                                $error_count++;
+                            }
+                        }
+                    }
+
+                    $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                    }
                 }
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
@@ -731,7 +744,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return $this->sendError('Policy not found for this document');
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)

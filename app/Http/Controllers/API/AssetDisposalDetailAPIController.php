@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateAssetDisposalDetailAPIRequest;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\FixedAssetMaster;
+use App\Models\ItemAssigned;
 use App\Repositories\AssetDisposalDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -292,6 +293,19 @@ class AssetDisposalDetailAPIController extends AppBaseController
 
         if (empty($assetDisposalDetail)) {
             return $this->sendError('Asset Disposal Detail not found');
+        }
+
+        $disposalMaster = AssetDisposalMaster::find($assetDisposalDetail->assetdisposalMasterAutoID);
+
+        if (empty($disposalMaster)) {
+            return $this->sendError('Asset Disposal Master not found');
+        }
+
+        if($disposalMaster->disposalType == 1){
+            $itemAssign = ItemAssigned::where('companySystemID',$disposalMaster->toCompanySystemID)->where('itemCodeSystem',$input['itemCode'])->where('isActive',1)->where('isAssigned',-1)->first();
+            if(empty($itemAssign)){
+                return $this->sendError('This item is not assigned to '.$disposalMaster->toCompanyID. ' Company',500);
+            }
         }
 
         $assetDisposalDetail = $this->assetDisposalDetailRepository->update($input, $id);

@@ -197,6 +197,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
     Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
     Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
+    Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
 
 
     Route::resource('erp_locations', 'ErpLocationAPIController');
@@ -1286,6 +1287,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
     Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
 
+    Route::resource('report_templates', 'ReportTemplateAPIController');
+    Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+    Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
+    Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
+    Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
+    Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
+    Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
+    Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+
     Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
     Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
     Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
@@ -1342,7 +1352,7 @@ Route::get('runQueue', function () {
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(255);
+    //$master = \App\Models\AssetDisposalMaster::find(261);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
