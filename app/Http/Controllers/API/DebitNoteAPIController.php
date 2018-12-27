@@ -1299,12 +1299,14 @@ UNION ALL
                 ->get();
 
             foreach ($documentApproval as $da) {
-                $emails[] = array('empSystemID' => $da->employeeSystemID,
-                    'companySystemID' => $debitNoteMasterData->companySystemID,
-                    'docSystemID' => $debitNoteMasterData->documentSystemID,
-                    'alertMessage' => $emailSubject,
-                    'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $debitNoteMasterData->debitNoteCode);
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $debitNoteMasterData->companySystemID,
+                        'docSystemID' => $debitNoteMasterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $debitNoteMasterData->debitNoteCode);
+                }
             }
 
             $sendEmail = \Email::sendEmail($emails);

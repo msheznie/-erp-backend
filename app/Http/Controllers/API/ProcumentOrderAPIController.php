@@ -2737,7 +2737,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         //checking segment is active
-
         $segments = SegmentMaster::where("serviceLineSystemID", $purchaseOrder->serviceLineSystemID)
             ->where('companySystemID', $input['companySystemID'])
             ->where('isActive', 1)

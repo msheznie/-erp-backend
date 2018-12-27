@@ -1805,14 +1805,14 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->get();
 
             foreach ($documentApproval as $da) {
-
-                $emails[] = array('empSystemID' => $da->employeeSystemID,
-                    'companySystemID' => $bookInvSuppMasterData->companySystemID,
-                    'docSystemID' => $bookInvSuppMasterData->documentSystemID,
-                    'alertMessage' => $emailSubject,
-                    'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
-
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $bookInvSuppMasterData->companySystemID,
+                        'docSystemID' => $bookInvSuppMasterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+                }
             }
 
             $sendEmail = \Email::sendEmail($emails);

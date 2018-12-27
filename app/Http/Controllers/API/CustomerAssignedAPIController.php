@@ -74,7 +74,7 @@ class CustomerAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-        $input = array_except($input, ['final_approved_by']);
+        $input = array_except($input, ['final_approved_by','company']);
         $input = $this->convertArrayToValue($input);
 
         if( array_key_exists ('customerAssignedID' , $input )){
