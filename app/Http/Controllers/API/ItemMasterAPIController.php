@@ -25,6 +25,7 @@ use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
@@ -559,6 +560,7 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError('Item Master not found');
         }
 
+
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if ($company) {
@@ -576,6 +578,28 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'primaryCompanySystemID' => 'required|numeric|min:1',
+                'financeCategoryMaster' => 'required|numeric|min:1',
+                'financeCategorySub' => 'required|numeric|min:1',
+                'secondaryItemCode' => 'required',
+                'unit' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$input['financeCategoryMaster'])
+                                                               ->where('itemCategorySubID',$input['financeCategorySub'])
+                                                               ->where('companySystemID',$input['primaryCompanySystemID'])
+                                                               ->first();
+
+            if(empty($checkSubCategory)){
+                return $this->sendError('The Finance Sub Category field is required.',500);
+            }
+
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {

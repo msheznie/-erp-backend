@@ -174,7 +174,10 @@ return [
         'yearID' => 'Year',
         'reportTypeID' => 'Report Type',
         'chartOfAccountSystemID' => 'GL Code',
-        'accountCurrencyID' => 'Currency'
+        'accountCurrencyID' => 'Currency',
+        'financeCategorySub' => 'Finance Sub Category',
+        'primaryCompanySystemID' => 'Primary Company',
+        'financeCategoryMaster' => 'Finance Category'
     ],
 
 ];
