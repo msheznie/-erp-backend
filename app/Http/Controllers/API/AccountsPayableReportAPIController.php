@@ -641,6 +641,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 return array('reportData' => $outputArr,
                     'companyName' => $checkIsGroup->CompanyName,
+                    'company' => $checkIsGroup,
                     'grandTotal' => $grandTotalArr,
                     'currencyDecimalPlace' => $decimalPlaces,
                     'count' => count($output));
@@ -1161,7 +1162,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
@@ -1181,11 +1182,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
                     $output = $this->getUnbilledDetailQRY($request);
-                    $name = "aging_detail";
+                    $name = "summary";
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
@@ -1209,7 +1210,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
@@ -1249,7 +1250,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 

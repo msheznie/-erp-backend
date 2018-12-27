@@ -451,9 +451,6 @@ class BankAccountAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
-            ->addColumn('amounts', function ($row) {
-                return $this->getBankAccountBalanceSummery($row);
-            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
