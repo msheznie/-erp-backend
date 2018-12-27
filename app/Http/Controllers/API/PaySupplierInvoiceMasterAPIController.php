@@ -12,6 +12,7 @@
  * -- Date: 14-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherMatchItems()
  * -- Date: 12-November 2018 By:Nazir Description: Added new functions named as updateSentToTreasuryDetail()
  * -- Date: 13-November 2018 By:Nazir Description: Added new functions named as printPaymentVoucher()
+ * -- Date: 26-December 2018 By:Nazir Description: Added new functions named as amendPaymentVoucherReview()
  */
 
 namespace App\Http\Controllers\API;
@@ -23,19 +24,23 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\BankLedger;
 use App\Models\BankMemoPayee;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectPaymentReferback;
+use App\Models\DirectReceiptDetail;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
+use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
@@ -527,9 +532,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($input['payeeType'] == 2) {
                     $input['directPaymentPayeeSelectEmp'] = -1;
                     $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                    if(!empty($emp)){
+                    if (!empty($emp)) {
                         $input['directPaymentPayee'] = $emp->empFullName;
-                    }else{
+                    } else {
                         $input['directPaymentPayee'] = null;
                     }
                     $input['directPaymentpayeeYN'] = 0;
@@ -947,7 +952,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
-            if($input['payeeType'] == 1){
+            if ($input['payeeType'] == 1) {
                 $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)
                     ->delete();
             }
@@ -1125,7 +1130,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $search_without_comma = str_replace(",", "", $search);
-            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search,$search_without_comma) {
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
                 $query->where('BPVcode', 'LIKE', "%{$search}%")
                     ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%");
             });
@@ -2066,5 +2071,165 @@ HAVING
             return $this->sendError($exception->getMessage());
         }
     }
+
+    public function amendPaymentVoucherReview(Request $request)
+    {
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $paymentVoucherData = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
+        if (empty($paymentVoucherData)) {
+            return $this->sendError('Payment Voucher Master not found');
+        }
+
+
+        if ($paymentVoucherData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this payment voucher, it is not confirmed');
+        }
+
+        /*       // checking document matched in matchmaster
+               $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $PayMasterAutoId)
+                   ->where('companySystemID', $paymentVoucherData->companySystemID)
+                   ->where('addedDocumentSystemID', $paymentVoucherData->documentSystemID)
+                   ->first();
+
+               if ($checkDetailExistMatch) {
+                   return $this->sendError('Cannot return back to amend. payment voucher is added to matching');
+               }*/
+
+        // checking document matched in matchmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. payment voucher is added to matching');
+        }
+
+        $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkBLDataExist) {
+            if ($checkBLDataExist->trsClearedYN == -1) {
+                return $this->sendError('Cannot return back to amend. payment voucher is already treasury cleared');
+            }
+            if ($checkBLDataExist->bankClearedYN == -1) {
+                return $this->sendError('Cannot return back to amend. payment voucher is already bank reconciled');
+            }
+        }
+
+        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName;
+        $emailSubject = $paymentVoucherData->BPVcode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($paymentVoucherData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $paymentVoucherData->confirmedByEmpSystemID,
+                    'companySystemID' => $paymentVoucherData->companySystemID,
+                    'docSystemID' => $paymentVoucherData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $paymentVoucherData->BPVcode);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemCode', $PayMasterAutoId)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $paymentVoucherData->companySystemID,
+                        'docSystemID' => $paymentVoucherData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $paymentVoucherData->BPVcode);
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            //deleting records from accounts payable
+            $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            if ($paymentVoucherData->invoiceType == 3) {
+                if ($paymentVoucherData->expenseClaimOrPettyCash == 6 || $paymentVoucherData->expenseClaimOrPettyCash == 7) {
+
+                    //deleting records from customer receive voucher master
+                    $deleteCRVData = CustomerReceivePayment::where('custReceivePaymentAutoID', $PayMasterAutoId)
+                        ->where('companySystemID', $paymentVoucherData->interCompanyToSystemID)
+                        ->where('documentSystemID', 21)
+                        ->delete();
+
+                    //deleting records from customer receive voucher detail
+                    $deleteCRVDetailData = DirectReceiptDetail::where('directReceiptAutoID', $PayMasterAutoId)
+                        ->where('companySystemID', $paymentVoucherData->interCompanyToSystemID)
+                        ->delete();
+                } else {
+                    //deleting records from customer receive voucher master
+                    $deleteCRVData = CustomerReceivePayment::where('PayMasterAutoId', $PayMasterAutoId)
+                        ->where('companySystemID', $paymentVoucherData->companySystemID)
+                        ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                        ->delete();
+                }
+            }
+
+            //deleting records from bank ledger
+            $deleteBLData = BankLedger::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $paymentVoucherData->confirmedYN = 0;
+            $paymentVoucherData->confirmedByEmpSystemID = null;
+            $paymentVoucherData->confirmedByEmpID = null;
+            $paymentVoucherData->confirmedByName = null;
+            $paymentVoucherData->confirmedDate = null;
+            $paymentVoucherData->RollLevForApp_curr = 1;
+
+            $paymentVoucherData->approved = 0;
+            $paymentVoucherData->approvedByUserSystemID = null;
+            $paymentVoucherData->approvedByUserID = null;
+            $paymentVoucherData->approvedDate = null;
+            $paymentVoucherData->postedDate = null;
+            $paymentVoucherData->save();
+
+            DB::commit();
+            return $this->sendResponse($paymentVoucherData->toArray(), 'Payment voucher return back to amend successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 
 }

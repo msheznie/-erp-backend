@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : BankAccountRefferedBackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Bank Account Reffered Back
+ * -- Author : Mohamed Fayas
+ * -- Create date : 21 - December 2018
+ * -- Description : This file contains the all CRUD for  Bank Account
+ * -- REVISION HISTORY
+ * -- Date: 21-December 2018 By: Fayas Description: Added new functions named as getAccountsReferBackHistory()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankAccountRefferedBackAPIRequest;
@@ -156,12 +166,12 @@ class BankAccountRefferedBackAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BankAccountRefferedBack $bankAccountRefferedBack */
-        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
+        $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->with(['currency','confirmed_by','chart_of_account'])->findWithoutFail($id);
 
         if (empty($bankAccountRefferedBack)) {
             return $this->sendError('Bank Account Reffered Back not found');
         }
-
+        $bankAccountRefferedBack->accountIBAN = $bankAccountRefferedBack['accountIBAN#'];
         return $this->sendResponse($bankAccountRefferedBack->toArray(), 'Bank Account Reffered Back retrieved successfully');
     }
 
@@ -277,5 +287,56 @@ class BankAccountRefferedBackAPIController extends AppBaseController
         $bankAccountRefferedBack->delete();
 
         return $this->sendResponse($id, 'Bank Account Reffered Back deleted successfully');
+    }
+
+    public function getAccountsReferBackHistory(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccounts = BankAccountRefferedBack::whereIn('companySystemID', $subCompanies)
+                                //->where('isAccountActive',1)
+                                ->where('bankAccountAutoID',$input['id'])
+                                ->with(['currency']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankAccounts = $bankAccounts->where(function ($query) use ($search) {
+                $query->where('AccountNo', 'LIKE', "%{$search}%")
+                    ->orWhere('bankBranch', 'LIKE', "%{$search}%")
+                    ->orWhere('glCodeLinked', 'LIKE', "%{$search}%")
+                    ->orWhere('accountSwiftCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankAccounts)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankAccountAutoIDRefferedBack', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

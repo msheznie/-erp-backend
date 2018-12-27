@@ -392,15 +392,27 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     }
                 }
             }
-
         }
 
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-            ->first();
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
+
+        //check PO segment is correct with PR pull segment
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if ($itemExist['isChecked'] && $itemExist['poQty'] > 0) {
+
+                $PRMaster = PurchaseRequest::find($itemExist['purchaseRequestID']);
+
+                if($purchaseOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID){
+                    return $this->sendError("PR segment is not matched with PO segment");
+                }
+            }
+        }
+
 
         foreach ($input['detailTable'] as $new) {
 

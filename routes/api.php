@@ -717,6 +717,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
     Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
     Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
+    Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
     Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
     Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
@@ -1303,7 +1304,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
     Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
     Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
-    Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
+    Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
+    Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
 });
 
@@ -1351,7 +1353,7 @@ Route::get('runQueue', function () {
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(255);
+    //$master = \App\Models\AssetDisposalMaster::find(261);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
