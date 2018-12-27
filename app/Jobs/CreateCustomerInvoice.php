@@ -132,23 +132,17 @@ class CreateCustomerInvoice implements ShouldQueue
             $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
             $customerInvoiceData['custTransactionCurrencyER'] = 1;
 
-            $disposalDetail = AssetDisposalDetail::OfMaster($dpMaster->assetdisposalMasterAutoID)->get();
+            $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT * ('.$dpMaster->revenuePercentage.'/100),netBookValueLocal + (netBookValueLocal * ('.$dpMaster->revenuePercentage.'/100)))) as localAmountDetail, 
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * ('.$dpMaster->revenuePercentage.'/100),netBookValueRpt + (netBookValueRpt * ('.$dpMaster->revenuePercentage.'/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
 
             $localAmount = 0;
             $comRptAmount = 0;
 
             if (count($disposalDetail) > 0) {
                 foreach ($disposalDetail as $val) {
-                    if ($val->netBookValueLocal == 0) {
-                        $localAmount += $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);
-                    } else {
-                        $localAmount += (($val->COSTUNIT - $val->depAmountLocal‌) + ((($val->COSTUNIT - $val->depAmountLocal‌)) * ($dpMaster->revenuePercentage / 100)));
-                    }
-                    if ($val->netBookValueRpt == 0) {
-                        $comRptAmount += $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
-                    } else {
-                        $comRptAmount += (($val->costUnitRpt - $val->depAmountRpt‌) + ((($val->costUnitRpt - $val->depAmountRpt‌)) * ($dpMaster->revenuePercentage / 100)));
-                    }
+                    $localAmount += $val->localAmountDetail;
+                    $comRptAmount += $val->comRptAmountDetail;
                 }
             }
 
@@ -172,7 +166,9 @@ class CreateCustomerInvoice implements ShouldQueue
             Log::info($customerInvoiceData);
             $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
-            $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
+            $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT * ('.$dpMaster->revenuePercentage.'/100),netBookValueLocal + (netBookValueLocal * ('.$dpMaster->revenuePercentage.'/100)))) as localAmountDetail, 
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * ('.$dpMaster->revenuePercentage.'/100),netBookValueRpt + (netBookValueRpt * ('.$dpMaster->revenuePercentage.'/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
             if ($disposalDetail) {
                 $chartofAccount = ChartOfAccount::find(557);
                 $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
@@ -200,19 +196,19 @@ class CreateCustomerInvoice implements ShouldQueue
                     $cusInvoiceDetails['clientContractID'] = 0;
                     $cusInvoiceDetails['performaMasterID'] = 0;
 
-                    $localAmountDetail = 0;
-                    $comRptAmountDetail = 0;
+                    $localAmountDetail = $val->localAmountDetail;
+                    $comRptAmountDetail = $val->comRptAmountDetail;
 
-                    if (round($val->netBookValueLocal, 2) == 0) {
+                    /*if (round($val->netBookValueLocal, 2) == 0) {
                         $localAmountDetail = $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);
                     } else {
-                        $localAmountDetail = (($val->COSTUNIT - $val->depAmountLocal‌) + ((($val->COSTUNIT - $val->depAmountLocal‌)) * ($dpMaster->revenuePercentage / 100)));
+                        $localAmountDetail = ($val->netBookValueLocal‌ + (($val->netBookValueLocal) * ($dpMaster->revenuePercentage / 100)));
                     }
                     if (round($val->netBookValueRpt, 2) == 0) {
                         $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
                     } else {
-                        $comRptAmountDetail = (($val->costUnitRpt - $val->depAmountRpt‌) + ((($val->costUnitRpt - $val->depAmountRpt‌)) * ($dpMaster->revenuePercentage / 100)));
-                    }
+                        $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
+                    }*/
 
                     $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
                     $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);

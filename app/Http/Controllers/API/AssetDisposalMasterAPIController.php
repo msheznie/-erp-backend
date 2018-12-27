@@ -28,6 +28,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetMaster;
+use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -423,15 +424,19 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
                 }
 
-                $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
-
-                if (empty($disposalDetailExist)) {
-                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
-                }
 
                 if($assetDisposalMaster->disposalType == 1) {
+                    $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
+
+                    if (empty($disposalDetailExist)) {
+                        return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
+                    }
+
+                    $itemAssignToCompany = ItemAssigned::where('companySystemID',$assetDisposalMaster->toCompanySystemID)->where('isActive',1)->where('isAssigned',-1)->pluck('itemCodeSystem')->toArray();
+
                     $finalError = array(
                         'itemcode_not_exist' => array(),
+                        'itemcode_not_assigned_to_company' => array(),
                     );
                     $error_count = 0;
 
@@ -439,6 +444,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         if (empty($val->itemCode) || $val->itemCode == 0) {
                             array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
                             $error_count++;
+                        }else{
+                            if(!in_array($val->itemCode, $itemAssignToCompany)){
+                                array_push($finalError['itemcode_not_assigned_to_company'], 'FA' . ' | ' . $val->faCode);
+                                $error_count++;
+                            }
                         }
                     }
 
