@@ -155,6 +155,15 @@ class ReportTemplateLinksAPIController extends AppBaseController
                 }
             }
         }
+
+        $lastSortOrder = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->where('templateDetailID',$input['templateDetailID'])->orderBy('linkID','asc')->get();
+        if(count($lastSortOrder) > 0){
+            foreach ($lastSortOrder as $key => $val) {
+                $data2['sortOrder'] = $key + 1;
+                $reportTemplateLinks = $this->reportTemplateLinksRepository->update($data2, $val->linkID);
+            }
+        }
+
         return $this->sendResponse([], 'Report Template Links saved successfully');
     }
 
@@ -356,6 +365,14 @@ class ReportTemplateLinksAPIController extends AppBaseController
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                     $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
+            }
+        }
+
+        $lastSortOrder = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->where('templateDetailID',$input['templateDetailID'])->orderBy('linkID','asc')->get();
+        if(count($lastSortOrder) > 0){
+            foreach ($lastSortOrder as $key => $val) {
+                $data2['sortOrder'] = $key + 1;
+                $reportTemplateLinks = $this->reportTemplateLinksRepository->update($data2, $val->linkID);
             }
         }
         return $this->sendResponse([], 'Report Template Links saved successfully');

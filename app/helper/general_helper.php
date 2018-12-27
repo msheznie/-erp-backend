@@ -696,7 +696,7 @@ class Helper
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
                                         foreach ($approvalList as $da) {

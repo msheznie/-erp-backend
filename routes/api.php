@@ -1304,7 +1304,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
     Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
     Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
-
+    Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
+    Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
 });
 
 

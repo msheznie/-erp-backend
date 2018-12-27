@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateReportTemplateDetailsAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateDetailsAPIRequest;
 use App\Models\Company;
+use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
 use App\Repositories\ReportTemplateDetailsRepository;
@@ -339,13 +340,17 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $q->orderBy('sortOrder', 'asc');
         }])->OfMaster($id)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-        return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+        $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->get();
+
+        $output = ['template'=> $reportTemplateDetails->toArray(),'columns' => $reportTemplateColLink->toArray()];
+
+        return $this->sendResponse($output, 'Report Template Details retrieved successfully');
     }
 
 
     public function getReportTemplateSubCat(Request $request)
     {
-        $reportTemplateDetails = ReportTemplateDetails::where('masterID',$request->detID)->where('itemType',2)->orderBy('sortOrder')->get();
+        $reportTemplateDetails = ReportTemplateDetails::where('masterID',$request->masterID)->where('detID','<',$request->detID)->orderBy('sortOrder')->get();
 
         return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
     }
