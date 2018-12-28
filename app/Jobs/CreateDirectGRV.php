@@ -201,7 +201,7 @@ class CreateDirectGRV implements ShouldQueue
 
                     $directGRVDet['unitCost'] = $comRptAmountDetail;
                     $directGRVDet['netAmount'] = $comRptAmountDetail;
-                    //$directGRVDet['comment'] = $comment;
+                    $directGRVDet['comment'] = $val->faCode;
                     if ($supplierCurrency) {
                         $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
                         $directGRVDet['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
