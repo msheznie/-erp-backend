@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 12-June 2018 By: Nazir Description: Added new functions named as getAllFinancePeriod() For load all finance period
  * -- Date: 08-November 2018 By: Nazir Description: Added new functions named as getAllFinancePeriodForYear() For load all finance period
+ * -- Date: 27-December 2018 By: Fayas Description: Added new functions named as getFinancialPeriodsByYear()
  */
 namespace App\Http\Controllers\API;
 
@@ -233,9 +234,57 @@ class CompanyFinancePeriodAPIController extends AppBaseController
             return $this->sendError('Company Finance Period not found');
         }
 
+
+        $checkFinancePeriod = 0;
+
+
+        if ($input['isActive']) {
+            $input['isActive'] = -1;
+        } else if ($companyFinancePeriod->isActive && !$input['isActive'] && $checkFinancePeriod > 0) {
+            //return $this->sendError('Cannot deactivate, There are some open finance periods for this finance year.');
+        }
+
+        if ($input['isCurrent']) {
+            $input['isCurrent'] = -1;
+            if(!$companyFinancePeriod->isCurrent){
+                $checkCurrentFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
+                                                                    ->where('departmentSystemID', $companyFinancePeriod->departmentSystemID)
+                                                                    ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                                                    ->where('isCurrent', -1)
+                                                                    ->count();
+
+                if ($checkCurrentFinancePeriod > 0) {
+                    return $this->sendError('Company already has a current financial period for this department.');
+                }
+            }
+        }
+
+        if ($input['isClosed']) {
+            $input['isClosed']  = -1;
+
+            if($companyFinancePeriod->departmentSystemID == 5){
+
+                $checkOtherDepartments = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
+                                                            ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                                            ->where('departmentSystemID','!=', 5)
+                                                            ->where(function ($q) {
+                                                                $q->where('isActive', -1);
+                                                                    //->orWhere('isCurrent', -1)
+                                                                    //->orWhere('isClosed', 0);
+                                                            })
+                                                            ->count();
+
+                if ($checkOtherDepartments > 0) {
+                    return $this->sendError('There are some department has active financial period.');
+                }
+            }
+            $input['isCurrent'] = 0;
+            $input['isActive']  = 0;
+        }
+
         $companyFinancePeriod = $this->companyFinancePeriodRepository->update($input, $id);
 
-        return $this->sendResponse($companyFinancePeriod->toArray(), 'CompanyFinancePeriod updated successfully');
+        return $this->sendResponse($companyFinancePeriod->toArray(), 'Company Financial Period updated successfully');
     }
 
     /**
@@ -334,6 +383,65 @@ class CompanyFinancePeriodAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($output, 'Finance periods retrieved successfully');
+    }
+
+    public function getFinancialPeriodsByYear(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('departmentSystemID', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companyFinancialPeriods = CompanyFinancePeriod::whereIn('companySystemID', $subCompanies)
+                                                       ->where('companyFinanceYearID', $request['companyFinanceYearID']);
+
+        if (array_key_exists('departmentSystemID', $input)) {
+            if ($input['departmentSystemID'] && !is_null($input['departmentSystemID'])) {
+                $companyFinancialPeriods->where('departmentSystemID', $input['departmentSystemID']);
+            }else{
+                $companyFinancialPeriods->where('departmentSystemID', 0);
+            }
+        }else{
+            $companyFinancialPeriods->where('departmentSystemID', 0);
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $companyFinancialPeriods = $companyFinancialPeriods->where(function ($query) use ($search) {
+                /*$query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%")
+                    ->orWhere('issueRefNo', 'LIKE', "%{$search}%");*/
+            });
+        }
+
+        return \DataTables::eloquent($companyFinancialPeriods)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('companyFinancePeriodID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
 }
