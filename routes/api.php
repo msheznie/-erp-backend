@@ -1304,9 +1304,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
     Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
     Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
+    Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
+    Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
+    Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
     Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
     Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
+    Route::post('getFinancialYearsByCompany', 'CompanyFinanceYearAPIController@getFinancialYearsByCompany');
+    Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');
+    Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear');
+    Route::resource('companyFinanceYearPeriodMasters', 'CompanyFinanceYearperiodMasterAPIController');
 });
 
 
@@ -1362,6 +1369,7 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-    //$bt = \App\Models\BudgetTransferForm::find(463);
-    //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
+    //$bt = \App\Models\CompanyFinanceYear::find(295);
+    //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
