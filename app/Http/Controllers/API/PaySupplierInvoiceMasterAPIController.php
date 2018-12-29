@@ -1824,6 +1824,10 @@ HAVING
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+            ->where('documentSystemID', 4)
+            ->first();
+
         $paymentVoucher = DB::table('erp_documentapproved')
             ->select(
                 'erp_paysupplierinvoicemaster.*',
@@ -1842,11 +1846,13 @@ HAVING
                 'erp_bankmemopayee.memoHeaderPayee',
                 'erp_bankmemopayee.memoDetailPayee'
             )
-            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
                 $query->whereIn('employeesdepartments.documentSystemID', [4])
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);

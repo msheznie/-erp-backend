@@ -1,31 +1,28 @@
 <?php
-/**
- * =============================================
- * -- File Name : ReportTemplateDetails.php
- * -- Project Name : ERP
- * -- Module Name : Configuration
- * -- Author : Mohamed Mubashir
- * -- Create date : 20- December 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="ReportTemplateDetails",
+ *      definition="ReportTemplateColumnLink",
  *      required={""},
  *      @SWG\Property(
- *          property="detID",
- *          description="detID",
+ *          property="columnLinkID",
+ *          description="columnLinkID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyReportTemplateID",
- *          description="companyReportTemplateID",
+ *          property="columnID",
+ *          description="columnID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="templateID",
+ *          description="templateID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -35,38 +32,20 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="itemType",
- *          description="itemType",
- *          type="integer",
- *          format="int32"
+ *          property="shortCode",
+ *          description="shortCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="type",
+ *          description="type",
+ *          type="boolean"
  *      ),
  *      @SWG\Property(
  *          property="sortOrder",
  *          description="sortOrder",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="masterID",
- *          description="masterID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="accountType",
- *          description="accountType",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="companySystemID",
- *          description="companySystemID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="companyID",
- *          description="companyID",
- *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="createdPCID",
@@ -102,25 +81,23 @@ use Eloquent as Model;
  *      )
  * )
  */
-class ReportTemplateDetails extends Model
+class ReportTemplateColumnLink extends Model
 {
 
-    public $table = 'erp_companyreporttemplatedetails';
+    public $table = 'erp_companyreporttemplatecolumnlink';
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'detID';
+    protected $primaryKey = 'columnLinkID';
 
     public $fillable = [
-        'companyReportTemplateID',
+        'columnID',
+        'templateID',
         'description',
-        'itemType',
+        'shortCode',
+        'type',
         'sortOrder',
-        'masterID',
-        'accountType',
-        'bgColor',
-        'hideHeader',
         'companySystemID',
         'companyID',
         'createdPCID',
@@ -140,15 +117,13 @@ class ReportTemplateDetails extends Model
      * @var array
      */
     protected $casts = [
-        'detID' => 'integer',
-        'companyReportTemplateID' => 'integer',
+        'columnLinkID' => 'integer',
+        'columnID' => 'integer',
+        'templateID' => 'integer',
         'description' => 'string',
-        'itemType' => 'integer',
+        'shortCode' => 'string',
+        'type' => 'boolean',
         'sortOrder' => 'integer',
-        'masterID' => 'integer',
-        'accountType' => 'string',
-        'bgColor' => 'string',
-        'hideHeader' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'createdPCID' => 'string',
@@ -159,14 +134,6 @@ class ReportTemplateDetails extends Model
         'modifiedUserID' => 'string'
     ];
 
-    /**
-     * Validation rules
-     *
-     * @var array
-     */
-    public static $rules = [
-        
-    ];
 
     /**
      * Scope a query to only include users of a given type.
@@ -176,20 +143,20 @@ class ReportTemplateDetails extends Model
      * @return \Illuminate\Database\Eloquent\Builder
      */
 
-    public function scopeOfMaster($query, $companyReportTemplateID)
+    public function scopeOfTemplate($query, $templateMasterID)
     {
-        return $query->where('companyReportTemplateID',  $companyReportTemplateID);
+        return $query->where('templateID',  $templateMasterID);
     }
 
-    public function subcategory()
-    {
-        return $this->hasMany(ReportTemplateDetails::class,'masterID','detID');
-    }
 
-    public function gllink()
-    {
-        return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
-    }
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
 
     
 }

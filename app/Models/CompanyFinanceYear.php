@@ -105,9 +105,9 @@ class CompanyFinanceYear extends Model
 
     public $table = 'companyfinanceyear';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'companyFinanceYearID';
 
 
     public $fillable = [
@@ -129,7 +129,8 @@ class CompanyFinanceYear extends Model
         'createdDateTime',
         'modifiedUser',
         'modifiedPc',
-        'timeStamp'
+        'timeStamp',
+        'generateStatus'
     ];
 
     /**
@@ -152,7 +153,8 @@ class CompanyFinanceYear extends Model
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'generateStatus' => 'integer'
     ];
 
     /**

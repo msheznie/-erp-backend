@@ -890,12 +890,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);;
+                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Supplier Code'] = $val->SupplierCode;
                             $data[$x]['Supplier Name'] = $val->suppliername;
-                            $data[$x]['Invoice Number'] = $val->documentID;
-                            $data[$x]['Invoice Date'] = $val->documentID;
+                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
                             $data[$x]['Currency'] = $val->documentCurrency;
                             $data[$x]['Amount'] = $val->invoiceAmountDoc;
                             $data[$x]['Balance Amount'] = $val->balanceAmountDoc;
