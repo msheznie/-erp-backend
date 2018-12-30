@@ -316,4 +316,9 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Report Template Column Link deleted successfully');
     }
+
+    public function getTemplateColumnLinks(Request $request){
+        $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->orderBy('sortOrder','asc')->findWhere(['templateID' => $request->templateID]);
+        return $this->sendResponse($reportTemplateColumnLink->toArray(), 'Report Template Column Link retrieved successfully');
+    }
 }

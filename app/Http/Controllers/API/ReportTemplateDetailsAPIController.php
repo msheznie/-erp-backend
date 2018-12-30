@@ -340,7 +340,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $q->orderBy('sortOrder', 'asc');
         }])->OfMaster($id)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-        $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->get();
+        $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder','asc')->get();
 
         $output = ['template'=> $reportTemplateDetails->toArray(),'columns' => $reportTemplateColLink->toArray()];
 

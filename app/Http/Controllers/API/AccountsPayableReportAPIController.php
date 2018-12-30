@@ -250,7 +250,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
 
@@ -275,7 +275,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
                 break;
             case 'APSS': //Supplier Statement Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $reportTypeID = $request->reportTypeID;
 
@@ -422,7 +422,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryQRY($request);
 
@@ -459,7 +459,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
                 } else if ($reportTypeID == 'SADA') { //Supplier aging detail advance
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
 
@@ -492,7 +492,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'lineGrandTotal' => $lineGrandTotal);
                 } else if ($reportTypeID == 'SASA') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
 
@@ -527,7 +527,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSBS': //Supplier Balance Summary Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierBalanceSummeryQRY($request);
 
@@ -849,7 +849,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $type = $request->type;
                 $reportTypeID = $request->reportTypeID;
                 if($reportTypeID == 'SS'){
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getSupplierStatementQRY($request);
                     if ($output) {
                         $x = 0;
@@ -925,7 +925,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSL':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                 $output = $this->getSupplierLedgerQRY($request);
                 if ($output) {
                     $x = 0;
@@ -1020,7 +1020,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SAS') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1045,7 +1045,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1072,7 +1072,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SASA') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
