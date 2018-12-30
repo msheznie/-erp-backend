@@ -71,7 +71,8 @@ class DepartmentMaster extends Model
         'isFunctionalDepartment',
         'isReportGroupYN',
         'hrObjectiveSetting',
-        'timeStamp'
+        'timeStamp',
+        'isFinancialYearYN'
     ];
 
     /**
@@ -97,7 +98,8 @@ class DepartmentMaster extends Model
         'managerfield' => 'string',
         'isFunctionalDepartment' => 'integer',
         'isReportGroupYN' => 'integer',
-        'hrObjectiveSetting' => 'integer'
+        'hrObjectiveSetting' => 'integer',
+        'isFinancialYearYN' => 'integer'
     ];
 
     /**
