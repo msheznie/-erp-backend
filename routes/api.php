@@ -1307,6 +1307,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
     Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
     Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
+    Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks');
     Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
     Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
