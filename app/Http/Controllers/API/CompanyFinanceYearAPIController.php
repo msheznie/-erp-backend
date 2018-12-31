@@ -19,6 +19,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DepartmentMaster;
+use App\Repositories\CompanyFinancePeriodRepository;
 use App\Repositories\CompanyFinanceYearRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -35,10 +36,12 @@ class CompanyFinanceYearAPIController extends AppBaseController
 {
     /** @var  CompanyFinanceYearRepository */
     private $companyFinanceYearRepository;
+    private $companyFinancePeriodRepository;
 
-    public function __construct(CompanyFinanceYearRepository $companyFinanceYearRepo)
+    public function __construct(CompanyFinanceYearRepository $companyFinanceYearRepo,CompanyFinancePeriodRepository $companyFinancePeriodRepo)
     {
         $this->companyFinanceYearRepository = $companyFinanceYearRepo;
+        $this->companyFinancePeriodRepository = $companyFinancePeriodRepo;
     }
 
     /**
@@ -303,8 +306,18 @@ class CompanyFinanceYearAPIController extends AppBaseController
         if ($input['isClosed']) {
             $input['isClosed']  = -1;
 
-            if(!$companyFinanceYear->isClosed && $checkFinancePeriod > 0){
-                return $this->sendError('Cannot close, There are some open financial periods for this finance year.');
+            if(!$companyFinanceYear->isClosed && $checkFinancePeriod > 0 && $input['closeAllPeriods'] == 0){
+                return $this->sendError('Cannot close, There are some open financial periods for this finance year. Do you want to close all financial periods?',500,array('type' => 'active_period_exist' ));
+            }
+
+            if($input['closeAllPeriods'] == 1){
+                $updateFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinanceYear->companySystemID)
+                                                            ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                                                            ->get();
+
+                foreach ($updateFinancePeriod as $period){
+                    $this->companyFinancePeriodRepository->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => -1],$period->companyFinancePeriodID);
+                }
             }
 
             $input['isCurrent'] = 0;
@@ -424,6 +437,9 @@ class CompanyFinanceYearAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('closeAllPeriods', function ($row) {
+                return 0;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
