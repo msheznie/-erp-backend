@@ -277,18 +277,14 @@ class CompanyFinanceYearAPIController extends AppBaseController
         }
 
         $checkFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinanceYear->companySystemID)
-            ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-            ->where(function ($q) {
-                $q->where('isActive', -1);
-                    //->orWhere('isCurrent', -1)
-                    //->orWhere('isClosed', 0);
-            })
-            ->count();
+                                                    ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                                                    ->where('isActive', -1)
+                                                    ->count();
 
         if ($input['isActive']) {
             $input['isActive'] = -1;
         } else if ($companyFinanceYear->isActive && !$input['isActive'] && $checkFinancePeriod > 0) {
-            return $this->sendError('Cannot deactivate, There are some open finance periods for this finance year.');
+            return $this->sendError('Cannot deactivate, There are some active finance periods for this finance year.');
         }
 
         if ($input['isCurrent']) {
@@ -316,8 +312,10 @@ class CompanyFinanceYearAPIController extends AppBaseController
 
             $input['closedByEmpSystemID'] = $employee->employeeSystemID;
             $input['closedByEmpID']       = $employee->empID;
-            $input['closedByEmpName']     =
+            $input['closedByEmpName']     = $employee->empName;
             $input['closedDate']          = now();
+        }else if($companyFinanceYear->isClosed == -1 && $input['isClosed'] == 0){
+            return $this->sendError('Cannot open this finance year.');
         }
 
 
