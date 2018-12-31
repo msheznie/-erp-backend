@@ -481,7 +481,7 @@ class CustomerReceivePayment extends Model
         'cancelYN',
         'cancelComment',
         'cancelDate',
-        'canceledByEmpSystemID',
+        'cancelledByEmpSystemID',
         'canceledByEmpID',
         'canceledByEmpName',
         'companyFinancePeriodID',
@@ -566,7 +566,7 @@ class CustomerReceivePayment extends Model
         'timesReferred' => 'integer',
         'cancelYN' => 'integer',
         'cancelComment' => 'string',
-        'canceledByEmpSystemID' => 'integer',
+        'cancelledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
         'companyFinancePeriodID' => 'integer',
@@ -644,6 +644,11 @@ class CustomerReceivePayment extends Model
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custReceivePaymentAutoID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
     }
 
     public function customer()
