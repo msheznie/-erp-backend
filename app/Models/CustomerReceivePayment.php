@@ -478,6 +478,12 @@ class CustomerReceivePayment extends Model
         'createdUserSystemID',
         'refferedBackYN',
         'timesReferred',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
         'companyFinancePeriodID',
     ];
 
@@ -558,6 +564,11 @@ class CustomerReceivePayment extends Model
         'createdUserSystemID' => 'integer',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
+        'cancelYN' => 'integer',
+        'cancelComment' => 'string',
+        'canceledByEmpSystemID' => 'integer',
+        'canceledByEmpID' => 'string',
+        'canceledByEmpName' => 'string',
         'companyFinancePeriodID' => 'integer',
     ];
 
