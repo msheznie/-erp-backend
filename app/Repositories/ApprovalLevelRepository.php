@@ -14,7 +14,7 @@ use InfyOm\Generator\Common\BaseRepository;
  * @method ApprovalLevel findWithoutFail($id, $columns = ['*'])
  * @method ApprovalLevel find($id, $columns = ['*'])
  * @method ApprovalLevel first($columns = ['*'])
-*/
+ */
 class ApprovalLevelRepository extends BaseRepository
 {
     /**
@@ -58,34 +58,46 @@ class ApprovalLevelRepository extends BaseRepository
         } else {
             $sort = 'desc';
         }
-         $approvalLevel = $this->model
-            ->with(['company' => function($query) use ($search) {
-                $query->select('companySystemID','CompanyName','CompanyID');
-            },'department' => function($query) use ($search) {
-                $query->select('departmentSystemID','DepartmentDescription');
-            },'document' => function($query) use ($search) {
-                $query->select('documentSystemID','documentDescription');
-            },'serviceline' => function($query) use ($search) {
-                $query->select('serviceLineSystemID','ServiceLineDes');
-            },'category' => function($query) use ($search) {
-                $query->select('itemCategoryID','categoryDescription');
+        $approvalLevel = $this->model
+            ->with(['company' => function ($query) use ($search) {
+                $query->select('companySystemID', 'CompanyName', 'CompanyID');
+            }, 'department' => function ($query) use ($search) {
+                $query->select('departmentSystemID', 'DepartmentDescription');
+            }, 'document' => function ($query) use ($search) {
+                $query->select('documentSystemID', 'documentDescription');
+            }, 'serviceline' => function ($query) use ($search) {
+                $query->select('serviceLineSystemID', 'ServiceLineDes');
+            }, 'category' => function ($query) use ($search) {
+                $query->select('itemCategoryID', 'categoryDescription');
             }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
 
-        if(array_key_exists ('selectedCompanyID' , $input)){
-            if($input['selectedCompanyID'] > 0){
-                $approvalLevel->where('erp_approvallevel.companySystemID',$input['selectedCompanyID']);
+        if (array_key_exists('selectedCompanyID', $input)) {
+            if ($input['selectedCompanyID'] > 0) {
+                $approvalLevel->where('erp_approvallevel.companySystemID', $input['selectedCompanyID']);
             }
-        }else{
-            if(!\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
+        } else {
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $companiesByGroup = $input['globalCompanyId'];
-                $approvalLevel->where('erp_approvallevel.companySystemID',$companiesByGroup);
+                $approvalLevel->where('erp_approvallevel.companySystemID', $companiesByGroup);
             }
         }
 
-        if(array_key_exists ('documentSystemID' , $input)){
-            if($input['documentSystemID'] > 0){
-                $approvalLevel->where('erp_approvallevel.documentSystemID',$input['documentSystemID']);
+        if (array_key_exists('documentSystemID', $input)) {
+            if ($input['documentSystemID'] > 0) {
+                $approvalLevel->where('erp_approvallevel.documentSystemID', $input['documentSystemID']);
             }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] > 0) {
+                $approvalLevel->where('erp_approvallevel.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+
+            $approvalLevel->where('erp_approvallevel.isActive', $input['isActive']);
+
         }
 
         if ($search) {
@@ -95,9 +107,8 @@ class ApprovalLevelRepository extends BaseRepository
         //return datatables($approvalLevel)->toJson();
         return \DataTables::eloquent($approvalLevel)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('approvalLevelID', $input['order'][0]['dir']);
                     }
                 }
@@ -108,7 +119,8 @@ class ApprovalLevelRepository extends BaseRepository
             ->make(true);
     }
 
-    public function getGroupFilterData($input){
+    public function getGroupFilterData($input)
+    {
 
     }
 
