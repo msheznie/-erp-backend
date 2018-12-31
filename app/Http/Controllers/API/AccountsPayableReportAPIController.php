@@ -3872,7 +3872,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $finalSelect = "final.*";
 
         if($reportTypeID == 'UGRVS'){
-            $supplierGroup = "GROUP BY final.supplierID";
+            $supplierGroup = "GROUP BY final.supplierID,final.companySystemID";
             $finalSelect = "final.companySystemID,
                 final.companyID,
                 final.documentSystemID,
@@ -4290,7 +4290,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $finalSelect = "agingFinal.*";
 
         if($reportTypeID == 'UGRVAS'){
-            $supplierGroup = "GROUP BY supplierID";
+            $supplierGroup = "GROUP BY supplierID,companySystemID";
             $finalSelect = "agingFinal.companySystemID,
                 agingFinal.companyID,
                 agingFinal.documentSystemID,
