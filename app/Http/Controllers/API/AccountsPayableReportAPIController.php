@@ -297,6 +297,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     $outputArr = array();
 
@@ -884,6 +885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     if ($output) {
                         $x = 0;
@@ -3872,7 +3874,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $finalSelect = "final.*";
 
         if($reportTypeID == 'UGRVS'){
-            $supplierGroup = "GROUP BY final.supplierID";
+            $supplierGroup = "GROUP BY final.supplierID,final.companySystemID";
             $finalSelect = "final.companySystemID,
                 final.companyID,
                 final.documentSystemID,
@@ -4290,7 +4292,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $finalSelect = "agingFinal.*";
 
         if($reportTypeID == 'UGRVAS'){
-            $supplierGroup = "GROUP BY supplierID";
+            $supplierGroup = "GROUP BY supplierID,companySystemID";
             $finalSelect = "agingFinal.companySystemID,
                 agingFinal.companyID,
                 agingFinal.documentSystemID,
