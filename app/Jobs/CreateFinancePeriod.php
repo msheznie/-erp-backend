@@ -40,24 +40,31 @@ class CreateFinancePeriod implements ShouldQueue
         $financeYear = $this->financeYear;
         Log::useFiles(storage_path() . '/logs/create_finance_period_jobs.log');
         Log::info('Create Finance Period Jobs Start');
-        Log::info($financeYear);
         $bigginingDate = new Carbon($financeYear->bigginingDate);
         $endingDate    = new Carbon($financeYear->endingDate);
+        $currentMonth  = $bigginingDate->month;
+        $currentYear   = $bigginingDate->year;
 
-        $currentMonth = $bigginingDate->month;
-        for($i=1;$i <= 12;$i++){
+        for($i = $currentMonth;$i < ($currentMonth + 12);$i++){
             $firstDay = '01';
             if($i == $bigginingDate->month){
                 //$firstDay = $bigginingDate->day;
             }
-            $startDate = new Carbon($bigginingDate->year.'-'.$i.'-'.$firstDay);
 
-            //if($i == $endingDate->month){
-              //  $endDate   = $endingDate;
-            //}else{
-                $endDate   = new Carbon(date("Y-m-t", strtotime($startDate)));
-            //}
-            if($bigginingDate <= $startDate && $endingDate >= $endDate) {
+            if($i > 12){
+                $month = ($i % 12);
+                $currentYear = $bigginingDate->year + floor(($i / 12));
+            }else{
+                $month = $i;
+            }
+
+            Log::info('Current Month : ' . $month);
+            Log::info('Current Year :' . $currentYear);
+
+            $startDate = new Carbon($currentYear.'-'.$month.'-'.$firstDay);
+            $endDate   = new Carbon(date("Y-m-t", strtotime($startDate)));
+
+           // if($bigginingDate <= $startDate && $endingDate >= $endDate) {
                 $dataArray = array(
                     'companySystemID' => $financeYear->companySystemID,
                     'companyID' => $financeYear->companyID,
@@ -66,9 +73,9 @@ class CreateFinancePeriod implements ShouldQueue
                     'dateTo' => $endDate);
                 $financeYearPeriodMasterRepo->create($dataArray);
                 Log::info('Created Finance Period : '.$i);
-            }else{
-                Log::info('Not Created Finance Period : '.$i);
-            }
+            //}else{
+             //   Log::info('Not Created Finance Period : '.$i);
+            //}
         }
 
         $departments = DepartmentMaster::where('isFinancialYearYN', 1)
