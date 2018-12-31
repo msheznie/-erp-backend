@@ -1619,11 +1619,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -1763,6 +1763,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -2669,11 +2670,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                sum(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                sum(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                sum(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -2813,6 +2814,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -2994,11 +2996,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3138,6 +3140,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -3312,11 +3315,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3456,6 +3459,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -3632,11 +3636,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3776,6 +3780,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
