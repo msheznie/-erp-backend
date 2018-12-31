@@ -291,7 +291,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                     return $this->sendError('There are some department has active financial period.',500,array('type' => 'active_period_exist'));
                 }
 
-                if($input['closeAllPeriods'] == 1){
+                //if($input['closeAllPeriods'] == 1){
                     $updateFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
                                                                 ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
                                                                 ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
@@ -300,7 +300,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                     foreach ($updateFinancePeriod as $period){
                         $this->companyFinancePeriodRepository->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => -1],$period->companyFinancePeriodID);
                     }
-                }
+                //}
             }
             $input['isCurrent'] = 0;
             $input['isActive']  = 0;

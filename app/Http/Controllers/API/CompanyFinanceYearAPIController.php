@@ -148,7 +148,6 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $toDate = new Carbon($request->endingDate);
         $input['endingDate'] = $toDate->format('Y-m-d');
 
-
         $checkLastFinancialYear = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])
                                                         ->max('endingDate');
 
@@ -159,6 +158,12 @@ class CompanyFinanceYearAPIController extends AppBaseController
             if($lastDate >= $input['bigginingDate']){
                 return $this->sendError('You cannot create financial year, Please select the begging date after ' . (new Carbon($lastDate))->format('d/m/Y'));
             }
+        }
+
+        $diffMonth = (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
+
+        if($diffMonth != 12){
+            return  $this->sendError('Financial Year must contains 12 month.');
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -310,7 +315,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
                 return $this->sendError('Cannot close, There are some open financial periods for this finance year. Do you want to close all financial periods?',500,array('type' => 'active_period_exist' ));
             }
 
-            if($input['closeAllPeriods'] == 1){
+            //if($input['closeAllPeriods'] == 1){
                 $updateFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinanceYear->companySystemID)
                                                             ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
                                                             ->get();
@@ -318,7 +323,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
                 foreach ($updateFinancePeriod as $period){
                     $this->companyFinancePeriodRepository->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => -1],$period->companyFinancePeriodID);
                 }
-            }
+            //}
 
             $input['isCurrent'] = 0;
             $input['isActive']  = 0;
