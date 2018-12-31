@@ -297,6 +297,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     $outputArr = array();
 
@@ -884,6 +885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     if ($output) {
                         $x = 0;
