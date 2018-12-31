@@ -252,12 +252,12 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                 $checkOtherDepartments = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
                                                         ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
                                                         ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
-                                                        ->whereDate('departmentSystemID','!=',5)
+                                                        ->where('departmentSystemID','!=',5)
                                                         ->where('isActive', -1)
                                                         ->count();
 
                 if ($checkOtherDepartments > 0) {
-                    return $this->sendError('You cannot deactivate this financial period.This period is active in some department');
+                    return $this->sendError('Deactivate other department periods before deactivating general ledger period.',500);
                 }
         }
 
