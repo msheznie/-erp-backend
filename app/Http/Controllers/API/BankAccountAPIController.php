@@ -139,7 +139,7 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
             }
         }
 
@@ -256,7 +256,7 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
             }
         }
 
