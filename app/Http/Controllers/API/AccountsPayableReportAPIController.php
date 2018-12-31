@@ -297,6 +297,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     $outputArr = array();
 
@@ -884,6 +885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
                 }else if($reportTypeID == 'SBSR'){
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     if ($output) {
                         $x = 0;
@@ -4747,16 +4749,55 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE 	round(
-		finalAgingDetail.balanceAmountTrans,
-		0
-	) = 0 AND round(
-		finalAgingDetail.balanceAmountLocal,
-		0
-	) <> 0 AND round(
-		finalAgingDetail.balanceAmountRpt,
-		0
-	) <> 0 ORDER BY documentDate ASC';
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) <> 0
+	)
+OR (
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) <> 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) = 0
+	)
+)
+OR (
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) <> 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) <> 0
+	)
+)
+ORDER BY
+	documentDate ASC';
         //echo $qry;
         //exit();
         return $output = \DB::select($qry);
