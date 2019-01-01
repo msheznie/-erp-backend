@@ -66,7 +66,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 $customerInvoiceData['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
                 $customerInvoiceData['FYEnd'] = $fromCompanyFinanceYear->endingDate;
 
-                if (!empty($fromCompanyFinanceYear)) {
+                if (!empty($fromCompanyFinancePeriod)) {
                     $customerInvoiceData['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
                     $customerInvoiceData['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
                     $customerInvoiceData['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom;
@@ -159,8 +159,8 @@ class CreateCustomerInvoice implements ShouldQueue
             $customerInvoiceData['postedDate'] = $today;
             $customerInvoiceData['documentType'] = 11;
             $customerInvoiceData['interCompanyTransferYN'] = -1;
-            $customerInvoiceData['createdUserSystemID'] = $dpMaster->confirmedByEmpSystemID;
-            $customerInvoiceData['createdUserID'] = $dpMaster->confirmedByEmpID;
+            $customerInvoiceData['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+            $customerInvoiceData['createdUserID'] = $dpMaster->confimedByEmpID;
             $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
             $customerInvoiceData['createdDateAndTime'] = NOW();
             Log::info($customerInvoiceData);

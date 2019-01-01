@@ -162,8 +162,8 @@ class CompanyFinanceYearAPIController extends AppBaseController
 
         $diffMonth = (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
 
-        if($diffMonth != 12){
-            return  $this->sendError('Financial Year must contains 12 month.');
+        if($diffMonth != 11){
+            return  $this->sendError('Financial year must contain 12 months.');
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -312,7 +312,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $input['isClosed']  = -1;
 
             if(!$companyFinanceYear->isClosed && $checkFinancePeriod > 0 && $input['closeAllPeriods'] == 0){
-                return $this->sendError('Cannot close, There are some open financial periods for this finance year. Do you want to close all financial periods?',500,array('type' => 'active_period_exist' ));
+                return $this->sendError('Cannot close, There are some open financial periods for the selected financial year. Do you want to close all the financial periods?',500,array('type' => 'active_period_exist' ));
             }
 
             //if($input['closeAllPeriods'] == 1){

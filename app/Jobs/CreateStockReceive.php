@@ -95,10 +95,10 @@ class CreateStockReceive implements ShouldQueue
 
 
                         $cusInvLastSerial = CustomerInvoiceDirect::where('companySystemID', $stMaster->companyFromSystemID)
-                                                                    ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                                                                    ->where('serialNo','>',0)
-                                                                    ->orderBy('custInvoiceDirectAutoID', 'desc')
-                                                                    ->first();
+                            ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                            ->where('serialNo', '>', 0)
+                            ->orderBy('custInvoiceDirectAutoID', 'desc')
+                            ->first();
 
                         $cusInvLastSerialNumber = 1;
                         if ($cusInvLastSerial) {
@@ -193,9 +193,9 @@ class CreateStockReceive implements ShouldQueue
                         $cusInvoiceDetails['companyID'] = $stMaster->companyID;
                         $cusInvoiceDetails['serviceLineCode'] = $stMaster->serviceLineCode;
 
-                        if($cusInvoiceDetails['serviceLineCode']){
+                        if ($cusInvoiceDetails['serviceLineCode']) {
                             $cusInvDelServiceLine = SegmentMaster::where("ServiceLineCode", $cusInvoiceDetails['serviceLineCode'])->first();
-                            if (!empty($cusInvDelServiceLine)){
+                            if (!empty($cusInvDelServiceLine)) {
                                 $cusInvoiceDetails['serviceLineSystemID'] = $cusInvDelServiceLine->serviceLineSystemID;
                             }
                         }
@@ -275,7 +275,7 @@ class CreateStockReceive implements ShouldQueue
                             $data['createdUserSystemID'] = $stMaster->approvedByUserSystemID;
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
-                            $data['invoiceNumber'] =   $customerInvoice->customerInvoiceNo;
+                            $data['invoiceNumber'] = $customerInvoice->customerInvoiceNo;
                             $data['invoiceDate'] = $customerInvoice->customerInvoiceDate;
 
                             $glAR = $data;
@@ -335,18 +335,18 @@ class CreateStockReceive implements ShouldQueue
 
                         // ARL Start
 
-                        if($customerInvoice) {
+                        if ($customerInvoice) {
 
                             $arLedger = array();
                             $arLedger['companySystemID'] = $customerInvoice->companySystemID;
-                            $arLedger['companyID']       = $customerInvoice->companyID;
-                            $arLedger['documentSystemID'] =  $customerInvoice->documentSystemiD;
+                            $arLedger['companyID'] = $customerInvoice->companyID;
+                            $arLedger['documentSystemID'] = $customerInvoice->documentSystemiD;
                             $arLedger['documentID'] = $customerInvoice->documentID;
                             $arLedger['documentCodeSystem'] = $customerInvoice->custInvoiceDirectAutoID;
                             $arLedger['documentCode'] = $customerInvoice->bookingInvCode;
-                            $arLedger['customerID'] =   $customerInvoice->customerID;
+                            $arLedger['customerID'] = $customerInvoice->customerID;
                             $arLedger['documentDate'] = $today;
-                            $arLedger['InvoiceNo'] =   $customerInvoice->customerInvoiceNo;
+                            $arLedger['InvoiceNo'] = $customerInvoice->customerInvoiceNo;
                             $arLedger['InvoiceDate'] = $customerInvoice->customerInvoiceDate;
                             $arLedger['custTransCurrencyID'] = $customerInvoice->custTransactionCurrencyID;
                             $arLedger['custTransER'] = 1;
@@ -363,7 +363,7 @@ class CreateStockReceive implements ShouldQueue
                             $arLedger['isInvoiceLockedYN'] = 0;
                             $arLedger['selectedToPaymentInv'] = 0;
                             $arLedger['fullyInvoiced'] = 0;
-                            $arLedger['createdUserID'] =  $stMaster->approvedByUserID;
+                            $arLedger['createdUserID'] = $stMaster->approvedByUserID;
                             $arLedger['createdPcID'] = gethostname();
                             $arLedger['documentType'] = 11;
 
@@ -372,134 +372,132 @@ class CreateStockReceive implements ShouldQueue
                             Log::info($accountsReceivableLedger);
                             // ARL End
                         }
-                    }
 
+                        // stock receive create start
+                        if ($customerInvoice) {
 
-                    // stock receive create start
-                    $push = true;
-                    if ($push) {
-
-                        $stockReceive = new StockReceive();
-                        $stockReceive->documentSystemID = 10;
-                        $documentMaster = DocumentMaster::where('documentSystemID', $stockReceive->documentSystemID)->first();
-                        if ($documentMaster) {
-                            $stockReceive->documentID = $documentMaster->documentID;
-                        }
-
-                        $stockReceive->companySystemID = $stMaster->companyToSystemID;
-                        $stockReceive->companyID = $stMaster->companyTo;
-                        $stockReceive->serviceLineSystemID = NULl;
-                        $stockReceive->serviceLineCode = NULl;
-                        $stockReceive->refNo = $customerInvoice->bookingInvCode;
-                        $stockReceive->comment = $customerInvoice->comments .', '.$customerInvoice->bookingInvCode;
-                        $stockReceive->companyFromSystemID = $stMaster->companyFromSystemID;
-                        $stockReceive->companyFrom = $stMaster->companyFrom;
-                        $stockReceive->companyToSystemID = $stMaster->companyToSystemID;
-                        $stockReceive->companyTo = $stMaster->companyTo;
-                        $stockReceive->locationTo = $stMaster->locationTo;
-                        $stockReceive->locationFrom = $stMaster->locationFrom;
-                        $stockReceive->confirmedYN = 0;
-                        $stockReceive->approved = 0;
-                        $stockReceive->interCompanyTransferYN = $stMaster->interCompanyTransferYN;
-                        $stockReceive->RollLevForApp_curr = 1;
-                        $stockReceive->createdDateTime = $stMaster->createdDateTime;
-                        $stockReceive->createdUserGroup = $stMaster->createdUserGroup;
-                        $stockReceive->createdPCID = $stMaster->createdPCID;
-                        $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
-                        $stockReceive->createdUserID = $stMaster->createdUserID;
-
-
-                        $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
-                                                                        ->where('departmentSystemID', 10)
-                                                                        ->where('isActive', -1)
-                                                                        //->where('dateFrom', '<', $stMaster->tranferDate)
-                                                                        //->where('dateTo', '>', $stMaster->tranferDate)
-                                                                        ->where('isCurrent', -1)
-                                                                        ->first();
-                        $lastSerialNumber = 1;
-                        if (!empty($toCompanyFinancePeriod)) {
-                            $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
-                                ->where('companySystemID', $stMaster->companyToSystemID)
-                                ->first();
-
-                            $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
-                                ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
-                                ->where('serialNo','>',0)
-                                ->orderBy('stockReceiveAutoID', 'desc')
-                                ->first();
-                            if ($lastSerial) {
-                                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                            $stockReceive = new StockReceive();
+                            $stockReceive->documentSystemID = 10;
+                            $documentMaster = DocumentMaster::where('documentSystemID', $stockReceive->documentSystemID)->first();
+                            if ($documentMaster) {
+                                $stockReceive->documentID = $documentMaster->documentID;
                             }
 
-                            if (!empty($companyFinanceYear)) {
-                                $stockReceive->FYBiggin = $companyFinanceYear->bigginingDate;
-                                $stockReceive->FYEnd = $companyFinanceYear->endingDate;
-                            }
+                            $stockReceive->companySystemID = $stMaster->companyToSystemID;
+                            $stockReceive->companyID = $stMaster->companyTo;
+                            $stockReceive->serviceLineSystemID = NULl;
+                            $stockReceive->serviceLineCode = NULl;
+                            $stockReceive->refNo = $customerInvoice->bookingInvCode;
+                            $stockReceive->comment = $customerInvoice->comments . ', ' . $customerInvoice->bookingInvCode;
+                            $stockReceive->companyFromSystemID = $stMaster->companyFromSystemID;
+                            $stockReceive->companyFrom = $stMaster->companyFrom;
+                            $stockReceive->companyToSystemID = $stMaster->companyToSystemID;
+                            $stockReceive->companyTo = $stMaster->companyTo;
+                            $stockReceive->locationTo = $stMaster->locationTo;
+                            $stockReceive->locationFrom = $stMaster->locationFrom;
+                            $stockReceive->confirmedYN = 0;
+                            $stockReceive->approved = 0;
+                            $stockReceive->interCompanyTransferYN = $stMaster->interCompanyTransferYN;
+                            $stockReceive->RollLevForApp_curr = 1;
+                            $stockReceive->createdDateTime = $stMaster->createdDateTime;
+                            $stockReceive->createdUserGroup = $stMaster->createdUserGroup;
+                            $stockReceive->createdPCID = $stMaster->createdPCID;
+                            $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
+                            $stockReceive->createdUserID = $stMaster->createdUserID;
 
+
+                            $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
+                                ->where('departmentSystemID', 10)
+                                ->where('isActive', -1)
+                                //->where('dateFrom', '<', $stMaster->tranferDate)
+                                //->where('dateTo', '>', $stMaster->tranferDate)
+                                ->where('isCurrent', -1)
+                                ->first();
+                            $lastSerialNumber = 1;
                             if (!empty($toCompanyFinancePeriod)) {
-                                $stockReceive->companyFinanceYearID = $toCompanyFinancePeriod->companyFinanceYearID;
-                                $stockReceive->companyFinancePeriodID = $toCompanyFinancePeriod->companyFinancePeriodID;
-                                $stockReceive->receivedDate = $stMaster->tranferDate;
+                                $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                    ->where('companySystemID', $stMaster->companyToSystemID)
+                                    ->first();
+
+                                $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
+                                    ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                    ->where('serialNo', '>', 0)
+                                    ->orderBy('stockReceiveAutoID', 'desc')
+                                    ->first();
+                                if ($lastSerial) {
+                                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                                }
+
+                                if (!empty($companyFinanceYear)) {
+                                    $stockReceive->FYBiggin = $companyFinanceYear->bigginingDate;
+                                    $stockReceive->FYEnd = $companyFinanceYear->endingDate;
+                                }
+
+                                if (!empty($toCompanyFinancePeriod)) {
+                                    $stockReceive->companyFinanceYearID = $toCompanyFinancePeriod->companyFinanceYearID;
+                                    $stockReceive->companyFinancePeriodID = $toCompanyFinancePeriod->companyFinancePeriodID;
+                                    $stockReceive->receivedDate = $stMaster->tranferDate;
+                                }
+
+                                if ($companyFinanceYear) {
+                                    $startYear = $companyFinanceYear['bigginingDate'];
+                                    $finYearExp = explode('-', $startYear);
+                                    $finYear = $finYearExp[0];
+                                } else {
+                                    $finYear = date("Y");
+                                }
                             }
 
-                            if ($companyFinanceYear) {
-                                $startYear = $companyFinanceYear['bigginingDate'];
-                                $finYearExp = explode('-', $startYear);
-                                $finYear = $finYearExp[0];
-                            } else {
-                                $finYear = date("Y");
+                            $stockReceive->serialNo = $lastSerialNumber;
+
+                            $stockReceiveCode = ($stockReceive->companyID . '\\' . $finYear . '\\' . $stockReceive->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                            $stockReceive->stockReceiveCode = $stockReceiveCode;
+                            $stockReceive->save();
+
+                            $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
+
+                            foreach ($stDetails as $new) {
+
+                                $item = array();
+                                $item['stockReceiveAutoID'] = $stockReceive->stockReceiveAutoID;
+                                $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
+                                $item['stockTransferAutoID'] = $stMaster->stockTransferAutoID;
+                                $item['stockTransferCode'] = $stMaster->stockTransferCode;
+                                $item['stockTransferDate'] = $today;
+
+                                $item['itemCodeSystem'] = $new['itemCodeSystem'];
+                                $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                                $item['itemDescription'] = $new['itemDescription'];
+                                $item['unitOfMeasure'] = $new['unitOfMeasure'];
+                                $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
+                                $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+                                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                                $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                                $item['localCurrencyID'] = $toCompany->localCurrencyID;
+                                // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
+                                $temUnitCostRpt = $new['unitCostRpt'] * 1.03;
+                                $convertCurrencyConversion = \Helper::currencyConversion($stMaster->companyToSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, $temUnitCostRpt);
+                                $item['unitCostLocal'] = $convertCurrencyConversion['localAmount'];
+                                $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
+                                $item['unitCostRpt'] = $convertCurrencyConversion['reportingAmount'];
+                                $item['qty'] = $new['qty'];
+
+                                if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
+                                    // return $this->sendError("Cost is not updated", 500);
+                                } else {
+                                    $srdItem = $stockReceiveDetailsRepo->create($item);
+                                    Log::info($srdItem);
+                                    $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
+                                    $stDetail->addedToRecieved = -1;
+                                    $stDetail->stockRecieved = -1;
+                                    $stDetail->save();
+                                }
                             }
+
+                            $stMaster->fullyReceived = -1;
+                            $stMaster->save();
+                            Log::info('Successfully created  stock_receive' . date('H:i:s'));
                         }
-
-                        $stockReceive->serialNo = $lastSerialNumber;
-
-                        $stockReceiveCode = ($stockReceive->companyID . '\\' . $finYear . '\\' . $stockReceive->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                        $stockReceive->stockReceiveCode = $stockReceiveCode;
-                        $stockReceive->save();
-
-                        $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
-
-                        foreach ($stDetails as $new) {
-
-                            $item = array();
-                            $item['stockReceiveAutoID'] = $stockReceive->stockReceiveAutoID;
-                            $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
-                            $item['stockTransferAutoID'] = $stMaster->stockTransferAutoID;
-                            $item['stockTransferCode'] = $stMaster->stockTransferCode;
-                            $item['stockTransferDate'] = $today;
-
-                            $item['itemCodeSystem'] = $new['itemCodeSystem'];
-                            $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
-                            $item['itemDescription'] = $new['itemDescription'];
-                            $item['unitOfMeasure'] = $new['unitOfMeasure'];
-                            $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
-                            $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                            $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
-                            $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
-                            $item['localCurrencyID'] = $toCompany->localCurrencyID;
-                            // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
-                            $temUnitCostRpt              = $new['unitCostRpt'] * 1.03;
-                            $convertCurrencyConversion   = \Helper::currencyConversion($stMaster->companyToSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, $temUnitCostRpt);
-                            $item['unitCostLocal']       = $convertCurrencyConversion['localAmount'];
-                            $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
-                            $item['unitCostRpt']         = $convertCurrencyConversion['reportingAmount'];
-                            $item['qty'] = $new['qty'];
-
-                            if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
-                                // return $this->sendError("Cost is not updated", 500);
-                            } else {
-                                $srdItem = $stockReceiveDetailsRepo->create($item);
-                                Log::info($srdItem);
-                                $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
-                                $stDetail->addedToRecieved = -1;
-                                $stDetail->stockRecieved = -1;
-                                $stDetail->save();
-                            }
-                        }
-
-                        $stMaster->fullyReceived = -1;
-                        $stMaster->save();
-                        Log::info('Successfully created  stock_receive' . date('H:i:s'));
                     }
                 }
                 DB::commit();
