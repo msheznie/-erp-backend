@@ -182,7 +182,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystemID"] = 17;
+        $inputParam["departmentSystemID"] = 5;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -398,7 +398,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystemID"] = 1;
+        $inputParam["departmentSystemID"] = 5;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);

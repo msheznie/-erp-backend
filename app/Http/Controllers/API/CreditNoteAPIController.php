@@ -417,7 +417,7 @@ class CreditNoteAPIController extends AppBaseController
         // updating header amounts
         $totalAmount = CreditNoteDetails::selectRaw("COALESCE(SUM(creditAmount),0) as creditAmountTrans, COALESCE(SUM(localAmount),0) as creditAmountLocal, COALESCE(SUM(comRptAmount),0) as creditAmountRpt")->where('creditNoteAutoID', $id)->first();
 
-        $input['creditAmountTrans'] = $totalAmount->creditAmountTrans;
+        $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
         $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
         $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
 
@@ -427,17 +427,6 @@ class CreditNoteAPIController extends AppBaseController
         if ($_post['creditNoteDate'] > $curentDate) {
             return $this->sendError('Document date cannot be greater than current date', 500);
         }
-
-        if (($_post['creditNoteDate'] >= $input['FYPeriodDateFrom']) && ($_post['creditNoteDate'] <= $input['FYPeriodDateTo'])) {
-
-        } else {
-            return $this->sendError('Document date should be between financial period start date and end date.', 500);
-
-        }
-
-        /*end of customer*/
-
-        /**/
 
         if ($input['confirmedYN'] == 1) {
             if ($creditNote->confirmedYN == 0) {
@@ -460,6 +449,15 @@ class CreditNoteAPIController extends AppBaseController
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
+
+                $documentDate = $input['creditNoteDate'];
+                $monthBegin = $input['FYPeriodDateFrom'];
+                $monthEnd = $input['FYPeriodDateTo'];
+                if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+                } else {
+                    return $this->sendError('Document date is not within the selected financial period !', 500);
+                }
+
 
                 /*details check*/
 
