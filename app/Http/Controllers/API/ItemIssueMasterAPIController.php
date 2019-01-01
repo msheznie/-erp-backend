@@ -189,6 +189,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'comment' => 'required',
         ]);
 
+
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
@@ -198,8 +199,6 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $input['issueDate'] = new Carbon($input['issueDate']);
             }
         }
-
-
 
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
