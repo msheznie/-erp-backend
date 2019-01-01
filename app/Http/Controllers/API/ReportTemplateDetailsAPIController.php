@@ -315,6 +315,12 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError('Report Template Details not found');
             }
 
+            $columnLink = ReportTemplateColumnLink::whereRaw("formulaRowID LIKE '$id,%' OR formulaRowID LIKE '%,$id,%' OR formulaRowID LIKE '%,$id' OR formulaRowID = '$id'")->first();
+
+            if ($columnLink) {
+                return $this->sendError('You cannot delete this record because already this record has been added to the formula');
+            }
+
             $detID = $reportTemplateDetails->subcategory()->pluck('detID');
             $reportTemplateDetails->subcategory()->delete();
             $reportTemplateDetails->gllink()->delete();

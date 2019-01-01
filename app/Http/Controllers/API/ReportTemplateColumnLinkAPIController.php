@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateReportTemplateColumnLinkAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateColumnLinkAPIRequest;
 use App\Models\Company;
 use App\Models\ReportTemplateColumnLink;
+use App\Models\ReportTemplateDetails;
 use App\Repositories\ReportTemplateColumnLinkRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -260,6 +261,43 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             return $this->sendError('Report Template Column Link not found');
         }
 
+        if (isset($input['formula'])) {
+            if (is_array(($input['formula']))) {
+                $formula = $input['formula'];
+                if ($formula) {
+                    $input['formula'] = implode('~', $formula);
+                    if ($input['formula']) {
+                        $formulaColumnID = [];
+                        $formulaRowID = [];
+                        foreach ($formula as $val) {
+                            $firstChar = substr($val, 0, 1);
+                            if ($firstChar == '#') {
+                                $formulaColumnID[] = ltrim($val, '#');
+                            }
+                            if ($firstChar == '$') {
+                                $formulaRowID[] = ltrim($val, '$');
+                            }
+                        }
+                        $input['formulaColumnID'] = join(',', $formulaColumnID);
+                        $input['formulaRowID'] = join(',', $formulaRowID);
+                    }
+                } else {
+                    $input['formulaColumnID'] = null;
+                    $input['formulaRowID'] = null;
+                    $input['formula'] = null;
+                }
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedUserID'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $input['modifiedDateTime'] = now();
+
+        $input = $this->convertArrayToValue($input);
+
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->update($input, $id);
 
         return $this->sendResponse($reportTemplateColumnLink->toArray(), 'ReportTemplateColumnLink updated successfully');
@@ -306,7 +344,14 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var ReportTemplateColumnLink $reportTemplateColumnLink */
+
         $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWithoutFail($id);
+
+        $columnLink = ReportTemplateColumnLink::whereRaw("formulaColumnID LIKE '$id,%' OR formulaColumnID LIKE '%,$id,%' OR formulaColumnID LIKE '%,$id' OR formulaColumnID = '$id'")->first();
+
+        if ($columnLink) {
+            return $this->sendError('You cannot delete this column because already this column has been added to the formula');
+        }
 
         if (empty($reportTemplateColumnLink)) {
             return $this->sendError('Report Template Column Link not found');
@@ -317,8 +362,26 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         return $this->sendResponse($id, 'Report Template Column Link deleted successfully');
     }
 
-    public function getTemplateColumnLinks(Request $request){
-        $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->orderBy('sortOrder','asc')->findWhere(['templateID' => $request->templateID]);
+    public function getTemplateColumnLinks(Request $request)
+    {
+        $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->orderBy('sortOrder', 'asc')->findWhere(['templateID' => $request->templateID]);
         return $this->sendResponse($reportTemplateColumnLink->toArray(), 'Report Template Column Link retrieved successfully');
+    }
+
+    public function reportTemplateFormulaColumn(Request $request)
+    {
+        $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWithoutFail($request->columnLinkID);
+
+        if (empty($reportTemplateColumnLink)) {
+            return $this->sendError('Report Template Column Link not found');
+        }
+
+        $reportTemplateColumnLink = $this->reportTemplateColumnLinkRepository->findWhereIn('columnLinkID', explode(',', $reportTemplateColumnLink->formulaColumnID));
+
+        $reportTemplateRows = ReportTemplateDetails::OfMaster($request->companyReportTemplateID)->where('itemType', 2)->get();
+
+        $response = array('columns' => $reportTemplateColumnLink, 'rows' => $reportTemplateRows);
+
+        return $this->sendResponse($response, 'Tax Formula Detail retrieved successfully');
     }
 }
