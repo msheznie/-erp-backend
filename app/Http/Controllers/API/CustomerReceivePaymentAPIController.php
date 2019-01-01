@@ -1079,7 +1079,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
