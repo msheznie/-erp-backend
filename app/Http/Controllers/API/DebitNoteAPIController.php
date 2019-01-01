@@ -732,7 +732,7 @@ class DebitNoteAPIController extends AppBaseController
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
 
         $suppliers = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
             ->where('companySystemID', $companyId)

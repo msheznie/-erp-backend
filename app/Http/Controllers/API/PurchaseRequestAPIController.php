@@ -218,7 +218,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $priorities = Priority::all();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+                          array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
 
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
