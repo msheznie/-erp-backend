@@ -15,6 +15,7 @@
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as approveCustomerInvoice()
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as rejectCustomerInvoice()
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceAmend()
+ * -- Date: 01 January 2019 By: Nazir Description: Added new functions named as customerInvoiceCancel()
  */
 
 namespace App\Http\Controllers\API;
@@ -456,9 +457,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
         }
 
-        if($_post['customerInvoiceNo'] !='') {
+        if ($_post['customerInvoiceNo'] != '') {
             /*checking customer invoice no already exist*/
-            $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $_post['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID','<>', $id)->first();
+            $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $_post['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID', '<>', $id)->first();
             if ($verifyCompanyInvoiceNo) {
                 return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
             }
@@ -545,10 +546,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
 
         }
-
-
-
-
 
 
         $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
@@ -877,7 +874,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'year', 'isProforma'));
+        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -909,6 +906,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $invMaster->where('erp_custinvoicedirect.approved', $input['approved']);
             }
         }
+
+        if (array_key_exists('canceledYN', $input)) {
+            if (($input['canceledYN'] == 0 || $input['canceledYN'] == -1) && !is_null($input['canceledYN'])) {
+                $invMaster->where('erp_custinvoicedirect.canceledYN', $input['canceledYN']);
+            }
+        }
+
         if (array_key_exists('isProforma', $input)) {
             if (!is_null($input['isProforma'])) {
                 $invMaster->where('isPerforma', $input['isProforma']);
@@ -963,7 +967,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode','customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -1479,7 +1483,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companySystemID = $master->companySystemID;
 
 
-
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
         $customerInvoice = (object)[];
 
@@ -1493,25 +1496,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-
-
         $company = Company::where('companySystemID', $companySystemID)->first();
-        $companyLogo='';
-        $CompanyName='';
-        if($company){
+        $companyLogo = '';
+        $CompanyName = '';
+        if ($company) {
             $companyLogo = $company->companyLogo;
             $CompanyName = $company->CompanyName;
         }
 
         if ($master->secondaryLogoCompanySystemID > 0) {
             $company = Company::where('companySystemID', $master->secondaryLogoCompanySystemID)->first();
-            if($company){
+            if ($company) {
                 $CompanyName = $company->CompanyName;
                 $companyLogo = $company->companyLogo;
             }
 
         }
-
 
 
         $line_invoiceNO = true;
@@ -1599,14 +1599,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $linePageNo = true;
 
                     /*requested by zahlan on 2018-12-20 remove group for midwest company*/
-                    if($companySystemID==42){
+                    if ($companySystemID == 42) {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate,  qty * rate  AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID  ORDER BY  t.mitID ASC");
-                      
-                    }else{
+
+                    } else {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
                     }
-
-
 
 
                 } else {
@@ -1684,13 +1682,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
         }
 
-        $custom = (array) $customerInvoice;
+        $custom = (array)$customerInvoice;
         if (empty($custom)) {
             return $this->sendError('Customer Invoice detail not found.');
         }
         $customerInvoice->companySystemID = $companySystemID;
-        $customerInvoice->CompanyName =$CompanyName;
-        $customerInvoice->companyLogo =$companyLogo;
+        $customerInvoice->CompanyName = $CompanyName;
+        $customerInvoice->companyLogo = $companyLogo;
 
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
@@ -1723,8 +1721,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->line_rentalPeriod = $line_rentalPeriod;
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
-
-
 
 
         $array = array('request' => $customerInvoice);
@@ -2184,6 +2180,48 @@ WHERE
         }
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer Invoice Amend successfully');
+    }
+
+    public function customerInvoiceCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
+
+        $customerInvoiceDirectData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+        if (empty($customerInvoiceDirectData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        if ($customerInvoiceDirectData->confirmedYN == 1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already confirmed');
+        }
+
+        if ($customerInvoiceDirectData->approved == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already approved');
+        }
+
+        if ($customerInvoiceDirectData->canceledYN == -1) {
+            return $this->sendError('You cannot cancel this customer invoice, this is already cancelled');
+        }
+
+        $customerDirectDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->get();
+
+        if (count($customerDirectDetail) > 0) {
+            return $this->sendError('You cannot cancel this customer invoice, invoice details are exist');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $customerInvoiceDirectData->canceledYN = -1;
+        $customerInvoiceDirectData->canceledComments = $request['cancelComments'];
+        $customerInvoiceDirectData->canceledDateTime = NOW();
+        $customerInvoiceDirectData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $customerInvoiceDirectData->canceledByEmpID = $employee->empID;
+        $customerInvoiceDirectData->canceledByEmpName = $employee->empFullName;
+        $customerInvoiceDirectData->save();
+
+        return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }
 
 
