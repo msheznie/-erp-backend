@@ -234,14 +234,31 @@ class CompanyFinancePeriodAPIController extends AppBaseController
             return $this->sendError('Company Finance Period not found');
         }
 
-
-        $checkFinancePeriod = 0;
-
-
         if ($input['isActive']) {
             $input['isActive'] = -1;
-        } else if ($companyFinancePeriod->isActive && !$input['isActive'] && $checkFinancePeriod > 0) {
-            //return $this->sendError('Cannot deactivate, There are some open finance periods for this finance year.');
+            if(!$companyFinancePeriod->isActive && $input['isActive'] && $companyFinancePeriod->departmentSystemID != 5) {
+                $checkGlAccount = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
+                                                        ->where('departmentSystemID', 5)
+                                                        ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                                        ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
+                                                        ->where('isActive', -1)
+                                                        ->count();
+
+                if ($checkGlAccount == 0) {
+                    return $this->sendError('General Ledger financial period is not active. You cannot activate financial period.');
+                }
+            }
+        } else if ($companyFinancePeriod->isActive && !$input['isActive'] && $companyFinancePeriod->departmentSystemID == 5) {
+                $checkOtherDepartments = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
+                                                        ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                                        ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
+                                                        ->whereDate('departmentSystemID','!=',5)
+                                                        ->where('isActive', -1)
+                                                        ->count();
+
+                if ($checkOtherDepartments > 0) {
+                    return $this->sendError('You cannot deactivate this financial period.This period is active in some department');
+                }
         }
 
         if ($input['isCurrent']) {
@@ -267,16 +284,23 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                 $checkOtherDepartments = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
                                                             ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
                                                             ->where('departmentSystemID','!=', 5)
-                                                            ->where(function ($q) {
-                                                                $q->where('isActive', -1);
-                                                                    //->orWhere('isCurrent', -1)
-                                                                    //->orWhere('isClosed', 0);
-                                                            })
+                                                            ->where('isActive', -1)
                                                             ->count();
 
-                if ($checkOtherDepartments > 0) {
-                    return $this->sendError('There are some department has active financial period.');
+                if ($checkOtherDepartments > 0 && $input['closeAllPeriods'] == 0) {
+                    return $this->sendError('There are some department has active financial period.',500,array('type' => 'active_period_exist'));
                 }
+
+                //if($input['closeAllPeriods'] == 1){
+                    $updateFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinancePeriod->companySystemID)
+                                                                ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                                                ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
+                                                                ->get();
+
+                    foreach ($updateFinancePeriod as $period){
+                        $this->companyFinancePeriodRepository->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => -1],$period->companyFinancePeriodID);
+                    }
+                //}
             }
             $input['isCurrent'] = 0;
             $input['isActive']  = 0;
@@ -440,6 +464,9 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('closeAllPeriods', function ($row) {
+                return 0;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
