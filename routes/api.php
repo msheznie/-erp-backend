@@ -230,6 +230,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
+    Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
 
     /** Bank master Created by Pasan  */
     Route::resource('bank/masters', 'BankMasterAPIController');

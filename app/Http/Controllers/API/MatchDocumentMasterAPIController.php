@@ -790,7 +790,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    //->where('matchingDocID', $matchDocumentMaster->matchDocumentMasterAutoID)
+                    ->where('matchingDocID', '<>' ,0)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
 
@@ -823,7 +823,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentFinalApprovedDate'] = $DebitNoteMasterExData->approvedDate;
                         $data['documentFinalApprovedBy'] = $DebitNoteMasterExData->approvedByUserID;
                         $data['documentFinalApprovedByEmpSystemID'] = $DebitNoteMasterExData->approvedByUserSystemID;
-                        $data['documentNarration'] = $DebitNoteMasterExData->comments;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from '. $matchDocumentMaster->matchingDocCode;
                         $data['clientContractID'] = 'X';
                         $data['contractUID'] = 159;
                         $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
@@ -869,7 +869,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['serviceLineCode'] = 'X';
                         $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
                         $data['glCode'] = $companyData->exchangeGainLossGLCode;
-                        $data['glAccountType'] = 'BS';
+                        $data['glAccountType'] = 'PL';
                         if($diffLocal > 0) {
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
                         }

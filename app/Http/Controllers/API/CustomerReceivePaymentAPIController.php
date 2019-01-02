@@ -683,6 +683,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'custPaymentReceiveDate' => 'required',
+                'bankID' => 'required',
+                'bankCurrency' => 'required|numeric|min:1',
+                'bankAccount' => 'required',
+                'custTransactionCurrencyID' => 'required|numeric|min:1',
+                'narration' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
