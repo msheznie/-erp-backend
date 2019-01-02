@@ -223,7 +223,7 @@ class JvMasterAPIController extends AppBaseController
 
         $lastSerial = JvMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('jvMasterAutoId', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
@@ -638,7 +638,7 @@ class JvMasterAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
         if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-            $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
+            //$companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
