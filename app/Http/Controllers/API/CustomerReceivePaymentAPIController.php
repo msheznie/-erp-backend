@@ -201,19 +201,24 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
-        $serialNo = CustomerReceivePayment::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))
-            ->where('documentSystemID', 21)
+        $serialNo = CustomerReceivePayment::where('documentSystemID', 21)
             ->where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
             ->first();
 
+        $lastSerialNumber = 1;
+        if ($serialNo) {
+            $lastSerialNumber = intval($serialNo->serialNo) + 1;
+        }
+
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
-        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
+        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['documentSystemID'] = 21;
         $input['documentID'] = 'BRV';
-        $input['serialNo'] = $serialNo->serialNo;
+        $input['serialNo'] = $lastSerialNumber;
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['custPaymentReceiveCode'] = $custPaymentReceiveCode;
