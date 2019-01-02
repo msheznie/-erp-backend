@@ -203,7 +203,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $lastSerial = CustomerInvoiceDirect::where('companySystemID', $input['companyID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('custInvoiceDirectAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;

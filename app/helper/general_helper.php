@@ -2473,9 +2473,13 @@ class Helper
 
         if ($fixedCapital->allocationTypeID == 1) {
 
-            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+            $documentDate  = Carbon::parse($fixedCapital->documentDate);
+            $documentYear = $documentDate->format('Y');
+            $documentYearMonth = $documentDate->format('Y-m');
 
-            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
 
             $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
                 ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])

@@ -228,7 +228,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('bookingSuppMasInvAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;

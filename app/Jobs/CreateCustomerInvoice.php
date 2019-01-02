@@ -54,11 +54,11 @@ class CreateCustomerInvoice implements ShouldQueue
             $customerInvoiceData['documentSystemiD'] = 20;
             $customerInvoiceData['documentID'] = 'INV';
 
-            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)->where('bigginingDate', '<', $dpMaster->disposalDocumentDate)->where('endingDate', '>', $dpMaster->disposalDocumentDate)->first();
 
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', $dpMaster->disposalDocumentDate)->where('dateTo', '>', $dpMaster->disposalDocumentDate)->first();
 
-            $today = NOW();
+            $today = $dpMaster->disposalDocumentDate;
             $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode;
 
             if (!empty($fromCompanyFinanceYear)) {

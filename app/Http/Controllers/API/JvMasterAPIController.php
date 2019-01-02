@@ -223,7 +223,7 @@ class JvMasterAPIController extends AppBaseController
 
         $lastSerial = JvMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('jvMasterAutoId', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
