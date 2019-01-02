@@ -150,7 +150,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $lastSerial = CreditNote::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('creditNoteAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
