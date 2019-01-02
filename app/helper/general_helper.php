@@ -2473,9 +2473,13 @@ class Helper
 
         if ($fixedCapital->allocationTypeID == 1) {
 
-            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+            $documentDate  = Carbon::parse($fixedCapital->documentDate);
+            $documentYear = $documentDate->format('Y');
+            $documentYearMonth = $documentDate->format('Y-m');
 
-            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
 
             $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
                 ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])
@@ -2784,13 +2788,17 @@ class Helper
                     $receivePayment['documentSystemID'] = 21;
                     $receivePayment['documentID'] = 'BRV';
 
-                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                    $documentDate  = Carbon::parse($pvMaster->BPVdate);
+                    $documentYear = $documentDate->format('Y');
+                    $documentYearMonth = $documentDate->format('Y-m');
+
+                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
 
                     $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                     $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                     $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
                     if ($companyFinancePeriod) {
                         $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                         $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
@@ -2897,13 +2905,17 @@ class Helper
                             $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
                             $receivePayment['documentID'] = $pvMaster->documentID;
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                            $documentDate  = Carbon::parse($pvMaster->BPVdate);
+                            $documentYear = $documentDate->format('Y');
+                            $documentYearMonth = $documentDate->format('Y-m');
+
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
 
                             $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                             $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                             $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
                             if ($companyFinancePeriod) {
                                 $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                                 $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;

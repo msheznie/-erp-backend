@@ -778,6 +778,123 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+
+            // Booking of Exchange Gain or Loss at Matching for debit note
+            if($matchDocumentMaster->documentSystemID == 15){
+
+                $diffLocal = 0;
+                $diffRpt = 0;
+                $DebitNoteMasterExData = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
+
+                $companyData = Company::find($DebitNoteMasterExData->companySystemID);
+
+                $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
+                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('matchingDocID', '<>' ,0)
+                    ->where('companySystemID', $matchDocumentMaster->companySystemID)
+                    ->first();
+
+                if(round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0){
+
+                    if((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0 )){
+
+                        $data = [];
+                        $finalData = [];
+                        $diffLocal = $totalAmountPayEx->paymentLocalAmount - $DebitNoteMasterExData->debitAmountLocal;
+                        $diffRpt = $totalAmountPayEx->paymentComRptAmount - $DebitNoteMasterExData->debitAmountRpt;
+
+                        //echo $diffLocal.' - '. $diffRpt;
+                        //exit();
+                        $data['companySystemID'] = $DebitNoteMasterExData->companySystemID;
+                        $data['companyID'] = $DebitNoteMasterExData->companyID;
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $DebitNoteMasterExData->documentSystemID;
+                        $data['documentID'] = $DebitNoteMasterExData->documentID;
+                        $data['documentSystemCode'] = $matchDocumentMaster->PayMasterAutoId;
+                        $data['documentCode'] = $DebitNoteMasterExData->debitNoteCode;
+                        $data['documentDate'] = $DebitNoteMasterExData->debitNoteDate;
+                        $data['documentYear'] = \Helper::dateYear($DebitNoteMasterExData->debitNoteDate);
+                        $data['documentMonth'] = \Helper::dateMonth($DebitNoteMasterExData->debitNoteDate);
+                        $data['documentConfirmedDate'] = $DebitNoteMasterExData->confirmedDate;
+                        $data['documentConfirmedBy'] = $DebitNoteMasterExData->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $DebitNoteMasterExData->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $DebitNoteMasterExData->approvedDate;
+                        $data['documentFinalApprovedBy'] = $DebitNoteMasterExData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $DebitNoteMasterExData->approvedByUserSystemID;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from '. $matchDocumentMaster->matchingDocCode;
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
+
+                        $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->supplierGLCodeSystemID;
+                        $data['glCode'] = $DebitNoteMasterExData->supplierGLCode;
+                        $data['glAccountType'] = 'BS';
+                        $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $DebitNoteMasterExData->supplierTransactionCurrencyER;
+                        $data['documentLocalCurrencyID'] = $DebitNoteMasterExData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $DebitNoteMasterExData->localCurrencyER;
+                        $data['documentRptCurrencyID'] = $DebitNoteMasterExData->companyReportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $DebitNoteMasterExData->companyReportingER;
+
+                        $data['documentTransAmount'] = 0;
+                        if($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        }
+                        else{
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        }
+
+                        if($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        }
+                        else{
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        }
+
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['documentType'] = $DebitNoteMasterExData->documentType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $employee->empID;
+                        $data['createdUserSystemID'] = $employee->employeeSystemID;
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        array_push($finalData, $data);
+
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
+                        $data['glCode'] = $companyData->exchangeGainLossGLCode;
+                        $data['glAccountType'] = 'PL';
+                        if($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
+                        }
+                        else{
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        }
+                        if($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt) * -1);
+                        }
+                        else{
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
+                        }
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+
+                        if($finalData){
+                            $storeSupplierInvoiceHistory = GeneralLedger::insert($finalData);
+                        }
+
+                    }
+
+                }
+
+            }
+
         }
 
         $input['modifiedPc'] = gethostname();

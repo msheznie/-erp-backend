@@ -228,7 +228,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('bookingSuppMasInvAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
@@ -902,7 +902,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
         if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-            $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
+            //$companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 

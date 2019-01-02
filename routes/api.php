@@ -230,6 +230,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
+    Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
 
     /** Bank master Created by Pasan  */
     Route::resource('bank/masters', 'BankMasterAPIController');
@@ -1187,6 +1188,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
     Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
     Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
+    Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
 
     Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
     Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
@@ -1358,7 +1360,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 24,'autoID' => 91, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 63,'autoID' => 16, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1369,6 +1371,7 @@ Route::get('runQueue', function () {
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
     //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
+    //$job = \App\Helper\Helper::generateAssetDisposal($master);
 });
 
 Route::get('runQueueSR', function () {

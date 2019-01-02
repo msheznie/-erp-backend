@@ -1172,7 +1172,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 

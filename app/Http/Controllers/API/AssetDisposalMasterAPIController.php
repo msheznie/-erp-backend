@@ -626,7 +626,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $yesNoSelection = YesNoSelection::all();
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
         $companyCurrency = \Helper::companyCurrency($companyId);
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
         $disposalType = AssetDisposalType::all();
         $customer = CustomerAssigned::ofCompany($companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $month = Months::all();

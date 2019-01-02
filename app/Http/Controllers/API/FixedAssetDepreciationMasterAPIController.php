@@ -506,7 +506,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($companyId);
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
 
         $output = array(
             'financialYears' => $financialYears,

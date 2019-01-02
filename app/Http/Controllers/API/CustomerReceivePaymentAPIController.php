@@ -201,19 +201,24 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
-        $serialNo = CustomerReceivePayment::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))
-            ->where('documentSystemID', 21)
+        $serialNo = CustomerReceivePayment::where('documentSystemID', 21)
             ->where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
             ->first();
 
+        $lastSerialNumber = 1;
+        if ($serialNo) {
+            $lastSerialNumber = intval($serialNo->serialNo) + 1;
+        }
+
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
-        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
+        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['documentSystemID'] = 21;
         $input['documentID'] = 'BRV';
-        $input['serialNo'] = $serialNo->serialNo;
+        $input['serialNo'] = $lastSerialNumber;
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['custPaymentReceiveCode'] = $custPaymentReceiveCode;
@@ -678,6 +683,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'custPaymentReceiveDate' => 'required',
+                'bankID' => 'required',
+                'bankCurrency' => 'required|numeric|min:1',
+                'bankAccount' => 'required',
+                'custTransactionCurrencyID' => 'required|numeric|min:1',
+                'narration' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
@@ -1079,7 +1099,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
