@@ -687,9 +687,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'custPaymentReceiveDate' => 'required',
-                'bankID' => 'required',
+                'bankID' => 'required|numeric|min:1',
                 'bankCurrency' => 'required|numeric|min:1',
-                'bankAccount' => 'required',
+                'bankAccount' => 'required|numeric|min:1',
                 'custTransactionCurrencyID' => 'required|numeric|min:1',
                 'narration' => 'required',
             ]);
