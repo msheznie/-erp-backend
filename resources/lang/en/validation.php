@@ -177,7 +177,8 @@ return [
         'accountCurrencyID' => 'Currency',
         'financeCategorySub' => 'Finance Sub Category',
         'primaryCompanySystemID' => 'Primary Company',
-        'financeCategoryMaster' => 'Finance Category'
+        'financeCategoryMaster' => 'Finance Category',
+        'wareHouseDescription' => 'Description'
     ],
 
 ];
