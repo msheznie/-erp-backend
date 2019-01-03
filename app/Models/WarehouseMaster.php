@@ -32,12 +32,11 @@ class WarehouseMaster extends Model
     //use SoftDeletes;
 
     public $table           = 'warehousemaster';
-    const CREATED_AT        = 'timeStamp';
+    const CREATED_AT        = 'createdDateTime';
     const UPDATED_AT        = 'timeStamp';
     protected $primaryKey   = 'wareHouseSystemCode';
     protected $dates        = ['deleted_at'];
-    //protected $timestamp = false;
-    //public $timestamps = false;
+
 
     public $fillable = [
         'wareHouseCode',
@@ -46,7 +45,20 @@ class WarehouseMaster extends Model
         'isActive',
         'companyID',
         'companySystemID',
-        'timestamp'
+        'timestamp',
+        'isDefault',
+        'isPosLocation',
+        'posFooterNote',
+        'createdPCID',
+        'createdUserSystemID',
+        'createdUserID',
+        'createdUserName',
+        'createdDateTime',
+        'modifiedPCID',
+        'modifiedUserSystemID',
+        'modifiedUserID',
+        'modifiedDateTime',
+        'modifiedUserName'
     ];
 
     /**
@@ -62,7 +74,20 @@ class WarehouseMaster extends Model
         'wareHouseLocation' => 'integer',
         'isActive' => 'integer',
         'companyID' => 'string',
-        'companySystemID' => 'integer'
+        'companySystemID' => 'integer',
+        'isDefault' => 'integer',
+        'isPosLocation' => 'integer',
+        'posFooterNote' => 'string',
+        'createdPCID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'createdUserName' => 'string',
+        'createdDateTime' => 'string',
+        'modifiedPCID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUserID' => 'string',
+        'modifiedDateTime' => 'string',
+        'modifiedUserName' => 'string'
     ];
 
     /**
