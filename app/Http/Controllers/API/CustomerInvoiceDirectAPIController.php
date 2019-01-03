@@ -2082,6 +2082,17 @@ WHERE
             ->make(true);
     }
 
+    public function approvalPreCheckCustomerInvoice(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
+    }
+
     public function approveCustomerInvoice(Request $request)
     {
         $approve = \Helper::approveDocument($request);
@@ -2092,6 +2103,7 @@ WHERE
         }
 
     }
+
 
     public function rejectCustomerInvoice(Request $request)
     {
