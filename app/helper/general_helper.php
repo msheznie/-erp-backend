@@ -3528,4 +3528,15 @@ class Helper
             Models\BankLedger::create($data);
         }
     }
+
+    public static function  getCompanyById($companySystemID)
+    {
+        $company = Models\Company::select('CompanyID')->where("companySystemID",$companySystemID)->first();
+
+        if(!empty($company)){
+            return $company->CompanyID;
+        }else{
+            return "";
+        }
+    }
 }

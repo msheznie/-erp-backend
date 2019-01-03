@@ -814,9 +814,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentID'] = $DebitNoteMasterExData->documentID;
                         $data['documentSystemCode'] = $matchDocumentMaster->PayMasterAutoId;
                         $data['documentCode'] = $DebitNoteMasterExData->debitNoteCode;
-                        $data['documentDate'] = $DebitNoteMasterExData->debitNoteDate;
-                        $data['documentYear'] = \Helper::dateYear($DebitNoteMasterExData->debitNoteDate);
-                        $data['documentMonth'] = \Helper::dateMonth($DebitNoteMasterExData->debitNoteDate);
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
                         $data['documentConfirmedDate'] = $DebitNoteMasterExData->confirmedDate;
                         $data['documentConfirmedBy'] = $DebitNoteMasterExData->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $DebitNoteMasterExData->confirmedByEmpSystemID;
@@ -871,7 +871,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         if ($diffLocal > 0) {
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
                         } else {
-                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
                         }
                         if ($diffRpt > 0) {
                             $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt) * -1);
@@ -923,9 +923,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentID'] = $PaySupplierInvoiceMasterExData->documentID;
                         $data['documentSystemCode'] = $matchDocumentMaster->PayMasterAutoId;
                         $data['documentCode'] = $PaySupplierInvoiceMasterExData->BPVcode;
-                        $data['documentDate'] = $PaySupplierInvoiceMasterExData->BPVdate;
-                        $data['documentYear'] = \Helper::dateYear($PaySupplierInvoiceMasterExData->BPVdate);
-                        $data['documentMonth'] = \Helper::dateMonth($PaySupplierInvoiceMasterExData->BPVdate);
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
                         $data['documentConfirmedDate'] = $PaySupplierInvoiceMasterExData->confirmedDate;
                         $data['documentConfirmedBy'] = $PaySupplierInvoiceMasterExData->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $PaySupplierInvoiceMasterExData->confirmedByEmpSystemID;
@@ -980,7 +980,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         if ($diffLocal > 0) {
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
                         } else {
-                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
                         }
                         if ($diffRpt > 0) {
                             $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt) * -1);

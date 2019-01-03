@@ -270,5 +270,9 @@ class Employee extends Model
     public function desi_master(){
         return $this->belongsTo('App\Models\EmployeeDetails', 'designation','designationID');
     }
-    
+
+    public function outlet()
+    {
+        return $this->hasMany('App\Models\OutletUsers','userID','employeeSystemID');
+    }
 }
