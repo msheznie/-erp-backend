@@ -1783,7 +1783,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('Cannot return back to amend. Supplier Invoice is added to payment');
         }
 
-        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend';
 
         DB::beginTransaction();
