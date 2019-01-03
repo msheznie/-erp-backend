@@ -162,20 +162,6 @@ class JvMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $validator = \Validator::make($input, [
-            'companyFinancePeriodID' => 'required|numeric|min:1',
-            'companyFinanceYearID' => 'required|numeric|min:1',
-            'jvType' => 'required',
-            'JVdate' => 'required',
-            'companySystemID' => 'required',
-            'currencyID' => 'required|numeric|min:1',
-            'JVNarration' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
-
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
@@ -192,6 +178,20 @@ class JvMasterAPIController extends AppBaseController
         }
 
         unset($inputParam);
+
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'jvType' => 'required',
+            'JVdate' => 'required',
+            'companySystemID' => 'required',
+            'currencyID' => 'required|numeric|min:1',
+            'JVNarration' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
