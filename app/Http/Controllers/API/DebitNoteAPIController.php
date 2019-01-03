@@ -1257,7 +1257,7 @@ UNION ALL
             return $this->sendError('You cannot return back to amend this debit note, it is not confirmed');
         }
 
-        // checking document matched in machmaster
+/*        // checking document matched in machmaster
         $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
             ->where('companySystemID', $debitNoteMasterData->companySystemID)
             ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
@@ -1265,7 +1265,7 @@ UNION ALL
 
         if ($checkDetailExistMatch) {
             return $this->sendError('Cannot return back to amend. debit note is added to matching');
-        }
+        }*/
 
         // checking document matched in machmaster
         $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $debitNoteAutoID)
@@ -1277,7 +1277,7 @@ UNION ALL
             return $this->sendError('Cannot return back to amend. debit note is added to matching');
         }
 
-        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $debitNoteMasterData->debitNoteCode . ' has been return back to amend';
 
         DB::beginTransaction();

@@ -184,7 +184,7 @@ class InventoryReportAPIController extends AppBaseController
                         $sort = 'desc';
                     }
 
-                    $output = $this->stockAgingQry($input);
+                    $output = $this->stockAgingQry($input,0);
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
@@ -195,7 +195,7 @@ class InventoryReportAPIController extends AppBaseController
     }
 
 
-    public function stockAgingQry($request)
+    public function stockAgingQry($request,$forExcel = 0)
     {
 
         $date = new Carbon($request['asOfDate']);
@@ -233,6 +233,14 @@ class InventoryReportAPIController extends AppBaseController
         }
 
         $agingField .= "if(ItemLedger.ageDays <= 0,ItemLedger.Qty,0) as `current`";
+
+        $groupByCompanyPlus = "";
+        $groupByCompanyMinus = "";
+
+        if($forExcel){
+            $groupByCompanyPlus = ",ItemLedger.companySystemID";
+            $groupByCompanyMinus = ",erp_itemledger.companySystemID";
+        }
 
         //DB::enableQueryLog();
         $sql = "SELECT * FROM (SELECT
@@ -296,12 +304,13 @@ class InventoryReportAPIController extends AppBaseController
                
                 ) AS ItemLedger 
             GROUP BY
-                ItemLedger.itemSystemCode) as grandFinal";
+                ItemLedger.itemSystemCode".$groupByCompanyPlus.") as grandFinal";
         $items = DB::select($sql);
 
 
         $issuedSql = "SELECT
                 erp_itemledger.itemSystemCode,
+                erp_itemledger.companySystemID,
                 SUM(erp_itemledger.inOutQty) AS Qty
             FROM
                 `erp_itemledger`
@@ -311,7 +320,7 @@ class InventoryReportAPIController extends AppBaseController
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 AND erp_itemledger.inOutQty < 0
             GROUP BY
-                erp_itemledger.itemSystemCode";
+                erp_itemledger.itemSystemCode".$groupByCompanyMinus;
 
 
         $issuedItems = DB::select($issuedSql);
@@ -320,7 +329,7 @@ class InventoryReportAPIController extends AppBaseController
 
             $issuedQty = 0;
             foreach ($issuedItems as $issue) {
-                if ($issue->itemSystemCode == $item->itemSystemCode) {
+                if ($issue->itemSystemCode == $item->itemSystemCode && (($issue->companySystemID == $item->companySystemID && $forExcel) || !$forExcel)) {
                     $issuedQty = abs($issue->Qty);
                     break;
                 }
@@ -539,7 +548,7 @@ class InventoryReportAPIController extends AppBaseController
                     $type = $request->type;
                     $input = $request->all();
                     $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
-                    $output = $this->stockAgingQry($input);
+                    $output = $this->stockAgingQry($input,1);
                     $data = array();
                     if ($output) {
                         $x = 0;
@@ -547,7 +556,7 @@ class InventoryReportAPIController extends AppBaseController
                         foreach ($output['categories'] as $key ) {
                             foreach ($key as $val) {
                                 $x++;
-
+                                $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
                                 $data[$x]['Category'] = $val->categoryDescription;

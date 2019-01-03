@@ -230,6 +230,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
+    Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
 
     /** Bank master Created by Pasan  */
     Route::resource('bank/masters', 'BankMasterAPIController');
@@ -432,7 +433,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
-  // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
+    // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
     Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
     Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
@@ -1185,6 +1186,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
     Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
     Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
+    Route::post('approvalPreCheckCustomerInvoice', 'CustomerInvoiceDirectAPIController@approvalPreCheckCustomerInvoice');
     Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
     Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
     Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
@@ -1318,6 +1320,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');
     Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear');
     Route::resource('companyFinanceYearPeriodMasters', 'CompanyFinanceYearperiodMasterAPIController');
+
+    Route::resource('outlet_users', 'OutletUsersAPIController');
+    Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
+    Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
 });
 
 
@@ -1359,7 +1365,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 63,'autoID' => 16, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 15, 'autoID' => 9067, 'companySystemID' => 52, 'employeeSystemID' => 2664, 'approvalLevelID' => 259, 'rollLevelOrder' => 1, 'documentSystemCode' => 9067];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1371,10 +1377,13 @@ Route::get('runQueue', function () {
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
     //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
     //$job = \App\Helper\Helper::generateAssetDisposal($master);
+    //return $job = \App\Helper\Helper::postedDatePromptInFinalApproval($master);
 });
 
 Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+
 
