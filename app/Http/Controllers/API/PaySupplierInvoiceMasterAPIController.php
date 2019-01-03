@@ -2131,7 +2131,8 @@ HAVING
             }
         }
 
-        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+
         $emailSubject = $paymentVoucherData->BPVcode . ' has been return back to amend';
 
         DB::beginTransaction();

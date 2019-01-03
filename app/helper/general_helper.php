@@ -887,6 +887,93 @@ class Helper
 
     }
 
+    /**
+     * function to prompt posted date in final approval
+     * @param $input - get line records
+     * @return mixed
+     */
+    public static function postedDatePromptInFinalApproval($input)
+    {
+        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
+        switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
+            case 20: // customer invoice
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["documentDate"] = "bookingDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 19: // credit note
+                $docInforArr["tableName"] = 'erp_creditnote';
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                $docInforArr["documentDate"] = "creditNoteDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 15: // debit note
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                $docInforArr["documentDate"] = "debitNoteDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 11: // supplier invoice
+                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                $docInforArr["documentDate"] = "bookingDate";
+                $docInforArr["financePeriod"] = "financeperiod_by";
+                break;
+            case 4: // Payment voucher
+                $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                $docInforArr["documentDate"] = "BPVdate";
+                $docInforArr["financePeriod"] = "financeperiod_by";
+                break;
+            case 17: // Journal Voucher
+                $docInforArr["tableName"] = 'erp_jvmaster';
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                $docInforArr["documentDate"] = "JVdate";
+                $docInforArr["financePeriod"] = "financeperiod_by";
+                break;
+            default:
+                return ['success' => false, 'message' => '', 'type' => 4];
+        }
+
+        $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+
+        if ($approvalLevel) {
+            if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // check for final approval
+                $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                $masterRec = $namespacedModel::with([$docInforArr["financePeriod"]])->find($input["documentSystemCode"]);
+                $financePeriod = $docInforArr["financePeriod"];
+                $documentDate = $docInforArr["documentDate"];
+                if ($masterRec) {
+                    if($masterRec->$financePeriod) {
+                        $isActive = $masterRec->$financePeriod->isActive;
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if ($isActive == -1) {
+                            $masterDocumentDate = $masterRec->$documentDate;
+                        }
+                        $masterDocumentDate = Carbon::parse($masterDocumentDate);
+                        $masterDocumentDate = $masterDocumentDate->format('d/m/Y');
+                        return ['success' => true, 'message' => 'Document will be posted on ' . $masterDocumentDate . '. Are you sure you want to continue?', 'type' => 1];
+                    }else{
+                        return ['success' => false, 'message' => 'Financial period not found', 'type' => 3];
+                    }
+                } else {
+                    return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+                }
+            }else{
+                return ['success' => true, 'message' => 'Success', 'type' => 5];
+            }
+        }else {
+            return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+        }
+    }
+
 
     /**
      * function to approve documents
@@ -1923,7 +2010,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3,57,56,58,59,66])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2473,7 +2560,7 @@ class Helper
 
         if ($fixedCapital->allocationTypeID == 1) {
 
-            $documentDate  = Carbon::parse($fixedCapital->documentDate);
+            $documentDate = Carbon::parse($fixedCapital->documentDate);
             $documentYear = $documentDate->format('Y');
             $documentYearMonth = $documentDate->format('Y-m');
 
@@ -2788,7 +2875,7 @@ class Helper
                     $receivePayment['documentSystemID'] = 21;
                     $receivePayment['documentID'] = 'BRV';
 
-                    $documentDate  = Carbon::parse($pvMaster->BPVdate);
+                    $documentDate = Carbon::parse($pvMaster->BPVdate);
                     $documentYear = $documentDate->format('Y');
                     $documentYearMonth = $documentDate->format('Y-m');
 
@@ -2905,7 +2992,7 @@ class Helper
                             $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
                             $receivePayment['documentID'] = $pvMaster->documentID;
 
-                            $documentDate  = Carbon::parse($pvMaster->BPVdate);
+                            $documentDate = Carbon::parse($pvMaster->BPVdate);
                             $documentYear = $documentDate->format('Y');
                             $documentYearMonth = $documentDate->format('Y-m');
 
