@@ -433,7 +433,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
-  // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
+    // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
     Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
     Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
@@ -1186,6 +1186,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
     Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
     Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
+    Route::post('approvalPreCheckCustomerInvoice', 'CustomerInvoiceDirectAPIController@approvalPreCheckCustomerInvoice');
     Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
     Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
     Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
@@ -1364,7 +1365,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 63,'autoID' => 16, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 15, 'autoID' => 9067, 'companySystemID' => 52, 'employeeSystemID' => 2664, 'approvalLevelID' => 259, 'rollLevelOrder' => 1, 'documentSystemCode' => 9067];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1376,6 +1377,7 @@ Route::get('runQueue', function () {
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
     //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
     //$job = \App\Helper\Helper::generateAssetDisposal($master);
+    //return $job = \App\Helper\Helper::postedDatePromptInFinalApproval($master);
 });
 
 Route::get('runQueueSR', function () {
