@@ -14,6 +14,7 @@
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateWarehouseMaster()
 -- Date: 10 - April 2018 By: Mubashir Description: Changed warehouse not found error message
 -- Date: 13 - July 2018 By: Nazir Description:  Added a new function named as getAllWarehouseForSelectedCompany()
+-- Date: 02 - January 2018 By: Fayas Description:  Modified function getAllWarehouseMaster()
  */
 namespace App\Http\Controllers\API;
 
@@ -72,26 +73,39 @@ class WarehouseMasterAPIController extends AppBaseController
     public function store(CreateWarehouseMasterAPIRequest $request)
     {
         $input = $request->all();
-        if(isset($input['companySystemID']))
+        $input = $this->convertArrayToValue($input);
+        $entityName = 'Warehouse';
+        if(isset($input['isPosLocation']) && $input['isPosLocation'])
         {
-            $input['companyID'] = $this->getCompanyById($input['companySystemID']);
+            $entityName = 'Outlet';
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => 'Warehouse code already exists'
+            'wareHouseCode.unique'   => $entityName.' code already exists',
+            'wareHouseCode.required'   => 'The '.$entityName.' code field is required.',
+            'wareHouseLocation.unique'   => 'The location field is required.',
         );
 
         $validator = \Validator::make($input, [
-            'wareHouseCode' => 'unique:warehousemaster'
+            'wareHouseCode' => 'required|unique:warehousemaster',
+            'companySystemID' => 'required',
+            'wareHouseLocation' => 'required',
+            'wareHouseDescription' => 'required'
         ],$messages);
 
         if ($validator->fails()) {//echo 'in';exit;
             return $this->sendError($validator->messages(), 422 );
         }
+        $input['companyID'] = $this->getCompanyById($input['companySystemID']);
+        $employee = \Helper::getEmployeeInfo();
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+        $input['createdUserName'] = $employee->empName;
 
         $warehouseMasters = $this->warehouseMasterRepository->create($input);
 
-        return $this->sendResponse($warehouseMasters->toArray(), 'Warehouse Master saved successfully');
+        return $this->sendResponse($warehouseMasters->toArray(), $entityName.' saved successfully');
     }
 
     /**
@@ -235,7 +249,9 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $warehouseMasters = WarehouseMaster::with(['location', 'company'])
             ->whereIn('companySystemID',$childCompanies)
-            ->select('warehousemaster.*');
+            ->when(request('isPosLocation') == -1, function ($q) {
+                $q->where('isPosLocation',-1);
+            });
 
         $search = $request->input('search.value');
         if($search){

@@ -504,16 +504,16 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $jobs = TicketMaster::whereIn('companySystemID', $companies)
-                            ->where('clientSystemID', $input['customer_id'])
-                            ->where('contractUID', $input['contractUIID'])
-                            ->where('jobStartedYNBM', 1)
-                            ->where('jobEndYNSup','!=' ,1)
-                            ->when(request('search', false), function ($q, $search) {
-                                return $q->where(function ($query) use ($search) {
-                                    return $query->where('ticketNo', 'LIKE', "%{$search}%");
-                                });
-                            })
-                            ->get(['ticketidAtuto', 'ticketNo']);
+            ->where('clientSystemID', $input['customer_id'])
+            ->where('contractUID', $input['contractUIID'])
+            ->where('jobStartedYNBM', 1)
+            ->where('jobEndYNSup', '!=', 1)
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('ticketNo', 'LIKE', "%{$search}%");
+                });
+            })
+            ->get(['ticketidAtuto', 'ticketNo']);
 
 
         return $this->sendResponse($jobs->toArray(), 'Jobs by Customer retrieved successfully');
@@ -551,8 +551,8 @@ class CustomerMasterAPIController extends AppBaseController
         $companySystemID = $request['companySystemID'];
 
         $customerCompanies = CustomerAssigned::where('companySystemID', $companySystemID)
-            ->with(['company','customer_master' => function($query){
-                $query->select('customerCodeSystem','companyLinkedToSystemID');
+            ->with(['company', 'customer_master' => function ($query) {
+                $query->select('customerCodeSystem', 'companyLinkedToSystemID');
             }])
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
@@ -613,5 +613,48 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($customer->toArray(), 'Customer Master Amend successfully');
+    }
+
+    public function exportCustomerMaster(Request $request)
+    {
+        $input = $request->all();
+        $type = $input['type'];
+
+        $customerMasters = CustomerMaster::with(['country'])
+            ->get();
+
+        if ($customerMasters) {
+            $x = 0;
+            $data = array();
+            foreach ($customerMasters as $val) {
+                $data[$x]['Primary Code'] = $val->CutomerCode;
+                $data[$x]['Secondary Code'] = $val->customerShortCode;
+                $data[$x]['Customer Name'] = $val->CustomerName;
+                $data[$x]['City'] = $val->customerCity;
+                $data[$x]['Country'] = $val->CustomerName;
+                if ($val->country) {
+                    $data[$x]['Country'] = $val->country->countryName;
+                } else {
+                    $data[$x]['Country'] = '';
+                }
+                $data[$x]['Credit Period'] = $val->creditDays;
+                $data[$x]['Credit Limit'] = $val->creditLimit;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        $csv = \Excel::create('customer_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 }
