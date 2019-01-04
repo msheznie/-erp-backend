@@ -919,7 +919,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $assetCositng = $assetCositng->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%")
-                    ->orWhere('COMMENTS', 'LIKE', "%{$search}%");
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%");
             });
         }
 
