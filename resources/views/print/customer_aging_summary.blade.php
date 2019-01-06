@@ -176,11 +176,11 @@
         @foreach ($reportData as $key => $val)
             <thead>
             <tr>
-                <td colspan="9">{{$key}}</td>
+                <td colspan="9"><b>{{$key}}</b></td>
             </tr>
             <tr>
                 <th width="10%">Cust. Code</th>
-                <th width="10%">Customer Name</th>
+                <th width="20%">Customer Name</th>
                 <th width="10%">Currency</th>
                 <th width="10%">Amount</th>
                 @foreach ($agingRange as $age)
@@ -189,11 +189,37 @@
             </tr>
             </thead>
             <tbody>
-            @foreach ($val as $key => $det)
-            <tr>
-                <td>{{ dd($det) }}</td>
-            </tr>
+            {{ $ageTotal = 0 }}
+            @foreach ($val as $det)
+                @foreach ($agingRange as $age)
+                    {{ $ageTotal += $det[0]->$age }}
+                @endforeach
+                <tr>
+                    <td>{{ $det[0]->CustomerCode }}</td>
+                    <td>{{ $det[0]->CustomerName }}</td>
+                    <td>{{ $det[0]->documentCurrency }}</td>
+                    <td style="text-align: right">{{ number_format($ageTotal, $det[0]->balanceDecimalPlaces) }}</td>
+                    @foreach ($agingRange as $age)
+                        <td style="text-align: right">{{ number_format($det[0]->$age, $det[0]->balanceDecimalPlaces) }}</td>
+                    @endforeach
+                </tr>
             @endforeach
+            <tr>
+                <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
+                    class="text-right"><b>Sub Total:</b></td>
+                <td style="text-align: right">{{ number_format($ageTotal, $det[0]->balanceDecimalPlaces) }}</td>
+                @foreach ($agingRange as $age)
+                    <td style="text-align: right">{{ number_format($det[0]->$age, $det[0]->balanceDecimalPlaces) }}</td>
+                @endforeach
+            </tr>
+            <tr>
+                <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
+                    class="text-right"><b>Grand Total:</b></td>
+                <td style="text-align: right">{{ number_format($ageTotal, $det[0]->balanceDecimalPlaces) }}</td>
+                @foreach ($agingRange as $age)
+                    <td style="text-align: right">{{ number_format($det[0]->$age, $det[0]->balanceDecimalPlaces) }}</td>
+                @endforeach
+            </tr>
             </tbody>
         @endforeach
     </table>
