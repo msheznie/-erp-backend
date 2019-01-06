@@ -233,18 +233,18 @@ class BudjetdetailsAPIController extends AppBaseController
         $input = $request->all();
 
         $validator = \Validator::make($input, [
-            'budjetAmtRpt' => 'numeric|min:0'
+            'budjetAmtRpt' => 'numeric'
         ]);
 
         if ($validator->fails()) {
-            $input['budjetAmtRpt'] = 0;
+            $input['budjetAmtRpt'] = floatval($input['budjetAmtRpt']);
         }
 
         /** @var Budjetdetails $budjetdetails */
         $budjetdetails = $this->budjetdetailsRepository->findWithoutFail($id);
 
         if (empty($budjetdetails)) {
-            return $this->sendError('Budjetdetails not found');
+            return $this->sendError('Budget details not found');
         }
 
         if(!$input['budjetAmtRpt']){
