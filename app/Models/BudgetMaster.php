@@ -94,6 +94,8 @@ class BudgetMaster extends Model
     public $fillable = [
         'companySystemID',
         'companyID',
+        'documentSystemID',
+        'documentID',
         'companyFinanceYearID',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -126,6 +128,8 @@ class BudgetMaster extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'companyFinanceYearID' => 'integer',
+        'documentSystemID'  => 'integer',
+        'documentID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'templateMasterID' => 'integer',
