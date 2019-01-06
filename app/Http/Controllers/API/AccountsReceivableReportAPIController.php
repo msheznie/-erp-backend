@@ -46,7 +46,6 @@ use App\Models\GeneralLedger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-ini_set('max_execution_time', 300);
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
