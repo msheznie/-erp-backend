@@ -823,13 +823,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentFinalApprovedDate'] = $DebitNoteMasterExData->approvedDate;
                         $data['documentFinalApprovedBy'] = $DebitNoteMasterExData->approvedByUserID;
                         $data['documentFinalApprovedByEmpSystemID'] = $DebitNoteMasterExData->approvedByUserSystemID;
-                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $matchDocumentMaster->matchingDocCode;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $input['matchingDocCode'];
                         $data['clientContractID'] = 'X';
                         $data['contractUID'] = 159;
                         $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
 
-                        $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->supplierGLCodeSystemID;
-                        $data['glCode'] = $DebitNoteMasterExData->supplierGLCode;
+                        $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->liabilityAccountSysemID;
+                        $data['glCode'] = $DebitNoteMasterExData->liabilityAccount;
                         $data['glAccountType'] = 'BS';
                         $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $DebitNoteMasterExData->supplierTransactionCurrencyER;
@@ -932,7 +932,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentFinalApprovedDate'] = $PaySupplierInvoiceMasterExData->approvedDate;
                         $data['documentFinalApprovedBy'] = $PaySupplierInvoiceMasterExData->approvedByUserID;
                         $data['documentFinalApprovedByEmpSystemID'] = $PaySupplierInvoiceMasterExData->approvedByUserSystemID;
-                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $matchDocumentMaster->matchingDocCode;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $input['matchingDocCode'];
                         $data['clientContractID'] = 'X';
                         $data['contractUID'] = 159;
                         $data['supplierCodeSystem'] = $PaySupplierInvoiceMasterExData->BPVsupplierID;
