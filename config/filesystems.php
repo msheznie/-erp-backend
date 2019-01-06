@@ -47,7 +47,12 @@ return [
             'driver' => 'local',
             'root' => storage_path('app'),
         ],
-
+        'local_public' => [
+            'driver' => 'local',
+            'root' => public_path(''),
+            'url' => env('APP_URL').'',
+            'visibility' => 'public',
+        ],
         'public' => [
             'driver' => 'local',
             'root' => 'C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads', //storage_path('app/public'),

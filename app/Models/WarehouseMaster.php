@@ -58,7 +58,9 @@ class WarehouseMaster extends Model
         'modifiedUserSystemID',
         'modifiedUserID',
         'modifiedDateTime',
-        'modifiedUserName'
+        'modifiedUserName',
+        'templateImgUrl',
+        'printTemplateId'
     ];
 
     /**
@@ -87,7 +89,9 @@ class WarehouseMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUserID' => 'string',
         'modifiedDateTime' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'templateImgUrl' => 'string',
+        'printTemplateId' => 'integer'
     ];
 
     /**

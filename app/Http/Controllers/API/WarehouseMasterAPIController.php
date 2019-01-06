@@ -15,6 +15,7 @@
 -- Date: 10 - April 2018 By: Mubashir Description: Changed warehouse not found error message
 -- Date: 13 - July 2018 By: Nazir Description:  Added a new function named as getAllWarehouseForSelectedCompany()
 -- Date: 02 - January 2018 By: Fayas Description:  Modified function getAllWarehouseMaster()
+-- Date: 03 - January 2018 By: Fayas Description:  Modified function uploadWarehouseImage()
  */
 namespace App\Http\Controllers\API;
 
@@ -27,6 +28,9 @@ use App\Models\YesNoSelection;
 use App\Repositories\WarehouseMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -141,6 +145,13 @@ class WarehouseMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        if(isset($input['wareHouseImage'])){
+            $wareHouseImage = $input['wareHouseImage'];
+        }else{
+            $wareHouseImage = null;
+        }
+
+        $input = array_except($input, ['wareHouseImage']);
         $input = $this->convertArrayToValue($input);
         $entityName = 'Warehouse';
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
@@ -178,6 +189,19 @@ class WarehouseMasterAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         $input['modifiedUserName'] = $employee->empName;
         $input['modifiedDateTime'] = now();
+
+        if(!empty($wareHouseImage)){
+            $to_path   = "warehouse/".$id;
+            $destination = public_path($to_path);
+            if (!file_exists($destination)) {
+                File::makeDirectory($destination, 0777, true);
+            }
+            if (Storage::disk('local_public')->exists($wareHouseImage['path'])) {
+                //Storage::disk('local_public')->move($wareHouseImage['path'], $to_path);
+                File::move(public_path($wareHouseImage['path']), $to_path.'/'.$wareHouseImage['file_name']);
+                $input['templateImgUrl'] = $to_path.'/'.$wareHouseImage['file_name'];
+            }
+        }
 
         $warehouseMaster = $this->warehouseMasterRepository->update($input, $id);
 
@@ -364,4 +388,40 @@ class WarehouseMasterAPIController extends AppBaseController
 
         return $this->sendResponse($warehouseMasters->toArray(), 'Record retrieved successfully');
     }
+
+
+    public function uploadWarehouseImage(Request $request)
+    {
+        try {
+            if ($request->hasFile('file')) {
+                $img = $request->file('file');
+                $file_ext = $img->getClientOriginalExtension();
+                $filename = "template_image_".md5(microtime()).$request->get('id').'.'.$file_ext;
+                $fileSize = $img->getClientSize();
+                $fileName = $img->getClientOriginalName();
+                $temp_path = "warehouse_temp_file/".$request->get('id');
+
+                $destination = public_path($temp_path);
+                if (!file_exists($destination)) {
+                    File::makeDirectory($destination, 0777, true);
+                }
+
+                Storage::disk('local_public')->putFileAs($temp_path, $img, $filename);
+
+                $response = [
+                    'file_name' => $filename,
+                    'file_ext' => $file_ext,
+                    'path' => $temp_path.'/'.$filename,
+                    'file_size' => round($fileSize / 1024, 2),
+                    'original_file_name' => $fileName
+                ];
+                return $this->sendResponse($response, 'Image uploaded successfully');
+            } else {
+                return $this->sendError('Image cannot be uploaded',500);
+            }
+        } catch (\Exception $exception) {
+            return $this->sendError('Image cannot be uploaded',500);
+        }
+    }
+
 }
