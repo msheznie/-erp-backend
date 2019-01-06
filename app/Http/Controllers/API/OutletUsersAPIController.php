@@ -443,4 +443,6 @@ class OutletUsersAPIController extends AppBaseController
         $users = $users->take(20)->get();
         return $this->sendResponse($users->toArray(), 'Data retrieved successfully');
     }
+
+
 }
