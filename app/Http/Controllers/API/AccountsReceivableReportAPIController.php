@@ -47,7 +47,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-
 class AccountsReceivableReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -1609,6 +1608,107 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
+                break;
+            case 'CR':
+                if ($request->reportTypeID == 'RMS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerRevenueMonthlySummary($request);
+
+                    $currency = $request->currencyID;
+                    $currencyId = 2;
+
+                    if ($currency == 2) {
+                        $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    } else {
+                        $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    }
+
+                    if (!empty($decimalPlaceUnique)) {
+                        $currencyId = $decimalPlaceUnique[0];
+                    }
+
+
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+
+                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+
+                    $total = array();
+
+                    $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
+                    $total['Feb'] = array_sum(collect($output)->pluck('Feb')->toArray());
+                    $total['March'] = array_sum(collect($output)->pluck('March')->toArray());
+                    $total['April'] = array_sum(collect($output)->pluck('April')->toArray());
+                    $total['May'] = array_sum(collect($output)->pluck('May')->toArray());
+                    $total['June'] = array_sum(collect($output)->pluck('June')->toArray());
+                    $total['July'] = array_sum(collect($output)->pluck('July')->toArray());
+                    $total['Aug'] = array_sum(collect($output)->pluck('Aug')->toArray());
+                    $total['Sept'] = array_sum(collect($output)->pluck('Sept')->toArray());
+                    $total['Oct'] = array_sum(collect($output)->pluck('Oct')->toArray());
+                    $total['Nov'] = array_sum(collect($output)->pluck('Nov')->toArray());
+                    $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
+                    $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
+
+
+                    $outputArr = array();
+                    foreach ($output as $val) {
+                        $outputArr[$val->CompanyName][] = $val;
+                    }
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
+
+                    $html = view('print.revenue_monthly_summary', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
+                break;
+            case 'CA':
+                if ($request->reportTypeID == 'CAS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerAgingSummaryQRY($request);
+
+                    $outputArr = array();
+                    $grandTotalArr = array();
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
+                            $total = collect($output['data'])->pluck($val)->toArray();
+                            $grandTotalArr[$val] = array_sum($total);
+                        }
+                    }
+
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
+                            $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
+
+                    $html = view('print.customer_aging_summary', $dataArr);
 
                     $pdf = \App::make('dompdf.wrapper');
                     $pdf->loadHTML($html);
@@ -3643,29 +3743,29 @@ WHERE
                     erp_generalledger.supplierCodeSystem,
                 IF
                     (
-                    erp_generalledger.clientContractID = "X" 
+                    erp_generalledger.clientContractID = "X"
                     AND erp_generalledger.supplierCodeSystem = 0,
                     0,
                 IF
                     (
-                    erp_generalledger.clientContractID <> "X" 
+                    erp_generalledger.clientContractID <> "X"
                     AND erp_generalledger.supplierCodeSystem = 0,
                     contractmaster.clientID,
                 IF
-                    ( erp_generalledger.documentSystemID = 11 OR erp_generalledger.documentSystemID = 15 OR erp_generalledger.documentSystemID = 4, contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
-                    ) 
+                    ( erp_generalledger.documentSystemID = 11 OR erp_generalledger.documentSystemID = 15 OR erp_generalledger.documentSystemID = 4, contractmaster.clientID, erp_generalledger.supplierCodeSystem )
+                    )
                     ) AS mySupplierCode,
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentLocalAmount,
                     round((erp_generalledger.documentLocalAmount *- 1),0) AS MyLocalAmount,
                     erp_generalledger.documentRptAmount,
-                    round((erp_generalledger.documentRptAmount *- 1),0) AS MyRptAmount 
+                    round((erp_generalledger.documentRptAmount *- 1),0) AS MyRptAmount
                 FROM
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-                    LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber 
+                    LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                     INNER JOIN (
                 SELECT
@@ -3675,18 +3775,18 @@ WHERE
                     erp_templatesdetails.controlAccountID,
                     erp_templatesdetails.controlAccountSubID,
                     erp_templatesglcode.chartOfAccountSystemID,
-                    erp_templatesglcode.glCode 
+                    erp_templatesglcode.glCode
                 FROM
                     erp_templatesdetails
-                    INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                    INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
                 WHERE
-                    ( ( ( erp_templatesdetails.templatesMasterAutoID ) = 15 ) AND ( ( erp_templatesdetails.controlAccountID ) = "PLI" ) ) 
-                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID 
+                    ( ( ( erp_templatesdetails.templatesMasterAutoID ) = 15 ) AND ( ( erp_templatesdetails.controlAccountID ) = "PLI" ) )
+                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-		          
+
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
                     WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')

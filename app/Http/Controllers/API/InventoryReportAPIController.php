@@ -623,9 +623,18 @@ class InventoryReportAPIController extends AppBaseController
 
                                 $data[$x]['Over 730 (Qty)'] = $val->case7;
                                 if($input['currencyID'] == 1){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+
+                                    if( $val->Qty == 0){
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    }
                                 }else if($input['currencyID'] == 2){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7,$val->RptCurrencyDecimals);
+                                    if( $val->Qty == 0) {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    }
                                 }
                             }
                         }
