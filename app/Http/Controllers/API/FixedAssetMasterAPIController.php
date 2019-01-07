@@ -825,15 +825,22 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $search = $request->input('search.value');
+
         $assetAllocation = GRVDetails::with(['grv_master', 'item_by', 'localcurrency', 'rptcurrency'])->whereHas('item_by', function ($q) {
             $q->where('financeCategoryMaster', 3);
             $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
-        })->whereHas('grv_master', function ($q) {
+        })->whereHas('grv_master', function ($q) use ($search) {
             $q->where('grvConfirmedYN', 1);
             $q->where('approved', -1);
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+            }
         })->whereHas('localcurrency', function ($q) {
         })->whereHas('rptcurrency', function ($q) {
         })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
+
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -853,13 +860,10 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
-        $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetAllocation = $assetAllocation->where(function ($query) use ($search) {
-                $query->where('grvPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                $query->where('itemDescription', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
