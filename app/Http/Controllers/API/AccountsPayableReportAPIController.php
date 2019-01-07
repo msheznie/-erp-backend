@@ -420,7 +420,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -456,7 +456,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SADA') { //Supplier aging detail advance
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
@@ -1014,7 +1014,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $lineTotal += $val->$val2;
                             }
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal;
+                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
                             $x++;
                         }
                     } else {
@@ -1039,7 +1039,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $lineTotal += $val->$val2;
                             }
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal;
+                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
                             $x++;
                         }
                     } else {
@@ -2550,10 +2550,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(grandFinal.ageDays > " . $through . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 }
                 $c++;
             }
@@ -2874,10 +2874,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",grandFinal.balanceAmount,0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",grandFinal.balanceAmount,0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 }
                 $c++;
             }
