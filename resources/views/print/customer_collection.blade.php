@@ -10,7 +10,7 @@
     }
 
     body {
-        font-size: 11px;
+        font-size: 10px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -30,8 +30,13 @@
     }
 
     table > tbody > th > tr > td {
-        font-size: 11px;
+        font-size: 10px;
     }
+
+    table > tbody > th{
+        font-size: 10px;
+    }
+
 
     .theme-tr-head {
         background-color: #EBEBEB !important;
@@ -165,7 +170,7 @@
         </tr>
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Collection for the Period {{ $fromDate }}
+                <span class="font-weight-bold">Collection for the Period : {{ $fromDate }}
                     to {{ $toDate }}</span>
             </td>
         </tr>
@@ -185,17 +190,19 @@
                 <td colspan="5"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="20%">Customer Code</th>
-                <th width="50%">Customer Name</th>
-                <th width="10%">Bank Payment</th>
-                <th width="10%">Credit Note Issued</th>
-                <th width="10%">Total</th>
+                <th width="20%" style="text-align: center">Customer Code</th>
+                <th width="50%" style="text-align: center">Customer Name</th>
+                <th width="10%" style="text-align: center">Bank Payment</th>
+                <th width="10%" style="text-align: center">Credit Note Issued</th>
+                <th width="10%" style="text-align: center">Total</th>
             </tr>
             </thead>
             <tbody>
-            {{ $grandTotalBank = 0 }}
-            {{ $grandTotalCredit = 0 }}
+            {{ $lineTotalBank = 0 }}
+            {{ $lineTotalCredit = 0 }}
             @foreach ($val as $det)
+                {{ $lineTotalBank = 0  }}
+                {{ $lineTotalCredit = 0  }}
                 @foreach ($det as $det2)
                     <tr>
                         <td>{{ $det2->CutomerCode }}</td>
@@ -203,28 +210,32 @@
                         <td style="text-align: right"> {{ number_format($det2->BRVDocumentAmount, $decimalPlaces) }} </td>
                         <td style="text-align: right"> {{ number_format($det2->CNDocumentAmount, $decimalPlaces) }} </td>
                         <td style="text-align: right"> {{ number_format(($det2->BRVDocumentAmount + $det2->CNDocumentAmount), $decimalPlaces) }} </td>
-
                     </tr>
+                    {{ $lineTotalBank += $det2->BRVDocumentAmount }}
+                    {{ $lineTotalCredit += $det2->CNDocumentAmount }}
                 @endforeach
                 <tr>
                     <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
                         class="text-right"><b>Total:</b></td>
-                    <td style="text-align: right"><b>{{ number_format($bankPaymentTotal, $decimalPlaces) }}</b></td>
-                    <td style="text-align: right"><b>{{ number_format($creditNoteTotal, $decimalPlaces) }}</b></td>
-                    <td style="text-align: right"><b>{{ number_format(($bankPaymentTotal + $creditNoteTotal), $decimalPlaces) }}</b></td>
+                    <td style="text-align: right"><b>{{ number_format($lineTotalBank, $decimalPlaces) }}</b></td>
+                    <td style="text-align: right"><b>{{ number_format($lineTotalCredit, $decimalPlaces) }}</b></td>
+                    <td style="text-align: right">
+                        <b>{{ number_format(($lineTotalBank + $lineTotalCredit), $decimalPlaces) }}</b></td>
                 </tr>
-                {{ $grandTotalBank += $bankPaymentTotal  }}
-                {{ $grandTotalCredit += $creditNoteTotal  }}
-            @endforeach
-            <tr>
-                <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b>Grand Total:</b></td>
-                <td style="text-align: right"><b>{{ number_format($grandTotalBank, $decimalPlaces) }}</b></td>
-                <td style="text-align: right"><b>{{ number_format($grandTotalCredit, $decimalPlaces) }}</b></td>
-                <td style="text-align: right"><b>{{ number_format(($grandTotalBank + $grandTotalCredit), $decimalPlaces) }}</b></td>
-            </tr>
-            <tbody>
+
         @endforeach
+        <tbody>
+        @endforeach
+        <tfoot>
+        <tr>
+            <td colspan="2" style="border-bottom-color:white !important;border-left-color:white !important"
+                class="text-right"><b>Grand Total:</b></td>
+            <td style="text-align: right"><b>{{ number_format($bankPaymentTotal, $decimalPlaces) }}</b></td>
+            <td style="text-align: right"><b>{{ number_format($creditNoteTotal, $decimalPlaces) }}</b></td>
+            <td style="text-align: right">
+                <b>{{ number_format(($bankPaymentTotal + $creditNoteTotal), $decimalPlaces) }}</b></td>
+        </tr>
+        </tfoot>
     </table>
 </div>
 

@@ -10,7 +10,7 @@
     }
 
     body {
-        font-size: 11px;
+        font-size: 9px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -30,7 +30,11 @@
     }
 
     table > tbody > th > tr > td {
-        font-size: 11px;
+        font-size: 9px;
+    }
+
+    table > thead > th {
+        font-size: 9px;
     }
 
     .theme-tr-head {
@@ -186,22 +190,26 @@
         @foreach ($reportData as $key => $val)
             <thead>
             <tr>
-                <th width="30%">Customer Name</th>
-                <th width="5%">Jan</th>
-                <th width="5%">Feb</th>
-                <th width="5%">March</th>
-                <th width="5%">April</th>
-                <th width="5%">May</th>
-                <th width="5%">Jun</th>
-                <th width="5%">July</th>
-                <th width="5%">Aug</th>
-                <th width="5%">Sept</th>
-                <th width="5%">Oct</th>
-                <th width="5%">Nov</th>
-                <th width="5%">Dec</th>
-                <th width="10%">Total</th>
+                <td colspan="14"><b>{{$key}}</b></td>
+            </tr>
+            <tr>
+                <th width="20%">Customer Name</th>
+                <th width="6%">Jan</th>
+                <th width="6%">Feb</th>
+                <th width="6%">March</th>
+                <th width="6%">April</th>
+                <th width="6%">May</th>
+                <th width="6%">Jun</th>
+                <th width="6%">July</th>
+                <th width="6%">Aug</th>
+                <th width="6%">Sept</th>
+                <th width="6%">Oct</th>
+                <th width="6%">Nov</th>
+                <th width="6%">Dec</th>
+                <th width="8%">Total</th>
             </tr>
             </thead>
+            <tbody>
             {{ $janTotal = 0 }}
             {{ $febTotal = 0 }}
             {{ $marTotal = 0 }}
@@ -264,24 +272,27 @@
                 <td class="text-right"><b>{{number_format($decTotal, $decimalPlace)}}</b></td>
                 <td class="text-right"><b>{{number_format($gTotal, $decimalPlace)}}</b></td>
             </tr>
-            <tr style="background-color: #E7E7E7">
-                <td class="text-right"
-                    style=""><b>Grand Total:</b>
-                </td>
-                <td class="text-right"><b>{{number_format($total['Jan'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Feb'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['March'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['April'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['May'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['June'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['July'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Aug'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Sept'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Oct'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Nov'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Dece'], $decimalPlace)}}</b></td>
-                <td class="text-right"><b>{{number_format($total['Total'], $decimalPlace)}}</b></td>
-            </tr>
+            </tbody>
         @endforeach
+        <tfoot>
+        <tr style="background-color: #E7E7E7">
+            <td class="text-right"
+                style=""><b>Grand Total:</b>
+            </td>
+            <td class="text-right"><b>{{number_format($total['Jan'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Feb'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['March'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['April'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['May'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['June'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['July'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Aug'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Sept'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Oct'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Nov'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Dece'], $decimalPlace)}}</b></td>
+            <td class="text-right"><b>{{number_format($total['Total'], $decimalPlace)}}</b></td>
+        </tr>
+        </tfoot>
     </table>
 </div>
