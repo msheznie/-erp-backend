@@ -565,6 +565,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 
     Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
+    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
     Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
     Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
