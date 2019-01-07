@@ -1326,6 +1326,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
     Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
     Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage');
+
+    Route::resource('counter', 'CounterAPIController');
+    Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
+    Route::get('getCounterFormData', 'CounterAPIController@getCounterFormData');
 });
 
 
@@ -1386,4 +1390,6 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+
 
