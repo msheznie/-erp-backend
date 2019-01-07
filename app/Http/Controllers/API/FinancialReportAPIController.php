@@ -42,6 +42,8 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
+        $company = Company::whereIN('companySystemID',$companiesByGroup)->get();
+
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companiesByGroup);
         if (isset($request['type']) && $request['type'] == 'add') {
@@ -69,6 +71,7 @@ class FinancialReportAPIController extends AppBaseController
             'accountType' => $accountType,
             'templateType' => $templateType,
             'segment' => $departments,
+            'company' => $company,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
