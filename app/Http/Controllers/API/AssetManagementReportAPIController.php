@@ -875,8 +875,8 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     erp_purchaseordermaster.purchaseOrderCode AS POCODE,
                     erp_fa_asset_master.serviceLineCode AS ServiceLine,
                     erp_fa_asset_master.MANUFACTURE AS Supplier,
-                    erp_fa_assetcost.localAmount AS AssetCostLocal,
-                    erp_fa_assetcost.rptAmount AS AssetCostRpt,
+                    erp_fa_asset_master.COSTUNIT AS AssetCostLocal,
+                    erp_fa_asset_master.costUnitRpt AS AssetCostRpt,
                     locCur.CurrencyCode as localCurrency,
                     locCur.DecimalPlaces as localCurrencyDeci,
                     repCur.CurrencyCode as reportCurrency,
@@ -884,7 +884,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                 FROM
                     erp_fa_asset_master
                 LEFT JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
-                LEFT JOIN erp_fa_assetcost ON erp_fa_asset_master.faID = erp_fa_assetcost.faID
+                -- LEFT JOIN erp_fa_assetcost ON erp_fa_asset_master.faID = erp_fa_assetcost.faID
                 LEFT JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                 LEFT JOIN erp_grvmaster ON erp_fa_asset_master.docOriginSystemCode = erp_grvmaster.grvAutoID
                 LEFT JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
