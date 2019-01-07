@@ -175,6 +175,8 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $input['companyID'] = $company->CompanyID;
+        $input['documentSystemID'] = 65;
+        $input['documentID'] = 'BUD';
 
         $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $input['companySystemID'])
             ->whereYear('bigginingDate', '=', $input['Year'])

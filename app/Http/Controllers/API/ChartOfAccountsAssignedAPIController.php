@@ -86,6 +86,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             $input = $this->convertArrayToValue($input);
 
             foreach ($input as $key => $value) {
+
+                if($key == 'isAssigned' && $value){
+                    $value = -1;
+                }
                 $chartOfAccountsAssigned->$key = $value;
             }
 

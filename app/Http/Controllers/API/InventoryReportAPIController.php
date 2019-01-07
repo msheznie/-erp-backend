@@ -252,6 +252,8 @@ class InventoryReportAPIController extends AppBaseController
                 ItemLedger.unitOfMeasure,
                 ItemLedger.secondaryItemCode,
                 ItemLedger.UnitShortCode,
+                ItemLedger.itemMovementCategory,
+                ItemLedger.movementCatDescription,
                 ItemLedger.categoryDescription,
                 ItemLedger.transactionDate,
                 ItemLedger.LocalCurrencyDecimals,
@@ -280,6 +282,8 @@ class InventoryReportAPIController extends AppBaseController
                 erp_itemledger.transactionDate,
                 financeitemcategorysub.categoryDescription,
                 itemmaster.secondaryItemCode,
+                itemassigned.itemMovementCategory,
+                itemmovementcategory.description as movementCatDescription,
                 units.UnitShortCode,
                 erp_itemledger.inOutQty AS Qty,
                 currencymaster.CurrencyName AS LocalCurrency,
@@ -292,6 +296,8 @@ class InventoryReportAPIController extends AppBaseController
             FROM
                 `erp_itemledger`
                 INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND `erp_itemledger`.`companySystemID` = `itemassigned`.`companySystemID`
+                LEFT JOIN `itemmovementcategory` ON `itemmovementcategory`.`id` = `itemassigned`.`itemMovementCategory`
                 INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
                 LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
                 LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
@@ -560,6 +566,7 @@ class InventoryReportAPIController extends AppBaseController
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
                                 $data[$x]['Category'] = $val->categoryDescription;
+                                $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
                                 $data[$x]['Qty'] =  $val->Qty;
 
@@ -616,9 +623,18 @@ class InventoryReportAPIController extends AppBaseController
 
                                 $data[$x]['Over 730 (Qty)'] = $val->case7;
                                 if($input['currencyID'] == 1){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+
+                                    if( $val->Qty == 0){
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    }
                                 }else if($input['currencyID'] == 2){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7,$val->RptCurrencyDecimals);
+                                    if( $val->Qty == 0) {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    }
                                 }
                             }
                         }

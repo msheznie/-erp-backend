@@ -11,6 +11,7 @@
  * -- Date: 06-july 2018 By: Fayas Description: Added new functions named as getTrialBalance()
  * -- Date: 11-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceDetails()
  * -- Date: 13-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceCompanyWise()
+ * -- Date: 07-january 2018 By: Fayas Description: Added new functions named as getAFRFilterChartOfAccounts()
  * -- REVISION HISTORY
  */
 
@@ -68,6 +69,41 @@ class FinancialReportAPIController extends AppBaseController
             'accountType' => $accountType,
             'templateType' => $templateType,
             'segment' => $departments,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAFRFilterChartOfAccounts(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $input = $request->all();
+        $inCategoryBLorPLID = [];
+
+        if(isset($input['isBS']) && $input['isBS'] == 'true'){
+            array_push($inCategoryBLorPLID,1);
+        }
+
+        if(isset($input['isPL']) && $input['isPL'] == 'true'){
+            array_push($inCategoryBLorPLID,2);
+        }
+
+        if(count($inCategoryBLorPLID) == 0){
+            $inCategoryBLorPLID = [1,2];
+        }
+        
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
+                                                 ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
+                                                 ->get(['chartOfAccountSystemID','AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+
+        $output = array(
+            'controlAccount' => $controlAccount
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -535,6 +571,9 @@ class FinancialReportAPIController extends AppBaseController
                             $x++;
                             $data[$x]['Company ID'] = 'Company ID';
                             $data[$x]['Company Name'] = 'Company Name';
+                            $data[$x]['GL  Type'] = 'GL  Type';
+                            $data[$x]['Template Description'] = 'Template Description';
+                            $data[$x]['Document ID'] = 'Document ID';
                             $data[$x]['Document Number'] = 'Document Number';
                             $data[$x]['Date'] = 'Date';
                             $data[$x]['Document Narration'] = 'Document Narration';
@@ -556,6 +595,9 @@ class FinancialReportAPIController extends AppBaseController
                                     $x++;
                                     $data[$x]['Company ID'] = $val->companyID;
                                     $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['GL  Type'] = $val->glAccountType;
+                                    $data[$x]['Template Description'] = $val->templateDetailDescription;
+                                    $data[$x]['Document ID'] = $val->documentID;
                                     $data[$x]['Document Number'] = $val->documentCode;
                                     $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['Document Narration'] = $val->documentNarration;
@@ -579,6 +621,9 @@ class FinancialReportAPIController extends AppBaseController
                                 $x++;
                                 $data[$x]['Company ID'] = '';
                                 $data[$x]['Company Name'] = '';
+                                $data[$x]['GL  Type'] = '';
+                                $data[$x]['Template Description'] = '';
+                                $data[$x]['Document ID'] = '';
                                 $data[$x]['Document Number'] = '';
                                 $data[$x]['Date'] = '';
                                 $data[$x]['Document Narration'] = '';
@@ -601,6 +646,9 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x][''] = '';
                                 $data[$x][''] = '';
                                 $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x][''] = '';
                                     $data[$x][''] = '';
@@ -612,6 +660,9 @@ class FinancialReportAPIController extends AppBaseController
                         $x++;
                         $data[$x]['Company ID'] = '';
                         $data[$x]['Company Name'] = '';
+                        $data[$x]['GL  Type'] = '';
+                        $data[$x]['Template Description'] = '';
+                        $data[$x]['Document ID'] = '';
                         $data[$x]['Document Number'] = '';
                         $data[$x]['Date'] = '';
                         $data[$x]['Document Narration'] = '';
@@ -633,7 +684,9 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['Account Description'] = $val->AccountDescription;
-
+                            $data[$x]['GL  Type'] = $val->glAccountType;
+                            $data[$x]['Template Description'] = $val->templateDetailDescription;
+                            $data[$x]['Document ID'] = $val->documentID;
                             $data[$x]['Document Number'] = $val->documentCode;
                             $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Narration'] = $val->documentNarration;
@@ -1191,6 +1244,9 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
@@ -1208,6 +1264,11 @@ class FinancialReportAPIController extends AppBaseController
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
                         LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
                     WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
@@ -1238,19 +1299,27 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                         erp_generalledger.documentRptCurrencyID,
                         sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
                         sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
-                        "" AS isCustomer 
+                        "" AS isCustomer
                     FROM
                         erp_generalledger
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
                         LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                    WHERE
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                        WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND erp_generalledger.glAccountType = "BS" 
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')

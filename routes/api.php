@@ -565,6 +565,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 
     Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
+    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
     Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
     Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
@@ -1324,6 +1325,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('outlet_users', 'OutletUsersAPIController');
     Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
     Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
+    Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage');
 });
 
 
@@ -1384,6 +1386,4 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
-
-
 
