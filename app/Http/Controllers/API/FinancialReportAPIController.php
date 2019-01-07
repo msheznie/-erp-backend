@@ -11,18 +11,21 @@
  * -- Date: 06-july 2018 By: Fayas Description: Added new functions named as getTrialBalance()
  * -- Date: 11-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceDetails()
  * -- Date: 13-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceCompanyWise()
+ * -- Date: 07-january 2018 By: Fayas Description: Added new functions named as getAFRFilterChartOfAccounts()
  * -- REVISION HISTORY
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\ReportTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,15 +42,13 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companiesByGroup);
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
+
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
         //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
@@ -55,11 +56,54 @@ class FinancialReportAPIController extends AppBaseController
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
 
         $contracts = Contract::whereIN('companySystemID', $companiesByGroup)->get(['contractUID', 'ContractNumber', 'contractDescription']);
+
+        $accountType = AccountsType::all();
+
+        $templateType = ReportTemplate::all();
+
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
             'controlAccount' => $controlAccount,
-            'contracts' => $contracts
+            'contracts' => $contracts,
+            'accountType' => $accountType,
+            'templateType' => $templateType,
+            'segment' => $departments,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAFRFilterChartOfAccounts(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $input = $request->all();
+        $inCategoryBLorPLID = [];
+
+        if(isset($input['isBS']) && $input['isBS'] == 'true'){
+            array_push($inCategoryBLorPLID,1);
+        }
+
+        if(isset($input['isPL']) && $input['isPL'] == 'true'){
+            array_push($inCategoryBLorPLID,2);
+        }
+
+        if(count($inCategoryBLorPLID) == 0){
+            $inCategoryBLorPLID = [1,2];
+        }
+        
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
+                                                 ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
+                                                 ->get(['chartOfAccountSystemID','AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+
+        $output = array(
+            'controlAccount' => $controlAccount
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
