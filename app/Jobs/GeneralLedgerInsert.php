@@ -1985,9 +1985,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentID'] = $masterData->documentID;
                                 $data['documentSystemCode'] = $masterModel["autoID"];
                                 $data['documentCode'] = $masterData->depCode;
-                                $data['documentDate'] = $val->depForFYperiodEndDate;
-                                $data['documentYear'] = \Helper::dateYear($val->depForFYperiodEndDate);
-                                $data['documentMonth'] = \Helper::dateMonth($val->depForFYperiodEndDate);
+                                $data['documentDate'] = $masterData->depDate;
+                                $data['documentYear'] = \Helper::dateYear($masterData->depDate);
+                                $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
                                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
                                 $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                                 $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -2032,9 +2032,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentID'] = $masterData->documentID;
                                     $data['documentSystemCode'] = $masterModel["autoID"];
                                     $data['documentCode'] = $masterData->depCode;
-                                    $data['documentDate'] = $val->depForFYperiodEndDate;
-                                    $data['documentYear'] = \Helper::dateYear($val->depForFYperiodEndDate);
-                                    $data['documentMonth'] = \Helper::dateMonth($val->depForFYperiodEndDate);
+                                    $data['documentDate'] = $masterData->depDate;
+                                    $data['documentYear'] = \Helper::dateYear($masterData->depDate);
+                                    $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
                                     $data['documentConfirmedDate'] = $masterData->confirmedDate;
                                     $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                                     $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;

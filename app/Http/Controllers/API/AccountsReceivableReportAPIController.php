@@ -1716,6 +1716,49 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
                 }
                 break;
+            case 'CC':
+                if ($request->reportTypeID == 'CCR') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerCollectionQRY($request);
+
+                    $outputArr = array();
+
+                    $bankPaymentTotal = collect($output)->pluck('BRVDocumentAmount')->toArray();
+                    $bankPaymentTotal = array_sum($bankPaymentTotal);
+
+                    $creditNoteTotal = collect($output)->pluck('CNDocumentAmount')->toArray();
+                    $creditNoteTotal = array_sum($creditNoteTotal);
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                            $selectedCurrency = $companyCurrency->localcurrency->CurrencyCode;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                            $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
+                        }
+                    }
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                        }
+                    }
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'decimalPlaces' => $decimalPlaces, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+
+                    $html = view('print.customer_collection', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }

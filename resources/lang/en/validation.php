@@ -178,7 +178,9 @@ return [
         'financeCategorySub' => 'Finance Sub Category',
         'primaryCompanySystemID' => 'Primary Company',
         'financeCategoryMaster' => 'Finance Category',
-        'wareHouseDescription' => 'Description'
+        'wareHouseDescription' => 'Description',
+        'counterCode'   => 'Counter code',
+        'counterName'   => 'Counter name'
     ],
 
 ];
