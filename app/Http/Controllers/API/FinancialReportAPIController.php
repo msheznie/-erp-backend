@@ -11,6 +11,7 @@
  * -- Date: 06-july 2018 By: Fayas Description: Added new functions named as getTrialBalance()
  * -- Date: 11-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceDetails()
  * -- Date: 13-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceCompanyWise()
+ * -- Date: 07-january 2018 By: Fayas Description: Added new functions named as getAFRFilterChartOfAccounts()
  * -- REVISION HISTORY
  */
 
@@ -60,6 +61,41 @@ class FinancialReportAPIController extends AppBaseController
             'departments' => $departments,
             'controlAccount' => $controlAccount,
             'contracts' => $contracts
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAFRFilterChartOfAccounts(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $input = $request->all();
+        $inCategoryBLorPLID = [];
+
+        if(isset($input['isBS']) && $input['isBS'] == 'true'){
+            array_push($inCategoryBLorPLID,1);
+        }
+
+        if(isset($input['isPL']) && $input['isPL'] == 'true'){
+            array_push($inCategoryBLorPLID,2);
+        }
+
+        if(count($inCategoryBLorPLID) == 0){
+            $inCategoryBLorPLID = [1,2];
+        }
+        
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
+                                                 ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
+                                                 ->get(['chartOfAccountSystemID','AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+
+        $output = array(
+            'controlAccount' => $controlAccount
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
