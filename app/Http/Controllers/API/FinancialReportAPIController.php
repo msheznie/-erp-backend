@@ -17,12 +17,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\ReportTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,15 +41,13 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companiesByGroup);
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
+
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
         //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
@@ -55,11 +55,19 @@ class FinancialReportAPIController extends AppBaseController
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
 
         $contracts = Contract::whereIN('companySystemID', $companiesByGroup)->get(['contractUID', 'ContractNumber', 'contractDescription']);
+
+        $accountType = AccountsType::all();
+
+        $templateType = ReportTemplate::all();
+
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
             'controlAccount' => $controlAccount,
-            'contracts' => $contracts
+            'contracts' => $contracts,
+            'accountType' => $accountType,
+            'templateType' => $templateType,
+            'segment' => $departments,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
