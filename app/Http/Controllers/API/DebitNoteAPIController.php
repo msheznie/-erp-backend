@@ -15,6 +15,7 @@
  * -- Date: 08-October 2018 By: Nazir Description: Added new function getDebitNotePaymentStatusHistory()
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
+ * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusDNPrint(),
  */
 namespace App\Http\Controllers\API;
 
@@ -1354,6 +1355,10 @@ UNION ALL
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function checkPaymentStatusDNPrint(Request $request){
+
     }
 
 

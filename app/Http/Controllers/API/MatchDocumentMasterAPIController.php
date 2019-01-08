@@ -1456,7 +1456,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountspayableledger.documentCode LIKE '%{$search}%') OR ( erp_accountspayableledger.supplierInvoiceNo LIKE '%{$search}%')";
+            $filter = " AND (( erp_accountspayableledger.documentCode LIKE '%{$search}%') OR ( erp_accountspayableledger.supplierInvoiceNo LIKE '%{$search}%'))";
         }
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
@@ -1563,7 +1563,7 @@ WHERE
         $id = $request->get('matchDocumentMasterAutoID');
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -1870,7 +1870,7 @@ HAVING
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') OR ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%')";
+            $filter = " AND (( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') OR ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%'))";
         }
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
@@ -1963,13 +1963,13 @@ LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = c
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
 AND date(erp_accountsreceivableledger.documentDate) <= '{$matchingDocdate}'
-{$filter}
 AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
 AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID
 AND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
 AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID
+{$filter}
 HAVING
 	ROUND(
 		balanceMemAmount,
