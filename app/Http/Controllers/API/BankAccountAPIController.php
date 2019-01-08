@@ -95,7 +95,7 @@ class BankAccountAPIController extends AppBaseController
             'bankBranch' => 'required',
             'AccountNo' => 'required',
             'accountCurrencyID' => 'required',
-            //'chartOfAccountSystemID' => 'required',
+            'chartOfAccountSystemID' => 'required'
             //'BranchEmail' => 'email'
         ]);
 
