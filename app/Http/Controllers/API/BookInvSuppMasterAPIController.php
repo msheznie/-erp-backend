@@ -23,6 +23,7 @@
  * -- Date: 28-September 2018 By: Nazir Description: Added new function getSupplierInvoiceAmend(),
  * -- Date: 17-October 2018 By: Nazir Description: Added new function supplierInvoiceTaxPercentage(),
  * -- Date: 20-December 2018 By: Nazir Description: Added new function amendSupplierInvoiceReview(),
+ * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusSIPrint(),
  */
 
 namespace App\Http\Controllers\API;
@@ -47,6 +48,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
+use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
@@ -1860,6 +1862,28 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function checkPaymentStatusSIPrint(Request $request)
+    {
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+        $companySystemID = $input['companySystemID'];
+        $matchingDocCode = $input['matchingDocCode'];
+
+        $printID = 0;
+
+        $matchedAmount = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('matchingDocCode', $matchingDocCode)
+            ->first();
+
+        if ($matchedAmount) {
+            $printID = $matchedAmount->matchDocumentMasterAutoID;
+        }
+
+        return $this->sendResponse($printID, 'Print data retrieved');
     }
 
 
