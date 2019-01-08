@@ -180,7 +180,8 @@ return [
         'financeCategoryMaster' => 'Finance Category',
         'wareHouseDescription' => 'Description',
         'counterCode'   => 'Counter code',
-        'counterName'   => 'Counter name'
+        'counterName'   => 'Counter name',
+        'companyID'   => 'Company'
     ],
 
 ];

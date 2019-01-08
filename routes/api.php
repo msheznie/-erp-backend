@@ -1330,6 +1330,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('counter', 'CounterAPIController');
     Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
     Route::get('getCounterFormData', 'CounterAPIController@getCounterFormData');
+
+    Route::resource('posPaymentGlConfigMasters', 'GposPaymentGlConfigMasterAPIController');
+    Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
+    Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
+    Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
 });
 
 
@@ -1390,6 +1395,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+
 
 
 
