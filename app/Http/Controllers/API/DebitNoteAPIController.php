@@ -1359,6 +1359,24 @@ UNION ALL
 
     public function checkPaymentStatusDNPrint(Request $request){
 
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+        $companySystemID = $input['companySystemID'];
+        $matchingDocCode = $input['matchingDocCode'];
+
+        $printID = 0;
+
+        $matchedAmount = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('matchingDocCode', $matchingDocCode)
+            ->first();
+
+        if($matchedAmount){
+            $printID = $matchedAmount->matchDocumentMasterAutoID;
+        }
+
+        return $this->sendResponse($printID, 'Print data retrieved');
     }
 
 
