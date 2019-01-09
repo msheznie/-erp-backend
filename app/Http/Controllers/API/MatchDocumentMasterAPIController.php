@@ -620,10 +620,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
 
             if ( $formattedMatchingDate < $postedDate) {
-                return $this->sendError('Advance payment is posted on '.$postedDate.'. You cannot select a date less than posted date!', 500);
+                return $this->sendError('Advance payment is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
             }
 
-        } elseif ($input['documentSystemID'] == 4) {
+        } elseif ($input['documentSystemID'] == 15) {
 
             $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
@@ -632,7 +632,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Debit note is posted on '.$postedDate.'. You cannot select a date less than posted date!', 500);
+                return $this->sendError('Debit note is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
             }
         }
 
@@ -1085,7 +1085,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
 
-            if (date("d/m/Y", strtotime($input['matchingDocdate'])) < $postedDate) {
+            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Receipt voucher is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
             }
 
@@ -1095,7 +1097,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($creditNoteDataUpdateCHK->postedDate));
 
-            if (date("d/m/Y", strtotime($input['matchingDocdate']))  < $postedDate) {
+            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Credit note is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
             }
         }
