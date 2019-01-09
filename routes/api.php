@@ -778,6 +778,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
     Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
+    Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
@@ -889,6 +890,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview');
+    Route::post('checkPaymentStatusSIPrint', 'BookInvSuppMasterAPIController@checkPaymentStatusSIPrint');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
@@ -1330,6 +1332,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('counter', 'CounterAPIController');
     Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
     Route::get('getCounterFormData', 'CounterAPIController@getCounterFormData');
+
+    Route::resource('posPaymentGlConfigMasters', 'GposPaymentGlConfigMasterAPIController');
+    Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
+    Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
+    Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
 });
 
 
@@ -1390,6 +1397,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+
 
 
 
