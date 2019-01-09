@@ -1617,6 +1617,7 @@ class Helper
                                                     $data["assetDescription"] = $val["itemDescription"];
                                                     $data["COSTUNIT"] = $val["unitCostLocal"];
                                                     $data["costUnitRpt"] = $val["unitCostRpt"];
+                                                    $data["assetType"] = 1;
                                                     $data['createdPcID'] = gethostname();
                                                     $data['createdUserID'] = \Helper::getEmployeeID();
                                                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
