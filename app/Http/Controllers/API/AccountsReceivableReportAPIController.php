@@ -1494,26 +1494,26 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $x++;
                         $matchingDocdate = '';
                         $matchingDocCode = '';
-                        if($val->custReceiptDate == null && $val->matchingDocdate == null){
+                        if ($val->custReceiptDate == null && $val->matchingDocdate == null) {
                             $matchingDocCode = $val->matchingDocCode;
-                        }else if($val->custReceiptDate != null && $val->matchingDocdate == null){
+                        } else if ($val->custReceiptDate != null && $val->matchingDocdate == null) {
                             $matchingDocCode = $val->custReceiptCode;
-                        }else if($val->custReceiptDate == null && $val->matchingDocdate != null){
+                        } else if ($val->custReceiptDate == null && $val->matchingDocdate != null) {
                             $matchingDocCode = $val->matchingDocCode;
-                        }else if($val->custReceiptDate > $val->matchingDocdate){
+                        } else if ($val->custReceiptDate > $val->matchingDocdate) {
                             $matchingDocCode = $val->custReceiptCode;
-                        }else if($val->matchingDocdate > $val->custReceiptDate){
+                        } else if ($val->matchingDocdate > $val->custReceiptDate) {
                             $matchingDocCode = $val->matchingDocCode;
                         }
-                        if($val->custReceiptDate == null && $val->matchingDocdate == null){
+                        if ($val->custReceiptDate == null && $val->matchingDocdate == null) {
                             $matchingDocdate = $val->matchingDocdate;
-                        }else if($val->custReceiptDate != null && $val->matchingDocdate == null){
+                        } else if ($val->custReceiptDate != null && $val->matchingDocdate == null) {
                             $matchingDocdate = $val->custReceiptDate;
-                        }else if($val->custReceiptDate == null && $val->matchingDocdate != null){
+                        } else if ($val->custReceiptDate == null && $val->matchingDocdate != null) {
                             $matchingDocdate = $val->matchingDocdate;
-                        }else if($val->custReceiptDate > $val->matchingDocdate){
+                        } else if ($val->custReceiptDate > $val->matchingDocdate) {
                             $matchingDocdate = $val->custReceiptDate;
-                        }else if($val->matchingDocdate > $val->custReceiptDate){
+                        } else if ($val->matchingDocdate > $val->custReceiptDate) {
                             $matchingDocdate = $val->matchingDocdate;
                         }
                         $data[$x]['Company ID'] = $val->companyID;
@@ -1528,7 +1528,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$x]['GL Description'] = $val->AccountDescription;
                         $data[$x]['Currency'] = $val->CurrencyCode;
                         $data[$x]['Credit Note Total Amount'] = round($val->documentRptAmount, $val->DecimalPlaces);
-                        $data[$x]['Receipt Matching Code'] = $matchingDocCode ;
+                        $data[$x]['Receipt Matching Code'] = $matchingDocCode;
                         $data[$x]['Receipt Matching Date'] = $matchingDocdate;
                         $data[$x]['Receipt Amount'] = round(($val->detailSum + $val->custReceiptSum), $val->DecimalPlaces);
                     }
@@ -1608,6 +1608,33 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                } elseif ($request->reportTypeID == 'CBS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerBalanceStatementQRY($request);
+
+                    //dd(DB::getQueryLog());
+                    $outputArr = array();
+                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
+                    $grandTotal = array_sum($grandTotal);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        }
+                    }
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+
+                    $html = view('print.customer_balance_statement', $dataArr);
 
                     $pdf = \App::make('dompdf.wrapper');
                     $pdf->loadHTML($html);
