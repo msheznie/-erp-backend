@@ -18,6 +18,7 @@
  * -- Date: 22-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherPullingDetail()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
+ * -- Date: 10-January 2019 By: Nazir Description: Added new functions named as printPaymentMatching()
  */
 namespace App\Http\Controllers\API;
 
@@ -617,10 +618,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($paySupplierInvoice->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
 
-            if ( $formattedMatchingDate < $postedDate) {
-                return $this->sendError('Advance payment is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Advance payment is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
 
         } elseif ($input['documentSystemID'] == 15) {
@@ -629,10 +630,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($DebitNoteMaster->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Debit note is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
+                return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
         }
 
@@ -1085,10 +1086,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Receipt voucher is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
+                return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
 
         } elseif ($input['documentSystemID'] == 19) {
@@ -1097,10 +1098,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $postedDate = date("d/m/Y", strtotime($creditNoteDataUpdateCHK->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime( $input['matchingDocdate']));
+            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
-                return $this->sendError('Credit note is posted on '.$postedDate.'. You cannot select a date less than posted date !', 500);
+                return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
         }
 
@@ -2087,6 +2088,41 @@ ORDER BY
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
 
+    }
+
+    public function printPaymentMatching(Request $request)
+    {
+        $id = $request->get('matchDocumentMasterAutoID');
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($id);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match document master not found');
+        }
+
+        $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->first();
+
+        if (empty($matchDocumentRecord)) {
+            return $this->sendError('Match document master not found');
+        }
+        $transDecimal = 2;
+        if ($matchDocumentRecord->transactioncurrency) {
+            $transDecimal = $matchDocumentRecord->transactioncurrency->DecimalPlaces;
+        }
+
+
+        $order = array(
+            'masterdata' => $matchDocumentRecord,
+            'transDecimal' => $transDecimal
+        );
+
+        $time = strtotime("now");
+        $fileName = 'payment_matching_' . $id . '_' . $time . '.pdf';
+        $html = view('print.payment_matching', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
 }

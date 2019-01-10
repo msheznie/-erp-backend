@@ -356,7 +356,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
     public function getReportTemplateSubCat(Request $request)
     {
-        $reportTemplateDetails = ReportTemplateDetails::where('masterID',$request->masterID)->where('detID','<',$request->detID)->orderBy('sortOrder')->get();
+        $reportTemplateDetails = ReportTemplateDetails::where('masterID',$request->masterID)->where('detID','<',$request->detID)->where('itemType','=',2)->orderBy('sortOrder')->get();
 
         return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
     }
