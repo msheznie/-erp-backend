@@ -47,6 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
 class AccountsReceivableReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -1482,6 +1483,65 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     })->download($type);
 
 
+                } elseif ($reportTypeID == 'RMS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerRevenueMonthlySummary($request);
+                    $type = $request->type;
+
+                    $currency = $request->currencyID;
+                    $currencyId = 2;
+
+                    if ($currency == 2) {
+                        $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    } else {
+                        $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    }
+
+                    if (!empty($decimalPlaceUnique)) {
+                        $currencyId = $decimalPlaceUnique[0];
+                    }
+
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
+                            $data[$x]['Currency'] = $requestCurrency->CurrencyCode;
+                            $data[$x]['Jan'] = $val->Jan;
+                            $data[$x]['Feb'] = $val->Feb;
+                            $data[$x]['March'] = $val->March;
+                            $data[$x]['April'] = $val->April;
+                            $data[$x]['May'] = $val->May;
+                            $data[$x]['June'] = $val->June;
+                            $data[$x]['July'] = $val->July;
+                            $data[$x]['Aug'] = $val->Aug;
+                            $data[$x]['Sept'] = $val->Sept;
+                            $data[$x]['Oct'] = $val->Oct;
+                            $data[$x]['Nov'] = $val->Nov;
+                            $data[$x]['Dec'] = $val->Dece;
+                            $data[$x]['Total'] = $val->Total;
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+
+                    $csv = \Excel::create('revenue_by_customer', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
                 }
                 break;
             case 'CNR': //Credit Note Register
@@ -1632,7 +1692,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
 
                     $html = view('print.customer_balance_statement', $dataArr);
 
