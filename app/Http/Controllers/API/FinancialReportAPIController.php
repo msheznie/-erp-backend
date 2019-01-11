@@ -371,18 +371,35 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$request->all();
                 $company = Company::find($request->selectedCompanyID);
                 $template = ReportTemplate::find($request->templateType);
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $output = $this->getCustomizeFinancialRptQry($request);
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request));
 
-                $finalOutput = [];
-                if($output){
-                    foreach ($output as $val){
-                        $finalOutput[$val->headerDesc][] = $val;
+                $finalOutput = $outputCollect->groupBy('headerDesc');
+
+                $unique = $outputCollect->unique('headerDesc');
+                $unique = $unique->values()->all();
+
+                $finalData = [];
+                if($unique) {
+                    foreach ($unique as $key => $val) {
+                        $headerDesc = $val->headerDesc;
+                        $data['headerDesc']  = $val->headerDesc;
+                        $data['headerSort']  = $val->headerSort;
+                        $data['hideHeader']  = $val->hideHeader;
+                        $data['headerColor']  = $val->headerColor;
+                        $data['detail']  = $finalOutput[$headerDesc];
+                        $finalData[] = $data;
                     }
                 }
 
-                return array('reportData' => $finalOutput,
+                $sorted = collect($finalData)->sortBy('headerSort');
+                $sorted->values()->all();
+
+                return array('reportData' => $sorted,
                     'template' => $template,
                     'company' => $company,
+                    'companyCurrency' => $companyCurrency,
                 );
                 break;
             default:
@@ -1742,16 +1759,22 @@ AND MASTER .canceledYN = 0';
 
         $sql = 'SELECT
 	f.*,
-	erp_companyreporttemplatedetails.description AS headerDesc 
+	erp_companyreporttemplatedetails.description AS headerDesc, 
+	erp_companyreporttemplatedetails.sortOrder AS headerSort,
+	erp_companyreporttemplatedetails.bgColor AS headerColor,
+	erp_companyreporttemplatedetails.hideHeader
 FROM
 	(
 SELECT
 	c.detDescription,
 	c.detID,
-	IFNULL( c.documentLocalAmount, e.documentLocalAmount ) AS documentLocalAmount,
-	IFNULL( c.documentRptAmount, e.documentRptAmount ) AS documentRptAmount,
+	IFNULL(IFNULL( c.documentLocalAmount, e.documentLocalAmount ),0) AS documentLocalAmount,
+	IFNULL(IFNULL( c.documentRptAmount, e.documentRptAmount ),0) AS documentRptAmount,
 	c.sortOrder,
-	c.masterID 
+	c.masterID,
+	c.bgColor,
+	c.hideHeader,
+	c.itemType  
 FROM
 	(
 SELECT
@@ -1759,7 +1782,10 @@ SELECT
 	erp_companyreporttemplatedetails.detID,
 	erp_companyreporttemplatedetails.description AS detDescription,
 	erp_companyreporttemplatedetails.sortOrder,
-	erp_companyreporttemplatedetails.masterID 
+	erp_companyreporttemplatedetails.masterID,
+	erp_companyreporttemplatedetails.bgColor,
+	erp_companyreporttemplatedetails.hideHeader,
+	erp_companyreporttemplatedetails.itemType 
 FROM
 	erp_companyreporttemplatedetails
 	LEFT JOIN (
@@ -1839,7 +1865,7 @@ GROUP BY
 	) f
 	LEFT JOIN erp_companyreporttemplatedetails ON f.masterID = erp_companyreporttemplatedetails.detID 
 WHERE
-	f.masterID IS NOT NULL';
+	f.masterID IS NOT NULL ORDER BY headerSort,sortOrder';
 
         $output = \DB::select($sql);
         return $output;
