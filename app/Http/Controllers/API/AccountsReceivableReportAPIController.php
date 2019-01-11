@@ -1482,6 +1482,65 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     })->download($type);
 
 
+                } elseif ($reportTypeID == 'RMS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerRevenueMonthlySummary($request);
+                    $type = $request->type;
+
+                    $currency = $request->currencyID;
+                    $currencyId = 2;
+
+                    if ($currency == 2) {
+                        $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    } else {
+                        $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    }
+
+                    if (!empty($decimalPlaceUnique)) {
+                        $currencyId = $decimalPlaceUnique[0];
+                    }
+
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
+                            $data[$x]['Currency'] = $requestCurrency->CurrencyCode;
+                            $data[$x]['Jan'] = $val->Jan;
+                            $data[$x]['Feb'] = $val->Feb;
+                            $data[$x]['March'] = $val->March;
+                            $data[$x]['April'] = $val->April;
+                            $data[$x]['May'] = $val->May;
+                            $data[$x]['June'] = $val->June;
+                            $data[$x]['July'] = $val->July;
+                            $data[$x]['Aug'] = $val->Aug;
+                            $data[$x]['Sept'] = $val->Sept;
+                            $data[$x]['Oct'] = $val->Oct;
+                            $data[$x]['Nov'] = $val->Nov;
+                            $data[$x]['Dec'] = $val->Dece;
+                            $data[$x]['Total'] = $val->Total;
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+
+                    $csv = \Excel::create('revenue_by_customer', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
                 }
                 break;
             case 'CNR': //Credit Note Register
@@ -1632,7 +1691,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
 
                     $html = view('print.customer_balance_statement', $dataArr);
 
@@ -1736,6 +1797,49 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_aging_summary', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+
+                } elseif ($request->reportTypeID == 'CAD') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerAgingDetailQRY($request);
+
+                    $outputArr = array();
+                    $grandTotalArr = array();
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
+                            $total = collect($output['data'])->pluck($val)->toArray();
+                            $grandTotalArr[$val] = array_sum($total);
+                        }
+                    }
+
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+
+                    $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
+                    $invoiceAmountTotal = array_sum($invoiceAmountTotal);
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+
+                    $html = view('print.customer_aging_detail', $dataArr);
 
                     $pdf = \App::make('dompdf.wrapper');
                     $pdf->loadHTML($html);
