@@ -15,6 +15,7 @@
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getApprovedRVForCurrentUser(),
  * -- Date: 21-November 2018 By: Nazir Description: Added new function amendReceiptVoucher(),
  * -- Date: 31-December 2018 By: Nazir Description: Added new function receiptVoucherCancel(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckReceiptVoucher(),
  */
 
 namespace App\Http\Controllers\API;
@@ -1798,5 +1799,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData->save();
 
         return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher cancelled successfully');
+    }
+
+    public function approvalPreCheckReceiptVoucher(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 }

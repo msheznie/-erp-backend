@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Credit Note
  * -- REVISION HISTORY
  * -- Date: 26-November 2018 By: Nazir Description: Added new function amendCreditNote(),
+ * -- Date: 11-January 2019 By: Muabashir Description: Added new function approvalPreCheckCreditNote(),
  */
 namespace App\Http\Controllers\API;
 
@@ -1236,6 +1237,17 @@ WHERE
         }
 
         return $this->sendResponse($creditNoteMasterData->toArray(), 'Credit note amend successfully');
+    }
+
+    public function approvalPreCheckCreditNote(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 
 

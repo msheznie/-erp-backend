@@ -16,6 +16,7 @@
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as rejectCustomerInvoice()
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceAmend()
  * -- Date: 01 January 2019 By: Nazir Description: Added new functions named as customerInvoiceCancel()
+ * -- Date: 11 January 2019 By: Mubashir Description: Added new functions named as approvalPreCheckCustomerInvoice()
  */
 
 namespace App\Http\Controllers\API;

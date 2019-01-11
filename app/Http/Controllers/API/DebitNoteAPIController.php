@@ -16,6 +16,7 @@
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
  * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusDNPrint(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckDebitNote(),
  */
 namespace App\Http\Controllers\API;
 
@@ -1377,6 +1378,17 @@ UNION ALL
         }
 
         return $this->sendResponse($printID, 'Print data retrieved');
+    }
+
+    public function approvalPreCheckDebitNote(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 
 
