@@ -778,6 +778,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
     Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
+    Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
     Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
@@ -886,6 +887,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
     Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
     Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel');
+    Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher');
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
@@ -1005,6 +1007,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
     Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
+    Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1363,6 +1366,7 @@ Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');

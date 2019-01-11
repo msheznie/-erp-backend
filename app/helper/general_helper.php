@@ -931,6 +931,13 @@ class Helper
                 $docInforArr["documentDate"] = "BPVdate";
                 $docInforArr["financePeriod"] = "financeperiod_by";
                 break;
+            case 21: // Receipt voucher
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentDate"] = "custPaymentReceiveDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
             case 17: // Journal Voucher
                 $docInforArr["tableName"] = 'erp_jvmaster';
                 $docInforArr["modelName"] = 'JvMaster';
