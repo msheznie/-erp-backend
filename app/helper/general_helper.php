@@ -1712,6 +1712,11 @@ class Helper
                                 $storingBudget = self::storeBudgetConsumption($masterData);
                             }
 
+                            //sending email based on policy
+                            if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
+                                $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
+                            }
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
@@ -3705,4 +3710,93 @@ class Helper
             default:
         }
     }
+
+    // sending email based on policy
+    public static function sendingEmailNotificationPolicy($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 1:
+            case 50:
+            case 51:
+                $masterRec = Models\PurchaseRequest::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 1 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved.</p>';
+                            $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $masterRec->purchaseRequestCode);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $masterRec = Models\ProcumentOrder::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->logisticsAvailable == -1) {
+
+                        $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 2 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                        $emails = array();
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = $masterRec->purchaseOrderCode . " marked as logistics available is approved.";
+                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' is approved.</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $masterRec->purchaseOrderCode);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 3 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+
+                    $supplierDetail = Models\SupplierMaster::find($masterRec->BPVsupplierID);
+                    $companyDetail = Models\Company::find($params["companySystemID"]);
+                    $supplierName = '';
+                    if($supplierDetail){
+                        $supplierName = $supplierDetail->supplierName;
+                    }
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
+                            $body = '<p>Payment '. $masterRec->BPVcode . '  has been released to.'.$supplierName. ' from '.$companyDetail->CompanyName.'</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $masterRec->BPVcode);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
 }
