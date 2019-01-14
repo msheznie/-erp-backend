@@ -1340,6 +1340,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
     Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
     Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
+
+    Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
+    Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
+    Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
 });
 
 
@@ -1402,8 +1406,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
-
-
-
-
-
