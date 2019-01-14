@@ -20,6 +20,7 @@
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherReopen()
  * -- Date: 05-December 2018 By: Nazir Description: Added new functions named as getJournalVoucherAmend()
  * -- Date: 23-December 2018 By: Nazir Description: Added new functions named as printJournalVoucher()
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new functions named as approvalPreCheckJV()
  */
 
 namespace App\Http\Controllers\API;
@@ -1609,5 +1610,16 @@ HAVING
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function approvalPreCheckJV(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 }
