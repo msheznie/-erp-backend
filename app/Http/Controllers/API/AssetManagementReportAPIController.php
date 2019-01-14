@@ -2026,7 +2026,7 @@ FROM
 		erp_fa_assetdepreciationperiods
 		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 	WHERE
-		erp_fa_depmaster.approved =- 1  AND erp_fa_depmaster.depDate < '$asOfDate'
+		erp_fa_depmaster.approved =- 1  AND erp_fa_depmaster.depDate <= '$asOfDate'
 	GROUP BY
 		faID 
 	) t ON erp_fa_asset_master.faID = t.faID
