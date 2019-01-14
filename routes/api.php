@@ -1383,7 +1383,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 15, 'autoID' => 9067, 'companySystemID' => 52, 'employeeSystemID' => 2664, 'approvalLevelID' => 259, 'rollLevelOrder' => 1, 'documentSystemCode' => 9067];
+    //$master = ['documentSystemID' => 19, 'autoID' => 3499, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
