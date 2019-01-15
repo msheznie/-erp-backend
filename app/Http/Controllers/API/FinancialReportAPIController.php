@@ -27,12 +27,15 @@ use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ReportTemplate;
+use App\Models\ReportTemplateColumnLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FinancialReportAPIController extends AppBaseController
 {
+    protected $globalFormula; //keep whole formula ro replace
+
     public function getFRFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
@@ -368,12 +371,14 @@ class FinancialReportAPIController extends AppBaseController
                 );
                 break;
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
+                return $this->columnFormulaDecode(28);
+                exit;
                 $request = (object)$request->all();
                 $company = Company::find($request->selectedCompanyID);
                 $template = ReportTemplate::find($request->templateType);
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                $output = $this->getCustomizeFinancialRptQry($request);
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request));
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request));
 
                 $finalOutput = $outputCollect->groupBy('headerDesc');
 
@@ -381,14 +386,21 @@ class FinancialReportAPIController extends AppBaseController
                 $unique = $unique->values()->all();
 
                 $finalData = [];
-                if($unique) {
+                if ($unique) {
                     foreach ($unique as $key => $val) {
                         $headerDesc = $val->headerDesc;
-                        $data['headerDesc']  = $val->headerDesc;
-                        $data['headerSort']  = $val->headerSort;
-                        $data['hideHeader']  = $val->hideHeader;
-                        $data['headerColor']  = $val->headerColor;
-                        $data['detail']  = $finalOutput[$headerDesc];
+                        $data['headerDesc'] = $val->headerDesc;
+                        $data['headerSort'] = $val->headerSort;
+                        $data['hideHeader'] = $val->hideHeader;
+                        $data['headerColor'] = $val->headerColor;
+                        $detail = $finalOutput[$headerDesc];
+                        if ($detail) {
+                            foreach ($detail as $val2) {
+                                $filtered = $outputDetail->where('templateDetailID', $val2->detID);
+                                $val2->glCodes = $filtered->values();
+                            }
+                        }
+                        $data['detail'] = $detail;
                         $finalData[] = $data;
                     }
                 }
@@ -1757,6 +1769,10 @@ AND MASTER .canceledYN = 0';
             $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
         }
 
+
+        //formula column decode
+
+
         $sql = 'SELECT
 	f.*,
 	erp_companyreporttemplatedetails.description AS headerDesc, 
@@ -1813,7 +1829,7 @@ ORDER BY
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	'.$dateFilter.'
+	' . $dateFilter . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID 
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
@@ -1852,7 +1868,7 @@ ORDER BY
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	'.$dateFilter.' 
+	' . $dateFilter . ' 
 GROUP BY
 	companyreporttemplatelinks.templateDetailID 
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
@@ -1869,6 +1885,117 @@ WHERE
 
         $output = \DB::select($sql);
         return $output;
+    }
+
+    function getCustomizeFinancialDetailRptQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $dateFilter = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+        }
+
+        $sql = 'SELECT
+	IFNULL(gl.documentLocalAmount,0) as documentLocalAmount,
+	IFNULL(gl.documentRptAmount,0) as documentRptAmount,
+	erp_companyreporttemplatelinks.glCode,
+	erp_companyreporttemplatelinks.glDescription,
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+	LEFT JOIN (
+        SELECT
+        SUM(documentLocalAmount) AS documentLocalAmount,
+        SUM(documentRptAmount) AS documentRptAmount,
+        erp_generalledger.chartOfAccountSystemID
+    FROM
+        erp_generalledger 
+        WHERE
+        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
+        ' . $dateFilter . ' 
+        GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
+ORDER BY
+	erp_companyreporttemplatelinks.sortOrder';
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    /**
+     * function to decode tax formula to multiple combined formula
+     * @param $columnLinkID
+     * @return array
+     */
+    public function columnFormulaDecode($columnLinkID)
+    {
+        global $globalFormula;
+        $sepFormulaArr = [];
+        $finalArr = [];
+        $taxFormula = ReportTemplateColumnLink::find($columnLinkID);
+        $globalFormula = $taxFormula->formula;
+        $linkedColumns = $taxFormula->formulaColumnID;
+        $sepFormulaArr[$columnLinkID] = $this->decodeColumnFormula($linkedColumns);
+        $globalFormula = '';
+        $taxArr = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
+        if($sepFormulaArr) {
+            foreach ($sepFormulaArr as $key => $val) {
+                $fomulaFinal = '';
+                $formulaArr = explode('~', $val);
+                if ($formulaArr) {
+                    foreach ($formulaArr as $val2) {
+                        $removedFirstChar = substr($val2, 1);
+                        $fomulaFinal .= $removedFirstChar;
+                    }
+                    $finalArr[$key] = $fomulaFinal;
+                }
+            }
+        }
+        return $finalArr;
+    }
+
+
+    /**
+     * function to decode customize report
+     * @param $linkedColumns - connected formulas
+     * @return mixed
+     */
+    public function decodeColumnFormula($linkedColumns){
+        global $globalFormula;
+        $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
+        if($taxFormula){
+            foreach ($taxFormula as $val){
+                $searchVal = '#'.$val['columnLinkID'];
+                if(!empty($val['formulaColumnID'])){
+                    $replaceVal = '|(~'.$val['formula'].'~|)';
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID']);
+                    if(is_array($return)){
+                        if($return[0] == 'e'){
+                            return $return;
+                            break;
+                        }
+                    }
+                }
+                else{
+                    $replaceVal = '#'.$val['shortCode'];
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                }
+            }
+        }
+
+        return $globalFormula;
     }
 
 
