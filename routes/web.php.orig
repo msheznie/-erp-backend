@@ -1,0 +1,19 @@
+
+
+Route::resource('outletUsers', 'OutletUsersController');
+
+Route::resource('counters', 'CounterController');
+
+Route::resource('gposPaymentGlConfigMasters', 'GposPaymentGlConfigMasterController');
+
+Route::resource('gposPaymentGlConfigDetails', 'GposPaymentGlConfigDetailController');
+
+<<<<<<< HEAD
+Route::resource('currencyDenominations', 'CurrencyDenominationController');
+
+Route::resource('shiftDetails', 'ShiftDetailsController');
+=======
+Route::resource('documentEmailNotificationMasters', 'DocumentEmailNotificationMasterController');
+
+Route::resource('documentEmailNotificationDetails', 'DocumentEmailNotificationDetailController');
+>>>>>>> 12ae1686f6adf1c20a90a8e45355634d6e5221dc
