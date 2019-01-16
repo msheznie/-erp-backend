@@ -442,5 +442,19 @@ class ShiftDetails extends Model
         
     ];
 
-    
+    public function user()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empID', 'employeeSystemID');
+    }
+
+    public function outlet()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseID','wareHouseSystemCode');
+    }
+
+    public function counter()
+    {
+        return $this->belongsTo('App\Models\Counter','counterID','counterID');
+    }
+
 }

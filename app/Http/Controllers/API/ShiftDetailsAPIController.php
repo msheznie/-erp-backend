@@ -124,9 +124,93 @@ class ShiftDetailsAPIController extends AppBaseController
     public function store(CreateShiftDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $messages = array(
+            'wareHouseID.required'   => 'The outlet field is required.'
+        );
+
+        $validator = \Validator::make($input, [
+            'wareHouseID' => 'required|numeric|min:1',
+            'counterID' => 'required|numeric|min:1',
+            'companyID' => 'required'
+        ],$messages);
+
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $employee = \Helper::getEmployeeInfo();
+
+        $counterCheck = ShiftDetails::where('isClosed',0)
+                                        ->where('wareHouseID',$input['wareHouseID'])
+                                        ->where('counterID',$input['counterID'])
+                                        ->with(['counter','user'])
+                                        ->first();
+
+        if(!empty($counterCheck)){
+            return $this->sendError('Already a shift is going on with counter [ '.$counterCheck->counter->counterCode.' ] by ' .$counterCheck->user->empName,500);
+        }
+
+        $shift = ShiftDetails::where('isClosed',0)
+                            ->where('empID',$employee->employeeSystemID)
+                            ->where('wareHouseID',$input['wareHouseID'])
+                            ->with(['counter','user'])
+                            ->first();
+
+        if(!empty($shift)){
+            return $this->sendError('You cannot start new shift, Already a shift is going on with counter [ '.$shift->counter->counterCode.' ]',500);
+        }
+
+        $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
+
+        $company  = Company::with(['localcurrency','reportingcurrency'])->find($input['companyID']);
+        if(empty($company)){
+            return $this->sendError('Company not found');
+        }
+
+        $input['empID'] = $employee->employeeSystemID;
+        $input['startTime'] = now();
+
+        if(isset($input['startingBalance_transaction'])){
+            $input['startingBalance_local'] = $input['startingBalance_transaction'];
+        }else{
+            $input['startingBalance_transaction'] = 0;
+            $input['startingBalance_local'] = 0;
+        }
+
+        $input['transactionCurrencyID'] = $company->localCurrencyID;
+        $input['companyLocalCurrencyID'] = $company->localCurrencyID;
+        $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+
+        if($company->localcurrency){
+            $input['transactionCurrencyDecimalPlaces'] = $company->localcurrency->DecimalPlaces;
+            $input['companyLocalCurrencyDecimalPlaces'] = $company->localcurrency->DecimalPlaces;
+            $input['transactionCurrency'] = $company->localcurrency->CurrencyCode;
+            $input['companyLocalCurrency'] = $company->localcurrency->CurrencyCode;
+        }
+
+        if($company->reportingcurrency){
+            $input['companyReportingCurrencyDecimalPlaces'] = $company->reportingcurrency->DecimalPlaces;
+            $input['companyReportingCurrency'] = $company->reportingcurrency->CurrencyCode;
+        }
+
+        $currencyCon = \Helper::currencyConversion($input['companyID'],$input['transactionCurrencyID'],$input['transactionCurrencyID'],$input['startingBalance_transaction']);
+
+        $input['startingBalance_reporting'] = round($currencyCon['reportingAmount'],$input['companyReportingCurrencyDecimalPlaces']);
+        $input['transactionExchangeRate'] = $currencyCon['trasToLocER'];
+        $input['companyLocalExchangeRate'] = $currencyCon['trasToLocER'];
+        $input['companyReportingExchangeRate'] = $currencyCon['trasToRptER'];
+
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+        $input['createdUserName'] = $employee->empName;
+
+        $input['timestamp'] = now();
 
         $shiftDetails = $this->shiftDetailsRepository->create($input);
-
+        //return $this->sendResponse($input, 'Shift Details saved successfully');
         return $this->sendResponse($shiftDetails->toArray(), 'Shift Details saved successfully');
     }
 
@@ -229,16 +313,51 @@ class ShiftDetailsAPIController extends AppBaseController
     public function update($id, UpdateShiftDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($request->all(), ['user', 'counter','outlet']);
+        $input = $this->convertArrayToValue($input);
+
+        $messages = array(
+            'wareHouseID.required'   => 'The outlet field is required.'
+        );
 
         /** @var ShiftDetails $shiftDetails */
         $shiftDetails = $this->shiftDetailsRepository->findWithoutFail($id);
 
         if (empty($shiftDetails)) {
-            return $this->sendError('Shift Details not found');
+            return $this->sendError('Shift not found');
         }
 
-        $shiftDetails = $this->shiftDetailsRepository->update($input, $id);
 
+        $validator = \Validator::make($input, [
+            'wareHouseID' => 'required|numeric|min:1',
+            'counterID' => 'required|numeric|min:1',
+            'companyID' => 'required',
+            'endingBalance_transaction' => 'required|numeric|min:0.001'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['endingBalance_local'] =  $input['endingBalance_transaction'];
+
+
+        $currencyConvert = \Helper::convertAmountToLocalRpt(207,$shiftDetails->shiftID,$input['endingBalance_transaction']);
+        $input['endingBalance_reporting'] = round($currencyConvert['reportingAmount'],$shiftDetails->companyReportingCurrencyDecimalPlaces);
+
+        $input['different_transaction'] = round(($input['endingBalance_transaction'] - $shiftDetails->startingBalance_transaction),$shiftDetails->transactionCurrencyDecimalPlaces);
+        $input['different_local'] = round(($input['endingBalance_transaction'] - $shiftDetails->startingBalance_transaction),$shiftDetails->transactionCurrencyDecimalPlaces);
+        $input['different_local_reporting'] = round(($input['endingBalance_reporting'] - $shiftDetails->startingBalance_reporting),$shiftDetails->companyReportingCurrencyDecimalPlaces);
+
+        $input['endTime'] = now();
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedUserID'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $input['modifiedUserName'] = $employee->empName;
+        $input['timestamp'] = now();
+        $shiftDetails = $this->shiftDetailsRepository->update($input, $id);
         return $this->sendResponse($shiftDetails->toArray(), 'ShiftDetails updated successfully');
     }
 
@@ -307,7 +426,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $company = Company::find($input['companyId']);
+        $company = Company::with(['localcurrency','reportingcurrency'])->find($input['companyId']);
 
         if (empty($company)) {
             return $this->sendError('Company not found');
@@ -320,6 +439,9 @@ class ShiftDetailsAPIController extends AppBaseController
         $assignedOutlet = OutletUsers::where('userID',$employee->employeeSystemID)
                                        ->where('companySystemID',$input['companyId'])
                                        ->where('isActive',1)
+                                        ->whereHas('outlet',function ($q){
+                                            $q->where('isActive',1);
+                                        })
                                        ->first();
 
         if(empty($assignedOutlet)){
@@ -330,11 +452,33 @@ class ShiftDetailsAPIController extends AppBaseController
                              ->where('wareHouseID',$assignedOutlet->wareHouseID)
                              ->get();
 
+        if(count($counters) == 0){
+            return $this->sendError('Assigned outlet no counter. Please create counters.');
+        }
+
+        $isShiftOpen = false;
+
+        $shift = ShiftDetails::where('isClosed',0)
+                             ->where('empID',$employee->employeeSystemID)
+                             ->where('wareHouseID',$assignedOutlet->wareHouseID)
+                             ->with(['user','outlet','counter'])
+                             ->first();
+
+        if(!empty($shift)){
+            $isShiftOpen = true;
+        }
+        $decimalPlaces = 2;
+        if($company->localcurrency){
+            $decimalPlaces = $company->localcurrency->DecimalPlaces;
+        }
         $output = array(
             'company' => $company,
             'currencyDenomination' => $currencyDenomination,
             'outlet' => $assignedOutlet,
-            'counters' => $counters
+            'counters' => $counters,
+            'shift' => $shift,
+            'isShiftOpen' => $isShiftOpen,
+            'decimalPlaces' => $decimalPlaces
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
