@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateCompanyPolicyMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyCategory;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentEmailNotificationMaster;
 use App\Repositories\CompanyPolicyMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -147,9 +148,11 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $policyCategories = CompanyPolicyCategory::where('isActive',-1)->get();
 
+        $emailPolicyCategories = DocumentEmailNotificationMaster::all();
 
         $output = array('companies' => $companies,
-                        'policyCategories' => $policyCategories
+                        'policyCategories' => $policyCategories,
+                        'emailPolicyCategories' => $emailPolicyCategories
                        );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

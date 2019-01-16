@@ -778,6 +778,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
     Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
+    Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
     Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
@@ -886,6 +887,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
     Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
     Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel');
+    Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher');
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
@@ -1005,6 +1007,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
     Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
+    Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1337,6 +1340,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
     Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
     Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
+    Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
+    Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+    Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
+    Route::resource('shift_details', 'ShiftDetailsAPIController');
+
+    Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
+    Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
+    Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+
 });
 
 
@@ -1359,6 +1371,7 @@ Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
@@ -1379,7 +1392,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 15, 'autoID' => 9067, 'companySystemID' => 52, 'employeeSystemID' => 2664, 'approvalLevelID' => 259, 'rollLevelOrder' => 1, 'documentSystemCode' => 9067];
+    //$master = ['documentSystemID' => 19, 'autoID' => 3499, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1399,7 +1412,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
-
-
-
+Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 

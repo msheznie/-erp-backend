@@ -764,8 +764,8 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (!empty($erp_taxdetail)) {
                             foreach ($erp_taxdetail as $tax) {
 
-                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                                $data['serviceLineCode'] = $item->serviceLineCode;
+                                $data['serviceLineSystemID'] = 24;
+                                $data['serviceLineCode'] = 'X';
 
                                 // from customer invoice master table
                                 $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
@@ -1235,6 +1235,12 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($tax) {
+                                $data['serviceLineSystemID'] = 24;
+                                $data['serviceLineCode'] = 'X';
+
+                                $data['clientContractID'] = 'X';
+                                $data['contractUID'] = 159;
+
                                 $data['chartOfAccountSystemID'] = $taxGLCode->vatOutputGLCodeSystemID;
                                 $data['glCode'] = $taxGLCode->vatOutputGLCode;
                                 $data['glAccountType'] = 'BS';

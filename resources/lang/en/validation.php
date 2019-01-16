@@ -181,7 +181,11 @@ return [
         'wareHouseDescription' => 'Description',
         'counterCode'   => 'Counter code',
         'counterName'   => 'Counter name',
-        'companyID'   => 'Company'
+        'companyID'   => 'Company',
+        'companyId'   => 'Company',
+        'startingBalance_transaction' => 'Starting Balance',
+        'endingBalance_transaction' => 'Closing Balance',
+        'counterID' => 'Counter'
     ],
 
 ];

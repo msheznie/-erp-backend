@@ -202,7 +202,6 @@ class ItemAssignedAPIController extends AppBaseController
                     'rpt' => $itemCurrentCostAndQty['wacValueReporting'],
                     'stock' => $itemCurrentCostAndQty['currentStockQty']);
                 return $array;
-
             })
             ->make(true);
         return $data;

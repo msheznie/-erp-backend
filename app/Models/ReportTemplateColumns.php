@@ -99,7 +99,7 @@ class ReportTemplateColumns extends Model
         'columnID' => 'integer',
         'description' => 'string',
         'shortCode' => 'string',
-        'type' => 'boolean',
+        'type' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'createdPCID' => 'string',

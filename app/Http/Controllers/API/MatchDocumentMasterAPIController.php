@@ -616,9 +616,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $paySupplierInvoice = PaySupplierInvoiceMaster::find($matchDocumentMaster->PayMasterAutoId);
 
-            $postedDate = date("d/m/Y", strtotime($paySupplierInvoice->postedDate));
+            $postedDate = date("Y-m-d", strtotime($paySupplierInvoice->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Advance payment is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
@@ -628,9 +628,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
-            $postedDate = date("d/m/Y", strtotime($DebitNoteMaster->postedDate));
+            $postedDate = date("Y-m-d", strtotime($DebitNoteMaster->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
@@ -1084,9 +1084,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
 
-            $postedDate = date("d/m/Y", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
+            $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
@@ -1096,9 +1096,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
 
-            $postedDate = date("d/m/Y", strtotime($creditNoteDataUpdateCHK->postedDate));
+            $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
 
-            $formattedMatchingDate = date("d/m/Y", strtotime($input['matchingDocdate']));
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
 
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
@@ -1145,7 +1145,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
                 ->sum('receiveAmountTrans');
 
-            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+            if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
 
@@ -2027,7 +2027,7 @@ AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData-
 HAVING
 	ROUND(
 		balanceMemAmount,
-		2
+		1
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC";

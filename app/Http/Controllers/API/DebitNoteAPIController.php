@@ -16,6 +16,7 @@
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
  * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusDNPrint(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckDebitNote(),
  */
 namespace App\Http\Controllers\API;
 
@@ -255,11 +256,19 @@ class DebitNoteAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if ($documentMaster) {
@@ -397,11 +406,19 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if (isset($input['debitNoteDate'])) {
@@ -570,6 +587,8 @@ class DebitNoteAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        //var_dump($input);
+        //exit();
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
@@ -1377,6 +1396,17 @@ UNION ALL
         }
 
         return $this->sendResponse($printID, 'Print data retrieved');
+    }
+
+    public function approvalPreCheckDebitNote(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 
 

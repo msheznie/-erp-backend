@@ -931,6 +931,13 @@ class Helper
                 $docInforArr["documentDate"] = "BPVdate";
                 $docInforArr["financePeriod"] = "financeperiod_by";
                 break;
+            case 21: // Receipt voucher
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentDate"] = "custPaymentReceiveDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
             case 17: // Journal Voucher
                 $docInforArr["tableName"] = 'erp_jvmaster';
                 $docInforArr["modelName"] = 'JvMaster';
@@ -1645,6 +1652,11 @@ class Helper
                                 }
                             }
 
+                            // generate asset costing
+                            if ($input["documentSystemID"] == 22) {
+                                $assetCosting = self::generateAssetCosting($sourceModel);
+                            }
+
                             // insert the record to budget consumed data
                             if ($input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52) {
                                 $budgetConsumeData = array();
@@ -1710,6 +1722,11 @@ class Helper
                             // adding records to budget consumption data
                             if ($input["documentSystemID"] == 11 || $input["documentSystemID"] == 4 || $input["documentSystemID"] == 15 || $input["documentSystemID"] == 19) {
                                 $storingBudget = self::storeBudgetConsumption($masterData);
+                            }
+
+                            //sending email based on policy
+                            if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
+                                $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
 
                         } else {
@@ -2472,6 +2489,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'comRptER';
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'localER';
+                break;
+            case 207: // Pos shift details
+                $docInforArr["modelName"] = 'ShiftDetails';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'companyReportingCurrencyID';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -3705,4 +3733,110 @@ class Helper
             default:
         }
     }
+
+    // sending email based on policy
+    public static function sendingEmailNotificationPolicy($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 1:
+            case 50:
+            case 51:
+                $masterRec = Models\PurchaseRequest::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 1 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = 'A new request ' . $masterRec->purchaseRequestCode . ' is approved.';
+                            $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $params["autoID"]);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $masterRec = Models\ProcumentOrder::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->logisticsAvailable == -1) {
+
+                        $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 2 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                        $emails = array();
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = $masterRec->purchaseOrderCode . " marked as logistics available is approved.";
+                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' marked as logistics available, is approved.</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $params["autoID"]);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 3 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+
+                    $supplierDetail = Models\SupplierMaster::find($masterRec->BPVsupplierID);
+                    $companyDetail = Models\Company::find($params["companySystemID"]);
+                    $supplierName = '';
+                    if ($supplierDetail) {
+                        $supplierName = $supplierDetail->supplierName;
+                    }
+                    $emails = array();
+                    if ($masterRec->BPVsupplierID != 0 || $masterRec->BPVsupplierID != null) {
+
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
+                                $body = '<p>Payment ' . $masterRec->BPVcode . '  has been released to ' . $supplierName . ' from ' . $companyDetail->CompanyName . '</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $params["autoID"]);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
+    public static function generateAssetCosting($masterData)
+    {
+        $companyCurrency = self::companyCurrency($masterData->companySystemID);
+        $cost['faID'] = $masterData->faID;
+        $cost['assetID'] =$masterData->faCode;
+        $cost['assetDescription'] =$masterData->assetDescription;
+        $cost['costDate'] =$masterData->dateAQ;
+        $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
+        $cost['localAmount'] =$masterData->COSTUNIT;
+        $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
+        $cost['rptAmount'] =$masterData->costUnitRpt;
+        $assetCosting = Models\FixedAssetCost::create($cost);
+    }
+
 }
