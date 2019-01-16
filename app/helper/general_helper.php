@@ -2485,6 +2485,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'localER';
                 break;
+            case 207: // Pos shift details
+                $docInforArr["modelName"] = 'ShiftDetails';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'companyReportingCurrencyID';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

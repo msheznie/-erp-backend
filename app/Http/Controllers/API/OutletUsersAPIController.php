@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateOutletUsersAPIRequest;
 use App\Http\Requests\API\UpdateOutletUsersAPIRequest;
 use App\Models\Employee;
 use App\Models\OutletUsers;
+use App\Models\ShiftDetails;
 use App\Repositories\OutletUsersRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -291,8 +292,28 @@ class OutletUsersAPIController extends AppBaseController
 
         if (isset($input['isActive']) && $input['isActive']) {
             $input['isActive'] = 1;
+
+            $checkUserActive = OutletUsers::where('userID',$input['userID'])
+                                           ->where('companySystemID',$input['companySystemID'])
+                                           ->where('isActive',1)
+                                           ->with(['outlet'])
+                                           ->first();
+
+            if(!empty($checkUserActive)){
+                return $this->sendError('This user already active in '.$checkUserActive->outlet->wareHouseCode,500);
+            }
+
         } else {
             $input['isActive'] = 0;
+
+            $shift = ShiftDetails::where('isClosed',0)
+                                    ->where('empID',$input['userID'])
+                                    ->with(['user','outlet','counter'])
+                                    ->first();
+
+            if(!empty($shift)){
+                return $this->sendError('Cannot deactivate, This use has on going shift.');
+            }
         }
 
         $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
@@ -353,6 +374,14 @@ class OutletUsersAPIController extends AppBaseController
 
         if (empty($outletUsers)) {
             return $this->sendError('Outlet User not found');
+        }
+
+        $shift = ShiftDetails::where('isClosed',0)
+            ->where('empID',$outletUsers->userID)
+            ->first();
+
+        if(!empty($shift)){
+            return $this->sendError('Cannot delete, This use has on going shift.');
         }
 
         $outletUsers->delete();

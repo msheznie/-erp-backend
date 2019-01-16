@@ -182,7 +182,10 @@ return [
         'counterCode'   => 'Counter code',
         'counterName'   => 'Counter name',
         'companyID'   => 'Company',
-        'companyId'   => 'Company'
+        'companyId'   => 'Company',
+        'startingBalance_transaction' => 'Starting Balance',
+        'endingBalance_transaction' => 'Closing Balance',
+        'counterID' => 'Counter'
     ],
 
 ];
