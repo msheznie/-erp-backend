@@ -256,11 +256,19 @@ class DebitNoteAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if ($documentMaster) {
@@ -398,11 +406,19 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if (isset($input['debitNoteDate'])) {
@@ -571,6 +587,8 @@ class DebitNoteAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        //var_dump($input);
+        //exit();
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
