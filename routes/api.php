@@ -1340,10 +1340,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
     Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
     Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
+    Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
+    Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+    Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
+    Route::resource('shift_details', 'ShiftDetailsAPIController');
 
     Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
     Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
     Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+
 });
 
 
@@ -1408,3 +1413,4 @@ Route::get('runQueueSR', function () {
 });
 
 Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
+

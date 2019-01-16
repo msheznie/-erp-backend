@@ -16,6 +16,7 @@
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getItemMasterAudit()
  * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as exportItemMaster()
  * -- Date: 14-December 2018 By: Fayas Description: Added new functions named as itemReferBack()
+ * -- Date: 11-January 2019 By: Fayas Description: Added new functions named as getPosItemSearch()
  */
 
 
@@ -591,13 +592,13 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$input['financeCategoryMaster'])
-                                                               ->where('itemCategorySubID',$input['financeCategorySub'])
-                                                               ->where('companySystemID',$input['primaryCompanySystemID'])
-                                                               ->first();
+            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $input['financeCategoryMaster'])
+                ->where('itemCategorySubID', $input['financeCategorySub'])
+                ->where('companySystemID', $input['primaryCompanySystemID'])
+                ->first();
 
-            if(empty($checkSubCategory)){
-                return $this->sendError('The Finance Sub Category field is required.',500);
+            if (empty($checkSubCategory)) {
+                return $this->sendError('The Finance Sub Category field is required.', 500);
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
@@ -824,12 +825,35 @@ class ItemMasterAPIController extends AppBaseController
             ->delete();
 
         if ($deleteApproval) {
-            $updateArray = ['refferedBackYN' => 0,'itemConfirmedYN' => 0,'itemConfirmedByEMPSystemID' => null,
-                'itemConfirmedByEMPID' => null,'itemConfirmedByEMPName' => null,'itemConfirmedDate' => null,'RollLevForApp_curr' => 1];
+            $updateArray = ['refferedBackYN' => 0, 'itemConfirmedYN' => 0, 'itemConfirmedByEMPSystemID' => null,
+                'itemConfirmedByEMPID' => null, 'itemConfirmedByEMPName' => null, 'itemConfirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-            $this->itemMasterRepository->update($updateArray,$id);
+            $this->itemMasterRepository->update($updateArray, $id);
         }
 
         return $this->sendResponse($item->toArray(), 'Item Master Amend successfully');
+    }
+
+
+    public function getPosItemSearch(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $items = ItemAssigned::where('companySystemID', $companyId)
+                                ->where('financeCategoryMaster', 1)
+                                ->with(['unit'])
+                                ->select(['itemPrimaryCode', 'itemDescription','itemCodeSystem','idItemAssigned', 'secondaryItemCode','itemUnitOfMeasure']);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(10)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

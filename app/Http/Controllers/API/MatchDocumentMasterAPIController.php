@@ -1145,7 +1145,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
                 ->sum('receiveAmountTrans');
 
-            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+            if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
 
@@ -2027,7 +2027,7 @@ AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData-
 HAVING
 	ROUND(
 		balanceMemAmount,
-		2
+		1
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC";

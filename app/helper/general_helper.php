@@ -2490,6 +2490,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'localER';
                 break;
+            case 207: // Pos shift details
+                $docInforArr["modelName"] = 'ShiftDetails';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'companyReportingCurrencyID';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -3737,7 +3748,7 @@ class Helper
                     if (!empty($fetchingUsers)) {
                         foreach ($fetchingUsers as $value) {
 
-                            $subject = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved.</p>';
+                            $subject = 'A new request ' . $masterRec->purchaseRequestCode . ' is approved.';
                             $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
 
                             $emails[] = array('empSystemID' => $value->employeeSystemID,
@@ -3745,7 +3756,7 @@ class Helper
                                 'docSystemID' => $masterRec->documentSystemID,
                                 'alertMessage' => $subject,
                                 'emailAlertMessage' => $body,
-                                'docSystemCode' => $masterRec->purchaseRequestCode);
+                                'docSystemCode' => $params["autoID"]);
                         }
                         $sendEmail = \Email::sendEmail($emails);
                     }
@@ -3764,14 +3775,14 @@ class Helper
                             foreach ($fetchingUsers as $value) {
 
                                 $subject = $masterRec->purchaseOrderCode . " marked as logistics available is approved.";
-                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' is approved.</p>';
+                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' marked as logistics available, is approved.</p>';
 
                                 $emails[] = array('empSystemID' => $value->employeeSystemID,
                                     'companySystemID' => $value->companySystemID,
                                     'docSystemID' => $masterRec->documentSystemID,
                                     'alertMessage' => $subject,
                                     'emailAlertMessage' => $body,
-                                    'docSystemCode' => $masterRec->purchaseOrderCode);
+                                    'docSystemCode' => $params["autoID"]);
                             }
                             $sendEmail = \Email::sendEmail($emails);
                         }
@@ -3786,24 +3797,27 @@ class Helper
                     $supplierDetail = Models\SupplierMaster::find($masterRec->BPVsupplierID);
                     $companyDetail = Models\Company::find($params["companySystemID"]);
                     $supplierName = '';
-                    if($supplierDetail){
+                    if ($supplierDetail) {
                         $supplierName = $supplierDetail->supplierName;
                     }
                     $emails = array();
-                    if (!empty($fetchingUsers)) {
-                        foreach ($fetchingUsers as $value) {
+                    if ($masterRec->BPVsupplierID != 0 || $masterRec->BPVsupplierID != null) {
 
-                            $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
-                            $body = '<p>Payment '. $masterRec->BPVcode . '  has been released to.'.$supplierName. ' from '.$companyDetail->CompanyName.'</p>';
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
 
-                            $emails[] = array('empSystemID' => $value->employeeSystemID,
-                                'companySystemID' => $value->companySystemID,
-                                'docSystemID' => $masterRec->documentSystemID,
-                                'alertMessage' => $subject,
-                                'emailAlertMessage' => $body,
-                                'docSystemCode' => $masterRec->BPVcode);
+                                $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
+                                $body = '<p>Payment ' . $masterRec->BPVcode . '  has been released to ' . $supplierName . ' from ' . $companyDetail->CompanyName . '</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $params["autoID"]);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
                         }
-                        $sendEmail = \Email::sendEmail($emails);
                     }
                 }
                 break;
