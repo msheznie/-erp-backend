@@ -61,7 +61,7 @@
     }
 
     .table th {
-        background-color: #EBEBEB !important;
+        background-color: #D7E4BD !important;
     }
 
     tfoot > tr > td {
@@ -124,27 +124,18 @@
         margin-bottom: 45px;
     }
 
-    #watermark {
+    header {
         position: fixed;
-        width: 100%;
-        height: 100%;
-        padding-top: 31%;
-    }
+        top: -60px;
+        left: 0px;
+        right: 0px;
+        height: 50px;
 
-    .watermarkText {
-        color: #dedede !important;
-        font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
-    }
-
-    #watermark {
-        height: 1000px;
-        opacity: 0.6;
-        left: 0;
-        transform-origin: 20% 20%;
-        z-index: 1000;
+        /** Extra personal styles **/
+        background-color: #03a9f4;
+        color: white;
+        text-align: center;
+        line-height: 35px;
     }
 
 </style>
@@ -161,23 +152,28 @@
     </table>
 </div>
 <div class="header">
-    <table style="width:100%;">
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Customer Balance Statement</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">As of {{ $fromDate }}</span>
-            </td>
-        </tr>
-    </table>
-</div>
-<br><br>
-<div class="row">
-    <div class="col-md-12">
-        <b>{{$companyName}}</b>
+    <div class="row">
+        <div class="col-md-12">
+            <table style="width: 100%">
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                    </td>
+                    <td valign="top" style="width: 55%">
+                        <span class="font-weight-bold" style="font-size: 12px; text-align: center;">Customer Balance Statement</span><br>
+                        <span class="font-weight-bold" style="font-size: 12px; text-align: center;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <span style="font-size: 12px;font-weight: 400"> {{$companyName}}</span>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 </div>
 <br><br>
