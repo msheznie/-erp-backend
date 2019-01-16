@@ -174,4 +174,8 @@ class OutletUsers extends Model
         return $this->belongsTo('App\Models\Employee','userID','employeeSystemID');
     }
 
+    public function outlet()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseID','wareHouseSystemCode');
+    }
 }

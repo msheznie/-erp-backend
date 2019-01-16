@@ -2027,7 +2027,7 @@ AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData-
 HAVING
 	ROUND(
 		balanceMemAmount,
-		2
+		1
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC";

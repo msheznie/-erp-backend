@@ -208,9 +208,9 @@
                         <td>{{ $det2->CustomerCode }}</td>
                         <td>{{ $det2->CustomerName }}</td>
                         <td>{{ $det2->documentCurrency }}</td>
-                        <td style="text-align: right">{{ number_format($ageTotal, $det2->balanceDecimalPlaces) }}</td>
+                        <td style="text-align: right">{{ number_format($ageTotal) }}</td>
                         @foreach ($agingRange as $age)
-                            <td style="text-align: right">{{ number_format($det2->$age, $det2->balanceDecimalPlaces) }}</td>
+                            <td style="text-align: right">{{ number_format($det2->$age) }}</td>
                         @endforeach
                     </tr>
                     {{$ageSubTotal += $ageTotal}}
@@ -219,10 +219,10 @@
                     <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
                         class="text-right"><b>Sub Total:</b></td>
                     <td style="text-align: right">
-                        <b>{{ number_format($ageSubTotal, $det[0]->balanceDecimalPlaces) }}</b></td>
+                        <b>{{ number_format($ageSubTotal) }}</b></td>
                     @foreach ($agingRange as $age)
                         <td style="text-align: right">
-                            <b>{{ number_format(array_sum($ageRangeSubTotal[$age]), $det[0]->balanceDecimalPlaces) }}</b>
+                            <b>{{ number_format(array_sum($ageRangeSubTotal[$age])) }}</b>
                         </td>
                     @endforeach
                 </tr>
@@ -234,10 +234,10 @@
         <tr>
             <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
                 class="text-right"><b>Grand Total:</b></td>
-            <td style="text-align: right"><b>{{ number_format($grandTotal, $det[0]->balanceDecimalPlaces) }}</b></td>
+            <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>
             @foreach ($agingRange as $age)
                 <td style="text-align: right">
-                    <b>{{ number_format(array_sum($ageRangeGrandTotal[$age]), $det[0]->balanceDecimalPlaces) }}</b></td>
+                    <b>{{ number_format(array_sum($ageRangeGrandTotal[$age])) }}</b></td>
             @endforeach
         </tr>
         </tfoot>
