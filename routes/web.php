@@ -7,3 +7,7 @@ Route::resource('counters', 'CounterController');
 Route::resource('gposPaymentGlConfigMasters', 'GposPaymentGlConfigMasterController');
 
 Route::resource('gposPaymentGlConfigDetails', 'GposPaymentGlConfigDetailController');
+
+Route::resource('currencyDenominations', 'CurrencyDenominationController');
+
+Route::resource('shiftDetails', 'ShiftDetailsController');

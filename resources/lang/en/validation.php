@@ -181,7 +181,8 @@ return [
         'wareHouseDescription' => 'Description',
         'counterCode'   => 'Counter code',
         'counterName'   => 'Counter name',
-        'companyID'   => 'Company'
+        'companyID'   => 'Company',
+        'companyId'   => 'Company'
     ],
 
 ];

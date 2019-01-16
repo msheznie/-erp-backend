@@ -291,23 +291,21 @@ class BankAccountAPIController extends AppBaseController
         }
 
         if ($bankAccount->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-            unset($inputParam);
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required',
                 'bankmasterAutoID' => 'required',
                 'bankAssignedAutoID' => 'required',
                 'bankBranch' => 'required',
                 'AccountNo' => 'required',
-                'accountCurrencyID' => 'required',
-                'chartOfAccountSystemID' => 'required'
-                //'BranchEmail' => 'email'
+                'accountCurrencyID' => 'required|numeric|min:1',
+                'chartOfAccountSystemID' => 'required|numeric|min:1'
             ]);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
-            if($bankAccount->isAccountActive == 0){
+            if($bankAccount->isAccount == 0){
                 return $this->sendError('Bank Account should be activated before confirm.',500);
             }
 
