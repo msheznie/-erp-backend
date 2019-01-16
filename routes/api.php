@@ -1406,3 +1406,5 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');

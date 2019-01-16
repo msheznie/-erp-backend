@@ -11,3 +11,5 @@ Route::resource('gposPaymentGlConfigDetails', 'GposPaymentGlConfigDetailControll
 Route::resource('documentEmailNotificationMasters', 'DocumentEmailNotificationMasterController');
 
 Route::resource('documentEmailNotificationDetails', 'DocumentEmailNotificationDetailController');
+
+Route::resource('reportTemplateFieldTypes', 'ReportTemplateFieldTypeController');
