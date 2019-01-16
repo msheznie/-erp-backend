@@ -764,8 +764,8 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (!empty($erp_taxdetail)) {
                             foreach ($erp_taxdetail as $tax) {
 
-                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                                $data['serviceLineCode'] = $item->serviceLineCode;
+                                $data['serviceLineSystemID'] = 24;
+                                $data['serviceLineCode'] = 'X';
 
                                 // from customer invoice master table
                                 $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
@@ -1235,6 +1235,12 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($tax) {
+                                $data['serviceLineSystemID'] = 24;
+                                $data['serviceLineCode'] = 'X';
+
+                                $data['clientContractID'] = 'X';
+                                $data['contractUID'] = 159;
+
                                 $data['chartOfAccountSystemID'] = $taxGLCode->vatOutputGLCodeSystemID;
                                 $data['glCode'] = $taxGLCode->vatOutputGLCode;
                                 $data['glAccountType'] = 'BS';
@@ -1972,7 +1978,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $debit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.depglCodeSystemID,erp_fa_asset_master.DEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts', 'chartOfAccountSystemID', 'depglCodeSystemID')->where('depMasterAutoID', $masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.depglCodeSystemID')->get();
 
-                        $credit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.accdepglCodeSystemID,erp_fa_asset_master.ACCDEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts', 'chartOfAccountSystemID', 'dispglCodeSystemID')->where('depMasterAutoID', $masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.accdepglCodeSystemID')->get();
+                        $credit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.accdepglCodeSystemID,erp_fa_asset_master.ACCDEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts', 'chartOfAccountSystemID', 'accdepglCodeSystemID')->where('depMasterAutoID', $masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.accdepglCodeSystemID')->get();
 
                         if ($debit) {
                             foreach ($debit as $val) {

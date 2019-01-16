@@ -164,7 +164,7 @@
     <table style="width:100%;">
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Customer Invoice Aging Summary</span>
+                <span class="font-weight-bold">Customer Balance Statement</span>
             </td>
         </tr>
         <tr>
@@ -175,70 +175,59 @@
     </table>
 </div>
 <br><br>
+<div class="row">
+    <div class="col-md-12">
+        <b>{{$companyName}}</b>
+    </div>
+</div>
+<br><br>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
-        <?php $ageRangeGrandTotal = [] ?>
-        {{ $grandTotal = 0 }}
         @foreach ($reportData as $key => $val)
             <tr>
                 <td colspan="9"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="10%">Cust. Code</th>
-                <th width="20%">Customer Name</th>
-                <th width="10%">Currency</th>
-                <th width="10%">Amount</th>
-                @foreach ($agingRange as $age)
-                    <th width="10%">{{$age}}</th>
-                @endforeach
+                <th width="10%">Document Code</th>
+                <th width="10%">Posted Date</th>
+                <th width="25%">Narration</th>
+                <th width="10%">Contract</th>
+                <th width="10%">PO Number</th>
+                <th width="10%">Invoice Number</th>
+                <th width="10%">Invoice Date</th>
+                <th width="5%">Currency</th>
+                <th width="10%">Balance Amount</th>
             </tr>
             <tbody>
-            {{ $ageTotal = 0 }}
-            {{ $ageSubTotal = 0 }}
             @foreach ($val as $det)
-                <?php $ageRangeSubTotal = [] ?>
+                {{ $lineTotal = 0 }}
                 @foreach ($det as $det2)
-                    {{ $ageTotal = 0 }}
-                    @foreach ($agingRange as $age)
-                        {{ $ageTotal += $det2->$age }}
-                        {{$ageRangeSubTotal[$age][] = $det2->$age}}
-                        {{$ageRangeGrandTotal[$age][] = $det2->$age}}
-                    @endforeach
                     <tr>
-                        <td>{{ $det2->CustomerCode }}</td>
-                        <td>{{ $det2->CustomerName }}</td>
+                        <td>{{ $det2->DocumentCode }}</td>
+                        <td> {{ \App\helper\Helper::dateFormat($det2->PostedDate)}}</td>
+                        <td>{{ $det2->DocumentNarration }}</td>
+                        <td>{{ $det2->Contract }}</td>
+                        <td>{{ $det2->PONumber }}</td>
+                        <td>{{ $det2->invoiceNumber }}</td>
+                        <td> {{ \App\helper\Helper::dateFormat($det2->InvoiceDate)}}</td>
                         <td>{{ $det2->documentCurrency }}</td>
-                        <td style="text-align: right">{{ number_format($ageTotal, $det2->balanceDecimalPlaces) }}</td>
-                        @foreach ($agingRange as $age)
-                            <td style="text-align: right">{{ number_format($det2->$age, $det2->balanceDecimalPlaces) }}</td>
-                        @endforeach
+                        <td style="text-align: right"> {{ number_format($det2->balanceAmount, $currencyDecimalPlace) }}</td>
                     </tr>
-                    {{$ageSubTotal += $ageTotal}}
+                    {{$lineTotal += $det2->balanceAmount}}
                 @endforeach
                 <tr>
-                    <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Sub Total:</b></td>
-                    <td style="text-align: right">
-                        <b>{{ number_format($ageSubTotal, $det[0]->balanceDecimalPlaces) }}</b></td>
-                    @foreach ($agingRange as $age)
-                        <td style="text-align: right">
-                            <b>{{ number_format(array_sum($ageRangeSubTotal[$age]), $det[0]->balanceDecimalPlaces) }}</b>
-                        </td>
-                    @endforeach
+                    <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
+                        class="text-right"><b>Total:</b></td>
+                    <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
                 </tr>
-                {{$grandTotal += $ageSubTotal}}
             @endforeach
             </tbody>
         @endforeach
         <tfoot>
         <tr>
-            <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
+            <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
                 class="text-right"><b>Grand Total:</b></td>
-            <td style="text-align: right"><b>{{ number_format($grandTotal, $det[0]->balanceDecimalPlaces) }}</b></td>
-            @foreach ($agingRange as $age)
-                <td style="text-align: right">
-                    <b>{{ number_format(array_sum($ageRangeGrandTotal[$age]), $det[0]->balanceDecimalPlaces) }}</b></td>
-            @endforeach
+            <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>
         </tr>
         </tfoot>
     </table>

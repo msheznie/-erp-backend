@@ -18,6 +18,7 @@
  * -- Date: 22-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherPullingDetail()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
+ * -- Date: 10-January 2019 By: Nazir Description: Added new functions named as printPaymentMatching()
  */
 namespace App\Http\Controllers\API;
 
@@ -610,6 +611,32 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
         $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
+        //checking below posted data
+        if ($input['documentSystemID'] == 4) {
+
+            $paySupplierInvoice = PaySupplierInvoiceMaster::find($matchDocumentMaster->PayMasterAutoId);
+
+            $postedDate = date("Y-m-d", strtotime($paySupplierInvoice->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Advance payment is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+
+        } elseif ($input['documentSystemID'] == 15) {
+
+            $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
+
+            $postedDate = date("Y-m-d", strtotime($DebitNoteMaster->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+        }
+
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
@@ -1051,6 +1078,33 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
         $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
+
+        //checking below posted data
+        if ($input['documentSystemID'] == 21) {
+
+            $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
+
+            $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+
+        } elseif ($input['documentSystemID'] == 19) {
+
+            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
+
+            $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+        }
+
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID,addedDocumentSystemID'))
@@ -1091,7 +1145,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
                 ->sum('receiveAmountTrans');
 
-            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+            if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
 
@@ -1973,7 +2027,7 @@ AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData-
 HAVING
 	ROUND(
 		balanceMemAmount,
-		2
+		1
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC";
@@ -2034,6 +2088,41 @@ ORDER BY
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
 
+    }
+
+    public function printPaymentMatching(Request $request)
+    {
+        $id = $request->get('matchDocumentMasterAutoID');
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($id);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match document master not found');
+        }
+
+        $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->first();
+
+        if (empty($matchDocumentRecord)) {
+            return $this->sendError('Match document master not found');
+        }
+        $transDecimal = 2;
+        if ($matchDocumentRecord->transactioncurrency) {
+            $transDecimal = $matchDocumentRecord->transactioncurrency->DecimalPlaces;
+        }
+
+
+        $order = array(
+            'masterdata' => $matchDocumentRecord,
+            'transDecimal' => $transDecimal
+        );
+
+        $time = strtotime("now");
+        $fileName = 'payment_matching_' . $id . '_' . $time . '.pdf';
+        $html = view('print.payment_matching', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
 }

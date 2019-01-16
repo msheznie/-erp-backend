@@ -22,16 +22,20 @@ use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ReportTemplate;
+use App\Models\ReportTemplateColumnLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FinancialReportAPIController extends AppBaseController
 {
+    protected $globalFormula; //keep whole formula ro replace
+
     public function getFRFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
@@ -42,17 +46,16 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $company = Company::whereIN('companySystemID',$companiesByGroup)->get();
+        $company = Company::whereIN('companySystemID', $companiesByGroup)->get();
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companiesByGroup);
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"));
+        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $selectedCompanyId);
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
-        //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
@@ -63,6 +66,14 @@ class FinancialReportAPIController extends AppBaseController
 
         $templateType = ReportTemplate::all();
 
+        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"));
+        $financePeriod = $financePeriod->where('companySystemID', $selectedCompanyId);
+        $financePeriod = $financePeriod->where('departmentSystemID', 5);
+        if (isset($request['type']) && $request['type'] == 'add') {
+            $financePeriod = $financePeriod->where('isActive', -1);
+        }
+        $financePeriod = $financePeriod->get();
+
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
@@ -72,6 +83,7 @@ class FinancialReportAPIController extends AppBaseController
             'templateType' => $templateType,
             'segment' => $departments,
             'company' => $company,
+            'financePeriod' => $financePeriod,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -89,21 +101,21 @@ class FinancialReportAPIController extends AppBaseController
         $input = $request->all();
         $inCategoryBLorPLID = [];
 
-        if(isset($input['isBS']) && $input['isBS'] == 'true'){
-            array_push($inCategoryBLorPLID,1);
+        if (isset($input['isBS']) && $input['isBS'] == 'true') {
+            array_push($inCategoryBLorPLID, 1);
         }
 
-        if(isset($input['isPL']) && $input['isPL'] == 'true'){
-            array_push($inCategoryBLorPLID,2);
+        if (isset($input['isPL']) && $input['isPL'] == 'true') {
+            array_push($inCategoryBLorPLID, 2);
         }
 
-        if(count($inCategoryBLorPLID) == 0){
-            $inCategoryBLorPLID = [1,2];
+        if (count($inCategoryBLorPLID) == 0) {
+            $inCategoryBLorPLID = [1, 2];
         }
-        
+
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
-                                                 ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
-                                                 ->get(['chartOfAccountSystemID','AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+            ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
 
         $output = array(
             'controlAccount' => $controlAccount
@@ -179,6 +191,23 @@ class FinancialReportAPIController extends AppBaseController
                 }
                 if ($request->tempType == 0) {//echo 'in';exit;
                     return $this->sendError('Please select a type');
+                }
+                break;
+            case 'FCT':
+                $validator = \Validator::make($request->all(), [
+                    'accountType' => 'required',
+                    'companyFinanceYearID' => 'required',
+                    'templateType' => 'required',
+                    'companySystemID' => 'required',
+                    'serviceLineSystemID' => 'required',
+                    'currency' => 'required',
+                    'fromDate' => 'required_if:dateType,1|nullable|date',
+                    'toDate' => 'required_if:dateType,1|nullable|date|after_or_equal:fromDate',
+                    'month' => 'required_if:dateType,2',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
                 }
                 break;
             default:
@@ -339,6 +368,50 @@ class FinancialReportAPIController extends AppBaseController
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
                     'tempType' => $request->tempType
+                );
+                break;
+            case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
+                return $this->columnFormulaDecode(28);
+                exit;
+                $request = (object)$request->all();
+                $company = Company::find($request->selectedCompanyID);
+                $template = ReportTemplate::find($request->templateType);
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request));
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request));
+
+                $finalOutput = $outputCollect->groupBy('headerDesc');
+
+                $unique = $outputCollect->unique('headerDesc');
+                $unique = $unique->values()->all();
+
+                $finalData = [];
+                if ($unique) {
+                    foreach ($unique as $key => $val) {
+                        $headerDesc = $val->headerDesc;
+                        $data['headerDesc'] = $val->headerDesc;
+                        $data['headerSort'] = $val->headerSort;
+                        $data['hideHeader'] = $val->hideHeader;
+                        $data['headerColor'] = $val->headerColor;
+                        $detail = $finalOutput[$headerDesc];
+                        if ($detail) {
+                            foreach ($detail as $val2) {
+                                $filtered = $outputDetail->where('templateDetailID', $val2->detID);
+                                $val2->glCodes = $filtered->values();
+                            }
+                        }
+                        $data['detail'] = $detail;
+                        $finalData[] = $data;
+                    }
+                }
+
+                $sorted = collect($finalData)->sortBy('headerSort');
+                $sorted->values()->all();
+
+                return array('reportData' => $sorted,
+                    'template' => $template,
+                    'company' => $company,
+                    'companyCurrency' => $companyCurrency,
                 );
                 break;
             default:
@@ -1645,8 +1718,8 @@ AND MASTER .canceledYN = 0';
                 $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
 
                 $finalData = array();
-                foreach($output as $val){
-                    $finalData[$val->glCode.' - '.$val->AccountDescription][] = $val;
+                foreach ($output as $val) {
+                    $finalData[$val->glCode . ' - ' . $val->AccountDescription][] = $val;
                 }
 
                 $dataArr = array(
@@ -1665,7 +1738,7 @@ AND MASTER .canceledYN = 0';
                     'totaldocumentLocalAmountCredit' => $totaldocumentLocalAmountCredit,
                     'totaldocumentRptAmountDebit' => $totaldocumentRptAmountDebit,
                     'totaldocumentRptAmountCredit' => $totaldocumentRptAmountCredit,
-                    );
+                );
 
                 $html = view('print.report_general_ledger', $dataArr);
 
@@ -1678,6 +1751,251 @@ AND MASTER .canceledYN = 0';
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    function getCustomizeFinancialRptQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $dateFilter = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+        }
+
+
+        //formula column decode
+
+
+        $sql = 'SELECT
+	f.*,
+	erp_companyreporttemplatedetails.description AS headerDesc, 
+	erp_companyreporttemplatedetails.sortOrder AS headerSort,
+	erp_companyreporttemplatedetails.bgColor AS headerColor,
+	erp_companyreporttemplatedetails.hideHeader
+FROM
+	(
+SELECT
+	c.detDescription,
+	c.detID,
+	IFNULL(IFNULL( c.documentLocalAmount, e.documentLocalAmount ),0) AS documentLocalAmount,
+	IFNULL(IFNULL( c.documentRptAmount, e.documentRptAmount ),0) AS documentRptAmount,
+	c.sortOrder,
+	c.masterID,
+	c.bgColor,
+	c.hideHeader,
+	c.itemType  
+FROM
+	(
+SELECT
+	b.*,
+	erp_companyreporttemplatedetails.detID,
+	erp_companyreporttemplatedetails.description AS detDescription,
+	erp_companyreporttemplatedetails.sortOrder,
+	erp_companyreporttemplatedetails.masterID,
+	erp_companyreporttemplatedetails.bgColor,
+	erp_companyreporttemplatedetails.hideHeader,
+	erp_companyreporttemplatedetails.itemType 
+FROM
+	erp_companyreporttemplatedetails
+	LEFT JOIN (
+SELECT
+	SUM( documentLocalAmount ) AS documentLocalAmount,
+	SUM( documentRptAmount ) AS documentRptAmount,
+	erp_generalledger.chartOfAccountSystemID,
+	companyreporttemplatelinks.templateDetailID,
+	companyreporttemplatelinks.description
+FROM
+	erp_generalledger
+	INNER JOIN (
+SELECT
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID,
+	erp_companyreporttemplatedetails.description
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
+ORDER BY
+	erp_companyreporttemplatedetails.sortOrder 
+	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
+WHERE
+	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
+	' . $dateFilter . '
+GROUP BY
+	companyreporttemplatelinks.templateDetailID 
+	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
+WHERE
+	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
+	) c
+	LEFT JOIN (
+SELECT
+	SUM( d.documentLocalAmount ) AS documentLocalAmount,
+	SUM( d.documentRptAmount ) AS documentRptAmount,
+	erp_companyreporttemplatelinks.templateDetailID 
+FROM
+	erp_companyreporttemplatelinks
+	LEFT JOIN (
+SELECT
+	SUM( documentLocalAmount ) AS documentLocalAmount,
+	SUM( documentRptAmount ) AS documentRptAmount,
+	erp_generalledger.chartOfAccountSystemID,
+	companyreporttemplatelinks.templateDetailID,
+	companyreporttemplatelinks.description
+FROM
+	erp_generalledger
+	INNER JOIN (
+SELECT
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID,
+	erp_companyreporttemplatedetails.description
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
+ORDER BY
+	erp_companyreporttemplatedetails.sortOrder 
+	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
+WHERE
+	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
+	' . $dateFilter . ' 
+GROUP BY
+	companyreporttemplatelinks.templateDetailID 
+	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
+	AND subCategory IS NOT NULL 
+GROUP BY
+	erp_companyreporttemplatelinks.templateDetailID 
+	) e ON e.templateDetailID = c.detID 
+	) f
+	LEFT JOIN erp_companyreporttemplatedetails ON f.masterID = erp_companyreporttemplatedetails.detID 
+WHERE
+	f.masterID IS NOT NULL ORDER BY headerSort,sortOrder';
+
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    function getCustomizeFinancialDetailRptQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $dateFilter = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+        }
+
+        $sql = 'SELECT
+	IFNULL(gl.documentLocalAmount,0) as documentLocalAmount,
+	IFNULL(gl.documentRptAmount,0) as documentRptAmount,
+	erp_companyreporttemplatelinks.glCode,
+	erp_companyreporttemplatelinks.glDescription,
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+	LEFT JOIN (
+        SELECT
+        SUM(documentLocalAmount) AS documentLocalAmount,
+        SUM(documentRptAmount) AS documentRptAmount,
+        erp_generalledger.chartOfAccountSystemID
+    FROM
+        erp_generalledger 
+        WHERE
+        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
+        ' . $dateFilter . ' 
+        GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
+ORDER BY
+	erp_companyreporttemplatelinks.sortOrder';
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    /**
+     * function to decode tax formula to multiple combined formula
+     * @param $columnLinkID
+     * @return array
+     */
+    public function columnFormulaDecode($columnLinkID)
+    {
+        global $globalFormula;
+        $sepFormulaArr = [];
+        $finalArr = [];
+        $taxFormula = ReportTemplateColumnLink::find($columnLinkID);
+        $globalFormula = $taxFormula->formula;
+        $linkedColumns = $taxFormula->formulaColumnID;
+        $sepFormulaArr[$columnLinkID] = $this->decodeColumnFormula($linkedColumns);
+        $globalFormula = '';
+        $taxArr = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
+        if($sepFormulaArr) {
+            foreach ($sepFormulaArr as $key => $val) {
+                $fomulaFinal = '';
+                $formulaArr = explode('~', $val);
+                if ($formulaArr) {
+                    foreach ($formulaArr as $val2) {
+                        $removedFirstChar = substr($val2, 1);
+                        $fomulaFinal .= $removedFirstChar;
+                    }
+                    $finalArr[$key] = $fomulaFinal;
+                }
+            }
+        }
+        return $finalArr;
+    }
+
+
+    /**
+     * function to decode customize report
+     * @param $linkedColumns - connected formulas
+     * @return mixed
+     */
+    public function decodeColumnFormula($linkedColumns){
+        global $globalFormula;
+        $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
+        if($taxFormula){
+            foreach ($taxFormula as $val){
+                $searchVal = '#'.$val['columnLinkID'];
+                if(!empty($val['formulaColumnID'])){
+                    $replaceVal = '|(~'.$val['formula'].'~|)';
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID']);
+                    if(is_array($return)){
+                        if($return[0] == 'e'){
+                            return $return;
+                            break;
+                        }
+                    }
+                }
+                else{
+                    $replaceVal = '#'.$val['shortCode'];
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                }
+            }
+        }
+
+        return $globalFormula;
     }
 
 

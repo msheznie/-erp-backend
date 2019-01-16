@@ -931,6 +931,13 @@ class Helper
                 $docInforArr["documentDate"] = "BPVdate";
                 $docInforArr["financePeriod"] = "financeperiod_by";
                 break;
+            case 21: // Receipt voucher
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentDate"] = "custPaymentReceiveDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
             case 17: // Journal Voucher
                 $docInforArr["tableName"] = 'erp_jvmaster';
                 $docInforArr["modelName"] = 'JvMaster';
@@ -951,7 +958,7 @@ class Helper
                 $financePeriod = $docInforArr["financePeriod"];
                 $documentDate = $docInforArr["documentDate"];
                 if ($masterRec) {
-                    if($masterRec->$financePeriod) {
+                    if ($masterRec->$financePeriod) {
                         $isActive = $masterRec->$financePeriod->isActive;
                         $masterDocumentDate = date('Y-m-d H:i:s');
                         if ($isActive == -1) {
@@ -960,16 +967,16 @@ class Helper
                         $masterDocumentDate = Carbon::parse($masterDocumentDate);
                         $masterDocumentDate = $masterDocumentDate->format('d/m/Y');
                         return ['success' => true, 'message' => 'Document will be posted on ' . $masterDocumentDate . '. Are you sure you want to continue?', 'type' => 1];
-                    }else{
+                    } else {
                         return ['success' => false, 'message' => 'Financial period not found', 'type' => 3];
                     }
                 } else {
                     return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
                 }
-            }else{
+            } else {
                 return ['success' => true, 'message' => 'Success', 'type' => 5];
             }
-        }else {
+        } else {
             return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
         }
     }
@@ -1617,6 +1624,7 @@ class Helper
                                                     $data["assetDescription"] = $val["itemDescription"];
                                                     $data["COSTUNIT"] = $val["unitCostLocal"];
                                                     $data["costUnitRpt"] = $val["unitCostRpt"];
+                                                    $data["assetType"] = 1;
                                                     $data['createdPcID'] = gethostname();
                                                     $data['createdUserID'] = \Helper::getEmployeeID();
                                                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -1704,6 +1712,16 @@ class Helper
                                         $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
                                     }
                                 }
+                            }
+
+                            // adding records to budget consumption data
+                            if ($input["documentSystemID"] == 11 || $input["documentSystemID"] == 4 || $input["documentSystemID"] == 15 || $input["documentSystemID"] == 19) {
+                                $storingBudget = self::storeBudgetConsumption($masterData);
+                            }
+
+                            //sending email based on policy
+                            if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
+                                $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
 
                         } else {
@@ -3531,12 +3549,261 @@ class Helper
 
     public static function  getCompanyById($companySystemID)
     {
-        $company = Models\Company::select('CompanyID')->where("companySystemID",$companySystemID)->first();
+        $company = Models\Company::select('CompanyID')->where("companySystemID", $companySystemID)->first();
 
-        if(!empty($company)){
+        if (!empty($company)) {
             return $company->CompanyID;
-        }else{
+        } else {
             return "";
         }
     }
+
+    // storing records to budget
+    public static function storeBudgetConsumption($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 11:
+                $budgetConsumeData = array();
+                $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->documentType == 1) {
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+
+                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                                if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $masterRec->companySystemID,
+                                        "companyID" => $masterRec->companyID,
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => $value->serviceLineCode,
+                                        "documentSystemID" => $masterRec->documentSystemID,
+                                        "documentID" => $masterRec->documentID,
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec->bookingInvCode,
+                                        "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                        "GLCode" => $value->glCode,
+                                        "year" => $value->budgetYear,
+                                        "month" => date("m", strtotime($masterRec->bookingDate)),
+                                        "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                        "consumedLocalAmount" => abs($value->localAmountTot),
+                                        "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                        "consumedRptAmount" => abs($value->comRptAmountTot),
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                            $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $budgetConsumeData = array();
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->invoiceType == 3) {
+                        $directDetail = \DB::select('SELECT directPaymentDetailsID,directPaymentAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directpaymentdetails WHERE directPaymentAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+
+                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                                if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $masterRec->companySystemID,
+                                        "companyID" => $masterRec->companyID,
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => $value->serviceLineCode,
+                                        "documentSystemID" => $masterRec->documentSystemID,
+                                        "documentID" => $masterRec->documentID,
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec->BPVcode,
+                                        "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                        "GLCode" => $value->glCode,
+                                        "year" => $value->budgetYear,
+                                        "month" => date("m", strtotime($masterRec->BPVdate)),
+                                        "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                        "consumedLocalAmount" => abs($value->localAmountTot),
+                                        "consumedRptCurrencyID" => $masterRec->companyRptCurrencyID,
+                                        "consumedRptAmount" => abs($value->comRptAmountTot),
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                            $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                        }
+                    }
+                }
+                break;
+            case 15:
+                $budgetConsumeData = array();
+                $masterRec = Models\DebitNote::find($params["autoID"]);
+                if ($masterRec) {
+                    $directDetail = \DB::select('SELECT debitNoteDetailsID,debitNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_debitnotedetails WHERE debitNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                    if (!empty($directDetail)) {
+                        foreach ($directDetail as $value) {
+
+                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                            if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $masterRec->companySystemID,
+                                    "companyID" => $masterRec->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $masterRec->documentSystemID,
+                                    "documentID" => $masterRec->documentID,
+                                    "documentSystemCode" => $params["autoID"],
+                                    "documentCode" => $masterRec->debitNoteCode,
+                                    "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                    "GLCode" => $value->glCode,
+                                    "year" => $value->budgetYear,
+                                    "month" => date("m", strtotime($masterRec->debitNoteDate)),
+                                    "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                    "consumedLocalAmount" => ($value->localAmountTot * -1),
+                                    "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                    "consumedRptAmount" => ($value->comRptAmountTot * -1),
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
+                break;
+            case 19:
+                $budgetConsumeData = array();
+                $masterRec = Models\CreditNote::find($params["autoID"]);
+                if ($masterRec) {
+                    $directDetail = \DB::select('SELECT creditNoteDetailsID,creditNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_creditnotedetails WHERE creditNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                    if (!empty($directDetail)) {
+                        foreach ($directDetail as $value) {
+
+                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                            if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $masterRec->companySystemID,
+                                    "companyID" => $masterRec->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $masterRec->documentSystemiD,
+                                    "documentID" => $masterRec->documentID,
+                                    "documentSystemCode" => $params["autoID"],
+                                    "documentCode" => $masterRec->creditNoteCode,
+                                    "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                    "GLCode" => $value->glCode,
+                                    "year" => $value->budgetYear,
+                                    "month" => date("m", strtotime($masterRec->creditNoteDate)),
+                                    "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                    "consumedLocalAmount" => ($value->localAmountTot * -1),
+                                    "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                    "consumedRptAmount" => ($value->comRptAmountTot * -1),
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
+    // sending email based on policy
+    public static function sendingEmailNotificationPolicy($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 1:
+            case 50:
+            case 51:
+                $masterRec = Models\PurchaseRequest::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 1 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved.</p>';
+                            $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $masterRec->purchaseRequestCode);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $masterRec = Models\ProcumentOrder::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->logisticsAvailable == -1) {
+
+                        $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 2 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                        $emails = array();
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = $masterRec->purchaseOrderCode . " marked as logistics available is approved.";
+                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' is approved.</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $masterRec->purchaseOrderCode);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 3 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+
+                    $supplierDetail = Models\SupplierMaster::find($masterRec->BPVsupplierID);
+                    $companyDetail = Models\Company::find($params["companySystemID"]);
+                    $supplierName = '';
+                    if($supplierDetail){
+                        $supplierName = $supplierDetail->supplierName;
+                    }
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
+                            $body = '<p>Payment '. $masterRec->BPVcode . '  has been released to.'.$supplierName. ' from '.$companyDetail->CompanyName.'</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $masterRec->BPVcode);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
 }

@@ -33,10 +33,9 @@
         font-size: 10px;
     }
 
-    table > tbody > th{
+    table > tbody > th {
         font-size: 10px;
     }
-
 
     .theme-tr-head {
         background-color: #EBEBEB !important;
@@ -185,7 +184,6 @@
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
-            <thead>
             <tr>
                 <td colspan="5"><b>{{$key}}</b></td>
             </tr>
@@ -196,7 +194,6 @@
                 <th width="10%" style="text-align: center">Credit Note Issued</th>
                 <th width="10%" style="text-align: center">Total</th>
             </tr>
-            </thead>
             <tbody>
             {{ $lineTotalBank = 0 }}
             {{ $lineTotalCredit = 0 }}
