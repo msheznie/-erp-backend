@@ -136,7 +136,20 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError('Item not found');
         }
 
-        $itemAssigned = $this->itemAssignedRepository->update(array_only($input, ['minimumQty', 'maximunQty', 'rolQuantity']), $id);
+        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity'];
+
+        if($itemAssigned->isPOSItem == 1){
+            $updateColumns = array_merge($updateColumns, ['sellingCost']);
+        }
+
+        $updateColumns = array_only($input,$updateColumns);
+
+        $validator = \Validator::make($updateColumns, ['sellingCost' => 'required|numeric|min:0.001']);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $itemAssigned = $this->itemAssignedRepository->update($updateColumns, $id);
 
         return $this->sendResponse($itemAssigned->toArray(), 'Item updated successfully');
     }
@@ -316,6 +329,12 @@ class ItemAssignedAPIController extends AppBaseController
         $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
             ->whereIn('companySystemID', $childCompanies)
             ->where('financeCategoryMaster', 1);
+
+        if (array_key_exists('isPOSItem', $input)) {
+            if ($input['isPOSItem'] > 0 && !is_null($input['isPOSItem'])) {
+                $itemMasters->where('isPOSItem', 1);
+            }
+        }
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {

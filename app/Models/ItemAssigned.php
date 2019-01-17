@@ -96,7 +96,9 @@ class ItemAssigned extends Model
         'isAssigned',
         'selectedForWarehouse',
         'itemMovementCategory',
-        'timeStamp'
+        'timeStamp',
+        'isPOSItem',
+        'sellingCost'
     ];
 
     /**
@@ -135,7 +137,9 @@ class ItemAssigned extends Model
         'isActive' => 'integer',
         'isAssigned' => 'integer',
         'selectedForWarehouse' => 'integer',
-        'itemMovementCategory' => 'integer'
+        'itemMovementCategory' => 'integer',
+        'isPOSItem' => 'integer',
+        'sellingCost' => 'float'
     ];
 
     /**
