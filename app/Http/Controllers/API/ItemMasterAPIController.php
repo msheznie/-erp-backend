@@ -559,19 +559,19 @@ class ItemMasterAPIController extends AppBaseController
                 ->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')
                 ->where('itemCodeSystem', $itemMasters->itemCodeSystem)
                 ->first();
-            if(!empty($itemMaster)){
+            if (!empty($itemMaster)) {
                 $itemMaster = collect($itemMaster)->toArray();
                 $itemMaster['sellingCost'] = $input['sellingCost'];
 
-                if(isset($input['rolQuantity'])){
+                if (isset($input['rolQuantity'])) {
                     $itemMaster['rolQuantity'] = $input['rolQuantity'];
                 }
 
-                if(isset($input['maximunQty'])){
+                if (isset($input['maximunQty'])) {
                     $itemMaster['maximunQty'] = $input['maximunQty'];
                 }
 
-                if(isset($input['rolQuantity'])){
+                if (isset($input['rolQuantity'])) {
                     $itemMaster['minimumQty'] = $input['minimumQty'];
                 }
 
@@ -897,12 +897,27 @@ class ItemMasterAPIController extends AppBaseController
     public function getPosItemSearch(Request $request)
     {
         $input = $request->all();
-        $companyId = $input['companyId'];
+        $input['warehouseSystemCode'] = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+        $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
         $items = ItemAssigned::where('companySystemID', $companyId)
             ->where('financeCategoryMaster', 1)
             ->where('isPOSItem', 1)
-            ->with(['unit'])
-            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure','sellingCost']);
+            ->with(['unit', 'outlet_items' => function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+            },'item_ledger' => function($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+            }])
+            ->whereHas('outlet_items', function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+            })
+            ->whereHas('item_ledger', function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->havingRaw('sum(inOutQty) > 0 ');
+            })
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost','barcode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -914,6 +929,13 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $items = $items->take(10)->get();
+
+        foreach ($items as $item){
+            if(count($item['item_ledger']) > 0){
+                $item['current_stock'] = $item['item_ledger'][0]['stock'];
+            }
+        }
+
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

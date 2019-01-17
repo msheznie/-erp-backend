@@ -141,7 +141,7 @@ class ItemAssignedAPIController extends AppBaseController
         $rules = [];
 
         if($itemAssigned->isPOSItem == 1){
-            $updateColumns = array_merge($updateColumns, ['sellingCost']);
+            $updateColumns = array_merge($updateColumns, ['sellingCost','barcode']);
             $rules = ['sellingCost' => 'required|numeric|min:0.001'];
         }
 

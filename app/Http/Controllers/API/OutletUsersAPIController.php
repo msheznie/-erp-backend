@@ -154,6 +154,16 @@ class OutletUsersAPIController extends AppBaseController
             return $this->sendError('User not Found', 500);
         }
 
+        $checkUserActive = OutletUsers::where('userID',$input['userID'])
+                                        ->where('companySystemID',$input['companySystemID'])
+                                        ->where('isActive',1)
+                                        ->first();
+
+        if(!empty($checkUserActive)){
+            return $this->sendError('This user already active in '.$checkUserActive->outlet->wareHouseCode,500);
+        }
+
+
         $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
         $employee = \Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
