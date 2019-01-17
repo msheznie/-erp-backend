@@ -138,13 +138,16 @@ class ItemAssignedAPIController extends AppBaseController
 
         $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity'];
 
+        $rules = [];
+
         if($itemAssigned->isPOSItem == 1){
             $updateColumns = array_merge($updateColumns, ['sellingCost']);
+            $rules = ['sellingCost' => 'required|numeric|min:0.001'];
         }
 
         $updateColumns = array_only($input,$updateColumns);
 
-        $validator = \Validator::make($updateColumns, ['sellingCost' => 'required|numeric|min:0.001']);
+        $validator = \Validator::make($updateColumns,$rules);
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
