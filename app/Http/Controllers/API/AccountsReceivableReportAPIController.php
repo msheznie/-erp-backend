@@ -1678,6 +1678,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
+                    $companyLogo = $checkIsGroup->companyLogo;
                     //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -1691,9 +1692,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_balance_statement', $dataArr);
 

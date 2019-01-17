@@ -1412,10 +1412,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
-
-
-
-
-
-
+Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 

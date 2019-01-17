@@ -148,10 +148,10 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                 $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
                                 $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
                                 $data['localCurrencyID'] = $masterData->localCurrencyID;
-                                $data['localER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal));
+                                $data['localER'] = round(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal), 8);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal));
                                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                                $data['comRptER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt));
+                                $data['comRptER'] = round(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt), 8);
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt));
                             } else {
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;

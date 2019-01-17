@@ -1652,6 +1652,11 @@ class Helper
                                 }
                             }
 
+                            // generate asset costing
+                            if ($input["documentSystemID"] == 22) {
+                                $assetCosting = self::generateAssetCosting($sourceModel);
+                            }
+
                             // insert the record to budget consumed data
                             if ($input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52) {
                                 $budgetConsumeData = array();
@@ -3818,6 +3823,20 @@ class Helper
                 break;
             default:
         }
+    }
+
+    public static function generateAssetCosting($masterData)
+    {
+        $companyCurrency = self::companyCurrency($masterData->companySystemID);
+        $cost['faID'] = $masterData->faID;
+        $cost['assetID'] =$masterData->faCode;
+        $cost['assetDescription'] =$masterData->assetDescription;
+        $cost['costDate'] =$masterData->dateAQ;
+        $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
+        $cost['localAmount'] =$masterData->COSTUNIT;
+        $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
+        $cost['rptAmount'] =$masterData->costUnitRpt;
+        $assetCosting = Models\FixedAssetCost::create($cost);
     }
 
 }
