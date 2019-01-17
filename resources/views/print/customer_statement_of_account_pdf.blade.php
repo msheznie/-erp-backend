@@ -1,8 +1,24 @@
 <style type="text/css">
     @page {
-        margin-left: 3%;
-        margin-right: 3%;
-        margin-top: 4%;
+        margin: 100px 30px 40px;
+    }
+
+    #header {
+        position: fixed;
+        left: 0px;
+        top: -100px;
+        right: 0px;
+        height: 50px;
+        text-align: center;
+    }
+
+    #footer {
+        position: fixed;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        height: 0px;
+        font-size: 10px;
     }
 
     .footer {
@@ -10,7 +26,7 @@
     }
 
     body {
-        font-size: 11px;
+        font-size: 10px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -53,11 +69,18 @@
         padding: 0.4rem !important;
         vertical-align: top;
         border: 1px solid #dee2e6 !important;
-        /* border-bottom: 1px solid rgb(127, 127, 127) !important;*/
     }
 
     .table th {
-        background-color: #EBEBEB !important;
+        background-color: #D7E4BD !important;
+    }
+
+    table > tbody > th > tr > td {
+        font-size: 10px;
+    }
+
+    table > thead > th {
+        font-size: 10px;
     }
 
     tfoot > tr > td {
@@ -94,57 +117,14 @@
         margin-top: 0 !important;
     }
 
-    .title {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .footer {
-        bottom: 0;
-        height: 40px;
-    }
-
-    .footer {
-        width: 100%;
-        text-align: center;
-        position: fixed;
-        font-size: 10px;
-        padding-top: -20px;
-    }
-
     .pagenum:after {
         content: counter(page);
     }
 
-    .content {
-        margin-bottom: 45px;
-    }
 
-    #watermark {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        padding-top: 31%;
-    }
-
-    .watermarkText {
-        color: #dedede !important;
-        font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
-    }
-
-    #watermark {
-        height: 1000px;
-        opacity: 0.6;
-        left: 0;
-        transform-origin: 20% 20%;
-        z-index: 1000;
-    }
 
 </style>
-<div class="footer">
+<div id="footer">
     <table style="width:100%;">
         <tr>
             <td colspan="2" style="width:100%">
@@ -161,25 +141,40 @@
         </tr>
     </table>
 </div>
-<div class="header">
+<div id="header">
+    <div class="row">
+        <div class="col-md-12">
+            <table style="width: 100%">
+                <tr>
+                    <td valign="top" style="width: 40%">
+                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                    </td>
+                    <td valign="top" style="width: 60%">
+                        <br><br>
+                        <span class="font-weight-bold">Statement of Account for the Period {{ $fromDate }}
+                            to {{ $toDate }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <span class="font-weight-bold"> {{$companyName}}</span>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="content">
     <table style="width:100%;">
         <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">{{$companyName}}</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Statement of Account for the Period {{ $fromDate }}
-                    to {{ $toDate }}</span>
-            </td>
-        </tr>
-        <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>{{$customerName}}</span>
+                <span><b>{{$customerName}}</b></span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Report Date {{ $reportDate }}</span><br>
+                <span style="float: right;"><b>Report Date {{ $reportDate }}</b></span><br>
             </td>
         </tr>
         <tr>
@@ -187,13 +182,11 @@
 
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">{{ $currency }}</span><br>
+                <span style="float: right;"><b>{{ $currency }}</b></span><br>
             </td>
         </tr>
     </table>
-</div>
-<div class="content">
-    <table style="width:93%;border:1px solid #9fcdff" class="table">
+    <table style="width:95%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
             <thead>
             <tr>
