@@ -185,7 +185,11 @@ return [
         'companyId'   => 'Company',
         'startingBalance_transaction' => 'Starting Balance',
         'endingBalance_transaction' => 'Closing Balance',
-        'counterID' => 'Counter'
+        'counterID' => 'Counter',
+        'secondaryItemCode' => 'Mfg. Part No',
+        'itemDescription' => 'Item Description',
+        'unit' => 'Unit of Measure'
+
     ],
 
 ];

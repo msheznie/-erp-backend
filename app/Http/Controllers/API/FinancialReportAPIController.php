@@ -28,7 +28,9 @@ use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateColumnLink;
+use App\Models\ReportTemplateColumns;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -371,12 +373,97 @@ class FinancialReportAPIController extends AppBaseController
                 );
                 break;
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
-                return $this->columnFormulaDecode(28);
-                exit;
                 $request = (object)$request->all();
+                $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
+
                 $company = Company::find($request->selectedCompanyID);
                 $template = ReportTemplate::find($request->templateType);
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $currencyColumn = '';
+                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request));
+
+                //formula column decode
+                if($request->currency == 1){
+                    $currencyColumn = 'documentLocalAmount';
+                }else{
+                    $currencyColumn = 'documentRptAmount';
+                }
+                $columns = ReportTemplateColumns::all();
+                $columnArray = [];
+                $linkedcolumnArray = [];
+                $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->get();
+                if(count($columns) > 0){
+                    $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
+                    $currentYearPeriodArr = [];
+                    $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+                    $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+                    $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+                    $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+                    $lastYearPeriod = CarbonPeriod::create($lastYearStartDate, '1 month', $lastYearEndDate);
+                    $lastYearPeriodArr = [];
+                    $currentMonth = Carbon::parse($financeYear->bigginingDate)->format('Y-m');
+                    $prevMonth = Carbon::parse($financeYear->bigginingDate)->subMonth()->format('Y-m');
+                    $prevMonth2 = Carbon::parse($financeYear->bigginingDate)->subMonth(2)->format('Y-m');
+                    $LCurrentMonth = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m');
+                    $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
+                    $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
+                    foreach ($currentYearPeriod as $val){
+                        $currentYearPeriodArr[] = $val->format('Y-m');
+                    }
+
+                    foreach ($lastYearPeriod as $val){
+                        $lastYearPeriodArr[] = $val->format('Y-m');
+                    }
+
+                    $currentMonthColumn = collect($columns)->where('type',3)->values();
+                    $prevMonthColumn = collect($columns)->where('type',6)->values();
+                    if(count($currentMonthColumn) > 0){
+                        foreach ($currentMonthColumn as $key => $val){
+                            $columnArray[$val->shortCode] =  "SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '".$currentYearPeriodArr[$key]."',$currencyColumn,0))";
+                        }
+                    }
+
+                    if(count($prevMonthColumn) > 0){
+                        foreach ($prevMonthColumn as $key => $val){
+                            $columnArray[$val->shortCode] =  $lastYearPeriodArr[$key];
+                        }
+                    }
+
+                    foreach ($columns as $val){
+                        if($val->shortCode == 'CM'){
+                            $columnArray[$val->shortCode] =  "SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '".$currentMonth."',$currencyColumn,0))";
+                        }
+                        if($val->shortCode == 'CM-1'){
+                            $columnArray[$val->shortCode] =  $prevMonth;
+                        }
+                        if($val->shortCode == 'CM-2'){
+                            $columnArray[$val->shortCode] =  $prevMonth2;
+                        }
+                        if($val->shortCode == 'LYCM'){
+                            $columnArray[$val->shortCode] =  $LCurrentMonth;
+                        }
+                        if($val->shortCode == 'LYCM-1'){
+                            $columnArray[$val->shortCode] =  $LPrevMonth;
+                        }
+                        if($val->shortCode == 'LYCM-2'){
+                            $columnArray[$val->shortCode] =  $LPrevMonth2;
+                        }
+                    }
+
+                }
+
+                if(count($linkedColumn) > 0){
+                    foreach ($linkedColumn as $val){
+                        if($val->shortCode == 'FCA' || $val->shortCode == 'FCP'){
+                            $linkedcolumnArray[$val->shortCode] = $this->columnFormulaDecode($val->columnLinkID,$detTotCollect,$columnArray);
+                        }else {
+                            $linkedcolumnArray[$val->shortCode] = $columnArray[$val->shortCode];
+                        }
+                    }
+                }
+
+                return $linkedcolumnArray;
+
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request));
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request));
 
@@ -1770,9 +1857,6 @@ AND MASTER .canceledYN = 0';
         }
 
 
-        //formula column decode
-
-
         $sql = 'SELECT
 	f.*,
 	erp_companyreporttemplatedetails.description AS headerDesc, 
@@ -1929,6 +2013,54 @@ WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
 	erp_companyreporttemplatelinks.sortOrder';
+
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    function getCustomizeFinancialDetailTOTQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $dateFilter = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+        }
+
+        $sql = 'SELECT
+	SUM( documentLocalAmount ) AS documentLocalAmount,
+	SUM( documentRptAmount ) AS documentRptAmount,
+	companyreporttemplatelinks.templateDetailID,
+	companyreporttemplatelinks.description
+FROM
+	erp_generalledger
+	INNER JOIN (
+SELECT
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID,
+	erp_companyreporttemplatedetails.description
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
+ORDER BY
+	erp_companyreporttemplatedetails.sortOrder 
+	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
+WHERE
+	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
+	' . $dateFilter . '
+GROUP BY
+	companyreporttemplatelinks.templateDetailID';
+
         $output = \DB::select($sql);
         return $output;
     }
@@ -1936,9 +2068,11 @@ ORDER BY
     /**
      * function to decode tax formula to multiple combined formula
      * @param $columnLinkID
+     * @param $rowValues
+     * @param $columnArray
      * @return array
      */
-    public function columnFormulaDecode($columnLinkID)
+    public function columnFormulaDecode($columnLinkID,$rowValues,$columnArray)
     {
         global $globalFormula;
         $sepFormulaArr = [];
@@ -1946,7 +2080,8 @@ ORDER BY
         $taxFormula = ReportTemplateColumnLink::find($columnLinkID);
         $globalFormula = $taxFormula->formula;
         $linkedColumns = $taxFormula->formulaColumnID;
-        $sepFormulaArr[$columnLinkID] = $this->decodeColumnFormula($linkedColumns);
+        $linkedRows = $taxFormula->formulaRowID;
+        $sepFormulaArr[$columnLinkID] = $this->decodeColumnFormula($linkedColumns,$linkedRows,$rowValues,$columnArray);
         $globalFormula = '';
         $taxArr = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
         if($sepFormulaArr) {
@@ -1969,9 +2104,12 @@ ORDER BY
     /**
      * function to decode customize report
      * @param $linkedColumns - connected formulas
+     * @param $rowValues
+     * @param $columnArray
+     * @param $linkedRows
      * @return mixed
      */
-    public function decodeColumnFormula($linkedColumns){
+    public function decodeColumnFormula($linkedColumns,$linkedRows,$rowValues,$columnArray){
         global $globalFormula;
         $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID',explode(',',$linkedColumns))->get();
         if($taxFormula){
@@ -1980,7 +2118,7 @@ ORDER BY
                 if(!empty($val['formulaColumnID'])){
                     $replaceVal = '|(~'.$val['formula'].'~|)';
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
-                    $return = $this->decodeColumnFormula($val['formulaColumnID']);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID'],$val['formulaRowID'],$rowValues,$columnArray);
                     if(is_array($return)){
                         if($return[0] == 'e'){
                             return $return;
@@ -1989,7 +2127,22 @@ ORDER BY
                     }
                 }
                 else{
-                    $replaceVal = '#'.$val['shortCode'];
+                    $replaceVal = '#'.$columnArray[$val['shortCode']];
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                }
+            }
+        }
+
+        dd($globalFormula);
+
+        if($linkedRows){
+            $explodeLinkedRows = explode(',',$linkedRows);
+            if($explodeLinkedRows) {
+                foreach ($explodeLinkedRows as $val) {
+                    $searchVal = '$'.$val;
+                    $filtered = $rowValues->where('templateDetailID', $val);
+                    $detValues = $filtered->values();
+                    $replaceVal = '$'.$detValues[0]->documentRptAmount;
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                 }
             }
