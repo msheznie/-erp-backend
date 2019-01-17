@@ -19,6 +19,7 @@
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
  * -- Date: 10-January 2019 By: Nazir Description: Added new functions named as printPaymentMatching()
+ * -- Date: 17-January 2019 By: Nazir Description: Added new functions named as deleteAllPVMDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -2123,6 +2124,41 @@ ORDER BY
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function deleteAllRVMDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match document master not found');
+        }
+
+        $detailExistAll = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
+            ->where('companySystemID', $MatchDocumentMasterData->companySystemID )
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDetail) {
+
+                $deleteDetails = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $cvDetail['custRecivePayDetAutoID'])->delete();
+
+                $updateMaster = AccountsReceivableLedger::where('arAutoID', $cvDetail['arAutoID'])
+                    ->update(array('selectedToPaymentInv' => 0, 'fullyInvoiced' => 1));
+
+            }
+        }
+
+        return $this->sendResponse($matchDocumentMasterAutoID, 'Details deleted successfully');
     }
 
 }

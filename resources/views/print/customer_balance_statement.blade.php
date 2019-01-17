@@ -1,145 +1,106 @@
-<style type="text/css">
-    @page {
-        margin-left: 3%;
-        margin-right: 3%;
-        margin-top: 4%;
-    }
+<html>
+<head>
+    <style>
+        @page {
+            margin: 100px 30px 40px;
+        }
 
-    .footer {
-        position: absolute;
-    }
+        #header {
+            position: fixed;
+            left: 0px;
+            top: -100px;
+            right: 0px;
+            height: 50px;
+            text-align: center;
+        }
 
-    body {
-        font-size: 10px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
-    }
+        #footer {
+            position: fixed;
+            left: 0px;
+            bottom: 0px;
+            right: 0px;
+            height: 0px;
+            font-size: 10px;
+        }
 
-    h3 {
-        font-size: 1.53125rem;
-    }
+        #footer .page:after {
+            content: counter(page, upper-roman);
+        }
 
-    h6 {
-        font-size: 0.875rem;
-    }
+        body {
+            font-size: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
+        }
 
-    h6, h3 {
-        margin-bottom: 0.1rem;
-        font-weight: 500;
-        line-height: 1.2;
-        color: inherit;
-    }
+        .pagenum:after {
+            content: counter(page);
+        }
 
-    table > tbody > th > tr > td {
-        font-size: 10px;
-    }
+        table {
+            border-collapse: collapse;
+        }
 
-    table > thead > th {
-        font-size: 10px;
-    }
+        table > tbody > th > tr > td {
+            font-size: 10px;
+        }
 
-    .theme-tr-head {
-        background-color: #EBEBEB !important;
-    }
+        table > thead > th {
+            font-size: 10px;
+        }
 
-    .text-left {
-        text-align: left;
-    }
+        .table th, .table td {
+            padding: 0.4rem !important;
+            vertical-align: top;
+            border: 1px solid #dee2e6 !important;
+            /* border-bottom: 1px solid rgb(127, 127, 127) !important;*/
+        }
 
-    table {
-        border-collapse: collapse;
-    }
+        .table th {
+            background-color: #D7E4BD !important;
+        }
 
-    .font-weight-bold {
-        font-weight: 700 !important;
-    }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+        }
+        .font-weight-bold {
+            font-weight: 700 !important;
+            font-size: 12px;
+            text-align: center;
+        }
+        .text-right {
+            text-align: right !important;
+        }
 
-    .table th, .table td {
-        padding: 0.4rem !important;
-        vertical-align: top;
-        border: 1px solid #dee2e6 !important;
-        /* border-bottom: 1px solid rgb(127, 127, 127) !important;*/
-    }
+    </style>
 
-    .table th {
-        background-color: #D7E4BD !important;
-    }
+<body>
+<div id="header">
+    <div class="row">
+        <div class="col-md-12">
+            <table style="width: 100%">
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                    </td>
+                    <td valign="top" style="width: 55%">
+                        <br><br>
+                        <span class="font-weight-bold">Customer Balance Statement</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <span class="font-weight-bold"> {{$companyName}}</span>
+                    </td>
+                    <td>
 
-    tfoot > tr > td {
-        border: 1px solid rgb(127, 127, 127);
-    }
-
-    .text-right {
-        text-align: right !important;
-    }
-
-    .font-weight-bold {
-        font-weight: 700 !important;
-    }
-
-    hr {
-        border: 0;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    th {
-        text-align: inherit;
-        font-weight: bold;
-    }
-
-    .table-striped tbody tr:nth-of-type(odd) {
-        background-color: #f9f9f9;
-    }
-
-    .white-space-pre-line {
-        white-space: pre-line;
-    }
-
-    p {
-        margin-top: 0 !important;
-    }
-
-    .title {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .footer {
-        bottom: 0;
-        height: 40px;
-    }
-
-    .footer {
-        width: 100%;
-        text-align: center;
-        position: fixed;
-        font-size: 10px;
-        padding-top: -20px;
-    }
-
-    .pagenum:after {
-        content: counter(page);
-    }
-
-    .content {
-        margin-bottom: 45px;
-    }
-
-    header {
-        position: fixed;
-        top: -60px;
-        left: 0px;
-        right: 0px;
-        height: 50px;
-
-        /** Extra personal styles **/
-        background-color: #03a9f4;
-        color: white;
-        text-align: center;
-        line-height: 35px;
-    }
-
-</style>
-<div class="footer">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<div id="footer">
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
@@ -151,33 +112,7 @@
         </tr>
     </table>
 </div>
-<div class="header">
-    <div class="row">
-        <div class="col-md-12">
-            <table style="width: 100%">
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
-                    </td>
-                    <td valign="top" style="width: 55%">
-                        <span class="font-weight-bold" style="font-size: 12px; text-align: center;">Customer Balance Statement</span><br>
-                        <span class="font-weight-bold" style="font-size: 12px; text-align: center;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span style="font-size: 12px;font-weight: 400"> {{$companyName}}</span>
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<br><br>
-<div class="content">
+<div id="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
             <tr>
@@ -228,3 +163,5 @@
         </tfoot>
     </table>
 </div>
+</body>
+</html>
