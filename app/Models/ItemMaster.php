@@ -111,7 +111,8 @@ class ItemMaster extends Model
         'createdDateTime',
         'timestamp',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'isPOSItem'
     ];
 
     /**
@@ -157,7 +158,8 @@ class ItemMaster extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'isPOSItem' => 'integer'
     ];
 
     /**

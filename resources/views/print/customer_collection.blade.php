@@ -1,12 +1,28 @@
 <style type="text/css">
     @page {
-        margin-left: 3%;
-        margin-right: 3%;
-        margin-top: 4%;
+        margin: 100px 30px 40px;
     }
 
-    .footer {
-        position: absolute;
+    #header {
+        position: fixed;
+        left: 0px;
+        top: -100px;
+        right: 0px;
+        height: 50px;
+        text-align: center;
+    }
+
+    #footer {
+        position: fixed;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        height: 0px;
+        font-size: 10px;
+    }
+
+    #footer .page:after {
+        content: counter(page, upper-roman);
     }
 
     body {
@@ -61,7 +77,7 @@
     }
 
     .table th {
-        background-color: #EBEBEB !important;
+        background-color: #D7E4BD !important;
     }
 
     tfoot > tr > td {
@@ -148,7 +164,35 @@
     }
 
 </style>
-<div class="footer">
+<div id="header">
+    <div class="row">
+        <div class="col-md-12">
+            <table style="width: 100%">
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                    </td>
+                    <td valign="top" style="width: 55%">
+                        <br><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collection Report</span><br>
+                        <span class="font-weight-bold">Collection for the Period : {{ $fromDate }}
+                            to {{ $toDate }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currency {{ $selectedCurrency }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" valign="top" style="width: 45%">
+                        <span class="font-weight-bold"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<div id="footer">
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
@@ -160,27 +204,6 @@
         </tr>
     </table>
 </div>
-<div class="header">
-    <table style="width:100%;">
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Collection Report</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Collection for the Period : {{ $fromDate }}
-                    to {{ $toDate }}</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Currency : {{ $selectedCurrency }}</span>
-            </td>
-        </tr>
-    </table>
-</div>
-<br><br>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)

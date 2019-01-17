@@ -477,26 +477,39 @@ class ItemMasterAPIController extends AppBaseController
     public function store(CreateItemMasterAPIRequest $request)
     {
 
-
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
+        $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $validator = \Validator::make($input, ['secondaryItemCode' => 'unique:itemmaster'], $messages);
+        $ruleArray = array('secondaryItemCode' => 'required|unique:itemmaster',
+            'primaryCompanySystemID' => 'required|numeric|min:1',
+            'itemDescription' => 'required',
+            'unit' => 'required|numeric|min:1',
+            'financeCategoryMaster' => 'required|numeric|min:1',
+            'financeCategorySub' => 'required|numeric|min:1',
+            'isActive' => 'required|numeric|min:1',
+        );
+        if ($input['isPOSItem'] == 1) {
+            $ruleArray = array_merge($ruleArray, ['sellingCost' => 'required|numeric|min:0.001']);
+        }
+
+        $validator = \Validator::make($input, $ruleArray, $messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-        $empId = $user->employee['empID'];
+        $employee = \Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $empId;
+        $input['createdUserID'] = $employee->empID;
 
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
+
+        if (empty($financeCategoryMaster)) {
+            return $this->sendError('Finance category not found');
+        }
 
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
         $code = $financeCategoryMaster->itemCodeDef;
@@ -506,19 +519,65 @@ class ItemMasterAPIController extends AppBaseController
         $input['primaryCode'] = $primaryCode;
         $input['primaryItemCode'] = $code;
         $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $input['financeCategorySub'])->first();
+
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
         $input['primaryCompanyID'] = $company->CompanyID;
         $document = DocumentMaster::where('documentID', 'ITMM')->first();
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
         $input['isActive'] = 1;
 
+        if ($input['isPOSItem'] == 1) {
+            $input['itemConfirmedYN'] = 1;
+            $input['itemConfirmedByEMPSystemID'] = $employee->employeeSystemID;
+            $input['itemConfirmedByEMPID'] = $employee->empID;
+            $input['itemConfirmedByEMPName'] = $employee->empName;
+            $input['itemConfirmedDate'] = now();
+
+            $input['itemApprovedBySystemID'] = $employee->employeeSystemID;
+            $input['itemApprovedBy'] = $employee->empID;
+            $input['itemApprovedYN'] = 1;
+            $input['itemApprovedDate'] = now();
+            $input['itemApprovedComment'] = '';
+        }
+
         $itemMasters = $this->itemMasterRepository->create($input);
 
         $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
         $financeCategoryMaster->modifiedPc = gethostname();
-        $financeCategoryMaster->modifiedUser = $empId;
+        $financeCategoryMaster->modifiedUser = $employee->empID;
         $financeCategoryMaster->save();
+
+        if ($input['isPOSItem'] == 1) {
+            $itemMaster = DB::table('itemmaster')
+                ->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp,isPOSItem')
+                ->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')
+                ->where('itemCodeSystem', $itemMasters->itemCodeSystem)
+                ->first();
+            if (!empty($itemMaster)) {
+                $itemMaster = collect($itemMaster)->toArray();
+                $itemMaster['sellingCost'] = $input['sellingCost'];
+
+                if (isset($input['rolQuantity'])) {
+                    $itemMaster['rolQuantity'] = $input['rolQuantity'];
+                }
+
+                if (isset($input['maximunQty'])) {
+                    $itemMaster['maximunQty'] = $input['maximunQty'];
+                }
+
+                if (isset($input['rolQuantity'])) {
+                    $itemMaster['minimumQty'] = $input['minimumQty'];
+                }
+
+                $itemAssign = ItemAssigned::insert($itemMaster);
+            }
+        }
 
         return $this->sendResponse($itemMasters->toArray(), 'Item Master saved successfully');
     }
@@ -838,11 +897,27 @@ class ItemMasterAPIController extends AppBaseController
     public function getPosItemSearch(Request $request)
     {
         $input = $request->all();
-        $companyId = $input['companyId'];
+        $input['warehouseSystemCode'] = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+        $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
         $items = ItemAssigned::where('companySystemID', $companyId)
-                                ->where('financeCategoryMaster', 1)
-                                ->with(['unit'])
-                                ->select(['itemPrimaryCode', 'itemDescription','itemCodeSystem','idItemAssigned', 'secondaryItemCode','itemUnitOfMeasure']);
+            ->where('financeCategoryMaster', 1)
+            ->where('isPOSItem', 1)
+            ->with(['unit', 'outlet_items' => function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+            },'item_ledger' => function($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+            }])
+            ->whereHas('outlet_items', function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+            })
+            ->whereHas('item_ledger', function ($q) use($input){
+                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->havingRaw('sum(inOutQty) > 0 ');
+            })
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost','barcode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -854,6 +929,13 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $items = $items->take(10)->get();
+
+        foreach ($items as $item){
+            if(count($item['item_ledger']) > 0){
+                $item['current_stock'] = $item['item_ledger'][0]['stock'];
+            }
+        }
+
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

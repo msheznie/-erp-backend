@@ -96,7 +96,9 @@ class ItemAssigned extends Model
         'isAssigned',
         'selectedForWarehouse',
         'itemMovementCategory',
-        'timeStamp'
+        'timeStamp',
+        'isPOSItem',
+        'sellingCost'
     ];
 
     /**
@@ -135,7 +137,9 @@ class ItemAssigned extends Model
         'isActive' => 'integer',
         'isAssigned' => 'integer',
         'selectedForWarehouse' => 'integer',
-        'itemMovementCategory' => 'integer'
+        'itemMovementCategory' => 'integer',
+        'isPOSItem' => 'integer',
+        'sellingCost' => 'float'
     ];
 
     /**
@@ -178,6 +182,14 @@ class ItemAssigned extends Model
     public function rpt_currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueReportingCurrencyID', 'currencyID');
+    }
+
+    public function outlet_items(){
+        return $this->hasMany('App\Models\WarehouseItems','itemSystemCode','itemCodeSystem');
+    }
+
+    public function item_ledger(){
+        return $this->hasMany('App\Models\ErpItemLedger','itemSystemCode','itemCodeSystem');
     }
 
 
