@@ -1647,7 +1647,7 @@ class Helper
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
                                     foreach ($updateDisposed as $val) {
-                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
                             }
