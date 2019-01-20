@@ -1,12 +1,28 @@
 <style type="text/css">
     @page {
-        margin-left: 3%;
-        margin-right: 3%;
-        margin-top: 4%;
+        margin: 100px 30px 40px;
     }
 
-    .footer {
-        position: absolute;
+    #header {
+        position: fixed;
+        left: 0px;
+        top: -100px;
+        right: 0px;
+        height: 50px;
+        text-align: center;
+    }
+
+    #footer {
+        position: fixed;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        height: 0px;
+        font-size: 10px;
+    }
+
+    #footer .page:after {
+        content: counter(page, upper-roman);
     }
 
     body {
@@ -61,7 +77,7 @@
     }
 
     .table th {
-        background-color: #EBEBEB !important;
+        background-color: #D7E4BD !important;
     }
 
     tfoot > tr > td {
@@ -98,24 +114,6 @@
         margin-top: 0 !important;
     }
 
-    .title {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .footer {
-        bottom: 0;
-        height: 40px;
-    }
-
-    .footer {
-        width: 100%;
-        text-align: center;
-        position: fixed;
-        font-size: 10px;
-        padding-top: -20px;
-    }
-
     .pagenum:after {
         content: counter(page);
     }
@@ -124,31 +122,8 @@
         margin-bottom: 45px;
     }
 
-    #watermark {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        padding-top: 31%;
-    }
-
-    .watermarkText {
-        color: #dedede !important;
-        font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
-    }
-
-    #watermark {
-        height: 1000px;
-        opacity: 0.6;
-        left: 0;
-        transform-origin: 20% 20%;
-        z-index: 1000;
-    }
-
 </style>
-<div class="footer">
+<div id="footer">
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
@@ -160,19 +135,31 @@
         </tr>
     </table>
 </div>
-<div class="header">
-    <table style="width:100%;">
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Customer Invoice Aging Summary</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">As of {{ $fromDate }}</span>
-            </td>
-        </tr>
-    </table>
+<div id="header">
+    <div class="row">
+        <div class="col-md-12">
+            <table style="width: 100%">
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                    </td>
+                    <td valign="top" style="width: 55%">
+                        <br><br>
+                        <span class="font-weight-bold">Customer Invoice Aging Summary</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" style="width: 45%">
+                        <span class="font-weight-bold"> {{$companyName}}</span>
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
 </div>
 <br><br>
 <div class="content">
@@ -184,7 +171,7 @@
                 <td colspan="9"><b>{{$key}}</b></td>
             </tr>
             <tr>
-                <th width="10%">Cust. Code</th>
+                <th width="10%">Customer Code</th>
                 <th width="20%">Customer Name</th>
                 <th width="10%">Currency</th>
                 <th width="10%">Amount</th>

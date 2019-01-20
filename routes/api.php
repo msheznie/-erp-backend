@@ -913,6 +913,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
     Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
     Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
+    Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
@@ -1344,10 +1345,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
     Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
     Route::resource('shift_details', 'ShiftDetailsAPIController');
+    Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
+    Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
+    Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
     Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
     Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
     Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+    Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
+    Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
 
 });
 
@@ -1413,4 +1419,5 @@ Route::get('runQueueSR', function () {
 });
 
 Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
+Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
 
