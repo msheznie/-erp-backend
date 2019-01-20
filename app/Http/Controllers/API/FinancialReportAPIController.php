@@ -26,7 +26,9 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\GeneralLedger;
 use App\Models\ReportTemplate;
+use App\Models\ReportTemplateCashBank;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
 use Carbon\Carbon;
@@ -51,11 +53,11 @@ class FinancialReportAPIController extends AppBaseController
         $company = Company::whereIN('companySystemID', $companiesByGroup)->get();
 
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $selectedCompanyId);
+        $companyFinanceYear = $companyFinanceYear->whereIn('companySystemID', $companiesByGroup);
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
-        $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
+        $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 
@@ -86,6 +88,7 @@ class FinancialReportAPIController extends AppBaseController
             'segment' => $departments,
             'company' => $company,
             'financePeriod' => $financePeriod,
+            'companiesByGroup' => $companiesByGroup
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -381,12 +384,16 @@ class FinancialReportAPIController extends AppBaseController
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
                 $toDate = '';
+                $fromDate = '';
                 if ($request->dateType == 1) {
                     $toDate = new Carbon($request->toDate);
                     $toDate = $toDate->format('Y-m-d');
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('Y-m-d');
                 } else {
-                    $toDate = CompanyFinancePeriod::find($request->month);
-                    $toDate = $toDate->dateTo;
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $toDate = $period->dateTo;
+                    $fromDate = $period->dateFrom;
                 }
 
                 $currencyColumn = '';
@@ -469,6 +476,16 @@ class FinancialReportAPIController extends AppBaseController
                             $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',$currencyColumn,0)),0)";
                             $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
                         }
+                        if ($val->shortCode == 'CYYTD') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                        }
+                        if ($val->shortCode == 'LYYTD') {
+                            $fromDate = Carbon::parse($fromDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                        }
                     }
                 }
 
@@ -478,6 +495,9 @@ class FinancialReportAPIController extends AppBaseController
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray);
                             $columnHeader[] = $val->description;
+                        } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                            $columnHeader[] = $columnHeaderArray[$val->shortCode];
                         } else {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                             $columnHeader[] = Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M');
@@ -500,41 +520,46 @@ class FinancialReportAPIController extends AppBaseController
 
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear));
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear));
+                $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
 
-                $finalOutput = $outputCollect->groupBy('headerDesc');
+                $outputOpeningBalance = '';
+                $outputOpeningBalanceArr = [];
+                $outputClosingBalanceArr = [];
+                if($request->accountType == 3){
+                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request,$currencyColumn);
+                    $outputOpeningBalance = $outputOpeningBalance->openingBalance;
 
-                $unique = $outputCollect->unique('headerDesc');
-                $unique = $unique->values()->all();
+                    $lastColumn =  collect($headers)->last(); // considering net total
 
-                $finalData = [];
-                if ($unique) {
-                    foreach ($unique as $key => $val) {
-                        $headerDesc = $val->headerDesc;
-                        $data['headerDesc'] = $val->headerDesc;
-                        $data['headerSort'] = $val->headerSort;
-                        $data['hideHeader'] = $val->hideHeader;
-                        $data['headerColor'] = $val->headerColor;
-                        $detail = $finalOutput[$headerDesc];
-                        if ($detail) {
-                            foreach ($detail as $val2) {
-                                $filtered = $outputDetail->where('templateDetailID', $val2->detID);
-                                $val2->glCodes = $filtered->values();
-                            }
+                    foreach ($columnKeys as $key => $val){
+                        if($key == 0){
+                            $outputOpeningBalanceArr[] = $outputOpeningBalance;
+                            $outputClosingBalanceArr[] = $lastColumn->$val+$outputOpeningBalance;
+                        }else{
+                            $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key-1];
+                            $outputClosingBalanceArr[] = $lastColumn->$val+$outputClosingBalanceArr[$key-1];
                         }
-                        $data['detail'] = $detail;
-                        $finalData[] = $data;
                     }
                 }
 
-                $sorted = collect($finalData)->sortBy('headerSort');
-                $sorted->values()->all();
+                if (count($headers) > 0) {
+                    foreach ($headers as $key => $val) {
+                        $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+                        $val->detail = $details;
+                        foreach ($details as $key2 => $val2) {
+                            $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                        }
+                    }
+                }
 
-                return array('reportData' => $sorted,
+                return array('reportData' => $headers,
                     'template' => $template,
                     'company' => $company,
                     'companyCurrency' => $companyCurrency,
                     'columns' => $columnKeys,
                     'columnHeader' => $columnHeader,
+                    'openingBalance' => $outputOpeningBalanceArr,
+                    'closingBalance' => $outputClosingBalanceArr,
                 );
                 break;
             default:
@@ -543,7 +568,8 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public function exportReport(Request $request)
+    public
+    function exportReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -991,7 +1017,8 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public function getTrialBalance($request)
+    public
+    function getTrialBalance($request)
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $asOfDate->addDays(1);
@@ -1166,7 +1193,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTrialBalanceDetails($request)
+    public
+    function getTrialBalanceDetails($request)
     {
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
@@ -1208,7 +1236,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTrialBalanceCompanyWise($request, $subCompanies)
+    public
+    function getTrialBalanceCompanyWise($request, $subCompanies)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1385,7 +1414,8 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public function getGeneralLedger($request)
+    public
+    function getGeneralLedger($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1539,7 +1569,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getGeneralLedgerQryForPDF($request)
+    public
+    function getGeneralLedgerQryForPDF($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1678,7 +1709,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTaxDetailQry($request)
+    public
+    function getTaxDetailQry($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1794,7 +1826,8 @@ AND MASTER .canceledYN = 0';
 
     }
 
-    public function pdfExportReport(Request $request)
+    public
+    function pdfExportReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -1902,25 +1935,18 @@ AND MASTER .canceledYN = 0';
         $thirdLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= 'IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0) AS `' . $val . '`,';
-            $thirdLinkedcolumnQry .= 'IFNULL(d.`' . $val . '`,0) AS `' . $val . '`,';
+            $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
-	f.*,
-	erp_companyreporttemplatedetails.description AS headerDesc, 
-	erp_companyreporttemplatedetails.sortOrder AS headerSort,
-	erp_companyreporttemplatedetails.bgColor AS headerColor,
-	erp_companyreporttemplatedetails.hideHeader
-FROM
-	(
-SELECT
 	c.detDescription,
 	c.detID,
 	' . $secondLinkedcolumnQry . '
 	c.sortOrder,
 	c.masterID,
 	c.bgColor,
-	c.itemType  
+	c.itemType,
+	c.hideHeader  
 FROM
 	(
 SELECT
@@ -2011,11 +2037,7 @@ WHERE
 	AND subCategory IS NOT NULL 
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID 
-	) e ON e.templateDetailID = c.detID 
-	) f
-	LEFT JOIN erp_companyreporttemplatedetails ON f.masterID = erp_companyreporttemplatedetails.detID 
-WHERE
-	f.masterID IS NOT NULL ORDER BY headerSort,sortOrder';
+	) e ON e.templateDetailID = c.detID';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2080,6 +2102,21 @@ ORDER BY
         return $output;
     }
 
+    function getCashflowOpeningBalanceQry($request, $currency)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $glCodes = ReportTemplateCashBank::whereIN('companySystemID',$companyID)->pluck('chartOfAccountSystemID')->toArray();
+
+        $output = GeneralLedger::selectRaw('SUM('.$currency.') as openingBalance')->whereIN('companySystemID',$companyID)->whereIN('chartOfAccountSystemID',$glCodes)->whereIN('serviceLineSystemID',$serviceline)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+
+        return $output;
+    }
+
     function getCustomizeFinancialDetailTOTQry($request)
     {
         $fromDate = new Carbon($request->fromDate);
@@ -2134,7 +2171,8 @@ GROUP BY
      * @param $columnArray
      * @return array
      */
-    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray)
+    public
+    function columnFormulaDecode($columnLinkID, $rowValues, $columnArray)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -2168,7 +2206,8 @@ GROUP BY
      * @param $linkedRows
      * @return mixed
      */
-    public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray)
+    public
+    function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray)
     {
         global $globalFormula;
         $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID', explode(',', $linkedColumns))->get();
