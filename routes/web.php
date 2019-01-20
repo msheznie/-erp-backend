@@ -1,3 +1,0 @@
-
-
-Route::resource('customerMasterCategories', 'CustomerMasterCategoryController');

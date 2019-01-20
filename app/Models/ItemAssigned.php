@@ -184,5 +184,13 @@ class ItemAssigned extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueReportingCurrencyID', 'currencyID');
     }
 
+    public function outlet_items(){
+        return $this->hasMany('App\Models\WarehouseItems','itemSystemCode','itemCodeSystem');
+    }
+
+    public function item_ledger(){
+        return $this->hasMany('App\Models\ErpItemLedger','itemSystemCode','itemCodeSystem');
+    }
+
 
 }
