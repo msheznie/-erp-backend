@@ -1415,3 +1415,6 @@ Route::get('runQueueSR', function () {
 
 Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 
+
+
+Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
