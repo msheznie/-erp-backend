@@ -14,6 +14,7 @@
  * -- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
  * -- Date: 19-November 2018 By: Fayas Description: Added new functions named as getJobsByContractAndCustomer()
  * -- Date: 18-December 2018 By: Fayas Description: Added new functions named as customerReferBack()
+ * -- Date: 20-January 2019 By: Fayas Description: Added new functions named as getPosCustomerSearch()
  */
 
 namespace App\Http\Controllers\API;
@@ -657,4 +658,44 @@ class CustomerMasterAPIController extends AppBaseController
 
         return $this->sendResponse(array(), 'successfully export');
     }
+
+ public function getPosCustomerSearch(Request $request)
+{
+    $input = $request->all();
+    $input['warehouseSystemCode'] = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+    $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
+    $customers = CustomerAssigned::where('companySystemID', $companyId)
+        ->where('financeCategoryMaster', 1)
+        ->where('isPOSItem', 1)
+        ->with(['unit', 'outlet_items' => function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+        },'item_ledger' => function($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                ->groupBy('itemSystemCode')
+                ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+        }])
+        ->whereHas('outlet_items', function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+        })
+        ->whereHas('item_ledger', function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                ->groupBy('itemSystemCode')
+                ->havingRaw('sum(inOutQty) > 0 ');
+        })
+        ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost','barcode']);
+
+
+    if (array_key_exists('search', $input)) {
+        $search = $input['search'];
+        $customers = $customers->where(function ($query) use ($search) {
+            $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+        });
+    }
+
+    $customers = $customers->take(10)->get();
+
+    return $this->sendResponse($customers->toArray(), 'Data retrieved successfully');
+}
 }

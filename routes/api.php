@@ -1345,6 +1345,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
     Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
     Route::resource('shift_details', 'ShiftDetailsAPIController');
+    Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
+    Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
+    Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
     Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
     Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
