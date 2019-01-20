@@ -466,7 +466,7 @@ class ItemAssignedAPIController extends AppBaseController
                 ->where('isAssigned', -1)
                 ->where('isActive', 1)
                 ->where('isPOSItem', 0);
-            
+
             if (isset($input['appliedFilter'])) {
                 if (array_key_exists('financeCategorySub', $input)) {
                     if ($input['financeCategorySub'] > 0 && !is_null($input['appliedFilter']['financeCategorySub'])) {
