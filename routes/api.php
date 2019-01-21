@@ -957,6 +957,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
     Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
+    Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');

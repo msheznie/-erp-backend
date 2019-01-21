@@ -916,6 +916,19 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('mainCategory', $input)) {
+            if ($input['mainCategory']) {
+                $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('subCategory', $input)) {
+            if ($input['subCategory']) {
+                $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -1609,6 +1622,108 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             return $this->sendError('Attachments not found', 500);
         }
+    }
+
+    public function exportAssetMaster(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
+
+        $type = $input['type'];
+
+        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3'])->where('companySystemID', $input['companyID']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetCositng->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetCositng->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('mainCategory', $input)) {
+            if ($input['mainCategory'] && !is_null($input['mainCategory'])) {
+                $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('subCategory', $input)) {
+            if ($input['subCategory'] && !is_null($input['subCategory'])) {
+                $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        $output = $assetCositng->orderBy('faID','desc')->get();
+
+        if (count($output) > 0) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Department Code'] = $val->departmentID;
+                $data[$x]['Department'] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
+                $data[$x]['ServiceLine Code'] = $val->serviceLineCode;
+                $data[$x]['ServiceLine'] = $val->department?$val->department->ServiceLineDes:'';
+                $data[$x]['FA Code'] = $val->faCode;
+                $data[$x]['Asset Description'] = $val->assetDescription;
+                $data[$x]['Serial No'] = $val->faUnitSerialNo;
+                $data[$x]['Comments'] = $val->COMMENTS;
+                $data[$x]['Manufacture'] = $val->MANUFACTURE;
+                $data[$x]['Date Acquired'] = \Helper::dateFormat($val->dateAQ);
+                $data[$x]['Dep Date Start'] = \Helper::dateFormat($val->dateDEP);
+                $data[$x]['Life time in years'] = $val->depMonth;
+                $data[$x]['Dep %'] = $val->DEPpercentage;
+                $data[$x]['GRV No'] = $val->docOrigin;
+                $data[$x]['Main Cat'] = $val->category_by?$val->category_by->catDescription:'';
+                $data[$x]['Sub Cat'] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
+                $data[$x]['Sub Cat2'] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
+                $data[$x]['Sub Cat3'] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
+                $data[$x]['Audit Category'] = $val->finance_category?$val->finance_category->financeCatDescription:'';
+                $data[$x]['Cost Account'] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
+                $data[$x]['Acc Dep GL Code'] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
+                $data[$x]['Dep GL Code'] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
+                $data[$x]['Dis Po GL Code'] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
+                $data[$x]['Post to GL Account'] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
+                $data[$x]['Asset Type'] = $val->asset_type?$val->asset_type->typeDes:'';
+                $data[$x]['Supplier Code'] = $val->supplier?$val->supplier->primarySupplierCode:'';
+                $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName:'';
+                $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
+                $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
+                $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+
+                if ($val->confirmedYN == 1) {
+                    $data[$x]['Confirmed Status'] = 'Yes';
+                } else {
+                    $data[$x]['Confirmed Status'] = 'No';
+                }
+                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Confirmed By'] = $val->confirmed_by?$val->confirmed_by->empName:'';
+                if ($val->approved == -1) {
+                    $data[$x]['Approved Status'] = 'Yes';
+                } else {
+                    $data[$x]['Approved Status'] = 'No';
+                }
+                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        $csv = \Excel::create('po_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }
