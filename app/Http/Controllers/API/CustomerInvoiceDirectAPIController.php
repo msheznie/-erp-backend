@@ -652,13 +652,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if (count($detail) == 0) {
                     return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
                 } else {
-                    $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+                    $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
                     IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
                     where('custInvoiceDirectID', $id)
                         ->where(function ($query) {
 
                             $query->whereIn('serviceLineSystemID', [null, 0])
+                                ->orwhereIn('serviceLineCode', [null, 0])
                                 ->orwhereIn('unitOfMeasure', [null, 0])
                                 ->orwhereIn('invoiceQty', [null, 0])
                                 ->orwhereIn('contractID', [null, 0])
@@ -674,6 +675,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             $validators = \Validator::make($item, [
                                 'serviceLineSystemID' => 'required|numeric|min:1',
+                                'serviceLineCode' => 'required|min:1',
                                 'unitOfMeasure' => 'required|numeric|min:1',
                                 'invoiceQty' => 'required|numeric|min:1',
                                 'contractID' => 'required|numeric|min:1',
@@ -682,6 +684,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             ], [
 
                                 'serviceLineSystemID.required' => 'Department is required.',
+                                'serviceLineCode.required' => 'Department code is required ',
                                 'unitOfMeasure.required' => 'UOM is required.',
                                 'invoiceQty.required' => 'Qty is required.',
                                 'contractID.required' => 'Contract no. is required.',

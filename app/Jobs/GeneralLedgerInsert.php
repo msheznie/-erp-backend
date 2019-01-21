@@ -2077,7 +2077,9 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 41: // FADS - Fixed Asset Disposal
-                        $masterData = AssetDisposalMaster::find($masterModel["autoID"]);
+                        $masterData = AssetDisposalMaster::with(['disposal_type' => function($query){
+                            $query->with('chartofaccount');
+                    }])->find($masterModel["autoID"]);
 
                         $disposal = AssetDisposalDetail::with('disposal_account')->selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt,DISPOGLCODESystemID,DISPOGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('DISPOGLCODESystemID', 'serviceLineSystemID')->get();
 
@@ -2204,9 +2206,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     foreach ($disposal as $val) {
                                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                         $data['serviceLineCode'] = $val->serviceLineCode;
-                                        $data['chartOfAccountSystemID'] = $val->DISPOGLCODESystemID;
-                                        $data['glCode'] = $val->DISPOGLCODE;
-                                        $data['glAccountType'] = $val->disposal_account->catogaryBLorPL;
+                                        $data['chartOfAccountSystemID'] = $masterData->disposal_type->chartOfAccountID;
+                                        $data['glCode'] = $masterData->disposal_type->glCode;
+                                        $data['glAccountType'] =$masterData->disposal_type->chartofaccount->catogaryBLorPL;
                                         $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = 0;
                                         $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
