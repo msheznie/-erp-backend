@@ -814,4 +814,9 @@ class FixedAssetMaster extends Model
         return $this->belongsTo('App\Models\ChartOfAccount','postToGLCodeSystemID','chartOfAccountSystemID');
     }
 
+    public function disposal_by()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalMaster','assetdisposalMasterAutoID','assetdisposalMasterAutoID');
+    }
+
 }
