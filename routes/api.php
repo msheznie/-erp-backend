@@ -686,6 +686,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+    Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
     Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
     Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
@@ -956,6 +957,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
     Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
+    Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
@@ -1421,3 +1423,6 @@ Route::get('runQueueSR', function () {
 Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
 
+
+
+Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');

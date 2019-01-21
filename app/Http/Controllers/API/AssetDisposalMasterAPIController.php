@@ -661,7 +661,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }
 
         $assets = FixedAssetMaster::selectRaw('*,false as isChecked')->with(['depperiod_by' => function ($query) use ($input) {
-            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+            $query->selectRaw('IFNULL(SUM(depAmountRpt),0) as depAmountRpt,IFNULL(SUM(depAmountLocal),0) as depAmountLocal,faID');
             $query->where('companySystemID', $input['companySystemID']);
             $query->groupBy('faID');
         }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal()->isApproved();

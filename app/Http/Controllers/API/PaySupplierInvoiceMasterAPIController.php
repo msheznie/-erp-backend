@@ -887,11 +887,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                     } else {
                         $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
-                        $input['payAmountBank'] = $bankAmount["defaultAmount"];
+                        $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                         $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                         $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                        $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                        $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                        $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                     }
                 } else {
@@ -912,8 +912,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = $bankAmount["defaultAmount"];
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
-                    $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                    $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                 } else {
                     $input['payAmountBank'] = 0;
@@ -933,8 +933,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = $bankAmount["defaultAmount"];
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
-                    $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                    $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
                 } else {
                     $input['payAmountBank'] = 0;

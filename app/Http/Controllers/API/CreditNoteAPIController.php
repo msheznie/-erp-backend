@@ -466,12 +466,13 @@ class CreditNoteAPIController extends AppBaseController
                     return $this->sendError('You cannot confirm. Credit note details not found.', 500);
                 } else {
 
-                    $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
+                    $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
                     IF ( creditAmount IS NULL OR creditAmount = '' OR creditAmount = 0, null, 1 ) AS creditAmount")->
                     where('creditNoteAutoID', $id)
                         ->where(function ($query) {
 
                             $query->whereIn('serviceLineSystemID', [null, 0])
+                                ->orwhereIn('serviceLineCode', [null, 0])
                                 ->orwhereIn('contractUID', [null, 0])
                                 ->orwhereIn('creditAmount', [null, 0]);
                         });
@@ -481,11 +482,13 @@ class CreditNoteAPIController extends AppBaseController
 
                             $validators = \Validator::make($item, [
                                 'serviceLineSystemID' => 'required|numeric|min:1',
+                                'serviceLineCode' => 'required|min:1',
                                 'contractUID' => 'required|numeric|min:1',
                                 'creditAmount' => 'required|numeric|min:1'
                             ], [
 
                                 'serviceLineSystemID.required' => 'Department is required.',
+                                'serviceLineCode.required' => 'Department code is required.',
                                 'contractUID.required' => 'Contract no. is required.',
                                 'creditAmount.required' => 'Amount is required.',
 
