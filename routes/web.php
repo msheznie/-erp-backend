@@ -1,3 +1,0 @@
-
-
-Route::resource('reportTemplateCashBanks', 'ReportTemplateCashBankController');
