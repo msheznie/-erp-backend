@@ -471,10 +471,10 @@ class CreditNoteAPIController extends AppBaseController
                     where('creditNoteAutoID', $id)
                         ->where(function ($query) {
 
-                            $query->whereIn('serviceLineSystemID', [null, 0])
-                                ->orwhereIn('serviceLineCode', [null, 0])
-                                ->orwhereIn('contractUID', [null, 0])
-                                ->orwhereIn('creditAmount', [null, 0]);
+                            $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
+                                ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
+                                ->orwhereRaw('contractUID IS NULL OR contractUID =""')
+                                ->orwhereRaw('creditAmount IS NULL OR creditAmount =""');
                         });
 
                     if (!empty($detailValidation->get()->toArray())) {
@@ -488,7 +488,7 @@ class CreditNoteAPIController extends AppBaseController
                             ], [
 
                                 'serviceLineSystemID.required' => 'Department is required.',
-                                'serviceLineCode.required' => 'Department code is required.',
+                                'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
                                 'contractUID.required' => 'Contract no. is required.',
                                 'creditAmount.required' => 'Amount is required.',
 

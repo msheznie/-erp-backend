@@ -627,6 +627,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input['toBankGlCodeSystemID'] = $bankAccount->chartOfAccountSystemID;
         $input['toBankGlCode'] = $chartofaccount->AccountCode;
         $input['toBankGLDescription'] = $chartofaccount->AccountDescription;
+        $input['toBankAmount'] = \Helper::roundValue($input['toBankAmount']);
         unset($input['companySystemID']);
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $input['directPaymentDetailsID']);
@@ -667,7 +668,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
 
-            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
+            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => \Helper::roundValue($bankAmount)];
             return $this->sendResponse($output, 'Successfully data retrieved');
         } else {
             $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
