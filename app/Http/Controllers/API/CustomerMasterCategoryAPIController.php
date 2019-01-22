@@ -156,7 +156,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 $customerMasterCategories = $this->customerMasterCategoryRepository->create($input);
             }
         }
-        return $this->sendResponse($customerMasterCategories->toArray(), 'Customer Master Category saved successfully');
+        return $this->sendResponse($input, 'Customer Master Category saved successfully');
     }
 
     /**

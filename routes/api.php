@@ -1354,6 +1354,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
     Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
     Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
+    Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
+    Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+    Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
+    Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData');
+    Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
+    Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
 
 });
 
@@ -1420,4 +1426,6 @@ Route::get('runQueueSR', function () {
 
 Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+
+
 
