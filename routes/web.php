@@ -1,3 +1,0 @@
-
-
-Route::resource('reportTemplateDocuments', 'ReportTemplateDocumentController');
