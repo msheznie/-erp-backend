@@ -31,6 +31,7 @@ use App\Models\ReportTemplate;
 use App\Models\ReportTemplateCashBank;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
+use App\Models\ReportTemplateDocument;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -385,6 +386,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 $toDate = '';
                 $fromDate = '';
+                $period = '';
                 if ($request->dateType == 1) {
                     $toDate = new Carbon($request->toDate);
                     $toDate = $toDate->format('Y-m-d');
@@ -397,7 +399,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 $currencyColumn = '';
-                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request));
+                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request,$period));
 
                 //formula column decode
                 if ($request->currency == 1) {
@@ -518,26 +520,26 @@ class FinancialReportAPIController extends AppBaseController
 
                 $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
 
-                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear));
-                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear));
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear,$period));
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear,$period));
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
 
                 $outputOpeningBalance = '';
                 $outputOpeningBalanceArr = [];
                 $outputClosingBalanceArr = [];
-                if($request->accountType == 3){
-                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request,$currencyColumn);
+                if ($request->accountType == 3) {
+                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn);
                     $outputOpeningBalance = $outputOpeningBalance->openingBalance;
 
-                    $lastColumn =  collect($headers)->last(); // considering net total
+                    $lastColumn = collect($headers)->last(); // considering net total
 
-                    foreach ($columnKeys as $key => $val){
-                        if($key == 0){
+                    foreach ($columnKeys as $key => $val) {
+                        if ($key == 0) {
                             $outputOpeningBalanceArr[] = $outputOpeningBalance;
-                            $outputClosingBalanceArr[] = $lastColumn->$val+$outputOpeningBalance;
-                        }else{
-                            $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key-1];
-                            $outputClosingBalanceArr[] = $lastColumn->$val+$outputClosingBalanceArr[$key-1];
+                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputOpeningBalance;
+                        } else {
+                            $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key - 1];
+                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputClosingBalanceArr[$key - 1];
                         }
                     }
                 }
@@ -1909,7 +1911,7 @@ AND MASTER .canceledYN = 0';
         }
     }
 
-    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear)
+    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear,$period)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1920,17 +1922,29 @@ AND MASTER .canceledYN = 0';
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
 
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
         $lastYearEndDate = Carbon::parse($financeYear->endingDate);
         $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
 
         $dateFilter = '';
+        $documentQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+        } else {
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
         }
 
-        $firstLinkedcolumnQry = $linkedcolumnQry;
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
@@ -1964,7 +1978,7 @@ FROM
 SELECT
 	--SUM( documentLocalAmount ) AS documentLocalAmount,
 	--SUM( documentRptAmount ) AS documentRptAmount,
-	' . $firstLinkedcolumnQry . ',
+	' . $firstLinkedcolumnQry . '
 	erp_generalledger.chartOfAccountSystemID,
 	companyreporttemplatelinks.templateDetailID,
 	companyreporttemplatelinks.description
@@ -1986,7 +2000,7 @@ ORDER BY
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	' . $dateFilter . '
+	' . $dateFilter . ' ' . $documentQry . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID 
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
@@ -2005,7 +2019,7 @@ FROM
 SELECT
 	--SUM( documentLocalAmount ) AS documentLocalAmount,
 	--SUM( documentRptAmount ) AS documentRptAmount,
-	' . $firstLinkedcolumnQry . ',
+	' . $firstLinkedcolumnQry . '
 	erp_generalledger.chartOfAccountSystemID,
 	erp_generalledger.documentDate,
 	companyreporttemplatelinks.templateDetailID,
@@ -2042,7 +2056,7 @@ GROUP BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear)
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear,$period)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2052,6 +2066,7 @@ GROUP BY
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
@@ -2059,11 +2074,21 @@ GROUP BY
         $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
 
         $dateFilter = '';
+        $documentQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+        } else {
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
         }
 
-        $firstLinkedcolumnQry = $linkedcolumnQry;
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry)? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= 'IFNULL(gl.`' . $val . '`,0) AS `' . $val . '`,';
@@ -2084,14 +2109,14 @@ FROM
         SELECT
         --SUM(documentLocalAmount) AS documentLocalAmount,
         --SUM(documentRptAmount) AS documentRptAmount,
-        ' . $firstLinkedcolumnQry . ',
+        ' . $firstLinkedcolumnQry . '
         erp_generalledger.chartOfAccountSystemID
     FROM
         erp_generalledger 
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
         AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-        ' . $dateFilter . ' 
+        ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
@@ -2110,14 +2135,14 @@ ORDER BY
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
 
-        $glCodes = ReportTemplateCashBank::whereIN('companySystemID',$companyID)->pluck('chartOfAccountSystemID')->toArray();
+        $glCodes = ReportTemplateCashBank::whereIN('companySystemID', $companyID)->pluck('chartOfAccountSystemID')->toArray();
 
-        $output = GeneralLedger::selectRaw('SUM('.$currency.') as openingBalance')->whereIN('companySystemID',$companyID)->whereIN('chartOfAccountSystemID',$glCodes)->whereIN('serviceLineSystemID',$serviceline)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+        $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('chartOfAccountSystemID', $glCodes)->whereIN('serviceLineSystemID', $serviceline)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
 
         return $output;
     }
 
-    function getCustomizeFinancialDetailTOTQry($request)
+    function getCustomizeFinancialDetailTOTQry($request,$period)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2127,10 +2152,21 @@ ORDER BY
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
         $dateFilter = '';
+        $documentQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+        } else {
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
         }
 
         $sql = 'SELECT
@@ -2156,7 +2192,7 @@ ORDER BY
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	' . $dateFilter . '
+	' . $dateFilter . ' ' . $documentQry . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID';
 
