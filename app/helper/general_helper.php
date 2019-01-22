@@ -917,13 +917,6 @@ class Helper
                 $docInforArr["documentDate"] = "debitNoteDate";
                 $docInforArr["financePeriod"] = "finance_period_by";
                 break;
-            case 11: // supplier invoice
-                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
-                $docInforArr["modelName"] = 'BookInvSuppMaster';
-                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
-                $docInforArr["documentDate"] = "bookingDate";
-                $docInforArr["financePeriod"] = "financeperiod_by";
-                break;
             case 21: // Receipt voucher
                 $docInforArr["tableName"] = 'erp_customerreceivepayment';
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
