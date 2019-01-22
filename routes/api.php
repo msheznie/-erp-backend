@@ -1432,3 +1432,8 @@ Route::get('runQueueSR', function () {
 
 
 
+
+
+Route::resource('quotation_masters', 'QuotationMasterAPIController');
+
+Route::resource('quotation_details', 'QuotationDetailsAPIController');
