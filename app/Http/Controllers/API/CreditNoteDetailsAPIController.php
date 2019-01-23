@@ -371,11 +371,10 @@ class CreditNoteDetailsAPIController extends AppBaseController
     public function getAllcontractbyclientbase(Request $request)
     {
         $input = $request->all();
-        $creditNoteDetailsID = $input['creditNoteDetailsID'];
-        $detail = CreditNoteDetails::where('creditNoteDetailsID', $creditNoteDetailsID)->first();
-        $master = CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
+        $customerID = $input['customerID'];
+        $companySystemID = $input['companySystemID'];
 
-        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $companySystemID AND clientID = $customerID";
         $contract = DB::select($qry);
 
         return $this->sendResponse($contract, 'Record retrieved successfully');
@@ -398,24 +397,20 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         $master = CreditNote::select('*')->where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
 
-        if ($input['contractUID'] != $detail->contractUID) {
-            $input['clientContractID'] = NULL;
+        $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
+            ->where('contractUID', $input['contractUID'])
+            ->first();
 
-            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
-                ->where('contractUID', $input['contractUID'])
-                ->first();
-
+        if ($contract) {
             $input['clientContractID'] = $contract->ContractNumber;
-
         }
+
 
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
 
             $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
             $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
-            $input['clientContractID'] = NULL;
-            $input['contractUID'] = NULL;
         }
 
         if ($master->FYBiggin) {
@@ -425,24 +420,21 @@ class CreditNoteDetailsAPIController extends AppBaseController
             $input['budgetYear'] = date("Y");
         }
 
-        if ($input['creditAmount'] != $detail->creditAmount) {
-            $myCurr = $master->customerCurrencyID;               /*currencyID*/
-            $companyCurrency = \Helper::companyCurrency($myCurr);
-            $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $myCurr = $master->customerCurrencyID;
+        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
-            $input['creditAmountCurrency'] = $master->customerCurrencyID;
-            $input['creditAmountCurrencyER'] = 1;
-            $totalAmount = $input['creditAmount'];
-            $input['creditAmount'] = round($input['creditAmount'], $decimal);
-            /**/
-            $currency = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $totalAmount);
-            $input["comRptAmount"] = $currency['reportingAmount'];
-            $input["localAmount"] = $currency['localAmount'];
-        }
+        $input['creditAmountCurrency'] = $master->customerCurrencyID;
+        $input['creditAmountCurrencyER'] = 1;
+        $totalAmount = $input['creditAmount'];
+        $input['creditAmount'] = round($input['creditAmount'], $decimal);
+        /**/
+        $currency = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $totalAmount);
+        $input["comRptAmount"] = $currency['reportingAmount'];
+        $input["localAmount"] = $currency['localAmount'];
 
         $x = CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
-        return $this->sendResponse('s', 'successfully updated');
 
+        return $this->sendResponse('s', 'Credit note detail updated successfully');
 
     }
 
