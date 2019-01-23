@@ -18,9 +18,12 @@ use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerMaster;
+use App\Models\DocumentMaster;
 use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
 use App\Models\YesNoSelection;
+use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\QuotationMasterRepository;
 use Illuminate\Http\Request;
@@ -159,8 +162,58 @@ class QuotationMasterAPIController extends AppBaseController
             $lastSerialNumber = intval($lastSerial->salesPersonID) + 1;
         }
 
-        $salesPersonCode = ($company->CompanyID . '\\' . 'REP' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-        $input['SalesPersonCode'] = $salesPersonCode;
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        if($documentMaster){
+            $input['documentID'] = $documentMaster->documentID;
+        }
+
+        $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
+
+        if($customerData){
+            $input['customerCode'] = $customerData->CutomerCode;
+            $input['customerName'] = $customerData->CustomerName;
+            $input['customerAddress'] = $customerData->customerAddress1;
+            //$input['customerTelephone'] = $customerData->CutomerCode;
+            //$input['customerFax'] = $customerData->CutomerCode;
+            //$input['customerEmail'] = $customerData->CutomerCode;
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+            $input['companyLocalCurrencyID'] = $company->localCurrencyID;
+            $input['companyLocalExchangeRate'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+            $input['companyReportingExchangeRate'] = $companyCurrencyConversion['trasToRptER'];
+
+        }
+
+        //updating transaction currency details
+        $transactionCurrencyData = CurrencyMaster::where('currencyID', $input['transactionCurrencyID'])->first();
+        if($transactionCurrencyData){
+            $input['transactionCurrency'] = $transactionCurrencyData->CurrencyCode;
+            $input['transactionExchangeRate'] = 1;
+            $input['transactionCurrencyDecimalPlaces'] = $transactionCurrencyData->DecimalPlaces;
+        }
+
+        //updating local currency details
+        $localCurrencyData = CurrencyMaster::where('currencyID', $input['companyLocalCurrencyID'])->first();
+        if($localCurrencyData){
+            $input['companyLocalCurrency'] = $localCurrencyData->CurrencyCode;
+            $input['companyLocalCurrencyDecimalPlaces'] = $localCurrencyData->DecimalPlaces;
+        }
+
+        //updating reporting currency details
+        $reportingCurrencyData = CurrencyMaster::where('currencyID', $input['companyLocalCurrencyID'])->first();
+        if($reportingCurrencyData){
+            $input['companyReportingCurrency'] = $reportingCurrencyData->CurrencyCode;
+            $input['companyReportingCurrencyDecimalPlaces'] = $reportingCurrencyData->DecimalPlaces;
+        }
+        //$salesPersonCode = ($company->CompanyID . '\\' . 'REP' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        //$input['SalesPersonCode'] = $salesPersonCode;
 
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -346,7 +399,6 @@ class QuotationMasterAPIController extends AppBaseController
         } else {
             $subCompanies = [$companyId];
         }
-
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
