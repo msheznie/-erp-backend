@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 26-November 2018 By: Nazir Description: Added new function amendCreditNote(),
  * -- Date: 11-January 2019 By: Muabashir Description: Added new function approvalPreCheckCreditNote(),
+ * -- Date: 23-January 2019 By: Nazir Store function, update function issues fixed and modified,
  */
 namespace App\Http\Controllers\API;
 
@@ -145,6 +146,11 @@ class CreditNoteAPIController extends AppBaseController
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         /**/
 
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($input['creditNoteDate'] > $curentDate) {
+            return $this->sendError('Document date cannot be greater than current date', 500);
+        }
+
         $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
@@ -170,34 +176,41 @@ class CreditNoteAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $creditNoteCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'CN' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-        $input['creditNoteCode'] = $creditNoteCode;
-
         $input['companyID'] = $company->CompanyID;
         $input['documentSystemiD'] = 19;
         $input['documentID'] = 'CN';
         $input['serialNo'] = $lastSerialNumber;
         $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
-        $input['creditNoteCode'] = $creditNoteCode;
         $input['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['documentType'] = 12;
 
-        /*currency*/
-        $myCurr = $input['customerCurrencyID'];
+        $documentDate = $input['creditNoteDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
 
-        $companyCurrency = \Helper::companyCurrency($input['customerCurrencyID']);
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
-        /*exchange added*/
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the financial period!');
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+
+        //var_dump($companyCurrencyConversion);
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
+        $creditNoteCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'CN' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['creditNoteCode'] = $creditNoteCode;
+
         $input['customerCurrencyER'] = 1;
-        $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-        $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-        $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        /*end of currency*/
-
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
@@ -205,20 +218,9 @@ class CreditNoteAPIController extends AppBaseController
         $input['modifiedUser'] = \Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
+        $creditNotes = $this->creditNoteRepository->create($input);
 
-        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
-        if ($input['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Document date cannot be greater than current date', 500);
-        }
-
-        if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
-            $creditNotes = $this->creditNoteRepository->create($input);
-            return $this->sendResponse($creditNotes->toArray(), 'Credit note saved successfully');
-        } else {
-            return $this->sendError('Credit note document date should be between financial period start and end date', 500);
-        }
-
-
+        return $this->sendResponse($creditNotes->toArray(), 'Credit note saved successfully');
     }
 
     /**
@@ -325,40 +327,19 @@ class CreditNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
-        'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate'));
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedPc'] = getenv('COMPUTERNAME');
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate'));
 
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
-        $detail = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
-        $input['departmentSystemID'] = 4;
         if (empty($creditNote)) {
-            return $this->sendError('Credit Note not found', 500);
+            return $this->sendError('Credit note not found', 500);
         }
 
-        /**/
-        if ($input['customerCurrencyID'] != $creditNote->customerCurrencyID) {
-            if (count($detail) == 0) {
-                /*currency*/
-                $myCurr = $input['customerCurrencyID'];
+        $detail = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
 
-                $companyCurrency = \Helper::companyCurrency($input['customerCurrencyID']);
-                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
-                /*exchange added*/
-                $input['customerCurrencyER'] = 1;
-                $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                /*end of currency*/
-            } else {
-                return $this->sendError('Credit note details exist. You cannot change the currency.', 500);
-            }
-        }
+        $input['departmentSystemID'] = 4;
 
         /*financial Year check*/
         $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
@@ -370,18 +351,10 @@ class CreditNoteAPIController extends AppBaseController
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
-        /*  if ($input['companyFinanceYearID'] != $creditNote->companyFinanceYearID) {
-              $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-              $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
-              $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
-          }*/
 
-
-        if ($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID) {
-            $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-            $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
-            $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
-        }
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+        $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
 
 
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
@@ -396,23 +369,10 @@ class CreditNoteAPIController extends AppBaseController
 
         }
 
-        /*customer*/
-        if ($input['customerID'] != $creditNote->customerID) {
-            if (count($detail) > 0) {
-                return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
-            }
-            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-            /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                 return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
-             }*/
-
-            /*if customer change*/
-            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+        $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+        if ($customer) {
             $input['customerGLCode'] = $customer->custGLaccount;
             $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
-
-            /**/
-
         }
 
         // updating header amounts
@@ -421,7 +381,7 @@ class CreditNoteAPIController extends AppBaseController
         $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
         $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
         $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
-
+        $input['customerCurrencyER'] = 1;
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
@@ -429,109 +389,110 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError('Document date cannot be greater than current date', 500);
         }
 
-        if ($input['confirmedYN'] == 1) {
-            if ($creditNote->confirmedYN == 0) {
-                $messages = [
+        if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+            $messages = [
+                'customerCurrencyID.required' => 'Currency is required.',
+                'customerID.required' => 'Customer is required.',
+                'companyFinanceYearID.required' => 'Financial Year is required.',
+                'companyFinancePeriodID.required' => 'Financial Period is required.',
 
-                    'customerCurrencyID.required' => 'Currency is required.',
-                    'customerID.required' => 'Customer is required.',
-                    'companyFinanceYearID.required' => 'Financial Year is required.',
-                    'companyFinancePeriodID.required' => 'Financial Period is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'customerCurrencyID' => 'required|numeric|min:1',
+                'customerID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'companyFinancePeriodID' => 'required|numeric|min:1',
 
-                ];
-                $validator = \Validator::make($input, [
-                    'customerCurrencyID' => 'required|numeric|min:1',
-                    'customerID' => 'required|numeric|min:1',
-                    'companyFinanceYearID' => 'required|numeric|min:1',
-                    'companyFinancePeriodID' => 'required|numeric|min:1',
+            ], $messages);
 
-                ], $messages);
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
 
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
+            $documentDate = $input['creditNoteDate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
 
-                $documentDate = $input['creditNoteDate'];
-                $monthBegin = $input['FYPeriodDateFrom'];
-                $monthEnd = $input['FYPeriodDateTo'];
-                if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-                } else {
-                    return $this->sendError('Document date is not within the selected financial period !', 500);
-                }
+            if (count($detail) == 0) {
+                return $this->sendError('You cannot confirm. Credit note should have at least one item.', 500);
+            }
 
-
-                /*details check*/
-
-                if (count($detail) == 0) { /*==*/
-                    return $this->sendError('You cannot confirm. Credit note details not found.', 500);
-                } else {
-
-                    $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
+            $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
                     IF ( creditAmount IS NULL OR creditAmount = '' OR creditAmount = 0, null, 1 ) AS creditAmount")->
-                    where('creditNoteAutoID', $id)
-                        ->where(function ($query) {
+            where('creditNoteAutoID', $id)
+                ->where(function ($query) {
 
-                            $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
-                                ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
-                                ->orwhereRaw('contractUID IS NULL OR contractUID =""')
-                                ->orwhereRaw('creditAmount IS NULL OR creditAmount =""');
-                        });
+                    $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
+                        ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
+                        ->orwhereRaw('contractUID IS NULL OR contractUID =""')
+                        ->orwhereRaw('creditAmount IS NULL OR creditAmount =""');
+                });
 
-                    if (!empty($detailValidation->get()->toArray())) {
-                        foreach ($detailValidation->get()->toArray() as $item) {
+            if (!empty($detailValidation->get()->toArray())) {
+                foreach ($detailValidation->get()->toArray() as $item) {
 
-                            $validators = \Validator::make($item, [
-                                'serviceLineSystemID' => 'required|numeric|min:1',
-                                'serviceLineCode' => 'required|min:1',
-                                'contractUID' => 'required|numeric|min:1',
-                                'creditAmount' => 'required|numeric|min:1'
-                            ], [
+                    $validators = \Validator::make($item, [
+                        'serviceLineSystemID' => 'required|numeric|min:1',
+                        'serviceLineCode' => 'required|min:1',
+                        'contractUID' => 'required|numeric|min:1',
+                        'creditAmount' => 'required|numeric|min:1'
+                    ], [
 
-                                'serviceLineSystemID.required' => 'Department is required.',
-                                'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
-                                'contractUID.required' => 'Contract no. is required.',
-                                'creditAmount.required' => 'Amount is required.',
+                        'serviceLineSystemID.required' => 'Department is required.',
+                        'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
+                        'contractUID.required' => 'Contract no is required.',
+                        'creditAmount.required' => 'Amount should be greater than 0 for every items.',
 
-                            ]);
-                            if ($validators->fails()) {
-                                return $this->sendError($validators->messages(), 422);
-                            }
-                        }
-                    }
-
-
-                    /*serviceline and contract validation*/
-                    $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
-                    $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
-                    if (count($groupby) != 0 || count($groupby) != 0) {
-
-                        if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                            return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
-                        } else {
-                            $params = array('autoID' => $id,
-                                'company' => $creditNote->companySystemID,
-                                'document' => $creditNote->documentSystemiD,
-                                'segment' => '',
-                                'category' => '',
-                                'amount' => ''
-                            );
-
-                            $confirm = \Helper::confirmDocument($params);
-                            if (!$confirm["success"]) {
-                                return $this->sendError($confirm["message"], 500);
-                            }
-
-                            $customerInvoiceDirect = $this->creditNoteRepository->update($input, $id);
-                        }
-                    } else {
-                        return $this->sendError('Credit note details not found.', 500);
+                    ]);
+                    if ($validators->fails()) {
+                        return $this->sendError($validators->messages(), 422);
                     }
                 }
             }
-        } else {
 
-            $creditNote = $this->creditNoteRepository->update($input, $id);
+            /*serviceline and contract validation*/
+            $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
+            $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
+            if (count($groupby) != 0 || count($groupby) != 0) {
+                if (count($groupby) > 1 || count($groupbycontract) > 1) {
+                    return $this->sendError('You cannot continue. Multiple service line or contract exist in details.', 500);
+                }
+            } else {
+                return $this->sendError('Credit note details not found.', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemiD"],
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $input['creditAmountTrans']
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+
         }
+
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedPc'] = getenv('COMPUTERNAME');
+
+        $creditNote = $this->creditNoteRepository->update($input, $id);
 
         return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
     }
@@ -631,7 +592,7 @@ class CreditNoteAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
                 break;
             case 'getCurrency':
@@ -658,7 +619,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
@@ -681,7 +642,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
@@ -768,7 +729,7 @@ class CreditNoteAPIController extends AppBaseController
             });
         }
         $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode','customermaster.CustomerName', 'creditAmountTrans');
+        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans');
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {
@@ -1246,7 +1207,7 @@ WHERE
     {
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
             return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
         }
