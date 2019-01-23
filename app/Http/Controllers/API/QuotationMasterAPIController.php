@@ -1,22 +1,40 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : QuotationMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  QuotationMaster
+ * -- Author : Mohamed Nazir
+ * -- Create date : 22 - January 2019
+ * -- Description : This file contains the all CRUD for Sales Quotation Master
+ * -- REVISION HISTORY
+ * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
+ * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesPersonFormData(),
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
+use App\Models\CurrencyMaster;
+use App\Models\CustomerAssigned;
 use App\Models\QuotationMaster;
+use App\Models\SalesPersonMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\QuotationMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Response;
 
 /**
  * Class QuotationMasterController
  * @package App\Http\Controllers\API
  */
-
 class QuotationMasterAPIController extends AppBaseController
 {
     /** @var  QuotationMasterRepository */
@@ -109,6 +127,44 @@ class QuotationMasterAPIController extends AppBaseController
     public function store(CreateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        if (isset($input['documentDate'])) {
+            if ($input['documentDate']) {
+                $input['documentDate'] = new Carbon($input['documentDate']);
+            }
+        }
+
+        if (isset($input['documentExpDate'])) {
+            if ($input['documentExpDate']) {
+                $input['documentExpDate'] = new Carbon($input['documentExpDate']);
+            }
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        // creating document code
+        $lastSerial = SalesPersonMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('salesPersonID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->salesPersonID) + 1;
+        }
+
+        $salesPersonCode = ($company->CompanyID . '\\' . 'REP' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['SalesPersonCode'] = $salesPersonCode;
+
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserName'] = $employee->empName;
 
         $quotationMasters = $this->quotationMasterRepository->create($input);
 
@@ -277,5 +333,47 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster->delete();
 
         return $this->sendResponse($id, 'Quotation Master deleted successfully');
+    }
+
+    public function getSalesQuotationFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+
+        $customer = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->where('companySystemID', $subCompanies)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        $salespersons = SalesPersonMaster::where('companySystemID', $subCompanies)
+            ->get();
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'currencies' => $currencies,
+            'customer' => $customer,
+            'salespersons' => $salespersons
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

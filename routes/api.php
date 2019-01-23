@@ -1367,6 +1367,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
 
+    Route::resource('quotationMasters', 'QuotationMasterAPIController');
+    Route::resource('quotationDetails', 'QuotationDetailsAPIController');
+    Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+
 });
 
 
@@ -1434,6 +1438,3 @@ Route::get('runQueueSR', function () {
 
 
 
-Route::resource('quotation_masters', 'QuotationMasterAPIController');
-
-Route::resource('quotation_details', 'QuotationDetailsAPIController');
