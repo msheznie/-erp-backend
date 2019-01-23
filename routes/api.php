@@ -1367,6 +1367,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
 
+    Route::resource('quotationMasters', 'QuotationMasterAPIController');
+    Route::resource('quotationDetails', 'QuotationDetailsAPIController');
+    Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+
 });
 
 
@@ -1429,6 +1433,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
+
+
 
 
 

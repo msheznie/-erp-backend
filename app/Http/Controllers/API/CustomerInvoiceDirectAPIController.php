@@ -175,7 +175,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         //$input['custTransactionCurrencyID'] = $currency->currencyID;
         $myCurr = $input['custTransactionCurrencyID'];
 
-        $companyCurrency = \Helper::companyCurrency($myCurr);
+        $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
         $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
         /*exchange added*/
         $input['custTransactionCurrencyER'] = 1;
@@ -241,14 +241,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($input['bookingDate'] > $curentDate) {
-            return $this->sendResponse('e', 'Dcoument date can not be greater than current date');
+            return $this->sendResponse('e', 'Document date cannot be greater than current date');
         }
 
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
         } else {
-            return $this->sendResponse('e', 'Document Date should be between financial period start date and end date');
+            return $this->sendResponse('e', 'Document date should be between financial period start date and end date');
         }
 
 
@@ -379,7 +379,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('Invoice details exist. You cannot change the currency.', 500);
                 } else {
                     $myCurr = $_post['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrency = \Helper::companyCurrency($customerInvoiceDirect->companySystemID);
                     $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $_post['custTransactionCurrencyER'] = 1;
