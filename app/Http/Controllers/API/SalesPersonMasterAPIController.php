@@ -132,6 +132,10 @@ class SalesPersonMasterAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
+        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '' && $input['SalesPersonName'] == '')) {
+            return $this->sendError('Sales person name is required');
+        }
+
         $wareHouseData = WarehouseMaster::find($input['wareHouseAutoID']);
 
         if ($wareHouseData) {
@@ -301,6 +305,10 @@ class SalesPersonMasterAPIController extends AppBaseController
 
         /** @var SalesPersonMaster $salesPersonMaster */
         $salesPersonMaster = $this->salesPersonMasterRepository->findWithoutFail($id);
+
+        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '' && $input['SalesPersonName'] == '')) {
+            return $this->sendError('Sales person name is required');
+        }
 
         if (empty($salesPersonMaster)) {
             return $this->sendError('Sales Person Master not found');
