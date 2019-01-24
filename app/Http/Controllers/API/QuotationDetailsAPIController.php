@@ -1,22 +1,37 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : QuotationDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  QuotationDetails
+ * -- Author : Mohamed Nazir
+ * -- Create date : 24 - January 2019
+ * -- Description : This file contains the all CRUD for Sales Quotation Details
+ * -- REVISION HISTORY
+ * -- Date: 24-January 2019 By: Nazir Description: Added new function getSalesQuotationDetails(),
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateQuotationDetailsAPIRequest;
 use App\Http\Requests\API\UpdateQuotationDetailsAPIRequest;
+use App\Models\ItemAssigned;
 use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
+use App\Models\Unit;
+use App\Models\Company;
 use App\Repositories\QuotationDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Carbon\Carbon;
 use Response;
 
 /**
  * Class QuotationDetailsController
  * @package App\Http\Controllers\API
  */
-
 class QuotationDetailsAPIController extends AppBaseController
 {
     /** @var  QuotationDetailsRepository */
@@ -109,6 +124,53 @@ class QuotationDetailsAPIController extends AppBaseController
     public function store(CreateQuotationDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($request->all(), 'unit');
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $companySystemID = $input['companySystemID'];
+
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
+            ->where('quotationMasterID', $input['quotationMasterID'])
+            ->first();
+
+        if (!empty($itemExist)) {
+            return $this->sendError('Added item all ready exist');
+        }
+
+        if (empty($item)) {
+            return $this->sendError('Added item not found in item master');
+        }
+
+        $quotationMasterData = QuotationMaster::find($input['quotationMasterID']);
+
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Quotation Master not found');
+        }
+
+        $input['itemSystemCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['itemCategory'] = $item->financeCategoryMaster;
+        $input['itemReferenceNo'] = $item->secondaryItemCode;
+        $input['unitOfMeasureID'] = $item->itemUnitOfMeasure;
+
+        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
+        if ($unitMasterData) {
+            $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserName'] = $employee->empName;
 
         $quotationDetails = $this->quotationDetailsRepository->create($input);
 
@@ -215,6 +277,8 @@ class QuotationDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $employee = \Helper::getEmployeeInfo();
+
         /** @var QuotationDetails $quotationDetails */
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
 
@@ -222,9 +286,32 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Details not found');
         }
 
+        $quotationMasterData = QuotationMaster::find($input['quotationMasterID']);
+
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Quotation Master not found');
+        }
+
+        // updating transaction amount for local and reporting
+        $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['transactionAmount']);
+
+        $input['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
+        $input['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+
+        // adding customer default currencyID base currency conversion
+
+        $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['transactionAmount']);
+
+        $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+
+        $input['modifiedDateTime'] = Carbon::now();
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedUserID'] = $employee->empID;
+        $input['modifiedUserName'] = $employee->empName;
+
         $quotationDetails = $this->quotationDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($quotationDetails->toArray(), 'QuotationDetails updated successfully');
+        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details updated successfully');
     }
 
     /**
@@ -278,4 +365,17 @@ class QuotationDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Quotation Details deleted successfully');
     }
+
+    public function getSalesQuotationDetails(Request $request)
+    {
+        $input = $request->all();
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
+    }
+
+
 }

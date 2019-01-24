@@ -386,6 +386,8 @@ class QuotationMaster extends Model
     public $fillable = [
         'documentSystemID',
         'documentID',
+        'quotationCode',
+        'serialNumber',
         'documentDate',
         'documentExpDate',
         'salesPersonID',
@@ -467,6 +469,8 @@ class QuotationMaster extends Model
         'quotationMasterID' => 'integer',
         'documentSystemID' => 'string',
         'documentID' => 'string',
+        'quotationCode' => 'string',
+        'serialNumber' => 'integer',
         'documentDate' => 'date',
         'documentExpDate' => 'date',
         'salesPersonID' => 'integer',

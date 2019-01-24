@@ -1370,6 +1370,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('quotationMasters', 'QuotationMasterAPIController');
     Route::resource('quotationDetails', 'QuotationDetailsAPIController');
     Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+    Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
+    Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+    Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
 
 });
 
