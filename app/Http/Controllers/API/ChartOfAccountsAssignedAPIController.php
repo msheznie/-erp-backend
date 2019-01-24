@@ -277,7 +277,9 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         if (isset($input['catogaryBLorPL'])) {
-            $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+            if($input['catogaryBLorPL']) {
+                $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+            }
         }
 
         $items = $items->get();
