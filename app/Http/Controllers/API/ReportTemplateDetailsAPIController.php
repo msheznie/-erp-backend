@@ -252,7 +252,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index']);
+        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index','subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ReportTemplateDetails $reportTemplateDetails */
@@ -344,6 +344,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $q->orderBy('sortOrder', 'asc');
             }]);
             $q->orderBy('sortOrder', 'asc');
+        },'subcategorytot' => function ($q) {
+            $q->with('subcategory');
         }])->OfMaster($id)->whereNull('masterID')->orderBy('sortOrder')->get();
 
         $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder','asc')->get();
