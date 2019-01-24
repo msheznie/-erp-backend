@@ -1727,8 +1727,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                     $data['glCode'] = $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
-                                    $data['documentTransCurrencyID'] = $masterData->bankCurrency;
-                                    $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
                                     $data['documentTransAmount'] = \Helper::roundValue($totaldd->transAmount);
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
