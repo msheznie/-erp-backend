@@ -9,7 +9,8 @@
  * -- Description : This file contains the all CRUD for Sales Quotation Master
  * -- REVISION HISTORY
  * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
- * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesPersonFormData(),
+ * -- Date: 23-January 2019 By: Nazir Description: Added new function getAllSalesQuotation(),
+ * -- Date: 24-January 2019 By: Nazir Description: Added new function getItemsForSalesQuotation(),
  */
 
 namespace App\Http\Controllers\API;
@@ -20,11 +21,15 @@ use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
+use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
 use App\Models\YesNoSelection;
 use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ChartOfAccount;
+use App\Models\customercurrency;
 use App\Repositories\QuotationMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -152,16 +157,6 @@ class QuotationMasterAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
-        // creating document code
-        $lastSerial = SalesPersonMaster::where('companySystemID', $input['companySystemID'])
-            ->orderBy('salesPersonID', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->salesPersonID) + 1;
-        }
-
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         if($documentMaster){
@@ -212,8 +207,53 @@ class QuotationMasterAPIController extends AppBaseController
             $input['companyReportingCurrency'] = $reportingCurrencyData->CurrencyCode;
             $input['companyReportingCurrencyDecimalPlaces'] = $reportingCurrencyData->DecimalPlaces;
         }
-        //$salesPersonCode = ($company->CompanyID . '\\' . 'REP' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-        //$input['SalesPersonCode'] = $salesPersonCode;
+
+        //updating customer GL update
+        $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerSystemCode'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+        if($customerGLCodeUpdate){
+
+            $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
+            if($chartOfAccountData){
+                $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
+                $input['customerReceivableGLAccount'] = $chartOfAccountData->AccountCode;
+                $input['customerReceivableDescription'] = $chartOfAccountData->AccountDescription;
+                $input['customerReceivableType'] = $chartOfAccountData->controlAccounts;
+            }
+
+        }
+
+        $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
+        if($customerCurrency){
+
+            $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
+
+            $input['customerCurrencyID'] = $customerCurrency->currencyID;
+            $input['customerCurrency'] = $customerCurrencyMasterData->CurrencyCode;
+            $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
+
+            //updating customer currency exchange rate
+            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+
+            if ($currencyConversionCustomerDefault) {
+                $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
+            }
+        }
+
+        // creating document code
+        $lastSerial = QuotationMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('quotationMasterID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
+        }
+
+        $quotationCode = ($company->CompanyID . '\\' . 'QUO' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['quotationCode'] = $quotationCode;
+        $input['serialNumber'] = $lastSerialNumber;
 
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -324,6 +364,10 @@ class QuotationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
@@ -331,9 +375,89 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
+        if (isset($input['documentDate'])) {
+            if ($input['documentDate']) {
+                $input['documentDate'] = new Carbon($input['documentDate']);
+            }
+        }
+
+        if (isset($input['documentExpDate'])) {
+            if ($input['documentExpDate']) {
+                $input['documentExpDate'] = new Carbon($input['documentExpDate']);
+            }
+        }
+
+        $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
+
+        if($customerData){
+            $input['customerCode'] = $customerData->CutomerCode;
+            $input['customerName'] = $customerData->CustomerName;
+            $input['customerAddress'] = $customerData->customerAddress1;
+            //$input['customerTelephone'] = $customerData->CutomerCode;
+            //$input['customerFax'] = $customerData->CutomerCode;
+            //$input['customerEmail'] = $customerData->CutomerCode;
+        }
+
+        //updating transaction currency details
+        $transactionCurrencyData = CurrencyMaster::where('currencyID', $input['transactionCurrencyID'])->first();
+        if($transactionCurrencyData){
+            $input['transactionCurrency'] = $transactionCurrencyData->CurrencyCode;
+            $input['transactionExchangeRate'] = 1;
+            $input['transactionCurrencyDecimalPlaces'] = $transactionCurrencyData->DecimalPlaces;
+        }
+
+
+        //updating customer GL update
+        $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerSystemCode'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+        if($customerGLCodeUpdate){
+
+            $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
+            if($chartOfAccountData){
+                $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
+                $input['customerReceivableGLAccount'] = $chartOfAccountData->AccountCode;
+                $input['customerReceivableDescription'] = $chartOfAccountData->AccountDescription;
+                $input['customerReceivableType'] = $chartOfAccountData->controlAccounts;
+            }
+
+        }
+
+        $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
+        if($customerCurrency){
+
+            $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
+
+            $input['customerCurrencyID'] = $customerCurrency->currencyID;
+            $input['customerCurrency'] = $customerCurrencyMasterData->CurrencyCode;
+            $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
+
+            //updating customer currency exchange rate
+            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+
+            if ($currencyConversionCustomerDefault) {
+                $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
+            }
+        }
+
+        // updating header amounts
+        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount, COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, COALESCE(SUM(customerAmount),0) as totalCustomerAmount")
+            ->where('quotationMasterID', $id)->first();
+
+        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount);
+        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount);
+        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount);
+        $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
+
+
+        $input['modifiedDateTime'] = Carbon::now();
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedUserID'] = $employee->empID;
+        $input['modifiedUserName'] = $employee->empName;
+
         $quotationMaster = $this->quotationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($quotationMaster->toArray(), 'QuotationMaster updated successfully');
+        return $this->sendResponse($quotationMaster->toArray(), 'Quotation master updated successfully');
     }
 
     /**
@@ -415,7 +539,8 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
-        $salespersons = SalesPersonMaster::where('companySystemID', $subCompanies)
+        $salespersons = SalesPersonMaster::select(DB::raw("salesPersonID,CONCAT(SalesPersonCode, ' | ' ,SalesPersonName) as SalesPersonName"))
+            ->where('companySystemID', $subCompanies)
             ->get();
 
         $output = array(
@@ -428,4 +553,70 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    public function getAllSalesQuotation(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
+                $query->where('quotationCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($quotationMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('quotationMasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getItemsForSalesQuotation(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+
+        $items = ItemAssigned::where('companySystemID', $companySystemID);
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
 }
