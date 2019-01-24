@@ -309,7 +309,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         /*get master*/
         $master = CreditNote::select('*')->where('creditNoteAutoID', $creditNoteAutoID)->first();
         $myCurr = $master->customerCurrencyID;               /*currencyID*/
-        $companyCurrency = \Helper::companyCurrency($myCurr);
+        //$companyCurrency = \Helper::companyCurrency($myCurr);
         $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
         $x = 0;
 
@@ -328,10 +328,10 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $inputData['creditAmountCurrency'] = $myCurr;
         $inputData['creditAmountCurrencyER'] = '';
         $inputData['creditAmount'] = 0;
-        $inputData['localCurrency'] = $companyCurrency->localcurrency->currencyID;
+        $inputData['localCurrency'] = $master->localCurrencyID;
         $inputData['localCurrencyER'] = $master->localCurrencyER;
         $inputData['localAmount'] = 0;
-        $inputData['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
+        $inputData['comRptCurrency'] = $master->companyReportingCurrencyID;
         $inputData['comRptCurrencyER'] = $master->companyReportingER;
         if ($master->FYBiggin) {
             $finYearExp = explode('-', $master->FYBiggin);

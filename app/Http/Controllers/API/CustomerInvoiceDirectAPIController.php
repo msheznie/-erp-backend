@@ -379,14 +379,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('Invoice details exist. You cannot change the currency.', 500);
                 } else {
                     $myCurr = $_post['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerInvoiceDirect->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                    //$companyCurrency = \Helper::companyCurrency($customerInvoiceDirect->companySystemID);
+                    //$companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $_post['custTransactionCurrencyER'] = 1;
-                    $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                    $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    /* $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                     $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                     $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];*/
                     $_post['bankAccountID'] = NULL;
 
                 }
@@ -487,14 +487,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['custTransactionCurrencyID'] = $currency->currencyID;
                 $myCurr = $currency->currencyID;
 
-                $companyCurrency = \Helper::companyCurrency($currency->currencyID);
-                $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                //$companyCurrency = \Helper::companyCurrency($currency->currencyID);
+                //$companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                 /*exchange added*/
                 $_post['custTransactionCurrencyER'] = 1;
-                $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                /*$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];*/
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
@@ -551,9 +551,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
 
-        $_post['bookingAmountTrans'] = $detailAmount->bookingAmountTrans;
-        $_post['bookingAmountLocal'] = $detailAmount->bookingAmountLocal;
-        $_post['bookingAmountRpt'] = $detailAmount->bookingAmountRpt;
+        $_post['bookingAmountTrans'] = \Helper::roundValue($detailAmount->bookingAmountTrans);
+        $_post['bookingAmountLocal'] = \Helper::roundValue($detailAmount->bookingAmountLocal);
+        $_post['bookingAmountRpt'] = \Helper::roundValue($detailAmount->bookingAmountRpt);
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
@@ -1015,7 +1015,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
         $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
-        $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId,1);
+        $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
@@ -1183,7 +1183,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $myCurr = $bankAccountDetails->currencyID; /*currencyID*/
         $updatedInvoiceNo = PerformaDetails::select('*')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->get();
-        $companyCurrency = \Helper::companyCurrency($myCurr);
+        //$companyCurrency = \Helper::companyCurrency($myCurr);
+        $transDecimalPlace = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         $x = 0;
         if (!empty($updatedInvoiceNo)) {
@@ -1210,14 +1211,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount,$transDecimalPlace);
 
-                $addToCusInvDetails[$x]['localCurrency'] = $companyCurrency->localcurrency->currencyID;
-                $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $addToCusInvDetails[$x]['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $addToCusInvDetails[$x]['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
+                $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
+                $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];;
+                $addToCusInvDetails[$x]['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                $addToCusInvDetails[$x]['comRptCurrency'] = $master->companyReportingCurrencyID;
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $addToCusInvDetails[$x]['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                $addToCusInvDetails[$x]['comRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
                 $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
@@ -1235,12 +1236,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankdetails['bankAccountID'] = $bankAccountDetails->accountID;
             $bankdetails['customerInvoiceNo'] = $performa->PerformaCode;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
+            //$companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
             /*exchange added*/
             $bankdetails['custTransactionCurrencyER'] = 1;
-            $bankdetails['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            //$bankdetails['companyReportingCurrencyID'] = $master->companyReportingCurrencyID;
             $bankdetails['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $bankdetails['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+            //$bankdetails['localCurrencyID'] = $master->localCurrencyID;
             $bankdetails['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
             $now = Carbon::now();
@@ -2090,7 +2091,7 @@ WHERE
     {
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
             return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
         }

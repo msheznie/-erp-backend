@@ -356,30 +356,6 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         /*selectedPerformaMaster*/
 
 
-
-        /*if bookinvoice not available create header*/
-     /*   if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
-
-            $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
-            $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
-            $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-
-            $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
-            $upMaster['serialNo'] = $serialNo->serialNo;
-            $upMaster['bookingInvCode'] = $bookingInvCode;
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($upMaster);
-        }*/
-
-
-        /*  $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('contractUID', $contractID)->first();
-
-          $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
-          if ($detail) {
-              if ($detail->serviceLineSystemID != $serviceLineSystemID || $contract->ContractNumber != $detail->clientContractID) {
-                  return $this->sendError('Different Service Line or Contract ID selected');
-              }
-          }*/
-
         $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $master->companySystemID)
             ->where('documentSystemID', $master->documentSystemiD)
@@ -387,19 +363,11 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         if (!empty($tax)) {
             return $this->sendError('Please delete tax details to continue !');
         }
-        /*  if (!empty($contract)) {
-              if ($contract->paymentInDaysForJob <= 0) {
-                  return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
-              }
-          } else {
-              return $this->sendError('Contract not exist.');
 
-          }*/
+        $myCurr = $master->custTransactionCurrencyID;
+        /*currencyID*/
 
-
-        $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
-
-        $companyCurrency = \Helper::companyCurrency($myCurr);
+        //$companyCurrency = \Helper::companyCurrency($myCurr);
         $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
         $x = 0;
 
@@ -425,51 +393,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
          $addToCusInvDetails['unitCost'] = $unitCost;*/
         $addToCusInvDetails['invoiceAmount'] = round($totalAmount, $decimal);
 
-        $addToCusInvDetails['localCurrency'] = $companyCurrency->localcurrency->currencyID;
+        $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
         $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
 
-        $addToCusInvDetails['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
+        $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-
-        /*        $addToCusInvDetails['clientContractID'] = $contract->ContractNumber;*/
-
-        /**/
-        /*   $MyRptAmount = 0;
-           if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
-               $MyRptAmount = $totalAmount;
-           } else {
-               if ($master->companyReportingER > $master->custTransactionCurrencyER) {
-                   if ($master->companyReportingER > 1) {
-                       $MyRptAmount = ($totalAmount / $master->companyReportingER);
-                   } else {
-                       $MyRptAmount = ($totalAmount * $master->companyReportingER);
-                   }
-               } else {
-                   if ($master->companyReportingER > 1) {
-                       $MyRptAmount = ($totalAmount * $master->companyReportingER);
-                   } else {
-                       $MyRptAmount = ($totalAmount / $master->companyReportingER);
-                   }
-               }
-           }*/
         $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
-        /*     if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
-                 $MyLocalAmount = $totalAmount;
-             } else {
-                 if ($master->localCurrencyER > $master->custTransactionCurrencyER) {
-                     if ($master->localCurrencyER > 1) {
-                         $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
-                     } else {
-                         $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
-                     }
-                 } else {
-                     if ($master->localCurrencyER > 1) {
-                         $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
-                     } else {
-                         $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
-                     }
-                 }
-             }*/
         $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
         if($master->isPerforma==0){
             $addToCusInvDetails['unitOfMeasure'] = 7;
@@ -503,7 +432,6 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, array('unit', 'department','performadetails'));
         $input = $this->convertArrayToValue($input);
-        $input['unitOfMeasure'];
         $id = $input['custInvDirDetAutoID'];
 
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $id)->first();
@@ -563,7 +491,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
-            $companyCurrency = \Helper::companyCurrency($myCurr);
+            //$companyCurrency = \Helper::companyCurrency($myCurr);
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
             $input['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
