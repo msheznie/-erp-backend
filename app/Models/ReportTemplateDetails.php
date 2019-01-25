@@ -191,5 +191,10 @@ class ReportTemplateDetails extends Model
         return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
     }
 
+    public function subcategorytot()
+    {
+        return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
+    }
+
     
 }

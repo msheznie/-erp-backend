@@ -516,6 +516,17 @@ class Helper
                     $docInforArr["modelName"] = 'BankAccount';
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     break;
+                case 67: // Quotation
+                    $docInforArr["documentCodeColumnName"] = 'quotationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_quotationmaster';
+                    $docInforArr["modelName"] = 'QuotationMaster';
+                    $docInforArr["primarykey"] = 'quotationMasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -917,20 +928,6 @@ class Helper
                 $docInforArr["documentDate"] = "debitNoteDate";
                 $docInforArr["financePeriod"] = "finance_period_by";
                 break;
-            case 11: // supplier invoice
-                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
-                $docInforArr["modelName"] = 'BookInvSuppMaster';
-                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
-                $docInforArr["documentDate"] = "bookingDate";
-                $docInforArr["financePeriod"] = "financeperiod_by";
-                break;
-            case 4: // Payment voucher
-                $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
-                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
-                $docInforArr["primarykey"] = 'PayMasterAutoId';
-                $docInforArr["documentDate"] = "BPVdate";
-                $docInforArr["financePeriod"] = "financeperiod_by";
-                break;
             case 21: // Receipt voucher
                 $docInforArr["tableName"] = 'erp_customerreceivepayment';
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
@@ -946,7 +943,7 @@ class Helper
                 $docInforArr["financePeriod"] = "financeperiod_by";
                 break;
             default:
-                return ['success' => false, 'message' => '', 'type' => 4];
+                return ['success' => true, 'message' => '', 'type' => 5];
         }
 
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
@@ -1364,6 +1361,18 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 67: // Quotation
+                $docInforArr["tableName"] = 'erp_quotationmaster';
+                $docInforArr["modelName"] = 'QuotationMaster';
+                $docInforArr["primarykey"] = 'quotationMasterID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedbyEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;

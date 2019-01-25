@@ -514,6 +514,7 @@ class FixedAssetMaster extends Model
         'RollLevForApp_curr',
         'timesReferred',
         'refferedBackYN',
+        'postedDate',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -812,6 +813,11 @@ class FixedAssetMaster extends Model
     public function posttogl_by()
     {
         return $this->belongsTo('App\Models\ChartOfAccount','postToGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function disposal_by()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalMaster','assetdisposalMasterAutoID','assetdisposalMasterAutoID');
     }
 
 }

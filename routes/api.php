@@ -686,6 +686,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+    Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
     Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
     Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
@@ -956,6 +957,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
     Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
+    Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
@@ -1352,6 +1354,31 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
     Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
     Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+    Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
+    Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
+    Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
+    Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+    Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
+    Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData');
+    Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
+    Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
+
+    Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
+
+    Route::resource('quotationMasters', 'QuotationMasterAPIController');
+    Route::resource('quotationDetails', 'QuotationDetailsAPIController');
+    Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+    Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
+    Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+    Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+    Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
+    Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
+    Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
+    Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
+    Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
+    Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
 
     Route::resource('gposInvoices', 'GposInvoiceAPIController');
     Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
@@ -1388,6 +1415,7 @@ Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPa
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
@@ -1420,9 +1448,9 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
-Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
 
 
 
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+
 

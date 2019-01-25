@@ -2280,15 +2280,15 @@ SELECT
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	erp_generalledger.documentTransAmount,
+	SUM(erp_generalledger.documentTransAmount) as documentTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	erp_generalledger.documentLocalAmount,
+	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	erp_generalledger.documentRptAmount,
+	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	erp_custinvoicedirect.PONumber,
 	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
@@ -2306,6 +2306,7 @@ WHERE
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
 	LEFT JOIN (
 	SELECT
@@ -2651,15 +2652,15 @@ SELECT
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	erp_generalledger.documentTransAmount,
+	SUM(erp_generalledger.documentTransAmount) as documentTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	erp_generalledger.documentLocalAmount,
+	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	erp_generalledger.documentRptAmount,
+	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
 	customermaster.CustomerName as customerName2,
@@ -2682,6 +2683,7 @@ WHERE
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
 	LEFT JOIN (
 	SELECT
@@ -3016,15 +3018,15 @@ SELECT
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
 	currTrans.DecimalPlaces as documentTransDecimalPlaces,
-	erp_generalledger.documentTransAmount,
+	SUM(erp_generalledger.documentTransAmount) as documentTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
 	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-	erp_generalledger.documentLocalAmount,
+	SUM(erp_generalledger.documentLocalAmount) as documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
-	erp_generalledger.documentRptAmount,
+	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	customermaster.CustomerName,
 	customermaster.CutomerCode
@@ -3041,6 +3043,7 @@ WHERE
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+	GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
 	) AS mainQuery
 	LEFT JOIN (
 	SELECT
