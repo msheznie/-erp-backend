@@ -188,8 +188,9 @@ return [
         'counterID' => 'Counter',
         'secondaryItemCode' => 'Mfg. Part No',
         'itemDescription' => 'Item Description',
-        'unit' => 'Unit of Measure'
-
+        'unit' => 'Unit of Measure',
+        'shiftID' => 'Shift',
+        'wareHouseAutoID' => 'Outlet'
     ],
 
 ];

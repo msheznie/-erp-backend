@@ -1353,6 +1353,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
     Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
 
+    Route::resource('gposInvoices', 'GposInvoiceAPIController');
+    Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
+    Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
+    Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
 });
 
 
@@ -1421,3 +1425,4 @@ Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIContro
 
 
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+

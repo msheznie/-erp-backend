@@ -2501,6 +2501,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
                 $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
                 break;
+            case 208: // Pos invoice details
+                $docInforArr["modelName"] = 'GposInvoice';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'transactionExchangeRate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
