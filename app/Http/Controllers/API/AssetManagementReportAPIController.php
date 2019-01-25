@@ -1916,76 +1916,6 @@ WHERE
             erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
         }
 
-
-        if ($request->excelType == 1) {
-
-            $qry = "SELECT
-IF(groupTO,1,0) as groupTO,
-	assetGroup.assetDescription as groupbydesc,
-	faUnitSerialNo,
-	erp_fa_asset_master.faID,
-	erp_fa_assettype.typeDes,
-	erp_fa_financecategory.financeCatDescription,
-	erp_fa_asset_master.COSTGLCODE,
-	erp_fa_asset_master.ACCDEPGLCODE,
-	assetType,
-	serviceline.ServiceLineDes,
-	erp_fa_asset_master.serviceLineCode,
-	docOrigin,
-	AUDITCATOGARY,
-	faCode,
-	erp_fa_asset_master.assetDescription,
-	DEPpercentage,
-	dateAQ,
-	dateDEP,
-	COSTUNIT,
-	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
-	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
-	costUnitRpt,
-	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
-	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
-FROM
-	erp_fa_asset_master
-	LEFT JOIN (
-	SELECT
-		faID,
-		erp_fa_assetdepreciationperiods.depMasterAutoID,
-		sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
-		sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
-	FROM
-		erp_fa_assetdepreciationperiods
-		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
-	WHERE
-		erp_fa_depmaster.approved =- 1  AND erp_fa_depmaster.depDate <= '$asOfDate'
-	GROUP BY
-		faID 
-	) t ON erp_fa_asset_master.faID = t.faID
-	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
-	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
-	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-LEFT JOIN (SELECT assetDescription , faID FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = 31   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
-WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID
-	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate'
-	OR DIPOSED = - 1 
-	)";
-
-
-        } else {
-            $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
- IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv 
- FROM ( SELECT t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM 
- ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM 
- ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 AND erp_fa_depmaster.depDate <= '$asOfDate' GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
-  
-  UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
-erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master 
-LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM 
-( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 AND erp_fa_depmaster.depDate <= '$asOfDate' GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
-
-
-        }
-
         $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
@@ -2026,7 +1956,7 @@ FROM
 		erp_fa_assetdepreciationperiods
 		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 	WHERE
-		erp_fa_depmaster.approved =- 1  AND erp_fa_depmaster.depDate <= '$asOfDate'
+		erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
 	GROUP BY
 		faID 
 	) t ON erp_fa_asset_master.faID = t.faID
@@ -2036,7 +1966,7 @@ FROM
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
-	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (   disposedDate > '$asOfDate')) OR DIPOSED <>  -1)
+	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (  DATE(disposedDate) > '$asOfDate')) OR DIPOSED <>  -1)
 	$where
 	) t  ORDER BY sortfaID desc  ";
 
