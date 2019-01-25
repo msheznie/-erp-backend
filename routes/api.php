@@ -1380,6 +1380,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
     Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
 
+    Route::resource('gposInvoices', 'GposInvoiceAPIController');
+    Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
+    Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
+    Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
 });
 
 
@@ -1446,5 +1450,7 @@ Route::get('runQueueSR', function () {
 
 
 
+
+Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
 
 

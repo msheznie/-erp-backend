@@ -160,7 +160,7 @@ class OutletUsersAPIController extends AppBaseController
                                         ->first();
 
         if(!empty($checkUserActive)){
-            return $this->sendError('This user already active in '.$checkUserActive->outlet->wareHouseCode,500);
+            return $this->sendError('Select user already active in '.$checkUserActive->outlet->wareHouseCode,500);
         }
 
 

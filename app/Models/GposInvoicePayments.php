@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : GposPaymentGlConfigDetail.php
+ * -- File Name : GposInvoicePayments.php
  * -- Project Name : ERP
- * -- Module Name :  General pos Payment Gl Config Detail
+ * -- Module Name :  General pos Invoice Payments
  * -- Author : Fayas
- * -- Create date : 08 - January 2019
+ * -- Create date : 22 - January 2019
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  */
 namespace App\Models;
@@ -14,11 +14,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="GposPaymentGlConfigDetail",
+ *      definition="GposInvoicePayments",
  *      required={""},
  *      @SWG\Property(
- *          property="ID",
- *          description="ID",
+ *          property="PaymentID",
+ *          description="PaymentID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceID",
+ *          description="invoiceID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -29,32 +35,45 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="paymentConfigDetailID",
+ *          description="paymentConfigDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="glAccountType",
+ *          description="glAccountType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="GLCode",
  *          description="GLCode",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyID",
- *          description="companyID",
- *          type="integer",
- *          format="int32"
+ *          property="amount",
+ *          description="amount",
+ *          type="number",
+ *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="companyCode",
- *          description="companyCode",
+ *          property="reference",
+ *          description="reference",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="warehouseID",
- *          description="warehouseID",
+ *          property="customerAutoID",
+ *          description="customerAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="isAuthRequired",
- *          description="isAuthRequired",
- *          type="boolean"
+ *          property="isAdvancePayment",
+ *          description="isAdvancePayment",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="createdUserGroup",
@@ -94,25 +113,27 @@ use Eloquent as Model;
  *      )
  * )
  */
-class GposPaymentGlConfigDetail extends Model
+class GposInvoicePayments extends Model
 {
 
-    public $table = 'erp_gpos_paymentglconfigdetail';
-
+    public $table = 'erp_gpos_invoicepayments';
+    
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'modifiedDateTime';
 
-    protected $primaryKey = 'ID';
-
+    protected $primaryKey = 'PaymentID';
 
 
     public $fillable = [
+        'invoiceID',
         'paymentConfigMasterID',
+        'paymentConfigDetailID',
+        'glAccountType',
         'GLCode',
-        'companyID',
-        'companyCode',
-        'warehouseID',
-        'isAuthRequired',
+        'amount',
+        'reference',
+        'customerAutoID',
+        'isAdvancePayment',
         'createdUserGroup',
         'createdPCID',
         'createdUserID',
@@ -122,9 +143,7 @@ class GposPaymentGlConfigDetail extends Model
         'modifiedUserID',
         'modifiedUserName',
         'modifiedDateTime',
-        'timestamp',
-        'createdUserSystemID',
-        'modifiedUserSystemID'
+        'timestamp'
     ];
 
     /**
@@ -133,22 +152,23 @@ class GposPaymentGlConfigDetail extends Model
      * @var array
      */
     protected $casts = [
-        'ID' => 'integer',
+        'PaymentID' => 'integer',
+        'invoiceID' => 'integer',
         'paymentConfigMasterID' => 'integer',
+        'paymentConfigDetailID' => 'integer',
+        'glAccountType' => 'integer',
         'GLCode' => 'integer',
-        'companyID' => 'integer',
-        'companyCode' => 'string',
-        'warehouseID' => 'integer',
-        'isAuthRequired' => 'boolean',
+        'amount' => 'float',
+        'reference' => 'string',
+        'customerAutoID' => 'integer',
+        'isAdvancePayment' => 'integer',
         'createdUserGroup' => 'integer',
         'createdPCID' => 'string',
         'createdUserID' => 'string',
         'createdUserName' => 'string',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string',
-        'createdUserSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserName' => 'string'
     ];
 
     /**
@@ -160,18 +180,5 @@ class GposPaymentGlConfigDetail extends Model
         
     ];
 
-    public function warehouse()
-    {
-        return $this->belongsTo('App\Models\WarehouseMaster','warehouseID','wareHouseSystemCode');
-    }
-
-    public function account()
-    {
-        return $this->belongsTo('App\Models\ChartOfAccount', 'GLCode','chartOfAccountSystemID');
-    }
-
-    public function type()
-    {
-        return $this->belongsTo('App\Models\GposPaymentGlConfigMaster', 'paymentConfigMasterID','autoID');
-    }
+    
 }
