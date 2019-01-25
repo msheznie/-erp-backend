@@ -11,6 +11,12 @@
  * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
  * -- Date: 23-January 2019 By: Nazir Description: Added new function getAllSalesQuotation(),
  * -- Date: 24-January 2019 By: Nazir Description: Added new function getItemsForSalesQuotation(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationApprovals(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function getApprovedSalesQuotationForUser(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function approveSalesQuotation(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function rejectSalesQuotation(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationMasterRecord(),
+ * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationPrintPDF(),
  */
 
 namespace App\Http\Controllers\API;
@@ -22,6 +28,7 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
+use App\Models\Months;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
@@ -159,13 +166,13 @@ class QuotationMasterAPIController extends AppBaseController
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
-        if($documentMaster){
+        if ($documentMaster) {
             $input['documentID'] = $documentMaster->documentID;
         }
 
         $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
 
-        if($customerData){
+        if ($customerData) {
             $input['customerCode'] = $customerData->CutomerCode;
             $input['customerName'] = $customerData->CustomerName;
             $input['customerAddress'] = $customerData->customerAddress1;
@@ -188,7 +195,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         //updating transaction currency details
         $transactionCurrencyData = CurrencyMaster::where('currencyID', $input['transactionCurrencyID'])->first();
-        if($transactionCurrencyData){
+        if ($transactionCurrencyData) {
             $input['transactionCurrency'] = $transactionCurrencyData->CurrencyCode;
             $input['transactionExchangeRate'] = 1;
             $input['transactionCurrencyDecimalPlaces'] = $transactionCurrencyData->DecimalPlaces;
@@ -196,14 +203,14 @@ class QuotationMasterAPIController extends AppBaseController
 
         //updating local currency details
         $localCurrencyData = CurrencyMaster::where('currencyID', $input['companyLocalCurrencyID'])->first();
-        if($localCurrencyData){
+        if ($localCurrencyData) {
             $input['companyLocalCurrency'] = $localCurrencyData->CurrencyCode;
             $input['companyLocalCurrencyDecimalPlaces'] = $localCurrencyData->DecimalPlaces;
         }
 
         //updating reporting currency details
         $reportingCurrencyData = CurrencyMaster::where('currencyID', $input['companyLocalCurrencyID'])->first();
-        if($reportingCurrencyData){
+        if ($reportingCurrencyData) {
             $input['companyReportingCurrency'] = $reportingCurrencyData->CurrencyCode;
             $input['companyReportingCurrencyDecimalPlaces'] = $reportingCurrencyData->DecimalPlaces;
         }
@@ -212,10 +219,10 @@ class QuotationMasterAPIController extends AppBaseController
         $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerSystemCode'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
-        if($customerGLCodeUpdate){
+        if ($customerGLCodeUpdate) {
 
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
-            if($chartOfAccountData){
+            if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
                 $input['customerReceivableGLAccount'] = $chartOfAccountData->AccountCode;
                 $input['customerReceivableDescription'] = $chartOfAccountData->AccountDescription;
@@ -225,7 +232,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
-        if($customerCurrency){
+        if ($customerCurrency) {
 
             $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
 
@@ -255,6 +262,7 @@ class QuotationMasterAPIController extends AppBaseController
         $input['quotationCode'] = $quotationCode;
         $input['serialNumber'] = $lastSerialNumber;
 
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
@@ -305,7 +313,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var QuotationMaster $quotationMaster */
-        $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+        $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
             return $this->sendError('Quotation Master not found');
@@ -363,7 +371,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input, ['created_by', 'confirmedByName','confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -389,7 +397,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
 
-        if($customerData){
+        if ($customerData) {
             $input['customerCode'] = $customerData->CutomerCode;
             $input['customerName'] = $customerData->CustomerName;
             $input['customerAddress'] = $customerData->customerAddress1;
@@ -400,7 +408,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         //updating transaction currency details
         $transactionCurrencyData = CurrencyMaster::where('currencyID', $input['transactionCurrencyID'])->first();
-        if($transactionCurrencyData){
+        if ($transactionCurrencyData) {
             $input['transactionCurrency'] = $transactionCurrencyData->CurrencyCode;
             $input['transactionExchangeRate'] = 1;
             $input['transactionCurrencyDecimalPlaces'] = $transactionCurrencyData->DecimalPlaces;
@@ -411,10 +419,10 @@ class QuotationMasterAPIController extends AppBaseController
         $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerSystemCode'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
-        if($customerGLCodeUpdate){
+        if ($customerGLCodeUpdate) {
 
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
-            if($chartOfAccountData){
+            if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
                 $input['customerReceivableGLAccount'] = $chartOfAccountData->AccountCode;
                 $input['customerReceivableDescription'] = $chartOfAccountData->AccountDescription;
@@ -424,7 +432,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
-        if($customerCurrency){
+        if ($customerCurrency) {
 
             $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
 
@@ -449,11 +457,76 @@ class QuotationMasterAPIController extends AppBaseController
         $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount);
         $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
 
+        if ($quotationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+            $validator = \Validator::make($input, [
+                'documentDate' => 'required',
+                'documentExpDate' => 'required',
+                'customerSystemCode' => 'required|numeric|min:1',
+                'transactionCurrencyID' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $qoDetailExist = QuotationDetails::where('quotationMasterID', $id)
+                ->count();
+
+            if ($qoDetailExist == 0) {
+                return $this->sendError('Quotation cannot be confirmed without any details');
+            }
+
+            $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
+                ->where('requestedQty', '<', 0.1)
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every item should have at least one minimum qty requested', 500);
+            }
+
+            if ($qoDetailExist > 0) {
+                $checkAmount = QuotationDetails::where('quotationMasterID', $id)
+                    ->where(function ($q) {
+                        $q->where('transactionAmount', '<=', 0)
+                            ->orWhereNull('companyLocalAmount', '<=', 0)
+                            ->orWhereNull('companyReportingAmount', '<=', 0)
+                            ->orWhereNull('transactionAmount')
+                            ->orWhereNull('companyLocalAmount')
+                            ->orWhereNull('companyReportingAmount');
+                    })
+                    ->count();
+                if ($checkAmount > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $input['transactionAmount']
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+        }
         $input['modifiedDateTime'] = Carbon::now();
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserName'] = $employee->empName;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $quotationMaster = $this->quotationMasterRepository->update($input, $id);
 
@@ -543,9 +616,19 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID', $subCompanies)
             ->get();
 
+        $years = QuotationMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+        $month = Months::all();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
             'currencies' => $currencies,
             'customer' => $customer,
             'salespersons' => $salespersons
@@ -575,6 +658,42 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $quotationMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $quotationMaster->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $quotationMaster->whereMonth('documentDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $quotationMaster->whereYear('documentDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerSystemCode', $input)) {
+            if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
+                $quotationMaster->where('customerSystemCode', $input['customerSystemCode']);
+            }
+        }
+
+        if (array_key_exists('salesPersonID', $input)) {
+            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
+                $quotationMaster->where('salesPersonID', $input['salesPersonID']);
+            }
+        }
 
         $search = $request->input('search.value');
         if ($search) {
@@ -617,6 +736,219 @@ class QuotationMasterAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function getSalesQuotationApprovals(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_quotationmaster.quotationMasterID',
+            'erp_quotationmaster.quotationCode',
+            'erp_quotationmaster.documentSystemID',
+            'erp_quotationmaster.referenceNo',
+            'erp_quotationmaster.documentDate',
+            'erp_quotationmaster.documentExpDate',
+            'erp_quotationmaster.narration',
+            'erp_quotationmaster.createdDateTime',
+            'erp_quotationmaster.confirmedDate',
+            'erp_quotationmaster.transactionAmount',
+            'erp_quotationmaster.customerName',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            $query->where('employeesdepartments.documentSystemID', 67)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_quotationmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'quotationMasterID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_quotationmaster.companySystemID', $companyID)
+                ->where('erp_quotationmaster.approvedYN', 0)
+                ->where('erp_quotationmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 67)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('quotationCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('customerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedSalesQuotationForUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_quotationmaster.quotationMasterID',
+            'erp_quotationmaster.quotationCode',
+            'erp_quotationmaster.documentSystemID',
+            'erp_quotationmaster.referenceNo',
+            'erp_quotationmaster.documentDate',
+            'erp_quotationmaster.documentExpDate',
+            'erp_quotationmaster.narration',
+            'erp_quotationmaster.createdDateTime',
+            'erp_quotationmaster.confirmedDate',
+            'erp_quotationmaster.transactionAmount',
+            'erp_quotationmaster.approvedDate',
+            'erp_quotationmaster.customerName',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_quotationmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'quotationMasterID')
+                ->where('erp_quotationmaster.companySystemID', $companyID)
+                ->where('erp_quotationmaster.approvedYN', -1)
+                ->where('erp_quotationmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.documentSystemID', 67)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('quotationCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('customerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveSalesQuotation(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectSalesQuotation(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function getSalesQuotationMasterRecord(Request $request)
+    {
+        $input = $request->all();
+
+        $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 11);
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function getSalesQuotationPrintPDF(Request $request)
+    {
+        $id = $request->get('id');
+
+        $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
+
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Quotation Master not found');
+        }
+
+        $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 11);
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+
+        $netTotal = QuotationDetails::where('quotationMasterID', $id)
+            ->sum('transactionAmount');
+
+        $order = array(
+            'masterdata' => $output,
+            'netTotal' => $netTotal
+        );
+
+        $html = view('print.sales_quotation', $order);
+
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
 }

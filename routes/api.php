@@ -1373,6 +1373,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
     Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
     Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+    Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
+    Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
+    Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
+    Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
+    Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
+    Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
 
 });
 
@@ -1405,6 +1411,7 @@ Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPa
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
