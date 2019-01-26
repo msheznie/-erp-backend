@@ -1585,6 +1585,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $data['confirmedDate'] = NOW();
                         $data['approved'] = -1;
                         $data['approvedDate'] = NOW();
+                        $data['postedDate'] = NOW();
                         $data['approvedByUserID'] = \Helper::getEmployeeID();
                         $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
                         $data['createdPcID'] = gethostname();

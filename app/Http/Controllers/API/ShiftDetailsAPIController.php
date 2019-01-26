@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateShiftDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\Counter;
 use App\Models\CurrencyDenomination;
+use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
 use App\Models\ShiftDetails;
 use App\Models\WarehouseMaster;
@@ -471,6 +472,11 @@ class ShiftDetailsAPIController extends AppBaseController
         if($company->localcurrency){
             $decimalPlaces = $company->localcurrency->DecimalPlaces;
         }
+
+        $payments = GposPaymentGlConfigDetail::where('warehouseID',$assignedOutlet->wareHouseID)
+                                             ->with(['type'])
+                                             ->get();
+
         $output = array(
             'company' => $company,
             'currencyDenomination' => $currencyDenomination,
@@ -478,7 +484,8 @@ class ShiftDetailsAPIController extends AppBaseController
             'counters' => $counters,
             'shift' => $shift,
             'isShiftOpen' => $isShiftOpen,
-            'decimalPlaces' => $decimalPlaces
+            'decimalPlaces' => $decimalPlaces,
+            'payments' => $payments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

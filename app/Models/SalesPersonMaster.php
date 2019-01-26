@@ -234,6 +234,7 @@ class SalesPersonMaster extends Model
 
     public $fillable = [
         'empSystemID',
+        'serialNumber',
         'SalesPersonCode',
         'SalesPersonName',
         'salesPersonImage',
@@ -285,6 +286,7 @@ class SalesPersonMaster extends Model
     protected $casts = [
         'salesPersonID' => 'integer',
         'empSystemID' => 'integer',
+        'serialNumber' => 'integer',
         'SalesPersonCode' => 'string',
         'SalesPersonName' => 'string',
         'salesPersonImage' => 'string',
