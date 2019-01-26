@@ -32,6 +32,7 @@ use App\Models\ReportTemplateCashBank;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
 use App\Models\ReportTemplateDocument;
+use App\Models\ReportTemplateLinks;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -485,7 +486,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                         if ($val->shortCode == 'CYYTD') {
                             if ($request->accountType == 2) {
-                                if($request->dateType == 2) {
+                                if ($request->dateType == 2) {
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
@@ -495,7 +496,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                         if ($val->shortCode == 'LYYTD') {
                             if ($request->accountType == 2) {
-                                if($request->dateType == 2) {
+                                if ($request->dateType == 2) {
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
@@ -509,7 +510,7 @@ class FinancialReportAPIController extends AppBaseController
                 if (count($linkedColumn) > 0) {
                     foreach ($linkedColumn as $val) {
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, '',false);
+                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, '', false);
                         } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                             $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                         } else {
@@ -530,13 +531,13 @@ class FinancialReportAPIController extends AppBaseController
 
                 $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
 
-                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request,$linkedcolumnQry2,$financeYear,$period));
+                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period));
 
                 if (count($linkedColumn) > 0) {
                     foreach ($linkedColumn as $val) {
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
                             $columnCustomeCode = $val->shortCode . '-' . $val->columnLinkID;
-                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, $columnCustomeCode,true);
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, $columnCustomeCode, true);
                             $columnHeader[] = $val->description;
                         } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
@@ -570,7 +571,7 @@ class FinancialReportAPIController extends AppBaseController
                 $outputClosingBalanceArr = [];
                 if ($request->accountType == 3) {
                     $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn);
-                    $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance)?$outputOpeningBalance->openingBalance:0;
+                    $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance) ? $outputOpeningBalance->openingBalance : 0;
 
                     $lastColumn = collect($headers)->last(); // considering net total
 
@@ -1966,6 +1967,16 @@ AND MASTER .canceledYN = 0';
 
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
+        $isExpand = 0;
+        $templateMaster = ReportTemplate::find($request->templateType);
+        if ($templateMaster) {
+            if ($templateMaster->presentationType == 2) {
+                $isExpand = 1;
+            }else{
+                $isExpand = 0;
+            }
+        }
+
         $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
         $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
         $lastYearEndDate = Carbon::parse($financeYear->endingDate);
@@ -1976,9 +1987,9 @@ AND MASTER .canceledYN = 0';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
         } else {
-            if($request->accountType == 2) {
+            if ($request->accountType == 2) {
                 $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            }else{
+            } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
@@ -2007,7 +2018,7 @@ AND MASTER .canceledYN = 0';
 	c.bgColor,
 	c.itemType,
 	c.hideHeader,
-	0 as expanded  
+	' . $isExpand . ' as expanded  
 FROM
 	(
 SELECT
@@ -2126,9 +2137,9 @@ GROUP BY
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
         } else {
-            if($request->accountType == 2) {
+            if ($request->accountType == 2) {
                 $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            }else{
+            } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
@@ -2188,14 +2199,14 @@ ORDER BY
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
-        $glCodes = ReportTemplateCashBank::whereIN('companySystemID', $companyID)->pluck('chartOfAccountSystemID')->toArray();
+        $glCodes = ReportTemplateLinks::where('templateMasterID', $request->templateType)->whereNotNull('glAutoID')->pluck('glAutoID')->toArray();
 
         $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereIN('serviceLineSystemID', $serviceline)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
 
         return $output;
     }
 
-    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear,$period)
+    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2217,9 +2228,9 @@ ORDER BY
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
         } else {
-            if($request->accountType == 2) {
+            if ($request->accountType == 2) {
                 $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            }else{
+            } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
@@ -2271,7 +2282,7 @@ GROUP BY
      * @return string
      */
     public
-    function columnFormulaDecode($columnLinkID, $rowValues, $columnArray,$columnCustomeCode, $linkedRowHead = false)
+    function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $columnCustomeCode, $linkedRowHead = false)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -2282,7 +2293,7 @@ GROUP BY
         if ($linkedRowHead) {
             $linkedRows = $taxFormula->formulaRowID;
         }
-        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray,$columnCustomeCode);
+        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $columnCustomeCode);
         $globalFormula = '';
         if ($sepFormulaArr) {
             $fomulaFinal = '';
@@ -2309,7 +2320,7 @@ GROUP BY
      * @return mixed
      */
     public
-    function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray,$columnCustomeCode)
+    function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $columnCustomeCode)
     {
         global $globalFormula;
         $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID', explode(',', $linkedColumns))->get();
@@ -2319,7 +2330,7 @@ GROUP BY
                 if (!empty($val['formulaColumnID'])) {
                     $replaceVal = '|(~' . $val['formula'] . '~|)';
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
-                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray,$columnCustomeCode);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray, $columnCustomeCode);
                     if (is_array($return)) {
                         if ($return[0] == 'e') {
                             return $return;

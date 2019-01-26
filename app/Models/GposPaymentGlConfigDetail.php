@@ -174,6 +174,4 @@ class GposPaymentGlConfigDetail extends Model
     {
         return $this->belongsTo('App\Models\GposPaymentGlConfigMaster', 'paymentConfigMasterID','autoID');
     }
-
-
 }

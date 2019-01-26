@@ -1370,7 +1370,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('quotationMasters', 'QuotationMasterAPIController');
     Route::resource('quotationDetails', 'QuotationDetailsAPIController');
     Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+    Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
+    Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+    Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+    Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
+    Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
+    Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
+    Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
+    Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
+    Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
 
+    Route::resource('gposInvoices', 'GposInvoiceAPIController');
+    Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
+    Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
+    Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
 });
 
 
@@ -1402,6 +1415,7 @@ Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPa
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
@@ -1436,5 +1450,7 @@ Route::get('runQueueSR', function () {
 
 
 
+
+Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
 
 

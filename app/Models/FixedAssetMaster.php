@@ -514,6 +514,7 @@ class FixedAssetMaster extends Model
         'RollLevForApp_curr',
         'timesReferred',
         'refferedBackYN',
+        'postedDate',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',

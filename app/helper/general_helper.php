@@ -516,6 +516,17 @@ class Helper
                     $docInforArr["modelName"] = 'BankAccount';
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     break;
+                case 67: // Quotation
+                    $docInforArr["documentCodeColumnName"] = 'quotationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_quotationmaster';
+                    $docInforArr["modelName"] = 'QuotationMaster';
+                    $docInforArr["primarykey"] = 'quotationMasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1350,6 +1361,18 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 67: // Quotation
+                $docInforArr["tableName"] = 'erp_quotationmaster';
+                $docInforArr["modelName"] = 'QuotationMaster';
+                $docInforArr["primarykey"] = 'quotationMasterID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedbyEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
@@ -2486,6 +2509,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
                 $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
                 $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
+                break;
+            case 208: // Pos invoice details
+                $docInforArr["modelName"] = 'GposInvoice';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'transactionExchangeRate';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
