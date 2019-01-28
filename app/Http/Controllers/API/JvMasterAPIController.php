@@ -1225,7 +1225,8 @@ INNER JOIN (
 		financeGLcodebBS,
 		financeGLcodebBSSystemID
 	FROM
-		erp_purchaseorderdetails
+		erp_purchaseorderdetails GROUP BY
+	erp_purchaseorderdetails.purchaseOrderMasterID
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
