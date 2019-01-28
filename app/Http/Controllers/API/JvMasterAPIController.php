@@ -1184,26 +1184,18 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 	pomaster.approvedDate,
 	podetail.itemPrimaryCode,
 	podetail.itemDescription,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBS
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBS
-		ELSE
-			podetail.financeGLcodePL
-		END
-	) AS glCode,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBSSystemID
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBSSystemID
-		ELSE
-			podetail.financeGLcodePLSystemID
-		END
-	) AS glCodeSystemID,
+	IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBS,
+	podetail.financeGLcodePL
+) AS glCode,
+IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBSSystemID,
+	podetail.financeGLcodePLSystemID
+) AS glCodeSystemID,
 	pomaster.supplierName,
 	podetail.poSum AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
