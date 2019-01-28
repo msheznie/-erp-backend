@@ -136,10 +136,15 @@ class SalesPersonTargetAPIController extends AppBaseController
             return $this->sendError('Percentage % should be between 0 - 100');
         }
 
+        if ($input["toTargetAmount"] <= $input["fromTargetAmount"]) {
+            return $this->sendError('Start Amount cannot be greater than end amount!');
+        }
+
         if (isset($request->targetID) && !empty($request->targetID)) {
 
             $salesPersonTargetUpdate = SalesPersonTarget::find($request->targetID);
             $salesPersonTargetUpdate->percentage = $input["percentage"];
+            $salesPersonTargetUpdate->toTargetAmount = $input["toTargetAmount"];
             $salesPersonTargetUpdate->modifiedPCID = gethostname();
             $salesPersonTargetUpdate->modifiedUserID = $employee->empID;
             $salesPersonTargetUpdate->save();

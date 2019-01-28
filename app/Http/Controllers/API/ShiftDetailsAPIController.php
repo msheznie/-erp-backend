@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateShiftDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\Counter;
 use App\Models\CurrencyDenomination;
+use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
 use App\Models\ShiftDetails;
 use App\Models\WarehouseMaster;
@@ -445,7 +446,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                        ->first();
 
         if(empty($assignedOutlet)){
-            return $this->sendError('This user is not assigned for any outlet.');
+            return $this->sendError('You are not assigned for an outlet. Please assign and try again.');
         }
 
         $counters = Counter::where('companySystemID',$input['companyId'])
@@ -453,7 +454,7 @@ class ShiftDetailsAPIController extends AppBaseController
                              ->get();
 
         if(count($counters) == 0){
-            return $this->sendError('Assigned outlet no counter. Please create counters.');
+            return $this->sendError('Counter not created. Please create a counter.');
         }
 
         $isShiftOpen = false;
@@ -471,6 +472,11 @@ class ShiftDetailsAPIController extends AppBaseController
         if($company->localcurrency){
             $decimalPlaces = $company->localcurrency->DecimalPlaces;
         }
+
+        $payments = GposPaymentGlConfigDetail::where('warehouseID',$assignedOutlet->wareHouseID)
+                                             ->with(['type'])
+                                             ->get();
+
         $output = array(
             'company' => $company,
             'currencyDenomination' => $currencyDenomination,
@@ -478,7 +484,8 @@ class ShiftDetailsAPIController extends AppBaseController
             'counters' => $counters,
             'shift' => $shift,
             'isShiftOpen' => $isShiftOpen,
-            'decimalPlaces' => $decimalPlaces
+            'decimalPlaces' => $decimalPlaces,
+            'payments' => $payments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

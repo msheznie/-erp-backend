@@ -377,5 +377,30 @@ class QuotationDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
 
+    public function salesQuotationDetailsDeleteAll(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detailExistAll = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDeatil) {
+
+                $deleteDetails = QuotationDetails::where('quotationDetailsID', $cvDeatil['quotationDetailsID'])->delete();
+
+            }
+        }
+
+        return $this->sendResponse($quotationMasterID, 'Quotation details deleted successfully');
+    }
+
 
 }

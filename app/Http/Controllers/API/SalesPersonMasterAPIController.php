@@ -20,6 +20,7 @@ use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
+use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
 use App\Models\SalesPersonTarget;
 use App\Models\SegmentMaster;
@@ -186,11 +187,12 @@ class SalesPersonMasterAPIController extends AppBaseController
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->salesPersonID) + 1;
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
 
         $salesPersonCode = ($company->CompanyID . '\\' . 'REP' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
         $input['SalesPersonCode'] = $salesPersonCode;
+        $input['serialNumber'] = $lastSerialNumber;
 
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -412,6 +414,13 @@ class SalesPersonMasterAPIController extends AppBaseController
             return $this->sendError('Sales Person Master not found');
         }
 
+        $checkSalesPerson = QuotationMaster::where('companySystemID', $salesPersonMaster->companySystemID)
+            ->where('salesPersonID', $id)
+            ->first();
+
+        if (!empty($checkSalesPerson)) {
+            return $this->sendError('You cannot delete the sales person, Sales person all ready added to quotation');
+        }
         // deleting master record
         $salesPersonMaster->delete();
 
@@ -494,9 +503,7 @@ class SalesPersonMasterAPIController extends AppBaseController
             ->get();
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
-        if (isset($request['type']) && $request['type'] != 'filter') {
-            $segments = $segments->where('isActive', 1);
-        }
+        $segments = $segments->where('isActive', 1);
         $segments = $segments->get();
 
         $wareHouses = WarehouseMaster::whereIn('companySystemID', $subCompanies);

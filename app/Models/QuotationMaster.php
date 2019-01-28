@@ -448,11 +448,13 @@ class QuotationMaster extends Model
         'closedReason',
         'companySystemID',
         'companyID',
+        'createdUserSystemID',
         'createdUserGroup',
         'createdPCID',
         'createdUserID',
         'createdDateTime',
         'createdUserName',
+        'modifiedUserSystemID',
         'modifiedPCID',
         'modifiedUserID',
         'modifiedDateTime',
@@ -527,10 +529,12 @@ class QuotationMaster extends Model
         'closedReason' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserGroup' => 'integer',
         'createdPCID' => 'string',
         'createdUserID' => 'string',
         'createdUserName' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string'
@@ -544,6 +548,41 @@ class QuotationMaster extends Model
     public static $rules = [
         
     ];
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function detail()
+    {
+        return $this->hasMany('App\Models\QuotationDetails', 'quotationMasterID', 'quotationMasterID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'quotationMasterID');
+    }
+
+    public function sales_person()
+    {
+        return $this->belongsTo('App\Models\SalesPersonMaster', 'salesPersonID', 'salesPersonID');
+    }
 
     
 }
