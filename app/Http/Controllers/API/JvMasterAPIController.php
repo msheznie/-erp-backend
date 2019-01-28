@@ -1205,10 +1205,10 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 		END
 	) AS glCodeSystemID,
 	pomaster.supplierName,
-	pomaster.poTotalComRptCurrency AS poCost,
+	podetail.poSum AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
 	(
-		pomaster.poTotalComRptCurrency - IFNULL(grvdetail.grvSum, 0)
+		podetail.poSum - IFNULL(grvdetail.grvSum, 0)
 	) AS balanceCost
 FROM
 	erp_purchaseordermaster AS pomaster
