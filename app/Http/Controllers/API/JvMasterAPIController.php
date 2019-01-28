@@ -1264,6 +1264,10 @@ HAVING
         //exit();
         $invMaster = DB::select($qry);
 
+        if ($input['temptype'] == 0) {
+            return $invMaster;
+        }
+
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];
         $request->request->remove('order');
