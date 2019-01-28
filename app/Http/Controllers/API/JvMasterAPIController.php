@@ -1225,8 +1225,7 @@ INNER JOIN (
 		financeGLcodebBS,
 		financeGLcodebBSSystemID
 	FROM
-		erp_purchaseorderdetails GROUP BY
-	erp_purchaseorderdetails.purchaseOrderMasterID
+		erp_purchaseorderdetails
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
@@ -1248,7 +1247,6 @@ AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
 AND pomaster.poType_N <> 5
-AND pomaster.grvRecieved <> 2
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
 AND date(pomaster.approvedDate) >= '2016-05-01'
@@ -1258,7 +1256,7 @@ AND date(
 {$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 HAVING
-	round(balanceCost, 2) <> 0";
+	round(balanceCost, 2) > 0";
 
         //echo $qry;
         //exit();
