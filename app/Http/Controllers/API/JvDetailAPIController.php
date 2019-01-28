@@ -807,6 +807,8 @@ GROUP BY
                 $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
                 $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
                 $detail_arr['documentID'] = $jvMasterData->documentID;
+                $detail_arr['contractUID'] = 159;
+                $detail_arr['clientContractID'] = 'X';
                 $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
                 $detail_arr['serviceLineCode'] = $new['serviceLine'];
                 $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
@@ -834,7 +836,8 @@ GROUP BY
                 $detail_debitArr['documentID'] = $jvMasterData->documentID;
                 $detail_debitArr['recurringjvMasterAutoId'] = 0;
                 $detail_debitArr['recurringjvMasterAutoId'] = 0;
-                $detail_debitArr['clientContractID'] = 'x';
+                $detail_debitArr['contractUID'] = 159;
+                $detail_debitArr['clientContractID'] = 'X';
                 $detail_debitArr['serviceLineSystemID'] = $new['serviceLineSystemID'];
                 $detail_debitArr['serviceLineCode'] = $new['serviceLine'];
                 $detail_debitArr['companySystemID'] = $jvMasterData->companySystemID;
@@ -854,8 +857,6 @@ GROUP BY
                 $store = $this->jvDetailRepository->create($detail_debitArr);
             }
         }
-
-
 
         return $this->sendResponse('', 'JV Details saved successfully');
 

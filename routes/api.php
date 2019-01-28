@@ -195,6 +195,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
     Route::resource('chart_of_account', 'ChartOfAccountAPIController');
     Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
+    Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
     Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
     Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
     Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');

@@ -398,9 +398,9 @@ class FinancialReportAPIController extends AppBaseController
                     $fromDate = $fromDate->format('Y-m-d');
                 } else {
                     $period = CompanyFinancePeriod::find($request->month);
-                    $toDate = $period->dateTo;
+                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                     $month = Carbon::parse($toDate)->format('Y-m-d');
-                    $fromDate = $period->dateFrom;
+                    $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
                 }
 
                 $currencyColumn = '';
@@ -490,8 +490,16 @@ class FinancialReportAPIController extends AppBaseController
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            }else if($request->accountType == 1){
+                                if ($request->dateType == 2) {
+                                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            }else if($request->accountType == 3){
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+
                             $columnHeaderArray[$val->shortCode] = $val->shortCode;
                         }
                         if ($val->shortCode == 'LYYTD') {
@@ -500,8 +508,16 @@ class FinancialReportAPIController extends AppBaseController
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            }else if($request->accountType == 1){
+                                if ($request->dateType == 2) {
+                                    $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                            }else if($request->accountType == 3){
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+
                             $columnHeaderArray[$val->shortCode] = $val->shortCode;
                         }
                     }
@@ -538,13 +554,13 @@ class FinancialReportAPIController extends AppBaseController
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
                             $columnCustomeCode = $val->shortCode . '-' . $val->columnLinkID;
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, $columnCustomeCode, true);
-                            $columnHeader[] = $val->description;
+                            $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor];
                         } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                            $columnHeader[] = $columnHeaderArray[$val->shortCode];
+                            $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor];
                         } else {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                            $columnHeader[] = Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M');
+                            $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor];
                         }
                     }
                 }
@@ -1985,10 +2001,10 @@ AND MASTER .canceledYN = 0';
         $dateFilter = '';
         $documentQry = '';
         if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
@@ -2005,7 +2021,7 @@ AND MASTER .canceledYN = 0';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= 'IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0) AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= 'IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0) * -1 AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
         }
 
@@ -2034,8 +2050,6 @@ FROM
 	erp_companyreporttemplatedetails
 	LEFT JOIN (
 SELECT
-	--SUM( documentLocalAmount ) AS documentLocalAmount,
-	--SUM( documentRptAmount ) AS documentRptAmount,
 	' . $firstLinkedcolumnQry . '
 	erp_generalledger.chartOfAccountSystemID,
 	companyreporttemplatelinks.templateDetailID,
@@ -2067,16 +2081,12 @@ WHERE
 	) c
 	LEFT JOIN (
 SELECT
-	--SUM( d.documentLocalAmount ) AS documentLocalAmount,
-	--SUM( d.documentRptAmount ) AS documentRptAmount,
 	' . $thirdLinkedcolumnQry . '
 	erp_companyreporttemplatelinks.templateDetailID 
 FROM
 	erp_companyreporttemplatelinks
 	LEFT JOIN (
 SELECT
-	--SUM( documentLocalAmount ) AS documentLocalAmount,
-	--SUM( documentRptAmount ) AS documentRptAmount,
 	' . $firstLinkedcolumnQry . '
 	erp_generalledger.chartOfAccountSystemID,
 	erp_generalledger.documentDate,
@@ -2154,12 +2164,10 @@ GROUP BY
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= 'IFNULL(gl.`' . $val . '`,0) AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= 'IFNULL(gl.`' . $val . '`,0) * -1 AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
-	--IFNULL(gl.documentLocalAmount,0) as documentLocalAmount,
-	--IFNULL(gl.documentRptAmount,0) as documentRptAmount,
 	' . $secondLinkedcolumnQry . '
 	erp_companyreporttemplatelinks.glCode,
 	erp_companyreporttemplatelinks.glDescription,
@@ -2170,8 +2178,6 @@ FROM
 	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
 	LEFT JOIN (
         SELECT
-        --SUM(documentLocalAmount) AS documentLocalAmount,
-        --SUM(documentRptAmount) AS documentRptAmount,
         ' . $firstLinkedcolumnQry . '
         erp_generalledger.chartOfAccountSystemID
     FROM

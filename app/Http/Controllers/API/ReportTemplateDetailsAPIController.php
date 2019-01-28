@@ -15,7 +15,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateReportTemplateDetailsAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateDetailsAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Models\ReportTemplate;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
@@ -252,7 +255,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index','subcategorytot']);
+        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ReportTemplateDetails $reportTemplateDetails */
@@ -324,8 +327,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             $detID = $reportTemplateDetails->subcategory()->pluck('detID');
             $reportTemplateDetails->subcategory()->delete();
             $reportTemplateDetails->gllink()->delete();
-            if($detID){
-                $glLink = ReportTemplateLinks::whereIN('templateDetailID',$detID)->delete();
+            if ($detID) {
+                $glLink = ReportTemplateLinks::whereIN('templateDetailID', $detID)->delete();
             }
             $reportTemplateDetails->delete();
             DB::commit();
@@ -338,19 +341,25 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
     public function getReportTemplateDetail($id, Request $request)
     {
-        $reportTemplateDetails = ReportTemplateDetails::with(['subcategory' => function ($q) {
+        $reportTemplateDetails = ReportTemplateDetails::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
             $q->with(['gllink' => function ($q) {
                 $q->with('subcategory');
                 $q->orderBy('sortOrder', 'asc');
             }]);
             $q->orderBy('sortOrder', 'asc');
-        },'subcategorytot' => function ($q) {
+        }, 'subcategorytot' => function ($q) {
             $q->with('subcategory');
         }])->OfMaster($id)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-        $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder','asc')->get();
+        $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder', 'asc')->get();
+        $reportTemplateMaster = ReportTemplate::find($id);
 
-        $output = ['template'=> $reportTemplateDetails->toArray(),'columns' => $reportTemplateColLink->toArray()];
+        $assignedGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->count();
+        $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->count();
+
+        $remainingGLCount = $assignedGL - $linkedGL;
+
+        $output = ['template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount];
 
         return $this->sendResponse($output, 'Report Template Details retrieved successfully');
     }
@@ -359,9 +368,9 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function getReportTemplateSubCat(Request $request)
     {
         $reportTemplateDetails = '';
-        if($request->isHeader == 1){
+        if ($request->isHeader == 1) {
             $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->where('itemType', '=', 2)->orderBy('sortOrder')->get();
-        }else {
+        } else {
             $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('detID', '<', $request->detID)->where('itemType', '=', 2)->orderBy('sortOrder')->get();
         }
 
