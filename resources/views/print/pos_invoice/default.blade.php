@@ -164,13 +164,13 @@
                 @endif
             </td>
         </tr>
-        {{-- <tr style="width: 100%">
+         <tr style="width: 100%">
              <td colspan="3">
                  @if($entity->company)
                      <h6>{{$entity->company->CompanyAddress}}</h6>
                  @endif
              </td>
-         </tr>--}}
+         </tr>
         <tr style="width: 100%">
             <td colspan="3" class="text-center">
                 <h3>
