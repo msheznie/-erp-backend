@@ -48,6 +48,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -161,15 +162,19 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'assetSerialNo.*.required' => 'Asset Serial No is required',
+                'assetSerialNo.*.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'assetSerialNo.*.faUnitSerialNo' => 'required|unique:erp_fa_asset_master,faUnitSerialNo',
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
                 return $this->sendError($validator->messages(), 422);
             }
+
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > 31457280) {
@@ -228,6 +233,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
+
                 if ($grvDetails["noQty"]) {
                     if ($grvDetails->noQty < 1) {
                         $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -351,10 +357,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
@@ -575,10 +583,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
