@@ -1381,6 +1381,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
 
     Route::resource('gposInvoices', 'GposInvoiceAPIController');
+    Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
     Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
     Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
     Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
@@ -1420,6 +1421,9 @@ Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQu
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
 Route::get('loginwithToken', 'UserAPIController@loginwithToken');
+Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
+
+
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
