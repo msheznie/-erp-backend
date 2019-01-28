@@ -142,7 +142,7 @@ class OutletUsersAPIController extends AppBaseController
             ->where('userID', $input['userID'])
             ->count();
         if ($checkAlreadyExist > 0) {
-            return $this->sendError('Selected user already added to this outlet', 500);
+            return $this->sendError('Selected user is already added to this outlet', 500);
         }
 
         $checkEmployee = Employee::where('employeeSystemID', $input['userID'])
@@ -160,7 +160,7 @@ class OutletUsersAPIController extends AppBaseController
                                         ->first();
 
         if(!empty($checkUserActive)){
-            return $this->sendError('Select user already active in '.$checkUserActive->outlet->wareHouseCode,500);
+            return $this->sendError('Selected user is already active in outlet '.$checkUserActive->outlet->wareHouseCode,500);
         }
 
 
@@ -310,7 +310,7 @@ class OutletUsersAPIController extends AppBaseController
                                            ->first();
 
             if(!empty($checkUserActive)){
-                return $this->sendError('This user already active in '.$checkUserActive->outlet->wareHouseCode,500);
+                return $this->sendError('User is already active in outlet '.$checkUserActive->outlet->wareHouseCode,500);
             }
 
         } else {
@@ -322,7 +322,7 @@ class OutletUsersAPIController extends AppBaseController
                                     ->first();
 
             if(!empty($shift)){
-                return $this->sendError('Cannot deactivate, This use has on going shift.');
+                return $this->sendError('Cannot deactivate, Selected user has on going shift.');
             }
         }
 
@@ -387,11 +387,12 @@ class OutletUsersAPIController extends AppBaseController
         }
 
         $shift = ShiftDetails::where('isClosed',0)
+            ->where('wareHouseID',$outletUsers->wareHouseID)
             ->where('empID',$outletUsers->userID)
             ->first();
 
         if(!empty($shift)){
-            return $this->sendError('Cannot delete, This use has on going shift.');
+            return $this->sendError('Cannot delete, Selected user has on going shift.');
         }
 
         $outletUsers->delete();
