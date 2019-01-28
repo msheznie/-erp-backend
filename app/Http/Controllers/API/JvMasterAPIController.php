@@ -1205,10 +1205,10 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 		END
 	) AS glCodeSystemID,
 	pomaster.supplierName,
-	pomaster.poTotalComRptCurrency AS poCost,
+	podetail.poSum AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
 	(
-		pomaster.poTotalComRptCurrency - IFNULL(grvdetail.grvSum, 0)
+		podetail.poSum - IFNULL(grvdetail.grvSum, 0)
 	) AS balanceCost
 FROM
 	erp_purchaseordermaster AS pomaster
@@ -1225,7 +1225,8 @@ INNER JOIN (
 		financeGLcodebBS,
 		financeGLcodebBSSystemID
 	FROM
-		erp_purchaseorderdetails
+		erp_purchaseorderdetails GROUP BY
+	erp_purchaseorderdetails.purchaseOrderMasterID
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
@@ -1262,6 +1263,10 @@ HAVING
         //echo $qry;
         //exit();
         $invMaster = DB::select($qry);
+
+        if ($input['temptype'] == 0) {
+            return $invMaster;
+        }
 
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];

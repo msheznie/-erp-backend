@@ -1180,6 +1180,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
@@ -1723,6 +1724,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $search = str_replace("\\", "\\\\", $search);
             $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
