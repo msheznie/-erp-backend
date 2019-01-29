@@ -1184,26 +1184,18 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 	pomaster.approvedDate,
 	podetail.itemPrimaryCode,
 	podetail.itemDescription,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBS
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBS
-		ELSE
-			podetail.financeGLcodePL
-		END
-	) AS glCode,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBSSystemID
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBSSystemID
-		ELSE
-			podetail.financeGLcodePLSystemID
-		END
-	) AS glCodeSystemID,
+	IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBS,
+	podetail.financeGLcodePL
+) AS glCode,
+IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBSSystemID,
+	podetail.financeGLcodePLSystemID
+) AS glCodeSystemID,
 	pomaster.supplierName,
 	podetail.poSum AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
@@ -1225,8 +1217,7 @@ INNER JOIN (
 		financeGLcodebBS,
 		financeGLcodebBSSystemID
 	FROM
-		erp_purchaseorderdetails GROUP BY
-	erp_purchaseorderdetails.purchaseOrderMasterID
+		erp_purchaseorderdetails
 ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
@@ -1248,7 +1239,6 @@ AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
 AND pomaster.poType_N <> 5
-AND pomaster.grvRecieved <> 2
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
 AND date(pomaster.approvedDate) >= '2016-05-01'
@@ -1258,7 +1248,7 @@ AND date(
 {$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 HAVING
-	round(balanceCost, 2) <> 0";
+	round(balanceCost, 2) > 0";
 
         //echo $qry;
         //exit();
