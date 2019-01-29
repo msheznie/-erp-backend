@@ -64,6 +64,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 
+
+ini_set('max_execution_time', 300);
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -1584,6 +1586,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
                 break;
             case 31: /*IPCP*/
+            case 24 : /*GEY - Yemen*/
             case 42: /*MOS*/
             case 60: /*WMS*/
             case 63: /*WSS*/
@@ -1602,7 +1605,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $linePageNo = true;
 
                     /*requested by zahlan on 2018-12-20 remove group for midwest company*/
-                    if ($companySystemID == 42 || $companySystemID == 31 ) {
+
+                    if (in_array($companySystemID,[42,31,24])  ) {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate,  qty * rate  AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID  ORDER BY  t.mitID ASC");
 
                     } else {
@@ -1626,7 +1630,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 if ($master->isPerforma == 1) {
 
-                    if ($master->customerID == 79) {
+                    if ($master->customerID == 79 ) {
                         $footerDate = false;
                         $logo = false;
                         $line_seNo = false;
