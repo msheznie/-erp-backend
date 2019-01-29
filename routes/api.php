@@ -1386,6 +1386,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getInvoicesByShift', 'GposInvoiceAPIController@getInvoicesByShift');
     Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
     Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
+
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
 });
 
 
@@ -1452,10 +1455,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
-
-
-
-
-Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-
-

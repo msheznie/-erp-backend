@@ -33,6 +33,7 @@ use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
 use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
+use App\Models\ReportTemplateNumbers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -208,7 +209,7 @@ class FinancialReportAPIController extends AppBaseController
                     'companyFinanceYearID' => 'required',
                     'templateType' => 'required',
                     'companySystemID' => 'required',
-                    'serviceLineSystemID' => 'required',
+                    'serviceLineSystemID' => 'required_if:accountType,2|nullable',
                     'currency' => 'required',
                     'fromDate' => 'required_if:dateType,1|nullable|date',
                     'toDate' => 'required_if:dateType,1|nullable|date|after_or_equal:fromDate',
@@ -491,12 +492,12 @@ class FinancialReportAPIController extends AppBaseController
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
-                            }else if($request->accountType == 1){
+                            } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
-                            }else if($request->accountType == 3){
+                            } else if ($request->accountType == 3) {
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
 
@@ -509,12 +510,12 @@ class FinancialReportAPIController extends AppBaseController
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
-                            }else if($request->accountType == 1){
+                            } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
-                            }else if($request->accountType == 3){
+                            } else if ($request->accountType == 3) {
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
 
@@ -612,6 +613,14 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
+                $divisionValue = 1;
+                if ($template) {
+                    if ($template->showNumbersIn !== 1) {
+                        $numbers = ReportTemplateNumbers::find($template->showNumbersIn);
+                        $divisionValue = (float)$numbers->value;
+                    }
+                }
+
                 return array('reportData' => $headers,
                     'template' => $template,
                     'company' => $company,
@@ -620,6 +629,7 @@ class FinancialReportAPIController extends AppBaseController
                     'columnHeader' => $columnHeader,
                     'openingBalance' => $outputOpeningBalanceArr,
                     'closingBalance' => $outputClosingBalanceArr,
+                    'numbers' => $divisionValue,
                     'month' => $month,
                 );
                 break;
@@ -1984,11 +1994,17 @@ AND MASTER .canceledYN = 0';
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
         $isExpand = 0;
+        $divisionValue = 1;
         $templateMaster = ReportTemplate::find($request->templateType);
         if ($templateMaster) {
+            if ($templateMaster->showNumbersIn !== 1) {
+                $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
+                $divisionValue = (float)$numbers->value;
+            }
+
             if ($templateMaster->presentationType == 2) {
                 $isExpand = 1;
-            }else{
+            } else {
                 $isExpand = 0;
             }
         }
@@ -2000,6 +2016,7 @@ AND MASTER .canceledYN = 0';
 
         $dateFilter = '';
         $documentQry = '';
+        $servicelineQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
@@ -2017,11 +2034,17 @@ AND MASTER .canceledYN = 0';
             }
         }
 
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= 'IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0) * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/'.$divisionValue.') * -1 AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
         }
 
@@ -2071,8 +2094,7 @@ ORDER BY
 	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	' . $dateFilter . ' ' . $documentQry . '
+	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID 
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
@@ -2109,8 +2131,7 @@ ORDER BY
 	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	' . $dateFilter . ' ' . $documentQry . '
+	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID 
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
@@ -2144,6 +2165,7 @@ GROUP BY
 
         $dateFilter = '';
         $documentQry = '';
+        $servicelineQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
         } else {
@@ -2161,10 +2183,25 @@ GROUP BY
             }
         }
 
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $divisionValue = 1;
+        $templateMaster = ReportTemplate::find($request->templateType);
+        if ($templateMaster) {
+            if ($templateMaster->showNumbersIn !== 1) {
+                $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
+                $divisionValue = (float)$numbers->value;
+            }
+        }
+
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= 'IFNULL(gl.`' . $val . '`,0) * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/'.$divisionValue.') * -1 AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
@@ -2184,8 +2221,7 @@ FROM
         erp_generalledger 
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-        AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-        ' . $dateFilter . ' ' . $documentQry . '
+        '.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
@@ -2231,6 +2267,7 @@ ORDER BY
 
         $dateFilter = '';
         $documentQry = '';
+        $servicelineQry = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
         } else {
@@ -2245,6 +2282,12 @@ ORDER BY
         if ($request->accountType == 3) {
             if (count($documents) > 0) {
                 $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
             }
         }
 
@@ -2271,8 +2314,7 @@ ORDER BY
 	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
 WHERE
 	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')
-	' . $dateFilter . ' ' . $documentQry . '
+	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
 GROUP BY
 	companyreporttemplatelinks.templateDetailID';
 

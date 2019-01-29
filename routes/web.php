@@ -1,1 +1,4 @@
 
+
+
+Route::resource('reportTemplateNumbers', 'ReportTemplateNumbersController');
