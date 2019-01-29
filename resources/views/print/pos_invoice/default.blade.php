@@ -32,7 +32,7 @@
         }
 
         table > tbody > tr > td {
-            font-size: 11.5px;
+            font-size: 11px;
         }
 
         .theme-tr-head {
@@ -99,7 +99,7 @@
         }
 
         table > thead > tr > th {
-            font-size: 11.5px;
+            font-size: 11px;
         }
 
         hr {
@@ -147,9 +147,19 @@
         .content {
             margin-bottom: 45px;
         }
+
+        .table-border {
+            border-top: 1px solid #333 !important;
+            border-bottom: 1px solid #333 !important;
+        }
+
+        .table th, .table td {
+            padding-top: 1px !important;
+            padding-bottom: 1px !important;
+        }
     </style>
 </head>
-<body>
+<body onload="window.print()">
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
@@ -159,23 +169,16 @@
     <table style="width: 100%">
         <tr style="width: 100%">
             <td colspan="3" class="text-center">
-                @if($entity->company)
-                    <h3> {{$entity->company->CompanyName}}</h3>
+                @if($entity->warehouse_by)
+                    <img src="{{$entity->warehouse_by->templateImgUrl}}" width="180px" height="60px">
                 @endif
             </td>
         </tr>
-         <tr style="width: 100%">
-             <td colspan="3">
-                 @if($entity->company)
-                     <h6>{{$entity->company->CompanyAddress}}</h6>
-                 @endif
-             </td>
-         </tr>
-        <tr style="width: 100%">
-            <td colspan="3" class="text-center">
-                <h3>
-                    Item Issue Voucher
-                </h3>
+        <tr style="width: 100%" class="text-center">
+            <td colspan="3">
+                @if($entity->warehouse_by)
+                    <h6> {{$entity->warehouse_by->wareHouseDescription}} </h6>
+                @endif
             </td>
         </tr>
     </table>
@@ -186,37 +189,16 @@
                 <table>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Warehouse</span>
+                            <span class="font-weight-bold">Customer</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            @if($entity->warehouse_by)
+                            Cash
+                            {{--@if($entity->warehouse_by)
                                 {{$entity->warehouse_by->wareHouseDescription}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Ref No</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            {{$entity->issueRefNo}}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Comments </span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>{{$entity->comment}}</span>
+                            @endif--}}
                         </td>
                     </tr>
                 </table>
@@ -227,17 +209,6 @@
                 <table>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Document No</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>{{$entity->itemIssueCode}}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
                             <span class="font-weight-bold">Date </span>
                         </td>
                         <td width="10px">
@@ -245,8 +216,19 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::dateFormat($entity->issueDate)}}
+                                {{ date("Y-m-d h.sa", strtotime($entity->createdDateTime))}}
                             </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="70px">
+                            <span class="font-weight-bold">Invoice No</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{$entity->invoiceCode}}</span>
                         </td>
                     </tr>
                 </table>
@@ -254,104 +236,77 @@
         </tr>
     </table>
     {{--<hr>--}}
-    <div style="margin-top: 30px">
+    <div style="margin-top: 5px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>
-            <tr class="theme-tr-head">
-                <th></th>
-                <th class="text-left">Item Code</th>
-                <th class="text-left">Item Description</th>
-                <th class="text-left">UOM</th>
-                <th class="text-left">QTY</th>
-                <th class="text-left">Cost(USD)</th>
-                <th class="text-left">Comments</th>
+            <tr>
+                <th>#</th>
+                <th class="text-center">Description</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">Price</th>
+                <th class="text-center">Discount</th>
+                <th class="text-center">Amount</th>
             </tr>
             </thead>
             <tbody>
             @foreach ($entity->details as $item)
-                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                <tr class="table-border">
                     <td>{{$loop->iteration}}</td>
-                    <td>{{$item->itemPrimaryCode}}</td>
                     <td>{{$item->itemDescription}}</td>
-                    <td>
-                        @if($item->uom_issuing)
-                            {{$item->uom_issuing->UnitShortCode}}
-                        @endif
-                    </td>
-                    <td class="text-right">{{$item->qtyIssued}}</td>
-                    <td class="text-right">{{round($item->issueCostRpt,2)}}</td>
-                    <td class="text-left">
-                        {{$item->comments}}
-                    </td>
+                    <td class="text-right">{{$item->qty}}</td>
+                    <td class="text-right">{{number_format($item->totalAmount,$entity->decimalPlaces)}}</td>
+                    <td class="text-right">{{number_format($item->discountAmount,$entity->decimalPlaces)}}</td>
+                    <td class="text-right">{{number_format($item->netAmount,$entity->decimalPlaces)}}</td>
                 </tr>
             @endforeach
+            <tr class="table-border">
+                <td colspan="2" rowspan="7" valign="top">
+                    Total Items - {{count($entity->details)}} <br>
+                    Created by :
+                     @if($entity->created_by) {{$entity->created_by->empName}} @endif
+                </td>
+                <td colspan="4" style="padding-top: -1px !important;padding-bottom: -1px !important;"></td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Subtotal</strong></td>
+                <td colspan="2" class="text-right">{{number_format($entity->subTotal,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Discount ({{number_format($entity->discountPercentage,2)}}%)</strong></td>
+                <td colspan="2"
+                    class="text-right">{{number_format($entity->discountAmount,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Grand Total</strong></td>
+                <td colspan="2" class="text-right">{{number_format($entity->netTotal,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Cash</strong></td>
+                <td colspan="2" class="text-right">{{number_format($entity->cashAmount,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Card</strong></td>
+                <td colspan="2" class="text-right">{{number_format($entity->cardAmount,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="2" class="text-left"><strong>Change</strong></td>
+                <td colspan="2" class="text-right">{{number_format($entity->balanceAmount,$entity->decimalPlaces)}}</td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="6" class="text-left"><br><br><br></td>
+            </tr>
+            <tr class="table-border">
+                <td colspan="6" class="text-center">
+                    @if($entity->warehouse_by)
+                        <b>{{$entity->warehouse_by->posFooterNote}}</b>
+                    @endif
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>
-    {{--<hr>--}}
-    <div class="row" style="margin-top: 60px;margin-left: -8px">
-        <table>
-            <tr width="100%">
-                <td width="60%">
-                    <table width="100%">
-                        <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Issued By :</span>
-                            </td>
-                            <td width="400px">
-                                @if($entity->confirmed_by)
-                                    {{$entity->confirmed_by->empName}}
-                                @endif
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td width="10%">
-
-                </td>
-                <td width="30%">
-                    <table>
-                        <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
-                            </td>
-                            <td>
-                                <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
-    </div>
-    <div style="margin-top: 10px">
-        <table>
-            <tr>
-               {{-- @foreach ($entity->approved_by as $det)
-                    <td style="padding-right: 25px">
-                        @if($det->employee)
-                            {{$det->employee->empFullName }}
-                            @if($det->employee->details)
-                                @if($det->employee->details->designation)
-                                    <br>{{$det->employee->details->designation->designation}}
-                                @endif
-                            @endif
-                        @endif
-                        <br>
-                        @if($det->employee)
-                            @if($det->approvedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                            @elseif($det->rejectedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
-                            @endif
-                        @endif
-                    </td>
-                @endforeach--}}
-            </tr>
-        </table>
+    <div class="row text-center" style="margin-top: 10px">
+        <span class="font-weight-bold" style="font-size: 14px">Thank You!</span>
     </div>
 </div>
 </body>
