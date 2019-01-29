@@ -721,7 +721,7 @@ class GposInvoiceAPIController extends AppBaseController
     public function printInvoice(Request $request)
     {
         $input = $request->all();
-        $id = $input['id'];
+        $id = isset($input['id']) ? $input['id'] : 0;
         /** @var GposInvoice $gposInvoice */
         $gposInvoice = $this->gposInvoiceRepository->getAudit($id);
 
@@ -740,9 +740,10 @@ class GposInvoiceAPIController extends AppBaseController
         $fileName = 'invoice_' . $id . '_' . $time . '.pdf';
         $viewName  = 'print.pos_invoice.default';
         $html = view($viewName, $array);
+        //return $html;
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
     }
 }
