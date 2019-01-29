@@ -1,0 +1,292 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : QuotationMasterVersionAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  QuotationMasterVersion
+ * -- Author : Mohamed Nazir
+ * -- Create date : 29 - January 2019
+ * -- Description : This file contains the all CRUD for Sales Quotation Master Version
+ * -- REVISION HISTORY
+ * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
+ */
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateQuotationMasterVersionAPIRequest;
+use App\Http\Requests\API\UpdateQuotationMasterVersionAPIRequest;
+use App\Models\QuotationMasterVersion;
+use App\Repositories\QuotationMasterVersionRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class QuotationMasterVersionController
+ * @package App\Http\Controllers\API
+ */
+
+class QuotationMasterVersionAPIController extends AppBaseController
+{
+    /** @var  QuotationMasterVersionRepository */
+    private $quotationMasterVersionRepository;
+
+    public function __construct(QuotationMasterVersionRepository $quotationMasterVersionRepo)
+    {
+        $this->quotationMasterVersionRepository = $quotationMasterVersionRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/quotationMasterVersions",
+     *      summary="Get a listing of the QuotationMasterVersions.",
+     *      tags={"QuotationMasterVersion"},
+     *      description="Get all QuotationMasterVersions",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/QuotationMasterVersion")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->quotationMasterVersionRepository->pushCriteria(new RequestCriteria($request));
+        $this->quotationMasterVersionRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $quotationMasterVersions = $this->quotationMasterVersionRepository->all();
+
+        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Versions retrieved successfully');
+    }
+
+    /**
+     * @param CreateQuotationMasterVersionAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/quotationMasterVersions",
+     *      summary="Store a newly created QuotationMasterVersion in storage",
+     *      tags={"QuotationMasterVersion"},
+     *      description="Store QuotationMasterVersion",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="QuotationMasterVersion that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/QuotationMasterVersion")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/QuotationMasterVersion"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateQuotationMasterVersionAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterVersions = $this->quotationMasterVersionRepository->create($input);
+
+        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Version saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/quotationMasterVersions/{id}",
+     *      summary="Display the specified QuotationMasterVersion",
+     *      tags={"QuotationMasterVersion"},
+     *      description="Get QuotationMasterVersion",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of QuotationMasterVersion",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/QuotationMasterVersion"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var QuotationMasterVersion $quotationMasterVersion */
+        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+
+        if (empty($quotationMasterVersion)) {
+            return $this->sendError('Quotation Master Version not found');
+        }
+
+        return $this->sendResponse($quotationMasterVersion->toArray(), 'Quotation Master Version retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateQuotationMasterVersionAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/quotationMasterVersions/{id}",
+     *      summary="Update the specified QuotationMasterVersion in storage",
+     *      tags={"QuotationMasterVersion"},
+     *      description="Update QuotationMasterVersion",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of QuotationMasterVersion",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="QuotationMasterVersion that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/QuotationMasterVersion")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/QuotationMasterVersion"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateQuotationMasterVersionAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var QuotationMasterVersion $quotationMasterVersion */
+        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+
+        if (empty($quotationMasterVersion)) {
+            return $this->sendError('Quotation Master Version not found');
+        }
+
+        $quotationMasterVersion = $this->quotationMasterVersionRepository->update($input, $id);
+
+        return $this->sendResponse($quotationMasterVersion->toArray(), 'QuotationMasterVersion updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/quotationMasterVersions/{id}",
+     *      summary="Remove the specified QuotationMasterVersion from storage",
+     *      tags={"QuotationMasterVersion"},
+     *      description="Delete QuotationMasterVersion",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of QuotationMasterVersion",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var QuotationMasterVersion $quotationMasterVersion */
+        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+
+        if (empty($quotationMasterVersion)) {
+            return $this->sendError('Quotation Master Version not found');
+        }
+
+        $quotationMasterVersion->delete();
+
+        return $this->sendResponse($id, 'Quotation Master Version deleted successfully');
+    }
+}

@@ -354,7 +354,13 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateColLink = ReportTemplateColumnLink::ofTemplate($id)->orderBy('sortOrder', 'asc')->get();
         $reportTemplateMaster = ReportTemplate::find($id);
 
-        $assignedGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->count();
+        $assignedGL = 0;
+        if($reportTemplateMaster->reportID == 3){
+            $assignedGL = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->count();
+        }else{
+            $assignedGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->count();
+        }
+
         $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->count();
 
         $remainingGLCount = $assignedGL - $linkedGL;

@@ -6,8 +6,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="QuotationMaster",
+ *      definition="QuotationMasterVersion",
  *      required={""},
+ *      @SWG\Property(
+ *          property="quotationVerstionMasterID",
+ *          description="quotationVerstionMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="quotationMasterID",
  *          description="quotationMasterID",
@@ -23,6 +29,17 @@ use Eloquent as Model;
  *          property="documentID",
  *          description="documentID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="quotationCode",
+ *          description="quotationCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNumber",
+ *          description="serialNumber",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="documentDate",
@@ -308,6 +325,18 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="RollLevForApp_curr",
  *          description="RollLevForApp_curr",
  *          type="integer",
@@ -336,6 +365,12 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="createdUserGroup",
  *          description="createdUserGroup",
  *          type="integer",
@@ -357,6 +392,12 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="modifiedPCID",
  *          description="modifiedPCID",
  *          type="string"
@@ -373,17 +414,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class QuotationMaster extends Model
+class QuotationMasterVersion extends Model
 {
 
-    public $table = 'erp_quotationmaster';
-    
+    public $table = 'erp_quotationmasterversion';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'quotationMasterID';
+    protected $primaryKey = 'quotationVerstionMasterID';
 
     public $fillable = [
+        'quotationMasterID',
         'documentSystemID',
         'documentID',
         'quotationCode',
@@ -470,6 +512,7 @@ class QuotationMaster extends Model
      * @var array
      */
     protected $casts = [
+        'quotationVerstionMasterID' => 'integer',
         'quotationMasterID' => 'integer',
         'documentSystemID' => 'string',
         'documentID' => 'string',
@@ -552,41 +595,6 @@ class QuotationMaster extends Model
     public static $rules = [
         
     ];
-
-    public function company()
-    {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function created_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
-    }
-
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-
-    public function modified_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
-    }
-
-    public function detail()
-    {
-        return $this->hasMany('App\Models\QuotationDetails', 'quotationMasterID', 'quotationMasterID');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'quotationMasterID');
-    }
-
-    public function sales_person()
-    {
-        return $this->belongsTo('App\Models\SalesPersonMaster', 'salesPersonID', 'salesPersonID');
-    }
 
     
 }

@@ -612,7 +612,10 @@ class GposInvoice extends Model
         'isCancelled',
         'reCalledYN',
         'modifiedUserSystemID',
-        'createdUserSystemID'
+        'createdUserSystemID',
+        'isVoid',
+        'voidBy',
+        'voidDatetime'
     ];
 
     /**
@@ -712,7 +715,10 @@ class GposInvoice extends Model
         'isCancelled' => 'integer',
         'reCalledYN' => 'integer',
         'modifiedUserSystemID' => 'integer',
-        'createdUserSystemID' => 'integer'
+        'createdUserSystemID' => 'integer',
+        'isVoid' => 'integer',
+        'voidBy' => 'integer',
+        'voidDatetime' => 'string'
     ];
 
     /**

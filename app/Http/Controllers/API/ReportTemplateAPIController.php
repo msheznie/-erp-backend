@@ -20,6 +20,7 @@ use App\Models\Company;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
+use App\Models\ReportTemplateNumbers;
 use App\Repositories\ReportTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -373,7 +374,8 @@ class ReportTemplateAPIController extends AppBaseController
     {
         $companySystemID = $request['companySystemID'];
         $accountType = AccountsType::all();
-        $output = ['accountType' => $accountType];
+        $numbers = ReportTemplateNumbers::all();
+        $output = ['accountType' => $accountType, 'numbers' => $numbers];
         return $this->sendResponse($output, 'Report Template retrieved successfully');
     }
 

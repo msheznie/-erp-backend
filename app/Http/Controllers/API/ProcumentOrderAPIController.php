@@ -2386,7 +2386,8 @@ GROUP BY
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
 	InvoiceDet.LinelocalTotal,
-	InvoiceDet.LineRptTotal
+	InvoiceDet.LineRptTotal,
+	countrymaster.countryName
 FROM
 	erp_purchaseordermaster
 INNER JOIN (
@@ -2458,6 +2459,8 @@ LEFT JOIN (
 		erp_bookinvsuppdet.purchaseOrderID,
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchaseordermaster.supplierID
+    LEFT JOIN countrymaster ON suppliermaster.supplierCountryID = countrymaster.countryID
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
