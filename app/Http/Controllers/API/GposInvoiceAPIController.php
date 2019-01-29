@@ -8,7 +8,7 @@
  * -- Create date : 22 - January 2019
  * -- Description : This file contains the all CRUD for  General pos invoice
  * -- REVISION HISTORY
- * -- Date: 24 - January 2019 By: Fayas Description: Added new function getPosHoldInvoices()
+ * -- Date: 24 - January 2019 By: Fayas Description: Added new function getInvoicesByShift()
  * -- Date: 28 - January 2019 By: Fayas Description: Added new function getInvoiceDetails(),printInvoice()
  */
 namespace App\Http\Controllers\API;
@@ -166,6 +166,26 @@ class GposInvoiceAPIController extends AppBaseController
         }
 
         $invoiceId = isset($invoiceMaster['invoiceID']) ? $invoiceMaster['invoiceID'] : 0;
+
+        if($invoiceId > 0){
+            $posInvoices = $this->gposInvoiceRepository->find($invoiceId);
+
+            if(empty($posInvoices)){
+                return $this->sendError('Invoice not found', 500);
+            }
+
+            if($posInvoices->isCancelled == 1){
+                return $this->sendError('Invoice already canceled', 500);
+            }
+
+            if($posInvoices->isVoid == 1){
+                return $this->sendError('Invoice voided', 500);
+            }
+
+            if($posInvoices->isHold == 0){
+                return $this->sendError('Cannot modify this invoice', 500);
+            }
+        }
 
         DB::beginTransaction();
         try {
@@ -578,12 +598,22 @@ class GposInvoiceAPIController extends AppBaseController
         $gposInvoice = $this->gposInvoiceRepository->findWithoutFail($id);
 
         if (empty($gposInvoice)) {
-            return $this->sendError('Gpos Invoice not found');
+            return $this->sendError('Invoice not found');
         }
 
-        $gposInvoice = $this->gposInvoiceRepository->update($input, $id);
+        if(isset($input['isVoid']) && $input['isVoid'] == 1){
 
-        return $this->sendResponse($gposInvoice->toArray(), 'GposInvoice updated successfully');
+            if($gposInvoice->isVoid == 1){
+                return $this->sendError('Invoice already voided.');
+            }
+            $employee = \Helper::getEmployeeInfo();
+            $input['voidBy'] = $employee->employeeSystemID;
+            $input['voidDatetime'] = now();
+        }
+
+        $gposInvoice = $this->gposInvoiceRepository->update(array_only($input, ['isVoid','voidBy','voidDatetime']), $id);
+
+        return $this->sendResponse($gposInvoice->toArray(), 'Invoice updated successfully');
     }
 
     /**
@@ -638,10 +668,10 @@ class GposInvoiceAPIController extends AppBaseController
         return $this->sendResponse($id, 'Gpos Invoice deleted successfully');
     }
 
-    public function getPosHoldInvoices(Request $request)
+    public function getInvoicesByShift(Request $request)
     {
         $input = $request->all();
-        $input['warehouseSystemCode'] = isset($input['warehouseID']) ? $input['warehouseID'] : 0;
+        $input['shiftID'] = isset($input['shiftID']) ? $input['shiftID'] : 0;
         $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -649,19 +679,35 @@ class GposInvoiceAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $input['warehouseSystemCode'] = 0;
+        $shift = ShiftDetails::where('companyID',$companyId)->where('shiftID',$input['shiftID'])
+                             ->first();
+
+        if(!empty($shift)){
+            $input['warehouseSystemCode'] = $shift->wareHouseID;
+        }
+
+
         $invoices = GposInvoice::where('companySystemID', $companyId)
-            ->where('wareHouseAutoID', $input['warehouseSystemCode'])
-            ->where('isHold', 1)
-            ->where('isCancelled', 0)
+            ->where('shiftID', $input['shiftID'])
+            ->when(request('isVoid') == 1 || request('isVoid') == 0, function ($q) use ($input) {
+                $q->where('isVoid', $input['isVoid']);
+            })
+            ->when(request('isHold') == 1 || request('isHold') == 0, function ($q) use ($input) {
+                $q->where('isHold', $input['isHold']);
+            })
+            ->when(request('isCancelled') == 1 || request('isCancelled') == 0, function ($q) use ($input) {
+                $q->where('isCancelled', $input['isCancelled']);
+            })
             ->with(['details' => function ($q) use ($input) {
                 $q->with(['unit', 'item_ledger' => function ($q) use ($input) {
                     $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
                         ->groupBy('itemSystemCode')
                         ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
                 }]);
-            }]);
+            },'transaction_currency','created_by']);
 
-        $search = $request->input('search . value');
+        $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $invoices = $invoices->where(function ($query) use ($search) {
