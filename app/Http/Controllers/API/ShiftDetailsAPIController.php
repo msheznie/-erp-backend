@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateShiftDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\Counter;
 use App\Models\CurrencyDenomination;
+use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
 use App\Models\ShiftDetails;
@@ -338,6 +339,13 @@ class ShiftDetailsAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+
+        $checkHoldInvoices = GposInvoice::where('shiftID',$id)->where('isHold',1)->count();
+
+        if($checkHoldInvoices > 0){
+            return $this->sendError('Please close all the pending hold bills. '.$checkHoldInvoices.' bills found!');
         }
 
         $input['endingBalance_local'] =  $input['endingBalance_transaction'];

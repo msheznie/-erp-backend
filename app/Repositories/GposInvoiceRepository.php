@@ -118,4 +118,11 @@ class GposInvoiceRepository extends BaseRepository
     {
         return GposInvoice::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['warehouse_by','created_by','company','transaction_currency','details' => function ($q) {
+            $q->with('unit');
+        }])->findWithoutFail($id);
+    }
 }
