@@ -1380,12 +1380,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
     Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
     Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
+    Route::post('salesQuotationReopen', 'QuotationMasterAPIController@salesQuotationReopen');
+    Route::post('salesQuotationVersionCreate', 'QuotationMasterAPIController@salesQuotationVersionCreate');
 
     Route::resource('gposInvoices', 'GposInvoiceAPIController');
     Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
-    Route::post('getPosHoldInvoices', 'GposInvoiceAPIController@getPosHoldInvoices');
+    Route::post('getInvoicesByShift', 'GposInvoiceAPIController@getInvoicesByShift');
     Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
     Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
+
+    Route::resource('quotationMasterVersions', 'QuotationMasterVersionAPIController');
+    Route::resource('quotationVersionDetails', 'QuotationVersionDetailsAPIController');
+
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
+
 });
 
 
@@ -1425,9 +1434,7 @@ Route::get('loginwithToken', 'UserAPIController@loginwithToken');
 Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
 
-
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
-
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
@@ -1453,9 +1460,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
-
-
-
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-
 

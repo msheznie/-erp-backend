@@ -149,13 +149,19 @@
         }
 
         .table-border {
-            border-top: 1px solid #333 !important;
-            border-bottom: 1px solid #333 !important;
+            /*border-top: 1px solid #333 !important;
+            border-bottom: 1px solid #333 !important;*/
+            border: none !important;
         }
 
         .table th, .table td {
             padding-top: 1px !important;
             padding-bottom: 1px !important;
+        }
+
+        .table, .table th, .table td, .table tr {
+            /*border: 1px solid black !important;*/
+            border: none !important;
         }
     </style>
 </head>
@@ -240,12 +246,12 @@
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr>
-                <th>#</th>
-                <th class="text-center">Description</th>
-                <th class="text-center">Quantity</th>
-                <th class="text-center">Price</th>
-                <th class="text-center">Discount</th>
-                <th class="text-center">Amount</th>
+                <th></th>
+                <th class="text-left">Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Discount</th>
+                <th class="text-right">Amount</th>
             </tr>
             </thead>
             <tbody>
@@ -259,6 +265,9 @@
                     <td class="text-right">{{number_format($item->netAmount,$entity->decimalPlaces)}}</td>
                 </tr>
             @endforeach
+            <tr>
+                <td colspan="6"><hr></td>
+            </tr>
             <tr class="table-border">
                 <td colspan="2" rowspan="7" valign="top">
                     Total Items - {{count($entity->details)}} <br>
