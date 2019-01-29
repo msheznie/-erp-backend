@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for  General pos invoice
  * -- REVISION HISTORY
  * -- Date: 24 - January 2019 By: Fayas Description: Added new function getPosHoldInvoices()
+ * -- Date: 28 - January 2019 By: Fayas Description: Added new function getInvoiceDetails(),printInvoice()
  */
 namespace App\Http\Controllers\API;
 
@@ -305,15 +306,16 @@ class GposInvoiceAPIController extends AppBaseController
             } else {
                 $invoiceMasterData['modifiedPCID'] = gethostname();
                 $invoiceMasterData['modifiedUserID'] = $employee->empID;
+                $invoiceMasterData['modifiedUserSystemID'] = $employee->employeeSystemID;
                 $invoiceMasterData['modifiedUserName'] = $employee->empName;
             }
             if (count($invoiceDetails) == 0) {
                 return $this->sendError('There is no item to proceed . ', 500);
             }
 
-            if($invoiceId > 0){
-                $posInvoices = $this->gposInvoiceRepository->update($invoiceMasterData,$invoiceId);
-            }else{
+            if ($invoiceId > 0) {
+                $posInvoices = $this->gposInvoiceRepository->update($invoiceMasterData, $invoiceId);
+            } else {
                 $posInvoices = $this->gposInvoiceRepository->create($invoiceMasterData);
             }
 
@@ -321,7 +323,7 @@ class GposInvoiceAPIController extends AppBaseController
 
             if ($posInvoices) {
 
-                GposInvoiceDetail::where('invoiceID',$invoiceId)->delete();
+                GposInvoiceDetail::where('invoiceID', $invoiceId)->delete();
 
                 foreach ($invoiceDetails as $item) {
                     $temItem = array();
@@ -406,20 +408,26 @@ class GposInvoiceAPIController extends AppBaseController
                 }
                 $total = 0;
                 $cardTotal = 0;
-                GposInvoicePayments::where('invoiceID',$invoiceId)->delete();
+                $cashTotal = 0;
+
+                GposInvoicePayments::where('invoiceID', $invoiceId)->delete();
                 foreach ($invoicePayments as $payment) {
                     if ($payment['amount'] > 0) {
 
                         $paymentConfig = GposPaymentGlConfigDetail::where('ID', $payment['ID'])
-                                                                    ->where('companyID', $posInvoices->companySystemID)
-                                                                    ->with(['type'])
-                                                                    ->first();
+                            ->where('companyID', $posInvoices->companySystemID)
+                            ->with(['type'])
+                            ->first();
 
                         if (!empty($paymentConfig)) {
 
                             $total = $total + intval($payment['amount']);
                             if ($payment['paymentConfigMasterID'] != 1) {
                                 $cardTotal = $cardTotal + intval($payment['amount']);
+                            }
+
+                            if($payment['paymentConfigMasterID'] == 1){
+                                $cashTotal = intval($payment['amount']);
                             }
 
                             $tempPayment = array();
@@ -447,13 +455,14 @@ class GposInvoiceAPIController extends AppBaseController
                     }
                 }
 
-                if(!$posInvoices->isHold && !$posInvoices->isCancelled){
-                    if($cardTotal > $posInvoices->netTotal ){
+                  $posInvoices = $this->gposInvoiceRepository->update(['cashAmount' => $cashTotal,'cardAmount' => $cardTotal], $posInvoices->invoiceID);
+                if (!$posInvoices->isHold && !$posInvoices->isCancelled) {
+                    if ($cardTotal > $posInvoices->netTotal) {
                         return $this->sendError('You can not pay more than the net total using cards!', 500);
                     }
 
-                    if($posInvoices->paidAmount < $posInvoices->netTotal){
-                        return $this->sendError($posInvoices->paidAmount . ' - '. $posInvoices->netTotal. ' Under payment of ' . $posInvoices->balanceAmount . ' ' . $posInvoices->transactionCurrency . ' . Please enter the exact bill amount and submit again',500);
+                    if ($posInvoices->paidAmount < $posInvoices->netTotal) {
+                        return $this->sendError($posInvoices->paidAmount . ' - ' . $posInvoices->netTotal . ' Under payment of ' . $posInvoices->balanceAmount . ' ' . $posInvoices->transactionCurrency . ' . Please enter the exact bill amount and submit again', 500);
                     }
                 }
             }
@@ -641,12 +650,12 @@ class GposInvoiceAPIController extends AppBaseController
         }
 
         $invoices = GposInvoice::where('companySystemID', $companyId)
-            ->where('wareHouseAutoID',$input['warehouseSystemCode'])
+            ->where('wareHouseAutoID', $input['warehouseSystemCode'])
             ->where('isHold', 1)
             ->where('isCancelled', 0)
-            ->with(['details' => function($q) use($input){
-                $q->with(['unit','item_ledger' => function($q) use($input){
-                    $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+            ->with(['details' => function ($q) use ($input) {
+                $q->with(['unit', 'item_ledger' => function ($q) use ($input) {
+                    $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
                         ->groupBy('itemSystemCode')
                         ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
                 }]);
@@ -657,8 +666,8 @@ class GposInvoiceAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $invoices = $invoices->where(function ($query) use ($search) {
                 $query->where('invoiceCode', 'LIKE', "%{$search}%");
-                   // ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                   // ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+                // ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                // ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -676,15 +685,64 @@ class GposInvoiceAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getCurrentStock($row){
+    public function getCurrentStock($row)
+    {
 
-        foreach ($row['details'] as $item){
-            $item->current_stock = ErpItemLedger::where('itemSystemCode',$item['itemAutoID'])
-                ->where('companySystemID',$row['companySystemID'])
-                ->where('wareHouseSystemCode',$row['wareHouseAutoID'])
+        foreach ($row['details'] as $item) {
+            $item->current_stock = ErpItemLedger::where('itemSystemCode', $item['itemAutoID'])
+                ->where('companySystemID', $row['companySystemID'])
+                ->where('wareHouseSystemCode', $row['wareHouseAutoID'])
                 ->groupBy('itemSystemCode')
                 ->sum('inOutQty');
         }
         return $row->toArray();
+    }
+
+    public function getInvoiceDetails(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        /** @var GposInvoice $gposInvoice */
+        $gposInvoice = $this->gposInvoiceRepository->getAudit($id);
+
+        if (empty($gposInvoice)) {
+            return $this->sendError('Invoice not found');
+        }
+
+        if($gposInvoice->transaction_currency){
+            $gposInvoice->decimalPlaces = $gposInvoice->transaction_currency->DecimalPlaces;
+            $gposInvoice->currencyCode = $gposInvoice->transaction_currency->CurrencyCode;
+        }
+
+        return $this->sendResponse($gposInvoice->toArray(), 'Gpos Invoice retrieved successfully');
+
+    }
+
+    public function printInvoice(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        /** @var GposInvoice $gposInvoice */
+        $gposInvoice = $this->gposInvoiceRepository->getAudit($id);
+
+        if (empty($gposInvoice)) {
+            return $this->sendError('Invoice not found');
+        }
+
+        if($gposInvoice->transaction_currency){
+            $gposInvoice->decimalPlaces = $gposInvoice->transaction_currency->DecimalPlaces;
+            $gposInvoice->currencyCode = $gposInvoice->transaction_currency->CurrencyCode;
+        }
+
+
+        $array = array('entity' => $gposInvoice);
+        $time = strtotime("now");
+        $fileName = 'invoice_' . $id . '_' . $time . '.pdf';
+        $viewName  = 'print.pos_invoice.default';
+        $html = view($viewName, $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 }

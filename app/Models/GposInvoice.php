@@ -610,7 +610,9 @@ class GposInvoice extends Model
         'timestamp',
         'isHold',
         'isCancelled',
-        'reCalledYN'
+        'reCalledYN',
+        'modifiedUserSystemID',
+        'createdUserSystemID'
     ];
 
     /**
@@ -708,7 +710,9 @@ class GposInvoice extends Model
         'modifiedUserName' => 'string',
         'isHold' => 'integer',
         'isCancelled' => 'integer',
-        'reCalledYN' => 'integer'
+        'reCalledYN' => 'integer',
+        'modifiedUserSystemID' => 'integer',
+        'createdUserSystemID' => 'integer'
     ];
 
     /**
@@ -724,5 +728,28 @@ class GposInvoice extends Model
     {
         return $this->hasMany('App\Models\GposInvoiceDetail','invoiceID','invoiceID');
     }
-    
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseAutoID','wareHouseSystemCode');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function transaction_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'transactionCurrencyID','currencyID');
+    }
+
 }
