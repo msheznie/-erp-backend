@@ -64,8 +64,6 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 
-
-ini_set('max_execution_time', 300);
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
