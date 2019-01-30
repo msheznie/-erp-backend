@@ -19,6 +19,7 @@
  * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingDetailAdvanceQRY()
  * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingSummaryAdvanceQRY()
  * -- Date: 27-December 2018 By: Nazir Description: Added new functions named as getSupplierBalanceStatementReconcileQRY()
+ * -- Date: 30-January 2019 By: Nazir Description: Added new functions named as pdfExportReport()
  */
 
 namespace App\Http\Controllers\API;
@@ -37,6 +38,7 @@ use App\Models\Year;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -67,8 +69,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ->pluck('supplierID');*/
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
-                                               //->whereIN('supplierCodeSytem', $filterSuppliers)
-                                               ->groupBy('supplierCodeSytem')->get();
+                //->whereIN('supplierCodeSytem', $filterSuppliers)
+                ->groupBy('supplierCodeSytem')->get();
 
         } else {
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
@@ -125,7 +127,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if (isset($request->reportTypeID)) {
                     $reportTypeID = $request->reportTypeID;
                 }
-                if($reportTypeID == 'SS'){
+                if ($reportTypeID == 'SS') {
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
@@ -137,7 +139,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($validator->fails()) {//echo 'in';exit;
                         return $this->sendError($validator->messages(), 422);
                     }
-                }else if($reportTypeID == 'SBSR'){
+                } else if ($reportTypeID == 'SBSR') {
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
@@ -250,7 +252,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
 
@@ -275,11 +277,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
                 break;
             case 'APSS': //Supplier Statement Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $reportTypeID = $request->reportTypeID;
 
-                if($reportTypeID == 'SS'){
+                if ($reportTypeID == 'SS') {
                     $output = $this->getSupplierStatementQRY($request);
 
                     $outputArr = array();
@@ -296,7 +298,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
-                }else if($reportTypeID == 'SBSR'){
+                } else if ($reportTypeID == 'SBSR') {
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     $outputArr = array();
 
@@ -306,11 +308,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
 
-          /*          if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
-                        }
-                    }*/
+                    /*          if ($output) {
+                                  foreach ($output as $val) {
+                                      $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                                  }
+                              }*/
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }
 
@@ -386,7 +388,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SAD') { //Supplier aging detail
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailQRY($request);
 
@@ -422,7 +424,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryQRY($request);
 
@@ -459,7 +461,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SADA') { //Supplier aging detail advance
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
 
@@ -492,7 +494,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'lineGrandTotal' => $lineGrandTotal);
                 } else if ($reportTypeID == 'SASA') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
 
@@ -527,7 +529,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSBS': //Supplier Balance Summary Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierBalanceSummeryQRY($request);
 
@@ -572,16 +574,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APUGRV': //Unbilled GRV
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $outputArr = array();
                 $grandTotalArr = array('documentLocalAmount' => 0,
-                                       'matchedLocalAmount' => 0,
-                                       'balanceLocalAmount' => 0,
-                                       'documentRptAmount' => 0,
-                                       'matchedRptAmount' => 0,
-                                       'balanceRptAmount' => 0,
-                                      );
+                    'matchedLocalAmount' => 0,
+                    'balanceLocalAmount' => 0,
+                    'documentRptAmount' => 0,
+                    'matchedRptAmount' => 0,
+                    'balanceRptAmount' => 0,
+                );
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
@@ -597,36 +599,36 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
 
                     $output = $this->getUnbilledDetailQRY($request);
-                    if($reportTypeID == 'UGRVD') {
+                    if ($reportTypeID == 'UGRVD') {
                         if ($output) {
                             foreach ($output as $val) {
                                 $outputArr[$val->supplierName][] = $val;
                             }
                         }
-                    }else{
+                    } else {
                         $outputArr = $output;
                     }
 
-                }else if($reportTypeID == 'UGRVAD'){
+                } else if ($reportTypeID == 'UGRVAD') {
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
-                    if($reportTypeID == 'UGRVAD') {
+                    if ($reportTypeID == 'UGRVAD') {
                         if ($output) {
                             foreach ($output as $val) {
                                 $outputArr[$val->supplierName][] = $val;
                             }
                         }
                     }
-                }else if($reportTypeID == 'UGRVAS'){
+                } else if ($reportTypeID == 'UGRVAS') {
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $outputArr = $output;
                 }
 
                 $grandTotalArr['documentLocalAmount'] = array_sum(collect($output)->pluck('documentLocalAmount')->toArray());
-                $grandTotalArr['matchedLocalAmount']  = array_sum(collect($output)->pluck('matchedLocalAmount')->toArray());
-                $grandTotalArr['balanceLocalAmount']  = array_sum(collect($output)->pluck('balanceLocalAmount')->toArray());
-                $grandTotalArr['documentRptAmount']   = array_sum(collect($output)->pluck('documentRptAmount')->toArray());
-                $grandTotalArr['matchedRptAmount']    = array_sum(collect($output)->pluck('matchedRptAmount')->toArray());
-                $grandTotalArr['balanceRptAmount']    = array_sum(collect($output)->pluck('balanceRptAmount')->toArray());
+                $grandTotalArr['matchedLocalAmount'] = array_sum(collect($output)->pluck('matchedLocalAmount')->toArray());
+                $grandTotalArr['balanceLocalAmount'] = array_sum(collect($output)->pluck('balanceLocalAmount')->toArray());
+                $grandTotalArr['documentRptAmount'] = array_sum(collect($output)->pluck('documentRptAmount')->toArray());
+                $grandTotalArr['matchedRptAmount'] = array_sum(collect($output)->pluck('matchedRptAmount')->toArray());
+                $grandTotalArr['balanceRptAmount'] = array_sum(collect($output)->pluck('balanceRptAmount')->toArray());
 
                 $grandTotalArr['case1'] = array_sum(collect($output)->pluck('case1')->toArray());
                 $grandTotalArr['case2'] = array_sum(collect($output)->pluck('case2')->toArray());
@@ -848,8 +850,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'APSS':
                 $type = $request->type;
                 $reportTypeID = $request->reportTypeID;
-                if($reportTypeID == 'SS'){
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                if ($reportTypeID == 'SS') {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierStatementQRY($request);
                     if ($output) {
                         $x = 0;
@@ -883,7 +885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $lastrow = $excel->getActiveSheet()->getHighestRow();
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
-                }else if($reportTypeID == 'SBSR'){
+                } else if ($reportTypeID == 'SBSR') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     if ($output) {
@@ -926,7 +928,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSL':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $output = $this->getSupplierLedgerQRY($request);
                 if ($output) {
                     $x = 0;
@@ -993,7 +995,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 if ($reportTypeID == 'SAD') { //supplier aging detail
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1021,7 +1023,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SAS') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1046,7 +1048,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1073,7 +1075,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SASA') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1155,7 +1157,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $name = "";
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
 
                 if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                     $output = $this->getUnbilledDetailQRY($request);
@@ -1169,19 +1171,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Doc Number'] = $val->documentCode;
                             $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
 
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
 
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
+                } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                     $output = $this->getUnbilledDetailQRY($request);
                     $name = "summary";
                     if ($output) {
@@ -1191,19 +1193,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
 
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVAD'){ //Unbilled GRV aging detail
+                } else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
 
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
                     $name = "aging_detail";
@@ -1216,34 +1218,34 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
                             $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-                            if($request->currencyID == 2){
+                            if ($request->currencyID == 2) {
                                 $decimal = 3;
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
-                            }else {
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                            } else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             }
 
-                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
-                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
-                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
-                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
-                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
 
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVAS'){//Unbilled GRV aging summary
+                } else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
 
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $name = "aging_summary";
@@ -1255,27 +1257,27 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            if($request->currencyID == 2){
+                            if ($request->currencyID == 2) {
                                 $decimal = 3;
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
-                            }else {
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                            } else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             }
 
-                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
-                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
-                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
-                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
-                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
                             $x++;
                         }
                     } else {
@@ -3858,8 +3860,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -3868,16 +3870,16 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "final.*";
 
-        if($reportTypeID == 'UGRVS'){
+        if ($reportTypeID == 'UGRVS') {
             $supplierGroup = "GROUP BY final.supplierID,final.companySystemID";
             $finalSelect = "final.companySystemID,
                 final.companyID,
@@ -3896,7 +3898,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM(final.balanceRptAmount) as balanceRptAmount";
         }
 
-        $qry = 'SELECT '.$finalSelect.',
+        $qry = 'SELECT ' . $finalSelect . ',
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
@@ -4044,7 +4046,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup;
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
@@ -4063,9 +4065,9 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
-        $currencyID              = $request->currencyID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
+        $currencyID = $request->currencyID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -4074,39 +4076,39 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "final.*";
         $caseColumn = 'balanceRptAmount';
 
-        if($currencyID == 2){
+        if ($currencyID == 2) {
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal." . $caseColumn . ",0) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                    $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal." . $caseColumn . ",0) as `case" . $c . "`,";
                 }
                 $c++;
             }
         }
 
-        $agingField .= "if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0) as `current`";
+        $agingField .= "if(agingFinal.ageDays <= 0,agingFinal." . $caseColumn . ",0) as `current`";
 
-        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT '.$finalSelect.',
+        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT ' . $finalSelect . ',
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
@@ -4125,7 +4127,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
                 round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
-                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+                DATEDIFF("' . $asOfDate . '",DATE(docDate.documentDate)) as ageDays
             FROM
                 (
             SELECT
@@ -4255,7 +4257,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup.') as agingFinal';
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup . ') as agingFinal';
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
@@ -4275,9 +4277,9 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
-        $currencyID              = $request->currencyID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
+        $currencyID = $request->currencyID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -4286,16 +4288,16 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "agingFinal.*";
 
-        if($reportTypeID == 'UGRVAS'){
+        if ($reportTypeID == 'UGRVAS') {
             $supplierGroup = "GROUP BY supplierID,companySystemID";
             $finalSelect = "agingFinal.companySystemID,
                 agingFinal.companyID,
@@ -4316,29 +4318,29 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $caseColumn = 'balanceRptAmount';
 
-        if($currencyID == 2){
+        if ($currencyID == 2) {
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal." . $caseColumn . ",0)) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal." . $caseColumn . ",0)) as `case" . $c . "`,";
                 }
                 $c++;
             }
         }
 
-        $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0)) as `current`";
+        $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal." . $caseColumn . ",0)) as `current`";
 
-        $qry = 'SELECT '.$finalSelect.',' . $agingField . ' FROM (SELECT final.*,
+        $qry = 'SELECT ' . $finalSelect . ',' . $agingField . ' FROM (SELECT final.*,
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
@@ -4357,7 +4359,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
                 round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
-                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+                DATEDIFF("' . $asOfDate . '",DATE(docDate.documentDate)) as ageDays
             FROM
                 (
             SELECT
@@ -4487,7 +4489,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter.') as agingFinal '.$supplierGroup;
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ') as agingFinal ' . $supplierGroup;
 
         //DB::enableQueryLog();
         $output = \DB::select($qry);
@@ -4808,5 +4810,52 @@ ORDER BY
         return $output = \DB::select($qry);
         //dd(DB::getQueryLog());
         //return ['data' => $output];
+    }
+
+    public function pdfExportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'APSS':
+                if ($request->reportTypeID == 'SS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+
+                    $checkIsGroup = Company::find($request->companySystemID);
+
+                    $companyLogo = $checkIsGroup->companyLogo;
+
+                    $output = $this->getSupplierStatementQRY($request);
+
+                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
+                    $grandTotal = array_sum($grandTotal);
+
+                    $outputArr = array();
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal);
+
+                    $html = view('print.supplier_statement', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
     }
 }

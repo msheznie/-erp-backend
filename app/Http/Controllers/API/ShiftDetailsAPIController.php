@@ -454,7 +454,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                        ->first();
 
         if(empty($assignedOutlet)){
-            return $this->sendError('You are not assigned for an outlet. Please assign and try again.');
+            return $this->sendError('You are not assigned to an outlet. Please assign and try again.');
         }
 
         $counters = Counter::where('companySystemID',$input['companyId'])
