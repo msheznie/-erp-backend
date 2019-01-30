@@ -171,5 +171,10 @@ class ReportTemplateLinks extends Model
     {
         return $this->belongsTo('App\Models\ReportTemplateDetails','subCategory','detID');
     }
+
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','glAutoID','chartOfAccountSystemID');
+    }
     
 }
