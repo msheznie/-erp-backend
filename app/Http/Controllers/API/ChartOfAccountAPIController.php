@@ -559,7 +559,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $input = $request->all();
         //$companyID = $input['companyID'];
 
-        $items = ChartOfAccount::where('isActive', 1);
+        $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1);
 
         if (isset($input['controllAccountYN'])) {
             $items = $items->where('controllAccountYN', $input['controllAccountYN']);

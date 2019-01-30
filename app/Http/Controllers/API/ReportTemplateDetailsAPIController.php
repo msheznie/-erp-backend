@@ -355,13 +355,19 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateMaster = ReportTemplate::find($id);
 
         $assignedGL = 0;
+        $linkedGL = 0;
         if($reportTemplateMaster->reportID == 3){
             $assignedGL = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->count();
         }else{
             $assignedGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->count();
         }
-
-        $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->count();
+        if($reportTemplateMaster->reportID == 1) {
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->whereHas('chartofaccount', function ($q) {
+                $q->where('catogaryBLorPL','<>', 'PL');
+            })->count();
+        }else{
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->count();
+        }
 
         $remainingGLCount = $assignedGL - $linkedGL;
 
@@ -375,9 +381,9 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     {
         $reportTemplateDetails = '';
         if ($request->isHeader == 1) {
-            $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->where('itemType', '=', 2)->orderBy('sortOrder')->get();
+            $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
         } else {
-            $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('detID', '<', $request->detID)->where('itemType', '=', 2)->orderBy('sortOrder')->get();
+            $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('detID', '<', $request->detID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
         }
 
         return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');

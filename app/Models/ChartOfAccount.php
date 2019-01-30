@@ -167,5 +167,10 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\Employee','approvedBySystemID','employeeSystemID');
     }
 
+    public function templatelink()
+    {
+        return $this->belongsTo('App\Models\ReportTemplateLinks','chartOfAccountSystemID','glAutoID');
+    }
+
 
 }

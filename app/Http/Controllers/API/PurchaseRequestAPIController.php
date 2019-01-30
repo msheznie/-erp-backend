@@ -887,7 +887,8 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
                 'erp_purchaserequest.manuallyClosed',
-                'erp_purchaserequest.prClosedYN'
+                'erp_purchaserequest.prClosedYN',
+                'erp_purchaserequest.budgetYear'
             ]);
 
         $search = $request->input('search.value');
