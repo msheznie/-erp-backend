@@ -386,26 +386,28 @@ class FinancialReportAPIController extends AppBaseController
 
                 if ($request->accountType == 1) {
                     $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType',4)->whereNotNull('masterID')->first()->detID;
-                    $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request,$detID) {
-                        $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID);
-                    })->get();
-                    if(count($notExistPLAccount) > 0){
-                        $company = Company::find($request->selectedCompanyID);
-                        if ($company) {
-                            $data['companyID'] = $company->CompanyID;
-                        }
-                        foreach ($notExistPLAccount as $val){
-                            $data['templateMasterID'] = $request->templateType;
-                            $data['templateDetailID'] = $detID;
-                            $data['sortOrder'] = 1;
-                            $data['glAutoID'] = $val['chartOfAccountSystemID'];
-                            $data['glCode'] = $val['AccountCode'];
-                            $data['glDescription'] = $val['AccountDescription'];
-                            $data['companySystemID'] = $val['selectedCompanyID'];
-                            $data['createdPCID'] = gethostname();
-                            $data['createdUserID'] = \Helper::getEmployeeID();
-                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                            ReportTemplateLinks::create($data);
+                    if(!empty($detID) && !is_null($detID)) {
+                        $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request, $detID) {
+                            $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID);
+                        })->get();
+                        if (count($notExistPLAccount) > 0) {
+                            $company = Company::find($request->selectedCompanyID);
+                            if ($company) {
+                                $data['companyID'] = $company->CompanyID;
+                            }
+                            foreach ($notExistPLAccount as $val) {
+                                $data['templateMasterID'] = $request->templateType;
+                                $data['templateDetailID'] = $detID;
+                                $data['sortOrder'] = 1;
+                                $data['glAutoID'] = $val['chartOfAccountSystemID'];
+                                $data['glCode'] = $val['AccountCode'];
+                                $data['glDescription'] = $val['AccountDescription'];
+                                $data['companySystemID'] = $val['selectedCompanyID'];
+                                $data['createdPCID'] = gethostname();
+                                $data['createdUserID'] = \Helper::getEmployeeID();
+                                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                ReportTemplateLinks::create($data);
+                            }
                         }
                     }
                 }
@@ -540,7 +542,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
-                                    $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                                    $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',$currencyColumn,0)),0)";
                             } else if ($request->accountType == 3) {
