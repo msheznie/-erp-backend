@@ -31,6 +31,7 @@ use App\Models\ReportTemplate;
 use App\Models\ReportTemplateCashBank;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
+use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateNumbers;
@@ -382,6 +383,35 @@ class FinancialReportAPIController extends AppBaseController
                 break;
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
                 $request = (object)$request->all();
+
+                if ($request->accountType == 1) {
+                    $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType',4)->whereNotNull('masterID')->first()->detID;
+                    if(!empty($detID) && !is_null($detID)) {
+                        $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request, $detID) {
+                            $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID);
+                        })->get();
+                        if (count($notExistPLAccount) > 0) {
+                            $company = Company::find($request->selectedCompanyID);
+                            if ($company) {
+                                $data['companyID'] = $company->CompanyID;
+                            }
+                            foreach ($notExistPLAccount as $val) {
+                                $data['templateMasterID'] = $request->templateType;
+                                $data['templateDetailID'] = $detID;
+                                $data['sortOrder'] = 1;
+                                $data['glAutoID'] = $val['chartOfAccountSystemID'];
+                                $data['glCode'] = $val['AccountCode'];
+                                $data['glDescription'] = $val['AccountDescription'];
+                                $data['companySystemID'] = $val['selectedCompanyID'];
+                                $data['createdPCID'] = gethostname();
+                                $data['createdUserID'] = \Helper::getEmployeeID();
+                                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                ReportTemplateLinks::create($data);
+                            }
+                        }
+                    }
+                }
+
                 $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
 
                 $company = Company::find($request->selectedCompanyID);
@@ -496,7 +526,7 @@ class FinancialReportAPIController extends AppBaseController
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',$currencyColumn,0)),0)";
                             } else if ($request->accountType == 3) {
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
@@ -512,9 +542,9 @@ class FinancialReportAPIController extends AppBaseController
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
-                                    $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                                    $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',$currencyColumn,0)),0)";
                             } else if ($request->accountType == 3) {
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
@@ -548,7 +578,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
 
-                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period));
+                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
 
                 if (count($linkedColumn) > 0) {
                     foreach ($linkedColumn as $val) {
@@ -565,6 +595,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                 }
+
                 $columnKeys = collect($linkedcolumnArray)->keys()->all();
 
                 if (count($linkedcolumnArray)) {
@@ -2043,9 +2074,11 @@ AND MASTER .canceledYN = 0';
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
+        $fourthLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/'.$divisionValue.') * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') * -1 AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
+            $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
@@ -2073,30 +2106,38 @@ FROM
 	erp_companyreporttemplatedetails
 	LEFT JOIN (
 SELECT
-	' . $firstLinkedcolumnQry . '
-	erp_generalledger.chartOfAccountSystemID,
-	companyreporttemplatelinks.templateDetailID,
-	companyreporttemplatelinks.description
-FROM
-	erp_generalledger
-	INNER JOIN (
-SELECT
-	erp_companyreporttemplatelinks.glAutoID,
-	erp_companyreporttemplatelinks.templateDetailID,
-	erp_companyreporttemplatedetails.description
-FROM
-	erp_companyreporttemplatelinks
-	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-WHERE
-	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
-ORDER BY
-	erp_companyreporttemplatedetails.sortOrder 
-	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
-WHERE
-	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
-GROUP BY
-	companyreporttemplatelinks.templateDetailID 
+            ' . $fourthLinkedcolumnQry . '
+            a.templateDetailID,
+            a.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            chartOfAccountSystemID 
+            ) g
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID 
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
 WHERE
 	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
@@ -2108,32 +2149,39 @@ SELECT
 FROM
 	erp_companyreporttemplatelinks
 	LEFT JOIN (
-SELECT
-	' . $firstLinkedcolumnQry . '
-	erp_generalledger.chartOfAccountSystemID,
-	erp_generalledger.documentDate,
-	companyreporttemplatelinks.templateDetailID,
-	companyreporttemplatelinks.description
-FROM
-	erp_generalledger
-	INNER JOIN (
-SELECT
-	erp_companyreporttemplatelinks.glAutoID,
-	erp_companyreporttemplatelinks.templateDetailID,
-	erp_companyreporttemplatedetails.description
-FROM
-	erp_companyreporttemplatelinks
-	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-WHERE
-	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
-ORDER BY
-	erp_companyreporttemplatedetails.sortOrder 
-	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
-WHERE
-	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
-GROUP BY
-	companyreporttemplatelinks.templateDetailID 
+            SELECT
+            ' . $fourthLinkedcolumnQry . '
+            a.templateDetailID,
+            a.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            chartOfAccountSystemID 
+            ) g
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID 
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
@@ -2201,7 +2249,7 @@ GROUP BY
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/'.$divisionValue.') * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') * -1 AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
@@ -2221,13 +2269,12 @@ FROM
         erp_generalledger 
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-        '.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
+        ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
 	erp_companyreporttemplatelinks.sortOrder';
-
         $output = \DB::select($sql);
         return $output;
     }
@@ -2248,7 +2295,7 @@ ORDER BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period)
+    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2290,33 +2337,46 @@ ORDER BY
                 $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
             }
         }
+        $secondLinkedcolumnQry = '';
+        foreach ($columnKeys as $key => $val) {
+            $secondLinkedcolumnQry .= 'IFNULL(SUM(`' . $key . '`),0) AS `' . $key . '`,';
+        }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $sql = 'SELECT
-	' . $firstLinkedcolumnQry . '
-	companyreporttemplatelinks.templateDetailID,
-	companyreporttemplatelinks.description
-FROM
-	erp_generalledger
-	INNER JOIN (
-SELECT
-	erp_companyreporttemplatelinks.glAutoID,
-	erp_companyreporttemplatelinks.templateDetailID,
-	erp_companyreporttemplatedetails.description
-FROM
-	erp_companyreporttemplatelinks
-	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-WHERE
-	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
-ORDER BY
-	erp_companyreporttemplatedetails.sortOrder 
-	) AS companyreporttemplatelinks ON companyreporttemplatelinks.glAutoID = erp_generalledger.chartOfAccountSystemID 
-WHERE
-	erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-	'.$servicelineQry.' ' . $dateFilter . ' ' . $documentQry . '
-GROUP BY
-	companyreporttemplatelinks.templateDetailID';
+            ' . $secondLinkedcolumnQry . '
+            b.templateDetailID,
+            b.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            chartOfAccountSystemID 
+            ) a
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS b ON b.glAutoID = a.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID';
 
         $output = \DB::select($sql);
         return $output;
