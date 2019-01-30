@@ -8,7 +8,7 @@
  * -- Create date : 29 - January 2019
  * -- Description : This file contains the all CRUD for Sales Quotation Master Version
  * -- REVISION HISTORY
- * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
+ * -- Date: 30-January 2019 By: Nazir Description: Added new function getSalesQuotationRevisionHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -288,5 +288,32 @@ class QuotationMasterVersionAPIController extends AppBaseController
         $quotationMasterVersion->delete();
 
         return $this->sendResponse($id, 'Quotation Master Version deleted successfully');
+    }
+
+    public function getSalesQuotationRevisionHistory(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $quotationMasterID = $request['quotationMasterID'];
+
+
+        $quotationMasterVersion = QuotationMasterVersion::where('quotationMasterID', $quotationMasterID);
+
+        return \DataTables::eloquent($quotationMasterVersion)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('quotationVerstionMasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

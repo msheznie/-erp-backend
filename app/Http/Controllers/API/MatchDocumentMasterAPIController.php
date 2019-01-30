@@ -182,6 +182,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Pay Supplier Invoice Master not found');
                 }
 
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID',$paySupplierInvoiceMaster->documentSystemID)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
@@ -248,6 +258,17 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (empty($debitNoteMaster)) {
                     return $this->sendError('Debit Note not found');
                 }
+
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', 15)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected debit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 //when adding a new matching, checking whether debit note added in general ledger
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $debitNoteMaster->documentSystemID)->where('companySystemID', $debitNoteMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
@@ -350,6 +371,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Customer Receive Payment not found');
                 }
 
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['custReceivePaymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected receipt voucher is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 //get unallocation sum amount
                 $unAllocationAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmountTrans, Sum(erp_custreceivepaymentdet.receiveAmountLocal) AS SumDetailAmountLocal,Sum(erp_custreceivepaymentdet.receiveAmountRpt) AS SumDetailAmountRpt')
                     ->where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])
@@ -416,10 +447,22 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['approved'] = $customerReceivePaymentMaster->approved;
                 $input['approvedDate'] = $customerReceivePaymentMaster->approvedDate;
             } else if ($input['matchType'] == 2) {
+
                 $creditNoteMaster = CreditNote::find($input['custReceivePaymentAutoID']);
                 if (empty($creditNoteMaster)) {
                     return $this->sendError('Credit Note not found');
                 }
+
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['custReceivePaymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', $creditNoteMaster->documentSystemiD)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected credit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $creditNoteMaster->documentSystemiD)->where('companySystemID', $creditNoteMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
