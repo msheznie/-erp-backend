@@ -305,7 +305,7 @@ class BankAccountAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            if($bankAccount->isAccount == 0){
+            if($input['isAccountActive'] == 0){
                 return $this->sendError('Bank Account should be activated before confirm.',500);
             }
 

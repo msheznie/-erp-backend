@@ -6,8 +6,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="QuotationDetails",
+ *      definition="QuotationVersionDetails",
  *      required={""},
+ *      @SWG\Property(
+ *          property="quotationVersionDetailsID",
+ *          description="quotationVersionDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="quotationDetailsID",
  *          description="quotationDetailsID",
@@ -17,6 +23,12 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="quotationMasterID",
  *          description="quotationMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="versionNo",
+ *          description="versionNo",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -190,21 +202,29 @@ use Eloquent as Model;
  *          property="modifiedUserName",
  *          description="modifiedUserName",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class QuotationDetails extends Model
+class QuotationVersionDetails extends Model
 {
 
-    public $table = 'erp_quotationdetails';
-    
+    public $table = 'erp_quotationversiondetails';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'quotationDetailsID';
+    protected $primaryKey = 'quotationVersionDetailsID';
 
     public $fillable = [
+        'quotationDetailsID',
         'quotationMasterID',
+        'versionNo',
         'itemAutoID',
         'itemSystemCode',
         'itemDescription',
@@ -248,8 +268,10 @@ class QuotationDetails extends Model
      * @var array
      */
     protected $casts = [
+        'quotationVersionDetailsID' => 'integer',
         'quotationDetailsID' => 'integer',
         'quotationMasterID' => 'integer',
+        'versionNo' => 'integer',
         'itemAutoID' => 'integer',
         'itemSystemCode' => 'string',
         'itemDescription' => 'string',

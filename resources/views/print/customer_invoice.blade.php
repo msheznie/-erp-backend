@@ -1,14 +1,16 @@
 <style type="text/css">
     <!--
     @page {
-        margin-left: 3%;
-        margin-right: 3%;
-        margin-top: 4%;
-        color: black;
+        margin: 20px 30px 220px;
     }
 
-    .footer {
-        position: absolute;
+    #footer {
+        position: fixed;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        height: 0px;
+        font-size: 10px;
     }
 
     body {
@@ -110,29 +112,12 @@
         font-weight: 600;
     }
 
-    .footer {
-        bottom: 0;
-        height: 220px;
-    }
-
-    .footer {
-        width: 100%;
-        text-align: center;
-        position: fixed;
-        font-size: 10px;
-        padding-top: -20px;
-    }
-
     .pagenum:after {
         content: counter(page);
     }
 
-    pagecount:after {
-
-    }
-
     .content {
-        margin-bottom: 45px;
+        margin-bottom: 30px;
     }
 
     #watermark {
@@ -182,22 +167,18 @@
     }
 
 
-
-
 </style>
 
-<div class="footer">
+<div id="footer">
     @if($request->line_invoiceDetails)
         <div class="" style="">
             @else
                 <div class="" style="">
                     @endif
-
-
-                    <table >
+                    <table>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
-                            <td></td>
+                            <td width="100px"><span class="font-weight-bold">Bank Details </span></td>
+                            <td>-</td>
                         </tr>
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
@@ -269,7 +250,7 @@
 
                                             @if($det->employee->details)
                                                 @if($det->employee->details->designation)
-                                                {{$det->employee->details->designation->designation}}
+                                                    {{$det->employee->details->designation->designation}}
                                                 @endif
                                             @endif
                                             <br><br>
@@ -277,8 +258,6 @@
                                                 {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
                                             @endif
                                         @endif
-
-
 
 
                                     </td>
@@ -324,24 +303,22 @@
 
                         @if($request->linePageNo)
                             <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
-                                <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
+                                <span style="text-align: right;font-weight: bold;">Page <span
+                                            class="pagenum"></span> <span class="pagecount"></span></span><br>
 
                             </td>
                         @endif
-
                     </tr>
                     @if($request->linefooterAddress)
                         <tr>
-                            <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
+                            <td colspan="2"
+                                style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}} Tel
+                                : {{$request->company->CompanyTelephone}} , Fax : {{$request->company->CompanyFax}} ,
+                                E-mail : {{$request->company->CompanyEmail}}  </td>
                         </tr>
                     @endif
-
-
                 </table>
-
         </div>
-
-
 </div>
 {{--<div id="watermark">
          <span class="watermarkText">
@@ -363,9 +340,9 @@
             <tr>
                 <td width="30%">
                     @if($request->logo)
-                    <img src="logos/{{$request->companyLogo}}"
-                         width="180px" height="60px">
-                @endif
+                        <img src="logos/{{$request->companyLogo}}"
+                             width="180px" height="60px">
+                    @endif
                 </td>
 
 
@@ -373,8 +350,9 @@
                     <div class="text-center">
 
                         <h3 class="font-weight-bold">
-                           {{$request->CompanyName}}
+                            {{$request->CompanyName}}
                         </h3>
+
                         <h3 class="font-weight-bold">
                             Invoice
                         </h3>
@@ -404,51 +382,55 @@
                                 <td>{{$request->invoicedetails[0]->clientContractID}}</td>
                             </tr>
                         @endif
-                            @if($request->line_customerShortCode)
-                        <tr>
-                            <td>{{$request->customer->CutomerCode}}</td>
-                        </tr>
-                            @endif
+                        @if($request->line_customerShortCode)
+                            <tr>
+                                <td>{{$request->customer->CutomerCode}}</td>
+                            </tr>
+                        @endif
                         <tr>
                             <td>{{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td><div style="width: 122px">{{$request->customer->customerAddress1}}</div></td>
+                            <td>
+                                <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
+                            </td>
                         </tr>
-                            @if($request->lineSecondAddress)
+                        @if($request->lineSecondAddress)
                             <tr>
-                            <td><div >{{$request->customer->customerAddress2}}</div></td>
-                        </tr>
-                            @else
-                        <tr>
-                            <td>{{$request->customer->customerCity}}</td>
-                        </tr>
+                                <td>
+                                    <div>{{$request->customer->customerAddress2}}</div>
+                                </td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td>{{$request->customer->customerCity}}</td>
+                            </tr>
 
-                        <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>
-                       {{-- <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                        </tr>--}}
-                                @endif
+                            <tr>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                            </tr>
+                            {{-- <tr>
+                                 <td></td>
+                             </tr>
+                             <tr>
+                                 <td></td>
+                             </tr>
+                             <tr>
+                                 <td></td>
+                             </tr>
+                             <tr>
+                                 <td></td>
+                             </tr>--}}
+                        @endif
                     </table>
                 </fieldset>
 
@@ -478,18 +460,18 @@
                             </span></td>
                         </tr>
                         @if($request->line_performaCode)
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">Proforma Invoice No</span></td>
-                            <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
-                        </tr>
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">Proforma Invoice No</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
+                            </tr>
                         @endif
                         @if($request->line_seNo)
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">SE No</span></td>
-                            <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td><span>{{$request->wanNO}}</span></td>
-                        </tr>
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">SE No</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>{{$request->wanNO}}</span></td>
+                            </tr>
                         @endif
                         @if($request->line_dueDate)
                             <tr>
@@ -504,19 +486,21 @@
                         @endif
                         @if ($request->line_contractNo)
                             <tr>
-                                <td width="120px"><span class="font-weight-bold">Contract      @if($request->line_paymentTerms) Ref No @endif </span></td>
+                                <td width="120px"><span
+                                            class="font-weight-bold">Contract @if($request->line_paymentTerms) Ref
+                                        No @endif </span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
                             </tr>
                         @endif
 
                         @if ($request->line_poNumber)
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">PO Number</span></td>
-                            <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td>{{$request->PONumber}}</td>
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">PO Number</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td>{{$request->PONumber}}</td>
 
-                        </tr>
+                            </tr>
                         @endif
 
                         @if($request->line_paymentTerms)
@@ -526,7 +510,7 @@
                                 <td>{{$request->paymentInDaysForJob}} Days</td>
 
                             </tr>
-                            @endif
+                        @endif
 
                         @if ($request->line_unit)
                             <tr>
@@ -535,9 +519,10 @@
                                 {{--<td><span>{{$request->rigNo}}</span></td> --}}
                                 <td>
 
-                                    <span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span>{{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></td>
+                                    <span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span>
+                                    | <span>{{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></td>
                             </tr>
-@endif
+                        @endif
                         @if ($request->line_jobNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Job No</span></td>
@@ -547,42 +532,41 @@
 
                                     </span></td>
                             </tr>
-                        @endif
+                            @endif
 
-                       {{-- @if (!$request->template)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">Rig</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->rigNo}}</span></td>
+                            {{-- @if (!$request->template)
+                                 <tr>
+                                     <td width="120px"><span class="font-weight-bold">Rig</span></td>
+                                     <td width="10px"><span class="font-weight-bold">-</span></td>
+                                     <td><span>{{$request->rigNo}}</span></td>
+                                 </tr>
+                                 <tr>
+                                     <td width="150px"><span class="font-weight-bold">Well</span></td>
+                                     <td width="10px">
+                             <span class="font-weight-bold">
+                               -
+                              </span>
+                                     </td>
+
+                                     <td>
+
+
+                                         @if($request->invoicedetails[0]->performadetails )
+                                             <span>
+                                       @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field )
+                                                     {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field->fieldShortCode}}
+                                                     |
+                                                 @endif
+                                                 @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster )
+                                                     {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->wellNo}}
+                                                 @endif
+
+                                                 @endif </span>
+                                     </td>
+                                     @endif
+     --}}
+
                             </tr>
-                            <tr>
-                                <td width="150px"><span class="font-weight-bold">Well</span></td>
-                                <td width="10px">
-                        <span class="font-weight-bold">
-                          -
-                         </span>
-                                </td>
-
-                                <td>
-
-
-                                    @if($request->invoicedetails[0]->performadetails )
-                                        <span>
-                                  @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field )
-                                                {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field->fieldShortCode}}
-                                                |
-                                            @endif
-                                            @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster )
-                                                {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->wellNo}}
-                                            @endif
-
-                                            @endif </span>
-                                </td>
-                                @endif
---}}
-
-                            </tr>
-
 
 
                     </table>
@@ -602,12 +586,13 @@
                 {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalEndDate)}}</b>
         </div>
         <div class="row" style="">
-            <b><span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span> {{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></b>
+            <b><span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> |
+                <span> {{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></b>
         </div>
-        @else
-    <div class="row" style="">
-        <b>Comments : </b>  {!! nl2br($request->comments) !!}
-    </div>
+    @else
+        <div class="row" style="">
+            <b>Comments : </b> {!! nl2br($request->comments) !!}
+        </div>
     @endif
     <div class="row">
         <div style="text-align: right"><b>Currency
@@ -647,7 +632,7 @@
                 </tbody>
 
             </table>
-            @endif
+        @endif
 
         @if($request->line_invoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
@@ -675,7 +660,8 @@
                         <td style="width: 8%;text-align: center">{{number_format($item->qty,2)}}</td>
                         <td style="width: 10%;text-align: right">{{number_format($item->rate,$numberFormatting)}}</td>
 
-                        <td style="width: 10%" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>
+                        <td style="width: 10%"
+                            class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
                 @endforeach
@@ -683,7 +669,7 @@
 
             </table>
 
-            @endif
+        @endif
 
         @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
 
@@ -694,7 +680,7 @@
                     <th style=" text-align: center">Details</th>
 
 
-                    <th style="width:140px;text-align: right">Amount </th>
+                    <th style="width:140px;text-align: right">Amount</th>
                 </tr>
                 </thead>
 
@@ -713,7 +699,8 @@
                         <td>{{$item->myStdTitle}}</td>
 
 
-                        <td style="width: 100px" class="text-right">{{number_format($item->sumofsumofStandbyAmount,$numberFormatting)}}</td>
+                        <td style="width: 100px"
+                            class="text-right">{{number_format($item->sumofsumofStandbyAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
                 @endforeach

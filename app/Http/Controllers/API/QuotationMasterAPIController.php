@@ -17,20 +17,27 @@
  * -- Date: 25-January 2019 By: Nazir Description: Added new function rejectSalesQuotation(),
  * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationMasterRecord(),
  * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationPrintPDF(),
+ * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationReopen(),
+ * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationVersionCreate(),
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
+use App\Models\QuotationMasterVersion;
+use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
 use App\Models\YesNoSelection;
 use App\Models\Company;
@@ -157,6 +164,11 @@ class QuotationMasterAPIController extends AppBaseController
             if ($input['documentExpDate']) {
                 $input['documentExpDate'] = new Carbon($input['documentExpDate']);
             }
+        }
+
+        if ($input['documentExpDate'] < $input['documentDate']) {
+
+            return $this->sendError('Document expiry date cannot be less than document date!');
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -371,7 +383,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName','confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -393,6 +405,11 @@ class QuotationMasterAPIController extends AppBaseController
             if ($input['documentExpDate']) {
                 $input['documentExpDate'] = new Carbon($input['documentExpDate']);
             }
+        }
+
+        if ($input['documentExpDate'] < $input['documentDate']) {
+
+            return $this->sendError('Document expiry date cannot be less than document date!');
         }
 
         $customerData = CustomerMaster::where('customerCodeSystem', $input['customerSystemCode'])->first();
@@ -949,6 +966,204 @@ class QuotationMasterAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+    }
+
+
+    public function salesQuotationReopen(request $request)
+    {
+        $input = $request->all();
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $quotationMasterData = QuotationMaster::find($quotationMasterID);
+        $emails = array();
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Quotation master not found');
+        }
+
+        if ($quotationMasterData->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this sales quotation it is already partially approved');
+        }
+
+        if ($quotationMasterData->approved == -1) {
+            return $this->sendError('You cannot reopen this sales quotation it is already fully approved');
+        }
+
+        if ($quotationMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this sales quotation, it is not confirmed');
+        }
+
+        // updating fields
+        $quotationMasterData->confirmedYN = 0;
+        $quotationMasterData->confirmedByEmpSystemID = null;
+        $quotationMasterData->confirmedByEmpID = null;
+        $quotationMasterData->confirmedByName = null;
+        $quotationMasterData->confirmedDate = null;
+        $quotationMasterData->RollLevForApp_curr = 1;
+        $quotationMasterData->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $quotationMasterData->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $quotationMasterData->quotationCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $quotationMasterData->quotationCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemCode', $quotationMasterData->custInvoiceDirectAutoID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $quotationMasterData->companySystemID)
+                    ->where('documentSystemID', $quotationMasterData->documentSystemID)
+                    ->first();
+
+                /*if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }*/
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                /*  if ($companyDocument['isServiceLineApproval'] == -1) {
+                      $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                  }*/
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+            ->where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse('s', 'Sales quotation reopened successfully');
+
+    }
+
+    public function salesQuotationVersionCreate(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+        $currentVersion = 0;
+
+        $quotationMasterData = QuotationMaster::find($quotationMasterID);
+
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Quotation master not found');
+        }
+
+        $quotationMasterArray = $quotationMasterData->toArray();
+
+        $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
+
+        $fetchQuotationDetails = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+            ->get();
+
+        if (!empty($fetchQuotationDetails)) {
+            foreach ($fetchQuotationDetails as $bookDetail) {
+                $bookDetail['versionNo'] = $quotationMasterData->versionNo;
+            }
+        }
+
+        $quotationDetailsArray = $fetchQuotationDetails->toArray();
+
+        $storeQuotationVersionDetails = QuotationVersionDetails::insert($quotationDetailsArray);
+
+        // sending email to the relevant party
+
+        $emailBody = '<p>' . $quotationMasterData->quotationCode . ' has been created new version by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $quotationMasterData->quotationCode . ' has been created new version';
+
+        if ($quotationMasterData->confirmedYN == 1) {
+            $emails[] = array('empSystemID' => $quotationMasterData->confirmedByEmpSystemID,
+                'companySystemID' => $quotationMasterData->companySystemID,
+                'docSystemID' => $quotationMasterData->documentSystemID,
+                'alertMessage' => $emailSubject,
+                'emailAlertMessage' => $emailBody,
+                'docSystemCode' => $quotationMasterID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemCode', $quotationMasterID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            if ($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $quotationMasterData->companySystemID,
+                    'docSystemID' => $quotationMasterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $quotationMasterID);
+            }
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+            ->where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->delete();
+
+        if($quotationMasterData){
+            $currentVersion = $quotationMasterData->versionNo + 1;
+        }
+
+        if ($deleteApproval) {
+            // updating fields
+            $quotationMasterData->versionNo = $currentVersion;
+            $quotationMasterData->confirmedYN = 0;
+            $quotationMasterData->confirmedByEmpSystemID = null;
+            $quotationMasterData->confirmedByEmpID = null;
+            $quotationMasterData->confirmedByName = null;
+            $quotationMasterData->confirmedDate = null;
+            $quotationMasterData->RollLevForApp_curr = 1;
+
+            $quotationMasterData->approvedYN = 0;
+            $quotationMasterData->approvedEmpSystemID = null;
+            $quotationMasterData->approvedbyEmpID = null;
+            $quotationMasterData->approvedbyEmpName = null;
+            $quotationMasterData->approvedDate = null;
+            $quotationMasterData->save();
+        }
+
+        return $this->sendResponse($quotationMasterData->toArray(), 'Quotation version created successfully');
     }
 
 }
