@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateReportTemplateAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateAPIRequest;
 use App\Models\AccountsType;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
@@ -152,6 +153,50 @@ class ReportTemplateAPIController extends AppBaseController
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplates = $this->reportTemplateRepository->create($input);
+
+            if($input['reportID'] == 1){
+                $data['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data['description'] = 'Equity';
+                $data['itemType'] = 4;
+                $data['sortOrder'] = 1;
+                $data['companySystemID'] = $input['companySystemID'];
+                $data['companyID'] =  $input['companyID'];
+                $data['createdPCID'] = gethostname();
+                $data['createdUserID'] = \Helper::getEmployeeID();
+                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails = ReportTemplateDetails::create($data);
+
+                $data2['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data2['description'] = 'Retained Earning';
+                $data2['itemType'] = 4;
+                $data2['sortOrder'] = 1;
+                $data2['masterID'] = $reportTemplateDetails->detID;
+                $data2['companySystemID'] = $input['companySystemID'];
+                $data2['companyID'] =  $input['companyID'];
+                $data2['createdPCID'] = gethostname();
+                $data2['createdUserID'] = \Helper::getEmployeeID();
+                $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails = ReportTemplateDetails::create($data2);
+
+                $chartofaccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
+                if(count($chartofaccount) > 0){
+                    foreach ($chartofaccount as $key => $val){
+                        $data3['templateMasterID'] = $reportTemplates->companyReportTemplateID;
+                        $data3['templateDetailID'] = $reportTemplateDetails->detID;
+                        $data3['sortOrder'] = $key+1;
+                        $data3['glAutoID'] = $val['chartOfAccountSystemID'];
+                        $data3['glCode'] = $val['AccountCode'];
+                        $data3['glDescription'] = $val['AccountDescription'];
+                        $data3['companySystemID'] = $input['companySystemID'];
+                        $data3['companyID'] =  $input['companyID'];
+                        $data3['createdPCID'] = gethostname();
+                        $data3['createdUserID'] = \Helper::getEmployeeID();
+                        $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        ReportTemplateLinks::create($data3);
+                    }
+                }
+
+            }
             DB::commit();
             return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
         } catch (\Exception $exception) {

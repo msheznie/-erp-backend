@@ -861,9 +861,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    ->where('matchingDocID', '<>', 0)
+                    ->where('matchingDocID', $matchDocumentMaster->matchDocumentMasterAutoID)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
+
 
                 if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
 
@@ -970,7 +971,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    ->where('matchingDocID', '<>', 0)
+                    ->where('matchingDocID', $matchDocumentMaster->matchDocumentMasterAutoID)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
 

@@ -330,13 +330,15 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = $this->convertArrayToSelectedValue($input, array('companySystemID', 'emailNotificationID'));
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
 
-        $companyId = $request['companySystemID'];
+        $companyId = $input['companySystemID'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -348,13 +350,29 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $companyPolicyMasters = DocumentEmailNotificationDetail::with(['company', 'policyCategory', 'employee_by'])
-            ->when($search, function ($q) use ($search) {
-                return $q->whereHas('policyCategory', function ($q) use ($search) {
-                    return $q->where('description', 'LIKE', "%{$search}%");
-                });
-            })
-            ->whereIn('companySystemID', $childCompanies);
+        $companyPolicyMasters = DocumentEmailNotificationDetail::whereIn('companySystemID', $childCompanies)
+            ->with(['company', 'policyCategory', 'employee_by']);
+
+        if (array_key_exists('companySystemID', $input)) {
+            if (($input['companySystemID'] == 0 || $input['companySystemID'] == 1) && !is_null($input['companySystemID'])) {
+                $companyPolicyMasters = $companyPolicyMasters->where('companySystemID', $input['companySystemID']);
+            }
+        }
+
+        if (array_key_exists('emailNotificationID', $input)) {
+            if (($input['emailNotificationID'] == 0 || $input['emailNotificationID'] == 1) && !is_null($input['emailNotificationID'])) {
+                $companyPolicyMasters = $companyPolicyMasters->where('emailNotificationID', $input['emailNotificationID']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $companyPolicyMasters = $companyPolicyMasters->where(function ($query) use ($search) {
+                $query->where('policyCategory', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($companyPolicyMasters)
             ->order(function ($query) use ($input) {
@@ -369,6 +387,5 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
 
-        return $this->sendResponse($companyPolicyMasters->toArray(), 'Company Policy Masters retrieved successfully');
     }
 }
