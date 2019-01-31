@@ -482,7 +482,7 @@ class GposInvoiceAPIController extends AppBaseController
                     }
 
                     if ($posInvoices->paidAmount < $posInvoices->netTotal) {
-                        return $this->sendError($posInvoices->paidAmount . ' - ' . $posInvoices->netTotal . ' Under payment of ' . $posInvoices->balanceAmount . ' ' . $posInvoices->transactionCurrency . ' . Please enter the exact bill amount and submit again', 500);
+                        return $this->sendError('Under payment of ' . $posInvoices->balanceAmount . ' ' . $posInvoices->transactionCurrency . ' . Please enter the exact bill amount and submit again', 500);
                     }
                 }
             }
@@ -785,8 +785,10 @@ class GposInvoiceAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'invoice_' . $id . '_' . $time . '.pdf';
         $viewName  = 'print.pos_invoice.default';
-        $html = view($viewName, $array);
-        //return $html;
+        $html = view($viewName, $array)->render();
+
+        return $this->sendResponse($html, 'Invoice print successfully');
+
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
