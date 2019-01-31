@@ -1395,7 +1395,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
-
+    Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 });
 
 
@@ -1433,7 +1433,7 @@ Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQu
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
 Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
+
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
