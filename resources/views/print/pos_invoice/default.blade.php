@@ -165,13 +165,13 @@
         }
     </style>
 </head>
-<body onload="window.print()">
+<body onload="window.print();window.close()">
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
 </div>
 <div id="watermark"></div>
-<div class="card-body content" id="print-section">
+<div class="card-body content" id="print-section" >
     <table style="width: 100%">
         <tr style="width: 100%">
             <td colspan="3" class="text-center">

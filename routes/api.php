@@ -792,6 +792,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
 
     Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen');
     Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
 
     Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
@@ -1403,7 +1404,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
-
+    Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 });
 
 
@@ -1441,7 +1442,7 @@ Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQu
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
 Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
+
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');

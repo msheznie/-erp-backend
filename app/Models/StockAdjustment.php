@@ -205,7 +205,12 @@ class StockAdjustment extends Model
         'modifiedUser',
         'modifiedPc',
         'timestamp',
-        'RollLevForApp_curr'
+        'RollLevForApp_curr',
+        'refferedBackYN',
+        'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'timesReferred '
     ];
 
     /**
@@ -242,7 +247,12 @@ class StockAdjustment extends Model
         'modifiedPc' => 'string',
         'RollLevForApp_curr' => 'integer',
         'stockAdjustmentDate' => 'string',
-        'createdDateTime' => 'string'
+        'createdDateTime' => 'string',
+        'refferedBackYN' => 'integer',
+        'approvedDate' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

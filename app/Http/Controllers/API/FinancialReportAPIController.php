@@ -385,10 +385,10 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$request->all();
 
                 if ($request->accountType == 1) {
-                    $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType',4)->whereNotNull('masterID')->first()->detID;
-                    if(!empty($detID) && !is_null($detID)) {
+                    $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
+                    if (!empty($detID->detID) && !is_null($detID->detID)) {
                         $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request, $detID) {
-                            $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID);
+                            $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID->detID);
                         })->get();
                         if (count($notExistPLAccount) > 0) {
                             $company = Company::find($request->selectedCompanyID);
@@ -397,7 +397,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
                             foreach ($notExistPLAccount as $val) {
                                 $data['templateMasterID'] = $request->templateType;
-                                $data['templateDetailID'] = $detID;
+                                $data['templateDetailID'] = $detID->detID;
                                 $data['sortOrder'] = 1;
                                 $data['glAutoID'] = $val['chartOfAccountSystemID'];
                                 $data['glCode'] = $val['AccountCode'];
@@ -461,9 +461,11 @@ class FinancialReportAPIController extends AppBaseController
                     $linkedcolumnArrayFinal = [];
                     $linkedcolumnArrayFinal2 = [];
                     $currentMonth = Carbon::parse($toDate)->format('Y-m');
+                    $currentYear = Carbon::parse($toDate)->format('Y');
                     $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
                     $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
                     $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
+                    $LYear = Carbon::parse($toDate)->subYear()->format('Y');
                     $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
                     $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
                     foreach ($currentYearPeriod as $val) {
@@ -531,7 +533,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
 
-                            $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
                         }
                         if ($val->shortCode == 'LYYTD') {
                             if ($request->accountType == 2) {
@@ -549,7 +551,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
                             }
 
-                            $columnHeaderArray[$val->shortCode] = $val->shortCode;
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
                         }
                     }
                 }
@@ -557,7 +559,7 @@ class FinancialReportAPIController extends AppBaseController
                 if (count($linkedColumn) > 0) {
                     foreach ($linkedColumn as $val) {
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, '', false);
+                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false);
                         } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                             $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                         } else {
@@ -583,8 +585,7 @@ class FinancialReportAPIController extends AppBaseController
                 if (count($linkedColumn) > 0) {
                     foreach ($linkedColumn as $val) {
                         if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                            $columnCustomeCode = $val->shortCode . '-' . $val->columnLinkID;
-                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, $columnCustomeCode, true);
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true);
                             $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor];
                         } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                             $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
@@ -2088,6 +2089,7 @@ AND MASTER .canceledYN = 0';
 	c.sortOrder,
 	c.masterID,
 	c.bgColor,
+	c.fontColor,
 	c.itemType,
 	c.hideHeader,
 	' . $isExpand . ' as expanded  
@@ -2100,6 +2102,7 @@ SELECT
 	erp_companyreporttemplatedetails.sortOrder,
 	erp_companyreporttemplatedetails.masterID,
 	erp_companyreporttemplatedetails.bgColor,
+	erp_companyreporttemplatedetails.fontColor,
 	erp_companyreporttemplatedetails.hideHeader,
 	erp_companyreporttemplatedetails.itemType 
 FROM
@@ -2387,10 +2390,10 @@ ORDER BY
      * @param $columnLinkID
      * @param $rowValues
      * @param $columnArray
+     * @param $linkedRowHead
      * @return string
      */
-    public
-    function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $columnCustomeCode, $linkedRowHead = false)
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -2401,7 +2404,7 @@ ORDER BY
         if ($linkedRowHead) {
             $linkedRows = $taxFormula->formulaRowID;
         }
-        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $columnCustomeCode);
+        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray);
         $globalFormula = '';
         if ($sepFormulaArr) {
             $fomulaFinal = '';
@@ -2425,10 +2428,10 @@ ORDER BY
      * @param $rowValues
      * @param $columnArray
      * @param $linkedRows
+     * @param $columnCustomeCode
      * @return mixed
      */
-    public
-    function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $columnCustomeCode)
+    public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray)
     {
         global $globalFormula;
         $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID', explode(',', $linkedColumns))->get();
@@ -2438,7 +2441,7 @@ ORDER BY
                 if (!empty($val['formulaColumnID'])) {
                     $replaceVal = '|(~' . $val['formula'] . '~|)';
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
-                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray, $columnCustomeCode);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray);
                     if (is_array($return)) {
                         if ($return[0] == 'e') {
                             return $return;
@@ -2455,13 +2458,18 @@ ORDER BY
         }
 
         if ($linkedRows) {
+            $linkedColumnsShortCode = ReportTemplateColumnLink::where('columnLinkID', $linkedColumns)->first();
+            $columnCustomeCode = $linkedColumnsShortCode->shortCode . '-' . $linkedColumns;
             $explodeLinkedRows = explode(',', $linkedRows);
             if ($explodeLinkedRows) {
                 foreach ($explodeLinkedRows as $val) {
                     $searchVal = '$' . $val;
                     $filtered = $rowValues->where('templateDetailID', $val);
                     $detValues = $filtered->values();
-                    $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                    $replaceVal = '';
+                    if (count($detValues) > 0) {
+                        $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                    }
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                 }
             }

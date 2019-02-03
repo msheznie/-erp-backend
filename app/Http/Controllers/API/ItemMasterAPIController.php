@@ -620,6 +620,9 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError('Item Master not found');
         }
 
+        if($itemMaster->itemApprovedYN == 1){
+            return $this->sendError('Item Master already approved. You cannot edit');
+        }
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
@@ -666,12 +669,33 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError($confirm["message"], 500);
             }
         }
+
+        if($itemMaster->itemConfirmedYN == 1){
+            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $itemMaster->financeCategoryMaster)
+                ->where('itemCategorySubID', $input['financeCategorySub'])
+                ->where('companySystemID', $input['primaryCompanySystemID'])
+                ->first();
+
+            if (empty($checkSubCategory)) {
+                return $this->sendError('The Finance Sub Category field is required.', 500);
+            }
+        }
+
+        $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub');
+
         foreach ($input as $key => $value) {
-            $itemMaster->$key = $value;
+            if ($itemMaster->itemConfirmedYN == 1) {
+                if(in_array($key,$afterConfirm)){
+                    $itemMaster->$key = $value;
+                }
+            }else{
+                $itemMaster->$key = $value;
+            }
         }
 
         $itemMaster->save();
-        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
+        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully d');
 
     }
 
@@ -902,22 +926,22 @@ class ItemMasterAPIController extends AppBaseController
         $items = ItemAssigned::where('companySystemID', $companyId)
             ->where('financeCategoryMaster', 1)
             ->where('isPOSItem', 1)
-            ->with(['unit', 'outlet_items' => function ($q) use($input){
-                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
-            },'item_ledger' => function($q) use($input){
-                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+            ->with(['unit', 'outlet_items' => function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode']);
+            }, 'item_ledger' => function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
                     ->groupBy('itemSystemCode')
                     ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
             }])
-            ->whereHas('outlet_items', function ($q) use($input){
-                $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+            ->whereHas('outlet_items', function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode']);
             })
-            ->whereHas('item_ledger', function ($q) use($input){
-                $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+            ->whereHas('item_ledger', function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
                     ->groupBy('itemSystemCode')
                     ->havingRaw('sum(inOutQty) > 0 ');
             })
-            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost','barcode']);
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost', 'barcode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -930,8 +954,8 @@ class ItemMasterAPIController extends AppBaseController
 
         $items = $items->take(10)->get();
 
-        foreach ($items as $item){
-            if(count($item['item_ledger']) > 0){
+        foreach ($items as $item) {
+            if (count($item['item_ledger']) > 0) {
                 $item['current_stock'] = $item['item_ledger'][0]['stock'];
             }
         }
