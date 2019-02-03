@@ -11,6 +11,7 @@
  * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData(),
  *                        getStockAdjustmentAudit()
  * -- Date: 03 - September 2018 By: Fayas Description: Added new functions named as getStockAdjustmentApprovedByUser(),getStockAdjustmentApprovalByUser()
+ * -- Date: 03 - February 2019 By: Fayas Description: Added new functions named as stockAdjustmentReopen()
  *
  *
  */
@@ -22,7 +23,9 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockAdjustment;
@@ -937,6 +940,100 @@ class StockAdjustmentAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
+    }
+
+    public function stockAdjustmentReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['stockAdjustmentAutoID'];
+        $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($stockAdjustment)) {
+            return $this->sendError('Stock Adjustment not found');
+        }
+
+        if ($stockAdjustment->approved == -1) {
+            return $this->sendError('You cannot reopen this Stock Adjustment it is already fully approved');
+        }
+
+        if ($stockAdjustment->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Stock Adjustment it is already partially approved');
+        }
+
+        if ($stockAdjustment->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Stock Adjustment, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->stockAdjustmentRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $stockAdjustment->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockAdjustment->stockAdjustmentCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockAdjustment->stockAdjustmentCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $stockAdjustment->companySystemID)
+            ->where('documentSystemCode', $stockAdjustment->stockAdjustmentAutoID)
+            ->where('documentSystemID', $stockAdjustment->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $stockAdjustment->companySystemID)
+                    ->where('documentSystemID', $stockAdjustment->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockAdjustment->companySystemID)
+            ->where('documentSystemID', $stockAdjustment->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment reopened successfully');
     }
 
 }
