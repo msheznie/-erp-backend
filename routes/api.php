@@ -792,6 +792,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
 
     Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen');
     Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
 
     Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
