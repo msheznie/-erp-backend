@@ -209,8 +209,8 @@ class StockAdjustment extends Model
         'refferedBackYN',
         'approvedDate',
         'approvedByUserID',
-        'approvedByUserSystemID'
-
+        'approvedByUserSystemID',
+        'timesReferred '
     ];
 
     /**
@@ -251,7 +251,8 @@ class StockAdjustment extends Model
         'refferedBackYN' => 'integer',
         'approvedDate' => 'string',
         'approvedByUserID' => 'string',
-        'approvedByUserSystemID' => 'integer'
+        'approvedByUserSystemID' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

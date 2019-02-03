@@ -355,7 +355,7 @@ class BankAccountAPIController extends AppBaseController
     public function getAllBankAccountByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('bankmasterAutoID', 'isAccountActive'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -373,13 +373,16 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $logistics = BankAccount::whereIn('companySystemID', $subCompanies)
-            ->when(request('isAccountActive', false) && (request('isAccountActive') == 1 || request('isAccountActive') == 0), function ($q) use ($input) {
-                $q->where('isAccountActive', $input['isAccountActive']);
-            })
             ->when(request('bankmasterAutoID',false), function ($q) use ($input) {
                 $q->where('bankmasterAutoID', $input['bankmasterAutoID']);
             })
             ->with(['currency']);
+
+        if (array_key_exists('isAccountActive', $input)) {
+            if (($input['isAccountActive'] == 0 || $input['isAccountActive'] == 1) && !is_null($input['isAccountActive'])) {
+                $logistics->where('isAccountActive', $input['isAccountActive']);
+            }
+        }
 
         $search = $request->input('search.value');
 
