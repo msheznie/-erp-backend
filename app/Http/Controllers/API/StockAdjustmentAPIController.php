@@ -608,20 +608,21 @@ class StockAdjustmentAPIController extends AppBaseController
 
 
         $stockAdjustments = $stockAdjustments->select(
-            ['erp_stockadjustment.stockAdjustmentAutoID',
-                'erp_stockadjustment.stockAdjustmentCode',
-                'erp_stockadjustment.comment',
-                'erp_stockadjustment.stockAdjustmentDate',
-                'erp_stockadjustment.confirmedYN',
-                'erp_stockadjustment.approved',
-                'erp_stockadjustment.serviceLineSystemID',
-                'erp_stockadjustment.documentSystemID',
-                'erp_stockadjustment.confirmedByEmpSystemID',
-                'erp_stockadjustment.createdUserSystemID',
-                'erp_stockadjustment.confirmedDate',
-                'erp_stockadjustment.createdDateTime',
-                'erp_stockadjustment.refNo',
-                'erp_stockadjustment.location'
+            ['stockAdjustmentAutoID',
+                'stockAdjustmentCode',
+                'comment',
+                'stockAdjustmentDate',
+                'confirmedYN',
+                'approved',
+                'serviceLineSystemID',
+                'documentSystemID',
+                'confirmedByEmpSystemID',
+                'createdUserSystemID',
+                'confirmedDate',
+                'createdDateTime',
+                'refNo',
+                'location',
+                'refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
