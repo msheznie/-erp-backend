@@ -59,6 +59,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -850,11 +851,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         }
 
                         if ($bankAccount->isPrintedActive == 1) {
-                            $chequeNumber = $bankAccount->chquePrintedStartingNo + 1;
-                            $input['BPVchequeNo'] = $chequeNumber;
-
-                            $bankAccount->chquePrintedStartingNo = $chequeNumber;
+                            $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
+                            $input['BPVchequeNo'] = $nextChequeNo;
+                            Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
+                            Log::info('Cheque No:'.$input['BPVchequeNo']);
+                            Log::info('PV Code:'.$paySupplierInvoice->BPVcode);
+                            Log::info('-------------------------------------------------------');
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();

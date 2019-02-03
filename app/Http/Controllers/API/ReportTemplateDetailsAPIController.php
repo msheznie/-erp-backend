@@ -144,6 +144,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $input['companyID'] = $company->CompanyID;
             }
 
+            $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -323,10 +324,10 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             if ($columnLink) {
                 return $this->sendError('You cannot delete this record because already this record has been added to the formula');
             }
-
-            $detID = $reportTemplateDetails->subcategory()->pluck('detID');
+            $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
             $reportTemplateDetails->subcategory()->delete();
             $reportTemplateDetails->gllink()->delete();
+            $reportTemplateDetails->subcatlink()->delete();
             if ($detID) {
                 $glLink = ReportTemplateLinks::whereIN('templateDetailID', $detID)->delete();
             }
