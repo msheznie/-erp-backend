@@ -1474,3 +1474,4 @@ Route::get('runQueueSR', function () {
 });
 
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
