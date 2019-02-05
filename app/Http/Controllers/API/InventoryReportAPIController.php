@@ -258,14 +258,14 @@ class InventoryReportAPIController extends AppBaseController
                 ItemLedger.transactionDate,
                 ItemLedger.LocalCurrencyDecimals,
                 ItemLedger.RptCurrencyDecimals,
-                sum( Qty ) AS Qty,
+                round(sum(Qty),3) AS Qty,
                 LocalCurrency,
             IF
-                ( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
+                ( sum( localAmount ) / round(sum(Qty),3) IS NULL, 0, sum( localAmount ) / round(sum(Qty),3) ) AS WACLocal,
                 sum( localAmount ) AS WacLocalAmount,
                 RepCurrency,
             IF
-                ( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS WACRpt,
+                ( sum( rptAmount ) / round(sum(Qty),3) IS NULL, 0, sum( rptAmount ) / round(sum(Qty),3) ) AS WACRpt,
                 sum( rptAmount ) AS WacRptAmount,
                 " . $agingField . " 
             FROM
