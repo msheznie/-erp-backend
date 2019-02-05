@@ -331,6 +331,7 @@ class email
                     }
                     break;
                 case 67:
+                case 68:
                     $quotationMaster = QuotationMaster::find($data['docSystemCode']);
                     if (!empty($quotationMaster)) {
                         $data['docApprovedYN'] = $quotationMaster->approvedYN;

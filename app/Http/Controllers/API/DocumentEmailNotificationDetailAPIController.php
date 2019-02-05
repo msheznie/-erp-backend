@@ -353,14 +353,8 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $companyPolicyMasters = DocumentEmailNotificationDetail::whereIn('companySystemID', $childCompanies)
             ->with(['company', 'policyCategory', 'employee_by']);
 
-        if (array_key_exists('companySystemID', $input)) {
-            if (($input['companySystemID'] == 0 || $input['companySystemID'] == 1) && !is_null($input['companySystemID'])) {
-                $companyPolicyMasters = $companyPolicyMasters->where('companySystemID', $input['companySystemID']);
-            }
-        }
-
         if (array_key_exists('emailNotificationID', $input)) {
-            if (($input['emailNotificationID'] == 0 || $input['emailNotificationID'] == 1) && !is_null($input['emailNotificationID'])) {
+            if ($input['emailNotificationID'] != 0 && !is_null($input['emailNotificationID'])) {
                 $companyPolicyMasters = $companyPolicyMasters->where('emailNotificationID', $input['emailNotificationID']);
             }
         }
