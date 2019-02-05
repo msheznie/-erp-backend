@@ -529,6 +529,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'bookingDate' => 'required',
                 'supplierInvoiceDate' => 'required',
+                'supplierInvoiceNo' => 'required',
                 'supplierID' => 'required|numeric|min:1',
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
