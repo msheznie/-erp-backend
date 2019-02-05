@@ -24,6 +24,7 @@
  * -- Date: 17-October 2018 By: Nazir Description: Added new function supplierInvoiceTaxPercentage(),
  * -- Date: 20-December 2018 By: Nazir Description: Added new function amendSupplierInvoiceReview(),
  * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusSIPrint(),
+ * -- Date: 05-February 2019 By: Nazir Description: Added new function clearSupplierInvoiceNo(),
  */
 
 namespace App\Http\Controllers\API;
@@ -528,6 +529,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'bookingDate' => 'required',
                 'supplierInvoiceDate' => 'required',
+                'supplierInvoiceNo' => 'required',
                 'supplierID' => 'required|numeric|min:1',
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
@@ -1886,5 +1888,22 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($printID, 'Print data retrieved');
     }
 
+    public function clearSupplierInvoiceNo(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        // updating fields
+        $bookInvSuppMaster->supplierInvoiceNo = null;
+        $bookInvSuppMaster->save();
+
+        return $this->sendResponse($bookInvSuppMaster, 'Record updated successfully');
+    }
 
 }

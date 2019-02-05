@@ -516,7 +516,8 @@ class Helper
                     $docInforArr["modelName"] = 'BankAccount';
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     break;
-                case 67: // Quotation
+                case 67: // Sales Quotation
+                case 68: // Sales Order
                     $docInforArr["documentCodeColumnName"] = 'quotationCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByName';
@@ -1364,7 +1365,8 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 67: // Quotation
+            case 67: // Sales Quotation
+            case 68: // Sales Order
                 $docInforArr["tableName"] = 'erp_quotationmaster';
                 $docInforArr["modelName"] = 'QuotationMaster';
                 $docInforArr["primarykey"] = 'quotationMasterID';
@@ -1436,7 +1438,11 @@ class Helper
                                     ->where('companySystemID', $purchaseRequestMaster->companySystemID)
                                     ->first();
 
-                                if ($checkBudget->isYesNO == 1) {
+                                $departmentWiseCheckBudget = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 33)
+                                    ->where('companySystemID', $purchaseRequestMaster->companySystemID)
+                                    ->first();
+
+                                if ($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 1) {
                                     if ($purchaseRequestMaster->checkBudgetYN == -1) {
 
                                         $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
@@ -1457,6 +1463,89 @@ class Helper
                                                 $consumedAmount = collect(\DB::select('SELECT erp_budgetconsumeddata.companySystemID,erp_budgetconsumeddata.serviceLineSystemID,templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription, erp_budgetconsumeddata.Year, sum( erp_budgetconsumeddata.consumedLocalAmount ) AS ConsumedLocalAmount, sum( erp_budgetconsumeddata.consumedRptAmount ) AS ConsumedRptAmount FROM erp_budgetconsumeddata INNER JOIN ( SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_budgetconsumeddata.chartOfAccountID WHERE erp_budgetconsumeddata.Year = ' . $budgetYear . ' AND erp_budgetconsumeddata.companySystemID = ' . $companySystemID . ' AND erp_budgetconsumeddata.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, erp_budgetconsumeddata.Year,templateGLCode.templatesDetailsAutoID'))->first();
 
                                                 $pendingAmount = collect(\DB::select('SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt,Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND erp_purchaseordermaster.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear'))->first();
+
+                                                //get reporting amount converted
+                                                $currencyConversionRptAmount = self::currencyConversion($companySystemID, $purchaseRequestMaster->currency, $purchaseRequestMaster->currency, $documentAmount->totalCost);
+
+                                                $budgetDescription = '';
+                                                $totalDocumentRptAmount = $currencyConversionRptAmount['reportingAmount'];
+                                                $totalBudgetRptAmount = 0;
+                                                $totalConsumedRptAmount = 0;
+                                                $totalPendingRptAmount = 0;
+                                                if ($consumedAmount) {
+                                                    $totalConsumedRptAmount = $consumedAmount->ConsumedRptAmount;
+                                                }
+
+                                                if ($pendingAmount) {
+                                                    $totalPendingRptAmount = $pendingAmount->rptAmt;
+                                                }
+
+                                                if ($budgetAmount) {
+                                                    $totalBudgetRptAmount = ($budgetAmount->budgetRptAmount * -1);
+                                                    $budgetDescription = $budgetAmount->templateDetailDescription;
+                                                }
+
+                                                $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $totalConsumedRptAmount + $totalPendingRptAmount;
+
+                                                if ($totalConsumedAmount > $totalBudgetRptAmount) {
+                                                    $userMessageE .= "Budget Exceeded ' . $budgetDescription . '";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
+                                                    DB::commit();
+                                                    return ['success' => false, 'message' => $userMessageE];
+                                                } else {
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
+                                                }
+
+                                            }
+                                        }// closing finance Category check if condition
+                                    } else {
+                                        // update PR master table
+                                        $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
+                                    }
+                                }else if($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 0){
+                                    if ($purchaseRequestMaster->checkBudgetYN == -1) {
+
+                                        $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
+                                        $serviceLineSystemID = $purchaseRequestMaster->serviceLineSystemID;
+                                        $companySystemID = $purchaseRequestMaster->companySystemID;
+                                        $budgetYear = $purchaseRequestMaster->budgetYear;
+
+                                        if ($purchaseRequestMaster->financeCategory != 3) {
+
+                                            $totalDocumentRptAmount = 0;
+
+                                            $documentAmount = collect(\DB::select('SELECT erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID, Sum(erp_purchaserequestdetails.quantityRequested*erp_purchaserequestdetails.estimatedCost) AS totalCost, erp_purchaserequestdetails.budgetYear FROM erp_purchaserequestdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID, erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaserequestdetails.financeGLcodePLSystemID AND erp_purchaserequestdetails.budgetYear = ' . $budgetYear . ' WHERE erp_purchaserequestdetails.purchaseRequestID = ' . $purchaseRequestID . ' GROUP BY erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID'))->first();
+
+                                            if ($documentAmount) {
+
+                                                $budgetAmount = collect(\DB::select('SELECT erp_budjetdetails.companySystemID, erp_budjetdetails.serviceLineSystemID,erp_budjetdetails.templateDetailID,templateGLCode.templateDetailDescription, erp_budjetdetails. YEAR,sum(erp_budjetdetails.budjetAmtLocal) AS budgetLocalAmount,sum(erp_budjetdetails.budjetAmtRpt) AS budgetRptAmount FROM erp_budjetdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID,erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.templatesDetailsAutoID = erp_budjetdetails.templateDetailID AND templateGLCode.chartOfAccountSystemID = erp_budjetdetails.chartOfAccountID WHERE erp_budjetdetails.YEAR = ' . $budgetYear . ' AND erp_budjetdetails.companySystemID = ' . $companySystemID . ' AND erp_budjetdetails.templateDetailID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budjetdetails.companySystemID, erp_budjetdetails. YEAR, erp_budjetdetails.templateDetailID'))->first();
+
+                                                $consumedAmount = collect(\DB::select('SELECT erp_budgetconsumeddata.companySystemID,erp_budgetconsumeddata.serviceLineSystemID,templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription, erp_budgetconsumeddata.Year, sum( erp_budgetconsumeddata.consumedLocalAmount ) AS ConsumedLocalAmount, sum( erp_budgetconsumeddata.consumedRptAmount ) AS ConsumedRptAmount FROM erp_budgetconsumeddata INNER JOIN ( SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_budgetconsumeddata.chartOfAccountID WHERE erp_budgetconsumeddata.Year = ' . $budgetYear . ' AND erp_budgetconsumeddata.companySystemID = ' . $companySystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.Year,templateGLCode.templatesDetailsAutoID'))->first();
+
+                                                $pendingAmount = collect(\DB::select('SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt,Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_purchaseordermaster.companySystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear'))->first();
 
                                                 //get reporting amount converted
                                                 $currencyConversionRptAmount = self::currencyConversion($companySystemID, $purchaseRequestMaster->currency, $purchaseRequestMaster->currency, $documentAmount->totalCost);
@@ -2033,6 +2122,13 @@ class Helper
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 67:
+                case 68:// Sales Quotation
+                    $docInforArr["tableName"] = 'erp_quotationmaster';
+                    $docInforArr["modelName"] = 'QuotationMaster';
+                    $docInforArr["primarykey"] = 'quotationMasterID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2048,7 +2144,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66,7])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66,7, 67, 68])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

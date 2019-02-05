@@ -5,10 +5,10 @@
  * -- Project Name : ERP
  * -- Module Name :  QuotationVersionDetails
  * -- Author : Mohamed Nazir
- * -- Create date : 29 - January 2019
+ * -- Create date : 03-February 2019
  * -- Description : This file contains the all CRUD for Sales Quotation Version Details
  * -- REVISION HISTORY
- * -- Date: 23-January 2019 By: Nazir Description: Added new function getSalesQuotationFormData(),
+ * -- Date: 03-February 2019 By: Nazir Description: Added new function getSQVDetailsHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -27,7 +27,6 @@ use Response;
  * Class QuotationVersionDetailsController
  * @package App\Http\Controllers\API
  */
-
 class QuotationVersionDetailsAPIController extends AppBaseController
 {
     /** @var  QuotationVersionDetailsRepository */
@@ -288,5 +287,18 @@ class QuotationVersionDetailsAPIController extends AppBaseController
         $quotationVersionDetails->delete();
 
         return $this->sendResponse($id, 'Quotation Version Details deleted successfully');
+    }
+
+    public function getSQVDetailsHistory(Request $request)
+    {
+        $input = $request->all();
+        $quotationMasterID = $input['quotationMasterID'];
+        $versionNo = $input['versionNo'];
+
+        $items = QuotationVersionDetails::where('quotationMasterID', $quotationMasterID)
+            ->where('versionNo', $versionNo)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Quotation Version Details retrieved successfully');
     }
 }

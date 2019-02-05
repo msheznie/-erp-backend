@@ -19,6 +19,8 @@
  * -- Date: 25-January 2019 By: Nazir Description: Added new function getSalesQuotationPrintPDF(),
  * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationReopen(),
  * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationVersionCreate(),
+ * -- Date: 03-February 2019 By: Nazir Description: Added new function salesQuotationAmend(),
+ * -- Date: 05-February 2019 By: Nazir Description: Added new function salesQuotationAudit(),
  */
 
 namespace App\Http\Controllers\API;
@@ -31,11 +33,14 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\QuotationDetails;
+use App\Models\QuotationDetailsRefferedback;
 use App\Models\QuotationMaster;
+use App\Models\QuotationMasterRefferedback;
 use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
@@ -262,6 +267,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         // creating document code
         $lastSerial = QuotationMaster::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
             ->orderBy('quotationMasterID', 'desc')
             ->first();
 
@@ -270,8 +276,13 @@ class QuotationMasterAPIController extends AppBaseController
             $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
 
-        $quotationCode = ($company->CompanyID . '\\' . 'QUO' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-        $input['quotationCode'] = $quotationCode;
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        if ($documentMaster) {
+            $quotationCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['quotationCode'] = $quotationCode;
+        }
+
         $input['serialNumber'] = $lastSerialNumber;
 
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -388,11 +399,18 @@ class QuotationMasterAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
+        $tempName = '';
+        if ($input['documentSystemID'] == 67) {
+            $tempName = 'quotation';
+        } else if ($input['documentSystemID'] == 68) {
+            $tempName = 'order';
+        }
+
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
-            return $this->sendError('Quotation Master not found');
+            return $this->sendError('Sales ' . $tempName . ' not found');
         }
 
         if (isset($input['documentDate'])) {
@@ -491,7 +509,7 @@ class QuotationMasterAPIController extends AppBaseController
                 ->count();
 
             if ($qoDetailExist == 0) {
-                return $this->sendError('Quotation cannot be confirmed without any details');
+                return $this->sendError('Sales ' . $tempName . ' cannot be confirmed without any details');
             }
 
             $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
@@ -547,7 +565,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMaster = $this->quotationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($quotationMaster->toArray(), 'Quotation master updated successfully');
+        return $this->sendResponse($quotationMaster->toArray(), 'Sales ' . $tempName . ' updated successfully');
     }
 
     /**
@@ -674,7 +692,8 @@ class QuotationMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies);
+        $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies)
+            ->where('documentSystemID', $input['documentSystemID']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -766,6 +785,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
+        $documentSystemID = $request->documentSystemID;
         $empID = \Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
@@ -804,7 +824,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->where('erp_documentapproved.documentSystemID', 67)
+            ->where('erp_documentapproved.documentSystemID', $documentSystemID)
             ->where('erp_documentapproved.companySystemID', $companyID);
 
         $search = $request->input('search.value');
@@ -844,6 +864,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
+        $documentSystemID = $request->documentSystemID;
         $empID = \Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
@@ -876,6 +897,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
             ->where('erp_documentapproved.documentSystemID', 67)
             ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.documentSystemID', $documentSystemID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');
@@ -1103,7 +1125,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         // sending email to the relevant party
 
-        $emailBody = '<p>' . $quotationMasterData->quotationCode . ' has been created new version by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailBody = '<p>' . $quotationMasterData->quotationCode . ' is being revised by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $quotationMasterData->quotationCode . ' has been created new version';
 
         if ($quotationMasterData->confirmedYN == 1) {
@@ -1141,7 +1163,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('documentSystemID', $quotationMasterData->documentSystemID)
             ->delete();
 
-        if($quotationMasterData){
+        if ($quotationMasterData) {
             $currentVersion = $quotationMasterData->versionNo + 1;
         }
 
@@ -1165,5 +1187,90 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMasterData->toArray(), 'Quotation version created successfully');
     }
+
+    public function salesQuotationAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $quotationMasterData = QuotationMaster::find($quotationMasterID);
+
+        if (empty($quotationMasterData)) {
+            return $this->sendError('Sales quotation not found');
+        }
+
+        if ($quotationMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Sales quotation');
+        }
+
+        $salesQuotationArray = $quotationMasterData->toArray();
+
+        $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
+
+        $fetchQuotationDetails = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+            ->get();
+
+        if (!empty($fetchQuotationDetails)) {
+            foreach ($fetchQuotationDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $quotationMasterData->timesReferred;
+            }
+        }
+
+        $salesQuotationDetailArray = $fetchQuotationDetails->toArray();
+
+        $storeSalesQuotationDetailHistory = QuotationDetailsRefferedback::insert($salesQuotationDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+            ->where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $quotationMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+            ->where('companySystemID', $quotationMasterData->companySystemID)
+            ->where('documentSystemID', $quotationMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $quotationMasterData->refferedBackYN = 0;
+            $quotationMasterData->confirmedYN = 0;
+            $quotationMasterData->confirmedByEmpSystemID = null;
+            $quotationMasterData->confirmedByEmpID = null;
+            $quotationMasterData->confirmedByName = null;
+            $quotationMasterData->confirmedDate = null;
+            $quotationMasterData->RollLevForApp_curr = 1;
+            $quotationMasterData->save();
+        }
+
+        return $this->sendResponse($quotationMasterData->toArray(), 'Sales quotation amend successfully');
+    }
+
+    public function salesQuotationAudit(Request $request)
+    {
+        $input = $request->all();
+        $quotationMasterID = $input['quotationMasterID'];
+        $quotationMasterdata = $this->quotationMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->whereIn('documentSystemID', [67, 68]);
+        }, 'company'])->findWithoutFail($quotationMasterID);
+
+
+        if (empty($quotationMasterdata)) {
+            return $this->sendError('Sales quotation not found');
+        }
+
+        return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
+    }
+
 
 }

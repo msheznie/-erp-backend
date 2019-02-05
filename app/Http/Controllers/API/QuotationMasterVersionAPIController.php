@@ -167,7 +167,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
     public function show($id)
     {
         /** @var QuotationMasterVersion $quotationMasterVersion */
-        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+        $quotationMasterVersion = $this->quotationMasterVersionRepository->with(['confirmed_by', 'created_by'])->findWithoutFail($id);
 
         if (empty($quotationMasterVersion)) {
             return $this->sendError('Quotation Master Version not found');

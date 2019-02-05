@@ -912,7 +912,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -935,6 +935,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (array_key_exists('subCategory', $input)) {
             if ($input['subCategory']) {
                 $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        if (array_key_exists('auditCategory', $input)) {
+            if ($input['auditCategory']) {
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
         }
 
@@ -1664,6 +1670,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (array_key_exists('subCategory', $input)) {
             if ($input['subCategory'] && !is_null($input['subCategory'])) {
                 $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        if (array_key_exists('auditCategory', $input)) {
+            if ($input['auditCategory']) {
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
         }
 

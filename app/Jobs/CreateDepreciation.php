@@ -66,7 +66,7 @@ class CreateDepreciation implements ShouldQueue
                         $monthlyLocal = ($val->COSTUNIT * ($val->DEPpercentage / 100)) / 12;
                         $monthlyRpt = ($val->costUnitRpt * ($val->DEPpercentage / 100)) / 12;
 
-                        if (round($nbvLocal,2) != 0 || round($nbvRpt,2) != 0) {
+                        if (round($nbvLocal,2) > 0 || round($nbvRpt,2) > 0) {
                             $data['depMasterAutoID'] = $depMasterAutoID;
                             $data['companySystemID'] = $depMaster->companySystemID;
                             $data['companyID'] = $depMaster->companyID;
