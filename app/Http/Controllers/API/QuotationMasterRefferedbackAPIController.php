@@ -5,18 +5,19 @@
  * -- Project Name : ERP
  * -- Module Name :  QuotationMasterVersion
  * -- Author : Mohamed Nazir
- * -- Create date : 29 - January 2019
+ * -- Create date : 03 - February 2019
  * -- Description : This file contains the all CRUD for Sales Quotation Master Version
  * -- REVISION HISTORY
- * -- Date: 30-January 2019 By: Nazir Description: Added new function getSalesQuotationRevisionHistory(),
+ * -- Date: 3-February 2019 By: Nazir Description: Added new function getSalesQuotationAmendHistory(),
  */
+
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateQuotationMasterVersionAPIRequest;
-use App\Http\Requests\API\UpdateQuotationMasterVersionAPIRequest;
-use App\Models\QuotationMasterVersion;
-use App\Repositories\QuotationMasterVersionRepository;
+use App\Http\Requests\API\CreateQuotationMasterRefferedbackAPIRequest;
+use App\Http\Requests\API\UpdateQuotationMasterRefferedbackAPIRequest;
+use App\Models\QuotationMasterRefferedback;
+use App\Repositories\QuotationMasterRefferedbackRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -24,18 +25,17 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class QuotationMasterVersionController
+ * Class QuotationMasterRefferedbackController
  * @package App\Http\Controllers\API
  */
-
-class QuotationMasterVersionAPIController extends AppBaseController
+class QuotationMasterRefferedbackAPIController extends AppBaseController
 {
-    /** @var  QuotationMasterVersionRepository */
-    private $quotationMasterVersionRepository;
+    /** @var  QuotationMasterRefferedbackRepository */
+    private $quotationMasterRefferedbackRepository;
 
-    public function __construct(QuotationMasterVersionRepository $quotationMasterVersionRepo)
+    public function __construct(QuotationMasterRefferedbackRepository $quotationMasterRefferedbackRepo)
     {
-        $this->quotationMasterVersionRepository = $quotationMasterVersionRepo;
+        $this->quotationMasterRefferedbackRepository = $quotationMasterRefferedbackRepo;
     }
 
     /**
@@ -43,10 +43,10 @@ class QuotationMasterVersionAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/quotationMasterVersions",
-     *      summary="Get a listing of the QuotationMasterVersions.",
-     *      tags={"QuotationMasterVersion"},
-     *      description="Get all QuotationMasterVersions",
+     *      path="/quotationMasterRefferedbacks",
+     *      summary="Get a listing of the QuotationMasterRefferedbacks.",
+     *      tags={"QuotationMasterRefferedback"},
+     *      description="Get all QuotationMasterRefferedbacks",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -60,7 +60,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/QuotationMasterVersion")
+     *                  @SWG\Items(ref="#/definitions/QuotationMasterRefferedback")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -72,29 +72,29 @@ class QuotationMasterVersionAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->quotationMasterVersionRepository->pushCriteria(new RequestCriteria($request));
-        $this->quotationMasterVersionRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $quotationMasterVersions = $this->quotationMasterVersionRepository->all();
+        $this->quotationMasterRefferedbackRepository->pushCriteria(new RequestCriteria($request));
+        $this->quotationMasterRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $quotationMasterRefferedbacks = $this->quotationMasterRefferedbackRepository->all();
 
-        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Versions retrieved successfully');
+        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), 'Quotation Master Refferedbacks retrieved successfully');
     }
 
     /**
-     * @param CreateQuotationMasterVersionAPIRequest $request
+     * @param CreateQuotationMasterRefferedbackAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/quotationMasterVersions",
-     *      summary="Store a newly created QuotationMasterVersion in storage",
-     *      tags={"QuotationMasterVersion"},
-     *      description="Store QuotationMasterVersion",
+     *      path="/quotationMasterRefferedbacks",
+     *      summary="Store a newly created QuotationMasterRefferedback in storage",
+     *      tags={"QuotationMasterRefferedback"},
+     *      description="Store QuotationMasterRefferedback",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="QuotationMasterVersion that should be stored",
+     *          description="QuotationMasterRefferedback that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/QuotationMasterVersion")
+     *          @SWG\Schema(ref="#/definitions/QuotationMasterRefferedback")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -107,7 +107,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/QuotationMasterVersion"
+     *                  ref="#/definitions/QuotationMasterRefferedback"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -117,13 +117,13 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateQuotationMasterVersionAPIRequest $request)
+    public function store(CreateQuotationMasterRefferedbackAPIRequest $request)
     {
         $input = $request->all();
 
-        $quotationMasterVersions = $this->quotationMasterVersionRepository->create($input);
+        $quotationMasterRefferedbacks = $this->quotationMasterRefferedbackRepository->create($input);
 
-        return $this->sendResponse($quotationMasterVersions->toArray(), 'Quotation Master Version saved successfully');
+        return $this->sendResponse($quotationMasterRefferedbacks->toArray(), 'Quotation Master Refferedback saved successfully');
     }
 
     /**
@@ -131,14 +131,14 @@ class QuotationMasterVersionAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/quotationMasterVersions/{id}",
-     *      summary="Display the specified QuotationMasterVersion",
-     *      tags={"QuotationMasterVersion"},
-     *      description="Get QuotationMasterVersion",
+     *      path="/quotationMasterRefferedbacks/{id}",
+     *      summary="Display the specified QuotationMasterRefferedback",
+     *      tags={"QuotationMasterRefferedback"},
+     *      description="Get QuotationMasterRefferedback",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of QuotationMasterVersion",
+     *          description="id of QuotationMasterRefferedback",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -154,7 +154,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/QuotationMasterVersion"
+     *                  ref="#/definitions/QuotationMasterRefferedback"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -166,30 +166,30 @@ class QuotationMasterVersionAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var QuotationMasterVersion $quotationMasterVersion */
-        $quotationMasterVersion = $this->quotationMasterVersionRepository->with(['confirmed_by', 'created_by'])->findWithoutFail($id);
+        /** @var QuotationMasterRefferedback $quotationMasterRefferedback */
+        $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->with(['confirmed_by', 'created_by'])->findWithoutFail($id);
 
-        if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+        if (empty($quotationMasterRefferedback)) {
+            return $this->sendError('Quotation Master Refferedback not found');
         }
 
-        return $this->sendResponse($quotationMasterVersion->toArray(), 'Quotation Master Version retrieved successfully');
+        return $this->sendResponse($quotationMasterRefferedback->toArray(), 'Quotation Master Refferedback retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateQuotationMasterVersionAPIRequest $request
+     * @param UpdateQuotationMasterRefferedbackAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/quotationMasterVersions/{id}",
-     *      summary="Update the specified QuotationMasterVersion in storage",
-     *      tags={"QuotationMasterVersion"},
-     *      description="Update QuotationMasterVersion",
+     *      path="/quotationMasterRefferedbacks/{id}",
+     *      summary="Update the specified QuotationMasterRefferedback in storage",
+     *      tags={"QuotationMasterRefferedback"},
+     *      description="Update QuotationMasterRefferedback",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of QuotationMasterVersion",
+     *          description="id of QuotationMasterRefferedback",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -197,9 +197,9 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="QuotationMasterVersion that should be updated",
+     *          description="QuotationMasterRefferedback that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/QuotationMasterVersion")
+     *          @SWG\Schema(ref="#/definitions/QuotationMasterRefferedback")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -212,7 +212,7 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/QuotationMasterVersion"
+     *                  ref="#/definitions/QuotationMasterRefferedback"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -222,20 +222,20 @@ class QuotationMasterVersionAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateQuotationMasterVersionAPIRequest $request)
+    public function update($id, UpdateQuotationMasterRefferedbackAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var QuotationMasterVersion $quotationMasterVersion */
-        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+        /** @var QuotationMasterRefferedback $quotationMasterRefferedback */
+        $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->findWithoutFail($id);
 
-        if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+        if (empty($quotationMasterRefferedback)) {
+            return $this->sendError('Quotation Master Refferedback not found');
         }
 
-        $quotationMasterVersion = $this->quotationMasterVersionRepository->update($input, $id);
+        $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($quotationMasterVersion->toArray(), 'QuotationMasterVersion updated successfully');
+        return $this->sendResponse($quotationMasterRefferedback->toArray(), 'QuotationMasterRefferedback updated successfully');
     }
 
     /**
@@ -243,14 +243,14 @@ class QuotationMasterVersionAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/quotationMasterVersions/{id}",
-     *      summary="Remove the specified QuotationMasterVersion from storage",
-     *      tags={"QuotationMasterVersion"},
-     *      description="Delete QuotationMasterVersion",
+     *      path="/quotationMasterRefferedbacks/{id}",
+     *      summary="Remove the specified QuotationMasterRefferedback from storage",
+     *      tags={"QuotationMasterRefferedback"},
+     *      description="Delete QuotationMasterRefferedback",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of QuotationMasterVersion",
+     *          description="id of QuotationMasterRefferedback",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -278,19 +278,20 @@ class QuotationMasterVersionAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var QuotationMasterVersion $quotationMasterVersion */
-        $quotationMasterVersion = $this->quotationMasterVersionRepository->findWithoutFail($id);
+        /** @var QuotationMasterRefferedback $quotationMasterRefferedback */
+        $quotationMasterRefferedback = $this->quotationMasterRefferedbackRepository->findWithoutFail($id);
 
-        if (empty($quotationMasterVersion)) {
-            return $this->sendError('Quotation Master Version not found');
+        if (empty($quotationMasterRefferedback)) {
+            return $this->sendError('Quotation Master Refferedback not found');
         }
 
-        $quotationMasterVersion->delete();
+        $quotationMasterRefferedback->delete();
 
-        return $this->sendResponse($id, 'Quotation Master Version deleted successfully');
+        return $this->sendResponse($id, 'Quotation Master Refferedback deleted successfully');
     }
 
-    public function getSalesQuotationRevisionHistory(Request $request){
+    public function getSalesQuotationAmendHistory(Request $request)
+    {
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -301,14 +302,13 @@ class QuotationMasterVersionAPIController extends AppBaseController
 
         $quotationMasterID = $request['quotationMasterID'];
 
+        $quotationMasterRefferedbackData = QuotationMasterRefferedback::where('quotationMasterID', $quotationMasterID);
 
-        $quotationMasterVersion = QuotationMasterVersion::where('quotationMasterID', $quotationMasterID);
-
-        return \DataTables::eloquent($quotationMasterVersion)
+        return \DataTables::eloquent($quotationMasterRefferedbackData)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('quotationVerstionMasterID', $input['order'][0]['dir']);
+                        $query->orderBy('quotationMasterRefferedBackID', $input['order'][0]['dir']);
                     }
                 }
             })

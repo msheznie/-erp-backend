@@ -6,11 +6,11 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="QuotationMasterVersion",
+ *      definition="QuotationMasterRefferedback",
  *      required={""},
  *      @SWG\Property(
- *          property="quotationVerstionMasterID",
- *          description="quotationVerstionMasterID",
+ *          property="quotationMasterRefferedBackID",
+ *          description="quotationMasterRefferedBackID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -414,15 +414,15 @@ use Eloquent as Model;
  *      )
  * )
  */
-class QuotationMasterVersion extends Model
+class QuotationMasterRefferedback extends Model
 {
 
-    public $table = 'erp_quotationmasterversion';
+    public $table = 'erp_quotationmasterrefferedback';
 
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'quotationVerstionMasterID';
+    protected $primaryKey = 'quotationMasterRefferedBackID';
 
     public $fillable = [
         'quotationMasterID',
@@ -512,7 +512,7 @@ class QuotationMasterVersion extends Model
      * @var array
      */
     protected $casts = [
-        'quotationVerstionMasterID' => 'integer',
+        'quotationMasterRefferedBackID' => 'integer',
         'quotationMasterID' => 'integer',
         'documentSystemID' => 'string',
         'documentID' => 'string',

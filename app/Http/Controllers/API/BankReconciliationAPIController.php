@@ -582,9 +582,10 @@ class BankReconciliationAPIController extends AppBaseController
         $companyId = $request['companyId'];
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
-
+        $bankMasters = BankMaster::all();
         $output = array(
             'yesNoSelection' => $yesNoSelection,
+            'bankMasters' => $bankMasters
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
