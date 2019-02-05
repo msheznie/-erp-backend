@@ -20,6 +20,7 @@
  * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationReopen(),
  * -- Date: 29-January 2019 By: Nazir Description: Added new function salesQuotationVersionCreate(),
  * -- Date: 03-February 2019 By: Nazir Description: Added new function salesQuotationAmend(),
+ * -- Date: 05-February 2019 By: Nazir Description: Added new function salesQuotationAudit(),
  */
 
 namespace App\Http\Controllers\API;
@@ -1252,6 +1253,23 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($quotationMasterData->toArray(), 'Sales quotation amend successfully');
+    }
+
+    public function salesQuotationAudit(Request $request)
+    {
+        $input = $request->all();
+        $quotationMasterID = $input['quotationMasterID'];
+        $quotationMasterdata = $this->quotationMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->whereIn('documentSystemID', [67, 68]);
+        }, 'company'])->findWithoutFail($quotationMasterID);
+
+
+        if (empty($quotationMasterdata)) {
+            return $this->sendError('Sales quotation not found');
+        }
+
+        return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
     }
 
 
