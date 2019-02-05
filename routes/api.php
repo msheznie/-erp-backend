@@ -827,6 +827,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
     Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
     Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
+    Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
     Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
@@ -1383,6 +1384,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
     Route::post('salesQuotationReopen', 'QuotationMasterAPIController@salesQuotationReopen');
     Route::post('salesQuotationVersionCreate', 'QuotationMasterAPIController@salesQuotationVersionCreate');
+    Route::post('salesQuotationAmend', 'QuotationMasterAPIController@salesQuotationAmend');
+    Route::get('salesQuotationAudit', 'QuotationMasterAPIController@salesQuotationAudit');
 
     Route::resource('gposInvoices', 'GposInvoiceAPIController');
     Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
@@ -1393,6 +1396,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('quotationMasterVersions', 'QuotationMasterVersionAPIController');
     Route::resource('quotationVersionDetails', 'QuotationVersionDetailsAPIController');
     Route::post('getSalesQuotationRevisionHistory', 'QuotationMasterVersionAPIController@getSalesQuotationRevisionHistory');
+    Route::get('getSQVDetailsHistory', 'QuotationVersionDetailsAPIController@getSQVDetailsHistory');
+
+
+    Route::resource('quotationDetailsRefferedbacks', 'QuotationDetailsRefferedbackAPIController');
+    Route::resource('quotationMasterRefferedbacks', 'QuotationMasterRefferedbackAPIController');
+    Route::post('getSalesQuotationAmendHistory', 'QuotationMasterRefferedbackAPIController@getSalesQuotationAmendHistory');
+    Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
 
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
@@ -1464,4 +1474,4 @@ Route::get('runQueueSR', function () {
 });
 
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-
+Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');

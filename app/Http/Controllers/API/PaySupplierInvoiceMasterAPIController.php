@@ -575,7 +575,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-
+            Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -847,16 +847,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
 
                         if ($checkChequeNoDuplicate) {
-                            return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
+                            //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
                         }
 
                         if ($bankAccount->isPrintedActive == 1) {
                             $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
                             $input['BPVchequeNo'] = $nextChequeNo;
-                            Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
                             Log::info('Cheque No:'.$input['BPVchequeNo']);
-                            Log::info('PV Code:'.$paySupplierInvoice->BPVcode);
+                            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
                             Log::info('-------------------------------------------------------');
                         }
                     } else {
@@ -953,7 +952,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUser'] = \Helper::getEmployeeID();
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
+            Log::info('Cheque No:'.$input['BPVchequeNo']);
+            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
+            Log::info('beforeUpdate______________________________________________________');
+
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
+
+            Log::info('Cheque No:'.$input['BPVchequeNo']);
+            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
+            Log::info($paySupplierInvoiceMaster);
+            Log::info('afterUpdate______________________________________________________');
 
             if ($input['payeeType'] == 1) {
                 $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)

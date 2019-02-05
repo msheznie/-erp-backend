@@ -235,7 +235,12 @@
 
                 <div>
                     <span style="font-size: 18px">
-                        Sales Quotation
+                        @if($masterdata->documentSystemID == 67)
+                            Sales Quotation
+                        @endif
+                        @if($masterdata->documentSystemID == 68)
+                            Sales Order
+                        @endif
                     </span>
                 </div>
             </td>

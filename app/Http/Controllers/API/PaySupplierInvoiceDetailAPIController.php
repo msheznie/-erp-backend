@@ -746,6 +746,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $tempArray["PayMasterAutoId"] = $matchDocumentMasterData->PayMasterAutoId;
                     $tempArray["matchingDocID"] = $matchDocumentMasterAutoID;
 
+                    $tempArray["documentID"] = $matchDocumentMasterData->documentID;
+                    $tempArray["documentSystemID"] = $matchDocumentMasterData->documentSystemID;
+
                     $tempArray['createdPcID'] = gethostname();
                     $tempArray['createdUserID'] = $user->employee['empID'];
                     $tempArray['createdUserSystemID'] = $user->employee['employeeSystemID'];

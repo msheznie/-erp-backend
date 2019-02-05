@@ -246,6 +246,8 @@ class PaySupplierInvoiceDetail extends Model
 
     public $fillable = [
         'PayMasterAutoId',
+        'documentID',
+        'documentSystemID',
         'apAutoID',
         'matchingDocID',
         'companySystemID',
@@ -296,6 +298,8 @@ class PaySupplierInvoiceDetail extends Model
     protected $casts = [
         'payDetailAutoID' => 'integer',
         'PayMasterAutoId' => 'integer',
+        'documentID' => 'string',
+        'documentSystemID' => 'integer',
         'apAutoID' => 'integer',
         'matchingDocID' => 'integer',
         'companySystemID' => 'integer',

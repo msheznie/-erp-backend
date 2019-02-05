@@ -1490,23 +1490,23 @@ class GeneralLedgerInsert implements ShouldQueue
                                         if ($isBankCheck) {
                                             //calculate local amount
                                             if ($val->bankCurrencyID == $val->localCurrencyID) {
-                                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->bankAmount));
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
                                                 $convertedLocalAmount += $data['documentLocalAmount'];
                                             } else {
                                                 $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
                                                 $data['documentLocalCurrencyER'] = $conversion->conversion;
                                                 if ($conversion->conversion > 1) {
                                                     if ($conversion->conversion > 1) {
-                                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->bankAmount) / $conversion->conversion);
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     } else {
-                                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->bankAmount) * $conversion->conversion);
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                     $convertedLocalAmount += $data['documentLocalAmount'];
                                                 } else {
                                                     if ($conversion->conversion > 1) {
-                                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->bankAmount) * $conversion->conversion);
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     } else {
-                                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->bankAmount) / $conversion->conversion);
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                     $convertedLocalAmount += $data['documentLocalAmount'];
                                                 }
@@ -1514,34 +1514,34 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                             //calculate reporting amount
                                             if ($val->bankCurrencyID == $val->reportingCurrencyID) {
-                                                $data['documentRptAmount'] = \Helper::roundValue(ABS($val->bankAmount));
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
                                                 $convertedRpt += $data['documentRptAmount'];
                                             } else {
                                                 $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
                                                 $data['documentRptCurrencyER'] = $conversion->conversion;
                                                 if ($conversion->conversion > 1) {
                                                     if ($conversion->conversion > 1) {
-                                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->bankAmount) / $conversion->conversion);
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     } else {
-                                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->bankAmount) * $conversion->conversion);
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     }
                                                     $convertedRpt += $data['documentRptAmount'];
                                                 } else {
                                                     if ($conversion->conversion > 1) {
-                                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->bankAmount) * $conversion->conversion);
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
                                                     } else {
-                                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->bankAmount) / $conversion->conversion);
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
                                                     }
                                                     $convertedRpt += $data['documentRptAmount'];
                                                 }
                                             }
                                         } else {
                                             $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
                                             $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
-                                            $convertedLocalAmount += \Helper::roundValue(ABS($val->localAmount));
-                                            $convertedRpt += \Helper::roundValue(ABS($val->rptAmount));
+                                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                                            $convertedLocalAmount += \Helper::roundValue($val->localAmount);
+                                            $convertedRpt += \Helper::roundValue($val->rptAmount);
                                         }
 
                                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
@@ -1552,11 +1552,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentNarration'] = $val->comments;
                                         $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                         $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
                                         $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                         $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                                         $data['timestamp'] = \Helper::currentDateTime();
-                                        $convertedTrans += \Helper::roundValue(ABS($val->transAmount));
+                                        $convertedTrans += \Helper::roundValue($val->transAmount);
                                         array_push($finalData, $data);
                                     }
                                 }
