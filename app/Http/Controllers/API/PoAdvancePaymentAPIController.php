@@ -564,7 +564,18 @@ ORDER BY
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType'));
+
+        $validator = \Validator::make($request->all(), [
+            'reportTypeID' => 'required',
+            'asOfDate' => 'required',
+            'currencyID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -586,10 +597,6 @@ ORDER BY
                 }
             })
             ->addIndexColumn()
-            /*->addColumn('status', function ($row) {
-                return 0;
-                //return $this->getStatus($row);
-            })*/
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -597,7 +604,7 @@ ORDER BY
     public function advancePaymentRequestReportQry($request,$search){
 
         $input = $request;
-        $selectedCompanyId = $request['companyId'];
+        $selectedCompanyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
@@ -605,30 +612,71 @@ ORDER BY
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $asOfDate = (new Carbon($input['asOfDate']))->format('Y-m-d');
+
+        $detailsSumColumn = 'paymentAmount';
+        $caseColumn = 'reqAmount';
+        if ($input['currencyID'] == 2) {
+            $caseColumn = 'reqAmountInPOLocalCur';
+            $detailsSumColumn = 'localAmount';
+        } else if ($input['currencyID'] == 3) {
+            $caseColumn = 'reqAmountInPORptCur';
+            $detailsSumColumn = 'comRptAmount';
+        }
+
+        $agingField = '';
+        if($input['reportTypeID'] == 'APRA') {
+            $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
+            $condition = 'DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate))';
+            if (!empty($aging)) { /*calculate aging range in query*/
+                $count = count($aging);
+                $c = 1;
+                foreach ($aging as $val) {
+                    if ($count == $c) {
+                        $agingField .= "if(" . $condition . "   > " . 365 . "," . $caseColumn . ",0) as `case" . $c . "`,";
+                    } else {
+                        $list = explode("-", $val);
+                        $agingField .= "if(" . $condition . " >= " . $list[0] . " AND " . $condition . " <= " . $list[1] . "," . $caseColumn . ",0) as `case" . $c . "`,";
+                    }
+                    $c++;
+                }
+            }
+        }
 
         $advancePaymentRequest = DB::table('erp_purchaseorderadvpayment')
-            ->selectRaw('erp_purchaseorderadvpayment.*,suppliermaster.primarySupplierCode,suppliermaster.supplierName,
-                                        currencymaster.CurrencyCode,currencymaster.DecimalPlaces,
+            ->selectRaw('erp_purchaseorderadvpayment.*,'.$agingField.'
+                                        erp_purchaseordermaster.localCurrencyID,erp_purchaseordermaster.companyReportingCurrencyID,
+                                        erp_purchaseordermaster.poTotalSupplierTransactionCurrency,erp_purchaseordermaster.poTotalLocalCurrency,
+                                        erp_purchaseordermaster.poTotalComRptCurrency,
+                                        suppliermaster.primarySupplierCode,suppliermaster.supplierName,
+                                        trns.CurrencyCode as trnsCurrencyCode,trns.DecimalPlaces as trnsDecimalPlaces,
+                                        local.CurrencyCode as localCurrencyCode,local.DecimalPlaces as localDecimalPlaces,
+                                        rpt.CurrencyCode as rptCurrencyCode,rpt.DecimalPlaces as rptDecimalPlaces,
                                         details.PayMasterAutoId,details.SumOfpaymentAmount,erp_paysupplierinvoicemaster.approved as pay_approved,
                                         (If(round(reqAmount - details.SumOfpaymentAmount)=0 And erp_paysupplierinvoicemaster.approved=-1,2,
                                         If((selectedToPayment=-1 Or selectedToPayment=0) And round(reqAmount - details.SumOfpaymentAmount)<>0 And erp_paysupplierinvoicemaster.approved=-1,1,
-                                        If(selectedToPayment=-1 And erp_paysupplierinvoicemaster.approved=0,3,0)))) as status')
+                                        If(selectedToPayment=-1 And erp_paysupplierinvoicemaster.approved=0,3,0)))) as status,
+                                        DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate)) as ageDays')
             ->whereIn('erp_purchaseorderadvpayment.companySystemID', $subCompanies)
             ->where('erp_purchaseordermaster.poConfirmedYN', 1)
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseordermaster.poCancelledYN', 0)
+            ->whereDate('erp_purchaseorderadvpayment.reqDate','<=', $asOfDate)
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
-            ->leftJoin('currencymaster', 'erp_purchaseorderadvpayment.currencyID', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster as trns', 'erp_purchaseorderadvpayment.currencyID', 'trns.currencyID')
+            ->leftJoin('currencymaster as local', 'erp_purchaseordermaster.localCurrencyID', 'local.currencyID')
+            ->leftJoin('currencymaster as rpt', 'erp_purchaseordermaster.companyReportingCurrencyID', 'rpt.currencyID')
             ->leftJoin(DB::raw('(SELECT poAdvPaymentID, SumOfpaymentAmount,PayMasterAutoId FROM (SELECT * FROM
-	( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
-	INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.paymentAmount ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs 
-	) b) as details'), function ($query) {
+                ( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
+                INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.'.$detailsSumColumn.' ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs 
+                ) b) as details'), function ($query)
+            {
                 $query->on('erp_purchaseorderadvpayment.poAdvPaymentID', '=', 'details.poAdvPaymentID');
             })
             ->leftJoin('erp_paysupplierinvoicemaster', 'details.PayMasterAutoId', 'erp_paysupplierinvoicemaster.PayMasterAutoId');
 
-        if (array_key_exists('invoiceType', $input)) {
+        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
             $advancePaymentRequest = $advancePaymentRequest->having('status', $input['invoiceType']);
         }
 
@@ -647,8 +695,19 @@ ORDER BY
 
     public function exportAdvancePaymentRequestReport(Request $request)
     {
+
+        $validator = \Validator::make($request->all(), [
+            'reportTypeID' => 'required',
+            'asOfDate' => 'required',
+            'currencyID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType'));
+        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -656,7 +715,7 @@ ORDER BY
             $sort = 'desc';
         }
 
-        $search = $request->input('search.value');
+            $search = $request->input('search.value');
             $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search)->orderBy('poAdvPaymentID',$sort)->get();
             $type = $request->type;
 
@@ -676,14 +735,40 @@ ORDER BY
 
                 $x = 0;
                 foreach ($advancePaymentRequest as $val) {
+
+                    $decimal = 2;
+                    if ($input['currencyID'] == 1) {
+                        $decimal = $val->trnsDecimalPlaces;
+                    } else if ($input['currencyID'] == 2) {
+                        $decimal = $val->localDecimalPlaces;
+                    } else if ($input['currencyID'] == 3) {
+                        $decimal = $val->rptDecimalPlaces;
+                    }
                     $data[$x]['Supplier Code'] = $val->primarySupplierCode;
                     $data[$x]['Supplier Name'] = $val->supplierName;
                     $data[$x]['Purchase Order Code'] = $val->poCode;
                     $data[$x]['Req Date'] =  \Helper::dateFormat($val->reqDate);
                     $data[$x]['Narration'] = $val->narration;
-                    $data[$x]['Currency'] = $val->CurrencyCode;
-                    $data[$x]['Req Amount'] = number_format($val->reqAmount,$val->DecimalPlaces);
-                    $data[$x]['Paid Amount'] = number_format($val->SumOfpaymentAmount,$val->DecimalPlaces);
+
+                    if ($input['currencyID'] == 1) {
+                        $data[$x]['Currency'] = $val->trnsCurrencyCode;
+                        $data[$x]['PO Amount'] = number_format($val->poTotalSupplierTransactionCurrency,$decimal);
+                        $data[$x]['Req Amount'] = number_format($val->reqAmount,$decimal);
+                    } else if ($input['currencyID'] == 2) {
+                        $data[$x]['Currency'] = $val->localCurrencyCode;
+                        $data[$x]['PO Amount'] = number_format($val->poTotalLocalCurrency,$decimal);
+                        $data[$x]['Req Amount'] = number_format($val->reqAmountInPOLocalCur,$decimal);
+                    } else if ($input['currencyID'] == 3) {
+                        $data[$x]['Currency'] = $val->rptCurrencyCode;
+                        $data[$x]['PO Amount'] = number_format($val->poTotalComRptCurrency,$decimal);
+                        $data[$x]['Req Amount'] = number_format($val->reqAmountInPORptCur,$decimal);
+                    }else{
+                        $data[$x]['Currency'] = '';
+                        $data[$x]['PO Amount'] = number_format(0,$decimal);
+                        $data[$x]['Req Amount'] = number_format(0,$decimal);
+                    }
+
+                    $data[$x]['Paid Amount'] = number_format($val->SumOfpaymentAmount,$decimal);
 
                     $status = "";
                     if($val->status == 0){
@@ -699,6 +784,19 @@ ORDER BY
                     }
 
                     $data[$x]['Status'] = $status;
+
+                    if($input['reportTypeID'] == 'APRA') {
+                        $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                        $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                        $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                        $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                        $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                        $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                        $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                        $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                        $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                        $data[$x]['Over 365'] = number_format($val->case10, $decimal);
+                    }
                     $x++;
                 }
             } else {
