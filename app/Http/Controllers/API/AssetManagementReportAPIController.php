@@ -567,7 +567,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                             $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
                             $data[$x]['Asset Description'] = $value['assetDescription'];
                             $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
-                            $data[$x]['Date Aquired'] = \Helper::dateFormat($value['dateAQ']);
+                            $data[$x]['Date Aquired'] = \Helper::dateFormat($value['postedDate']);
                             $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
 
                             $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
@@ -657,7 +657,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                         $data[$x]['Serial Number'] = $val->SerialNumber;
                         $data[$x]['Asset Description'] = $val->AssetDescription;
                         $data[$x]['DEP percentage'] = $val->DEPpercentage;
-                        $data[$x]['Date Acquired'] = \Helper::dateFormat($val->DateAquired);
+                        $data[$x]['Date Acquired'] = \Helper::dateFormat($val->postedDate);
                         $data[$x]['GRV Code'] = $val->GRVCODE;
                         $data[$x]['PO Code'] = $val->POCODE;
                         $data[$x]['Service Line'] = $val->ServiceLineDes;
@@ -871,6 +871,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     ROUND(erp_fa_asset_master.DEPpercentage, 0) AS DEPpercentage,
                     serviceline.ServiceLineDes AS ServiceLineDes,
                     erp_fa_asset_master.dateAQ AS DateAquired,
+                    erp_fa_asset_master.postedDate AS postedDate,
                     erp_fa_asset_master.docOrigin AS GRVCODE,
                     erp_purchaseordermaster.purchaseOrderCode AS POCODE,
                     erp_fa_asset_master.serviceLineCode AS ServiceLine,
@@ -894,7 +895,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                 LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
-                    AND DATE(erp_fa_asset_master.dateAQ) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                    AND DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                 AND erp_fa_asset_master.approved = -1
                 GROUP BY
                     erp_fa_asset_master.companySystemID,
@@ -1933,6 +1934,7 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	erp_fa_asset_master.serviceLineCode,
 	docOrigin,
 	AUDITCATOGARY,
+	postedDate,
 	erp_fa_asset_master.faCode,
 	erp_fa_asset_master.assetDescription,
 	DEPpercentage,
