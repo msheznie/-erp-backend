@@ -2892,7 +2892,7 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date($jvMasterData->JVdate, strtotime('first day of next month'));
+            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
 
             $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
                 ->where('companySystemID', $jvMasterData->companySystemID)
@@ -2963,7 +2963,7 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
 
             $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
                 ->where('companySystemID', $jvMasterData->companySystemID)
