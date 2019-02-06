@@ -16,7 +16,8 @@
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
  * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusDNPrint(),
- * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckDebitNote(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckDebitNote()
+ * -- Date: 6-February 2019 By: Fayas Description: Added new function exportDebitNotesByCompany()
  */
 namespace App\Http\Controllers\API;
 
@@ -672,56 +673,8 @@ class DebitNoteAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
-            ->with('created_by', 'transactioncurrency', 'supplier')
-            ->where('documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $debitNotes = $debitNotes->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $debitNotes = $debitNotes->where(function ($query) use ($search) {
-                $query->where('debitNoteCode', 'LIKE', "%{$search}%")
-                    ->orWhere('invoiceNumber', 'LIKE', "%{$search}%")
-                    ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%")
-                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+        $debitNotes = $this->debitNotesByCompany($input,$search);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -1409,5 +1362,135 @@ UNION ALL
 
     }
 
+    public function exportDebitNotesByCompany(Request $request)
+    {
 
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $output = $this->debitNotesByCompany($input,$search)->orderBy('debitNoteAutoID', $sort)->get();
+        $data = array();
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Debit Note Code'] = $value->debitNoteCode;
+
+                if($value->postedDate){
+                    $data[$x]['Posted Date'] = \Helper::dateFormat($value->postedDate);
+                }else{
+                    $data[$x]['Posted Date'] = '';
+                }
+
+                $data[$x]['Narration'] = $value->comments;
+                if ($value->supplier) {
+                    $data[$x]['Supplier Code'] = $value->supplier->primarySupplierCode;
+                    $data[$x]['Supplier Name'] = $value->supplier->supplierName;
+                } else {
+                    $data[$x]['Supplier Code'] = '';
+                    $data[$x]['Supplier Name'] = '';
+                }
+
+                $decimalPlaces = 2;
+
+                if($value->transactioncurrency){
+                    $data[$x]['Currency'] = $value->transactioncurrency->CurrencyCode;
+                    $decimalPlaces = $value->transactioncurrency->DecimalPlaces;
+                }else{
+                    $data[$x]['Currency'] = '';
+                }
+
+                $data[$x]['Amount'] = round($value->debitAmountTrans,$decimalPlaces);
+
+                if ($value->final_approved_by) {
+                    $data[$x]['Approved By'] = $value->final_approved_by->empName;
+                } else {
+                    $data[$x]['Approved By'] = '';
+                }
+
+                if($value->approvedDate){
+                    $data[$x]['Approved Date'] = \Helper::dateFormat($value->approvedDate);
+                }else{
+                    $data[$x]['Approved Date'] = '';
+                }
+
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('debit_note_by_company', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+
+    private function debitNotesByCompany($request,$search){
+        $input = $request;
+        $selectedCompanyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
+            ->with('created_by', 'transactioncurrency', 'supplier','final_approved_by')
+            ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $debitNotes = $debitNotes->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
+            }
+        }
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('debitNoteCode', 'LIKE', "%{$search}%")
+                    ->orWhere('invoiceNumber', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('supplierName', 'like', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $debitNotes;
+     }
 }

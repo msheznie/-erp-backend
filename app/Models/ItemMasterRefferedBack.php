@@ -299,7 +299,8 @@ class ItemMasterRefferedBack extends Model
         'createdDateTime',
         'timestamp',
         'createdUserSystemID',
-        'modifiedUserSystemID'
+        'modifiedUserSystemID',
+        'isPOSItem'
     ];
 
     /**
@@ -348,7 +349,8 @@ class ItemMasterRefferedBack extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'createdUserSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'isPOSItem' => 'integer'
     ];
 
     /**
