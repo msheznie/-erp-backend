@@ -19,6 +19,8 @@ use App\Models\AssetFinanceCategory;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\FixedAssetDepreciationPeriod;
+use App\Models\FixedAssetMaster;
 use App\Models\Months;
 use App\Models\Year;
 use App\Models\AssetType;
@@ -68,12 +70,24 @@ class AssetManagementReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'AMAR':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'assetCategory' => 'required',
-                    'typeID' => 'required'
-                ]);
+                $validator = '';
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'assetCategory' => 'required',
+                        'typeID' => 'required'
+                    ]);
+                } else if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'financePeriod' => 'required',
+                        'financeYear' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required'
+                    ]);
+                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -124,8 +138,7 @@ class AssetManagementReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'AMAR': //Asset Register
-
-                if($request->reportTypeID == 'ARD') { // Asset Register Detail
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
                     /*shahmy*/
                     $typeID = $request->typeID;
                     $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
@@ -157,7 +170,52 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
 
-                if($request->reportTypeID == 'ARS') { // Asset Register Summary
+                if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+                    $financeYear = CompanyFinanceYear::find($request->financeYear);
+                    $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+                    $output = $this->getAssetRegisterSummaryQRY($request);
+                    $assetCategory = $request->assetCategory;
+                    $costTotal = [];
+                    $depTotal = [];
+                    $nbv = [];
+                    $nbvEnd = [];
+                    $depQry = collect($output['depQry']);
+                    $costQry = collect($output['costQry']);
+
+                    $filteredCostQry = $costQry->firstWhere('description', $beginingFinancialYear);
+                    $filteredDepQry = $depQry->firstWhere('description', $beginingFinancialYear);
+
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val) {
+                            $depTotal[$val['financeCatDescription']] = $depQry->sum($val['financeCatDescription']);
+                            $costTotal[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']);
+                            $nbv[$val['financeCatDescription']] = $filteredCostQry[$val['financeCatDescription']] - $filteredDepQry[$val['financeCatDescription']];
+                            $nbvEnd[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']) - $depQry->sum($val['financeCatDescription']);
+                        }
+                    }
+                    $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
+
+                    $costTotal['total'] = collect($costTotal)->values()->sum();
+                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['total'] = collect($depTotal)->values()->sum();
+                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['depQry'] = collect($output['depQry'])->toArray();
+                    $output['costQry'] = collect($output['costQry'])->toArray();
+                    $output['depQry'][] = $depTotal;
+                    $output['costQry'][] = $costTotal;
+
+                    $nbv['total'] = collect($nbv)->values()->sum();
+                    $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
+                    $nbv['description'] = $beginingFinancialYear;
+                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['nbvQry'][] = $nbv;
+                    $output['nbvQry'][] = $nbvEnd;
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                    return array('reportData' => $output, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'date' => Carbon::parse($financePeriod->dateTo)->format('Y-m-d'), 'companyName' => $companyCurrency->CompanyName);
 
                 }
 
@@ -433,158 +491,158 @@ class AssetManagementReportAPIController extends AppBaseController
         $type = $request->type;
         switch ($reportID) {
             case 'AMAR': //Asset Register
-
-                $output = $this->getAssetRegisterDetail($request);
-
-                $outputArr = [];
-
-                /*      if ($request->excelType == 1) {
-                          if ($output) {
-                              foreach ($output as $val) {
-                                  if($val->groupTO==1){
-                                      $outputArr[$val->groupTO][$val->groupbydesc][$val->financeCatDescription][] = (array)$val;
-                                  }else{
-                                      $outputArr[0][$val->financeCatDescription][] = (array)$val;
-                                  }
-
-                              }
-                          }
-
-                      } else {*/
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->financeCatDescription][] = (array)$val;
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    $output = $this->getAssetRegisterDetail($request);
+                    $outputArr = [];
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->financeCatDescription][] = (array)$val;
+                        }
                     }
-                }
+                    $x = 0;
+                    if (!empty($outputArr)) {
+                        $TotalCOSTUNIT = 0;
+                        $TotaldepAmountLocal = 0;
+                        $Totallocalnbv = 0;
+                        $TotalcostUnitRpt = 0;
+                        $TotaldepAmountRpt = 0;
+                        $Totalrptnbv = 0;
+                        foreach ($outputArr as $key => $val) {
+                            $data[$x]['Cost GL'] = $key;
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
 
-                /*  }*/
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = '';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = '';
+                            $data[$x]['Rpt Amount acc net value'] = '';
 
-
-                $x = 0;
-
-
-                if (!empty($outputArr)) {
-                    $TotalCOSTUNIT = 0;
-                    $TotaldepAmountLocal = 0;
-                    $Totallocalnbv = 0;
-                    $TotalcostUnitRpt = 0;
-                    $TotaldepAmountRpt = 0;
-                    $Totalrptnbv = 0;
-                    foreach ($outputArr as $key => $val) {
-
-                        $data[$x]['Cost GL'] = $key;
-                        $data[$x]['Acc Dep GL'] = '';
-                        $data[$x]['Type'] = '';
-
-                        $data[$x]['Segment'] = '';
-                        $data[$x]['category'] = '';
-                        $data[$x]['FA Code'] = '';
-                        $data[$x]['Grouped YN'] = '';
-                        $data[$x]['Serial Number'] = '';
-                        $data[$x]['Asset Description'] = '';
-                        $data[$x]['DEP %'] = '';
-                        $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = '';
-                        $data[$x]['Local Amount unitcost'] = '';
-                        $data[$x]['Local Amount accDep'] = '';
-                        $data[$x]['Local Amount net Value'] = '';
-                        $data[$x]['Rpt Amount unit cost'] = '';
-                        $data[$x]['Rpt Amount acc dep'] = '';
-                        $data[$x]['Rpt Amount acc net value'] = '';
-
-                        $x++;
-
-                        $data[$x]['Cost GL'] = 'Cost GL';
-                        $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
-                        $data[$x]['Type'] = 'Type';
-                        $data[$x]['Segment'] = 'Segment';
-                        $data[$x]['category'] = 'Finance Category';
-                        $data[$x]['FA Code'] = 'FA Code';
-                        $data[$x]['Grouped YN'] = 'Grouped FA Code';
-                        $data[$x]['Serial Number'] = 'Serial Number';
-                        $data[$x]['Asset Description'] = 'Asset Description';
-                        $data[$x]['DEP %'] = 'DEP %';
-                        $data[$x]['Date Aquired'] = 'Date Aquired';
-                        $data[$x]['Dep Start Date'] = 'Dep Start Date';
-                        $data[$x]['Local Amount unitcost'] = '';
-                        $data[$x]['Local Amount accDep'] = '';
-                        $data[$x]['Local Amount net Value'] = 'Local Amount';
-                        $data[$x]['Rpt Amount unit cost'] = '';
-                        $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
-                        $data[$x]['Rpt Amount acc net value'] = '';
-
-                        $x++;
-
-                        $data[$x]['Cost GL'] = '';
-                        $data[$x]['Acc Dep GL'] = '';
-                        $data[$x]['Type'] = '';
-                        $data[$x]['Segment'] = '';
-                        $data[$x]['category'] = '';
-                        $data[$x]['FA Code'] = '';
-                        $data[$x]['Grouped YN'] = '';
-                        $data[$x]['Serial Number'] = '';
-                        $data[$x]['Asset Description'] = '';
-                        $data[$x]['DEP %'] = '';
-                        $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = '';
-
-                        $data[$x]['Local Amount unitcost'] = 'Unit Cost';
-                        $data[$x]['Local Amount accDep'] = 'AccDep Amount';
-                        $data[$x]['Local Amount net Value'] = 'Net Book Value';
-                        $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
-                        $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
-                        $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
-
-                        $x++;
-                        $COSTUNIT = 0;
-                        $depAmountLocal = 0;
-                        $localnbv = 0;
-                        $costUnitRpt = 0;
-                        $depAmountRpt = 0;
-                        $rptnbv = 0;
-
-
-                        foreach ($outputArr[$key] as $value) {
                             $x++;
-                            $COSTUNIT += $value['COSTUNIT'];
-                            $depAmountLocal += $value['depAmountLocal'];
-                            $localnbv += $value['localnbv'];
-                            $costUnitRpt += $value['costUnitRpt'];
-                            $depAmountRpt += $value['depAmountRpt'];
-                            $rptnbv += $value['rptnbv'];
 
-                            $TotalCOSTUNIT += $value['COSTUNIT'];
-                            $TotaldepAmountLocal += $value['depAmountLocal'];
-                            $Totallocalnbv += $value['localnbv'];
-                            $TotalcostUnitRpt += $value['costUnitRpt'];
-                            $TotaldepAmountRpt += $value['depAmountRpt'];
-                            $Totalrptnbv += $value['rptnbv'];
+                            $data[$x]['Cost GL'] = 'Cost GL';
+                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                            $data[$x]['Type'] = 'Type';
+                            $data[$x]['Segment'] = 'Segment';
+                            $data[$x]['category'] = 'Finance Category';
+                            $data[$x]['FA Code'] = 'FA Code';
+                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                            $data[$x]['Serial Number'] = 'Serial Number';
+                            $data[$x]['Asset Description'] = 'Asset Description';
+                            $data[$x]['DEP %'] = 'DEP %';
+                            $data[$x]['Date Aquired'] = 'Date Aquired';
+                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = 'Local Amount';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                            $data[$x]['Rpt Amount acc net value'] = '';
 
-                            $data[$x]['Cost GL'] = $value['COSTGLCODE'];
-                            $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
-                            $data[$x]['Type'] = $value['typeDes'];
-                            $data[$x]['Segment'] = $value['ServiceLineDes'];
-                            $data[$x]['category'] = $key;
-                            $data[$x]['FA Code'] = $value['faCode'];
-                            $data[$x]['Grouped YN'] = $value['groupbydesc'];
-                            $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
-                            $data[$x]['Asset Description'] = $value['assetDescription'];
-                            $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
-                            $data[$x]['Date Aquired'] = \Helper::dateFormat($value['postedDate']);
-                            $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+                            $x++;
 
-                            $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
-                            $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
-                            $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
-                            $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
-                            $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
-                            $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+
+                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                            $x++;
+                            $COSTUNIT = 0;
+                            $depAmountLocal = 0;
+                            $localnbv = 0;
+                            $costUnitRpt = 0;
+                            $depAmountRpt = 0;
+                            $rptnbv = 0;
+
+                            foreach ($outputArr[$key] as $value) {
+                                $x++;
+                                $COSTUNIT += $value['COSTUNIT'];
+                                $depAmountLocal += $value['depAmountLocal'];
+                                $localnbv += $value['localnbv'];
+                                $costUnitRpt += $value['costUnitRpt'];
+                                $depAmountRpt += $value['depAmountRpt'];
+                                $rptnbv += $value['rptnbv'];
+
+                                $TotalCOSTUNIT += $value['COSTUNIT'];
+                                $TotaldepAmountLocal += $value['depAmountLocal'];
+                                $Totallocalnbv += $value['localnbv'];
+                                $TotalcostUnitRpt += $value['costUnitRpt'];
+                                $TotaldepAmountRpt += $value['depAmountRpt'];
+                                $Totalrptnbv += $value['rptnbv'];
+
+                                $data[$x]['Cost GL'] = $value['COSTGLCODE'];
+                                $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
+                                $data[$x]['Type'] = $value['typeDes'];
+                                $data[$x]['Segment'] = $value['ServiceLineDes'];
+                                $data[$x]['category'] = $key;
+                                $data[$x]['FA Code'] = $value['faCode'];
+                                $data[$x]['Grouped YN'] = $value['groupbydesc'];
+                                $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
+                                $data[$x]['Asset Description'] = $value['assetDescription'];
+                                $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
+                                $data[$x]['Date Aquired'] = \Helper::dateFormat($value['postedDate']);
+                                $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+
+                                $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
+                                $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
+                                $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
+                                $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
+                                $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
+                                $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+                            }
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                            $data[$x]['Local Amount net Value'] = $localnbv;
+                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+                            $x++;
 
                         }
 
                         $x++;
 
-
                         $data[$x]['Cost GL'] = '';
                         $data[$x]['Acc Dep GL'] = '';
                         $data[$x]['Type'] = '';
@@ -596,52 +654,142 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Asset Description'] = '';
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = 'Sub Total';
-
-                        $data[$x]['Local Amount unitcost'] = $COSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $depAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $localnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $rptnbv;
-
-                        $x++;
-
+                        $data[$x]['Dep Start Date'] = 'Total';
+                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
+                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
+                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
+                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
+                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
+                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                    $x++;
+                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                        $excel->sheet('asset register', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true, false);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
 
-                    $data[$x]['Cost GL'] = '';
-                    $data[$x]['Acc Dep GL'] = '';
-                    $data[$x]['Type'] = '';
-                    $data[$x]['Segment'] = '';
-                    $data[$x]['category'] = '';
-                    $data[$x]['FA Code'] = '';
-                    $data[$x]['Grouped YN'] = '';
-                    $data[$x]['Serial Number'] = '';
-                    $data[$x]['Asset Description'] = '';
-                    $data[$x]['DEP %'] = '';
-                    $data[$x]['Date Aquired'] = '';
-                    $data[$x]['Dep Start Date'] = 'Total';
-                    $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                    $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                    $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                    $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                    $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                    $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
                 }
 
+                if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+                    $financeYear = CompanyFinanceYear::find($request->financeYear);
+                    $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+                    $output = $this->getAssetRegisterSummaryQRY($request);
+                    $assetCategory = $request->assetCategory;
+                    $costTotal = [];
+                    $depTotal = [];
+                    $nbv = [];
+                    $nbvEnd = [];
+                    $depQry = collect($output['depQry']);
+                    $costQry = collect($output['costQry']);
 
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('asset register', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true, false);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
+                    $filteredCostQry = $costQry->firstWhere('description', $beginingFinancialYear);
+                    $filteredDepQry = $depQry->firstWhere('description', $beginingFinancialYear);
 
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val) {
+                            $depTotal[$val['financeCatDescription']] = $depQry->sum($val['financeCatDescription']);
+                            $costTotal[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']);
+                            $nbv[$val['financeCatDescription']] = $filteredCostQry[$val['financeCatDescription']] - $filteredDepQry[$val['financeCatDescription']];
+                            $nbvEnd[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']) - $depQry->sum($val['financeCatDescription']);
+                        }
+                    }
+                    $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
+
+                    $costTotal['total'] = collect($costTotal)->values()->sum();
+                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['total'] = collect($depTotal)->values()->sum();
+                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['depQry'] = collect($output['depQry'])->toArray();
+                    $output['costQry'] = collect($output['costQry'])->toArray();
+                    $output['depQry'][] = $depTotal;
+                    $output['costQry'][] = $costTotal;
+
+                    $nbv['total'] = collect($nbv)->values()->sum();
+                    $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
+                    $nbv['description'] = $beginingFinancialYear;
+                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['nbvQry'][] = $nbv;
+                    $output['nbvQry'][] = $nbvEnd;
+
+                    $currencyCode = '';
+                    $currencyDecimalPlace = 2;
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($request->currencyID == 2) {
+                        $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
+                    } else {
+                        $currencyDecimalPlace = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
+                    }
+
+                    $x = 0;
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val2) {
+                            $data[$x]['Description'] = '';
+                            $data[$x][$val2['financeCatDescription']] = '';
+                        }
+                    }
+                    $data[$x]['Total'] = '';
+                    $x++;
+                    $data[$x][''] = 'Cost(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['costQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+                    $x++;
+                    $data[$x][''] = 'Depreciation(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['depQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+                    $x++;
+                    $data[$x][''] = 'Net Book Value(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['nbvQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+
+                    $csv = \Excel::create('asset_register_summary', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                }
 
                 return $this->sendResponse(array(), 'successfully export');
 
@@ -663,6 +811,8 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Date Acquired'] = \Helper::dateFormat($val->postedDate);
                         $data[$x]['GRV Code'] = $val->GRVCODE;
                         $data[$x]['PO Code'] = $val->POCODE;
+                        $data[$x]['PO Amount Rpt'] = $val->poTotalComRptCurrency;
+                        $data[$x]['Payment Date'] = $val->paymentDate;
                         $data[$x]['Service Line'] = $val->ServiceLineDes;
                         $data[$x]['Supplier'] = $val->Supplier;
                         $data[$x]['Asset Cost Local Curr'] = $val->localCurrency;
@@ -877,6 +1027,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     erp_fa_asset_master.postedDate AS postedDate,
                     erp_fa_asset_master.docOrigin AS GRVCODE,
                     erp_purchaseordermaster.purchaseOrderCode AS POCODE,
+                    erp_purchaseordermaster.poTotalComRptCurrency AS poTotalComRptCurrency,
+                    inv.BPVdate AS paymentDate,
                     erp_fa_asset_master.serviceLineCode AS ServiceLine,
                     erp_fa_asset_master.MANUFACTURE AS Supplier,
                     erp_fa_asset_master.COSTUNIT AS AssetCostLocal,
@@ -892,6 +1044,14 @@ class AssetManagementReportAPIController extends AppBaseController
                 LEFT JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                 LEFT JOIN erp_grvmaster ON erp_fa_asset_master.docOriginSystemCode = erp_grvmaster.grvAutoID
                 LEFT JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                LEFT JOIN (SELECT
+	MAX(BPVdate) as BPVdate,
+	grvAutoID
+FROM
+	erp_bookinvsuppdet
+	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppdet.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+	LEFT JOIN ( SELECT erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicedetail.addedDocumentSystemID,erp_paysupplierinvoicemaster.BPVdate FROM erp_paysupplierinvoicedetail INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId ORDER BY bookingInvSystemCode asc,BPVdate desc) pv ON pv.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+	AND pv.addedDocumentSystemID = erp_bookinvsuppmaster.documentSystemID) inv ON inv.grvAutoID = erp_grvmaster.grvAutoID
                 LEFT JOIN erp_purchaseordermaster ON erp_grvdetails.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
                 LEFT JOIN companymaster ON companymaster.companySystemID = erp_fa_asset_master.companySystemID
                 LEFT JOIN serviceline ON erp_fa_asset_master.serviceLineSystemID = serviceline.serviceLineSystemID
@@ -1979,5 +2139,71 @@ WHERE
         $output = \DB::select($qry);
 
         return $output;
+    }
+
+    function getAssetRegisterSummaryQRY($request)
+    {
+
+        $financeYear = CompanyFinanceYear::find($request->financeYear);
+        $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 1) {
+            $currencyColumn = 'COSTUNIT';
+            $currencyColumnDep = 'depAmountLocal';
+        } else {
+            $currencyColumn = 'costUnitRpt';
+            $currencyColumnDep = 'depAmountRpt';
+        }
+
+        $assetCategory = $request->assetCategory;
+        $assetCategoryQry = '';
+        $assetCategoryQryTot = [];
+        $assetCategoryDepQry = '';
+        $assetCategoryDepQryTot = [];
+        if (count($assetCategory) > 0) {
+            foreach ($assetCategory as $val) {
+                $assetCategoryQry .= 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryDepQry .= 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryQryTot[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)';
+                $assetCategoryDepQryTot[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)';
+            }
+        }
+
+        $assetCategoryQryTot = '(' . join('+', $assetCategoryQryTot) . ') as total,';
+        $assetCategoryDepQryTot = '(' . join('+', $assetCategoryDepQryTot) . ') as total,';
+
+        $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+
+        // asset cost
+        $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany([$request->companySystemID]);
+        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Disposals" as description')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany([$request->companySystemID])->disposed(-1);
+        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description')->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany([$request->companySystemID])->union($additionCostquery)
+            ->union($disposalCostquery)->get();
+
+        // asset depreciation
+        $additionDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Charge For The Period" as description')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+        })->whereHas('asset_by', function ($q) use ($request) {
+            $q->assetType($request->typeID);
+            $q->disposed(-1);
+        })->ofCompany([$request->companySystemID]);
+
+        $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Disposal" as description')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+        })->whereHas('asset_by', function ($q) use ($request) {
+            $q->assetType($request->typeID);
+        })->ofCompany([$request->companySystemID]);
+
+        $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description')->whereHas('master_by', function ($q) use ($financeYear) {
+            $q->where('depDate', '<', $financeYear->bigginingDate);
+        })->whereHas('asset_by', function ($q) use ($request) {
+            $q->assetType($request->typeID);
+        })->ofCompany([$request->companySystemID])->union($additionDepquery)
+            ->union($disposalDepquery)->get();
+
+        return ['depQry' => $beginingDepquery, 'costQry' => $beginingCostquery];
+
     }
 }
