@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : StockAdjustmentDetails.php
+ * -- File Name : StockAdjustmentDetailsRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name : Stock Adjustment Details
+ * -- Module Name : Stock Adjustment Details Referred Back
  * -- Author : Mohamed Fayas
- * -- Create date : 20- August 2018
+ * -- Create date : 6 - February 2019
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,8 +15,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="StockAdjustmentDetails",
+ *      definition="StockAdjustmentDetailsRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="stockAdjustmentDetailsAutoRefferedbackID",
+ *          description="stockAdjustmentDetailsAutoRefferedbackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="stockAdjustmentDetailsAutoID",
  *          description="stockAdjustmentDetailsAutoID",
@@ -155,26 +161,38 @@ use Eloquent as Model;
  *          format="float"
  *      ),
  *      @SWG\Property(
+ *          property="wacAdjLocalER",
+ *          description="wacAdjLocalER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
  *          property="currenctStockQty",
  *          description="currenctStockQty",
  *          type="number",
  *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class StockAdjustmentDetails extends Model
+class StockAdjustmentDetailsRefferedBack extends Model
 {
 
-    public $table = 'erp_stockadjustmentdetails';
-    
+    public $table = 'erp_stockadjustmentdetails_refferedback';
+
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'stockAdjustmentDetailsAutoID';
-
+    protected $primaryKey  = 'stockAdjustmentDetailsAutoRefferedbackID';
 
 
 
     public $fillable = [
+        'stockAdjustmentDetailsAutoID',
         'stockAdjustmentAutoID',
         'stockAdjustmentAutoIDCode',
         'itemCodeSystem',
@@ -200,8 +218,8 @@ class StockAdjustmentDetails extends Model
         'wacAdjRpt',
         'wacAdjLocalER',
         'currenctStockQty',
-        'timestamp',
-        'timesReferred'
+        'timesReferred',
+        'timestamp'
     ];
 
     /**
@@ -210,6 +228,7 @@ class StockAdjustmentDetails extends Model
      * @var array
      */
     protected $casts = [
+        'stockAdjustmentDetailsAutoRefferedbackID' => 'integer',
         'stockAdjustmentDetailsAutoID' => 'integer',
         'stockAdjustmentAutoID' => 'integer',
         'stockAdjustmentAutoIDCode' => 'string',

@@ -804,7 +804,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
     Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
     Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
-
+    Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack');
 
     Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
     Route::get('getItemsOptionForGRV', 'GRVMasterAPIController@getItemsOptionForGRV');
@@ -1407,6 +1407,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
     Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
+
+    Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
+    Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
+    Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
+    Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
 });
 
 
@@ -1475,3 +1480,5 @@ Route::get('runQueueSR', function () {
 
 Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
 Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
+
+
