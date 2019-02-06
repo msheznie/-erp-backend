@@ -771,6 +771,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
     Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
+    Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
     Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
     Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
     Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
