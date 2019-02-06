@@ -427,4 +427,15 @@
             </tbody>
         </table>
     </div>
+    <hr style="color: #d3d9df">
+    <div class="row">
+        <table style="width:100%">
+            <tr>
+                <td style="width:11%;vertical-align: top;"><span class="font-weight-bold">Notes :</span></td>
+            </tr>
+            <tr>
+                <td style="width:88%;vertical-align: top;">{!! nl2br($masterdata->Note) !!}</td>
+            </tr>
+        </table>
+    </div>
 </div>

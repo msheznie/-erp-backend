@@ -249,6 +249,8 @@ class PaySupplierInvoiceDetailReferback extends Model
     public $fillable = [
         'payDetailAutoID',
         'PayMasterAutoId',
+        'documentID',
+        'documentSystemID',
         'apAutoID',
         'matchingDocID',
         'companySystemID',
@@ -300,6 +302,8 @@ class PaySupplierInvoiceDetailReferback extends Model
         'payDetailAutoRefferedBack' => 'integer',
         'payDetailAutoID' => 'integer',
         'PayMasterAutoId' => 'integer',
+        'documentID' => 'string',
+        'documentSystemID' => 'integer',
         'apAutoID' => 'integer',
         'matchingDocID' => 'integer',
         'companySystemID' => 'integer',
