@@ -521,6 +521,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+        if ($companyCurrencyConversion) {
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -529,6 +536,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'bookingDate' => 'required',
                 'supplierInvoiceDate' => 'required',
+                'supplierInvoiceNo' => 'required',
                 'supplierID' => 'required|numeric|min:1',
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',

@@ -861,7 +861,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    ->where('matchingDocID', $matchDocumentMaster->matchDocumentMasterAutoID)
+                    ->where('documentSystemID', 15)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
 
@@ -971,7 +971,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
-                    ->where('matchingDocID', $matchDocumentMaster->matchDocumentMasterAutoID)
+                    ->where('documentSystemID', 4)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
 
