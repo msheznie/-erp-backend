@@ -1525,7 +1525,7 @@ class Helper
                                         // update PR master table
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                     }
-                                }else if($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 0){
+                                } else if ($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 0) {
                                     if ($purchaseRequestMaster->checkBudgetYN == -1) {
 
                                         $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
@@ -2144,7 +2144,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66,7, 67, 68])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2892,7 +2892,7 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
 
             $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
                 ->where('companySystemID', $jvMasterData->companySystemID)
@@ -2913,6 +2913,7 @@ class Helper
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
             $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . date('F Y') . '';
+            $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
             $postJv['confirmedByEmpID'] = '';
@@ -2962,7 +2963,7 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
 
             $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
                 ->where('companySystemID', $jvMasterData->companySystemID)
@@ -2983,6 +2984,7 @@ class Helper
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
             $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . date('F Y') . '';
+            $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
             $postJv['confirmedByEmpID'] = '';
@@ -3951,13 +3953,13 @@ class Helper
     {
         $companyCurrency = self::companyCurrency($masterData->companySystemID);
         $cost['faID'] = $masterData->faID;
-        $cost['assetID'] =$masterData->faCode;
-        $cost['assetDescription'] =$masterData->assetDescription;
-        $cost['costDate'] =$masterData->dateAQ;
+        $cost['assetID'] = $masterData->faCode;
+        $cost['assetDescription'] = $masterData->assetDescription;
+        $cost['costDate'] = $masterData->dateAQ;
         $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
-        $cost['localAmount'] =$masterData->COSTUNIT;
+        $cost['localAmount'] = $masterData->COSTUNIT;
         $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
-        $cost['rptAmount'] =$masterData->costUnitRpt;
+        $cost['rptAmount'] = $masterData->costUnitRpt;
         $assetCosting = Models\FixedAssetCost::create($cost);
     }
 

@@ -3837,9 +3837,9 @@ FROM
 			erp_paysupplierinvoicedetail.supplierInvoiceNo,
 			erp_paysupplierinvoicedetail.supplierInvoiceDate,
 			erp_bookinvsuppdet.purchaseOrderID,
-			erp_bookinvsuppdet.totTransactionAmount AS TransAmount,
-			erp_bookinvsuppdet.totLocalAmount AS LocalAmount,
-			erp_bookinvsuppdet.totRptAmount AS RptAmount,
+			erp_paysupplierinvoicedetail.supplierPaymentAmount AS TransAmount,
+			erp_paysupplierinvoicedetail.paymentLocalAmount AS LocalAmount,
+			erp_paysupplierinvoicedetail.paymentComRptAmount AS RptAmount,
 			erp_paysupplierinvoicemaster.trsClearedDate,
 			erp_paysupplierinvoicemaster.bankClearedDate,
 			erp_paysupplierinvoicemaster.approvedDate,
@@ -4874,7 +4874,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         ->orWhere('narration', 'LIKE', "%{$search}%");
                 });
             })
-            ->with(['supplier']);
+            ->with(['supplier','fcategory']);
         /*->with(['supplier', 'detail' => function ($poDetail) {
             $poDetail->with([
                 'grv_details' => function ($q) {
@@ -4903,6 +4903,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data[$x]['Company ID'] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
                 $data[$x]['PO Number'] = $value->purchaseOrderCode;
+
+                if($value->fcategory){
+                    $data[$x]['Category'] = $value->fcategory->categoryDescription;
+                }else{
+                    $data[$x]['Category'] = '';
+                }
+
                 $data[$x]['PO Approved Date'] = \Helper::dateFormat($value->approvedDate);
                 $data[$x]['Narration'] = $value->narration;
                 if ($value->supplier) {

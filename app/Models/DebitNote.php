@@ -457,4 +457,9 @@ class DebitNote extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function final_approved_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'approvedByUserSystemID', 'employeeSystemID');
+    }
 }
