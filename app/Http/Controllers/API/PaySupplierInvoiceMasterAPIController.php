@@ -877,7 +877,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
-                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
+                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
+                    ->where('PayMasterAutoId', $id)
+                    ->where('matchingDocID', 0)
+                    ->first();
 
                 if (!empty($totalAmount->supplierPaymentAmount)) {
                     if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->supplierTransCurrencyID) {
