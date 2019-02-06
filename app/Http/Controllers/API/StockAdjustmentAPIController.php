@@ -12,8 +12,7 @@
  *                        getStockAdjustmentAudit()
  * -- Date: 03 - September 2018 By: Fayas Description: Added new functions named as getStockAdjustmentApprovedByUser(),getStockAdjustmentApprovalByUser()
  * -- Date: 03 - February 2019 By: Fayas Description: Added new functions named as stockAdjustmentReopen()
- *
- *
+ * -- Date: 06 - February 2019 By: Fayas Description: Added new functions named as stockAdjustmentReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -25,11 +24,14 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetails;
+use App\Models\StockAdjustmentDetailsRefferedBack;
+use App\Models\StockAdjustmentRefferedBack;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -1037,4 +1039,65 @@ class StockAdjustmentAPIController extends AppBaseController
         return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment reopened successfully');
     }
 
+    public function stockAdjustmentReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $stockAdjustment = $this->stockAdjustmentRepository->find($id);
+        if (empty($stockAdjustment)) {
+            return $this->sendError('Stock Adjustment not found');
+        }
+
+        if ($stockAdjustment->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this stock adjustment');
+        }
+
+        $stockAdjustmentArray = $stockAdjustment->toArray();
+
+        $storeSAHistory = StockAdjustmentRefferedBack::insert($stockAdjustmentArray);
+
+        $fetchDetails = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                                                ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $stockAdjustment->timesReferred;
+            }
+        }
+
+        $stockAdjustmentDetailArray = $fetchDetails->toArray();
+
+        $storeSADetailHistory = StockAdjustmentDetailsRefferedBack::insert($stockAdjustmentDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockAdjustment->companySystemID)
+            ->where('documentSystemID', $stockAdjustment->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $stockAdjustment->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockAdjustment->companySystemID)
+            ->where('documentSystemID', $stockAdjustment->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->stockAdjustmentRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment Amend successfully');
+    }
 }

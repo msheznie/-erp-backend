@@ -687,6 +687,19 @@ class FixedAssetMaster extends Model
      * @return \Illuminate\Database\Eloquent\Builder
      */
 
+    public function scopeDisposed($query, $disposed)
+    {
+        return $query->where('DIPOSED',  $disposed);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
     public function scopeOfCategory($query, $category)
     {
         return $query->where('faCatID',  $category);

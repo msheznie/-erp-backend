@@ -551,32 +551,42 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('There are no details to delete');
         }
         $accruvalMasterID = 0;
-        if (!empty($detailExistAll)) {
+        DB::beginTransaction();
+        try {
+            if (!empty($detailExistAll)) {
+                foreach ($detailExistAll as $cvDeatil) {
 
-            foreach ($detailExistAll as $cvDeatil) {
-                $accruvalMasterID = $cvDeatil['recurringjvMasterAutoId'];
+                    $accruvalMasterID = $cvDeatil['recurringjvMasterAutoId'];
 
-                // updating HRMS JvDetailtable
-                $updateHRMSJvMaster = HRMSJvDetails::find($cvDeatil['recurringjvDetailAutoID'])
-                    ->update([
-                        'jvMasterAutoID' => 0
-                    ]);
+                    // Fetching HRMS JvDetailtable
+                    $updateHRMSJvDetailData = HRMSJvDetails::find($cvDeatil['recurringjvDetailAutoID']);
 
-                $deleteDetails = JvDetail::where('jvDetailAutoID', $cvDeatil['jvDetailAutoID'])->delete();
+                    // updating fields
+                    $updateHRMSJvDetailData->jvMasterAutoID = 0;
+                    $updateHRMSJvDetailData->save();
+
+                    JvDetail::where('jvDetailAutoID', $cvDeatil['jvDetailAutoID'])->delete();
+                }
+
+                if ($accruvalMasterID != 0) {
+                    // updating HRMS JvMaster table
+                    $updateHRMSJvMasterData = HRMSJvMaster::find($accruvalMasterID);
+
+                    // updating fields
+                    $updateHRMSJvMasterData->jvMasterAutoID = 0;
+                    $updateHRMSJvMasterData->accJVSelectedYN = 0;
+                    $updateHRMSJvMasterData->save();
+                }
 
             }
+
+            DB::commit();
+            return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('e', 'Error occurred in detail deleting');
         }
 
-        if ($accruvalMasterID != 0) {
-            // updating HRMS JvMaster table
-            $updateHRMSJvMaster = HRMSJvMaster::find($accruvalMasterID)
-                ->update([
-                    'jvMasterAutoID' => 0,
-                    'accJVSelectedYN' => 0
-                ]);
-        }
-
-        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
     }
 
 
