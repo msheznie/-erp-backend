@@ -388,6 +388,12 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+        $firstDayNextMonth = Carbon::parse($input['JVdate'])->addMonth()->firstOfMonth();
+        $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
+
+
+        $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate FROM companyfinanceyear WHERE companySystemID = " . $input['companySystemID'] . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -1072,6 +1078,26 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function approveJournalVoucher(Request $request)
     {
+        $jvMasterData = JvMaster::find($request->jvMasterAutoId);
+
+        if ($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) {
+
+            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
+            $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
+
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+
+            if (empty($companyFinanceYear)) {
+                return $this->sendError('Financial year not created or not active for reversal document. You cannot approve this document.');
+            }
+
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
+
+            if (empty($companyFinancePeriod)) {
+                return $this->sendError('Financial period not created or not active for reversal document. You cannot approve this document.');
+            }
+        }
+
         $approve = \Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
@@ -1611,7 +1637,7 @@ HAVING
     {
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
             return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
         }
