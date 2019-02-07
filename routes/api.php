@@ -735,6 +735,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
     Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
     Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
+    Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
 
     Route::resource('performa_details', 'PerformaDetailsAPIController');
     Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
