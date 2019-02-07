@@ -608,212 +608,214 @@ WHERE
     function getTotalCountOfApproval()
     {
         $employeeSystemID = \Helper::getEmployeeSystemID();
-        $qry = "
-        SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
-SELECT
-*
-FROM
-	(
-SELECT
-	count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
-	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
-	INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
-	AND erp_purchaserequest.documentSystemID = erp_documentapproved.documentSystemID 
-	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
-	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
-	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-	AND erp_purchaserequest.PRConfirmedYN = 1 
-	AND erp_purchaserequest.approved = 0 
-	AND erp_purchaserequest.cancelledYN = 0 
-	AND erp_purchaserequest.refferedBackYN = 0 
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
-	) AS PendingRequestApprovals UNION ALL
-SELECT
-	* 
-FROM
-	(
-SELECT
-		count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
-	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
-	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.companySystemID = erp_documentapproved.companySystemID 
-	AND erp_purchaseordermaster.documentSystemID = erp_documentapproved.documentSystemID 
-	AND erp_purchaseordermaster.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
-	AND erp_purchaseordermaster.purchaseOrderID = erp_documentapproved.documentSystemCode 
-	AND erp_purchaseordermaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-	AND erp_purchaseordermaster.poConfirmedYN = 1 
-	AND erp_purchaseordermaster.approved = 0 
-	AND erp_purchaseordermaster.poCancelledYN = 0 
-	AND erp_purchaseordermaster.refferedBackYN = 0 
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN ( 2, 5, 52 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
-	) AS PendingOrderApprovals UNION ALL
-	SELECT 
-	*
-	FROM
-	(
-	SELECT
-		count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
-	AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-	INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.companySystemID=erp_documentapproved.companySystemID AND erp_paysupplierinvoicemaster.documentSystemID=erp_documentapproved.documentSystemID  AND erp_paysupplierinvoicemaster.PayMasterAutoId=erp_documentapproved.documentSystemCode AND erp_paysupplierinvoicemaster.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_paysupplierinvoicemaster.confirmedYN=1 AND erp_paysupplierinvoicemaster.approved=0 AND erp_paysupplierinvoicemaster.cancelYN=0 AND erp_paysupplierinvoicemaster.ReversedYN=0
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN (4)
-	AND employeesdepartments.employeeSystemID=$employeeSystemID
-	) AS PendingPaymentApprovals UNION ALL
-	SELECT 
-	*
-	FROM
-	(
-	SELECT
-		count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
-	AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID=erp_documentapproved.companySystemID AND erp_bookinvsuppmaster.documentSystemID=erp_documentapproved.documentSystemID  AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID=erp_documentapproved.documentSystemCode AND erp_bookinvsuppmaster.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_bookinvsuppmaster.confirmedYN=1 AND erp_bookinvsuppmaster.approved=0 AND erp_bookinvsuppmaster.cancelYN=0
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN (11)
-	AND employeesdepartments.employeeSystemID=$employeeSystemID
-	) AS PendingSupplierInvoiceApprovals UNION ALL
-	SELECT 
-	*
-	FROM
-	(
-	SELECT
-		count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
-	AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-	INNER JOIN erp_debitnote ON erp_debitnote.companySystemID=erp_documentapproved.companySystemID AND erp_debitnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_debitnote.debitNoteAutoID=erp_documentapproved.documentSystemCode AND erp_debitnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_debitnote.confirmedYN=1 AND erp_debitnote.approved=0
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN (15)
-	AND employeesdepartments.employeeSystemID=$employeeSystemID
-	) AS PendingDebiteNoteApprovals UNION ALL
-	SELECT 
-	*
-	FROM
-	(
-	SELECT
-		count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
-	AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-	INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.companySystemID=erp_documentapproved.companySystemID AND erp_custinvoicedirect.documentSystemID=erp_documentapproved.documentSystemID  AND erp_custinvoicedirect.custInvoiceDirectAutoID=erp_documentapproved.documentSystemCode AND erp_custinvoicedirect.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_custinvoicedirect.confirmedYN=1 AND erp_custinvoicedirect.approved=0 AND erp_custinvoicedirect.canceledYN=0
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN (20)
-	AND employeesdepartments.employeeSystemID=$employeeSystemID
-	) AS PendingCustomerInvoiceApprovals UNION ALL
-	SELECT 
-	*
-	FROM
-	(
-	SELECT
-	count(erp_documentapproved.companySystemID) as totalCount
-FROM
-	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
-	AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-	INNER JOIN erp_creditnote ON erp_creditnote.companySystemID=erp_documentapproved.companySystemID AND erp_creditnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_creditnote.creditNoteAutoID=erp_documentapproved.documentSystemCode AND erp_creditnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_creditnote.confirmedYN=1 AND erp_creditnote.approved=0
-WHERE
-	erp_documentapproved.approvedYN = 0 
-	AND erp_documentapproved.rejectedYN = 0 
-	AND erp_documentapproved.approvalGroupID > 0 
-	AND erp_documentapproved.documentSystemID IN (19)
-	AND employeesdepartments.employeeSystemID=$employeeSystemID
-	) AS PendingCreditNoteApprovals
-)t
+        $qry = " SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
+        SELECT
+        *
+        FROM
+            (
+        SELECT
+            count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+            AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
+            AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+            INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
+            AND erp_purchaserequest.documentSystemID = erp_documentapproved.documentSystemID 
+            AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
+            AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
+            AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+            AND erp_purchaserequest.PRConfirmedYN = 1 
+            AND erp_purchaserequest.approved = 0 
+            AND erp_purchaserequest.cancelledYN = 0 
+            AND erp_purchaserequest.refferedBackYN = 0 
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
+            AND employeesdepartments.employeeSystemID = $employeeSystemID 
+            ) AS PendingRequestApprovals UNION ALL
+        SELECT
+            * 
+        FROM
+            (
+        SELECT
+                count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+            AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
+            AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+            INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.companySystemID = erp_documentapproved.companySystemID 
+            AND erp_purchaseordermaster.documentSystemID = erp_documentapproved.documentSystemID 
+            AND erp_purchaseordermaster.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
+            AND erp_purchaseordermaster.purchaseOrderID = erp_documentapproved.documentSystemCode 
+            AND erp_purchaseordermaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+            AND erp_purchaseordermaster.poConfirmedYN = 1 
+            AND erp_purchaseordermaster.approved = 0 
+            AND erp_purchaseordermaster.poCancelledYN = 0 
+            AND erp_purchaseordermaster.refferedBackYN = 0 
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN ( 2, 5, 52 ) 
+            AND employeesdepartments.employeeSystemID = $employeeSystemID 
+            ) AS PendingOrderApprovals UNION ALL
+            SELECT 
+            *
+            FROM
+            (
+            SELECT
+                count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+            AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
+            INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.companySystemID=erp_documentapproved.companySystemID AND erp_paysupplierinvoicemaster.documentSystemID=erp_documentapproved.documentSystemID  AND erp_paysupplierinvoicemaster.PayMasterAutoId=erp_documentapproved.documentSystemCode AND erp_paysupplierinvoicemaster.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_paysupplierinvoicemaster.confirmedYN=1 AND erp_paysupplierinvoicemaster.approved=0 AND erp_paysupplierinvoicemaster.cancelYN=0 AND erp_paysupplierinvoicemaster.ReversedYN=0
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN (4)
+            AND employeesdepartments.employeeSystemID=$employeeSystemID
+            ) AS PendingPaymentApprovals UNION ALL
+            SELECT 
+            *
+            FROM
+            (
+            SELECT
+                count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+            AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
+            INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID=erp_documentapproved.companySystemID AND erp_bookinvsuppmaster.documentSystemID=erp_documentapproved.documentSystemID  AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID=erp_documentapproved.documentSystemCode AND erp_bookinvsuppmaster.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_bookinvsuppmaster.confirmedYN=1 AND erp_bookinvsuppmaster.approved=0 AND erp_bookinvsuppmaster.cancelYN=0
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN (11)
+            AND employeesdepartments.employeeSystemID=$employeeSystemID
+            ) AS PendingSupplierInvoiceApprovals UNION ALL
+            SELECT 
+            *
+            FROM
+            (
+            SELECT
+                count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+            AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
+            INNER JOIN erp_debitnote ON erp_debitnote.companySystemID=erp_documentapproved.companySystemID AND erp_debitnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_debitnote.debitNoteAutoID=erp_documentapproved.documentSystemCode AND erp_debitnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_debitnote.confirmedYN=1 AND erp_debitnote.approved=0
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN (15)
+            AND employeesdepartments.employeeSystemID=$employeeSystemID
+            ) AS PendingDebiteNoteApprovals UNION ALL
+            SELECT 
+            *
+            FROM
+            (
+            SELECT
+                count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+            AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
+            INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.companySystemID=erp_documentapproved.companySystemID AND erp_custinvoicedirect.documentSystemID=erp_documentapproved.documentSystemID  AND erp_custinvoicedirect.custInvoiceDirectAutoID=erp_documentapproved.documentSystemCode AND erp_custinvoicedirect.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_custinvoicedirect.confirmedYN=1 AND erp_custinvoicedirect.approved=0 AND erp_custinvoicedirect.canceledYN=0
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN (20)
+            AND employeesdepartments.employeeSystemID=$employeeSystemID
+            ) AS PendingCustomerInvoiceApprovals UNION ALL
+            SELECT 
+            *
+            FROM
+            (
+            SELECT
+            count(erp_documentapproved.companySystemID) as totalCount
+        FROM
+            erp_documentapproved
+            INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+            AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
+            INNER JOIN erp_creditnote ON erp_creditnote.companySystemID=erp_documentapproved.companySystemID AND erp_creditnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_creditnote.creditNoteAutoID=erp_documentapproved.documentSystemCode AND erp_creditnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_creditnote.confirmedYN=1 AND erp_creditnote.approved=0
+        WHERE
+            erp_documentapproved.approvedYN = 0 
+            AND erp_documentapproved.rejectedYN = 0 
+            AND erp_documentapproved.approvalGroupID > 0 
+            AND erp_documentapproved.documentSystemID IN (19)
+            AND employeesdepartments.employeeSystemID=$employeeSystemID
+            ) AS PendingCreditNoteApprovals
+        )t";
 
+        $qry1="SELECT
+                        count(erp_documentapproved.companySystemID)  as totalCount
+                    FROM
+                        (
+                        SELECT
+                            companySystemID,
+                            departmentSystemID,
+                    
+                        documentSystemID,
+                        serviceLineSystemID,
+                            approvalGroupID
+                    
+                            
+                        FROM
+                            erp_documentapproved 
+                        WHERE
+                            erp_documentapproved.approvedYN = 0 
+                            AND erp_documentapproved.rejectedYN = 0 
+                            AND erp_documentapproved.approvalGroupID > 0 
+                            AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) 
+                        ) erp_documentapproved
+                        INNER JOIN (
+                        SELECT
+                        companySystemID,
+                                departmentSystemID,
+                                    documentSystemID,
+                            ServiceLineSystemID,
+                                employeeGroupID
+                             
+                        FROM
+                            employeesdepartments 
+                        WHERE
+                            employeeSystemID = $employeeSystemID 
+                            AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) )employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+                            AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+                            AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+                        AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
+                        AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
+        $output = DB::select($qry);
 
-";
+        /*$output  = DocumentApproved::where('approvedYN',0)
+            ->where('rejectedYN',0)
+            ->where('approvalGroupID','>',0)
+            ->whereIn('documentSystemID',[1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19,17])
+            ->count('documentApprovedID');*/
 
-        $qry="SELECT
-	count(erp_documentapproved.companySystemID)  as totalCount
-FROM
-	(
-	SELECT
-		companySystemID,
-		departmentSystemID,
-
-	documentSystemID,
-	serviceLineSystemID,
-		approvalGroupID
-
-		
-	FROM
-		erp_documentapproved 
-	WHERE
-		erp_documentapproved.approvedYN = 0 
-		AND erp_documentapproved.rejectedYN = 0 
-		AND erp_documentapproved.approvalGroupID > 0 
-		AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) 
-	) erp_documentapproved
-	INNER JOIN (
-	SELECT
-	companySystemID,
-			departmentSystemID,
-				documentSystemID,
-		ServiceLineSystemID,
-			employeeGroupID
-		 
-	FROM
-		employeesdepartments 
-	WHERE
-		employeeSystemID = $employeeSystemID 
-		AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) )employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-		AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-		AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
-	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
-        /*$output = DB::select($qry);*/
-
-        return $this->sendResponse(0, 'Document Approved deleted successfully');
+        return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
 
     }
 

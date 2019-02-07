@@ -17,6 +17,7 @@
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceAmend()
  * -- Date: 01 January 2019 By: Nazir Description: Added new functions named as customerInvoiceCancel()
  * -- Date: 11 January 2019 By: Mubashir Description: Added new functions named as approvalPreCheckCustomerInvoice()
+ * -- Date: 06 February 2019 By: Fayas Description: Added new functions named as updateCustomerInvoiceGRV()
  */
 
 namespace App\Http\Controllers\API;
@@ -746,6 +747,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
     }
+
+    public function updateCustomerInvoiceGRV(Request $request)
+    {
+        $input = $request->all();
+        $id = isset($input['custInvoiceDirectAutoID'])?$input['custInvoiceDirectAutoID']:0;
+        /** @var CustomerInvoiceDirect $customerInvoiceDirect */
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice found');
+        }
+
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(array_only($input, ['customerGRVAutoID']), $id);
+
+        return $this->sendResponse($customerInvoiceDirect, 'Invoice Updated Successfully');
+    }
+
 
     /**
      * @param int $id
