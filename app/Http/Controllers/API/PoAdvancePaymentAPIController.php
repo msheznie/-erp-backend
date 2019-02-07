@@ -645,13 +645,15 @@ ORDER BY
 
         $advancePaymentRequest = DB::table('erp_purchaseorderadvpayment')
             ->selectRaw('erp_purchaseorderadvpayment.*,'.$agingField.'
-                                        erp_purchaseordermaster.localCurrencyID,erp_purchaseordermaster.companyReportingCurrencyID,
+                                        erp_purchaseordermaster.localCurrencyID,erp_purchaseordermaster.companyReportingCurrencyID,erp_purchaseordermaster.supplierTransactionCurrencyID,
                                         erp_purchaseordermaster.poTotalSupplierTransactionCurrency,erp_purchaseordermaster.poTotalLocalCurrency,
                                         erp_purchaseordermaster.poTotalComRptCurrency,
                                         suppliermaster.primarySupplierCode,suppliermaster.supplierName,
                                         trns.CurrencyCode as trnsCurrencyCode,trns.DecimalPlaces as trnsDecimalPlaces,
+                                        potrns.CurrencyCode as potrnsCurrencyCode,potrns.DecimalPlaces as potrnsDecimalPlaces,
                                         local.CurrencyCode as localCurrencyCode,local.DecimalPlaces as localDecimalPlaces,
                                         rpt.CurrencyCode as rptCurrencyCode,rpt.DecimalPlaces as rptDecimalPlaces,
+                                        companymaster.CompanyName,
                                         details.PayMasterAutoId,details.SumOfpaymentAmount,erp_paysupplierinvoicemaster.approved as pay_approved,
                                         (If(round(reqAmount - details.SumOfpaymentAmount)=0 And erp_paysupplierinvoicemaster.approved=-1,2,
                                         If((selectedToPayment=-1 Or selectedToPayment=0) And round(reqAmount - details.SumOfpaymentAmount)<>0 And erp_paysupplierinvoicemaster.approved=-1,1,
@@ -665,8 +667,10 @@ ORDER BY
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
             ->leftJoin('currencymaster as trns', 'erp_purchaseorderadvpayment.currencyID', 'trns.currencyID')
+            ->leftJoin('currencymaster as potrns', 'erp_purchaseordermaster.supplierTransactionCurrencyID', 'potrns.currencyID')
             ->leftJoin('currencymaster as local', 'erp_purchaseordermaster.localCurrencyID', 'local.currencyID')
             ->leftJoin('currencymaster as rpt', 'erp_purchaseordermaster.companyReportingCurrencyID', 'rpt.currencyID')
+            ->leftJoin('companymaster', 'erp_purchaseorderadvpayment.companySystemID', 'companymaster.companySystemID')
             ->leftJoin(DB::raw('(SELECT poAdvPaymentID, SumOfpaymentAmount,PayMasterAutoId FROM (SELECT * FROM
                 ( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
                 INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.'.$detailsSumColumn.' ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs 
@@ -737,13 +741,22 @@ ORDER BY
                 foreach ($advancePaymentRequest as $val) {
 
                     $decimal = 2;
+                    $poTransCurDecimal = 2;
                     if ($input['currencyID'] == 1) {
                         $decimal = $val->trnsDecimalPlaces;
+                        $poTransCurDecimal = $val->potrnsDecimalPlaces;
                     } else if ($input['currencyID'] == 2) {
                         $decimal = $val->localDecimalPlaces;
                     } else if ($input['currencyID'] == 3) {
                         $decimal = $val->rptDecimalPlaces;
                     }
+
+
+                    if (\Helper::checkIsCompanyGroup($input['companyId'])) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
+                    }
+
                     $data[$x]['Supplier Code'] = $val->primarySupplierCode;
                     $data[$x]['Supplier Name'] = $val->supplierName;
                     $data[$x]['Purchase Order Code'] = $val->poCode;
@@ -751,24 +764,28 @@ ORDER BY
                     $data[$x]['Narration'] = $val->narration;
 
                     if ($input['currencyID'] == 1) {
-                        $data[$x]['Currency'] = $val->trnsCurrencyCode;
-                        $data[$x]['PO Amount'] = number_format($val->poTotalSupplierTransactionCurrency,$decimal);
-                        $data[$x]['Req Amount'] = number_format($val->reqAmount,$decimal);
+                        $data[$x]['PO Currency'] = $val->potrnsCurrencyCode;
+                        $data[$x]['PO Amount'] = round($val->poTotalSupplierTransactionCurrency,$poTransCurDecimal);
+                        $data[$x]['Req Currency'] = $val->trnsCurrencyCode;
+                        $data[$x]['Req Amount'] = round($val->reqAmount,$decimal);
                     } else if ($input['currencyID'] == 2) {
-                        $data[$x]['Currency'] = $val->localCurrencyCode;
-                        $data[$x]['PO Amount'] = number_format($val->poTotalLocalCurrency,$decimal);
-                        $data[$x]['Req Amount'] = number_format($val->reqAmountInPOLocalCur,$decimal);
+                        $data[$x]['PO Currency'] = $val->localCurrencyCode;
+                        $data[$x]['PO Amount'] = round($val->poTotalLocalCurrency,$decimal);
+                        $data[$x]['Req Currency'] = $val->localCurrencyCode;
+                        $data[$x]['Req Amount'] = round($val->reqAmountInPOLocalCur,$decimal);
                     } else if ($input['currencyID'] == 3) {
-                        $data[$x]['Currency'] = $val->rptCurrencyCode;
-                        $data[$x]['PO Amount'] = number_format($val->poTotalComRptCurrency,$decimal);
-                        $data[$x]['Req Amount'] = number_format($val->reqAmountInPORptCur,$decimal);
+                        $data[$x]['PO Currency'] = $val->rptCurrencyCode;
+                        $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency,$decimal);
+                        $data[$x]['Req Currency'] = $val->rptCurrencyCode;
+                        $data[$x]['Req Amount'] = round($val->reqAmountInPORptCur,$decimal);
                     }else{
-                        $data[$x]['Currency'] = '';
-                        $data[$x]['PO Amount'] = number_format(0,$decimal);
-                        $data[$x]['Req Amount'] = number_format(0,$decimal);
+                        $data[$x]['PO Currency'] = '';
+                        $data[$x]['PO Amount'] = round(0,$decimal);
+                        $data[$x]['Req Currency'] = '';
+                        $data[$x]['Req Amount'] = round(0,$decimal);
                     }
 
-                    $data[$x]['Paid Amount'] = number_format($val->SumOfpaymentAmount,$decimal);
+                    $data[$x]['Paid Amount'] = round($val->SumOfpaymentAmount,$decimal);
 
                     $status = "";
                     if($val->status == 0){
