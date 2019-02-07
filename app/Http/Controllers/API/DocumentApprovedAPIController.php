@@ -815,7 +815,7 @@ WHERE
             ->whereIn('documentSystemID',[1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19,17])
             ->count('documentApprovedID');*/
 
-        return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
+        return $this->sendResponse($output[0]->totalCount, 'Document approved count retrieved successfully');
 
     }
 
