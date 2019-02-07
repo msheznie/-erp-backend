@@ -666,7 +666,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year','supplierID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1399,6 +1399,8 @@ UNION ALL
                 }
 
                 $decimalPlaces = 2;
+                $localDecimalPlaces = 2;
+                $rptDecimalPlaces = 2;
 
                 if($value->transactioncurrency){
                     $data[$x]['Currency'] = $value->transactioncurrency->CurrencyCode;
@@ -1407,7 +1409,17 @@ UNION ALL
                     $data[$x]['Currency'] = '';
                 }
 
+                if($value->localcurrency){
+                    $localDecimalPlaces = $value->localcurrency->DecimalPlaces;
+                }
+
+                if($value->rptcurrency){
+                    $rptDecimalPlaces = $value->rptcurrency->DecimalPlaces;
+                }
+
                 $data[$x]['Amount'] = round($value->debitAmountTrans,$decimalPlaces);
+                $data[$x]['Amount (Local)'] = round($value->debitAmountLocal,$localDecimalPlaces);
+                $data[$x]['Amount (Rpt)'] = round($value->debitAmountRpt,$rptDecimalPlaces);
 
                 if ($value->final_approved_by) {
                     $data[$x]['Approved By'] = $value->final_approved_by->empName;
@@ -1451,8 +1463,14 @@ UNION ALL
         }
 
         $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
-            ->with('created_by', 'transactioncurrency', 'supplier','final_approved_by')
+            ->with('created_by', 'transactioncurrency','localcurrency','rptcurrency','supplier','final_approved_by')
             ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $debitNotes = $debitNotes->where('supplierID',$input['supplierID']);
+            }
+        }
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
