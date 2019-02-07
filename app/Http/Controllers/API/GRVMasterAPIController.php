@@ -1277,6 +1277,7 @@ class GRVMasterAPIController extends AppBaseController
         $companyID = $input['companyID'];
         $grv = GRVMaster::select('grvAutoID', 'grvPrimaryCode')
             ->where('approved', -1)
+            ->where('companySystemID',$companyID)
             ->where('grvPrimaryCode', 'LIKE', "%{$seachText}%")
             ->orderBy('grvAutoID', 'desc')
             ->take(30)
