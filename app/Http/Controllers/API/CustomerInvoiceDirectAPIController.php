@@ -2057,7 +2057,7 @@ WHERE
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')
             ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
-            ->where('erp_documentapproved.documentSystemID', 11)
+            ->where('erp_documentapproved.documentSystemID', 20)
             ->where('erp_documentapproved.companySystemID', $companyID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
