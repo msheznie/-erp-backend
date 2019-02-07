@@ -963,7 +963,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSBS':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $output = $this->getSupplierBalanceSummeryQRY($request);
                 if ($output) {
                     $x = 0;
