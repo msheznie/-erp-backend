@@ -43,9 +43,9 @@ class AssetManagementReportAPIController extends AppBaseController
 
         $assetCategory = AssetFinanceCategory::all();
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"))->where('companySystemID', $selectedCompanyId)->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"))->whereIN('companySystemID', $companiesByGroup)->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
-        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"))->where('companySystemID', $selectedCompanyId)->where('departmentSystemID', 9)->get();
+        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"))->whereIN('companySystemID', $companiesByGroup)->groupBy('dateFrom')->where('departmentSystemID', 9)->get();
 
         $years = Year::all();
         $months = Months::all();
@@ -120,6 +120,18 @@ class AssetManagementReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                     'year' => 'required',
                     'month' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            case 'AMACWIP':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
                     'currencyID' => 'required'
                 ]);
 
@@ -479,6 +491,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 }
                 break;
+            case 'AMACWIP': //Asset CWIP
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $output = $this->getAssetCWIPQRY($request);
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -746,7 +762,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
                                 $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
                             }
                         }
                         $data[$x]['Total'] = $val['total'];
@@ -759,7 +775,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
                                 $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
                             }
                         }
                         $data[$x]['Total'] = $val['total'];
@@ -772,7 +788,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
                                 $data[$x]['Description'] = $val['description'];
-                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']],$currencyDecimalPlace);
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
                             }
                         }
                         $data[$x]['Total'] = $val['total'];
@@ -2144,6 +2160,14 @@ WHERE
     function getAssetRegisterSummaryQRY($request)
     {
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
         $financeYear = CompanyFinanceYear::find($request->financeYear);
         $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
 
@@ -2159,51 +2183,196 @@ WHERE
 
         $assetCategory = $request->assetCategory;
         $assetCategoryQry = '';
-        $assetCategoryQryTot = [];
+        $assetCategoryQryTotArr = [];
+        $assetCategoryQryDisposal = '';
+        $assetCategoryQryTotDisposalArr = [];
         $assetCategoryDepQry = '';
-        $assetCategoryDepQryTot = [];
+        $assetCategoryDepQryTotArr = [];
+        $assetCategoryDepQryDisposal = '';
+        $assetCategoryDepQryTotDisposalArr = [];
         if (count($assetCategory) > 0) {
             foreach ($assetCategory as $val) {
                 $assetCategoryQry .= 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
                 $assetCategoryDepQry .= 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
-                $assetCategoryQryTot[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)';
-                $assetCategoryDepQryTot[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)';
+                $assetCategoryQryDisposal .= 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)* -1 AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryDepQryDisposal .= 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0) * -1 AS `' . $val['financeCatDescription'] . '`,';
+
+                $assetCategoryQryTotArr[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)';
+                $assetCategoryDepQryTotArr[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)';
+
+                $assetCategoryQryTotDisposalArr[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)*-1';
+                $assetCategoryDepQryTotDisposalArr[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)*-1';
             }
         }
 
-        $assetCategoryQryTot = '(' . join('+', $assetCategoryQryTot) . ') as total,';
-        $assetCategoryDepQryTot = '(' . join('+', $assetCategoryDepQryTot) . ') as total,';
+        $assetCategoryQryTot = '(' . join('+', $assetCategoryQryTotArr) . ') as total,';
+        $assetCategoryDepQryTot = '(' . join('+', $assetCategoryDepQryTotArr) . ') as total,';
+
+        $assetCategoryQryTotDisposal = '(' . join('+', $assetCategoryQryTotDisposalArr) . ') as total,';
+        $assetCategoryDepQryTotDisposal = '(' . join('+', $assetCategoryDepQryTotDisposalArr) . ') as total,';
 
         $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
 
         // asset cost
-        $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany([$request->companySystemID]);
-        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Disposals" as description')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany([$request->companySystemID])->disposed(-1);
-        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description')->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany([$request->companySystemID])->union($additionCostquery)
+        $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description,2 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID);
+        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1);
+        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany($companyID)->union($additionCostquery)
             ->union($disposalCostquery)->get();
 
         // asset depreciation
-        $additionDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Charge For The Period" as description')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+
+        $additionDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Charge For The Period" as description,2 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+        })->whereHas('asset_by', function ($q) use ($request) {
+            $q->assetType($request->typeID);
+        })->ofCompany($companyID);
+
+        $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQryDisposal . $assetCategoryDepQryTotDisposal . '"Disposal" as description,3 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
             $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
         })->whereHas('asset_by', function ($q) use ($request) {
             $q->assetType($request->typeID);
             $q->disposed(-1);
-        })->ofCompany([$request->companySystemID]);
+        })->ofCompany($companyID);
 
-        $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Disposal" as description')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
-            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
-        })->whereHas('asset_by', function ($q) use ($request) {
-            $q->assetType($request->typeID);
-        })->ofCompany([$request->companySystemID]);
-
-        $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description')->whereHas('master_by', function ($q) use ($financeYear) {
+        $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->whereHas('master_by', function ($q) use ($financeYear) {
             $q->where('depDate', '<', $financeYear->bigginingDate);
         })->whereHas('asset_by', function ($q) use ($request) {
             $q->assetType($request->typeID);
-        })->ofCompany([$request->companySystemID])->union($additionDepquery)
+        })->ofCompany($companyID)->union($additionDepquery)
             ->union($disposalDepquery)->get();
 
         return ['depQry' => $beginingDepquery, 'costQry' => $beginingCostquery];
+
+    }
+
+    function getAssetRegisterSummaryDrillDownQRY(Request $request)
+    {
+        $input = $request->all();
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
+        $financeYear = CompanyFinanceYear::find($request->financeYear);
+        $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 1) {
+            $currencyColumn = 'COSTUNIT';
+            $currencyColumnDep = 'depAmountLocal';
+        } else {
+            $currencyColumn = 'costUnitRpt';
+            $currencyColumnDep = 'depAmountRpt';
+        }
+
+        // asset cost
+        if ($request->catType == 1) {
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID);
+            }
+            if ($request->subType == 2) { //addition
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID);
+            }
+            if ($request->subType == 3) {// disposal
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID);
+            }
+        }
+
+        if ($request->catType == 2) {
+            // asset depreciation
+
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear) {
+                    $q->where('depDate', '<', $financeYear->bigginingDate);
+                })->whereHas('asset_by', function ($q) use ($request) {
+                    $q->assetType($request->typeID);
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 2) { //charge
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                })->whereHas('asset_by', function ($q) use ($request) {
+                    $q->assetType($request->typeID);
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 3) { //disposed
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                })->whereHas('asset_by', function ($q) use ($request) {
+                    $q->assetType($request->typeID);
+                    $q->disposed(-1);
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+        }
+
+        /*$search = $request->input('search.value');
+        if($search){
+            $financeItemCategoryMasters =   $financeItemCategoryMasters->where('categoryDescription','LIKE',"%{$search}%")
+                ->orWhere('itemCodeDef', 'LIKE', "%{$search}%");
+        }*/
+
+        $total = $output->get();
+        $total = collect($total)->sum('amount');
+
+        return \DataTables::eloquent($output)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->with('totalAmount', [
+                'totalAmount' => $total,
+            ])
+            ->make(true);
+
+    }
+
+    function getAssetCWIPQRY($request)
+    {
+        /*$financeYear = CompanyFinanceYear::find($request->financeYear);
+        $firstQ1 = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
+        $endFirstQ1 = Carbon::parse($financeYear->bigginingDate)->endOfQuarter();
+        $secondQ1 = Carbon::parse($endFirstQ1->addDay())->format('Y-m-d');
+        $endSecondQ1 = Carbon::parse($secondQ1)->endOfQuarter();
+        $thirdQ1 = Carbon::parse($endSecondQ1->addDay())->format('Y-m-d');
+        $endThirdQ1 = Carbon::parse($thirdQ1)->endOfQuarter();
+        $fourthQ1 = Carbon::parse($endThirdQ1->addDay())->format('Y-m-d');
+        $endfourthQ1 = Carbon::parse($fourthQ1)->endOfQuarter();
+
+        $quarterArr = [1 => ['startDate' => $firstQ1, 'endDate' => $endFirstQ1->subDay()->format('Y-m-d')], 2 => ['startDate' => $secondQ1, 'endDate' => $endSecondQ1->subDay()->format('Y-m-d')], 3 => ['startDate' => $thirdQ1, 'endDate' => $endThirdQ1->subDay()->format('Y-m-d')], 4 => ['startDate' => $fourthQ1, 'endDate' => $endfourthQ1->format('Y-m-d')]];*/
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
 
     }
 }
