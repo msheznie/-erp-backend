@@ -756,6 +756,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
                 $decimalPlaceUnique = array_unique($decimalPlaceCollect);
 
+                $currencyId = $request->currencyID;
                 if (!empty($decimalPlaceUnique)) {
                     $currencyId = $decimalPlaceUnique[0];
                 }
@@ -4865,13 +4866,18 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                    AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+                WHERE
+                    (
+                        revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+                    )
                     ) AS revenueDataSummary
-                    GROUP BY
-                    revenueDataSummary.companySystemID
-                    ORDER BY companySystemID ASC');
+                GROUP BY
+                    revenueDataSummary.companySystemID,
+                    revenueDataSummary.mySupplierCode
+                ORDER BY
+	                Total DESC');
         return $output;
     }
 
