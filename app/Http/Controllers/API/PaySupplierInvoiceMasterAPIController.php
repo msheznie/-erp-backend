@@ -854,8 +854,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
                             $input['BPVchequeNo'] = $nextChequeNo;
-                            Log::info('Cheque No:'.$input['BPVchequeNo']);
-                            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
+                            Log::info('Cheque No:' . $input['BPVchequeNo']);
+                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
                             Log::info('-------------------------------------------------------');
                         }
                     } else {
@@ -955,14 +955,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUser'] = \Helper::getEmployeeID();
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
-            Log::info('Cheque No:'.$input['BPVchequeNo']);
-            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
+            Log::info('Cheque No:' . $input['BPVchequeNo']);
+            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
             Log::info('beforeUpdate______________________________________________________');
 
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
-            Log::info('Cheque No:'.$input['BPVchequeNo']);
-            Log::info('PV Code:'.$paySupplierInvoiceMaster->BPVcode);
+            Log::info('Cheque No:' . $input['BPVchequeNo']);
+            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
             Log::info($paySupplierInvoiceMaster);
             Log::info('afterUpdate______________________________________________________');
 
@@ -1186,7 +1186,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -2108,7 +2108,7 @@ HAVING
 
 
         if ($paymentVoucherData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this payment voucher, it is not confirmed');
+            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
         }
 
         /*       // checking document matched in matchmaster
@@ -2128,7 +2128,7 @@ HAVING
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. payment voucher is added to matching');
+            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
         }
 
         $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
@@ -2137,11 +2137,14 @@ HAVING
             ->first();
 
         if ($checkBLDataExist) {
-            if ($checkBLDataExist->trsClearedYN == -1) {
-                return $this->sendError('Cannot return back to amend. payment voucher is already treasury cleared');
-            }
-            if ($checkBLDataExist->bankClearedYN == -1) {
-                return $this->sendError('Cannot return back to amend. payment voucher is already bank reconciled');
+            if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Bank cleared. You cannot return back to amend.');
+            }else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+            }else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
             }
         }
 
