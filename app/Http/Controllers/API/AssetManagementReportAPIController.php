@@ -21,6 +21,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Models\GRVMaster;
 use App\Models\Months;
 use App\Models\Year;
 use App\Models\AssetType;
@@ -493,7 +494,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 break;
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
                 $output = $this->getAssetCWIPQRY($request);
+                return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -995,6 +1000,36 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
                 $csv = \Excel::create('asset_depreciation', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'AMACWIP': //Asset CWIP
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $output = $this->getAssetCWIPQRY($request);
+                if (count($output) > 0) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['GRV Number'] = $val->grvPrimaryCode;
+                        $data[$x]['GRV Posting Date'] = $val->approvedDate;
+                        $data[$x]['Opening'] = $val->opening;
+                        $data[$x]['Addition'] = $val->addition;
+                        $data[$x]['Capitalization'] = $val->capitalization;
+                        $data[$x]['Closing'] = $val->closing;
+                        $x++;
+                    }
+                }
+
+                $csv = \Excel::create('asset_cwip', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -2073,7 +2108,6 @@ WHERE
             }
         }
 
-
         return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
 
 
@@ -2365,14 +2399,60 @@ WHERE
 
         $quarterArr = [1 => ['startDate' => $firstQ1, 'endDate' => $endFirstQ1->subDay()->format('Y-m-d')], 2 => ['startDate' => $secondQ1, 'endDate' => $endSecondQ1->subDay()->format('Y-m-d')], 3 => ['startDate' => $thirdQ1, 'endDate' => $endThirdQ1->subDay()->format('Y-m-d')], 4 => ['startDate' => $fourthQ1, 'endDate' => $endfourthQ1->format('Y-m-d')]];*/
 
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
             $companyID = \Helper::getGroupCompany($request->companySystemID);
         } else {
-            $companyID = [$request->companySystemID];
+            $companyID = [(int)$request->companySystemID];
         }
 
 
+        $additionColumn = '';
+        $capitlizationColumn = '';
+        if ($request->currencyID == 2) {
+            $additionColumn = 'grvLocalAmount';
+            $capitlizationColumn = 'costLocal';
+        } else {
+            $additionColumn = 'grvRptAmount';
+            $capitlizationColumn = 'costRpt';
+        }
+
+        $addCapi = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
+	approvedDate,
+	0 as opening,
+	IFNULL(grvd.' . $additionColumn . ',0) as addition,
+	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing')->join('erp_grvdetails', function ($join) {
+            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
+                ->where('itemFinanceCategoryID', 3);
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
+            $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
+        })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+
+        $output = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
+	approvedDate,
+	IFNULL(grvd.' . $additionColumn . ',0) as opening,
+	0 as addition,
+	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing')->join('erp_grvdetails', function ($join) {
+            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
+                ->where('itemFinanceCategoryID', 3);
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
+            $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
+        })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereDate('erp_grvmaster.approvedDate','<',$fromDate)->union($addCapi)->get();
+
+        return $output;
     }
 }
