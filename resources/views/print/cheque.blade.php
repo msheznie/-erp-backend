@@ -183,7 +183,7 @@
     </style>
 </head>
 {{--<body onload="window.print()">--}}
-<body>
+<body onload="window.print();window.close()">
 
 @foreach ($entities as $entity)
     <div class="footer">

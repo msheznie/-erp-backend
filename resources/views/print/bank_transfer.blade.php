@@ -168,7 +168,7 @@
         }
     </style>
 </head>
-<body onload="window.print()">
+<body onload="window.print();window.close()">
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     {{-- <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}
