@@ -2426,12 +2426,13 @@ WHERE
 	0 as opening,
 	IFNULL(grvd.' . $additionColumn . ',0) as addition,
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
-	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing')->join('erp_grvdetails', function ($join) {
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')->join('erp_grvdetails', function ($join) {
             $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
                 ->where('itemFinanceCategoryID', 3);
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
-        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
         })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
@@ -2442,7 +2443,7 @@ WHERE
 	IFNULL(grvd.' . $additionColumn . ',0) as opening,
 	0 as addition,
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
-	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing')->join('erp_grvdetails', function ($join) {
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')->join('erp_grvdetails', function ($join) {
             $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
                 ->where('itemFinanceCategoryID', 3);
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
@@ -2454,5 +2455,54 @@ WHERE
         })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereDate('erp_grvmaster.approvedDate','<',$fromDate)->union($addCapi)->get();
 
         return $output;
+    }
+
+    function assetCWIPDrillDown(Request $request){
+        $input = $request->all();
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
+        $capitlizationColumn = '';
+        if ($request->currencyID == 2) {
+            $capitlizationColumn = 'COSTUNIT';
+        } else {
+            $capitlizationColumn = 'costUnitRpt';
+        }
+
+        $output = FixedAssetMaster::selectRAW($capitlizationColumn.' as capitalization,faCode,postedDate')->where('docOriginSystemCode',$request->grvAutoID)->where('docOriginDocumentSystemID',3)->isApproved()->whereRaw('DATE(postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"');
+
+        $total = $output->get();
+        $total = collect($total)->sum('capitalization');
+
+        return \DataTables::eloquent($output)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->with('totalAmount', [
+                'totalAmount' => $total,
+            ])
+            ->make(true);
     }
 }
