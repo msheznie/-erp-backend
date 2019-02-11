@@ -401,7 +401,7 @@
                 <th>Part No</th>
                 <th>UOM</th>
                 <th>Qty</th>
-                <th>Unit Cost</th>
+                <th>Sale Price</th>
                 <th>Discount</th>
                 <th>Net Amount</th>
             </tr>
