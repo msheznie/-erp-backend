@@ -158,6 +158,8 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['itemCategory'] = $item->financeCategoryMaster;
         $input['itemReferenceNo'] = $item->secondaryItemCode;
         $input['unitOfMeasureID'] = $item->itemUnitOfMeasure;
+        $input['wacValueLocal'] = $item->wacValueLocal;
+        $input['wacValueReporting'] = $item->wacValueReporting;
 
         $unitMasterData = Unit::find($item->itemUnitOfMeasure);
         if ($unitMasterData) {
