@@ -13,6 +13,7 @@
  * -- Date: 12-November 2018 By:Nazir Description: Added new functions named as updateSentToTreasuryDetail()
  * -- Date: 13-November 2018 By:Nazir Description: Added new functions named as printPaymentVoucher()
  * -- Date: 26-December 2018 By:Nazir Description: Added new functions named as amendPaymentVoucherReview()
+ * -- Date: 11-February 2019 By:Nazir Description: Added new functions named as amendPaymentVoucherPreCheck()
  */
 
 namespace App\Http\Controllers\API;
@@ -2141,9 +2142,9 @@ HAVING
                 return $this->sendError('Treasury cleared, You cannot return back to amend.');
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
                 return $this->sendError('Bank cleared. You cannot return back to amend.');
-            }else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
                 return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
-            }else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+            } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
                 return $this->sendError('Added to bank transfer. You cannot return back to amend.');
             }
         }
@@ -2253,6 +2254,52 @@ HAVING
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function amendPaymentVoucherPreCheck(Request $request)
+    {
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+
+        $paymentVoucherData = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
+        if (empty($paymentVoucherData)) {
+            return $this->sendError('Payment Voucher Master not found');
+        }
+
+
+        if ($paymentVoucherData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
+        }
+
+        // checking document matched in matchmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
+        }
+
+        $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkBLDataExist) {
+            if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            }
+        }
+
+        return $this->sendResponse($paymentVoucherData, 'Payment voucher pre checked successfully');
     }
 
 
