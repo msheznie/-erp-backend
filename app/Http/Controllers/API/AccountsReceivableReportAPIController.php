@@ -47,6 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
 class AccountsReceivableReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -2015,7 +2016,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
 	' . $currencyQry . ',
     ' . $decimalPlaceQry . ',
     MainQuery.customerName,
-    MainQuery.PONumber
+    MainQuery.PONumber,
+    MainQuery.documentSystemID,
+	MainQuery.documentSystemCode
 FROM
 	(
 SELECT
@@ -2200,7 +2203,9 @@ GROUP BY
 	final.customerName AS customerName, 
 	final.PONumber,
 	final.companyID,
-	final.CompanyName
+	final.CompanyName,
+	final.documentSystemCode,
+	final.documentSystemID
 FROM
 	(
 SELECT
@@ -2530,7 +2535,7 @@ WHERE
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
-        DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName FROM (SELECT
+        DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2553,7 +2558,9 @@ WHERE
 	final.brvInv,
 	final.companyID,
 	final.CompanyName,
-	final.serviceLineName
+	final.serviceLineName,
+	final.documentSystemCode,
+	final.documentSystemID
 FROM
 	(
 SELECT
@@ -3354,7 +3361,9 @@ GROUP BY
 	final.PONumber,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays,
 	final.companyID,
-	final.CompanyName
+	final.CompanyName,
+	final.documentSystemCode,
+	final.documentSystemID
 FROM
 	(
 SELECT
@@ -3647,6 +3656,8 @@ WHERE
 	CustomerBalanceSummary_Detail.concatCustomerName,
 	CustomerBalanceSummary_Detail.companyID,
 	CustomerBalanceSummary_Detail.CompanyName,
+	CustomerBalanceSummary_Detail.documentSystemCode,
+	CustomerBalanceSummary_Detail.documentSystemID,
 	 ' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
 	' . $invoiceAmountQry . '
@@ -3659,6 +3670,7 @@ SELECT
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
 	erp_generalledger.documentCode,
+	erp_generalledger.documentSystemID,
 	erp_generalledger.documentDate,
 	erp_generalledger.glCode,
 	erp_generalledger.supplierCodeSystem,
@@ -3702,6 +3714,7 @@ WHERE
 	companymaster.CompanyName,
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
+	erp_generalledger.documentSystemID,
 	"Opening Balance" as documentCode,
 	"1970-01-01" as documentDate,
 	erp_generalledger.glCode,
@@ -4401,6 +4414,8 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 customermaster.CutomerCode,
                                 customermaster.CustomerName,
                                 revenueCustomerDetail.documentCode,
+                                revenueCustomerDetail.documentSystemCode,
+                                revenueCustomerDetail.documentSystemID,
                                 revenueCustomerDetail.serviceLineCode,
                                 revenueCustomerDetail.ContractNumber,
                                 revenueCustomerDetail.contractDescription,
@@ -4432,6 +4447,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 erp_generalledger.documentID,
                                 erp_generalledger.documentSystemCode,
                                 erp_generalledger.documentCode,
+                                erp_generalledger.documentSystemID,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.documentNarration,
                                 erp_generalledger.glCode,
@@ -4552,6 +4568,8 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 MainQuery.companyID,
                 MainQuery.CompanyName,
                 MainQuery.documentCode,
+                MainQuery.documentSystemID,
+                MainQuery.documentSystemCode,
                 MainQuery.documentDate AS PostedDate,
                 MainQuery.clientContractID,
                 MainQuery.invoiceDate,
@@ -5676,6 +5694,7 @@ ORDER BY
 			erp_generalledger.serviceLineCode,
 			erp_generalledger.documentSystemCode,
 			erp_generalledger.documentCode,
+			erp_generalledger.documentSystemID,
 			erp_generalledger.documentDate as postedDate,
 			erp_generalledger.documentNarration,
 			companymaster.CompanyName,
