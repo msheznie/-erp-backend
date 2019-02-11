@@ -440,6 +440,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['PONumber'] = $input['PONumber'];
         $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
 
+        if(isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']){
+            $checkGrv  = CustomerInvoiceDirect::where('custInvoiceDirectAutoID','!=',$id)
+                ->where('customerGRVAutoID',$input['customerGRVAutoID'])
+                ->first();
+
+            if(!empty($checkGrv)){
+                return $this->sendError('Selected GRV is already assigned to '.$checkGrv->bookingInvCode,500,array('type' => 'grvAssigned'));
+            }
+        }else{
+            $input['customerGRVAutoID'] = null;
+        }
+
 
         if ($input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompID'] != '') {
@@ -757,6 +769,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice found');
+        }
+
+        if(isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']){
+            $checkGrv  = CustomerInvoiceDirect::where('custInvoiceDirectAutoID','!=',$id)
+                                               ->where('customerGRVAutoID',$input['customerGRVAutoID'])
+                                               ->first();
+
+            if(!empty($checkGrv)){
+                return $this->sendError('Selected GRV is already assigned to '.$checkGrv->bookingInvCode,500,array('type' => 'grvAssigned'));
+            }
+        }else{
+            $input['customerGRVAutoID'] = null;
         }
 
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(array_only($input, ['customerGRVAutoID']), $id);
