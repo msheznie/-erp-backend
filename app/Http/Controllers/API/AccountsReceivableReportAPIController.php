@@ -47,6 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+ini_set('max_execution_time', 300);
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -5652,15 +5653,18 @@ FROM
         DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-        AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	) AS revenueDetailData
-LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+	LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+	WHERE
+        (
+          revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+        )
 	) AS revenueDataSummary
 GROUP BY
 	revenueDataSummary.companySystemID,
 	revenueDataSummary.serviceLineSystemID
 ORDER BY
-	companySystemID ASC');
+	    Total DESC');
 
         return $output;
     }
