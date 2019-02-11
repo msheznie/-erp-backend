@@ -614,6 +614,17 @@ class FinancialReportAPIController extends AppBaseController
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
+                $grandTotalUncatArr = [];
+                $uncategorizeArr = [];
+                $uncategorize = '';
+                if ($request->accountType == 1 || $request->accountType == 2) {
+                    $uncategorize = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period));
+                    $lastColumn = collect($headers)->last(); // considering net total
+                    foreach ($columnKeys as $key => $val) {
+                        $grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorize->sum($val);
+                        $uncategorizeArr[$val] = $uncategorize->sum($val);
+                    }
+                }
 
                 $outputOpeningBalance = '';
                 $outputOpeningBalanceArr = [];
@@ -661,6 +672,9 @@ class FinancialReportAPIController extends AppBaseController
                     'columnHeader' => $columnHeader,
                     'openingBalance' => $outputOpeningBalanceArr,
                     'closingBalance' => $outputClosingBalanceArr,
+                    'uncategorize' => $uncategorizeArr,
+                    'uncategorizeDrillDown' => $uncategorize,
+                    'grandTotalUncatArr' => $grandTotalUncatArr,
                     'numbers' => $divisionValue,
                     'month' => $month,
                 );
@@ -2385,6 +2399,80 @@ ORDER BY
         return $output;
     }
 
+
+    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $reportTemplateMaster = ReportTemplate::find($request->templateType);
+        $uncategorizeGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->whereNotExists(function ($query) use ($request) {
+            $query->selectRaw('*')
+                ->from('erp_companyreporttemplatelinks')
+                ->where('templateMasterID', $request->templateType)
+                ->whereRaw('chartofaccounts.chartOfAccountSystemID = erp_companyreporttemplatelinks.glAutoID');
+        })->pluck('chartOfAccountSystemID')->toArray();
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $sql = 'SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID,
+            chartofaccounts.AccountCode as glCode,
+	        chartofaccounts.AccountDescription as glDescription 
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID';
+
+        $output = \DB::select($sql);
+        return $output;
+    }
+
     /**
      * function to decode tax formula to multiple combined formula
      * @param $columnLinkID
@@ -2428,7 +2516,6 @@ ORDER BY
      * @param $rowValues
      * @param $columnArray
      * @param $linkedRows
-     * @param $columnCustomeCode
      * @return mixed
      */
     public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray)
