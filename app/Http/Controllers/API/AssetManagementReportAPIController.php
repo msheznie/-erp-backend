@@ -2193,7 +2193,6 @@ WHERE
 
     function getAssetRegisterSummaryQRY($request)
     {
-
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
@@ -2207,7 +2206,7 @@ WHERE
 
         $currencyColumn = '';
         $currencyColumnDep = '';
-        if ($request->currencyID == 1) {
+        if ($request->currencyID == 2) {
             $currencyColumn = 'COSTUNIT';
             $currencyColumnDep = 'depAmountLocal';
         } else {
@@ -2249,8 +2248,10 @@ WHERE
 
         // asset cost
         $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description,2 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID);
-        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1);
-        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany($companyID)->union($additionCostquery)
+
+        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1);
+
+        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->where('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->union($additionCostquery)
             ->union($disposalCostquery)->get();
 
         // asset depreciation
@@ -2263,15 +2264,17 @@ WHERE
 
         $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQryDisposal . $assetCategoryDepQryTotDisposal . '"Disposal" as description,3 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
             $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
-        })->whereHas('asset_by', function ($q) use ($request) {
+        })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
             $q->assetType($request->typeID);
             $q->disposed(-1);
+            $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
         })->ofCompany($companyID);
 
         $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->whereHas('master_by', function ($q) use ($financeYear) {
             $q->where('depDate', '<', $financeYear->bigginingDate);
-        })->whereHas('asset_by', function ($q) use ($request) {
+        })->whereHas('asset_by', function ($q) use ($request, $financeYear) {
             $q->assetType($request->typeID);
+            $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
         })->ofCompany($companyID)->union($additionDepquery)
             ->union($disposalDepquery)->get();
 
@@ -2302,7 +2305,7 @@ WHERE
 
         $currencyColumn = '';
         $currencyColumnDep = '';
-        if ($request->currencyID == 1) {
+        if ($request->currencyID == 2) {
             $currencyColumn = 'COSTUNIT';
             $currencyColumnDep = 'depAmountLocal';
         } else {
@@ -2313,13 +2316,13 @@ WHERE
         // asset cost
         if ($request->catType == 1) {
             if ($request->subType == 1) { //opening
-                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->where('postedDate', '<', $financeYear->bigginingDate)->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID);
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->where('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID);
             }
             if ($request->subType == 2) { //addition
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID);
             }
             if ($request->subType == 3) {// disposal
-                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID);
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID);
             }
         }
 
@@ -2331,8 +2334,9 @@ WHERE
                     $q->with(['category_by', 'sub_category_by']);
                 }])->whereHas('master_by', function ($q) use ($financeYear) {
                     $q->where('depDate', '<', $financeYear->bigginingDate);
-                })->whereHas('asset_by', function ($q) use ($request) {
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear) {
                     $q->assetType($request->typeID);
+                    $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
 
@@ -2351,9 +2355,10 @@ WHERE
                     $q->with(['category_by', 'sub_category_by']);
                 }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
                     $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
-                })->whereHas('asset_by', function ($q) use ($request) {
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
                     $q->assetType($request->typeID);
                     $q->disposed(-1);
+                    $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
         }
@@ -2435,7 +2440,7 @@ WHERE
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
-        })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
 	AND "' . $toDate . '" ');
 
         $output = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
@@ -2452,12 +2457,13 @@ WHERE
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
-        })->whereIN('erp_grvmaster.companySystemID',$companyID)->where('erp_grvmaster.approved',-1)->whereDate('erp_grvmaster.approvedDate','<',$fromDate)->union($addCapi)->get();
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->union($addCapi)->get();
 
         return $output;
     }
 
-    function assetCWIPDrillDown(Request $request){
+    function assetCWIPDrillDown(Request $request)
+    {
         $input = $request->all();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -2484,7 +2490,7 @@ WHERE
             $capitlizationColumn = 'costUnitRpt';
         }
 
-        $output = FixedAssetMaster::selectRAW($capitlizationColumn.' as capitalization,faCode,postedDate')->where('docOriginSystemCode',$request->grvAutoID)->where('docOriginDocumentSystemID',3)->isApproved()->whereRaw('DATE(postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"');
+        $output = FixedAssetMaster::selectRAW($capitlizationColumn . ' as capitalization,faCode,postedDate')->where('docOriginSystemCode', $request->grvAutoID)->where('docOriginDocumentSystemID', 3)->isApproved()->whereRaw('DATE(postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"');
 
         $total = $output->get();
         $total = collect($total)->sum('capitalization');
