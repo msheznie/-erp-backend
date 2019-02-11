@@ -242,6 +242,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                             $input["faUnitSerialNo"] = $input['assetSerialNo'][0]['faUnitSerialNo'];
                         }
                         $input["serialNo"] = $lastSerialNumber;
+                        $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
+                        $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
                         $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
                         $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
                         $input['docOriginDetailID'] = $grvDetailsID;
@@ -291,6 +293,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                                     }
                                 }
                                 $input["serialNo"] = $lastSerialNumber;
+                                $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
+                                $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
                                 $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
                                 $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
                                 $input['docOriginDetailID'] = $grvDetailsID;
