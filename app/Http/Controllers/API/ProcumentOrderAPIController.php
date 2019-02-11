@@ -2197,7 +2197,8 @@ LEFT JOIN (
 	WHERE
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
-	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ') 
+	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+	AND year(erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')
 	GROUP BY
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.supplierID = erp_purchaseordermaster.supplierID
@@ -2209,6 +2210,9 @@ WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
 AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY erp_purchaseordermaster.supplierID';
+
+            //echo $doc2_query;
+            //exit();
             $supplierReportGRVBase = DB::select($doc2_query);
         }
         $alltotal = array();
@@ -2432,6 +2436,7 @@ LEFT JOIN (
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
 	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+	AND year(erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')
 	GROUP BY
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.supplierID = erp_purchaseordermaster.supplierID
