@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ReportTemplateEmployees.php
+ * -- Project Name : ERP
+ * -- Module Name : Configuration
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 02- January 2019
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -71,15 +80,15 @@ class ReportTemplateEmployees extends Model
 
     public $table = 'erp_companyreporttemplateemployees';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
-
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
 
     public $fillable = [
         'companyReportTemplateID',
         'userGroupID',
         'employeeSystemID',
+        'companySystemID',
+        'companyID',
         'createdPCID',
         'createdUserSystemID',
         'createdUserID',
@@ -101,6 +110,8 @@ class ReportTemplateEmployees extends Model
         'companyReportTemplateID' => 'integer',
         'userGroupID' => 'integer',
         'employeeSystemID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
         'createdPCID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
@@ -117,6 +128,11 @@ class ReportTemplateEmployees extends Model
     public static $rules = [
         
     ];
+
+    public function employee_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employeeSystemID', 'employeeSystemID');
+    }
 
     
 }
