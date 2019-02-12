@@ -1,4 +1,14 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : ReportTemplateEmployeesAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Report Template
+ * -- Author : Mubashir
+ * -- Create date : 21 - January 2019
+ * -- Description :  This file contains the all CRUD for Report template employee assign
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -16,7 +26,6 @@ use Response;
  * Class ReportTemplateEmployeesController
  * @package App\Http\Controllers\API
  */
-
 class ReportTemplateEmployeesAPIController extends AppBaseController
 {
     /** @var  ReportTemplateEmployeesRepository */
@@ -110,7 +119,27 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->create($input);
+        $validator = \Validator::make($input, [
+            'employeeSystemID' => 'required|array'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
+
+        $reportTemplateEmployees = '';
+        foreach ($input['employeeSystemID'] as $val) {
+            $data['companyReportTemplateID'] = $input['companyReportTemplateID'];
+            $data['employeeSystemID'] = $val['employeeSystemID'];
+            $data['companySystemID'] = $input['companySystemID'];
+            $data['companyID'] = $input['companyID'];
+            $data['createdPCID'] = gethostname();
+            $data['createdUserID'] = \Helper::getEmployeeID();
+            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->create($data);
+        }
 
         return $this->sendResponse($reportTemplateEmployees->toArray(), 'Report Template Employees saved successfully');
     }
@@ -277,5 +306,32 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
         $reportTemplateEmployees->delete();
 
         return $this->sendResponse($id, 'Report Template Employees deleted successfully');
+    }
+
+    public function getReportTemplateAssignedEmployee(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $output = ReportTemplateEmployees::with('employee_by')->where('companyReportTemplateID',$request->companyReportTemplateID)->where('companySystemID',$request->companySystemID);
+
+        return \DataTables::eloquent($output)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
     }
 }

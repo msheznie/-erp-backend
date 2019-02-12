@@ -1314,6 +1314,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
     Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
     Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
+    Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
     Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
 
@@ -1417,6 +1418,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
     Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
     Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
+
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
+    Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee');
 });
 
 
@@ -1483,7 +1488,6 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
-Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
+
 
 
