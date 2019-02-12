@@ -1,6 +1,6 @@
 <style type="text/css">
     @page {
-        margin: 100px 30px 40px;
+        margin: 110px 30px 40px;
     }
 
     #header {
@@ -166,24 +166,27 @@
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
             <tr>
-                <td colspan="10"><b>{{$key}}</b></td>
+                <td colspan="10"><span style="font-size: 11px; font-weight: bold">{{$key}}</span></td>
             </tr>
-            <tr>
-                <th width="5%">Doc ID</th>
-                <th width="10%">Document Code</th>
-                <th width="7%">Doc Date</th>
-                <th width="31%">Narration</th>
-                <th width="9%">Invoice Number</th>
-                <th width="7%">Invoice Date</th>
-                <th width="5%">Currency</th>
-                <th width="6%">Age Days</th>
-                <th width="10%">Doc Amount</th>
-                <th width="10%">BalanceAmount</th>
-            </tr>
-            <tbody>
-            @foreach ($val as $det)
+            @foreach ($val as $key2 => $val2)
+                <tr>
+                    <td colspan="10"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
+                </tr>
+                <tr>
+                    <th width="5%">Doc ID</th>
+                    <th width="10%">Document Code</th>
+                    <th width="7%">Doc Date</th>
+                    <th width="31%">Narration</th>
+                    <th width="9%">Invoice Number</th>
+                    <th width="7%">Invoice Date</th>
+                    <th width="5%">Currency</th>
+                    <th width="6%">Age Days</th>
+                    <th width="10%">Doc Amount</th>
+                    <th width="10%">BalanceAmount</th>
+                </tr>
+                <tbody>
                 {{ $lineTotal = 0 }}
-                @foreach ($det as $det2)
+                @foreach ($val2 as $det2)
                     <tr>
                         <td>{{ $det2->documentID }}</td>
                         <td>{{ $det2->documentCode }}</td>
@@ -203,8 +206,8 @@
                         class="text-right"><b>Total:</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
                 </tr>
+                </tbody>
             @endforeach
-            </tbody>
         @endforeach
         <tfoot>
         <tr>

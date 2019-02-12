@@ -282,6 +282,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
 
                 if ($reportTypeID == 'SS') {
+                    $request->fromPath = 'view';
                     $output = $this->getSupplierStatementQRY($request);
 
                     $outputArr = array();
@@ -852,6 +853,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SS') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                    $request->fromPath = 'view';
                     $output = $this->getSupplierStatementQRY($request);
                     if ($output) {
                         $x = 0;
@@ -1058,6 +1060,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Code'] = $val->documentCode;
+                            $data[$x]['Narration '] = $val->documentNarration;
                             $data[$x]['Supplier Code'] = $val->SupplierCode;
                             $data[$x]['Supplier Name'] = $val->suppliername;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -1519,6 +1522,14 @@ class AccountsPayableReportAPIController extends AppBaseController
         $controlAccountsSystemID = $request->controlAccountsSystemID;
 
         $currency = $request->currencyID;
+
+        $path = $request->fromPath;
+
+        $filterOrderBy = 'documentDate';
+        if ($path == 'pdf') {
+            $filterOrderBy = 'companySystemID';
+        }
+
         $currencyQry = '';
         $invoiceAmountQry = '';
         $balanceAmountQry = '';
@@ -1566,7 +1577,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $balanceAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName
+                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompany
                             FROM
                             (
                             SELECT
@@ -1593,17 +1605,17 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
                                 MAINQUERY.docRptAmount AS documentAmountRpt,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1 AS PaidAmountLocal,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
-                            
+
                                 MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
-                            
+
                                 MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
-                            
+
                                 MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt
                             FROM
                                 (
@@ -1776,7 +1788,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
         //dd(DB::getQueryLog());
         return $output;
     }
@@ -4840,6 +4852,7 @@ ORDER BY
 
                     $companyLogo = $checkIsGroup->companyLogo;
 
+                    $request->fromPath = 'pdf';
                     $output = $this->getSupplierStatementQRY($request);
 
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -4855,9 +4868,12 @@ ORDER BY
 
                     if ($output) {
                         foreach ($output as $val) {
-                            $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatCompany][$val->concatSupplierName][] = $val;
                         }
                     }
+
+                    //echo '<pre>';print_r($outputArr); echo '</pre>'; die();
+
 
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal);
 
