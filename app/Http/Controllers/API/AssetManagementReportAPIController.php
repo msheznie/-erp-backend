@@ -831,13 +831,15 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Serial Number'] = $val->SerialNumber;
                         $data[$x]['Asset Description'] = $val->AssetDescription;
                         $data[$x]['DEP percentage'] = $val->DEPpercentage;
-                        $data[$x]['Date Acquired'] = \Helper::dateFormat($val->postedDate);
+                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
                         $data[$x]['GRV Code'] = $val->GRVCODE;
                         $data[$x]['PO Code'] = $val->POCODE;
                         $data[$x]['PO Amount Rpt'] = $val->poTotalComRptCurrency;
                         $data[$x]['Payment Date'] = $val->paymentDate;
                         $data[$x]['Service Line'] = $val->ServiceLineDes;
                         $data[$x]['Supplier'] = $val->Supplier;
+                        $data[$x]['Cost GL'] = $val->COSTGLCODE;
+                        $data[$x]['Cost GL Desc'] = $val->COSTGLCODEdes;
                         $data[$x]['Asset Cost Local Curr'] = $val->localCurrency;
                         $data[$x]['Asset Cost Local'] = $val->AssetCostLocal;
                         $data[$x]['Asset Cost Rpt Curr'] = $val->reportCurrency;
@@ -1089,7 +1091,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     locCur.CurrencyCode as localCurrency,
                     locCur.DecimalPlaces as localCurrencyDeci,
                     repCur.CurrencyCode as reportCurrency,
-                    repCur.DecimalPlaces as reportCurrencyDeci
+                    repCur.DecimalPlaces as reportCurrencyDeci,
+                     erp_fa_asset_master.COSTGLCODE as COSTGLCODE,
+                     erp_fa_asset_master.COSTGLCODEdes as COSTGLCODEdes
                 FROM
                     erp_fa_asset_master
                 LEFT JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
