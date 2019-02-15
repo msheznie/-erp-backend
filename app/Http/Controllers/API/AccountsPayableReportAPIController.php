@@ -1060,6 +1060,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Code'] = $val->documentCode;
+                            $data[$x]['Narration '] = $val->documentNarration;
                             $data[$x]['Supplier Code'] = $val->SupplierCode;
                             $data[$x]['Supplier Name'] = $val->suppliername;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
