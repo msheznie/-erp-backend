@@ -24,6 +24,7 @@ use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
+use App\Jobs\RollBackApproval;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
 use App\Models\CustomerReceivePayment;
@@ -1613,6 +1614,14 @@ class Helper
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41])) { // already GL entry passed Check
+                                $outputGL = Models\GeneralLedger::where('documentSystemCode',$input["documentSystemCode"])->where('documentSystemID',$input["documentSystemID"])->first();
+                                if($outputGL){
+                                    return ['success' => false, 'message' => 'GL entries are already passed for this document'];
+                                }
+                            }
+
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -1928,6 +1937,8 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
+            //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
+            //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
