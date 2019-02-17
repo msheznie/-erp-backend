@@ -618,7 +618,7 @@ class FinancialReportAPIController extends AppBaseController
                 $uncategorizeArr = [];
                 $uncategorize = '';
                 if ($request->accountType == 1 || $request->accountType == 2) {
-                    $uncategorize = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period));
+                    $uncategorize = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys));
                     $lastColumn = collect($headers)->last(); // considering net total
                     foreach ($columnKeys as $key => $val) {
                         $grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorize->sum($val);
@@ -2307,7 +2307,7 @@ ORDER BY
 
         $glCodes = ReportTemplateLinks::where('templateMasterID', $request->templateType)->whereNotNull('glAutoID')->pluck('glAutoID')->toArray();
 
-        $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereIN('serviceLineSystemID', $serviceline)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+        $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
 
         return $output;
     }
@@ -2400,7 +2400,7 @@ ORDER BY
     }
 
 
-    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period)
+    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2454,7 +2454,12 @@ ORDER BY
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
-        $sql = 'SELECT
+        $secondLinkedcolumnQry = '';
+        foreach ($columnKeys as $key => $val) {
+            $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) * -1 AS `' . $val . '`,';
+        }
+
+        $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID,
             chartofaccounts.AccountCode as glCode,
@@ -2467,7 +2472,7 @@ ORDER BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID';
+            erp_generalledger.chartOfAccountSystemID) a';
 
         $output = \DB::select($sql);
         return $output;
