@@ -31,6 +31,7 @@
  * -- Date: 10-july 2018 By: Nazir Description: Added new functions named as getCustomerSummaryCollectionQRY()
  * -- Date: 11-july 2018 By: Nazir Description: Added new functions named as getCustomerSummaryOutstandingQRY()
  * -- Date: 11-july 2018 By: Nazir Description: Added new functions named as getCustomerSummaryRevenueServiceLineBaseQRY()
+ * -- Date: 13-February 2019 By: Nazir Description: Added new functions named as getCustomerSummaryOutstandingUpdatedQRY()
  */
 
 namespace App\Http\Controllers\API;
@@ -46,7 +47,6 @@ use App\Models\GeneralLedger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -751,7 +751,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $checkIsGroup = Company::find($request->companySystemID);
                 $outputRevenue = $this->getCustomerSummaryRevenueQRY($request);
                 $outputCollection = $this->getCustomerSummaryCollectionQRY($request);
-                $outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
+                //$outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
+                $outputOutstanding = $this->getCustomerSummaryOutstandingUpdatedQRY($request);
                 $outputServiceLine = $this->getCustomerSummaryRevenueServiceLineBaseQRY($request);
 
                 $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
@@ -3818,12 +3819,12 @@ WHERE
                 WHERE
                     (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
                     AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
-      
+
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 		            AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . '))
                     AS CustomerBalanceSummary_Detail
-                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem 
+                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem
                     ORDER BY CustomerBalanceSummary_Detail.documentDate ASC;');
 
         //dd(DB::getQueryLog());
@@ -5464,6 +5465,197 @@ ORDER BY
         return $output;
     }
 
+    function getCustomerSummaryOutstandingUpdatedQRY($request)
+    {
+
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $customers = (array)$request->customers;
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
+
+        $currency = $request->currencyID;
+        $year = $request->year;
+
+        $currencyClm = "CustomerBalanceSummary_Detail.documentRptAmount";
+
+        if ($currency == 2) {
+            $currencyClm = "CustomerBalanceSummary_Detail.documentLocalAmount";
+        } else if ($currency == 3) {
+            $currencyClm = "CustomerBalanceSummary_Detail.documentRptAmount";
+        }
+
+        $output = \DB::select('SELECT
+	CustomerBalanceSummary_Summary.companySystemID,
+	CustomerBalanceSummary_Summary.companyID,
+	CustomerBalanceSummary_Summary.CompanyName,
+	CustomerBalanceSummary_Summary.chartOfAccountSystemID,
+	CustomerBalanceSummary_Summary.AccountDescription,
+	sum(Jan) AS balanceAmountJan,
+	sum(Feb) AS balanceAmountFeb,
+	sum(March) AS balanceAmountMar,
+	sum(April) AS balanceAmountApr,
+	sum(May) AS balanceAmountMay,
+	sum(June) AS balanceAmountJun,
+	sum(July) AS balanceAmountJul,
+	sum(Aug) AS balanceAmountAug,
+	sum(Sept) AS balanceAmountSep,
+	sum(Oct) AS balanceAmountOct,
+	sum(Nov) AS balanceAmountNov,
+	sum(Dece) AS balanceAmountDec,
+	sum(balanceTotal) AS balanceAmountTot
+FROM
+	(
+		SELECT
+			CustomerBalanceSummary_Detail.companySystemID,
+			CustomerBalanceSummary_Detail.companyID,
+			CustomerBalanceSummary_Detail.CompanyName,
+			CustomerBalanceSummary_Detail.supplierCodeSystem,
+			CustomerBalanceSummary_Detail.CutomerCode,
+			CustomerBalanceSummary_Detail.CustomerName,
+			CustomerBalanceSummary_Detail.documentLocalCurrencyID,
+			CustomerBalanceSummary_Detail.documentDate,
+			CustomerBalanceSummary_Detail.DocMONTH,
+
+		IF (
+			CustomerBalanceSummary_Detail.DocMONTH = 1,
+			' . $currencyClm . ',
+			0
+		) AS Jan,
+
+	IF (
+		CustomerBalanceSummary_Detail.DocMONTH = 2,
+		' . $currencyClm . ',
+		0
+	) AS Feb,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 3,
+	' . $currencyClm . ',
+	0
+) AS March,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 4,
+	' . $currencyClm . ',
+	0
+) AS April,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 5,
+	' . $currencyClm . ',
+	0
+) AS May,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 6,
+	' . $currencyClm . ',
+	0
+) AS June,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 7,
+	' . $currencyClm . ',
+	0
+) AS July,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 8,
+	' . $currencyClm . ',
+	0
+) AS Aug,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 9,
+	' . $currencyClm . ',
+	0
+) AS Sept,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 10,
+	' . $currencyClm . ',
+	0
+) AS Oct,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 11,
+	' . $currencyClm . ',
+	0
+) AS Nov,
+
+IF (
+	CustomerBalanceSummary_Detail.DocMONTH = 12,
+	' . $currencyClm . ',
+	0
+) AS Dece,
+ ' . $currencyClm . ' AS balanceTotal,
+ CustomerBalanceSummary_Detail.documentLocalCurrency,
+ CustomerBalanceSummary_Detail.documentRptCurrency,
+ CustomerBalanceSummary_Detail.chartOfAccountSystemID,
+ CustomerBalanceSummary_Detail.AccountDescription
+FROM
+	(
+		SELECT
+			erp_generalledger.companySystemID,
+			erp_generalledger.companyID,
+			erp_generalledger.documentID,
+			erp_generalledger.documentSystemCode,
+			erp_generalledger.documentCode,
+			erp_generalledger.documentDate,
+			MONTH (
+				erp_generalledger.documentDate
+			) AS DocMONTH,
+			erp_generalledger.glCode,
+			erp_generalledger.supplierCodeSystem,
+			customermaster.CutomerCode,
+			customermaster.CustomerName,
+			erp_generalledger.documentLocalCurrencyID,
+			erp_generalledger.documentLocalAmount,
+			erp_generalledger.documentRptCurrencyID,
+			erp_generalledger.documentRptAmount,
+			erp_generalledger.chartOfAccountSystemID,
+			currLocal.CurrencyCode AS documentLocalCurrency,
+			currRpt.CurrencyCode AS documentRptCurrency,
+			companymaster.CompanyName,
+			chartofaccounts.AccountDescription
+		FROM
+			erp_generalledger
+		INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+		INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+		AND customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID
+		LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+		LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+		LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+		WHERE
+			(
+				erp_generalledger.documentSystemID = 20
+				OR erp_generalledger.documentSystemID = 19
+				OR erp_generalledger.documentSystemID = 21
+			)
+		AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+		AND DATE(
+			erp_generalledger.documentDate
+		) <= "' . $asOfDate . '"
+		AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+		AND YEAR (
+			erp_generalledger.documentDate
+		) = "' . $year . '"
+	) AS CustomerBalanceSummary_Detail
+	) AS CustomerBalanceSummary_Summary
+GROUP BY
+	CustomerBalanceSummary_Summary.companySystemID,
+	CustomerBalanceSummary_Summary.chartOfAccountSystemID');
+
+        return $output;
+    }
+
 
     function getCustomerSummaryRevenueServiceLineBaseQRY($request)
     {
@@ -5652,15 +5844,18 @@ FROM
         DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-        AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	) AS revenueDetailData
-LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+	LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+	WHERE
+        (
+          revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+        )
 	) AS revenueDataSummary
 GROUP BY
 	revenueDataSummary.companySystemID,
 	revenueDataSummary.serviceLineSystemID
 ORDER BY
-	companySystemID ASC');
+	    Total DESC');
 
         return $output;
     }

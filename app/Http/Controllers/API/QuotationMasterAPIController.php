@@ -758,7 +758,9 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-        $items = ItemAssigned::where('companySystemID', $companySystemID);
+        $items = ItemAssigned::where('companySystemID', $companySystemID)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1);
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
@@ -766,7 +768,6 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
         }
-
         $items = $items
             ->take(20)
             ->get();
