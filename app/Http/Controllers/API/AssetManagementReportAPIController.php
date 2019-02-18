@@ -11,6 +11,8 @@
  * -- Date: 12-july 2018 By: Mubashir Description: Added new functions named as getFilterData(),validateReport(),generateReport(),exportReport()
  * -- Date: 12-july 2018 By: Nazir Description: Added new functions named as getAssetAdditionsQRY()
  * -- Date: 12-july 2018 By: Fayas Description: Added new functions named as getAssetDisposal()
+ * -- Date: 06-feb 2019 By: Mubashir Description: Added new functions named as getAssetRegisterSummaryQRY(),getAssetRegisterSummaryDrillDownQRY()
+ * -- Date: 07-feb 2018 By: Mubashir Description: Added new functions named as getAssetCWIPQRY(),assetCWIPDrillDown()
  */
 
 namespace App\Http\Controllers\API;

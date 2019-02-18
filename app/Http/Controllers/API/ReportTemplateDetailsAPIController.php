@@ -384,7 +384,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         if ($request->isHeader == 1) {
             $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
         } else {
-            $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('detID', '<', $request->detID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
+            $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('sortOrder', '<', $request->sortOrder)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
         }
 
         return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');

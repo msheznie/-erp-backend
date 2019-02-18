@@ -1261,6 +1261,15 @@ class BankLedgerAPIController extends AppBaseController
             $sort = 'desc';
         }
         $employee = \Helper::getEmployeeInfo();
+
+        if(!isset($input['chequeNumberRangeFrom']) && !$input['chequeNumberRangeFrom']){
+            $input['chequeNumberRangeFrom'] = 0;
+        }
+
+        if(!isset($input['chequeNumberRangeTo']) && !$input['chequeNumberRangeTo']){
+            $input['chequeNumberRangeTo'] = 0;
+        }
+
         $bankLedger = $this->chequeListQrt($input, $search, 0)
             ->when($input['chequeNumberRange'], function ($q) use ($input) {
                 $q->where('BPVchequeNo', '>=', $input['chequeNumberRangeFrom'])
