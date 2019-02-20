@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateItemAssignedAPIRequest;
 use App\Http\Requests\API\UpdateItemAssignedAPIRequest;
 use App\Models\ItemAssigned;
 use App\Models\Company;
+use App\Models\ItemMaster;
 use App\Repositories\ItemAssignedRepository;
 use App\Repositories\ItemMasterRepository;
 use Illuminate\Http\Request;
@@ -74,17 +75,37 @@ class ItemAssignedAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+        $itemId = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
+
+        $itemMaster = ItemMaster::find($itemId);
+
+        if (empty($itemMaster)) {
+          return $this->sendError('Item master not found.',500);
+        }
+
+
         if (array_key_exists("idItemAssigned", $input)) {
             $itemAssigneds = ItemAssigned::where('idItemAssigned', $input['idItemAssigned'])->first();
-            $itemAssigneds->isActive = $input['isActive'];
-
             if ($input['isAssigned'] == 1 || $input['isAssigned'] == true) {
                 $input['isAssigned'] = -1;
             }
 
+            if($input['isAssigned'] == -1 && $itemAssigneds->isAssigned == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0 )){
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+
+            if($input['isActive'] == 1 && $itemAssigneds->isActive == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0)){
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+            $itemAssigneds->isActive = $input['isActive'];
             $itemAssigneds->isAssigned = $input['isAssigned'];
             $itemAssigneds->save();
         } else {
+
+            if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             $input['wacValueReportingCurrencyID'] = $company->reportingCurrency;
             $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;

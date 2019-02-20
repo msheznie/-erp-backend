@@ -465,32 +465,53 @@ class ExpenseClaimAPIController extends AppBaseController
         }
 
         $detail = \DB::select('SELECT
-                            erp_paysupplierinvoicemaster.PayMasterAutoId,
-                            erp_paysupplierinvoicemaster.BPVcode,
-                            erp_paysupplierinvoicemaster.documentID,
-                            erp_paysupplierinvoicemaster.companyID,
-                            erp_paysupplierinvoicemaster.BPVdate,
-                            erp_paysupplierinvoicemaster.BPVNarration,
-                            erp_paysupplierinvoicemaster.createdUserID,
-                            employees.empName,
-                            erp_directpaymentdetails.expenseClaimMasterAutoID 
-                        FROM
-                            ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
-                            LEFT JOIN employees ON erp_paysupplierinvoicemaster.createdUserID = employees.empID 
-                            WHERE erp_directpaymentdetails.expenseClaimMasterAutoID = '.$id.'
-                        GROUP BY
-                            erp_paysupplierinvoicemaster.PayMasterAutoId,
-                            erp_paysupplierinvoicemaster.BPVcode,
-                            erp_paysupplierinvoicemaster.documentID,
-                            erp_paysupplierinvoicemaster.companyID,
-                            erp_paysupplierinvoicemaster.BPVdate,
-                            erp_paysupplierinvoicemaster.BPVNarration,
-                            erp_paysupplierinvoicemaster.createdUserID,
-                            employees.empName,
-                            erp_directpaymentdetails.expenseClaimMasterAutoID,
-                            erp_directpaymentdetails.expenseClaimMasterAutoID 
-                        HAVING
-                            ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) );');
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.BPVcode,
+                                erp_paysupplierinvoicemaster.documentID,
+                                erp_paysupplierinvoicemaster.companyID,
+                                erp_paysupplierinvoicemaster.BPVdate,
+                                erp_paysupplierinvoicemaster.BPVNarration,
+                                erp_paysupplierinvoicemaster.createdUserID,
+                                employees.empName,
+                                erp_directpaymentdetails.expenseClaimMasterAutoID 
+                            FROM
+                                ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
+                                LEFT JOIN employees ON erp_paysupplierinvoicemaster.createdUserID = employees.empID 
+                            WHERE
+                                erp_directpaymentdetails.expenseClaimMasterAutoID = '.$id.'
+                            GROUP BY
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.documentSystemID,
+                                erp_paysupplierinvoicemaster.companySystemID,
+                                erp_directpaymentdetails.expenseClaimMasterAutoID 
+                            HAVING
+                                ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) ) UNION ALL
+                            SELECT
+                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
+                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
+                                hrms_monthlyadditionsmaster.documentID,
+                                hrms_monthlyadditionsmaster.CompanyID,
+                                hrms_monthlyadditionsmaster.dateMA,
+                                hrms_monthlyadditionsmaster.description,
+                                hrms_monthlyadditionsmaster.modifieduser,
+                                employees.empName,
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
+                            FROM
+                                ( hrms_monthlyadditionsmaster INNER JOIN hrms_monthlyadditiondetail ON hrms_monthlyadditionsmaster.monthlyAdditionsMasterID = hrms_monthlyadditiondetail.monthlyAdditionsMasterID )
+                                LEFT JOIN employees ON hrms_monthlyadditionsmaster.modifieduser = employees.empID 
+                            WHERE
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID = '.$id.'
+                            GROUP BY
+                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
+                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
+                                hrms_monthlyadditionsmaster.documentSystemID,
+                                hrms_monthlyadditionsmaster.companySystemID,
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
+                            HAVING
+                                ( ( ( hrms_monthlyadditiondetail.expenseClaimMasterAutoID ) <> 0 ) );
+                            ;');
+
+
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 }
