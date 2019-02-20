@@ -90,11 +90,11 @@ class ItemAssignedAPIController extends AppBaseController
                 $input['isAssigned'] = -1;
             }
 
-            if($input['isAssigned'] == -1 && $itemAssigneds->isAssigned == 0 && $itemMaster->isActive == 0){
+            if($input['isAssigned'] == -1 && $itemAssigneds->isAssigned == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0 )){
                 return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
             }
 
-            if($input['isActive'] == 1 && $itemAssigneds->isActive == 0 && $itemMaster->isActive == 0){
+            if($input['isActive'] == 1 && $itemAssigneds->isActive == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0)){
                 return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
             }
             $itemAssigneds->isActive = $input['isActive'];
@@ -102,7 +102,7 @@ class ItemAssignedAPIController extends AppBaseController
             $itemAssigneds->save();
         } else {
 
-            if ($itemMaster->isActive == 0) {
+            if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
                 return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
             }
 
