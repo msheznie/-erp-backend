@@ -553,7 +553,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), $currencyColumn) ), 0 )";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
@@ -2105,7 +2105,7 @@ AND MASTER .canceledYN = 0';
         $thirdLinkedcolumnQry = '';
         $fourthLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
         }
@@ -2282,7 +2282,7 @@ GROUP BY
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') AS `' . $val . '`,';
         }
 
         $sql = 'SELECT
