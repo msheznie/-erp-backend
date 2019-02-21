@@ -2104,13 +2104,15 @@ AND MASTER .canceledYN = 0';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
         $fourthLinkedcolumnQry = '';
+        $whereQry = [];
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
+            //$whereQry[] .= 'd.`' . $val . '` != 0';
         }
 
-        $sql = 'SELECT
+        $sql = 'SELECT * FROM (SELECT
 	c.detDescription,
 	c.detID,
 	' . $secondLinkedcolumnQry . '
@@ -2221,8 +2223,7 @@ WHERE
 	AND subCategory IS NOT NULL 
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID 
-	) e ON e.templateDetailID = c.detID';
-
+	) e ON e.templateDetailID = c.detID) d';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2281,11 +2282,13 @@ GROUP BY
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
+        $whereQry = [];
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') AS `' . $val . '`,';
+            //$whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
-        $sql = 'SELECT
+        $sql = 'SELECT * FROM (SELECT
 	' . $secondLinkedcolumnQry . '
 	erp_companyreporttemplatelinks.glCode,
 	erp_companyreporttemplatelinks.glDescription,
@@ -2308,7 +2311,7 @@ FROM
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
-	erp_companyreporttemplatelinks.sortOrder';
+	erp_companyreporttemplatelinks.sortOrder) a';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2474,7 +2477,7 @@ ORDER BY
 
         $secondLinkedcolumnQry = '';
         foreach ($columnKeys as $key => $val) {
-            $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) * -1 AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) AS `' . $val . '`,';
         }
 
         $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
