@@ -384,15 +384,9 @@ class JvMasterAPIController extends AppBaseController
 
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
-                $input['JVdate'] = new Carbon($input['JVdate']);
+                $input['JVdate'] = Carbon::parse($input['JVdate']);
             }
         }
-
-        $firstDayNextMonth = Carbon::parse($input['JVdate'])->addMonth()->firstOfMonth();
-        $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
-
-
-        $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate FROM companyfinanceyear WHERE companySystemID = " . $input['companySystemID'] . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
@@ -1082,7 +1076,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         if ($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) {
 
-            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
             $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
@@ -1091,7 +1086,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 return $this->sendError('Financial year not created or not active for reversal document. You cannot approve this document.');
             }
 
-            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND isActive = -1 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             if (empty($companyFinancePeriod)) {
                 return $this->sendError('Financial period not created or not active for reversal document. You cannot approve this document.');

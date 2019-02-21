@@ -2891,6 +2891,8 @@ class Helper
     {
         $jvMasterData = Models\JvMaster::find($masterData);
 
+        $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
         if ($jvMasterData->jvType == 1) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
@@ -2903,7 +2905,8 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
             $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
@@ -2914,7 +2917,7 @@ class Helper
                 $finYear = $finYearExp[0];
             }
 
-            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
@@ -2931,7 +2934,7 @@ class Helper
             $postJv['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
             $postJv['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-            $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . date('F Y') . '';
+            $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . $formattedDateJvN . '';
             $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
@@ -2970,6 +2973,8 @@ class Helper
     {
         $jvMasterData = Models\JvMaster::find($masterData);
 
+        $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
         if ($jvMasterData->jvType == 5) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
@@ -2982,7 +2987,8 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = Carbon::parse($jvMasterData->JVdate)->addMonth()->firstOfMonth();
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
             $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
@@ -2993,7 +2999,7 @@ class Helper
                 $finYear = $finYearExp[0];
             }
 
-            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
@@ -3009,7 +3015,7 @@ class Helper
             $postJv['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
             $postJv['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
-            $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . date('F Y') . '';
+            $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . $formattedDateJvN . '';
             $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
