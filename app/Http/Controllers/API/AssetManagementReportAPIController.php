@@ -251,7 +251,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
                     $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
-                    return array('reportData' => $output, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate);
+                    return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period']);
                 }
 
                 break;
@@ -716,6 +716,62 @@ class AssetManagementReportAPIController extends AppBaseController
                         $lastrow = $excel->getActiveSheet()->getHighestRow();
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
+
+                }
+
+                if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID'));
+                    $output = $this->getAssetRegisterDetail2($request);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($request->currencyID == 2) {
+                        $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
+                    } else {
+                        $currencyDecimalPlace = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
+                    }
+
+                    if ($output['data']) {
+                        $x = 0;
+                        foreach ($output['data'] as $val) {
+                            $data[$x]['GL Code'] = $val->COSTGLCODE;
+                            $data[$x]['Category'] = $val->catDescription;
+                            $data[$x]['FA Code'] = $val->faCode;
+                            $data[$x]['Grouped FA code'] = $val->group_to;
+                            $data[$x]['Posting date of FA'] = \Helper::dateFormat($val->postedDate);
+                            $data[$x]['Dep start date'] = \Helper::dateFormat($val->dateDEP);
+                            $data[$x]['Dep %'] = $val->DEPpercentage;
+                            $data[$x]['Service line'] = $val->ServiceLineDes;
+                            $data[$x]['GRV Date'] = $val->dateAQ;
+                            $data[$x]['GRV Number'] = $val->docOrigin;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Opening Cost'] = round($val->opening, $currencyDecimalPlace);
+                            $data[$x]['Addition Cost'] = round($val->addition, $currencyDecimalPlace);
+                            $data[$x]['Disposal Cost'] = round($val->disposed, $currencyDecimalPlace);
+                            $data[$x]['Closing Cost'] = round($val->costClosing, $currencyDecimalPlace);
+                            $data[$x]['Opening Dep'] = round($val->openingDep, $currencyDecimalPlace);
+                            $data[$x]['Charge during the year'] = round($val->additionDep, $currencyDecimalPlace);
+                            $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
+                            $data[$x]['Closing Dep'] = round($val->closingDep, $currencyDecimalPlace);
+                            $data[$x]['NBV'] = round($val->costClosing - $val->closingDep, $currencyDecimalPlace);
+                            foreach ($output['period'] as $val2) {
+                                $data[$x][$val2] = round($val->$val2, $currencyDecimalPlace);
+                            }
+                            $x++;
+                        }
+                    }
+
+
+                    $csv = \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
 
                 }
 
@@ -2275,7 +2331,7 @@ WHERE
         // asset cost
         $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description,2 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->isApproved();
 
-        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->isApproved();
+        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->isApproved();
 
         $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->where('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->isApproved()->union($additionCostquery)
             ->union($disposalCostquery)->get();
@@ -2291,13 +2347,13 @@ WHERE
         })->ofCompany($companyID);
 
         $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQryDisposal . $assetCategoryDepQryTotDisposal . '"Disposal" as description,3 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
-            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+            $q->whereDate('depDate', '<', $financePeriod->dateTo);
             $q->where('approved', -1);
         })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
             $q->assetType($request->typeID);
             $q->disposed(-1);
             $q->isApproved();
-            $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+            $q->whereDate('disposedDate', '<', $financePeriod->dateTo);
         })->ofCompany($companyID);
 
         $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->whereHas('master_by', function ($q) use ($financeYear) {
@@ -2354,7 +2410,7 @@ WHERE
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
             }
             if ($request->subType == 3) {// disposal
-                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
             }
         }
 
@@ -2390,12 +2446,12 @@ WHERE
                 $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
                     $q->with(['category_by', 'sub_category_by']);
                 }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
-                    $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->whereDate('depDate', '<', $financePeriod->dateTo);
                     $q->where('approved', -1);
                 })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
                     $q->assetType($request->typeID);
                     $q->disposed(-1);
-                    $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->whereDate('disposedDate', '<', $financePeriod->dateTo);
                     $q->isApproved();
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
@@ -2560,11 +2616,11 @@ WHERE
         $currencyColumn = '';
         $currencyColumnDep = '';
         if ($request->currencyID == 2) {
-            $currencyColumn = 'COSTUNIT';
-            $currencyColumnDep = 'depAmountLocal';
+            $currencyColumn = 'erp_fa_asset_master.COSTUNIT';
+            $currencyColumnDep = 'erp_fa_assetdepreciationperiods.depAmountLocal';
         } else {
-            $currencyColumn = 'costUnitRpt';
-            $currencyColumnDep = 'depAmountRpt';
+            $currencyColumn = 'erp_fa_asset_master.costUnitRpt';
+            $currencyColumnDep = 'erp_fa_assetdepreciationperiods.depAmountRpt';
         }
 
         $companyID = "";
@@ -2576,14 +2632,17 @@ WHERE
         }
 
         $periodQry = "";
+        $periodQry2 = "";
         $periodArr = [];
         $period = CarbonPeriod::create($fromDate, '1 month', $toDate);
         foreach ($period as $val) {
-            $periodQry .= 'IFNULL(SUM(IF(DATE_FORMAT(depForFYperiodEndDate,"%Y-%m") = "' . $val->format('Y-m') . '",' . $currencyColumnDep . ',0)),0) AS `' . $val->format('Y-m') . '`,';
-            $periodArr[] = $val->format('Y-m');
+            $periodQry .= 'IFNULL(SUM(IF(DATE_FORMAT(depForFYperiodEndDate,"%Y-%m") = "' . $val->format('Y-m') . '",' . $currencyColumnDep . ',0)),0) AS `' . $val->format('M-Y') . '`,';
+            $periodQry2 .= 'IFNULL(`' . $val->format('M-Y') . '`,0) as `' . $val->format('M-Y') . '`,';
+            $periodArr[] = $val->format('M-Y');
         }
 
-        $addition = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by', 'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+        /*$addition = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
             $q->selectRaw($periodQry . 'faID,depMasterAutoID');
             $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
                 $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
@@ -2599,10 +2658,11 @@ WHERE
                 $query->where('approved', -1);
             });
             $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,0 as opening,' . $currencyColumn . ' as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate')->whereRAW('DATE(postedDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ')->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->ofCompany($companyID);
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,0 as opening,' . $currencyColumn . ' as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereRAW('DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '"')->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->ofCompany($companyID)->get();
 
-        $openingDisposed = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by', 'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+        $openingDisposed = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
             $q->selectRaw($periodQry . 'faID,depMasterAutoID');
             $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
                 $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
@@ -2617,9 +2677,10 @@ WHERE
                 $query->where('approved', -1);
             });
             $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(1)->ofCompany($companyID)->whereDate('disposedDate', '>', $fromDate);
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(-1)->ofCompany($companyID)->whereDate('disposedDate', '>', $fromDate)->get();
 
-        $opening = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by', 'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+        $opening = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
             $q->selectRaw($periodQry . 'faID,depMasterAutoID');
             $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
                 $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
@@ -2634,8 +2695,180 @@ WHERE
                 $query->where('approved', -1);
             });
             $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(0)->ofCompany($companyID)->union($openingDisposed)->union($addition)->get();
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,0 as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(0)->ofCompany($companyID)->get();
 
-        return $opening;
+        $output = $opening->merge($openingDisposed)->merge($addition);*/
+
+
+        $query = 'SELECT 
+' . $periodQry2 . '
+COSTGLCODE,
+faCode,
+	postedDate,
+	dateDEP,
+	DEPpercentage,
+	opening,
+	addition,
+	dateAQ,
+	docOrigin,
+	faID,
+	serviceLineSystemID,
+	supplierIDRentedAsset,
+	groupTO,
+	faCatID,
+	DIPOSED,
+	disposedDate,
+	ServiceLineDes,
+	supplierName,
+	group_to,
+	catDescription,
+	disposed,
+	costClosing,
+	IFNULL(openingDep,0) as openingDep,
+	IFNULL(additionDep,0) as additionDep,
+	IFNULL(disposedDep,0) as disposedDep,
+	IFNULL(closingDep,0) as closingDep
+	FROM (SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	0 AS opening,
+	' . $currencyColumn . ' AS addition,
+	erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+IF
+	( erp_fa_asset_master.DIPOSED = - 1 && ( "' . $fromDate . '" < erp_fa_asset_master.disposedDate && "' . $toDate . '" > erp_fa_asset_master.disposedDate ), ' . $currencyColumn . ', 0 ) AS disposed,
+	(0 + ' . $currencyColumn . ' - IF
+	( erp_fa_asset_master.DIPOSED = - 1 && ( "' . $fromDate . '" < erp_fa_asset_master.disposedDate && "' . $toDate . '" > erp_fa_asset_master.disposedDate ), ' . $currencyColumn . ', 0 )) as costClosing,
+	dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN ( 
+	SELECT 0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep,SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
+	(0 + IFNULL(SUM(' . $currencyColumnDep . '),0) - SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 ))) as closingDep,erp_fa_assetdepreciationperiods.faID as faID3 
+	FROM erp_fa_assetdepreciationperiods
+	INNER JOIN erp_fa_asset_master ON  erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
+	INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID 
+	AND erp_fa_depmaster.approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY erp_fa_assetdepreciationperiods.faID 
+	) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	
+	UNION
+	
+	SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	' . $currencyColumn . ' as opening,
+	0 as addition,
+	 erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+	 if(erp_fa_asset_master.DIPOSED = -1 && ("' . $fromDate . '" < erp_fa_asset_master.disposedDate  && "' . $toDate . '" >  erp_fa_asset_master.disposedDate),' . $currencyColumn . ',0) as disposed,
+	 (' . $currencyColumn . '+ 0 - if(erp_fa_asset_master.DIPOSED = -1 && ("' . $fromDate . '" < erp_fa_asset_master.disposedDate  && "' . $toDate . '" >  erp_fa_asset_master.disposedDate),' . $currencyColumn . ',0)) as costClosing,
+	 dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN (
+	 SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
+	(IFNULL(SUM(' . $currencyColumnDep . '),0)+ 0 - SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 ))) as closingDep,erp_fa_assetdepreciationperiods.faID as faID3
+	  FROM erp_fa_assetdepreciationperiods 
+	  INNER JOIN erp_fa_asset_master ON  erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
+	  INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND erp_fa_depmaster.approved = -1 AND DATE(depDate) < "' . $fromDate . '" 
+	GROUP BY erp_fa_assetdepreciationperiods.faID ) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.disposedDate) > "' . $fromDate . '" 
+	AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.DIPOSED = -1 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	
+	UNION 
+	
+	SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	' . $currencyColumn . ' as opening,
+	0 as addition,
+	erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+	0 as disposed,
+	(' . $currencyColumn . '+0-0) as costClosing,
+	dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN ( SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep,0 as disposedDep,(IFNULL(SUM(' . $currencyColumnDep . '),0)+ 0 - 0) as closingDep, faID as faID3 
+	FROM erp_fa_assetdepreciationperiods 
+	INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) < "' . $fromDate . '" 
+	GROUP BY faID ) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.postedDate) < "' . $fromDate . '" 
+	AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.DIPOSED = 0 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	) a';
+
+        $output = \DB::select($query);
+
+        return ['data' => $output, 'period' => $periodArr];
     }
 }
