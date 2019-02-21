@@ -480,41 +480,49 @@ class FinancialReportAPIController extends AppBaseController
                     $prevMonthColumn = collect($columns)->where('type', 6)->values();
                     if (count($currentMonthColumn) > 0) {
                         foreach ($currentMonthColumn as $key => $val) {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
                         }
                     }
 
                     if (count($prevMonthColumn) > 0) {
                         foreach ($prevMonthColumn as $key => $val) {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
                         }
                     }
 
                     foreach ($columns as $val) {
                         if ($val->shortCode == 'CM') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $currentMonth;
                         }
                         if ($val->shortCode == 'CM-1') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $prevMonth;
                         }
                         if ($val->shortCode == 'CM-2') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $prevMonth2;
                         }
                         if ($val->shortCode == 'LYCM') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
                         }
                         if ($val->shortCode == 'LYCM-1') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $LPrevMonth;
                         }
                         if ($val->shortCode == 'LYCM-2') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',$currencyColumn,0)),0)";
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
                         }
                         if ($val->shortCode == 'CYYTD') {
@@ -523,14 +531,17 @@ class FinancialReportAPIController extends AppBaseController
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             } else if ($request->accountType == 3) {
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             }
 
                             $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
@@ -541,14 +552,17 @@ class FinancialReportAPIController extends AppBaseController
                                     $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
                                 }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             } else if ($request->accountType == 3) {
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',$currencyColumn,0)),0)";
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             }
 
                             $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
@@ -2131,14 +2145,15 @@ SELECT
             (
         SELECT
             ' . $firstLinkedcolumnQry . '
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
         FROM
             erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
             ) g
             INNER JOIN (
         SELECT
@@ -2175,14 +2190,15 @@ FROM
             (
         SELECT
             ' . $firstLinkedcolumnQry . '
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
         FROM
             erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
             ) g
             INNER JOIN (
         SELECT
@@ -2284,10 +2300,11 @@ FROM
         erp_generalledger.chartOfAccountSystemID
     FROM
         erp_generalledger 
+        INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
         ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+        GROUP BY erp_generalledger.chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
@@ -2370,14 +2387,15 @@ ORDER BY
             (
         SELECT
             ' . $firstLinkedcolumnQry . '
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
         FROM
             erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            chartOfAccountSystemID 
+            erp_generalledger.chartOfAccountSystemID 
             ) a
             INNER JOIN (
         SELECT
