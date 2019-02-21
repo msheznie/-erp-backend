@@ -34,6 +34,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Response;
 
 /**
@@ -614,6 +615,8 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('Jv Master not found');
         }
 
+        $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
         $detailRecordGrouping = DB::select("SELECT
 	accruvalfromop.accMasterID,
 	accruvalfromop.contractID as accrualNarration,
@@ -674,7 +677,7 @@ GROUP BY
                 $detail_arr['chartOfAccountSystemID'] = $rowData->chartOfAccountSystemID;
                 $detail_arr['glAccount'] = $rowData->GlCode;
                 $detail_arr['glAccountDescription'] = $rowData->AccountDescription;
-                $detail_arr['comments'] = 'Revenue Accrual for the month of ' . date('F Y') . '';
+                $detail_arr['comments'] = 'Revenue Accrual for the month of ' . $formattedDate . '';
                 $detail_arr['contractUID'] = $rowData->contractSystemID;
                 $detail_arr['clientContractID'] = $rowData->accrualNarration;
                 $detail_arr['currencyID'] = $jvMasterData->currencyID;
@@ -713,7 +716,7 @@ GROUP BY
             $detail_debitArr['chartOfAccountSystemID'] = 112;
             $detail_debitArr['glAccount'] = 21011;
             $detail_debitArr['glAccountDescription'] = 'Accrued Income';
-            $detail_debitArr['comments'] = 'Revenue Accrual for the month of ' . date('F Y') . '';
+            $detail_debitArr['comments'] = 'Revenue Accrual for the month of ' . $formattedDate . '';
             $detail_debitArr['currencyID'] = $jvMasterData->currencyID;
             $detail_debitArr['currencyER'] = $jvMasterData->currencyER;
             $detail_debitArr['debitAmount'] = $totalRevenueAmount;
@@ -732,10 +735,11 @@ GROUP BY
                 'accJVpostedYN' => -1
             ]);
 
+
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Revenue Accrual for the month of ' . date('F Y') . ''
+                'JVNarration' => 'Revenue Accrual for the month of '.$formattedDate
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
@@ -877,6 +881,14 @@ GROUP BY
 
             $store = $this->jvDetailRepository->create($detail_debitArr);
         }
+
+        $formattedDate = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
+        //updating JV master
+        $updateJvMaster = JvMaster::find($jvMasterAutoId)
+            ->update([
+                'JVNarration' => 'PO Accrual for the month of '.$formattedDate
+            ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
 
