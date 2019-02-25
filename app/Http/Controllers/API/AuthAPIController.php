@@ -41,6 +41,10 @@ class AuthAPIController extends PassportAccessTokenController
                 //reset failed login attemps
                 $this->clearLoginAttempts($request2);
             }*/
+            $user = User::where('email',$request2->username)->first();
+            if($user){
+                $employees = Employee::find($user->employee_id)->update(['isLock' => 0]);
+            }
             return $this->server->respondToAccessTokenRequest($request, new Psr7Response);
         } catch (OAuthServerException $exception) {
             //$this->incrementLoginAttempts($request2);
