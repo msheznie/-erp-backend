@@ -1488,6 +1488,8 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
 });
 
+Route::post('login', 'AuthAPIController@auth');
+
 
 
 
