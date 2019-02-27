@@ -148,6 +148,13 @@ class ReportTemplateLinksAPIController extends AppBaseController
                     $data['glDescription'] = $val['AccountDescription'];
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];
+                    if($input['reportID'] == 1) {
+                        if ($val["controlAccounts"] == 'BSA') {
+                            $data['categoryType'] = 1;
+                        } else {
+                            $data['categoryType'] = 2;
+                        }
+                    }
                     $data['createdPCID'] = gethostname();
                     $data['createdUserID'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
