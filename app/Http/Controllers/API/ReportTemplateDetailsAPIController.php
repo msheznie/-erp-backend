@@ -144,6 +144,10 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $input['companyID'] = $company->CompanyID;
             }
 
+            if($input['itemType'] == 3){
+                $input['categoryType'] = null;
+            }
+
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();

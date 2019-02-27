@@ -553,7 +553,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                                 }
                                 $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), $currencyColumn) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                             } else if ($request->accountType == 1) {
                                 if ($request->dateType == 2) {
                                     $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
@@ -2104,11 +2104,13 @@ AND MASTER .canceledYN = 0';
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
         $fourthLinkedcolumnQry = '';
+        $fifthLinkedcolumnQry = '';
         $whereQry = [];
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
+            $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
             //$whereQry[] .= 'd.`' . $val . '` != 0';
         }
 
@@ -2139,39 +2141,51 @@ FROM
 	erp_companyreporttemplatedetails
 	LEFT JOIN (
 SELECT
-            ' . $fourthLinkedcolumnQry . '
-            a.templateDetailID,
-            a.description
-        FROM
-            (
-            (
-        SELECT
-            ' . $firstLinkedcolumnQry . '
-            erp_generalledger.chartOfAccountSystemID 
-        FROM
-            erp_generalledger 
-            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-        WHERE
-            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY
-            erp_generalledger.chartOfAccountSystemID 
-            ) g
-            INNER JOIN (
-        SELECT
-            erp_companyreporttemplatelinks.glAutoID,
-            erp_companyreporttemplatelinks.templateDetailID,
-            erp_companyreporttemplatedetails.description 
-        FROM
-            erp_companyreporttemplatelinks
-            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-        WHERE
-            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
-        ORDER BY
-            erp_companyreporttemplatedetails.sortOrder 
-            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
-            ) GROUP BY
-            templateDetailID 
+	' . $fourthLinkedcolumnQry . ' 
+	templateDetailID,
+	description
+FROM
+	(
+		SELECT
+			' . $fifthLinkedcolumnQry . ' 
+			templateDetailID,
+			description
+			FROM
+			(
+				(
+					SELECT
+						' . $firstLinkedcolumnQry . ' 
+						erp_generalledger.chartOfAccountSystemID
+					FROM
+						erp_generalledger
+					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+					WHERE
+						erp_generalledger.companySystemID IN (
+							' . join(',
+							', $companyID) . '
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+					GROUP BY
+						erp_generalledger.chartOfAccountSystemID
+				) g
+				INNER JOIN (
+					SELECT
+						erp_companyreporttemplatelinks.glAutoID,
+						erp_companyreporttemplatelinks.templateDetailID,
+						erp_companyreporttemplatelinks.categoryType AS linkCatType,
+						erp_companyreporttemplatedetails.description,
+						erp_companyreporttemplatedetails.categoryType AS templateCatType
+					FROM
+						erp_companyreporttemplatelinks
+					INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
+					WHERE
+						erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '
+					ORDER BY
+						erp_companyreporttemplatedetails.sortOrder
+				) AS a ON a.glAutoID = g.chartOfAccountSystemID
+			)
+	) f
+GROUP BY
+	templateDetailID
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
 WHERE
 	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
@@ -2184,39 +2198,51 @@ FROM
 	erp_companyreporttemplatelinks
 	LEFT JOIN (
             SELECT
-            ' . $fourthLinkedcolumnQry . '
-            a.templateDetailID,
-            a.description
-        FROM
-            (
-            (
-        SELECT
-            ' . $firstLinkedcolumnQry . '
-            erp_generalledger.chartOfAccountSystemID 
-        FROM
-            erp_generalledger 
-            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-        WHERE
-            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY
-            erp_generalledger.chartOfAccountSystemID 
-            ) g
-            INNER JOIN (
-        SELECT
-            erp_companyreporttemplatelinks.glAutoID,
-            erp_companyreporttemplatelinks.templateDetailID,
-            erp_companyreporttemplatedetails.description 
-        FROM
-            erp_companyreporttemplatelinks
-            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-        WHERE
-            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
-        ORDER BY
-            erp_companyreporttemplatedetails.sortOrder 
-            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
-            ) GROUP BY
-            templateDetailID 
+	' . $fourthLinkedcolumnQry . ' 
+	templateDetailID,
+	description
+FROM
+	(
+		SELECT
+			' . $fifthLinkedcolumnQry . ' 
+			templateDetailID,
+			description
+			FROM
+			(
+				(
+					SELECT
+						' . $firstLinkedcolumnQry . ' 
+						erp_generalledger.chartOfAccountSystemID
+					FROM
+						erp_generalledger
+					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+					WHERE
+						erp_generalledger.companySystemID IN (
+							' . join(',
+							', $companyID) . '
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+					GROUP BY
+						erp_generalledger.chartOfAccountSystemID
+				) g
+				INNER JOIN (
+					SELECT
+						erp_companyreporttemplatelinks.glAutoID,
+						erp_companyreporttemplatelinks.templateDetailID,
+						erp_companyreporttemplatelinks.categoryType AS linkCatType,
+						erp_companyreporttemplatedetails.description,
+						erp_companyreporttemplatedetails.categoryType AS templateCatType
+					FROM
+						erp_companyreporttemplatelinks
+					INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
+					WHERE
+						erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '
+					ORDER BY
+						erp_companyreporttemplatedetails.sortOrder
+				) AS a ON a.glAutoID = g.chartOfAccountSystemID
+			)
+	) g
+GROUP BY
+	templateDetailID
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
@@ -2284,7 +2310,7 @@ GROUP BY
         $secondLinkedcolumnQry = '';
         $whereQry = [];
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') AS `' . $val . '`,';
+            $secondLinkedcolumnQry .= '((IFNULL(IF(erp_companyreporttemplatelinks.categoryType != erp_companyreporttemplatedetails.categoryType,gl.`' . $val . '`*-1,gl.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             //$whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
@@ -2293,7 +2319,9 @@ GROUP BY
 	erp_companyreporttemplatelinks.glCode,
 	erp_companyreporttemplatelinks.glDescription,
 	erp_companyreporttemplatelinks.glAutoID,
-	erp_companyreporttemplatelinks.templateDetailID
+	erp_companyreporttemplatelinks.templateDetailID,
+	erp_companyreporttemplatelinks.categoryType AS linkCatType,
+	erp_companyreporttemplatedetails.categoryType AS templateCatType
 FROM
 	erp_companyreporttemplatelinks
 	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
@@ -2375,46 +2403,60 @@ ORDER BY
             }
         }
         $secondLinkedcolumnQry = '';
+        $thirdLinkedcolumnQry = '';
         foreach ($columnKeys as $key => $val) {
             $secondLinkedcolumnQry .= 'IFNULL(SUM(`' . $key . '`),0) AS `' . $key . '`,';
+            $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $key . '` * -1,`' . $key . '`),0) AS `' . $key . '`,';
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $sql = 'SELECT
-            ' . $secondLinkedcolumnQry . '
-            b.templateDetailID,
-            b.description
-        FROM
-            (
-            (
-        SELECT
-            ' . $firstLinkedcolumnQry . '
-            erp_generalledger.chartOfAccountSystemID 
-        FROM
-            erp_generalledger 
-            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-        WHERE
-            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY
-            erp_generalledger.chartOfAccountSystemID 
-            ) a
-            INNER JOIN (
-        SELECT
-            erp_companyreporttemplatelinks.glAutoID,
-            erp_companyreporttemplatelinks.templateDetailID,
-            erp_companyreporttemplatedetails.description 
-        FROM
-            erp_companyreporttemplatelinks
-            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
-        WHERE
-            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
-        ORDER BY
-            erp_companyreporttemplatedetails.sortOrder 
-            ) AS b ON b.glAutoID = a.chartOfAccountSystemID 
-            ) GROUP BY
-            templateDetailID';
+	' . $secondLinkedcolumnQry . ' 
+	templateDetailID,
+	description
+FROM
+	(
+		SELECT
+			' . $thirdLinkedcolumnQry . ' 
+			templateDetailID,
+			description
+			FROM
+			(
+				(
+					SELECT
+						' . $firstLinkedcolumnQry . ' 
+						erp_generalledger.chartOfAccountSystemID
+					FROM
+						erp_generalledger
+					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+					WHERE
+						erp_generalledger.companySystemID IN (
+							' . join(',
+							', $companyID) . '
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+					GROUP BY
+						erp_generalledger.chartOfAccountSystemID
+				) g
+				INNER JOIN (
+					SELECT
+						erp_companyreporttemplatelinks.glAutoID,
+						erp_companyreporttemplatelinks.templateDetailID,
+						erp_companyreporttemplatelinks.categoryType AS linkCatType,
+						erp_companyreporttemplatedetails.description,
+						erp_companyreporttemplatedetails.categoryType AS templateCatType
+					FROM
+						erp_companyreporttemplatelinks
+					INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
+					WHERE
+						erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '
+					ORDER BY
+						erp_companyreporttemplatedetails.sortOrder
+				) AS a ON a.glAutoID = g.chartOfAccountSystemID
+			)
+	) f
+GROUP BY
+	templateDetailID';
 
         $output = \DB::select($sql);
         return $output;
