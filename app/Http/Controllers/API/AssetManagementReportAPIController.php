@@ -2353,7 +2353,7 @@ WHERE
             $q->assetType($request->typeID);
             $q->disposed(-1);
             $q->isApproved();
-            $q->whereDate('disposedDate', '<', $financePeriod->dateTo);
+            $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
         })->ofCompany($companyID);
 
         $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->whereHas('master_by', function ($q) use ($financeYear) {
@@ -2451,7 +2451,7 @@ WHERE
                 })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
                     $q->assetType($request->typeID);
                     $q->disposed(-1);
-                    $q->whereDate('disposedDate', '<', $financePeriod->dateTo);
+                    $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
                     $q->isApproved();
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
