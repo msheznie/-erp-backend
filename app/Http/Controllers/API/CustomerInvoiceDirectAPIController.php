@@ -481,8 +481,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
-
-
             if (count($detail) > 0) {
                 return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
             }
@@ -501,25 +499,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $myCurr = $currency->currencyID;
 
                 //$companyCurrency = \Helper::companyCurrency($currency->currencyID);
-                //$companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                 /*exchange added*/
                 $_post['custTransactionCurrencyER'] = 1;
-                /*$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];*/
+                //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
                 if ($bank) {
                     $_post['bankID'] = $bank->bankmasterAutoID;
                     $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
-                    $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                    if($bankAccount){
+                        $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                    }
                 }
             }
             /**/
 
+        } else {
+            $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+            /*exchange added*/
+            $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
+
 
         $_post['serviceStartDate'] = $customerInvoiceDirect->serviceStartDate;
         $_post['serviceEndDate'] = $customerInvoiceDirect->serviceEndDate;
@@ -755,7 +761,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         } else {
             $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
     }
