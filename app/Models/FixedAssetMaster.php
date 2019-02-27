@@ -514,6 +514,7 @@ class FixedAssetMaster extends Model
         'RollLevForApp_curr',
         'timesReferred',
         'refferedBackYN',
+        'postedDate',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -686,6 +687,19 @@ class FixedAssetMaster extends Model
      * @return \Illuminate\Database\Eloquent\Builder
      */
 
+    public function scopeDisposed($query, $disposed)
+    {
+        return $query->where('DIPOSED',  $disposed);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
     public function scopeOfCategory($query, $category)
     {
         return $query->where('faCatID',  $category);
@@ -768,6 +782,10 @@ class FixedAssetMaster extends Model
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }
 
+    public function depperiod2_by(){
+        return $this->depperiod_by();
+    }
+
     public function department()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
@@ -812,6 +830,11 @@ class FixedAssetMaster extends Model
     public function posttogl_by()
     {
         return $this->belongsTo('App\Models\ChartOfAccount','postToGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function disposal_by()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalMaster','assetdisposalMasterAutoID','assetdisposalMasterAutoID');
     }
 
 }

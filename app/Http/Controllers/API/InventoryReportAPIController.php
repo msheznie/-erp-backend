@@ -184,7 +184,7 @@ class InventoryReportAPIController extends AppBaseController
                         $sort = 'desc';
                     }
 
-                    $output = $this->stockAgingQry($input);
+                    $output = $this->stockAgingQry($input,0);
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
@@ -195,7 +195,7 @@ class InventoryReportAPIController extends AppBaseController
     }
 
 
-    public function stockAgingQry($request)
+    public function stockAgingQry($request,$forExcel = 0)
     {
 
         $date = new Carbon($request['asOfDate']);
@@ -234,6 +234,14 @@ class InventoryReportAPIController extends AppBaseController
 
         $agingField .= "if(ItemLedger.ageDays <= 0,ItemLedger.Qty,0) as `current`";
 
+        $groupByCompanyPlus = "";
+        $groupByCompanyMinus = "";
+
+        if($forExcel){
+            $groupByCompanyPlus = ",ItemLedger.companySystemID";
+            $groupByCompanyMinus = ",erp_itemledger.companySystemID";
+        }
+
         //DB::enableQueryLog();
         $sql = "SELECT * FROM (SELECT
                 ItemLedger.companySystemID,
@@ -244,18 +252,20 @@ class InventoryReportAPIController extends AppBaseController
                 ItemLedger.unitOfMeasure,
                 ItemLedger.secondaryItemCode,
                 ItemLedger.UnitShortCode,
+                ItemLedger.itemMovementCategory,
+                ItemLedger.movementCatDescription,
                 ItemLedger.categoryDescription,
                 ItemLedger.transactionDate,
                 ItemLedger.LocalCurrencyDecimals,
                 ItemLedger.RptCurrencyDecimals,
-                sum( Qty ) AS Qty,
+                round(sum(Qty),3) AS Qty,
                 LocalCurrency,
             IF
-                ( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
+                ( sum( localAmount ) / round(sum(Qty),3) IS NULL, 0, sum( localAmount ) / round(sum(Qty),3) ) AS WACLocal,
                 sum( localAmount ) AS WacLocalAmount,
                 RepCurrency,
             IF
-                ( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS WACRpt,
+                ( sum( rptAmount ) / round(sum(Qty),3) IS NULL, 0, sum( rptAmount ) / round(sum(Qty),3) ) AS WACRpt,
                 sum( rptAmount ) AS WacRptAmount,
                 " . $agingField . " 
             FROM
@@ -272,6 +282,8 @@ class InventoryReportAPIController extends AppBaseController
                 erp_itemledger.transactionDate,
                 financeitemcategorysub.categoryDescription,
                 itemmaster.secondaryItemCode,
+                itemassigned.itemMovementCategory,
+                itemmovementcategory.description as movementCatDescription,
                 units.UnitShortCode,
                 erp_itemledger.inOutQty AS Qty,
                 currencymaster.CurrencyName AS LocalCurrency,
@@ -284,6 +296,8 @@ class InventoryReportAPIController extends AppBaseController
             FROM
                 `erp_itemledger`
                 INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND `erp_itemledger`.`companySystemID` = `itemassigned`.`companySystemID`
+                LEFT JOIN `itemmovementcategory` ON `itemmovementcategory`.`id` = `itemassigned`.`itemMovementCategory`
                 INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
                 LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
                 LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
@@ -296,12 +310,13 @@ class InventoryReportAPIController extends AppBaseController
                
                 ) AS ItemLedger 
             GROUP BY
-                ItemLedger.itemSystemCode) as grandFinal";
+                ItemLedger.itemSystemCode".$groupByCompanyPlus.") as grandFinal";
         $items = DB::select($sql);
 
 
         $issuedSql = "SELECT
                 erp_itemledger.itemSystemCode,
+                erp_itemledger.companySystemID,
                 SUM(erp_itemledger.inOutQty) AS Qty
             FROM
                 `erp_itemledger`
@@ -311,7 +326,7 @@ class InventoryReportAPIController extends AppBaseController
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 AND erp_itemledger.inOutQty < 0
             GROUP BY
-                erp_itemledger.itemSystemCode";
+                erp_itemledger.itemSystemCode".$groupByCompanyMinus;
 
 
         $issuedItems = DB::select($issuedSql);
@@ -320,7 +335,7 @@ class InventoryReportAPIController extends AppBaseController
 
             $issuedQty = 0;
             foreach ($issuedItems as $issue) {
-                if ($issue->itemSystemCode == $item->itemSystemCode) {
+                if ($issue->itemSystemCode == $item->itemSystemCode && (($issue->companySystemID == $item->companySystemID && $forExcel) || !$forExcel)) {
                     $issuedQty = abs($issue->Qty);
                     break;
                 }
@@ -539,7 +554,7 @@ class InventoryReportAPIController extends AppBaseController
                     $type = $request->type;
                     $input = $request->all();
                     $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
-                    $output = $this->stockAgingQry($input);
+                    $output = $this->stockAgingQry($input,1);
                     $data = array();
                     if ($output) {
                         $x = 0;
@@ -547,10 +562,11 @@ class InventoryReportAPIController extends AppBaseController
                         foreach ($output['categories'] as $key ) {
                             foreach ($key as $val) {
                                 $x++;
-
+                                $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
                                 $data[$x]['Category'] = $val->categoryDescription;
+                                $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
                                 $data[$x]['Qty'] =  $val->Qty;
 
@@ -607,9 +623,17 @@ class InventoryReportAPIController extends AppBaseController
 
                                 $data[$x]['Over 730 (Qty)'] = $val->case7;
                                 if($input['currencyID'] == 1){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    if( $val->Qty == 0){
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                    }
                                 }else if($input['currencyID'] == 2){
-                                    $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7,$val->RptCurrencyDecimals);
+                                    if( $val->Qty == 0) {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                    }else{
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7,$val->RptCurrencyDecimals);
+                                    }
                                 }
                             }
                         }

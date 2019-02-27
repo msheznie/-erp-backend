@@ -20,6 +20,7 @@
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherReopen()
  * -- Date: 05-December 2018 By: Nazir Description: Added new functions named as getJournalVoucherAmend()
  * -- Date: 23-December 2018 By: Nazir Description: Added new functions named as printJournalVoucher()
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new functions named as approvalPreCheckJV()
  */
 
 namespace App\Http\Controllers\API;
@@ -162,6 +163,23 @@ class JvMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 5;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
+
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -175,23 +193,6 @@ class JvMasterAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystemID"] = 17;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else {
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
 
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
@@ -223,7 +224,7 @@ class JvMasterAPIController extends AppBaseController
 
         $lastSerial = JvMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('jvMasterAutoId', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
@@ -383,7 +384,7 @@ class JvMasterAPIController extends AppBaseController
 
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
-                $input['JVdate'] = new Carbon($input['JVdate']);
+                $input['JVdate'] = Carbon::parse($input['JVdate']);
             }
         }
 
@@ -398,7 +399,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystemID"] = 1;
+        $inputParam["departmentSystemID"] = 5;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -638,7 +639,7 @@ class JvMasterAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
         if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-            $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
+            //$companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
@@ -1071,6 +1072,27 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function approveJournalVoucher(Request $request)
     {
+        $jvMasterData = JvMaster::find($request->jvMasterAutoId);
+
+        if ($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) {
+
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
+            $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
+
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+
+            if (empty($companyFinanceYear)) {
+                return $this->sendError('Financial year not created or not active for reversal document. You cannot approve this document.');
+            }
+
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND isActive = -1 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
+
+            if (empty($companyFinancePeriod)) {
+                return $this->sendError('Financial period not created or not active for reversal document. You cannot approve this document.');
+            }
+        }
+
         $approve = \Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
@@ -1183,31 +1205,23 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 	pomaster.approvedDate,
 	podetail.itemPrimaryCode,
 	podetail.itemDescription,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBS
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBS
-		ELSE
-			podetail.financeGLcodePL
-		END
-	) AS glCode,
-	(
-		CASE podetail.financeGLcodePL
-		WHEN podetail.financeGLcodePL IS NULL THEN
-			podetail.financeGLcodebBSSystemID
-		WHEN podetail.financeGLcodePL = '' THEN
-			podetail.financeGLcodebBSSystemID
-		ELSE
-			podetail.financeGLcodePLSystemID
-		END
-	) AS glCodeSystemID,
+	IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBS,
+	podetail.financeGLcodePL
+) AS glCode,
+IF (
+	podetail.financeGLcodePL IS NULL
+	OR podetail.financeGLcodePL = '',
+	podetail.financeGLcodebBSSystemID,
+	podetail.financeGLcodePLSystemID
+) AS glCodeSystemID,
 	pomaster.supplierName,
-	pomaster.poTotalComRptCurrency AS poCost,
+	podetail.poSum AS poCost,
 	IFNULL(grvdetail.grvSum, 0) AS grvCost,
 	(
-		pomaster.poTotalComRptCurrency - IFNULL(grvdetail.grvSum, 0)
+		podetail.poSum - IFNULL(grvdetail.grvSum, 0)
 	) AS balanceCost
 FROM
 	erp_purchaseordermaster AS pomaster
@@ -1246,7 +1260,6 @@ AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
 AND pomaster.poType_N <> 5
-AND pomaster.grvRecieved <> 2
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
 AND date(pomaster.approvedDate) >= '2016-05-01'
@@ -1256,11 +1269,15 @@ AND date(
 {$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 HAVING
-	round(balanceCost, 2) <> 0";
+	round(balanceCost, 2) > 0";
 
         //echo $qry;
         //exit();
         $invMaster = DB::select($qry);
+
+        if ($input['temptype'] == 0) {
+            return $invMaster;
+        }
 
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];
@@ -1609,5 +1626,16 @@ HAVING
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function approvalPreCheckJV(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 }

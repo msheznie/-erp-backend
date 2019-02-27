@@ -11,16 +11,24 @@
  * -- Date: 12-july 2018 By: Mubashir Description: Added new functions named as getFilterData(),validateReport(),generateReport(),exportReport()
  * -- Date: 12-july 2018 By: Nazir Description: Added new functions named as getAssetAdditionsQRY()
  * -- Date: 12-july 2018 By: Fayas Description: Added new functions named as getAssetDisposal()
+ * -- Date: 06-feb 2019 By: Mubashir Description: Added new functions named as getAssetRegisterSummaryQRY(),getAssetRegisterSummaryDrillDownQRY()
+ * -- Date: 07-feb 2018 By: Mubashir Description: Added new functions named as getAssetCWIPQRY(),assetCWIPDrillDown()
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\FixedAssetDepreciationPeriod;
+use App\Models\FixedAssetMaster;
+use App\Models\GRVMaster;
 use App\Models\Months;
 use App\Models\Year;
 use App\Models\AssetType;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +47,10 @@ class AssetManagementReportAPIController extends AppBaseController
 
         $assetCategory = AssetFinanceCategory::all();
 
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"))->whereIN('companySystemID', $companiesByGroup)->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
+
+        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"))->whereIN('companySystemID', $companiesByGroup)->groupBy('dateFrom')->where('departmentSystemID', 9)->get();
+
         $years = Year::all();
         $months = Months::all();
 
@@ -46,7 +58,9 @@ class AssetManagementReportAPIController extends AppBaseController
         $aasetType = AssetType::all();
 
         $output = array(
+            'companyFinanceYear' => $companyFinanceYear,
             'assetCategory' => $assetCategory,
+            'financePeriod' => $financePeriod,
             'years' => $years,
             'months' => $months,
             'assetType' => $aasetType
@@ -60,12 +74,34 @@ class AssetManagementReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'AMAR':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'assetCategory' => 'required',
-                    'typeID' => 'required'
-                ]);
+                $validator = '';
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'assetCategory' => 'required',
+                        'typeID' => 'required'
+                    ]);
+                } else if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'financePeriod' => 'required',
+                        'financeYear' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required'
+                    ]);
+                } else if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromMonth' => 'required',
+                        'toMonth' => 'required',
+                        'year' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required'
+                    ]);
+                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -105,6 +141,18 @@ class AssetManagementReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'AMACWIP':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -116,47 +164,95 @@ class AssetManagementReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'AMAR': //Asset Register
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    /*shahmy*/
+                    $typeID = $request->typeID;
+                    $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                    $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+                    $assetCategory = join(',', $assetCategory);
 
-                /*shahmy*/
+                    $output = $this->getAssetRegisterDetail($request);
+                    $outputArr = [];
 
-                $typeID = $request->typeID;
-                $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
-                $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
-                $assetCategory = join(',', $assetCategory);
-
-                $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
- IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
-  
-  WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
-  
-  UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
-erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
-
-                //$output = \DB::select($qry);
-                $output = $this->getAssetRegisterDetail($request);
-                $outputArr = [];
-
-                $COSTUNIT = 0;
-                $costUnitRpt = 0;
-                $depAmountLocal = 0;
-                $depAmountRpt = 0;
-                $localnbv = 0;
-                $rptnbv = 0;
-                if ($output) {
-                    foreach ($output as $val) {
-                        $localnbv += $val->localnbv;
-                        $COSTUNIT += $val->COSTUNIT;
-                        $costUnitRpt += $val->costUnitRpt;
-                        $depAmountRpt += $val->depAmountRpt;
-                        $depAmountLocal += $val->depAmountLocal;
-                        $rptnbv += $val->rptnbv;
-                        $outputArr[$val->financeCatDescription][] = $val;
+                    $COSTUNIT = 0;
+                    $costUnitRpt = 0;
+                    $depAmountLocal = 0;
+                    $depAmountRpt = 0;
+                    $localnbv = 0;
+                    $rptnbv = 0;
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $localnbv += $val->localnbv;
+                            $COSTUNIT += $val->COSTUNIT;
+                            $costUnitRpt += $val->costUnitRpt;
+                            $depAmountRpt += $val->depAmountRpt;
+                            $depAmountLocal += $val->depAmountLocal;
+                            $rptnbv += $val->rptnbv;
+                            $outputArr[$val->financeCatDescription][] = $val;
+                        }
                     }
+
+
+                    return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
 
+                if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+                    $financeYear = CompanyFinanceYear::find($request->financeYear);
+                    $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+                    $output = $this->getAssetRegisterSummaryQRY($request);
+                    $assetCategory = $request->assetCategory;
+                    $costTotal = [];
+                    $depTotal = [];
+                    $nbv = [];
+                    $nbvEnd = [];
+                    $depQry = collect($output['depQry']);
+                    $costQry = collect($output['costQry']);
 
-                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+                    $filteredCostQry = $costQry->firstWhere('description', $beginingFinancialYear);
+                    $filteredDepQry = $depQry->firstWhere('description', $beginingFinancialYear);
 
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val) {
+                            $depTotal[$val['financeCatDescription']] = $depQry->sum($val['financeCatDescription']);
+                            $costTotal[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']);
+                            $nbv[$val['financeCatDescription']] = $filteredCostQry[$val['financeCatDescription']] - $filteredDepQry[$val['financeCatDescription']];
+                            $nbvEnd[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']) - $depQry->sum($val['financeCatDescription']);
+                        }
+                    }
+                    $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
+
+                    $costTotal['total'] = collect($costTotal)->values()->sum();
+                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['total'] = collect($depTotal)->values()->sum();
+                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['depQry'] = collect($output['depQry'])->toArray();
+                    $output['costQry'] = collect($output['costQry'])->toArray();
+                    $output['depQry'][] = $depTotal;
+                    $output['costQry'][] = $costTotal;
+
+                    $nbv['total'] = collect($nbv)->values()->sum();
+                    $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
+                    $nbv['description'] = $beginingFinancialYear;
+                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['nbvQry'][] = $nbv;
+                    $output['nbvQry'][] = $nbvEnd;
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                    return array('reportData' => $output, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'date' => Carbon::parse($financePeriod->dateTo)->format('Y-m-d'), 'companyName' => $companyCurrency->CompanyName);
+
+                }
+
+                if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID'));
+                    $output = $this->getAssetRegisterDetail2($request);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
+                    $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
+                    return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period']);
+                }
 
                 break;
             case 'AMAA': //Asset Additions
@@ -418,6 +514,14 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 }
                 break;
+            case 'AMACWIP': //Asset CWIP
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $output = $this->getAssetCWIPQRY($request);
+                return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -430,158 +534,158 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
         $type = $request->type;
         switch ($reportID) {
             case 'AMAR': //Asset Register
-
-                $output = $this->getAssetRegisterDetail($request);
-
-                $outputArr = [];
-
-                /*      if ($request->excelType == 1) {
-                          if ($output) {
-                              foreach ($output as $val) {
-                                  if($val->groupTO==1){
-                                      $outputArr[$val->groupTO][$val->groupbydesc][$val->financeCatDescription][] = (array)$val;
-                                  }else{
-                                      $outputArr[0][$val->financeCatDescription][] = (array)$val;
-                                  }
-
-                              }
-                          }
-
-                      } else {*/
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->financeCatDescription][] = (array)$val;
+                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    $output = $this->getAssetRegisterDetail($request);
+                    $outputArr = [];
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->financeCatDescription][] = (array)$val;
+                        }
                     }
-                }
+                    $x = 0;
+                    if (!empty($outputArr)) {
+                        $TotalCOSTUNIT = 0;
+                        $TotaldepAmountLocal = 0;
+                        $Totallocalnbv = 0;
+                        $TotalcostUnitRpt = 0;
+                        $TotaldepAmountRpt = 0;
+                        $Totalrptnbv = 0;
+                        foreach ($outputArr as $key => $val) {
+                            $data[$x]['Cost GL'] = $key;
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
 
-                /*  }*/
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = '';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = '';
+                            $data[$x]['Rpt Amount acc net value'] = '';
 
-
-                $x = 0;
-
-
-                if (!empty($outputArr)) {
-                    $TotalCOSTUNIT = 0;
-                    $TotaldepAmountLocal = 0;
-                    $Totallocalnbv = 0;
-                    $TotalcostUnitRpt = 0;
-                    $TotaldepAmountRpt = 0;
-                    $Totalrptnbv = 0;
-                    foreach ($outputArr as $key => $val) {
-
-                        $data[$x]['Cost GL'] = $key;
-                        $data[$x]['Acc Dep GL'] = '';
-                        $data[$x]['Type'] = '';
-
-                        $data[$x]['Segment'] = '';
-                        $data[$x]['category'] = '';
-                        $data[$x]['FA Code'] = '';
-                        $data[$x]['Grouped YN'] = '';
-                        $data[$x]['Serial Number'] = '';
-                        $data[$x]['Asset Description'] = '';
-                        $data[$x]['DEP %'] = '';
-                        $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = '';
-                        $data[$x]['Local Amount unitcost'] = '';
-                        $data[$x]['Local Amount accDep'] = '';
-                        $data[$x]['Local Amount net Value'] = '';
-                        $data[$x]['Rpt Amount unit cost'] = '';
-                        $data[$x]['Rpt Amount acc dep'] = '';
-                        $data[$x]['Rpt Amount acc net value'] = '';
-
-                        $x++;
-
-                        $data[$x]['Cost GL'] = 'Cost GL';
-                        $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
-                        $data[$x]['Type'] = 'Type';
-                        $data[$x]['Segment'] = 'Segment';
-                        $data[$x]['category'] = 'Finance Category';
-                        $data[$x]['FA Code'] = 'FA Code';
-                        $data[$x]['Grouped YN'] = 'Grouped FA Code';
-                        $data[$x]['Serial Number'] = 'Serial Number';
-                        $data[$x]['Asset Description'] = 'Asset Description';
-                        $data[$x]['DEP %'] = 'DEP %';
-                        $data[$x]['Date Aquired'] = 'Date Aquired';
-                        $data[$x]['Dep Start Date'] = 'Dep Start Date';
-                        $data[$x]['Local Amount unitcost'] = '';
-                        $data[$x]['Local Amount accDep'] = '';
-                        $data[$x]['Local Amount net Value'] = 'Local Amount';
-                        $data[$x]['Rpt Amount unit cost'] = '';
-                        $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
-                        $data[$x]['Rpt Amount acc net value'] = '';
-
-                        $x++;
-
-                        $data[$x]['Cost GL'] = '';
-                        $data[$x]['Acc Dep GL'] = '';
-                        $data[$x]['Type'] = '';
-                        $data[$x]['Segment'] = '';
-                        $data[$x]['category'] = '';
-                        $data[$x]['FA Code'] = '';
-                        $data[$x]['Grouped YN'] = '';
-                        $data[$x]['Serial Number'] = '';
-                        $data[$x]['Asset Description'] = '';
-                        $data[$x]['DEP %'] = '';
-                        $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = '';
-
-                        $data[$x]['Local Amount unitcost'] = 'Unit Cost';
-                        $data[$x]['Local Amount accDep'] = 'AccDep Amount';
-                        $data[$x]['Local Amount net Value'] = 'Net Book Value';
-                        $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
-                        $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
-                        $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
-
-                        $x++;
-                        $COSTUNIT = 0;
-                        $depAmountLocal = 0;
-                        $localnbv = 0;
-                        $costUnitRpt = 0;
-                        $depAmountRpt = 0;
-                        $rptnbv = 0;
-
-
-                        foreach ($outputArr[$key] as $value) {
                             $x++;
-                            $COSTUNIT += $value['COSTUNIT'];
-                            $depAmountLocal += $value['depAmountLocal'];
-                            $localnbv += $value['localnbv'];
-                            $costUnitRpt += $value['costUnitRpt'];
-                            $depAmountRpt += $value['depAmountRpt'];
-                            $rptnbv += $value['rptnbv'];
 
-                            $TotalCOSTUNIT += $value['COSTUNIT'];
-                            $TotaldepAmountLocal += $value['depAmountLocal'];
-                            $Totallocalnbv += $value['localnbv'];
-                            $TotalcostUnitRpt += $value['costUnitRpt'];
-                            $TotaldepAmountRpt += $value['depAmountRpt'];
-                            $Totalrptnbv += $value['rptnbv'];
+                            $data[$x]['Cost GL'] = 'Cost GL';
+                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                            $data[$x]['Type'] = 'Type';
+                            $data[$x]['Segment'] = 'Segment';
+                            $data[$x]['category'] = 'Finance Category';
+                            $data[$x]['FA Code'] = 'FA Code';
+                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                            $data[$x]['Serial Number'] = 'Serial Number';
+                            $data[$x]['Asset Description'] = 'Asset Description';
+                            $data[$x]['DEP %'] = 'DEP %';
+                            $data[$x]['Date Aquired'] = 'Date Aquired';
+                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = 'Local Amount';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                            $data[$x]['Rpt Amount acc net value'] = '';
 
-                            $data[$x]['Cost GL'] = $value['COSTGLCODE'];
-                            $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
-                            $data[$x]['Type'] = $value['typeDes'];
-                            $data[$x]['Segment'] = $value['ServiceLineDes'];
-                            $data[$x]['category'] = $key;
-                            $data[$x]['FA Code'] = $value['faCode'];
-                            $data[$x]['Grouped YN'] = $value['groupbydesc'];
-                            $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
-                            $data[$x]['Asset Description'] = $value['assetDescription'];
-                            $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
-                            $data[$x]['Date Aquired'] = \Helper::dateFormat($value['dateAQ']);
-                            $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+                            $x++;
 
-                            $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
-                            $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
-                            $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
-                            $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
-                            $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
-                            $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+
+                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                            $x++;
+                            $COSTUNIT = 0;
+                            $depAmountLocal = 0;
+                            $localnbv = 0;
+                            $costUnitRpt = 0;
+                            $depAmountRpt = 0;
+                            $rptnbv = 0;
+
+                            foreach ($outputArr[$key] as $value) {
+                                $x++;
+                                $COSTUNIT += $value['COSTUNIT'];
+                                $depAmountLocal += $value['depAmountLocal'];
+                                $localnbv += $value['localnbv'];
+                                $costUnitRpt += $value['costUnitRpt'];
+                                $depAmountRpt += $value['depAmountRpt'];
+                                $rptnbv += $value['rptnbv'];
+
+                                $TotalCOSTUNIT += $value['COSTUNIT'];
+                                $TotaldepAmountLocal += $value['depAmountLocal'];
+                                $Totallocalnbv += $value['localnbv'];
+                                $TotalcostUnitRpt += $value['costUnitRpt'];
+                                $TotaldepAmountRpt += $value['depAmountRpt'];
+                                $Totalrptnbv += $value['rptnbv'];
+
+                                $data[$x]['Cost GL'] = $value['COSTGLCODE'];
+                                $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
+                                $data[$x]['Type'] = $value['typeDes'];
+                                $data[$x]['Segment'] = $value['ServiceLineDes'];
+                                $data[$x]['category'] = $key;
+                                $data[$x]['FA Code'] = $value['faCode'];
+                                $data[$x]['Grouped YN'] = $value['groupbydesc'];
+                                $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
+                                $data[$x]['Asset Description'] = $value['assetDescription'];
+                                $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
+                                $data[$x]['Date Aquired'] = \Helper::dateFormat($value['postedDate']);
+                                $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+
+                                $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
+                                $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
+                                $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
+                                $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
+                                $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
+                                $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+                            }
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                            $data[$x]['Local Amount net Value'] = $localnbv;
+                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+                            $x++;
 
                         }
 
                         $x++;
 
-
                         $data[$x]['Cost GL'] = '';
                         $data[$x]['Acc Dep GL'] = '';
                         $data[$x]['Type'] = '';
@@ -593,52 +697,198 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                         $data[$x]['Asset Description'] = '';
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = 'Sub Total';
-
-                        $data[$x]['Local Amount unitcost'] = $COSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $depAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $localnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $rptnbv;
-
-                        $x++;
-
+                        $data[$x]['Dep Start Date'] = 'Total';
+                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
+                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
+                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
+                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
+                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
+                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                    $x++;
+                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                        $excel->sheet('asset register', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true, false);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
 
-                    $data[$x]['Cost GL'] = '';
-                    $data[$x]['Acc Dep GL'] = '';
-                    $data[$x]['Type'] = '';
-                    $data[$x]['Segment'] = '';
-                    $data[$x]['category'] = '';
-                    $data[$x]['FA Code'] = '';
-                    $data[$x]['Grouped YN'] = '';
-                    $data[$x]['Serial Number'] = '';
-                    $data[$x]['Asset Description'] = '';
-                    $data[$x]['DEP %'] = '';
-                    $data[$x]['Date Aquired'] = '';
-                    $data[$x]['Dep Start Date'] = 'Total';
-                    $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                    $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                    $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                    $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                    $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                    $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
                 }
 
+                if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID'));
+                    $output = $this->getAssetRegisterDetail2($request);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($request->currencyID == 2) {
+                        $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
+                    } else {
+                        $currencyDecimalPlace = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
+                    }
 
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('asset register', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true, false);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
+                    if ($output['data']) {
+                        $x = 0;
+                        foreach ($output['data'] as $val) {
+                            $data[$x]['GL Code'] = $val->COSTGLCODE;
+                            $data[$x]['Category'] = $val->catDescription;
+                            $data[$x]['FA Code'] = $val->faCode;
+                            $data[$x]['Grouped FA code'] = $val->group_to;
+                            $data[$x]['Posting date of FA'] = \Helper::dateFormat($val->postedDate);
+                            $data[$x]['Dep start date'] = \Helper::dateFormat($val->dateDEP);
+                            $data[$x]['Dep %'] = $val->DEPpercentage;
+                            $data[$x]['Service line'] = $val->ServiceLineDes;
+                            $data[$x]['GRV Date'] = $val->dateAQ;
+                            $data[$x]['GRV Number'] = $val->docOrigin;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Opening Cost'] = round($val->opening, $currencyDecimalPlace);
+                            $data[$x]['Addition Cost'] = round($val->addition, $currencyDecimalPlace);
+                            $data[$x]['Disposal Cost'] = round($val->disposed, $currencyDecimalPlace);
+                            $data[$x]['Closing Cost'] = round($val->costClosing, $currencyDecimalPlace);
+                            $data[$x]['Opening Dep'] = round($val->openingDep, $currencyDecimalPlace);
+                            $data[$x]['Charge during the year'] = round($val->additionDep, $currencyDecimalPlace);
+                            $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
+                            $data[$x]['Closing Dep'] = round($val->closingDep, $currencyDecimalPlace);
+                            $data[$x]['NBV'] = round($val->costClosing - $val->closingDep, $currencyDecimalPlace);
+                            foreach ($output['period'] as $val2) {
+                                $data[$x][$val2] = round($val->$val2, $currencyDecimalPlace);
+                            }
+                            $x++;
+                        }
+                    }
 
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+
+                    $csv = \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+
+                }
+
+                if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+                    $financeYear = CompanyFinanceYear::find($request->financeYear);
+                    $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+                    $output = $this->getAssetRegisterSummaryQRY($request);
+                    $assetCategory = $request->assetCategory;
+                    $costTotal = [];
+                    $depTotal = [];
+                    $nbv = [];
+                    $nbvEnd = [];
+                    $depQry = collect($output['depQry']);
+                    $costQry = collect($output['costQry']);
+
+                    $filteredCostQry = $costQry->firstWhere('description', $beginingFinancialYear);
+                    $filteredDepQry = $depQry->firstWhere('description', $beginingFinancialYear);
+
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val) {
+                            $depTotal[$val['financeCatDescription']] = $depQry->sum($val['financeCatDescription']);
+                            $costTotal[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']);
+                            $nbv[$val['financeCatDescription']] = $filteredCostQry[$val['financeCatDescription']] - $filteredDepQry[$val['financeCatDescription']];
+                            $nbvEnd[$val['financeCatDescription']] = $costQry->sum($val['financeCatDescription']) - $depQry->sum($val['financeCatDescription']);
+                        }
+                    }
+                    $selectedMonthYear = Carbon::parse($financePeriod->dateTo)->format('Y/M');
+
+                    $costTotal['total'] = collect($costTotal)->values()->sum();
+                    $costTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $depTotal['total'] = collect($depTotal)->values()->sum();
+                    $depTotal['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['depQry'] = collect($output['depQry'])->toArray();
+                    $output['costQry'] = collect($output['costQry'])->toArray();
+                    $output['depQry'][] = $depTotal;
+                    $output['costQry'][] = $costTotal;
+
+                    $nbv['total'] = collect($nbv)->values()->sum();
+                    $nbvEnd['total'] = collect($nbvEnd)->values()->sum();
+                    $nbv['description'] = $beginingFinancialYear;
+                    $nbvEnd['description'] = 'As at end of ' . $selectedMonthYear;
+                    $output['nbvQry'][] = $nbv;
+                    $output['nbvQry'][] = $nbvEnd;
+
+                    $currencyCode = '';
+                    $currencyDecimalPlace = 2;
+
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($request->currencyID == 2) {
+                        $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
+                    } else {
+                        $currencyDecimalPlace = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
+                    }
+
+                    $x = 0;
+                    if (count($assetCategory) > 0) {
+                        foreach ($assetCategory as $val2) {
+                            $data[$x]['Description'] = '';
+                            $data[$x][$val2['financeCatDescription']] = '';
+                        }
+                    }
+                    $data[$x]['Total'] = '';
+                    $x++;
+                    $data[$x][''] = 'Cost(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['costQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+                    $x++;
+                    $data[$x][''] = 'Depreciation(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['depQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+                    $x++;
+                    $data[$x][''] = 'Net Book Value(' . $currencyCode . ')';
+                    $x++;
+                    foreach ($output['nbvQry'] as $val) {
+                        if (count($assetCategory) > 0) {
+                            foreach ($assetCategory as $val2) {
+                                $data[$x]['Description'] = $val['description'];
+                                $data[$x][$val2['financeCatDescription']] = round($val[$val2['financeCatDescription']], $currencyDecimalPlace);
+                            }
+                        }
+                        $data[$x]['Total'] = $val['total'];
+                        $x++;
+                    }
+
+                    $csv = \Excel::create('asset_register_summary', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                }
 
                 return $this->sendResponse(array(), 'successfully export');
 
@@ -657,11 +907,15 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                         $data[$x]['Serial Number'] = $val->SerialNumber;
                         $data[$x]['Asset Description'] = $val->AssetDescription;
                         $data[$x]['DEP percentage'] = $val->DEPpercentage;
-                        $data[$x]['Date Acquired'] = \Helper::dateFormat($val->DateAquired);
+                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
                         $data[$x]['GRV Code'] = $val->GRVCODE;
                         $data[$x]['PO Code'] = $val->POCODE;
+                        $data[$x]['PO Amount Rpt'] = $val->poTotalComRptCurrency;
+                        $data[$x]['Payment Date'] = $val->paymentDate;
                         $data[$x]['Service Line'] = $val->ServiceLineDes;
                         $data[$x]['Supplier'] = $val->Supplier;
+                        $data[$x]['Cost GL'] = $val->COSTGLCODE;
+                        $data[$x]['Cost GL Desc'] = $val->COSTGLCODEdes;
                         $data[$x]['Asset Cost Local Curr'] = $val->localCurrency;
                         $data[$x]['Asset Cost Local'] = $val->AssetCostLocal;
                         $data[$x]['Asset Cost Rpt Curr'] = $val->reportCurrency;
@@ -836,6 +1090,36 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                 })->download($type);
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'AMACWIP': //Asset CWIP
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $output = $this->getAssetCWIPQRY($request);
+                if (count($output) > 0) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['GRV Number'] = $val->grvPrimaryCode;
+                        $data[$x]['GRV Posting Date'] = $val->approvedDate;
+                        $data[$x]['Opening'] = $val->opening;
+                        $data[$x]['Addition'] = $val->addition;
+                        $data[$x]['Capitalization'] = $val->capitalization;
+                        $data[$x]['Closing'] = $val->closing;
+                        $x++;
+                    }
+                }
+
+                $csv = \Excel::create('asset_cwip', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -871,30 +1155,43 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     ROUND(erp_fa_asset_master.DEPpercentage, 0) AS DEPpercentage,
                     serviceline.ServiceLineDes AS ServiceLineDes,
                     erp_fa_asset_master.dateAQ AS DateAquired,
+                    erp_fa_asset_master.postedDate AS postedDate,
                     erp_fa_asset_master.docOrigin AS GRVCODE,
                     erp_purchaseordermaster.purchaseOrderCode AS POCODE,
+                    erp_purchaseordermaster.poTotalComRptCurrency AS poTotalComRptCurrency,
+                    inv.BPVdate AS paymentDate,
                     erp_fa_asset_master.serviceLineCode AS ServiceLine,
                     erp_fa_asset_master.MANUFACTURE AS Supplier,
-                    erp_fa_assetcost.localAmount AS AssetCostLocal,
-                    erp_fa_assetcost.rptAmount AS AssetCostRpt,
+                    erp_fa_asset_master.COSTUNIT AS AssetCostLocal,
+                    erp_fa_asset_master.costUnitRpt AS AssetCostRpt,
                     locCur.CurrencyCode as localCurrency,
                     locCur.DecimalPlaces as localCurrencyDeci,
                     repCur.CurrencyCode as reportCurrency,
-                    repCur.DecimalPlaces as reportCurrencyDeci
+                    repCur.DecimalPlaces as reportCurrencyDeci,
+                     erp_fa_asset_master.COSTGLCODE as COSTGLCODE,
+                     erp_fa_asset_master.COSTGLCODEdes as COSTGLCODEdes
                 FROM
                     erp_fa_asset_master
                 LEFT JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
-                LEFT JOIN erp_fa_assetcost ON erp_fa_asset_master.faID = erp_fa_assetcost.faID
+                -- LEFT JOIN erp_fa_assetcost ON erp_fa_asset_master.faID = erp_fa_assetcost.faID
                 LEFT JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                 LEFT JOIN erp_grvmaster ON erp_fa_asset_master.docOriginSystemCode = erp_grvmaster.grvAutoID
                 LEFT JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                LEFT JOIN (SELECT
+	MAX(BPVdate) as BPVdate,
+	grvAutoID
+FROM
+	erp_bookinvsuppdet
+	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppdet.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+	LEFT JOIN ( SELECT erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicedetail.addedDocumentSystemID,erp_paysupplierinvoicemaster.BPVdate FROM erp_paysupplierinvoicedetail INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId ORDER BY bookingInvSystemCode asc,BPVdate desc) pv ON pv.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+	AND pv.addedDocumentSystemID = erp_bookinvsuppmaster.documentSystemID) inv ON inv.grvAutoID = erp_grvmaster.grvAutoID
                 LEFT JOIN erp_purchaseordermaster ON erp_grvdetails.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
                 LEFT JOIN companymaster ON companymaster.companySystemID = erp_fa_asset_master.companySystemID
                 LEFT JOIN serviceline ON erp_fa_asset_master.serviceLineSystemID = serviceline.serviceLineSystemID
                 LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
-                    AND DATE(erp_fa_asset_master.dateAQ) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                    AND DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                 AND erp_fa_asset_master.approved = -1
                 GROUP BY
                     erp_fa_asset_master.companySystemID,
@@ -1893,7 +2190,6 @@ WHERE
             }
         }
 
-
         return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
 
 
@@ -1916,71 +2212,6 @@ WHERE
             erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
         }
 
-
-        if ($request->excelType == 1) {
-
-            $qry = "SELECT
-IF(groupTO,1,0) as groupTO,
-	assetGroup.assetDescription as groupbydesc,
-	faUnitSerialNo,
-	erp_fa_asset_master.faID,
-	erp_fa_assettype.typeDes,
-	erp_fa_financecategory.financeCatDescription,
-	erp_fa_asset_master.COSTGLCODE,
-	erp_fa_asset_master.ACCDEPGLCODE,
-	assetType,
-	serviceline.ServiceLineDes,
-	erp_fa_asset_master.serviceLineCode,
-	docOrigin,
-	AUDITCATOGARY,
-	faCode,
-	erp_fa_asset_master.assetDescription,
-	DEPpercentage,
-	dateAQ,
-	dateDEP,
-	COSTUNIT,
-	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
-	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
-	costUnitRpt,
-	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
-	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
-FROM
-	erp_fa_asset_master
-	LEFT JOIN (
-	SELECT
-		faID,
-		erp_fa_assetdepreciationperiods.depMasterAutoID,
-		sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
-		sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
-	FROM
-		erp_fa_assetdepreciationperiods
-		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
-	WHERE
-		erp_fa_depmaster.approved =- 1 
-	GROUP BY
-		faID 
-	) t ON erp_fa_asset_master.faID = t.faID
-	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
-	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
-	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-LEFT JOIN (SELECT assetDescription , faID FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = 31   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
-WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID
-	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate'
-	OR DIPOSED = - 1 
-	)";
-
-
-        } else {
-            $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
- IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
-  
-  UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
-erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
-
-
-        }
-
         $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
@@ -1998,6 +2229,7 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	erp_fa_asset_master.serviceLineCode,
 	docOrigin,
 	AUDITCATOGARY,
+	postedDate,
 	erp_fa_asset_master.faCode,
 	erp_fa_asset_master.assetDescription,
 	DEPpercentage,
@@ -2021,7 +2253,7 @@ FROM
 		erp_fa_assetdepreciationperiods
 		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 	WHERE
-		erp_fa_depmaster.approved =- 1 
+		erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
 	GROUP BY
 		faID 
 	) t ON erp_fa_asset_master.faID = t.faID
@@ -2031,7 +2263,7 @@ FROM
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
-	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (   disposedDate > '$asOfDate')) OR DIPOSED <>  -1)
+	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (  DATE(disposedDate) > '$asOfDate')) OR DIPOSED <>  -1)
 	$where
 	) t  ORDER BY sortfaID desc  ";
 
@@ -2039,5 +2271,604 @@ WHERE
         $output = \DB::select($qry);
 
         return $output;
+    }
+
+    function getAssetRegisterSummaryQRY($request)
+    {
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
+        $financeYear = CompanyFinanceYear::find($request->financeYear);
+        $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 2) {
+            $currencyColumn = 'COSTUNIT';
+            $currencyColumnDep = 'depAmountLocal';
+        } else {
+            $currencyColumn = 'costUnitRpt';
+            $currencyColumnDep = 'depAmountRpt';
+        }
+
+        $assetCategory = $request->assetCategory;
+        $assetCategoryQry = '';
+        $assetCategoryQryTotArr = [];
+        $assetCategoryQryDisposal = '';
+        $assetCategoryQryTotDisposalArr = [];
+        $assetCategoryDepQry = '';
+        $assetCategoryDepQryTotArr = [];
+        $assetCategoryDepQryDisposal = '';
+        $assetCategoryDepQryTotDisposalArr = [];
+        if (count($assetCategory) > 0) {
+            foreach ($assetCategory as $val) {
+                $assetCategoryQry .= 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryDepQry .= 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0) AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryQryDisposal .= 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)* -1 AS `' . $val['financeCatDescription'] . '`,';
+                $assetCategoryDepQryDisposal .= 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0) * -1 AS `' . $val['financeCatDescription'] . '`,';
+
+                $assetCategoryQryTotArr[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)';
+                $assetCategoryDepQryTotArr[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)';
+
+                $assetCategoryQryTotDisposalArr[] = 'IFNULL(SUM(if(AUDITCATOGARY = ' . $val['faFinanceCatID'] . ',' . $currencyColumn . ',0)),0)*-1';
+                $assetCategoryDepQryTotDisposalArr[] = 'IFNULL(SUM(if(faFinanceCatID = ' . $val['faFinanceCatID'] . ',' . $currencyColumnDep . ',0)),0)*-1';
+            }
+        }
+
+        $assetCategoryQryTot = '(' . join('+', $assetCategoryQryTotArr) . ') as total,';
+        $assetCategoryDepQryTot = '(' . join('+', $assetCategoryDepQryTotArr) . ') as total,';
+
+        $assetCategoryQryTotDisposal = '(' . join('+', $assetCategoryQryTotDisposalArr) . ') as total,';
+        $assetCategoryDepQryTotDisposal = '(' . join('+', $assetCategoryDepQryTotDisposalArr) . ') as total,';
+
+        $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
+
+        // asset cost
+        $additionCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"Additions during the year" as description,2 as type')->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->isApproved();
+
+        $disposalCostquery = FixedAssetMaster::selectRaw($assetCategoryQryDisposal . $assetCategoryQryTotDisposal . '"Disposals" as description,3 as type')->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->isApproved();
+
+        $beginingCostquery = FixedAssetMaster::selectRaw($assetCategoryQry . $assetCategoryQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->where('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->isApproved()->union($additionCostquery)
+            ->union($disposalCostquery)->get();
+
+        // asset depreciation
+
+        $additionDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"Charge For The Period" as description,2 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+            $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+            $q->where('approved', -1);
+        })->whereHas('asset_by', function ($q) use ($request) {
+            $q->assetType($request->typeID);
+            $q->isApproved();
+        })->ofCompany($companyID);
+
+        $disposalDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQryDisposal . $assetCategoryDepQryTotDisposal . '"Disposal" as description,3 as type')->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+            $q->whereDate('depDate', '<', $financePeriod->dateTo);
+            $q->where('approved', -1);
+        })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
+            $q->assetType($request->typeID);
+            $q->disposed(-1);
+            $q->isApproved();
+            $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+        })->ofCompany($companyID);
+
+        $beginingDepquery = FixedAssetDepreciationPeriod::selectRaw($assetCategoryDepQry . $assetCategoryDepQryTot . '"' . $beginingFinancialYear . '" as description,1 as type')->whereHas('master_by', function ($q) use ($financeYear) {
+            $q->where('depDate', '<', $financeYear->bigginingDate);
+            $q->where('approved', -1);
+        })->whereHas('asset_by', function ($q) use ($request, $financeYear) {
+            $q->assetType($request->typeID);
+            $q->isApproved();
+            $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
+        })->ofCompany($companyID)->union($additionDepquery)
+            ->union($disposalDepquery)->get();
+
+        return ['depQry' => $beginingDepquery, 'costQry' => $beginingCostquery];
+
+    }
+
+    function getAssetRegisterSummaryDrillDownQRY(Request $request)
+    {
+        $input = $request->all();
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
+        $financeYear = CompanyFinanceYear::find($request->financeYear);
+        $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 2) {
+            $currencyColumn = 'COSTUNIT';
+            $currencyColumnDep = 'depAmountLocal';
+        } else {
+            $currencyColumn = 'costUnitRpt';
+            $currencyColumnDep = 'depAmountRpt';
+        }
+
+        // asset cost
+        if ($request->catType == 1) {
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->where('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+            }
+            if ($request->subType == 2) { //addition
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('postedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+            }
+            if ($request->subType == 3) {// disposal
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+            }
+        }
+
+        if ($request->catType == 2) {
+            // asset depreciation
+
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear) {
+                    $q->where('depDate', '<', $financeYear->bigginingDate);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear) {
+                    $q->assetType($request->typeID);
+                    $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
+                    $q->isApproved();
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 2) { //charge
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereBetween('depDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request) {
+                    $q->assetType($request->typeID);
+                    $q->isApproved();
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 3) { //disposed
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereDate('depDate', '<', $financePeriod->dateTo);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
+                    $q->assetType($request->typeID);
+                    $q->disposed(-1);
+                    $q->whereBetween('disposedDate', [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->isApproved();
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+        }
+
+        /*$search = $request->input('search.value');
+        if($search){
+            $financeItemCategoryMasters =   $financeItemCategoryMasters->where('categoryDescription','LIKE',"%{$search}%")
+                ->orWhere('itemCodeDef', 'LIKE', "%{$search}%");
+        }*/
+
+        $total = $output->get();
+        $total = collect($total)->sum('amount');
+
+        return \DataTables::eloquent($output)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->with('totalAmount', [
+                'totalAmount' => $total,
+            ])
+            ->make(true);
+
+    }
+
+    function getAssetCWIPQRY($request)
+    {
+        /*$financeYear = CompanyFinanceYear::find($request->financeYear);
+        $firstQ1 = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
+        $endFirstQ1 = Carbon::parse($financeYear->bigginingDate)->endOfQuarter();
+        $secondQ1 = Carbon::parse($endFirstQ1->addDay())->format('Y-m-d');
+        $endSecondQ1 = Carbon::parse($secondQ1)->endOfQuarter();
+        $thirdQ1 = Carbon::parse($endSecondQ1->addDay())->format('Y-m-d');
+        $endThirdQ1 = Carbon::parse($thirdQ1)->endOfQuarter();
+        $fourthQ1 = Carbon::parse($endThirdQ1->addDay())->format('Y-m-d');
+        $endfourthQ1 = Carbon::parse($fourthQ1)->endOfQuarter();
+
+        $quarterArr = [1 => ['startDate' => $firstQ1, 'endDate' => $endFirstQ1->subDay()->format('Y-m-d')], 2 => ['startDate' => $secondQ1, 'endDate' => $endSecondQ1->subDay()->format('Y-m-d')], 3 => ['startDate' => $thirdQ1, 'endDate' => $endThirdQ1->subDay()->format('Y-m-d')], 4 => ['startDate' => $fourthQ1, 'endDate' => $endfourthQ1->format('Y-m-d')]];*/
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
+
+        $additionColumn = '';
+        $capitlizationColumn = '';
+        if ($request->currencyID == 2) {
+            $additionColumn = 'grvLocalAmount';
+            $capitlizationColumn = 'costLocal';
+        } else {
+            $additionColumn = 'grvRptAmount';
+            $capitlizationColumn = 'costRpt';
+        }
+
+        $addCapi = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
+	approvedDate,
+	0 as opening,
+	IFNULL(grvd.' . $additionColumn . ',0) as addition,
+	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')->join('erp_grvdetails', function ($join) {
+            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
+                ->where('itemFinanceCategoryID', 3);
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
+            $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+
+        $output = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
+	approvedDate,
+	IFNULL(grvd.' . $additionColumn . ',0) as opening,
+	0 as addition,
+	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')->join('erp_grvdetails', function ($join) {
+            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
+                ->where('itemFinanceCategoryID', 3);
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
+        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
+            $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
+            $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->union($addCapi)->get();
+
+        return $output;
+    }
+
+    function assetCWIPDrillDown(Request $request)
+    {
+        $input = $request->all();
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new Carbon($request->toDate))->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
+        $capitlizationColumn = '';
+        if ($request->currencyID == 2) {
+            $capitlizationColumn = 'COSTUNIT';
+        } else {
+            $capitlizationColumn = 'costUnitRpt';
+        }
+
+        $output = FixedAssetMaster::selectRAW($capitlizationColumn . ' as capitalization,faCode,postedDate')->where('docOriginSystemCode', $request->grvAutoID)->where('docOriginDocumentSystemID', 3)->isApproved()->whereRaw('DATE(postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"');
+
+        $total = $output->get();
+        $total = collect($total)->sum('capitalization');
+
+        return \DataTables::eloquent($output)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->with('totalAmount', [
+                'totalAmount' => $total,
+            ])
+            ->make(true);
+    }
+
+    function getAssetRegisterDetail2($request)
+    {
+        $typeID = $request->typeID;
+        $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
+        $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
+        $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 2) {
+            $currencyColumn = 'erp_fa_asset_master.COSTUNIT';
+            $currencyColumnDep = 'erp_fa_assetdepreciationperiods.depAmountLocal';
+        } else {
+            $currencyColumn = 'erp_fa_asset_master.costUnitRpt';
+            $currencyColumnDep = 'erp_fa_assetdepreciationperiods.depAmountRpt';
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
+        $periodQry = "";
+        $periodQry2 = "";
+        $periodArr = [];
+        $period = CarbonPeriod::create($fromDate, '1 month', $toDate);
+        foreach ($period as $val) {
+            $periodQry .= 'IFNULL(SUM(IF(DATE_FORMAT(depForFYperiodEndDate,"%Y-%m") = "' . $val->format('Y-m') . '",' . $currencyColumnDep . ',0)),0) AS `' . $val->format('M-Y') . '`,';
+            $periodQry2 .= 'IFNULL(`' . $val->format('M-Y') . '`,0) as `' . $val->format('M-Y') . '`,';
+            $periodArr[] = $val->format('M-Y');
+        }
+
+        /*$addition = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
+                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw('0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep, faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
+                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,0 as opening,' . $currencyColumn . ' as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereRAW('DATE(postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '"')->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->ofCompany($companyID)->get();
+
+        $openingDisposed = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
+                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate) {
+                $query->whereDate('depDate', '<', $fromDate);
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(-1)->ofCompany($companyID)->whereDate('disposedDate', '>', $fromDate)->get();
+
+        $opening = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
+            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
+                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" ');
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
+            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
+            $q->whereHas('master_by', function ($query) use ($fromDate) {
+                $query->whereDate('depDate', '<', $fromDate);
+                $query->where('approved', -1);
+            });
+            $q->groupBy('faID');
+        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,0 as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(0)->ofCompany($companyID)->get();
+
+        $output = $opening->merge($openingDisposed)->merge($addition);*/
+
+
+        $query = 'SELECT 
+' . $periodQry2 . '
+COSTGLCODE,
+faCode,
+	postedDate,
+	dateDEP,
+	DEPpercentage,
+	opening,
+	addition,
+	dateAQ,
+	docOrigin,
+	faID,
+	serviceLineSystemID,
+	supplierIDRentedAsset,
+	groupTO,
+	faCatID,
+	DIPOSED,
+	disposedDate,
+	ServiceLineDes,
+	supplierName,
+	group_to,
+	catDescription,
+	disposed,
+	costClosing,
+	IFNULL(openingDep,0) as openingDep,
+	IFNULL(additionDep,0) as additionDep,
+	IFNULL(disposedDep,0) as disposedDep,
+	IFNULL(closingDep,0) as closingDep
+	FROM (SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	0 AS opening,
+	' . $currencyColumn . ' AS addition,
+	erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+IF
+	( erp_fa_asset_master.DIPOSED = - 1 && ( "' . $fromDate . '" < erp_fa_asset_master.disposedDate && "' . $toDate . '" > erp_fa_asset_master.disposedDate ), ' . $currencyColumn . ', 0 ) AS disposed,
+	(0 + ' . $currencyColumn . ' - IF
+	( erp_fa_asset_master.DIPOSED = - 1 && ( "' . $fromDate . '" < erp_fa_asset_master.disposedDate && "' . $toDate . '" > erp_fa_asset_master.disposedDate ), ' . $currencyColumn . ', 0 )) as costClosing,
+	dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN ( 
+	SELECT 0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep,SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
+	(0 + IFNULL(SUM(' . $currencyColumnDep . '),0) - SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 ))) as closingDep,erp_fa_assetdepreciationperiods.faID as faID3 
+	FROM erp_fa_assetdepreciationperiods
+	INNER JOIN erp_fa_asset_master ON  erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
+	INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID 
+	AND erp_fa_depmaster.approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY erp_fa_assetdepreciationperiods.faID 
+	) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	
+	UNION
+	
+	SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	' . $currencyColumn . ' as opening,
+	0 as addition,
+	 erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+	 if(erp_fa_asset_master.DIPOSED = -1 && ("' . $fromDate . '" < erp_fa_asset_master.disposedDate  && "' . $toDate . '" >  erp_fa_asset_master.disposedDate),' . $currencyColumn . ',0) as disposed,
+	 (' . $currencyColumn . '+ 0 - if(erp_fa_asset_master.DIPOSED = -1 && ("' . $fromDate . '" < erp_fa_asset_master.disposedDate  && "' . $toDate . '" >  erp_fa_asset_master.disposedDate),' . $currencyColumn . ',0)) as costClosing,
+	 dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN (
+	 SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 )) AS disposedDep,
+	(IFNULL(SUM(' . $currencyColumnDep . '),0)+ 0 - SUM(IF
+	( erp_fa_asset_master.DIPOSED = - 1 && (erp_fa_asset_master.disposedDate < "' . $toDate . '"), ' . $currencyColumnDep . ', 0 ))) as closingDep,erp_fa_assetdepreciationperiods.faID as faID3
+	  FROM erp_fa_assetdepreciationperiods 
+	  INNER JOIN erp_fa_asset_master ON  erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
+	  INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND erp_fa_depmaster.approved = -1 AND DATE(depDate) < "' . $fromDate . '" 
+	GROUP BY erp_fa_assetdepreciationperiods.faID ) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.disposedDate) > "' . $fromDate . '" 
+	AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.DIPOSED = -1 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	
+	UNION 
+	
+	SELECT
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.postedDate,
+	erp_fa_asset_master.dateDEP,
+	erp_fa_asset_master.DEPpercentage,
+	' . $currencyColumn . ' as opening,
+	0 as addition,
+	erp_fa_asset_master.dateAQ,
+	erp_fa_asset_master.docOrigin,
+	erp_fa_asset_master.faID,
+	erp_fa_asset_master.serviceLineSystemID,
+	erp_fa_asset_master.supplierIDRentedAsset,
+	erp_fa_asset_master.groupTO,
+	erp_fa_asset_master.faCatID,
+	erp_fa_asset_master.DIPOSED,
+	erp_fa_asset_master.disposedDate,
+	serviceline.ServiceLineDes,
+	suppliermaster.supplierName,
+	a2.faCode as group_to,
+	erp_fa_category.catDescription,
+	0 as disposed,
+	(' . $currencyColumn . '+0-0) as costClosing,
+	dep1.*,
+	dep2.* 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+	LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
+	LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
+	LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
+	LEFT JOIN ( SELECT ' . $periodQry . ' faID as faID2 FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) BETWEEN "' . $fromDate . '" 
+	AND "' . $toDate . '" GROUP BY faID ) dep1 ON dep1.faID2 = erp_fa_asset_master.faID
+	LEFT JOIN ( SELECT IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep,0 as disposedDep,(IFNULL(SUM(' . $currencyColumnDep . '),0)+ 0 - 0) as closingDep, faID as faID3 
+	FROM erp_fa_assetdepreciationperiods 
+	INNER JOIN erp_fa_depmaster ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID AND approved = -1 AND DATE(depDate) < "' . $fromDate . '" 
+	GROUP BY faID ) dep2 ON dep2.faID3 = erp_fa_asset_master.faID
+	WHERE DATE(erp_fa_asset_master.postedDate) < "' . $fromDate . '" 
+	AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') AND erp_fa_asset_master.approved = -1 AND erp_fa_asset_master.DIPOSED = 0 AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	) a';
+
+        $output = \DB::select($query);
+
+        return ['data' => $output, 'period' => $periodArr];
     }
 }

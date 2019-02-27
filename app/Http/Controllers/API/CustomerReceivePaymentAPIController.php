@@ -14,6 +14,8 @@
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getReceiptVoucherApproval(),
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getApprovedRVForCurrentUser(),
  * -- Date: 21-November 2018 By: Nazir Description: Added new function amendReceiptVoucher(),
+ * -- Date: 31-December 2018 By: Nazir Description: Added new function receiptVoucherCancel(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckReceiptVoucher(),
  */
 
 namespace App\Http\Controllers\API;
@@ -200,19 +202,24 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
-        $serialNo = CustomerReceivePayment::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))
-            ->where('documentSystemID', 21)
+        $serialNo = CustomerReceivePayment::where('documentSystemID', 21)
             ->where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
             ->first();
 
+        $lastSerialNumber = 1;
+        if ($serialNo) {
+            $lastSerialNumber = intval($serialNo->serialNo) + 1;
+        }
+
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
-        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
+        $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['documentSystemID'] = 21;
         $input['documentID'] = 'BRV';
-        $input['serialNo'] = $serialNo->serialNo;
+        $input['serialNo'] = $lastSerialNumber;
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['custPaymentReceiveCode'] = $custPaymentReceiveCode;
@@ -677,6 +684,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'custPaymentReceiveDate' => 'required',
+                'bankID' => 'required|numeric|min:1',
+                'bankCurrency' => 'required|numeric|min:1',
+                'bankAccount' => 'required|numeric|min:1',
+                'custTransactionCurrencyID' => 'required|numeric|min:1',
+                'narration' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
@@ -1078,7 +1100,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
@@ -1136,7 +1158,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
-                
+
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
@@ -1185,7 +1207,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
-            ->leftJoin('erp_bankledger', function($join) {
+            ->leftJoin('erp_bankledger', function ($join) {
                 $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
                 $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
                 $join->on('erp_bankledger.documentSystemID', '=', 'erp_customerreceivepayment.documentSystemID');
@@ -1200,6 +1222,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $master->where('erp_customerreceivepayment.approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $master->where('erp_customerreceivepayment.cancelYN', $input['cancelYN']);
             }
         }
 
@@ -1241,6 +1269,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_customerreceivepayment.refferedBackYN',
             'erp_customerreceivepayment.confirmedYN',
             'erp_customerreceivepayment.approved',
+            'erp_customerreceivepayment.cancelYN',
             'custReceivePaymentAutoID',
             'customermaster.CutomerCode',
             'customermaster.CustomerName',
@@ -1281,7 +1310,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
@@ -1721,5 +1750,65 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
 
         return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher amend successfully');
+    }
+
+    public function receiptVoucherCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+
+        $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
+
+        if (empty($customerReceivePaymentData)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        if ($customerReceivePaymentData->confirmedYN == 1) {
+            return $this->sendError('You cannot cancel this receipt voucher, this is already confirmed');
+        }
+
+        if ($customerReceivePaymentData->approved == -1) {
+            return $this->sendError('You cannot cancel this receipt voucher, this is already approved');
+        }
+
+        if ($customerReceivePaymentData->cancelYN == -1) {
+            return $this->sendError('You cannot cancel this receipt voucher, this is already cancelled');
+        }
+
+        $directDetail = DirectReceiptDetail::where('directReceiptAutoID', $custReceivePaymentAutoID)->get();
+
+        if (count($directDetail) > 0) {
+            return $this->sendError('You cannot cancel this receipt voucher, invoice details are exist');
+        }
+
+        $customerReceiptDetail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
+
+        if (count($customerReceiptDetail) > 0) {
+            return $this->sendError('You cannot cancel this receipt voucher, invoice details are exist');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $customerReceivePaymentData->cancelYN = -1;
+        $customerReceivePaymentData->cancelComment = $request['cancelComments'];
+        $customerReceivePaymentData->cancelDate = NOW();
+        $customerReceivePaymentData->cancelledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $customerReceivePaymentData->canceledByEmpID = $employee->empID;
+        $customerReceivePaymentData->canceledByEmpName = $employee->empFullName;
+        $customerReceivePaymentData->save();
+
+        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher cancelled successfully');
+    }
+
+    public function approvalPreCheckReceiptVoucher(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
     }
 }

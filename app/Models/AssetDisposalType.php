@@ -54,5 +54,10 @@ class AssetDisposalType extends Model
         
     ];
 
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountID', 'chartOfAccountSystemID');
+    }
+
     
 }

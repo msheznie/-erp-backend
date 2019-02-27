@@ -24,6 +24,7 @@ use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
+use App\Jobs\RollBackApproval;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
 use App\Models\CustomerReceivePayment;
@@ -516,6 +517,18 @@ class Helper
                     $docInforArr["modelName"] = 'BankAccount';
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     break;
+                case 67: // Sales Quotation
+                case 68: // Sales Order
+                    $docInforArr["documentCodeColumnName"] = 'quotationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_quotationmaster';
+                    $docInforArr["modelName"] = 'QuotationMaster';
+                    $docInforArr["primarykey"] = 'quotationMasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -696,7 +709,7 @@ class Helper
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
                                         foreach ($approvalList as $da) {
@@ -885,6 +898,86 @@ class Helper
 
         return $array;
 
+    }
+
+    /**
+     * function to prompt posted date in final approval
+     * @param $input - get line records
+     * @return mixed
+     */
+    public static function postedDatePromptInFinalApproval($input)
+    {
+        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
+        switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
+            case 20: // customer invoice
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["documentDate"] = "bookingDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 19: // credit note
+                $docInforArr["tableName"] = 'erp_creditnote';
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                $docInforArr["documentDate"] = "creditNoteDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 15: // debit note
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                $docInforArr["documentDate"] = "debitNoteDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 21: // Receipt voucher
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentDate"] = "custPaymentReceiveDate";
+                $docInforArr["financePeriod"] = "finance_period_by";
+                break;
+            case 17: // Journal Voucher
+                $docInforArr["tableName"] = 'erp_jvmaster';
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                $docInforArr["documentDate"] = "JVdate";
+                $docInforArr["financePeriod"] = "financeperiod_by";
+                break;
+            default:
+                return ['success' => true, 'message' => '', 'type' => 5];
+        }
+
+        $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+
+        if ($approvalLevel) {
+            if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // check for final approval
+                $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                $masterRec = $namespacedModel::with([$docInforArr["financePeriod"]])->find($input["documentSystemCode"]);
+                $financePeriod = $docInforArr["financePeriod"];
+                $documentDate = $docInforArr["documentDate"];
+                if ($masterRec) {
+                    if ($masterRec->$financePeriod) {
+                        $isActive = $masterRec->$financePeriod->isActive;
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if ($isActive == -1) {
+                            $masterDocumentDate = $masterRec->$documentDate;
+                        }
+                        $masterDocumentDate = Carbon::parse($masterDocumentDate);
+                        $masterDocumentDate = $masterDocumentDate->format('d/m/Y');
+                        return ['success' => true, 'message' => 'Document will be posted on ' . $masterDocumentDate . '. Are you sure you want to continue?', 'type' => 1];
+                    } else {
+                        return ['success' => false, 'message' => 'Financial period not found', 'type' => 3];
+                    }
+                } else {
+                    return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+                }
+            } else {
+                return ['success' => true, 'message' => 'Success', 'type' => 5];
+            }
+        } else {
+            return ['success' => false, 'message' => 'No Records Found', 'type' => 2];
+        }
     }
 
 
@@ -1273,6 +1366,19 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 67: // Sales Quotation
+            case 68: // Sales Order
+                $docInforArr["tableName"] = 'erp_quotationmaster';
+                $docInforArr["modelName"] = 'QuotationMaster';
+                $docInforArr["primarykey"] = 'quotationMasterID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedbyEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1333,7 +1439,11 @@ class Helper
                                     ->where('companySystemID', $purchaseRequestMaster->companySystemID)
                                     ->first();
 
-                                if ($checkBudget->isYesNO == 1) {
+                                $departmentWiseCheckBudget = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 33)
+                                    ->where('companySystemID', $purchaseRequestMaster->companySystemID)
+                                    ->first();
+
+                                if ($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 1) {
                                     if ($purchaseRequestMaster->checkBudgetYN == -1) {
 
                                         $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
@@ -1416,11 +1526,102 @@ class Helper
                                         // update PR master table
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                     }
+                                } else if ($checkBudget->isYesNO == 1 && $departmentWiseCheckBudget->isYesNO == 0) {
+                                    if ($purchaseRequestMaster->checkBudgetYN == -1) {
+
+                                        $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
+                                        $serviceLineSystemID = $purchaseRequestMaster->serviceLineSystemID;
+                                        $companySystemID = $purchaseRequestMaster->companySystemID;
+                                        $budgetYear = $purchaseRequestMaster->budgetYear;
+
+                                        if ($purchaseRequestMaster->financeCategory != 3) {
+
+                                            $totalDocumentRptAmount = 0;
+
+                                            $documentAmount = collect(\DB::select('SELECT erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID, Sum(erp_purchaserequestdetails.quantityRequested*erp_purchaserequestdetails.estimatedCost) AS totalCost, erp_purchaserequestdetails.budgetYear FROM erp_purchaserequestdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID, erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaserequestdetails.financeGLcodePLSystemID AND erp_purchaserequestdetails.budgetYear = ' . $budgetYear . ' WHERE erp_purchaserequestdetails.purchaseRequestID = ' . $purchaseRequestID . ' GROUP BY erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID'))->first();
+
+                                            if ($documentAmount) {
+
+                                                $budgetAmount = collect(\DB::select('SELECT erp_budjetdetails.companySystemID, erp_budjetdetails.serviceLineSystemID,erp_budjetdetails.templateDetailID,templateGLCode.templateDetailDescription, erp_budjetdetails. YEAR,sum(erp_budjetdetails.budjetAmtLocal) AS budgetLocalAmount,sum(erp_budjetdetails.budjetAmtRpt) AS budgetRptAmount FROM erp_budjetdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID,erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.templatesDetailsAutoID = erp_budjetdetails.templateDetailID AND templateGLCode.chartOfAccountSystemID = erp_budjetdetails.chartOfAccountID WHERE erp_budjetdetails.YEAR = ' . $budgetYear . ' AND erp_budjetdetails.companySystemID = ' . $companySystemID . ' AND erp_budjetdetails.templateDetailID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budjetdetails.companySystemID, erp_budjetdetails. YEAR, erp_budjetdetails.templateDetailID'))->first();
+
+                                                $consumedAmount = collect(\DB::select('SELECT erp_budgetconsumeddata.companySystemID,erp_budgetconsumeddata.serviceLineSystemID,templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription, erp_budgetconsumeddata.Year, sum( erp_budgetconsumeddata.consumedLocalAmount ) AS ConsumedLocalAmount, sum( erp_budgetconsumeddata.consumedRptAmount ) AS ConsumedRptAmount FROM erp_budgetconsumeddata INNER JOIN ( SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_budgetconsumeddata.chartOfAccountID WHERE erp_budgetconsumeddata.Year = ' . $budgetYear . ' AND erp_budgetconsumeddata.companySystemID = ' . $companySystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.Year,templateGLCode.templatesDetailsAutoID'))->first();
+
+                                                $pendingAmount = collect(\DB::select('SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt,Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_purchaseordermaster.companySystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear'))->first();
+
+                                                //get reporting amount converted
+                                                $currencyConversionRptAmount = self::currencyConversion($companySystemID, $purchaseRequestMaster->currency, $purchaseRequestMaster->currency, $documentAmount->totalCost);
+
+                                                $budgetDescription = '';
+                                                $totalDocumentRptAmount = $currencyConversionRptAmount['reportingAmount'];
+                                                $totalBudgetRptAmount = 0;
+                                                $totalConsumedRptAmount = 0;
+                                                $totalPendingRptAmount = 0;
+                                                if ($consumedAmount) {
+                                                    $totalConsumedRptAmount = $consumedAmount->ConsumedRptAmount;
+                                                }
+
+                                                if ($pendingAmount) {
+                                                    $totalPendingRptAmount = $pendingAmount->rptAmt;
+                                                }
+
+                                                if ($budgetAmount) {
+                                                    $totalBudgetRptAmount = ($budgetAmount->budgetRptAmount * -1);
+                                                    $budgetDescription = $budgetAmount->templateDetailDescription;
+                                                }
+
+                                                $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $totalConsumedRptAmount + $totalPendingRptAmount;
+
+                                                if ($totalConsumedAmount > $totalBudgetRptAmount) {
+                                                    $userMessageE .= "Budget Exceeded ' . $budgetDescription . '";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
+                                                    DB::commit();
+                                                    return ['success' => false, 'message' => $userMessageE];
+                                                } else {
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
+                                                }
+
+                                            }
+                                        }// closing finance Category check if condition
+                                    } else {
+                                        // update PR master table
+                                        $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
+                                    }
                                 }
                             }
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41])) { // already GL entry passed Check
+                                $outputGL = Models\GeneralLedger::where('documentSystemCode',$input["documentSystemCode"])->where('documentSystemID',$input["documentSystemID"])->first();
+                                if($outputGL){
+                                    return ['success' => false, 'message' => 'GL entries are already passed for this document'];
+                                }
+                            }
+
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -1530,6 +1731,7 @@ class Helper
                                                     $data["assetDescription"] = $val["itemDescription"];
                                                     $data["COSTUNIT"] = $val["unitCostLocal"];
                                                     $data["costUnitRpt"] = $val["unitCostRpt"];
+                                                    $data["assetType"] = 1;
                                                     $data['createdPcID'] = gethostname();
                                                     $data['createdUserID'] = \Helper::getEmployeeID();
                                                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -1552,9 +1754,14 @@ class Helper
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
                                     foreach ($updateDisposed as $val) {
-                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
+                            }
+
+                            // generate asset costing
+                            if ($input["documentSystemID"] == 22) {
+                                $assetCosting = self::generateAssetCosting($sourceModel);
                             }
 
                             // insert the record to budget consumed data
@@ -1617,6 +1824,16 @@ class Helper
                                         $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
                                     }
                                 }
+                            }
+
+                            // adding records to budget consumption data
+                            if ($input["documentSystemID"] == 11 || $input["documentSystemID"] == 4 || $input["documentSystemID"] == 15 || $input["documentSystemID"] == 19) {
+                                $storingBudget = self::storeBudgetConsumption($masterData);
+                            }
+
+                            //sending email based on policy
+                            if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
+                                $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
 
                         } else {
@@ -1720,6 +1937,8 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
+            //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
+            //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
@@ -1908,6 +2127,19 @@ class Helper
                     $docInforArr["primarykey"] = 'bankAccountAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 7: // Stock Adjustment
+                    $docInforArr["tableName"] = 'erp_stockadjustment';
+                    $docInforArr["modelName"] = 'StockAdjustment';
+                    $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 67:
+                case 68:// Sales Quotation
+                    $docInforArr["tableName"] = 'erp_quotationmaster';
+                    $docInforArr["modelName"] = 'QuotationMaster';
+                    $docInforArr["primarykey"] = 'quotationMasterID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1923,7 +2155,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12,17,9,63,41,64,62,3,57,56,58,59,66])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2380,6 +2612,28 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'localER';
                 break;
+            case 207: // Pos shift details
+                $docInforArr["modelName"] = 'ShiftDetails';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'companyReportingCurrencyID';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'companyLocalExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'companyLocalExchangeRate';
+                break;
+            case 208: // Pos invoice details
+                $docInforArr["modelName"] = 'GposInvoice';
+                $docInforArr["transCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'transactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'companyLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
+                $docInforArr["localCurrencyER"] = 'transactionExchangeRate';
+                $docInforArr["defaultCurrencyER"] = 'transactionExchangeRate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -2473,9 +2727,13 @@ class Helper
 
         if ($fixedCapital->allocationTypeID == 1) {
 
-            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+            $documentDate = Carbon::parse($fixedCapital->documentDate);
+            $documentYear = $documentDate->format('Y');
+            $documentYearMonth = $documentDate->format('Y-m');
 
-            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
 
             $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
                 ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])
@@ -2633,6 +2891,8 @@ class Helper
     {
         $jvMasterData = Models\JvMaster::find($masterData);
 
+        $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
         if ($jvMasterData->jvType == 1) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
@@ -2645,19 +2905,19 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
+            $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
-                ->where('companySystemID', $jvMasterData->companySystemID)
-                ->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
-            if ($companyfinanceyear) {
-                $startYear = $companyfinanceyear->bigginingDate;
+            if ($companyFinanceYear) {
+                $startYear = $firstDayNextMonth;
                 $finYearExp = explode('-', $startYear);
                 $finYear = $finYearExp[0];
-            } else {
-                $finYear = date("Y");
             }
+
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
@@ -2665,7 +2925,17 @@ class Helper
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
-            $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . date('F Y') . '';
+
+            $postJv['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+            $postJv['FYBiggin'] = $companyFinanceYear->bigginingDate;
+            $postJv['FYEnd'] = $companyFinanceYear->endingDate;
+            $postJv['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+            $postJv['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+            $postJv['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+
+            $postJv['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+            $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . $formattedDateJvN . '';
+            $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
             $postJv['confirmedByEmpID'] = '';
@@ -2703,6 +2973,8 @@ class Helper
     {
         $jvMasterData = Models\JvMaster::find($masterData);
 
+        $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
+
         if ($jvMasterData->jvType == 5) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
@@ -2715,19 +2987,19 @@ class Helper
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
+            $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
-                ->where('companySystemID', $jvMasterData->companySystemID)
-                ->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
-            if ($companyfinanceyear) {
-                $startYear = $companyfinanceyear->bigginingDate;
+            if ($companyFinanceYear) {
+                $startYear = $companyFinanceYear->bigginingDate;
                 $finYearExp = explode('-', $startYear);
                 $finYear = $finYearExp[0];
-            } else {
-                $finYear = date("Y");
             }
+
+            $companyFinancePeriod = collect(\DB::select("SELECT companyFinancePeriodID,dateFrom, dateTo FROM companyfinanceperiod WHERE companySystemID = " . $jvMasterData->companySystemID . " AND departmentSystemID = 5 AND companyFinanceYearID = " . $companyFinanceYear->companyFinanceYearID . " AND date('" . $formattedDate . "') BETWEEN dateFrom AND dateTo"))->first();
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
@@ -2735,7 +3007,16 @@ class Helper
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
-            $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . date('F Y') . '';
+
+            $postJv['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+            $postJv['FYBiggin'] = $companyFinanceYear->bigginingDate;
+            $postJv['FYEnd'] = $companyFinanceYear->endingDate;
+            $postJv['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+            $postJv['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+            $postJv['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+
+            $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . $formattedDateJvN . '';
+            $postJv['isReverseAccYN'] = -1;
             $postJv['confirmedYN'] = 0;
             $postJv['confirmedByEmpSystemID'] = '';
             $postJv['confirmedByEmpID'] = '';
@@ -2784,13 +3065,17 @@ class Helper
                     $receivePayment['documentSystemID'] = 21;
                     $receivePayment['documentID'] = 'BRV';
 
-                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                    $documentDate = Carbon::parse($pvMaster->BPVdate);
+                    $documentYear = $documentDate->format('Y');
+                    $documentYearMonth = $documentDate->format('Y-m');
+
+                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
 
                     $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                     $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                     $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
                     if ($companyFinancePeriod) {
                         $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                         $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
@@ -2897,13 +3182,17 @@ class Helper
                             $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
                             $receivePayment['documentID'] = $pvMaster->documentID;
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                            $documentDate = Carbon::parse($pvMaster->BPVdate);
+                            $documentYear = $documentDate->format('Y');
+                            $documentYearMonth = $documentDate->format('Y-m');
+
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
 
                             $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                             $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                             $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
                             if ($companyFinancePeriod) {
                                 $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                                 $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
@@ -3429,4 +3718,281 @@ class Helper
             Models\BankLedger::create($data);
         }
     }
+
+    public static function  getCompanyById($companySystemID)
+    {
+        $company = Models\Company::select('CompanyID')->where("companySystemID", $companySystemID)->first();
+
+        if (!empty($company)) {
+            return $company->CompanyID;
+        } else {
+            return "";
+        }
+    }
+
+    // storing records to budget
+    public static function storeBudgetConsumption($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 11:
+                $budgetConsumeData = array();
+                $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->documentType == 1) {
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+
+                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                                if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $masterRec->companySystemID,
+                                        "companyID" => $masterRec->companyID,
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => $value->serviceLineCode,
+                                        "documentSystemID" => $masterRec->documentSystemID,
+                                        "documentID" => $masterRec->documentID,
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec->bookingInvCode,
+                                        "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                        "GLCode" => $value->glCode,
+                                        "year" => $value->budgetYear,
+                                        "month" => date("m", strtotime($masterRec->bookingDate)),
+                                        "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                        "consumedLocalAmount" => abs($value->localAmountTot),
+                                        "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                        "consumedRptAmount" => abs($value->comRptAmountTot),
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                            $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $budgetConsumeData = array();
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->invoiceType == 3) {
+                        $directDetail = \DB::select('SELECT directPaymentDetailsID,directPaymentAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directpaymentdetails WHERE directPaymentAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+
+                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                                if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $masterRec->companySystemID,
+                                        "companyID" => $masterRec->companyID,
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => $value->serviceLineCode,
+                                        "documentSystemID" => $masterRec->documentSystemID,
+                                        "documentID" => $masterRec->documentID,
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec->BPVcode,
+                                        "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                        "GLCode" => $value->glCode,
+                                        "year" => $value->budgetYear,
+                                        "month" => date("m", strtotime($masterRec->BPVdate)),
+                                        "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                        "consumedLocalAmount" => abs($value->localAmountTot),
+                                        "consumedRptCurrencyID" => $masterRec->companyRptCurrencyID,
+                                        "consumedRptAmount" => abs($value->comRptAmountTot),
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                            $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                        }
+                    }
+                }
+                break;
+            case 15:
+                $budgetConsumeData = array();
+                $masterRec = Models\DebitNote::find($params["autoID"]);
+                if ($masterRec) {
+                    $directDetail = \DB::select('SELECT debitNoteDetailsID,debitNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_debitnotedetails WHERE debitNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                    if (!empty($directDetail)) {
+                        foreach ($directDetail as $value) {
+
+                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                            if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $masterRec->companySystemID,
+                                    "companyID" => $masterRec->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $masterRec->documentSystemID,
+                                    "documentID" => $masterRec->documentID,
+                                    "documentSystemCode" => $params["autoID"],
+                                    "documentCode" => $masterRec->debitNoteCode,
+                                    "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                    "GLCode" => $value->glCode,
+                                    "year" => $value->budgetYear,
+                                    "month" => date("m", strtotime($masterRec->debitNoteDate)),
+                                    "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                    "consumedLocalAmount" => ($value->localAmountTot * -1),
+                                    "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                    "consumedRptAmount" => ($value->comRptAmountTot * -1),
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
+                break;
+            case 19:
+                $budgetConsumeData = array();
+                $masterRec = Models\CreditNote::find($params["autoID"]);
+                if ($masterRec) {
+                    $directDetail = \DB::select('SELECT creditNoteDetailsID,creditNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_creditnotedetails WHERE creditNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+
+                    if (!empty($directDetail)) {
+                        foreach ($directDetail as $value) {
+
+                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+
+                            if ($chartOfAccount->catogaryBLorPLID == 2) {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $masterRec->companySystemID,
+                                    "companyID" => $masterRec->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $masterRec->documentSystemiD,
+                                    "documentID" => $masterRec->documentID,
+                                    "documentSystemCode" => $params["autoID"],
+                                    "documentCode" => $masterRec->creditNoteCode,
+                                    "chartOfAccountID" => $value->chartOfAccountSystemID,
+                                    "GLCode" => $value->glCode,
+                                    "year" => $value->budgetYear,
+                                    "month" => date("m", strtotime($masterRec->creditNoteDate)),
+                                    "consumedLocalCurrencyID" => $masterRec->localCurrencyID,
+                                    "consumedLocalAmount" => ($value->localAmountTot * -1),
+                                    "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
+                                    "consumedRptAmount" => ($value->comRptAmountTot * -1),
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
+    // sending email based on policy
+    public static function sendingEmailNotificationPolicy($params)
+    {
+        switch ($params["documentSystemID"]) { // check the document id
+            case 1:
+            case 50:
+            case 51:
+                $masterRec = Models\PurchaseRequest::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 1 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                    $emails = array();
+                    if (!empty($fetchingUsers)) {
+                        foreach ($fetchingUsers as $value) {
+
+                            $subject = 'A new request ' . $masterRec->purchaseRequestCode . ' is approved.';
+                            $body = '<p>A new request ' . $masterRec->purchaseRequestCode . ' is approved. Please process the order.</p>';
+
+                            $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                'companySystemID' => $value->companySystemID,
+                                'docSystemID' => $masterRec->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $params["autoID"]);
+                        }
+                        $sendEmail = \Email::sendEmail($emails);
+                    }
+                }
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $masterRec = Models\ProcumentOrder::find($params["autoID"]);
+                if ($masterRec) {
+                    if ($masterRec->logisticsAvailable == -1) {
+
+                        $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 2 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+                        $emails = array();
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = $masterRec->purchaseOrderCode . " marked as logistics available is approved.";
+                                $body = '<p>A new order ' . $masterRec->purchaseOrderCode . ' marked as logistics available, is approved.</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $params["autoID"]);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            case 4:
+                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                if ($masterRec) {
+                    $fetchingUsers = \DB::select('SELECT employeeSystemID, sendYN,companySystemID FROM erp_documentemailnotificationdetail WHERE emailNotificationID = 3 AND sendYN = 1 AND companySystemID = ' . $params["companySystemID"] . '');
+
+                    $supplierDetail = Models\SupplierMaster::find($masterRec->BPVsupplierID);
+                    $companyDetail = Models\Company::find($params["companySystemID"]);
+                    $supplierName = '';
+                    if ($supplierDetail) {
+                        $supplierName = $supplierDetail->supplierName;
+                    }
+                    $emails = array();
+                    if ($masterRec->BPVsupplierID != 0 || $masterRec->BPVsupplierID != null) {
+
+                        if (!empty($fetchingUsers)) {
+                            foreach ($fetchingUsers as $value) {
+
+                                $subject = 'Payment ' . $masterRec->BPVcode . ' is released.';
+                                $body = '<p>Payment ' . $masterRec->BPVcode . '  has been released to ' . $supplierName . ' from ' . $companyDetail->CompanyName . '</p>';
+
+                                $emails[] = array('empSystemID' => $value->employeeSystemID,
+                                    'companySystemID' => $value->companySystemID,
+                                    'docSystemID' => $masterRec->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $params["autoID"]);
+                            }
+                            $sendEmail = \Email::sendEmail($emails);
+                        }
+                    }
+                }
+                break;
+            default:
+        }
+    }
+
+    public static function generateAssetCosting($masterData)
+    {
+        $companyCurrency = self::companyCurrency($masterData->companySystemID);
+        $cost['faID'] = $masterData->faID;
+        $cost['assetID'] = $masterData->faCode;
+        $cost['assetDescription'] = $masterData->assetDescription;
+        $cost['costDate'] = $masterData->dateAQ;
+        $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
+        $cost['localAmount'] = $masterData->COSTUNIT;
+        $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
+        $cost['rptAmount'] = $masterData->costUnitRpt;
+        $assetCosting = Models\FixedAssetCost::create($cost);
+    }
+
 }

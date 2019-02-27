@@ -119,7 +119,9 @@ class ReportTemplateDetails extends Model
         'sortOrder',
         'masterID',
         'accountType',
+        'fontColor',
         'bgColor',
+        'hideHeader',
         'companySystemID',
         'companyID',
         'createdPCID',
@@ -146,7 +148,9 @@ class ReportTemplateDetails extends Model
         'sortOrder' => 'integer',
         'masterID' => 'integer',
         'accountType' => 'string',
+        'fontColor' => 'string',
         'bgColor' => 'string',
+        'hideHeader' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'createdPCID' => 'string',
@@ -185,6 +189,16 @@ class ReportTemplateDetails extends Model
     }
 
     public function gllink()
+    {
+        return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
+    }
+
+    public function subcatlink()
+    {
+        return $this->hasMany('App\Models\ReportTemplateLinks','subCategory','detID');
+    }
+
+    public function subcategorytot()
     {
         return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
     }

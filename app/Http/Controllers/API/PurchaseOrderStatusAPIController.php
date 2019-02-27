@@ -509,6 +509,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
+            ->where('poCancelledYN', 0)
             ->whereIn('grvRecieved',$grvStatus)
             ->with(['currency','status_one' => function ($q) {
                   $q->with(['category']);
@@ -664,6 +665,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
+            ->where('poCancelledYN', 0)
             ->whereIn('grvRecieved',$grvStatus)
             ->with(['supplier', 'currency', 'status_one' => function ($q) {
                 $q->with(['category']);

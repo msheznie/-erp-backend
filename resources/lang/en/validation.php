@@ -174,7 +174,23 @@ return [
         'yearID' => 'Year',
         'reportTypeID' => 'Report Type',
         'chartOfAccountSystemID' => 'GL Code',
-        'accountCurrencyID' => 'Currency'
+        'accountCurrencyID' => 'Currency',
+        'financeCategorySub' => 'Finance Sub Category',
+        'primaryCompanySystemID' => 'Primary Company',
+        'financeCategoryMaster' => 'Finance Category',
+        'wareHouseDescription' => 'Description',
+        'counterCode'   => 'Counter code',
+        'counterName'   => 'Counter name',
+        'companyID'   => 'Company',
+        'companyId'   => 'Company',
+        'startingBalance_transaction' => 'Starting Balance',
+        'endingBalance_transaction' => 'Closing Balance',
+        'counterID' => 'Counter',
+        'secondaryItemCode' => 'Mfg. Part No',
+        'itemDescription' => 'Item Description',
+        'unit' => 'Unit of Measure',
+        'shiftID' => 'Shift',
+        'wareHouseAutoID' => 'Outlet'
     ],
 
 ];

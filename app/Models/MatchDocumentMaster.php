@@ -505,5 +505,10 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
     }
 
+    public function detail()
+    {
+        return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'matchingDocID', 'matchDocumentMasterAutoID');
+    }
+
 
 }

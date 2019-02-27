@@ -14,6 +14,7 @@
  * -- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
  * -- Date: 19-November 2018 By: Fayas Description: Added new functions named as getJobsByContractAndCustomer()
  * -- Date: 18-December 2018 By: Fayas Description: Added new functions named as customerReferBack()
+ * -- Date: 20-January 2019 By: Fayas Description: Added new functions named as getPosCustomerSearch()
  */
 
 namespace App\Http\Controllers\API;
@@ -504,16 +505,16 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $jobs = TicketMaster::whereIn('companySystemID', $companies)
-                            ->where('clientSystemID', $input['customer_id'])
-                            ->where('contractUID', $input['contractUIID'])
-                            ->where('jobStartedYNBM', 1)
-                            ->where('jobEndYNSup','!=' ,1)
-                            ->when(request('search', false), function ($q, $search) {
-                                return $q->where(function ($query) use ($search) {
-                                    return $query->where('ticketNo', 'LIKE', "%{$search}%");
-                                });
-                            })
-                            ->get(['ticketidAtuto', 'ticketNo']);
+            ->where('clientSystemID', $input['customer_id'])
+            ->where('contractUID', $input['contractUIID'])
+            ->where('jobStartedYNBM', 1)
+            ->where('jobEndYNSup', '!=', 1)
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('ticketNo', 'LIKE', "%{$search}%");
+                });
+            })
+            ->get(['ticketidAtuto', 'ticketNo']);
 
 
         return $this->sendResponse($jobs->toArray(), 'Jobs by Customer retrieved successfully');
@@ -551,8 +552,8 @@ class CustomerMasterAPIController extends AppBaseController
         $companySystemID = $request['companySystemID'];
 
         $customerCompanies = CustomerAssigned::where('companySystemID', $companySystemID)
-            ->with(['company','customer_master' => function($query){
-                $query->select('customerCodeSystem','companyLinkedToSystemID');
+            ->with(['company', 'customer_master' => function ($query) {
+                $query->select('customerCodeSystem', 'companyLinkedToSystemID');
             }])
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
@@ -614,4 +615,87 @@ class CustomerMasterAPIController extends AppBaseController
 
         return $this->sendResponse($customer->toArray(), 'Customer Master Amend successfully');
     }
+
+    public function exportCustomerMaster(Request $request)
+    {
+        $input = $request->all();
+        $type = $input['type'];
+
+        $customerMasters = CustomerMaster::with(['country'])
+            ->get();
+
+        if ($customerMasters) {
+            $x = 0;
+            $data = array();
+            foreach ($customerMasters as $val) {
+                $data[$x]['Primary Code'] = $val->CutomerCode;
+                $data[$x]['Secondary Code'] = $val->customerShortCode;
+                $data[$x]['Customer Name'] = $val->CustomerName;
+                $data[$x]['City'] = $val->customerCity;
+                $data[$x]['Country'] = $val->CustomerName;
+                if ($val->country) {
+                    $data[$x]['Country'] = $val->country->countryName;
+                } else {
+                    $data[$x]['Country'] = '';
+                }
+                $data[$x]['Credit Period'] = $val->creditDays;
+                $data[$x]['Credit Limit'] = $val->creditLimit;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        $csv = \Excel::create('customer_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+ public function getPosCustomerSearch(Request $request)
+{
+    $input = $request->all();
+    $input['warehouseSystemCode'] = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+    $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
+    $customers = CustomerAssigned::where('companySystemID', $companyId)
+        ->where('financeCategoryMaster', 1)
+        ->where('isPOSItem', 1)
+        ->with(['unit', 'outlet_items' => function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+        },'item_ledger' => function($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                ->groupBy('itemSystemCode')
+                ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+        }])
+        ->whereHas('outlet_items', function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode']);
+        })
+        ->whereHas('item_ledger', function ($q) use($input){
+            $q->where('warehouseSystemCode',$input['warehouseSystemCode'])
+                ->groupBy('itemSystemCode')
+                ->havingRaw('sum(inOutQty) > 0 ');
+        })
+        ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost','barcode']);
+
+
+    if (array_key_exists('search', $input)) {
+        $search = $input['search'];
+        $customers = $customers->where(function ($query) use ($search) {
+            $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+        });
+    }
+
+    $customers = $customers->take(10)->get();
+
+    return $this->sendResponse($customers->toArray(), 'Data retrieved successfully');
+}
 }

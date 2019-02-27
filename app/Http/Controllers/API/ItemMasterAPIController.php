@@ -16,6 +16,7 @@
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getItemMasterAudit()
  * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as exportItemMaster()
  * -- Date: 14-December 2018 By: Fayas Description: Added new functions named as itemReferBack()
+ * -- Date: 11-January 2019 By: Fayas Description: Added new functions named as getPosItemSearch()
  */
 
 
@@ -25,6 +26,7 @@ use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
@@ -475,26 +477,39 @@ class ItemMasterAPIController extends AppBaseController
     public function store(CreateItemMasterAPIRequest $request)
     {
 
-
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
+        $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $validator = \Validator::make($input, ['secondaryItemCode' => 'unique:itemmaster'], $messages);
+        $ruleArray = array('secondaryItemCode' => 'required|unique:itemmaster',
+            'primaryCompanySystemID' => 'required|numeric|min:1',
+            'itemDescription' => 'required',
+            'unit' => 'required|numeric|min:1',
+            'financeCategoryMaster' => 'required|numeric|min:1',
+            'financeCategorySub' => 'required|numeric|min:1',
+            'isActive' => 'required|numeric|min:1',
+        );
+        if ($input['isPOSItem'] == 1) {
+            $ruleArray = array_merge($ruleArray, ['sellingCost' => 'required|numeric|min:0.001']);
+        }
+
+        $validator = \Validator::make($input, $ruleArray, $messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-        $empId = $user->employee['empID'];
+        $employee = \Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $empId;
+        $input['createdUserID'] = $employee->empID;
 
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
+
+        if (empty($financeCategoryMaster)) {
+            return $this->sendError('Finance category not found');
+        }
 
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
         $code = $financeCategoryMaster->itemCodeDef;
@@ -504,19 +519,65 @@ class ItemMasterAPIController extends AppBaseController
         $input['primaryCode'] = $primaryCode;
         $input['primaryItemCode'] = $code;
         $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $input['financeCategorySub'])->first();
+
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
         $input['primaryCompanyID'] = $company->CompanyID;
         $document = DocumentMaster::where('documentID', 'ITMM')->first();
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
         $input['isActive'] = 1;
 
+        if ($input['isPOSItem'] == 1) {
+            $input['itemConfirmedYN'] = 1;
+            $input['itemConfirmedByEMPSystemID'] = $employee->employeeSystemID;
+            $input['itemConfirmedByEMPID'] = $employee->empID;
+            $input['itemConfirmedByEMPName'] = $employee->empName;
+            $input['itemConfirmedDate'] = now();
+
+            $input['itemApprovedBySystemID'] = $employee->employeeSystemID;
+            $input['itemApprovedBy'] = $employee->empID;
+            $input['itemApprovedYN'] = 1;
+            $input['itemApprovedDate'] = now();
+            $input['itemApprovedComment'] = '';
+        }
+
         $itemMasters = $this->itemMasterRepository->create($input);
 
         $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
         $financeCategoryMaster->modifiedPc = gethostname();
-        $financeCategoryMaster->modifiedUser = $empId;
+        $financeCategoryMaster->modifiedUser = $employee->empID;
         $financeCategoryMaster->save();
+
+        if ($input['isPOSItem'] == 1) {
+            $itemMaster = DB::table('itemmaster')
+                ->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp,isPOSItem')
+                ->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')
+                ->where('itemCodeSystem', $itemMasters->itemCodeSystem)
+                ->first();
+            if (!empty($itemMaster)) {
+                $itemMaster = collect($itemMaster)->toArray();
+                $itemMaster['sellingCost'] = $input['sellingCost'];
+
+                if (isset($input['rolQuantity'])) {
+                    $itemMaster['rolQuantity'] = $input['rolQuantity'];
+                }
+
+                if (isset($input['maximunQty'])) {
+                    $itemMaster['maximunQty'] = $input['maximunQty'];
+                }
+
+                if (isset($input['rolQuantity'])) {
+                    $itemMaster['minimumQty'] = $input['minimumQty'];
+                }
+
+                $itemAssign = ItemAssigned::insert($itemMaster);
+            }
+        }
 
         return $this->sendResponse($itemMasters->toArray(), 'Item Master saved successfully');
     }
@@ -559,6 +620,10 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError('Item Master not found');
         }
 
+        if($itemMaster->itemApprovedYN == 1){
+            return $this->sendError('Item Master already approved. You cannot edit');
+        }
+
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if ($company) {
@@ -576,18 +641,61 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'primaryCompanySystemID' => 'required|numeric|min:1',
+                'financeCategoryMaster' => 'required|numeric|min:1',
+                'financeCategorySub' => 'required|numeric|min:1',
+                'secondaryItemCode' => 'required',
+                'unit' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $input['financeCategoryMaster'])
+                ->where('itemCategorySubID', $input['financeCategorySub'])
+                ->where('companySystemID', $input['primaryCompanySystemID'])
+                ->first();
+
+            if (empty($checkSubCategory)) {
+                return $this->sendError('The Finance Sub Category field is required.', 500);
+            }
+
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
+
+        if($itemMaster->itemConfirmedYN == 1){
+            $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $itemMaster->financeCategoryMaster)
+                ->where('itemCategorySubID', $input['financeCategorySub'])
+                ->where('companySystemID', $input['primaryCompanySystemID'])
+                ->first();
+
+            if (empty($checkSubCategory)) {
+                return $this->sendError('The Finance Sub Category field is required.', 500);
+            }
+        }
+
+        $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub');
+
         foreach ($input as $key => $value) {
-            $itemMaster->$key = $value;
+            if ($itemMaster->itemConfirmedYN == 1) {
+                if(in_array($key,$afterConfirm)){
+                    $itemMaster->$key = $value;
+                }
+            }else{
+                $itemMaster->$key = $value;
+            }
         }
 
         $itemMaster->save();
-        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
+        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully d');
 
     }
 
@@ -800,12 +908,58 @@ class ItemMasterAPIController extends AppBaseController
             ->delete();
 
         if ($deleteApproval) {
-            $updateArray = ['refferedBackYN' => 0,'itemConfirmedYN' => 0,'itemConfirmedByEMPSystemID' => null,
-                'itemConfirmedByEMPID' => null,'itemConfirmedByEMPName' => null,'itemConfirmedDate' => null,'RollLevForApp_curr' => 1];
+            $updateArray = ['refferedBackYN' => 0, 'itemConfirmedYN' => 0, 'itemConfirmedByEMPSystemID' => null,
+                'itemConfirmedByEMPID' => null, 'itemConfirmedByEMPName' => null, 'itemConfirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-            $this->itemMasterRepository->update($updateArray,$id);
+            $this->itemMasterRepository->update($updateArray, $id);
         }
 
         return $this->sendResponse($item->toArray(), 'Item Master Amend successfully');
+    }
+
+
+    public function getPosItemSearch(Request $request)
+    {
+        $input = $request->all();
+        $input['warehouseSystemCode'] = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+        $companyId = isset($input['companyId']) ? $input['companyId'] : 0;
+        $items = ItemAssigned::where('companySystemID', $companyId)
+            ->where('financeCategoryMaster', 1)
+            ->where('isPOSItem', 1)
+            ->with(['unit', 'outlet_items' => function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode']);
+            }, 'item_ledger' => function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+            }])
+            ->whereHas('outlet_items', function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode']);
+            })
+            ->whereHas('item_ledger', function ($q) use ($input) {
+                $q->where('warehouseSystemCode', $input['warehouseSystemCode'])
+                    ->groupBy('itemSystemCode')
+                    ->havingRaw('sum(inOutQty) > 0 ');
+            })
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'idItemAssigned', 'secondaryItemCode', 'itemUnitOfMeasure', 'sellingCost', 'barcode']);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(10)->get();
+
+        foreach ($items as $item) {
+            if (count($item['item_ledger']) > 0) {
+                $item['current_stock'] = $item['item_ledger'][0]['stock'];
+            }
+        }
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

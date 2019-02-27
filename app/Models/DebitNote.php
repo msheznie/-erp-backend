@@ -285,6 +285,10 @@ class DebitNote extends Model
         'supplierID',
         'supplierGLCode',
         'supplierGLCodeSystemID',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'supplierTransactionCurrencyID',
         'supplierTransactionCurrencyER',
         'companyReportingCurrencyID',
@@ -314,6 +318,9 @@ class DebitNote extends Model
         'matchingConfirmedByEmpID',
         'matchingConfirmedByName',
         'matchingConfirmedDate',
+        'lcPayment',
+        'lcDocCode',
+        'purchaseOrderID',
         'createdUserGroup',
         'createdUserSystemID',
         'createdUserID',
@@ -346,6 +353,10 @@ class DebitNote extends Model
         'supplierID' => 'integer',
         'supplierGLCode' => 'string',
         'supplierGLCodeSystemID' => 'integer',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount' => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount' => 'string',
         'supplierTransactionCurrencyID' => 'integer',
         'supplierTransactionCurrencyER' => 'float',
         'companyReportingCurrencyID' => 'integer',
@@ -371,6 +382,9 @@ class DebitNote extends Model
         'matchingConfirmedByEmpSystemID' => 'integer',
         'matchingConfirmedByEmpID' => 'string',
         'matchingConfirmedByName' => 'string',
+        'lcPayment' => 'integer',
+        'lcDocCode' => 'string',
+        'purchaseOrderID' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
@@ -448,5 +462,10 @@ class DebitNote extends Model
     public function finance_year_by()
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function final_approved_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'approvedByUserSystemID', 'employeeSystemID');
     }
 }

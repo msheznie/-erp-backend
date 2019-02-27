@@ -23,6 +23,8 @@
  * -- Date: 28-September 2018 By: Nazir Description: Added new function getSupplierInvoiceAmend(),
  * -- Date: 17-October 2018 By: Nazir Description: Added new function supplierInvoiceTaxPercentage(),
  * -- Date: 20-December 2018 By: Nazir Description: Added new function amendSupplierInvoiceReview(),
+ * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusSIPrint(),
+ * -- Date: 05-February 2019 By: Nazir Description: Added new function clearSupplierInvoiceNo(),
  */
 
 namespace App\Http\Controllers\API;
@@ -47,6 +49,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
+use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
@@ -228,7 +231,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('bookingSuppMasInvAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
@@ -518,6 +521,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+        if ($companyCurrencyConversion) {
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -526,6 +536,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'bookingDate' => 'required',
                 'supplierInvoiceDate' => 'required',
+                'supplierInvoiceNo' => 'required',
                 'supplierID' => 'required|numeric|min:1',
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
@@ -902,7 +913,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
         if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-            $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
+            //$companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
@@ -1783,7 +1794,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('Cannot return back to amend. Supplier Invoice is added to payment');
         }
 
-        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $bookInvSuppMasterData->bookingInvCode . ' has been return back to amend';
 
         DB::beginTransaction();
@@ -1862,5 +1873,44 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         }
     }
 
+    public function checkPaymentStatusSIPrint(Request $request)
+    {
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+        $companySystemID = $input['companySystemID'];
+        $matchingDocCode = $input['matchingDocCode'];
+
+        $printID = 0;
+
+        $matchedAmount = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('matchingDocCode', $matchingDocCode)
+            ->first();
+
+        if ($matchedAmount) {
+            $printID = $matchedAmount->matchDocumentMasterAutoID;
+        }
+
+        return $this->sendResponse($printID, 'Print data retrieved');
+    }
+
+    public function clearSupplierInvoiceNo(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        // updating fields
+        $bookInvSuppMaster->supplierInvoiceNo = null;
+        $bookInvSuppMaster->save();
+
+        return $this->sendResponse($bookInvSuppMaster, 'Record updated successfully');
+    }
 
 }

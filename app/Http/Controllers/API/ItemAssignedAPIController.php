@@ -8,7 +8,7 @@
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Item Assigned
  * -- Date: 6-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByCompany(),exportItemAssignedByCompanyReport()
- *
+ * -- Date: 20 - January 2019 By: Fayas Description: Added new functions named as getAllNonPosItemsByCompany(),savePullItemsFromInventory()
  * -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
@@ -17,7 +17,9 @@ use App\Http\Requests\API\CreateItemAssignedAPIRequest;
 use App\Http\Requests\API\UpdateItemAssignedAPIRequest;
 use App\Models\ItemAssigned;
 use App\Models\Company;
+use App\Models\ItemMaster;
 use App\Repositories\ItemAssignedRepository;
+use App\Repositories\ItemMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -32,10 +34,12 @@ class ItemAssignedAPIController extends AppBaseController
 {
     /** @var  ItemAssignedRepository */
     private $itemAssignedRepository;
+    private $itemMasterRepository;
 
-    public function __construct(ItemAssignedRepository $itemAssignedRepo)
+    public function __construct(ItemAssignedRepository $itemAssignedRepo,ItemMasterRepository $itemMasterRepo)
     {
         $this->itemAssignedRepository = $itemAssignedRepo;
+        $this->itemMasterRepository = $itemMasterRepo;
     }
 
     /**
@@ -71,17 +75,37 @@ class ItemAssignedAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+        $itemId = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
+
+        $itemMaster = ItemMaster::find($itemId);
+
+        if (empty($itemMaster)) {
+          return $this->sendError('Item master not found.',500);
+        }
+
+
         if (array_key_exists("idItemAssigned", $input)) {
             $itemAssigneds = ItemAssigned::where('idItemAssigned', $input['idItemAssigned'])->first();
-            $itemAssigneds->isActive = $input['isActive'];
-
             if ($input['isAssigned'] == 1 || $input['isAssigned'] == true) {
                 $input['isAssigned'] = -1;
             }
 
+            if($input['isAssigned'] == -1 && $itemAssigneds->isAssigned == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0 )){
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+
+            if($input['isActive'] == 1 && $itemAssigneds->isActive == 0 && ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0)){
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+            $itemAssigneds->isActive = $input['isActive'];
             $itemAssigneds->isAssigned = $input['isAssigned'];
             $itemAssigneds->save();
         } else {
+
+            if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
+                return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);
+            }
+
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             $input['wacValueReportingCurrencyID'] = $company->reportingCurrency;
             $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;
@@ -136,7 +160,23 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError('Item not found');
         }
 
-        $itemAssigned = $this->itemAssignedRepository->update(array_only($input, ['minimumQty', 'maximunQty', 'rolQuantity']), $id);
+        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity'];
+
+        $rules = [];
+
+        if ($itemAssigned->isPOSItem == 1) {
+            $updateColumns = array_merge($updateColumns, ['sellingCost', 'barcode']);
+            $rules = ['sellingCost' => 'required|numeric|min:0.001'];
+        }
+
+        $updateColumns = array_only($input, $updateColumns);
+
+        $validator = \Validator::make($updateColumns, $rules);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $itemAssigned = $this->itemAssignedRepository->update($updateColumns, $id);
 
         return $this->sendResponse($itemAssigned->toArray(), 'Item updated successfully');
     }
@@ -202,7 +242,6 @@ class ItemAssignedAPIController extends AppBaseController
                     'rpt' => $itemCurrentCostAndQty['wacValueReporting'],
                     'stock' => $itemCurrentCostAndQty['currentStockQty']);
                 return $array;
-
             })
             ->make(true);
         return $data;
@@ -318,6 +357,12 @@ class ItemAssignedAPIController extends AppBaseController
             ->whereIn('companySystemID', $childCompanies)
             ->where('financeCategoryMaster', 1);
 
+        if (array_key_exists('isPOSItem', $input)) {
+            if ($input['isPOSItem'] > 0 && !is_null($input['isPOSItem'])) {
+                $itemMasters->where('isPOSItem', 1);
+            }
+        }
+
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
                 $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
@@ -350,6 +395,131 @@ class ItemAssignedAPIController extends AppBaseController
             });
         }
         return $itemMasters;
+    }
+
+    public function getAllNonPosItemsByCompany(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+            ->whereIn('companySystemID', $childCompanies)
+            ->where('financeCategoryMaster', 1)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1)
+            ->where('isPOSItem', 0);
+
+
+        if (array_key_exists('financeCategorySub', $input)) {
+            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
+                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
+            }
+        }
+
+        $search = $input['search']['value'];
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        $data = \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('idItemAssigned', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+        return $data;
+    }
+
+    public function savePullItemsFromInventory(Request $request)
+    {
+
+        $input = $request->all();
+
+        $messages = array(
+            'pullList.required'   => 'Select the items.',
+        );
+
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'pullList' => 'required'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($input['companySystemID']);
+        } else {
+            $childCompanies = [$input['companySystemID']];
+        }
+
+        if (isset($input['isCheck']) && $input['isCheck']) {
+            $itemMasters = ItemAssigned::whereIn('companySystemID', $childCompanies)
+                ->where('financeCategoryMaster', 1)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1)
+                ->where('isPOSItem', 0);
+
+            if (isset($input['appliedFilter'])) {
+                if (array_key_exists('financeCategorySub', $input)) {
+                    if ($input['financeCategorySub'] > 0 && !is_null($input['appliedFilter']['financeCategorySub'])) {
+                        $itemMasters->where('financeCategorySub', $input['appliedFilter']['financeCategorySub']);
+                    }
+                }
+                $search = $input['appliedFilter']['search']['value'];
+                if ($search) {
+                    $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                        $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                            ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                            ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    });
+                }
+            }
+
+            $input['pullList'] = collect($itemMasters->get())->pluck('idItemAssigned')->toArray();
+        }
+
+        foreach ($input['pullList'] as $id) {
+            $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
+            if (!empty($itemAssigned)) {
+                $this->itemAssignedRepository->update(['isPOSItem' => 1], $id);
+                $itemMaster = $this->itemMasterRepository->findWithoutFail($itemAssigned->itemCodeSystem);
+                if (!empty($itemMaster)) {
+                    $this->itemMasterRepository->update(['isPOSItem' => 1], $itemAssigned->itemCodeSystem);
+                }
+            }
+        }
+
+        return $this->sendResponse($input['pullList'], 'Successfully pulled items from inventory');
+
     }
 
 }

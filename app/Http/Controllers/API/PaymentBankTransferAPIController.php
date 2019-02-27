@@ -795,9 +795,6 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $data = array();
         $x = 0;
-
-        $columnArray  =  array();
-
         if($input['type'] == 2){
             $columnArray = array(
                 'A' => '@',
@@ -896,6 +893,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $ifsc = "";
                 $intSwiftCode = "";
                 $intAccountNumber = "";
+                $IBANNumber = "";
                 if ($val->payeeID && $val['supplier_by']) {
                     if ($val['supplier_by']['supplierCurrency']) {
                         if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
@@ -915,6 +913,8 @@ class PaymentBankTransferAPIController extends AppBaseController
                                     $intSwiftCode = $memo->memoDetail;
                                 }else if($memo->bankMemoTypeID == 11){
                                     $intAccountNumber = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 8){
+                                    $IBANNumber = $memo->memoDetail;
                                 }
                             }
                         }
@@ -936,12 +936,19 @@ class PaymentBankTransferAPIController extends AppBaseController
                             $intSwiftCode = $memo->memoDetail;
                         }else if($memo->bankMemoTypeID == 11){
                             $intAccountNumber = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 8){
+                            $IBANNumber = $memo->memoDetail;
                         }
                     }
                 }
 
                 $data[$x]['Ben Bank SWIFT Code (12 chars)'] =  $benSwiftCode;
-                $data[$x]['Ben Account No(34)'] = str_replace(' ', '', $accountNo);
+
+                if($IBANNumber){
+                    $data[$x]['Ben Account No(34)'] = str_replace(' ','', $IBANNumber);
+                }else{
+                    $data[$x]['Ben Account No(34)'] = str_replace(' ','', $accountNo);
+                }
                 $data[$x]['Beneficiary Name(35)'] = $benName;
                 $data[$x]['Amount (15)'] = number_format($val->payAmountBank, $decimalPlaces);
                 $data[$x]['Payment Details(140)'] = str_replace('\\',"",$val->documentCode);

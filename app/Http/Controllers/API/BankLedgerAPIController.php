@@ -1215,10 +1215,11 @@ class BankLedgerAPIController extends AppBaseController
 
         $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
             ->where("confirmedYN", 1)
-            ->where("approved", 0)
-            ->where("RollLevForApp_curr", 1)
+            //->where("approved", 0)
+            ->whereRaw('RollLevForApp_curr <=> noOfApprovalLevels')
             ->where("refferedBackYN", 0)
             ->where("cancelYN", 0)
+            ->where("BPVchequeNo",'!=',0)
             ->where("chequePrintedYN", $chequePrintedYN)
             ->where("chequePaymentYN", $input['option'])
             ->when(request('invoiceType') && in_array($input['invoiceType'], $input), function ($q) use ($input) {
@@ -1260,6 +1261,15 @@ class BankLedgerAPIController extends AppBaseController
             $sort = 'desc';
         }
         $employee = \Helper::getEmployeeInfo();
+
+        if(!isset($input['chequeNumberRangeFrom']) && !$input['chequeNumberRangeFrom']){
+            $input['chequeNumberRangeFrom'] = 0;
+        }
+
+        if(!isset($input['chequeNumberRangeTo']) && !$input['chequeNumberRangeTo']){
+            $input['chequeNumberRangeTo'] = 0;
+        }
+
         $bankLedger = $this->chequeListQrt($input, $search, 0)
             ->when($input['chequeNumberRange'], function ($q) use ($input) {
                 $q->where('BPVchequeNo', '>=', $input['chequeNumberRangeFrom'])
@@ -1271,29 +1281,99 @@ class BankLedgerAPIController extends AppBaseController
         if (count($bankLedger) == 0) {
             return $this->sendError('No any item found for print', 500);
         }
+        DB::beginTransaction();
+        try {
+        $time = strtotime("now");
+        $fileName = 'cheque' . $time . '.pdf';
+        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
 
         foreach ($bankLedger as $item) {
             $temArray = array();
-            $temArray['chequePrintedYN'] = 1;
+            $temArray['chequePrintedYN'] = -1;
             $temArray['chequePrintedDateTime'] = now();
             $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
             $temArray['chequePrintedByEmpID'] = $employee->empID;
             $temArray['chequePrintedByEmpName'] = $employee->empName;
             $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+
+
+            $temArray['chequePrintedYN'] = -1;
+            $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+
+            $amountSplit = explode(".", $item->payAmountBank);
+            $intAmt = 0;
+            $floatAmt = 00;
+
+            if (count($amountSplit) == 1) {
+                $intAmt = $amountSplit[0];
+                $floatAmt = 00;
+            } else if (count($amountSplit) == 2) {
+                $intAmt = $amountSplit[0];
+                $floatAmt = $amountSplit[1];
+            }
+
+            $item['amount_word'] = ucwords($f->format($intAmt));
+            if ($item['supplier']) {
+                if ($item['supplier']['supplierCurrency']) {
+                    if ($item['supplier']['supplierCurrency'][0]['bankMemo_by']) {
+                        $memos = $item['supplier']['supplierCurrency'][0]['bankMemo_by'];
+                        $item->memos = $memos;
+                    }
+                }
+            }
+            $item['decimalPlaces'] = 2;
+            $item['floatAmt'] = (string)$floatAmt;
+            if ($item['bankcurrency']) {
+                $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
+            }
+
+            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['PayMasterAutoId'])
+                ->first();
+
+            if (!empty($temDetails)) {
+                if ($input['invoiceType'] == 2) {
+                    $item['details'] = $temDetails->supplierdetail;
+                } else if ($input['invoiceType'] == 3) {
+                    $item['details'] = $temDetails->directdetail;
+                } else if ($input['invoiceType'] == 5) {
+                    $item['details'] = $temDetails->advancedetail;
+                } else {
+                    $item['details'] = [];
+                }
+            } else {
+                $item['details'] = [];
+            }
         }
 
-        return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+        $htmlName = '';
+        if ($input['option'] == -1) {
+            $htmlName = 'cheque';
+        } else if ($input['option'] == 0) {
+            $htmlName = 'bank_transfer';
+        }
+        $array = array('entities' => $bankLedger, 'date' => now());
+        if ($htmlName) {
+            $html = view('print.' . $htmlName, $array)->render();;
+            //$pdf = \App::make('dompdf.wrapper');
+            //$pdf->loadHTML($html);
+            //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
+            //'landscape'
+            DB::commit();
+           // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+            return $this->sendResponse($html, 'Print successfully');
+        } else {
+            return $this->sendError('Error', 500);
+        }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return ['success' => false, 'message' => $e . 'Error'];
+        }
+       // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
     }
 
     public function printChequeItems(Request $request)
     {
         $input = $request->all();
-
-        /*return $checkAuth = \Helper::getEmployeeInfoByURL($input);
-        if (!$checkAuth["success"]) {
-            return $this->sendError($checkAuth["message"], 500);
-        }
-        $employee = $checkAuth["message"];*/
         $search = $request->input('search.value');
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1402,7 +1482,8 @@ class BankLedgerAPIController extends AppBaseController
         $accounts = BankAccount::whereIn('companySystemID', $subCompaniesByGroup)
             ->whereIN('bankmasterAutoID', $bankIds)
             ->where('isAccountActive', 1)
-            ->get();
+            ->with(['currency'])
+            ->get(['bankAccountAutoID', 'AccountNo','accountCurrencyID','bankmasterAutoID']);
         $output = array(
             'banks' => $banks,
             'accounts' => $accounts

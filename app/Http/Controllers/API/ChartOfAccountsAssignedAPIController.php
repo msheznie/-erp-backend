@@ -86,6 +86,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             $input = $this->convertArrayToValue($input);
 
             foreach ($input as $key => $value) {
+
+                if($key == 'isAssigned' && $value){
+                    $value = -1;
+                }
                 $chartOfAccountsAssigned->$key = $value;
             }
 
@@ -273,7 +277,9 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         }
 
         if (isset($input['catogaryBLorPL'])) {
-            $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+            if($input['catogaryBLorPL']) {
+                $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+            }
         }
 
         $items = $items->get();

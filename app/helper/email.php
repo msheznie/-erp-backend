@@ -43,6 +43,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseReturn;
+use App\Models\QuotationMaster;
 use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
@@ -327,6 +328,14 @@ class email
                     if (!empty($bankAccount)) {
                         $data['docApprovedYN'] = $bankAccount->approvedYN;
                         $data['docCode'] = $bankAccount->AccountNo;
+                    }
+                    break;
+                case 67:
+                case 68:
+                    $quotationMaster = QuotationMaster::find($data['docSystemCode']);
+                    if (!empty($quotationMaster)) {
+                        $data['docApprovedYN'] = $quotationMaster->approvedYN;
+                        $data['docCode'] = $quotationMaster->quotationCode;
                     }
                     break;
                 default:

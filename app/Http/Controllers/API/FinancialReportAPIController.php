@@ -11,24 +11,41 @@
  * -- Date: 06-july 2018 By: Fayas Description: Added new functions named as getTrialBalance()
  * -- Date: 11-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceDetails()
  * -- Date: 13-july 2018 By: Fayas Description: Added new functions named as getTrialBalanceCompanyWise()
+ * -- Date: 07-january 2018 By: Fayas Description: Added new functions named as getAFRFilterChartOfAccounts()
  * -- REVISION HISTORY
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\GeneralLedger;
+use App\Models\ReportTemplate;
+use App\Models\ReportTemplateCashBank;
+use App\Models\ReportTemplateColumnLink;
+use App\Models\ReportTemplateColumns;
+use App\Models\ReportTemplateDetails;
+use App\Models\ReportTemplateDocument;
+use App\Models\ReportTemplateLinks;
+use App\Models\ReportTemplateNumbers;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+ini_set('max_execution_time', 500);
+
 class FinancialReportAPIController extends AppBaseController
 {
+    protected $globalFormula; //keep whole formula ro replace
+
     public function getFRFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
@@ -39,27 +56,80 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+        $company = Company::whereIN('companySystemID', $companiesByGroup)->get();
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companiesByGroup);
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"));
+        $companyFinanceYear = $companyFinanceYear->whereIn('companySystemID', $companiesByGroup);
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
-        $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
+        $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
+
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
-        //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
 
         $contracts = Contract::whereIN('companySystemID', $companiesByGroup)->get(['contractUID', 'ContractNumber', 'contractDescription']);
+
+        $accountType = AccountsType::all();
+
+        $templateType = ReportTemplate::all();
+
+        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"));
+        $financePeriod = $financePeriod->where('companySystemID', $selectedCompanyId);
+        $financePeriod = $financePeriod->where('departmentSystemID', 5);
+        if (isset($request['type']) && $request['type'] == 'add') {
+            $financePeriod = $financePeriod->where('isActive', -1);
+        }
+        $financePeriod = $financePeriod->get();
+
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
             'controlAccount' => $controlAccount,
-            'contracts' => $contracts
+            'contracts' => $contracts,
+            'accountType' => $accountType,
+            'templateType' => $templateType,
+            'segment' => $departments,
+            'company' => $company,
+            'financePeriod' => $financePeriod,
+            'companiesByGroup' => $companiesByGroup
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAFRFilterChartOfAccounts(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $input = $request->all();
+        $inCategoryBLorPLID = [];
+
+        if (isset($input['isBS']) && $input['isBS'] == 'true') {
+            array_push($inCategoryBLorPLID, 1);
+        }
+
+        if (isset($input['isPL']) && $input['isPL'] == 'true') {
+            array_push($inCategoryBLorPLID, 2);
+        }
+
+        if (count($inCategoryBLorPLID) == 0) {
+            $inCategoryBLorPLID = [1, 2];
+        }
+
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)
+            ->whereIN('catogaryBLorPLID', $inCategoryBLorPLID)
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+
+        $output = array(
+            'controlAccount' => $controlAccount
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -132,6 +202,23 @@ class FinancialReportAPIController extends AppBaseController
                 }
                 if ($request->tempType == 0) {//echo 'in';exit;
                     return $this->sendError('Please select a type');
+                }
+                break;
+            case 'FCT':
+                $validator = \Validator::make($request->all(), [
+                    'accountType' => 'required',
+                    'companyFinanceYearID' => 'required',
+                    'templateType' => 'required',
+                    'companySystemID' => 'required',
+                    'serviceLineSystemID' => 'required_if:accountType,2|nullable',
+                    'currency' => 'required',
+                    'fromDate' => 'required_if:dateType,1|nullable|date',
+                    'toDate' => 'required_if:dateType,1|nullable|date|after_or_equal:fromDate',
+                    'month' => 'required_if:dateType,2',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
                 }
                 break;
             default:
@@ -294,13 +381,326 @@ class FinancialReportAPIController extends AppBaseController
                     'tempType' => $request->tempType
                 );
                 break;
+            case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
+                $request = (object)$request->all();
+
+                if ($request->accountType == 1) {
+                    $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
+                    if (!empty($detID->detID) && !is_null($detID->detID)) {
+                        $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request, $detID) {
+                            $query->where('templateMasterID', $request->templateType)->where('templateDetailID', $detID->detID);
+                        })->get();
+                        if (count($notExistPLAccount) > 0) {
+                            $company = Company::find($request->selectedCompanyID);
+                            if ($company) {
+                                $data['companyID'] = $company->CompanyID;
+                            }
+                            foreach ($notExistPLAccount as $val) {
+                                $data['templateMasterID'] = $request->templateType;
+                                $data['templateDetailID'] = $detID->detID;
+                                $data['sortOrder'] = 1;
+                                $data['glAutoID'] = $val['chartOfAccountSystemID'];
+                                $data['glCode'] = $val['AccountCode'];
+                                $data['glDescription'] = $val['AccountDescription'];
+                                $data['companySystemID'] = $val['selectedCompanyID'];
+                                $data['createdPCID'] = gethostname();
+                                $data['createdUserID'] = \Helper::getEmployeeID();
+                                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                ReportTemplateLinks::create($data);
+                            }
+                        }
+                    }
+                }
+
+                $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
+
+                $company = Company::find($request->selectedCompanyID);
+                $template = ReportTemplate::find($request->templateType);
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $toDate = '';
+                $fromDate = '';
+                $month = '';
+                $period = '';
+                if ($request->dateType == 1) {
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->format('Y-m-d');
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('Y-m-d');
+                } else {
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                    $month = Carbon::parse($toDate)->format('Y-m-d');
+                    $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
+                }
+
+                $currencyColumn = '';
+
+                //formula column decode
+                if ($request->currency == 1) {
+                    $currencyColumn = 'documentLocalAmount';
+                } else {
+                    $currencyColumn = 'documentRptAmount';
+                }
+                $columns = ReportTemplateColumns::all();
+                $columnArray = [];
+                $columnHeaderArray = [];
+                $columnHeader = [];
+                $linkedcolumnArray = [];
+                $linkedcolumnArray2 = [];
+                $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
+                if (count($columns) > 0) {
+                    $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
+                    $currentYearPeriodArr = [];
+                    $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+                    $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+                    $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+                    $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+                    $lastYearPeriod = CarbonPeriod::create($lastYearStartDate, '1 month', $lastYearEndDate);
+                    $lastYearPeriodArr = [];
+                    $linkedcolumnArrayFinal = [];
+                    $linkedcolumnArrayFinal2 = [];
+                    $currentMonth = Carbon::parse($toDate)->format('Y-m');
+                    $currentYear = Carbon::parse($toDate)->format('Y');
+                    $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
+                    $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
+                    $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
+                    $LYear = Carbon::parse($toDate)->subYear()->format('Y');
+                    $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
+                    $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
+                    foreach ($currentYearPeriod as $val) {
+                        $currentYearPeriodArr[] = $val->format('Y-m');
+                    }
+
+                    foreach ($lastYearPeriod as $val) {
+                        $lastYearPeriodArr[] = $val->format('Y-m');
+                    }
+
+                    $currentMonthColumn = collect($columns)->where('type', 3)->values();
+                    $prevMonthColumn = collect($columns)->where('type', 6)->values();
+                    if (count($currentMonthColumn) > 0) {
+                        foreach ($currentMonthColumn as $key => $val) {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
+                        }
+                    }
+
+                    if (count($prevMonthColumn) > 0) {
+                        foreach ($prevMonthColumn as $key => $val) {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
+                        }
+                    }
+
+                    foreach ($columns as $val) {
+                        if ($val->shortCode == 'CM') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $currentMonth;
+                        }
+                        if ($val->shortCode == 'CM-1') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $prevMonth;
+                        }
+                        if ($val->shortCode == 'CM-2') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $prevMonth2;
+                        }
+                        if ($val->shortCode == 'LYCM') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
+                        }
+                        if ($val->shortCode == 'LYCM-1') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $LPrevMonth;
+                        }
+                        if ($val->shortCode == 'LYCM-2') {
+                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
+                        }
+                        if ($val->shortCode == 'CYYTD') {
+                            if ($request->accountType == 2) {
+                                if ($request->dateType == 2) {
+                                    $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
+                                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            } else if ($request->accountType == 1) {
+                                if ($request->dateType == 2) {
+                                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            } else if ($request->accountType == 3) {
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            }
+
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
+                        }
+                        if ($val->shortCode == 'LYYTD') {
+                            if ($request->accountType == 2) {
+                                if ($request->dateType == 2) {
+                                    $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                                    $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), $currencyColumn) ), 0 )";
+                            } else if ($request->accountType == 1) {
+                                if ($request->dateType == 2) {
+                                    $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                                }
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            } else if ($request->accountType == 3) {
+                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                            }
+
+                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
+                        }
+                    }
+                }
+
+                if (count($linkedColumn) > 0) {
+                    foreach ($linkedColumn as $val) {
+                        if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
+                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false);
+                        } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
+                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                        } else {
+                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                        }
+                    }
+                }
+
+                if (count($linkedcolumnArray2)) {
+                    foreach ($linkedcolumnArray2 as $key => $val) {
+                        if ($key == 'FCA' || $key == 'FCP') {
+                            $linkedcolumnArrayFinal2[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                        } else {
+                            $linkedcolumnArrayFinal2[$key] = $val . ' as ' . '`' . $key . '`';
+                        }
+                    }
+                }
+
+                $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
+
+                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
+
+                if (count($linkedColumn) > 0) {
+                    foreach ($linkedColumn as $val) {
+                        if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true);
+                            $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor];
+                        } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                            $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor];
+                        } else {
+                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                            $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor];
+                        }
+                    }
+                }
+
+                $columnKeys = collect($linkedcolumnArray)->keys()->all();
+
+                if (count($linkedcolumnArray)) {
+                    foreach ($linkedcolumnArray as $key => $val) {
+                        if ($key == 'FCA' || $key == 'FCP') {
+                            $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                        } else {
+                            $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
+                        }
+                    }
+                }
+
+                $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
+
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
+                $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
+                $grandTotalUncatArr = [];
+                $uncategorizeArr = [];
+                $uncategorize = '';
+                if ($request->accountType == 1 || $request->accountType == 2) {
+                    $uncategorize = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys));
+                    $lastColumn = collect($headers)->last(); // considering net total
+                    foreach ($columnKeys as $key => $val) {
+                        $grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorize->sum($val);
+                        $uncategorizeArr[$val] = $uncategorize->sum($val);
+                    }
+                }
+
+                $outputOpeningBalance = '';
+                $outputOpeningBalanceArr = [];
+                $outputClosingBalanceArr = [];
+                if ($request->accountType == 3) {
+                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn);
+                    $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance) ? $outputOpeningBalance->openingBalance : 0;
+
+                    $lastColumn = collect($headers)->last(); // considering net total
+
+                    foreach ($columnKeys as $key => $val) {
+                        if ($key == 0) {
+                            $outputOpeningBalanceArr[] = $outputOpeningBalance;
+                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputOpeningBalance;
+                        } else {
+                            $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key - 1];
+                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputClosingBalanceArr[$key - 1];
+                        }
+                    }
+                }
+
+                if (count($headers) > 0) {
+                    foreach ($headers as $key => $val) {
+                        $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+                        $val->detail = $details;
+                        foreach ($details as $key2 => $val2) {
+                            $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                        }
+                    }
+                }
+
+                $divisionValue = 1;
+                if ($template) {
+                    if ($template->showNumbersIn !== 1) {
+                        $numbers = ReportTemplateNumbers::find($template->showNumbersIn);
+                        $divisionValue = (float)$numbers->value;
+                    }
+                }
+
+                return array('reportData' => $headers,
+                    'template' => $template,
+                    'company' => $company,
+                    'companyCurrency' => $companyCurrency,
+                    'columns' => $columnKeys,
+                    'columnHeader' => $columnHeader,
+                    'openingBalance' => $outputOpeningBalanceArr,
+                    'closingBalance' => $outputClosingBalanceArr,
+                    'uncategorize' => $uncategorizeArr,
+                    'uncategorizeDrillDown' => $uncategorize,
+                    'grandTotalUncatArr' => $grandTotalUncatArr,
+                    'numbers' => $divisionValue,
+                    'month' => $month,
+                );
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
     }
 
 
-    public function exportReport(Request $request)
+    public
+    function exportReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -527,6 +927,9 @@ class FinancialReportAPIController extends AppBaseController
                             $x++;
                             $data[$x]['Company ID'] = 'Company ID';
                             $data[$x]['Company Name'] = 'Company Name';
+                            $data[$x]['GL  Type'] = 'GL  Type';
+                            $data[$x]['Template Description'] = 'Template Description';
+                            $data[$x]['Document ID'] = 'Document ID';
                             $data[$x]['Document Number'] = 'Document Number';
                             $data[$x]['Date'] = 'Date';
                             $data[$x]['Document Narration'] = 'Document Narration';
@@ -548,6 +951,9 @@ class FinancialReportAPIController extends AppBaseController
                                     $x++;
                                     $data[$x]['Company ID'] = $val->companyID;
                                     $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['GL  Type'] = $val->glAccountType;
+                                    $data[$x]['Template Description'] = $val->templateDetailDescription;
+                                    $data[$x]['Document ID'] = $val->documentID;
                                     $data[$x]['Document Number'] = $val->documentCode;
                                     $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['Document Narration'] = $val->documentNarration;
@@ -571,6 +977,9 @@ class FinancialReportAPIController extends AppBaseController
                                 $x++;
                                 $data[$x]['Company ID'] = '';
                                 $data[$x]['Company Name'] = '';
+                                $data[$x]['GL  Type'] = '';
+                                $data[$x]['Template Description'] = '';
+                                $data[$x]['Document ID'] = '';
                                 $data[$x]['Document Number'] = '';
                                 $data[$x]['Date'] = '';
                                 $data[$x]['Document Narration'] = '';
@@ -593,6 +1002,9 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x][''] = '';
                                 $data[$x][''] = '';
                                 $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x][''] = '';
                                     $data[$x][''] = '';
@@ -604,6 +1016,9 @@ class FinancialReportAPIController extends AppBaseController
                         $x++;
                         $data[$x]['Company ID'] = '';
                         $data[$x]['Company Name'] = '';
+                        $data[$x]['GL  Type'] = '';
+                        $data[$x]['Template Description'] = '';
+                        $data[$x]['Document ID'] = '';
                         $data[$x]['Document Number'] = '';
                         $data[$x]['Date'] = '';
                         $data[$x]['Document Narration'] = '';
@@ -625,7 +1040,9 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['Account Description'] = $val->AccountDescription;
-
+                            $data[$x]['GL  Type'] = $val->glAccountType;
+                            $data[$x]['Template Description'] = $val->templateDetailDescription;
+                            $data[$x]['Document ID'] = $val->documentID;
                             $data[$x]['Document Number'] = $val->documentCode;
                             $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Narration'] = $val->documentNarration;
@@ -731,7 +1148,8 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public function getTrialBalance($request)
+    public
+    function getTrialBalance($request)
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $asOfDate->addDays(1);
@@ -906,7 +1324,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTrialBalanceDetails($request)
+    public
+    function getTrialBalanceDetails($request)
     {
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
@@ -948,7 +1367,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTrialBalanceCompanyWise($request, $subCompanies)
+    public
+    function getTrialBalanceCompanyWise($request, $subCompanies)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1125,7 +1545,8 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public function getGeneralLedger($request)
+    public
+    function getGeneralLedger($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1183,6 +1604,9 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
@@ -1200,6 +1624,11 @@ class FinancialReportAPIController extends AppBaseController
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
                         LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
                     WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
@@ -1230,19 +1659,27 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                         erp_generalledger.documentRptCurrencyID,
                         sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
                         sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
-                        "" AS isCustomer 
+                        "" AS isCustomer
                     FROM
                         erp_generalledger
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
                         LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
-                    WHERE
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                        WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND erp_generalledger.glAccountType = "BS" 
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
@@ -1263,7 +1700,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getGeneralLedgerQryForPDF($request)
+    public
+    function getGeneralLedgerQryForPDF($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1402,7 +1840,8 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public function getTaxDetailQry($request)
+    public
+    function getTaxDetailQry($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -1518,7 +1957,8 @@ AND MASTER .canceledYN = 0';
 
     }
 
-    public function pdfExportReport(Request $request)
+    public
+    function pdfExportReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -1565,8 +2005,8 @@ AND MASTER .canceledYN = 0';
                 $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
 
                 $finalData = array();
-                foreach($output as $val){
-                    $finalData[$val->glCode.' - '.$val->AccountDescription][] = $val;
+                foreach ($output as $val) {
+                    $finalData[$val->glCode . ' - ' . $val->AccountDescription][] = $val;
                 }
 
                 $dataArr = array(
@@ -1585,7 +2025,7 @@ AND MASTER .canceledYN = 0';
                     'totaldocumentLocalAmountCredit' => $totaldocumentLocalAmountCredit,
                     'totaldocumentRptAmountDebit' => $totaldocumentRptAmountDebit,
                     'totaldocumentRptAmountCredit' => $totaldocumentRptAmountCredit,
-                    );
+                );
 
                 $html = view('print.report_general_ledger', $dataArr);
 
@@ -1598,6 +2038,557 @@ AND MASTER .canceledYN = 0';
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $isExpand = 0;
+        $divisionValue = 1;
+        $templateMaster = ReportTemplate::find($request->templateType);
+        if ($templateMaster) {
+            if ($templateMaster->showNumbersIn !== 1) {
+                $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
+                $divisionValue = (float)$numbers->value;
+            }
+
+            if ($templateMaster->presentationType == 2) {
+                $isExpand = 1;
+            } else {
+                $isExpand = 0;
+            }
+        }
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+        $secondLinkedcolumnQry = '';
+        $thirdLinkedcolumnQry = '';
+        $fourthLinkedcolumnQry = '';
+        $whereQry = [];
+        foreach ($columnKeys as $val) {
+            $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
+            $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
+            $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
+            //$whereQry[] .= 'd.`' . $val . '` != 0';
+        }
+
+        $sql = 'SELECT * FROM (SELECT
+	c.detDescription,
+	c.detID,
+	' . $secondLinkedcolumnQry . '
+	c.sortOrder,
+	c.masterID,
+	c.bgColor,
+	c.fontColor,
+	c.itemType,
+	c.hideHeader,
+	' . $isExpand . ' as expanded  
+FROM
+	(
+SELECT
+	b.*,
+	erp_companyreporttemplatedetails.detID,
+	erp_companyreporttemplatedetails.description AS detDescription,
+	erp_companyreporttemplatedetails.sortOrder,
+	erp_companyreporttemplatedetails.masterID,
+	erp_companyreporttemplatedetails.bgColor,
+	erp_companyreporttemplatedetails.fontColor,
+	erp_companyreporttemplatedetails.hideHeader,
+	erp_companyreporttemplatedetails.itemType 
+FROM
+	erp_companyreporttemplatedetails
+	LEFT JOIN (
+SELECT
+            ' . $fourthLinkedcolumnQry . '
+            a.templateDetailID,
+            a.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID 
+            ) g
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID 
+	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
+WHERE
+	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
+	) c
+	LEFT JOIN (
+SELECT
+	' . $thirdLinkedcolumnQry . '
+	erp_companyreporttemplatelinks.templateDetailID 
+FROM
+	erp_companyreporttemplatelinks
+	LEFT JOIN (
+            SELECT
+            ' . $fourthLinkedcolumnQry . '
+            a.templateDetailID,
+            a.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID 
+            ) g
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS a ON a.glAutoID = g.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID 
+	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
+	AND subCategory IS NOT NULL 
+GROUP BY
+	erp_companyreporttemplatelinks.templateDetailID 
+	) e ON e.templateDetailID = c.detID) d';
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $divisionValue = 1;
+        $templateMaster = ReportTemplate::find($request->templateType);
+        if ($templateMaster) {
+            if ($templateMaster->showNumbersIn !== 1) {
+                $numbers = ReportTemplateNumbers::find($templateMaster->showNumbersIn);
+                $divisionValue = (float)$numbers->value;
+            }
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+        $secondLinkedcolumnQry = '';
+        $whereQry = [];
+        foreach ($columnKeys as $val) {
+            $secondLinkedcolumnQry .= '((IFNULL(gl.`' . $val . '`,0))/' . $divisionValue . ') AS `' . $val . '`,';
+            //$whereQry[] .= 'a.`' . $val . '` != 0';
+        }
+
+        $sql = 'SELECT * FROM (SELECT
+	' . $secondLinkedcolumnQry . '
+	erp_companyreporttemplatelinks.glCode,
+	erp_companyreporttemplatelinks.glDescription,
+	erp_companyreporttemplatelinks.glAutoID,
+	erp_companyreporttemplatelinks.templateDetailID
+FROM
+	erp_companyreporttemplatelinks
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+	LEFT JOIN (
+        SELECT
+        ' . $firstLinkedcolumnQry . '
+        erp_generalledger.chartOfAccountSystemID
+    FROM
+        erp_generalledger 
+        INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+        WHERE
+        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY erp_generalledger.chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+WHERE
+	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
+ORDER BY
+	erp_companyreporttemplatelinks.sortOrder) a';
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    function getCashflowOpeningBalanceQry($request, $currency)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $glCodes = ReportTemplateLinks::where('templateMasterID', $request->templateType)->whereNotNull('glAutoID')->pluck('glAutoID')->toArray();
+
+        $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+
+        return $output;
+    }
+
+    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+        $secondLinkedcolumnQry = '';
+        foreach ($columnKeys as $key => $val) {
+            $secondLinkedcolumnQry .= 'IFNULL(SUM(`' . $key . '`),0) AS `' . $key . '`,';
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $sql = 'SELECT
+            ' . $secondLinkedcolumnQry . '
+            b.templateDetailID,
+            b.description
+        FROM
+            (
+            (
+        SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID 
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID 
+            ) a
+            INNER JOIN (
+        SELECT
+            erp_companyreporttemplatelinks.glAutoID,
+            erp_companyreporttemplatelinks.templateDetailID,
+            erp_companyreporttemplatedetails.description 
+        FROM
+            erp_companyreporttemplatelinks
+            INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+        WHERE
+            erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '  
+        ORDER BY
+            erp_companyreporttemplatedetails.sortOrder 
+            ) AS b ON b.glAutoID = a.chartOfAccountSystemID 
+            ) GROUP BY
+            templateDetailID';
+
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+
+    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $reportTemplateMaster = ReportTemplate::find($request->templateType);
+        $uncategorizeGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->whereNotExists(function ($query) use ($request) {
+            $query->selectRaw('*')
+                ->from('erp_companyreporttemplatelinks')
+                ->where('templateMasterID', $request->templateType)
+                ->whereRaw('chartofaccounts.chartOfAccountSystemID = erp_companyreporttemplatelinks.glAutoID');
+        })->pluck('chartOfAccountSystemID')->toArray();
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $secondLinkedcolumnQry = '';
+        foreach ($columnKeys as $key => $val) {
+            $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) AS `' . $val . '`,';
+        }
+
+        $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID,
+            chartofaccounts.AccountCode as glCode,
+	        chartofaccounts.AccountDescription as glDescription 
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID) a';
+
+        $output = \DB::select($sql);
+        return $output;
+    }
+
+    /**
+     * function to decode tax formula to multiple combined formula
+     * @param $columnLinkID
+     * @param $rowValues
+     * @param $columnArray
+     * @param $linkedRowHead
+     * @return string
+     */
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false)
+    {
+        global $globalFormula;
+        $finalFormula = '';
+        $taxFormula = ReportTemplateColumnLink::find($columnLinkID);
+        $globalFormula = $taxFormula->formula;
+        $linkedColumns = $taxFormula->formulaColumnID;
+        $linkedRows = '';
+        if ($linkedRowHead) {
+            $linkedRows = $taxFormula->formulaRowID;
+        }
+        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray);
+        $globalFormula = '';
+        if ($sepFormulaArr) {
+            $fomulaFinal = '';
+            $formulaArr = explode('~', $sepFormulaArr);
+            if ($formulaArr) {
+                foreach ($formulaArr as $val2) {
+                    $removedFirstChar = substr($val2, 1);
+                    $fomulaFinal .= $removedFirstChar;
+                }
+                $finalFormula = $fomulaFinal;
+            }
+        }
+
+        return $finalFormula;
+    }
+
+
+    /**
+     * function to decode customize report
+     * @param $linkedColumns - connected formulas
+     * @param $rowValues
+     * @param $columnArray
+     * @param $linkedRows
+     * @return mixed
+     */
+    public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray)
+    {
+        global $globalFormula;
+        $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID', explode(',', $linkedColumns))->get();
+        if ($taxFormula) {
+            foreach ($taxFormula as $val) {
+                $searchVal = '#' . $val['columnLinkID'];
+                if (!empty($val['formulaColumnID'])) {
+                    $replaceVal = '|(~' . $val['formula'] . '~|)';
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray);
+                    if (is_array($return)) {
+                        if ($return[0] == 'e') {
+                            return $return;
+                            break;
+                        }
+                    }
+                } else {
+                    $replaceVal = '#' . $columnArray[$val['shortCode']];
+                    $globalFormula = str_replace_first($searchVal, $replaceVal, $globalFormula);
+                    /*$replaceVal = '/'.$columnArray[$val['shortCode']].'/';
+                    $globalFormula = preg_replace($searchVal, $replaceVal, $globalFormula,1);*/
+                }
+            }
+        }
+
+        if ($linkedRows) {
+            $linkedColumnsShortCode = ReportTemplateColumnLink::where('columnLinkID', $linkedColumns)->first();
+            $columnCustomeCode = $linkedColumnsShortCode->shortCode . '-' . $linkedColumns;
+            $explodeLinkedRows = explode(',', $linkedRows);
+            if ($explodeLinkedRows) {
+                foreach ($explodeLinkedRows as $val) {
+                    $searchVal = '$' . $val;
+                    $filtered = $rowValues->where('templateDetailID', $val);
+                    $detValues = $filtered->values();
+                    $replaceVal = '';
+                    if (count($detValues) > 0) {
+                        $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                    }
+                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
+                }
+            }
+        }
+
+        return $globalFormula;
     }
 
 

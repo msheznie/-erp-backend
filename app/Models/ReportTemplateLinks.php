@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ReportTemplateLinks.php
+ * -- Project Name : ERP
+ * -- Module Name : Configuration
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 30- January 2019
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -170,6 +179,11 @@ class ReportTemplateLinks extends Model
     public function subcategory()
     {
         return $this->belongsTo('App\Models\ReportTemplateDetails','subCategory','detID');
+    }
+
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','glAutoID','chartOfAccountSystemID');
     }
     
 }

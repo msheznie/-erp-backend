@@ -48,6 +48,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -161,15 +162,19 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'assetSerialNo.*.required' => 'Asset Serial No is required',
+                'assetSerialNo.*.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'assetSerialNo.*.faUnitSerialNo' => 'required|unique:erp_fa_asset_master,faUnitSerialNo',
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
                 return $this->sendError($validator->messages(), 422);
             }
+
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > 31457280) {
@@ -228,6 +233,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
+
                 if ($grvDetails["noQty"]) {
                     if ($grvDetails->noQty < 1) {
                         $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -236,6 +242,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                             $input["faUnitSerialNo"] = $input['assetSerialNo'][0]['faUnitSerialNo'];
                         }
                         $input["serialNo"] = $lastSerialNumber;
+                        $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
+                        $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
                         $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
                         $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
                         $input['docOriginDetailID'] = $grvDetailsID;
@@ -285,6 +293,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                                     }
                                 }
                                 $input["serialNo"] = $lastSerialNumber;
+                                $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
+                                $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
                                 $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
                                 $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
                                 $input['docOriginDetailID'] = $grvDetailsID;
@@ -351,10 +361,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
@@ -575,10 +587,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
             ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
@@ -825,15 +839,22 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $search = $request->input('search.value');
+
         $assetAllocation = GRVDetails::with(['grv_master', 'item_by', 'localcurrency', 'rptcurrency'])->whereHas('item_by', function ($q) {
             $q->where('financeCategoryMaster', 3);
             $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
-        })->whereHas('grv_master', function ($q) {
+        })->whereHas('grv_master', function ($q) use ($search) {
             $q->where('grvConfirmedYN', 1);
             $q->where('approved', -1);
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+            }
         })->whereHas('localcurrency', function ($q) {
         })->whereHas('rptcurrency', function ($q) {
         })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
+
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -853,13 +874,10 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
-        $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetAllocation = $assetAllocation->where(function ($query) use ($search) {
-                $query->where('grvPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                $query->where('itemDescription', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
@@ -898,7 +916,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by'])->ofCompany($subCompanies);
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -912,6 +930,25 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('mainCategory', $input)) {
+            if ($input['mainCategory']) {
+                $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('subCategory', $input)) {
+            if ($input['subCategory']) {
+                $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        if (array_key_exists('auditCategory', $input)) {
+            if ($input['auditCategory']) {
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
+            }
+        }
+
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -919,7 +956,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $assetCositng = $assetCositng->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%")
-                    ->orWhere('COMMENTS', 'LIKE', "%{$search}%");
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%");
             });
         }
 
@@ -940,7 +977,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by'])->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
@@ -1568,6 +1605,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $data['confirmedDate'] = NOW();
                         $data['approved'] = -1;
                         $data['approvedDate'] = NOW();
+                        $data['postedDate'] = NOW();
                         $data['approvedByUserID'] = \Helper::getEmployeeID();
                         $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
                         $data['createdPcID'] = gethostname();
@@ -1605,6 +1643,114 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             return $this->sendError('Attachments not found', 500);
         }
+    }
+
+    public function exportAssetMaster(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
+
+        $type = $input['type'];
+
+        $assetCositng = FixedAssetMaster::with(['category_by','sub_category_by','finance_category','asset_type','group_to','supplier','disposal_by','department','departmentmaster','confirmed_by','posttogl_by','sub_category_by2','sub_category_by3'])->where('companySystemID', $input['companyID']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetCositng->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetCositng->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('mainCategory', $input)) {
+            if ($input['mainCategory'] && !is_null($input['mainCategory'])) {
+                $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('subCategory', $input)) {
+            if ($input['subCategory'] && !is_null($input['subCategory'])) {
+                $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        if (array_key_exists('auditCategory', $input)) {
+            if ($input['auditCategory']) {
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
+            }
+        }
+
+        $output = $assetCositng->orderBy('faID','desc')->get();
+
+        if (count($output) > 0) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Department Code'] = $val->departmentID;
+                $data[$x]['Department'] = $val->departmentmaster? $val->departmentmaster->DepartmentDescription:'';
+                $data[$x]['ServiceLine Code'] = $val->serviceLineCode;
+                $data[$x]['ServiceLine'] = $val->department?$val->department->ServiceLineDes:'';
+                $data[$x]['FA Code'] = $val->faCode;
+                $data[$x]['Asset Description'] = $val->assetDescription;
+                $data[$x]['Serial No'] = $val->faUnitSerialNo;
+                $data[$x]['Comments'] = $val->COMMENTS;
+                $data[$x]['Manufacture'] = $val->MANUFACTURE;
+                $data[$x]['Date Acquired'] = \Helper::dateFormat($val->dateAQ);
+                $data[$x]['Dep Date Start'] = \Helper::dateFormat($val->dateDEP);
+                $data[$x]['Life time in years'] = $val->depMonth;
+                $data[$x]['Dep %'] = $val->DEPpercentage;
+                $data[$x]['GRV No'] = $val->docOrigin;
+                $data[$x]['Main Cat'] = $val->category_by?$val->category_by->catDescription:'';
+                $data[$x]['Sub Cat'] = $val->sub_category_by?$val->sub_category_by->catDescription:'';
+                $data[$x]['Sub Cat2'] = $val->sub_category_by2?$val->sub_category_by2->catDescription:'';
+                $data[$x]['Sub Cat3'] = $val->sub_category_by3?$val->sub_category_by3->catDescription:'';
+                $data[$x]['Audit Category'] = $val->finance_category?$val->finance_category->financeCatDescription:'';
+                $data[$x]['Cost Account'] = $val->COSTGLCODE.' - '.$val->COSTGLCODEdes;
+                $data[$x]['Acc Dep GL Code'] = $val->ACCDEPGLCODE.' - '.$val->ACCDEPGLCODEdes;
+                $data[$x]['Dep GL Code'] = $val->DEPGLCODE.' - '.$val->DEPGLCODEdes;
+                $data[$x]['Dis Po GL Code'] = $val->DISPOGLCODE.' - '.$val->DISPOGLCODEdes;
+                $data[$x]['Post to GL Account'] = $val->posttogl_by?$val->posttogl_by->AccountCode .' - '.$val->posttogl_by->AccountDescription:'';
+                $data[$x]['Asset Type'] = $val->asset_type?$val->asset_type->typeDes:'';
+                $data[$x]['Supplier Code'] = $val->supplier?$val->supplier->primarySupplierCode:'';
+                $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName:'';
+                $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
+                $data[$x]['Last Physical Verified Date'] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x]['Unit Price(Local)'] = $val->COSTUNIT;
+                $data[$x]['Unit Price(Rpt)'] = $val->costUnitRpt;
+
+                if ($val->confirmedYN == 1) {
+                    $data[$x]['Confirmed Status'] = 'Yes';
+                } else {
+                    $data[$x]['Confirmed Status'] = 'No';
+                }
+                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Confirmed By'] = $val->confirmed_by?$val->confirmed_by->empName:'';
+                if ($val->approved == -1) {
+                    $data[$x]['Approved Status'] = 'Yes';
+                } else {
+                    $data[$x]['Approved Status'] = 'No';
+                }
+                $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        $csv = \Excel::create('po_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }

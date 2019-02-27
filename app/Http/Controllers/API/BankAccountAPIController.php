@@ -21,6 +21,7 @@ use App\Models\BankAccount;
 use App\Models\BankAccountRefferedBack;
 use App\Models\BankAssign;
 use App\Models\BankLedger;
+use App\Models\BankMaster;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -95,7 +96,7 @@ class BankAccountAPIController extends AppBaseController
             'bankBranch' => 'required',
             'AccountNo' => 'required',
             'accountCurrencyID' => 'required',
-            //'chartOfAccountSystemID' => 'required',
+            'chartOfAccountSystemID' => 'required'
             //'BranchEmail' => 'email'
         ]);
 
@@ -107,66 +108,66 @@ class BankAccountAPIController extends AppBaseController
         $input['documentSystemID'] = 66;
         $input['documentID'] = 'BA';
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->with(['localcurrency','reportingcurrency'])->first();
+        $company = Company::where('companySystemID', $input['companySystemID'])->with(['localcurrency', 'reportingcurrency'])->first();
         if (empty($company)) {
             return $this->sendError('Company not found', 500);
         }
         $input['companyID'] = $company->CompanyID;
 
-        $bank = BankAssign::where('companySystemID',$input['companySystemID'])
-                            ->where('bankAssignedAutoID',$input['bankAssignedAutoID'])
-                            ->first();
+        $bank = BankAssign::where('companySystemID', $input['companySystemID'])
+            ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
+            ->first();
 
-        if(empty($bank)){
+        if (empty($bank)) {
             return $this->sendError('Bank not found', 500);
         }
 
-        $input['bankShortCode'] =  $bank->bankShortCode;
-        $input['bankName'] =  $bank->bankName;
+        $input['bankShortCode'] = $bank->bankShortCode;
+        $input['bankName'] = $bank->bankName;
 
         $checkDuplicateAccountNo = BankAccount::where('bankAssignedAutoID', $input['bankAssignedAutoID'])
-                                                ->where('companySystemID',$input['companySystemID'])
-                                                ->where('AccountNo',$input['AccountNo'])
-                                                ->first();
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('AccountNo', $input['AccountNo'])
+            ->first();
         if (!empty($checkDuplicateAccountNo)) {
             return $this->sendError('Account No ' . $checkDuplicateAccountNo->AccountNo . ' already exists', 500);
         }
 
-        if(isset($input['isDefault']) && $input['isDefault']) {
+        if (isset($input['isDefault']) && $input['isDefault']) {
             $checkDefaultAccount = BankAccount::where('bankAssignedAutoID', $input['bankAssignedAutoID'])
                 ->where('accountCurrencyID', $input['accountCurrencyID'])
                 ->where('isDefault', 1)
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
             }
         }
 
-        if(isset($input['accountIBAN'])){
+        if (isset($input['accountIBAN'])) {
             $input['accountIBAN#'] = $input['accountIBAN'];
         }
 
-        if(isset($input['chartOfAccountSystemID']) && $input['chartOfAccountSystemID']){
-            $chartOfAccount = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])
-                                                      ->where('companySystemID',$input['companySystemID'])
-                                                      ->where('isAssigned',-1)
-                                                      ->first();
+        if (isset($input['chartOfAccountSystemID']) && $input['chartOfAccountSystemID']) {
+            $chartOfAccount = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isAssigned', -1)
+                ->first();
 
-            if(empty($chartOfAccount)){
+            if (empty($chartOfAccount)) {
                 return $this->sendError('GL Code not found');
             }
 
-            if($chartOfAccount->isActive == 0){
-                return $this->sendError('Please select a active GL Code',500);
+            if ($chartOfAccount->isActive == 0) {
+                return $this->sendError('Please select a active GL Code', 500);
             }
 
 
-            $checkAlreadyAssignGl = BankAccount::where('companySystemID',$input['companySystemID'])
-                                                 ->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])
-                                                 ->first();
-            if(!empty($checkAlreadyAssignGl)){
-                return $this->sendError('Selected chart of account code is already linked in '. $checkAlreadyAssignGl->AccountNo .'.',500);
+            $checkAlreadyAssignGl = BankAccount::where('companySystemID', $input['companySystemID'])
+                ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                ->first();
+            if (!empty($checkAlreadyAssignGl)) {
+                return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
             }
 
             $input['glCodeLinked'] = $chartOfAccount->AccountCode;
@@ -188,7 +189,7 @@ class BankAccountAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BankAccount $bankAccount */
-        $bankAccount = $this->bankAccountRepository->with(['currency','confirmed_by','chart_of_account'])->findWithoutFail($id);
+        $bankAccount = $this->bankAccountRepository->with(['currency', 'confirmed_by', 'chart_of_account'])->findWithoutFail($id);
 
         if (empty($bankAccount)) {
             return $this->sendError('Bank Account not found');
@@ -212,16 +213,16 @@ class BankAccountAPIController extends AppBaseController
     public function update($id, UpdateBankAccountAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName','chart_of_account','amounts',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','currency']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'chart_of_account', 'amounts',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'currency']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
 
-        $input['modifiedPCID']        = gethostname();
-        $input['modifiedByEmpID']     = $employee->empID;
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedByEmpID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
-        $input['modifedDateTime']     = now();
+        $input['modifedDateTime'] = now();
 
         /** @var BankAccount $bankAccount */
         $bankAccount = $this->bankAccountRepository->findWithoutFail($id);
@@ -238,77 +239,75 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError('This document already approved.', 500);
         }
 
-        $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID','!=',$id)
-                                                ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
-                                                ->where('companySystemID',$input['companySystemID'])
-                                                ->where('AccountNo',$input['AccountNo'])
-                                                ->first();
+        $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)
+            ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('AccountNo', $input['AccountNo'])
+            ->first();
 
         if (!empty($checkDuplicateAccountNo)) {
             return $this->sendError('Account No ' . $checkDuplicateAccountNo->AccountNo . ' already exists', 500);
         }
 
-        if(isset($input['isDefault']) && $input['isDefault']) {
-            $checkDefaultAccount = BankAccount::where('bankAccountAutoID','!=',$id)
+        if (isset($input['isDefault']) && $input['isDefault']) {
+            $checkDefaultAccount = BankAccount::where('bankAccountAutoID', '!=', $id)
                 ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
                 ->where('accountCurrencyID', $input['accountCurrencyID'])
                 ->where('isDefault', 1)
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
             }
         }
 
-        if(isset($input['accountIBAN'])){
+        if (isset($input['accountIBAN'])) {
             $input['accountIBAN#'] = $input['accountIBAN'];
         }
 
-        if(isset($input['chartOfAccountSystemID']) && $input['chartOfAccountSystemID']){
-            $chartOfAccount = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])
-                ->where('companySystemID',$input['companySystemID'])
-                ->where('isAssigned',-1)
+        if (isset($input['chartOfAccountSystemID']) && $input['chartOfAccountSystemID']) {
+            $chartOfAccount = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isAssigned', -1)
                 ->first();
 
-            if(empty($chartOfAccount)){
+            if (empty($chartOfAccount)) {
                 return $this->sendError('GL Code not found');
             }
 
-            if($chartOfAccount->isActive == 0){
-                return $this->sendError('Please select a active GL Code',500);
+            if ($chartOfAccount->isActive == 0) {
+                return $this->sendError('Please select a active GL Code', 500);
             }
 
 
-            $checkAlreadyAssignGl = BankAccount::where('bankAccountAutoID','!=',$id)
-                ->where('companySystemID',$input['companySystemID'])
-                ->where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])
+            $checkAlreadyAssignGl = BankAccount::where('bankAccountAutoID', '!=', $id)
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
                 ->first();
-            if(!empty($checkAlreadyAssignGl)){
-                return $this->sendError('Selected chart of account code is already linked in '. $checkAlreadyAssignGl->AccountNo .'.',500);
+            if (!empty($checkAlreadyAssignGl)) {
+                return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
             }
 
             $input['glCodeLinked'] = $chartOfAccount->AccountCode;
         }
 
         if ($bankAccount->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-            unset($inputParam);
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required',
                 'bankmasterAutoID' => 'required',
                 'bankAssignedAutoID' => 'required',
                 'bankBranch' => 'required',
                 'AccountNo' => 'required',
-                'accountCurrencyID' => 'required',
-                'chartOfAccountSystemID' => 'required'
-                //'BranchEmail' => 'email'
+                'accountCurrencyID' => 'required|numeric|min:1',
+                'chartOfAccountSystemID' => 'required|numeric|min:1'
             ]);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
-            if($bankAccount->isAccountActive == 0){
-                return $this->sendError('Bank Account should be activated before confirm.',500);
+            if ($input['isAccountActive'] == 0) {
+                return $this->sendError('Bank Account should be activated before confirm.', 500);
             }
 
             $params = array('autoID' => $id,
@@ -356,7 +355,7 @@ class BankAccountAPIController extends AppBaseController
     public function getAllBankAccountByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('bankmasterAutoID', 'isAccountActive'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -374,8 +373,16 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $logistics = BankAccount::whereIn('companySystemID', $subCompanies)
-                               ->where('isAccountActive',1)
-                               ->with(['currency']);
+            ->when(request('bankmasterAutoID',false), function ($q) use ($input) {
+                $q->where('bankmasterAutoID', $input['bankmasterAutoID']);
+            })
+            ->with(['currency']);
+
+        if (array_key_exists('isAccountActive', $input)) {
+            if (($input['isAccountActive'] == 0 || $input['isAccountActive'] == 1) && !is_null($input['isAccountActive'])) {
+                $logistics->where('isAccountActive', $input['isAccountActive']);
+            }
+        }
 
         $search = $request->input('search.value');
 
@@ -425,9 +432,9 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
-                                //->where('isAccountActive',1)
-                                ->where('bankAssignedAutoID',$input['id'])
-                                ->with(['currency']);
+            //->where('isAccountActive',1)
+            ->where('bankAssignedAutoID', $input['id'])
+            ->with(['currency']);
 
         $search = $request->input('search.value');
 
@@ -451,42 +458,40 @@ class BankAccountAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
-            ->addColumn('amounts', function ($row) {
-                return $this->getBankAccountBalanceSummery($row);
-            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
 
-    function getBankAccountBalanceSummery($row){
-        $bankBalance = BankLedger::where('companySystemID',$row->companySystemID)
-                                    ->where('bankID',$row->bankmasterAutoID)
-                                    ->where('bankAccountID',$row->bankAccountAutoID)
-                                    ->where('bankClearedYN',-1)
-                                    ->sum('bankClearedAmount');
+    function getBankAccountBalanceSummery($row)
+    {
+        $bankBalance = BankLedger::where('companySystemID', $row->companySystemID)
+            ->where('bankID', $row->bankmasterAutoID)
+            ->where('bankAccountID', $row->bankAccountAutoID)
+            ->where('bankClearedYN', -1)
+            ->sum('bankClearedAmount');
 
-       /* $withTreasury = BankLedger::where('companySystemID',$row->companySystemID)
-                                    ->where('bankID',$row->bankmasterAutoID)
-                                    ->where('bankAccountID',$row->bankAccountAutoID)
-                                    ->where('bankClearedYN',0)
-                                    ->where('trsClearedYN',-1)
-                                    ->sum('trsClearedAmount');*/
+        /* $withTreasury = BankLedger::where('companySystemID',$row->companySystemID)
+                                     ->where('bankID',$row->bankmasterAutoID)
+                                     ->where('bankAccountID',$row->bankAccountAutoID)
+                                     ->where('bankClearedYN',0)
+                                     ->where('trsClearedYN',-1)
+                                     ->sum('trsClearedAmount');*/
 
-        $receiptsTotal = BankLedger::where('companySystemID',$row->companySystemID)
-                                    ->where('bankID',$row->bankmasterAutoID)
-                                    ->where('bankAccountID',$row->bankAccountAutoID)
-                                    ->where('payAmountBank','<',0)
-                                    ->where('bankClearedYN',0)
-                                    ->where('trsClearedYN',-1)
-                                    ->sum('trsClearedAmount');
+        $receiptsTotal = BankLedger::where('companySystemID', $row->companySystemID)
+            ->where('bankID', $row->bankmasterAutoID)
+            ->where('bankAccountID', $row->bankAccountAutoID)
+            ->where('payAmountBank', '<', 0)
+            ->where('bankClearedYN', 0)
+            ->where('trsClearedYN', -1)
+            ->sum('trsClearedAmount');
 
-        $paymentsTotal = BankLedger::where('companySystemID',$row->companySystemID)
-                                    ->where('bankID',$row->bankmasterAutoID)
-                                    ->where('bankAccountID',$row->bankAccountAutoID)
-                                    ->where('payAmountBank','>',0)
-                                    ->where('bankClearedYN',0)
-                                    ->where('trsClearedYN',-1)
-                                    ->sum('trsClearedAmount');
+        $paymentsTotal = BankLedger::where('companySystemID', $row->companySystemID)
+            ->where('bankID', $row->bankmasterAutoID)
+            ->where('bankAccountID', $row->bankAccountAutoID)
+            ->where('payAmountBank', '>', 0)
+            ->where('bankClearedYN', 0)
+            ->where('trsClearedYN', -1)
+            ->sum('trsClearedAmount');
         $withTreasury = ($receiptsTotal * -1) - $paymentsTotal;
 
         $totalBankBalance = ($bankBalance * -1);
@@ -503,18 +508,18 @@ class BankAccountAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
         $currencies = CurrencyMaster::all();
-        $company = Company::where('companySystemID',$companyId)
-                            ->with(['localcurrency','reportingcurrency'])->first();
+        $company = Company::where('companySystemID', $companyId)
+            ->with(['localcurrency', 'reportingcurrency'])->first();
 
         $yesNoSelection = YesNoSelection::all();
-
         $yesNoSelectionMin = YesNoSelectionForMinus::all();
+
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionMin' => $yesNoSelectionMin,
             'currencies' => $currencies,
-            'company' => $company,
+            'company' => $company
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
 
@@ -700,10 +705,10 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError('You cannot reopen this Bank Account, it is not confirmed');
         }
 
-        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
-            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-        $this->bankAccountRepository->update($updateInput,$id);
+        $this->bankAccountRepository->update($updateInput, $id);
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -811,10 +816,10 @@ class BankAccountAPIController extends AppBaseController
             ->delete();
 
         if ($deleteApproval) {
-            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
-                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+            $updateArray = ['refferedBackYN' => 0, 'confirmedYN' => 0, 'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null, 'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-            $this->bankAccountRepository->update($updateArray,$id);
+            $this->bankAccountRepository->update($updateArray, $id);
         }
 
         return $this->sendResponse($bankAccount->toArray(), 'Bank Account Amend successfully');

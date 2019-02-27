@@ -18,6 +18,8 @@
  * -- Date: 22-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherPullingDetail()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
+ * -- Date: 10-January 2019 By: Nazir Description: Added new functions named as printPaymentMatching()
+ * -- Date: 17-January 2019 By: Nazir Description: Added new functions named as deleteAllPVMDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -180,6 +182,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Pay Supplier Invoice Master not found');
                 }
 
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID',$paySupplierInvoiceMaster->documentSystemID)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
@@ -246,6 +258,17 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (empty($debitNoteMaster)) {
                     return $this->sendError('Debit Note not found');
                 }
+
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', 15)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected debit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 //when adding a new matching, checking whether debit note added in general ledger
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $debitNoteMaster->documentSystemID)->where('companySystemID', $debitNoteMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
@@ -348,6 +371,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Customer Receive Payment not found');
                 }
 
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['custReceivePaymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected receipt voucher is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 //get unallocation sum amount
                 $unAllocationAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmountTrans, Sum(erp_custreceivepaymentdet.receiveAmountLocal) AS SumDetailAmountLocal,Sum(erp_custreceivepaymentdet.receiveAmountRpt) AS SumDetailAmountRpt')
                     ->where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])
@@ -414,10 +447,22 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['approved'] = $customerReceivePaymentMaster->approved;
                 $input['approvedDate'] = $customerReceivePaymentMaster->approvedDate;
             } else if ($input['matchType'] == 2) {
+
                 $creditNoteMaster = CreditNote::find($input['custReceivePaymentAutoID']);
                 if (empty($creditNoteMaster)) {
                     return $this->sendError('Credit Note not found');
                 }
+
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['custReceivePaymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID', $creditNoteMaster->documentSystemiD)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected credit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $creditNoteMaster->documentSystemiD)->where('companySystemID', $creditNoteMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
@@ -610,6 +655,32 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
         $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
+        //checking below posted data
+        if ($input['documentSystemID'] == 4) {
+
+            $paySupplierInvoice = PaySupplierInvoiceMaster::find($matchDocumentMaster->PayMasterAutoId);
+
+            $postedDate = date("Y-m-d", strtotime($paySupplierInvoice->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Advance payment is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+
+        } elseif ($input['documentSystemID'] == 15) {
+
+            $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
+
+            $postedDate = date("Y-m-d", strtotime($DebitNoteMaster->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+        }
+
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
@@ -778,6 +849,229 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+
+            // Booking of Exchange Gain or Loss at Matching for debit note
+            if ($matchDocumentMaster->documentSystemID == 15) {
+
+                $diffLocal = 0;
+                $diffRpt = 0;
+                $DebitNoteMasterExData = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
+
+                $companyData = Company::find($DebitNoteMasterExData->companySystemID);
+
+                $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
+                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('documentSystemID', 15)
+                    ->where('companySystemID', $matchDocumentMaster->companySystemID)
+                    ->first();
+
+
+                if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
+
+                    if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+
+                        $data = [];
+                        $finalData = [];
+                        $diffLocal = $totalAmountPayEx->paymentLocalAmount - $DebitNoteMasterExData->debitAmountLocal;
+                        $diffRpt = $totalAmountPayEx->paymentComRptAmount - $DebitNoteMasterExData->debitAmountRpt;
+
+                        //echo $diffLocal.' - '. $diffRpt;
+                        //exit();
+                        $data['companySystemID'] = $DebitNoteMasterExData->companySystemID;
+                        $data['companyID'] = $DebitNoteMasterExData->companyID;
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $DebitNoteMasterExData->documentSystemID;
+                        $data['documentID'] = $DebitNoteMasterExData->documentID;
+                        $data['documentSystemCode'] = $matchDocumentMaster->PayMasterAutoId;
+                        $data['documentCode'] = $DebitNoteMasterExData->debitNoteCode;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
+                        $data['documentConfirmedDate'] = $DebitNoteMasterExData->confirmedDate;
+                        $data['documentConfirmedBy'] = $DebitNoteMasterExData->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $DebitNoteMasterExData->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $DebitNoteMasterExData->approvedDate;
+                        $data['documentFinalApprovedBy'] = $DebitNoteMasterExData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $DebitNoteMasterExData->approvedByUserSystemID;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $input['matchingDocCode'];
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
+
+                        $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->liabilityAccountSysemID;
+                        $data['glCode'] = $DebitNoteMasterExData->liabilityAccount;
+                        $data['glAccountType'] = 'BS';
+                        $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $DebitNoteMasterExData->supplierTransactionCurrencyER;
+                        $data['documentLocalCurrencyID'] = $DebitNoteMasterExData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $DebitNoteMasterExData->localCurrencyER;
+                        $data['documentRptCurrencyID'] = $DebitNoteMasterExData->companyReportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $DebitNoteMasterExData->companyReportingER;
+
+                        $data['documentTransAmount'] = 0;
+                        if ($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        } else {
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        }
+
+                        if ($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        } else {
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        }
+
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['documentType'] = $DebitNoteMasterExData->documentType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $employee->empID;
+                        $data['createdUserSystemID'] = $employee->employeeSystemID;
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        array_push($finalData, $data);
+
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
+                        $data['glCode'] = $companyData->exchangeGainLossGLCode;
+                        $data['glAccountType'] = 'PL';
+                        if ($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
+                        } else {
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
+                        }
+                        if ($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt) * -1);
+                        } else {
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
+                        }
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+
+                        if ($finalData) {
+                            $storeSupplierInvoiceHistory = GeneralLedger::insert($finalData);
+                        }
+
+                    }
+
+                }
+
+            } else if ($matchDocumentMaster->documentSystemID == 4) {
+
+                $diffLocal = 0;
+                $diffRpt = 0;
+                $PaySupplierInvoiceMasterExData = PaySupplierInvoiceMaster::find($matchDocumentMaster->PayMasterAutoId);
+
+                $companyData = Company::find($PaySupplierInvoiceMasterExData->companySystemID);
+
+                $totalAmountPayEx = PaySupplierInvoiceDetail::selectRaw("COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmount, COALESCE(SUM(paymentLocalAmount),0) as paymentLocalAmount, COALESCE(SUM(paymentComRptAmount),0) as paymentComRptAmount")
+                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('documentSystemID', 4)
+                    ->where('companySystemID', $matchDocumentMaster->companySystemID)
+                    ->first();
+
+                if (round($PaySupplierInvoiceMasterExData->payAmountSuppTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
+
+                    if ((round($PaySupplierInvoiceMasterExData->payAmountCompLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($PaySupplierInvoiceMasterExData->payAmountCompRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+
+                        $data = [];
+                        $finalData = [];
+                        $diffLocal = $totalAmountPayEx->paymentLocalAmount - $PaySupplierInvoiceMasterExData->payAmountCompLocal;
+                        $diffRpt = $totalAmountPayEx->paymentComRptAmount - $PaySupplierInvoiceMasterExData->payAmountCompRpt;
+
+                        //echo $diffLocal.' - '. $diffRpt;
+                        //exit();
+                        $data['companySystemID'] = $PaySupplierInvoiceMasterExData->companySystemID;
+                        $data['companyID'] = $PaySupplierInvoiceMasterExData->companyID;
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $PaySupplierInvoiceMasterExData->documentSystemID;
+                        $data['documentID'] = $PaySupplierInvoiceMasterExData->documentID;
+                        $data['documentSystemCode'] = $matchDocumentMaster->PayMasterAutoId;
+                        $data['documentCode'] = $PaySupplierInvoiceMasterExData->BPVcode;
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
+                        $data['documentConfirmedDate'] = $PaySupplierInvoiceMasterExData->confirmedDate;
+                        $data['documentConfirmedBy'] = $PaySupplierInvoiceMasterExData->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $PaySupplierInvoiceMasterExData->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $PaySupplierInvoiceMasterExData->approvedDate;
+                        $data['documentFinalApprovedBy'] = $PaySupplierInvoiceMasterExData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $PaySupplierInvoiceMasterExData->approvedByUserSystemID;
+                        $data['documentNarration'] = 'Exchange Gain/Loss Entry from ' . $input['matchingDocCode'];
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $PaySupplierInvoiceMasterExData->BPVsupplierID;
+
+                        $data['chartOfAccountSystemID'] = $PaySupplierInvoiceMasterExData->supplierGLCodeSystemID;
+                        $data['glCode'] = $PaySupplierInvoiceMasterExData->supplierGLCode;
+                        $data['glAccountType'] = 'BS';
+                        $data['documentTransCurrencyID'] = $PaySupplierInvoiceMasterExData->supplierTransCurrencyID;
+                        $data['documentTransCurrencyER'] = $PaySupplierInvoiceMasterExData->supplierTransCurrencyER;
+                        $data['documentLocalCurrencyID'] = $PaySupplierInvoiceMasterExData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $PaySupplierInvoiceMasterExData->localCurrencyER;
+                        $data['documentRptCurrencyID'] = $PaySupplierInvoiceMasterExData->companyRptCurrencyID;
+                        $data['documentRptCurrencyER'] = $PaySupplierInvoiceMasterExData->companyRptCurrencyER;
+
+                        $data['documentTransAmount'] = 0;
+                        if ($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        } else {
+                            $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                        }
+
+                        if ($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        } else {
+                            $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                        }
+
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['documentType'] = $PaySupplierInvoiceMasterExData->documentType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $employee->empID;
+                        $data['createdUserSystemID'] = $employee->employeeSystemID;
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        array_push($finalData, $data);
+
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
+                        $data['glCode'] = $companyData->exchangeGainLossGLCode;
+                        $data['glAccountType'] = 'PL';
+                        if ($diffLocal > 0) {
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
+                        } else {
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
+                        }
+                        if ($diffRpt > 0) {
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt) * -1);
+                        } else {
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
+                        }
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+
+                        if ($finalData) {
+                            $storeSupplierInvoiceHistory = GeneralLedger::insert($finalData);
+                        }
+
+                    }
+
+                }
+
+            }
+
         }
 
         $input['modifiedPc'] = gethostname();
@@ -829,6 +1123,33 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
         $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
+
+        //checking below posted data
+        if ($input['documentSystemID'] == 21) {
+
+            $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
+
+            $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Receipt voucher is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+
+        } elseif ($input['documentSystemID'] == 19) {
+
+            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
+
+            $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
+
+            $formattedMatchingDate = date("Y-m-d", strtotime($input['matchingDocdate']));
+
+            if ($formattedMatchingDate < $postedDate) {
+                return $this->sendError('Credit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
+            }
+        }
+
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID,addedDocumentSystemID'))
@@ -869,7 +1190,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
                 ->sum('receiveAmountTrans');
 
-            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+            if (round($detailAmountTotTran, $supplierCurrencyDecimalPlace) > round($input['matchBalanceAmount'], $supplierCurrencyDecimalPlace)) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
 
@@ -978,8 +1299,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
                 }
 
-                $RoundedMachAmount = round($machAmount,$supplierCurrencyDecimalPlace);
-                $RoundedReceiveAmountTot = round($receiveAmountTot,$supplierCurrencyDecimalPlace);
+                $RoundedMachAmount = round($machAmount, $supplierCurrencyDecimalPlace);
+                $RoundedReceiveAmountTot = round($receiveAmountTot, $supplierCurrencyDecimalPlace);
 
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
@@ -1019,19 +1340,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 $totalPaidAmount = ($customerDetailSum + $machAmount);
-                $RoundedTotalPaidAmount = round($totalPaidAmount,$supplierCurrencyDecimalPlace);
-                $RoundedCreditAmountTrans = round($creditNoteDataUpdate->creditAmountTrans,$supplierCurrencyDecimalPlace);
+                $RoundedTotalPaidAmount = round($totalPaidAmount, $supplierCurrencyDecimalPlace);
+                $RoundedCreditAmountTrans = round($creditNoteDataUpdate->creditAmountTrans, $supplierCurrencyDecimalPlace);
 
                 if ($totalPaidAmount == 0) {
                     $creditNoteDataUpdate->matchInvoice = 0;
-                }
-                elseif($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
+                } elseif ($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
                     $creditNoteDataUpdate->matchInvoice = 2;
-                }
-                elseif( $RoundedTotalPaidAmount > $RoundedCreditAmountTrans){
+                } elseif ($RoundedTotalPaidAmount > $RoundedCreditAmountTrans) {
                     $creditNoteDataUpdate->matchInvoice = 2;
-                }
-                elseif ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
+                } elseif ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
                     $creditNoteDataUpdate->matchInvoice = 1;
                 }
                 $creditNoteDataUpdate->save();
@@ -1233,11 +1551,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $filter='';
+        $filter = '';
         $search = $request->input('search.value');
-        if($search){
+        if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountspayableledger.documentCode LIKE '%{$search}%') OR ( erp_accountspayableledger.supplierInvoiceNo LIKE '%{$search}%')";
+            $filter = " AND (( erp_accountspayableledger.documentCode LIKE '%{$search}%') OR ( erp_accountspayableledger.supplierInvoiceNo LIKE '%{$search}%'))";
         }
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
@@ -1344,7 +1662,7 @@ WHERE
         $id = $request->get('matchDocumentMasterAutoID');
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -1647,11 +1965,11 @@ HAVING
             return $this->sendError('Matching document not found');
         }
 
-        $filter='';
+        $filter = '';
         $search = $request->input('search.value');
-        if($search){
+        if ($search) {
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') OR ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%')";
+            $filter = " AND (( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') OR ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%'))";
         }
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
@@ -1744,17 +2062,17 @@ LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = c
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
 AND date(erp_accountsreceivableledger.documentDate) <= '{$matchingDocdate}'
-{$filter}
 AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
 AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID
 AND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
 AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID
+{$filter}
 HAVING
 	ROUND(
 		balanceMemAmount,
-		2
+		1
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC";
@@ -1815,6 +2133,76 @@ ORDER BY
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
 
+    }
+
+    public function printPaymentMatching(Request $request)
+    {
+        $id = $request->get('matchDocumentMasterAutoID');
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($id);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match document master not found');
+        }
+
+        $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->first();
+
+        if (empty($matchDocumentRecord)) {
+            return $this->sendError('Match document master not found');
+        }
+        $transDecimal = 2;
+        if ($matchDocumentRecord->transactioncurrency) {
+            $transDecimal = $matchDocumentRecord->transactioncurrency->DecimalPlaces;
+        }
+
+
+        $order = array(
+            'masterdata' => $matchDocumentRecord,
+            'transDecimal' => $transDecimal
+        );
+
+        $time = strtotime("now");
+        $fileName = 'payment_matching_' . $id . '_' . $time . '.pdf';
+        $html = view('print.payment_matching', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function deleteAllRVMDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match document master not found');
+        }
+
+        $detailExistAll = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
+            ->where('companySystemID', $MatchDocumentMasterData->companySystemID )
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDetail) {
+
+                $deleteDetails = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $cvDetail['custRecivePayDetAutoID'])->delete();
+
+                $updateMaster = AccountsReceivableLedger::where('arAutoID', $cvDetail['arAutoID'])
+                    ->update(array('selectedToPaymentInv' => 0, 'fullyInvoiced' => 1));
+
+            }
+        }
+
+        return $this->sendResponse($matchDocumentMasterAutoID, 'Details deleted successfully');
     }
 
 }

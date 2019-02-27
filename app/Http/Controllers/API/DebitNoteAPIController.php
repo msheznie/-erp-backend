@@ -15,6 +15,9 @@
  * -- Date: 08-October 2018 By: Nazir Description: Added new function getDebitNotePaymentStatusHistory()
  * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  * -- Date: 23-December 2018 By: Nazir Description: Added new function amendDebitNoteReview(),
+ * -- Date: 08-January 2019 By: Nazir Description: Added new function checkPaymentStatusDNPrint(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckDebitNote()
+ * -- Date: 6-February 2019 By: Fayas Description: Added new function exportDebitNotesByCompany()
  */
 namespace App\Http\Controllers\API;
 
@@ -36,6 +39,7 @@ use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -184,6 +188,10 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
+            return $this->sendError("LC Doc Code is required", 500);
+        }
+
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -254,11 +262,19 @@ class DebitNoteAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if ($documentMaster) {
@@ -396,11 +412,23 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
+            return $this->sendError("LC Doc Code is required", 500);
+        }
 
-        if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
         if (isset($input['debitNoteDate'])) {
@@ -569,6 +597,8 @@ class DebitNoteAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        //var_dump($input);
+        //exit();
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
@@ -645,63 +675,15 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
-
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
-            ->with('created_by', 'transactioncurrency', 'supplier')
-            ->where('documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $debitNotes = $debitNotes->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $debitNotes = $debitNotes->where(function ($query) use ($search) {
-                $query->where('debitNoteCode', 'LIKE', "%{$search}%")
-                    ->orWhere('invoiceNumber', 'LIKE', "%{$search}%")
-                    ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%")
-                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+        $debitNotes = $this->debitNotesByCompany($input, $search);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -732,7 +714,7 @@ class DebitNoteAPIController extends AppBaseController
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
 
         $suppliers = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
             ->where('companySystemID', $companyId)
@@ -742,6 +724,14 @@ class DebitNoteAPIController extends AppBaseController
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
+
+        $companyBasePO = ProcumentOrder::select(DB::raw("purchaseOrderID,purchaseOrderCode"))
+            ->where('companySystemID', $companyId)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('approved', -1)
+            ->get();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -749,7 +739,8 @@ class DebitNoteAPIController extends AppBaseController
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
             'suppliers' => $suppliers,
-            'segments' => $segments
+            'segments' => $segments,
+            'companyBasePO' => $companyBasePO
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1257,15 +1248,15 @@ UNION ALL
             return $this->sendError('You cannot return back to amend this debit note, it is not confirmed');
         }
 
-        // checking document matched in machmaster
-        $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
-            ->where('companySystemID', $debitNoteMasterData->companySystemID)
-            ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
-            ->first();
+        /*        // checking document matched in machmaster
+                $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
+                    ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                    ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
+                    ->first();
 
-        if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. debit note is added to matching');
-        }
+                if ($checkDetailExistMatch) {
+                    return $this->sendError('Cannot return back to amend. debit note is added to matching');
+                }*/
 
         // checking document matched in machmaster
         $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $debitNoteAutoID)
@@ -1277,7 +1268,7 @@ UNION ALL
             return $this->sendError('Cannot return back to amend. debit note is added to matching');
         }
 
-        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $debitNoteMasterData->debitNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $emailSubject = $debitNoteMasterData->debitNoteCode . ' has been return back to amend';
 
         DB::beginTransaction();
@@ -1356,5 +1347,188 @@ UNION ALL
         }
     }
 
+    public function checkPaymentStatusDNPrint(Request $request)
+    {
 
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+        $companySystemID = $input['companySystemID'];
+        $matchingDocCode = $input['matchingDocCode'];
+
+        $printID = 0;
+
+        $matchedAmount = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('matchingDocCode', $matchingDocCode)
+            ->first();
+
+        if ($matchedAmount) {
+            $printID = $matchedAmount->matchDocumentMasterAutoID;
+        }
+
+        return $this->sendResponse($printID, 'Print data retrieved');
+    }
+
+    public function approvalPreCheckDebitNote(Request $request)
+    {
+        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
+        } else {
+            return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
+        }
+
+    }
+
+    public function exportDebitNotesByCompany(Request $request)
+    {
+
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $output = $this->debitNotesByCompany($input, $search)->orderBy('debitNoteAutoID', $sort)->get();
+        $data = array();
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Debit Note Code'] = $value->debitNoteCode;
+
+                if ($value->postedDate) {
+                    $data[$x]['Posted Date'] = \Helper::dateFormat($value->postedDate);
+                } else {
+                    $data[$x]['Posted Date'] = '';
+                }
+
+                $data[$x]['Narration'] = $value->comments;
+                if ($value->supplier) {
+                    $data[$x]['Supplier Code'] = $value->supplier->primarySupplierCode;
+                    $data[$x]['Supplier Name'] = $value->supplier->supplierName;
+                } else {
+                    $data[$x]['Supplier Code'] = '';
+                    $data[$x]['Supplier Name'] = '';
+                }
+
+                $decimalPlaces = 2;
+                $localDecimalPlaces = 2;
+                $rptDecimalPlaces = 2;
+
+                if ($value->transactioncurrency) {
+                    $data[$x]['Currency'] = $value->transactioncurrency->CurrencyCode;
+                    $decimalPlaces = $value->transactioncurrency->DecimalPlaces;
+                } else {
+                    $data[$x]['Currency'] = '';
+                }
+
+                if ($value->localcurrency) {
+                    $localDecimalPlaces = $value->localcurrency->DecimalPlaces;
+                }
+
+                if ($value->rptcurrency) {
+                    $rptDecimalPlaces = $value->rptcurrency->DecimalPlaces;
+                }
+
+                $data[$x]['Amount'] = round($value->debitAmountTrans, $decimalPlaces);
+                $data[$x]['Amount (Local)'] = round($value->debitAmountLocal, $localDecimalPlaces);
+                $data[$x]['Amount (Rpt)'] = round($value->debitAmountRpt, $rptDecimalPlaces);
+
+                if ($value->final_approved_by) {
+                    $data[$x]['Approved By'] = $value->final_approved_by->empName;
+                } else {
+                    $data[$x]['Approved By'] = '';
+                }
+
+                if ($value->approvedDate) {
+                    $data[$x]['Approved Date'] = \Helper::dateFormat($value->approvedDate);
+                } else {
+                    $data[$x]['Approved Date'] = '';
+                }
+
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('debit_note_by_company', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+
+    private function debitNotesByCompany($request, $search)
+    {
+        $input = $request;
+        $selectedCompanyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
+            ->with('created_by', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'final_approved_by')
+            ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $debitNotes = $debitNotes->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $debitNotes = $debitNotes->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
+            }
+        }
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('debitNoteCode', 'LIKE', "%{$search}%")
+                    ->orWhere('invoiceNumber', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('supplierName', 'like', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $debitNotes;
+    }
 }

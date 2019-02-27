@@ -304,7 +304,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $search = $request->input('search.value');
         if($search){
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%' OR erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' ) ";
+            $filter = " AND (( erp_accountsreceivableledger.documentCode LIKE '%{$search}%' OR erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' )) ";
         }
         $custPaymentReceiveDate = Carbon::parse($master->custPaymentReceiveDate)->format('Y-m-d');
            $qry="

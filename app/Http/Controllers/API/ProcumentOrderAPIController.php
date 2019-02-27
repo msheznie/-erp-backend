@@ -1180,6 +1180,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
@@ -1487,6 +1488,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
             'erp_purchaseordermaster.poType_N',
+            'erp_purchaseordermaster.budgetYear',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -1723,6 +1725,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $search = str_replace("\\", "\\\\", $search);
             $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
@@ -2194,7 +2197,8 @@ LEFT JOIN (
 	WHERE
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
-	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ') 
+	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+	AND year(erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')
 	GROUP BY
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.supplierID = erp_purchaseordermaster.supplierID
@@ -2206,6 +2210,9 @@ WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
 AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY erp_purchaseordermaster.supplierID';
+
+            //echo $doc2_query;
+            //exit();
             $supplierReportGRVBase = DB::select($doc2_query);
         }
         $alltotal = array();
@@ -2384,10 +2391,11 @@ GROUP BY
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
 	InvoiceDet.LinelocalTotal,
-	InvoiceDet.LineRptTotal
+	InvoiceDet.LineRptTotal,
+	countrymaster.countryName
 FROM
 	erp_purchaseordermaster
-INNER JOIN (
+	INNER JOIN (
 	SELECT
 		erp_purchaseorderdetails.purchaseOrderMasterID,
 		erp_purchaseordermaster.companyID,
@@ -2408,31 +2416,6 @@ INNER JOIN (
 	GROUP BY
 		erp_purchaseorderdetails.purchaseOrderMasterID
 ) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
-INNER JOIN (
-	SELECT
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvdetails.companyID,
-		erp_grvmaster.grvDate,
-		supplierID,
-		approvedDate,
-		GRVcostPerUnitLocalCur,
-		GRVcostPerUnitComRptCur,
-		noQty,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS GRVlocalAmount,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS GRVRptAmount
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		erp_grvmaster.approved = -1
-	AND erp_grvmaster.grvCancelledYN = 0
-	GROUP BY
-		erp_grvdetails.purchaseOrderMastertID
-) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
 	    ' . $feilds . '
@@ -2452,14 +2435,19 @@ LEFT JOIN (
 	WHERE
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
+	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+	AND year(erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')
 	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID,
 		erp_bookinvsuppmaster.supplierID
-) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
+) AS InvoiceDet ON InvoiceDet.supplierID = erp_purchaseordermaster.supplierID
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchaseordermaster.supplierID
+    LEFT JOIN countrymaster ON suppliermaster.supplierCountryID = countrymaster.countryID
+    LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=erp_purchaseordermaster.localCurrencyID
+    LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=erp_purchaseordermaster.companyReportingCurrencyID
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY erp_purchaseordermaster.supplierID');
         }
         $alltotal = array();
         $i = 0;
@@ -2775,6 +2763,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_purchaseordermaster.createdDateTime',
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_purchaseordermaster.budgetYear',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -3853,9 +3842,9 @@ FROM
 			erp_paysupplierinvoicedetail.supplierInvoiceNo,
 			erp_paysupplierinvoicedetail.supplierInvoiceDate,
 			erp_bookinvsuppdet.purchaseOrderID,
-			erp_bookinvsuppdet.totTransactionAmount AS TransAmount,
-			erp_bookinvsuppdet.totLocalAmount AS LocalAmount,
-			erp_bookinvsuppdet.totRptAmount AS RptAmount,
+			erp_paysupplierinvoicedetail.supplierPaymentAmount AS TransAmount,
+			erp_paysupplierinvoicedetail.paymentLocalAmount AS LocalAmount,
+			erp_paysupplierinvoicedetail.paymentComRptAmount AS RptAmount,
 			erp_paysupplierinvoicemaster.trsClearedDate,
 			erp_paysupplierinvoicemaster.bankClearedDate,
 			erp_paysupplierinvoicemaster.approvedDate,
@@ -4890,7 +4879,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         ->orWhere('narration', 'LIKE', "%{$search}%");
                 });
             })
-            ->with(['supplier']);
+            ->with(['supplier','fcategory']);
         /*->with(['supplier', 'detail' => function ($poDetail) {
             $poDetail->with([
                 'grv_details' => function ($q) {
@@ -4919,6 +4908,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data[$x]['Company ID'] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
                 $data[$x]['PO Number'] = $value->purchaseOrderCode;
+
+                if($value->fcategory){
+                    $data[$x]['Category'] = $value->fcategory->categoryDescription;
+                }else{
+                    $data[$x]['Category'] = '';
+                }
+
                 $data[$x]['PO Approved Date'] = \Helper::dateFormat($value->approvedDate);
                 $data[$x]['Narration'] = $value->narration;
                 if ($value->supplier) {

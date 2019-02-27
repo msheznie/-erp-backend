@@ -13,6 +13,7 @@
  * -- Date: 12-November 2018 By:Nazir Description: Added new functions named as updateSentToTreasuryDetail()
  * -- Date: 13-November 2018 By:Nazir Description: Added new functions named as printPaymentVoucher()
  * -- Date: 26-December 2018 By:Nazir Description: Added new functions named as amendPaymentVoucherReview()
+ * -- Date: 11-February 2019 By:Nazir Description: Added new functions named as amendPaymentVoucherPreCheck()
  */
 
 namespace App\Http\Controllers\API;
@@ -59,6 +60,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -574,7 +576,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-
+            Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -846,15 +848,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
 
                         if ($checkChequeNoDuplicate) {
-                            return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
+                            //return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
                         }
 
                         if ($bankAccount->isPrintedActive == 1) {
-                            $chequeNumber = $bankAccount->chquePrintedStartingNo + 1;
-                            $input['BPVchequeNo'] = $chequeNumber;
-
-                            $bankAccount->chquePrintedStartingNo = $chequeNumber;
+                            $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
+                            $input['BPVchequeNo'] = $nextChequeNo;
+                            Log::info('Cheque No:' . $input['BPVchequeNo']);
+                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
+                            Log::info('-------------------------------------------------------');
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -875,7 +878,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
-                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
+                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
+                    ->where('PayMasterAutoId', $id)
+                    ->where('matchingDocID', 0)
+                    ->first();
 
                 if (!empty($totalAmount->supplierPaymentAmount)) {
                     if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->supplierTransCurrencyID) {
@@ -887,11 +893,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                     } else {
                         $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
-                        $input['payAmountBank'] = $bankAmount["defaultAmount"];
+                        $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                         $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                         $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                        $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                        $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                        $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                        $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                     }
                 } else {
@@ -912,8 +918,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = $bankAmount["defaultAmount"];
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
-                    $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                    $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                 } else {
                     $input['payAmountBank'] = 0;
@@ -933,8 +939,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = $bankAmount["defaultAmount"];
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
-                    $input['payAmountCompLocal'] = $bankAmount["localAmount"];
-                    $input['payAmountCompRpt'] = $bankAmount["reportingAmount"];
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
                 } else {
                     $input['payAmountBank'] = 0;
@@ -950,7 +956,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUser'] = \Helper::getEmployeeID();
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
+            Log::info('Cheque No:' . $input['BPVchequeNo']);
+            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
+            Log::info('beforeUpdate______________________________________________________');
+
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
+
+            Log::info('Cheque No:' . $input['BPVchequeNo']);
+            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
+            Log::info($paySupplierInvoiceMaster);
+            Log::info('afterUpdate______________________________________________________');
 
             if ($input['payeeType'] == 1) {
                 $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)
@@ -1172,7 +1187,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -1824,6 +1839,10 @@ HAVING
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+            ->where('documentSystemID', 4)
+            ->first();
+
         $paymentVoucher = DB::table('erp_documentapproved')
             ->select(
                 'erp_paysupplierinvoicemaster.*',
@@ -1842,11 +1861,13 @@ HAVING
                 'erp_bankmemopayee.memoHeaderPayee',
                 'erp_bankmemopayee.memoDetailPayee'
             )
-            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
                 $query->whereIn('employeesdepartments.documentSystemID', [4])
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);
@@ -2088,7 +2109,7 @@ HAVING
 
 
         if ($paymentVoucherData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this payment voucher, it is not confirmed');
+            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
         }
 
         /*       // checking document matched in matchmaster
@@ -2108,7 +2129,7 @@ HAVING
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. payment voucher is added to matching');
+            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
         }
 
         $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
@@ -2117,15 +2138,21 @@ HAVING
             ->first();
 
         if ($checkBLDataExist) {
-            if ($checkBLDataExist->trsClearedYN == -1) {
-                return $this->sendError('Cannot return back to amend. payment voucher is already treasury cleared');
-            }
-            if ($checkBLDataExist->bankClearedYN == -1) {
-                return $this->sendError('Cannot return back to amend. payment voucher is already bank reconciled');
+            if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
             }
         }
 
-        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName;
+        $emailBody = '<p>' . $paymentVoucherData->BPVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+
         $emailSubject = $paymentVoucherData->BPVcode . ' has been return back to amend';
 
         DB::beginTransaction();
@@ -2229,6 +2256,54 @@ HAVING
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function amendPaymentVoucherPreCheck(Request $request)
+    {
+        $input = $request->all();
+
+        $PayMasterAutoId = $input['PayMasterAutoId'];
+
+        $paymentVoucherData = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
+        if (empty($paymentVoucherData)) {
+            return $this->sendError('Payment Voucher Master not found');
+        }
+
+
+        if ($paymentVoucherData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend, this payment voucher, it is not confirmed');
+        }
+
+        // checking document matched in matchmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('You cannot return back to amend. this payment voucher is added to matching');
+        }
+
+        $checkBLDataExist = BankLedger::where('documentSystemCode', $PayMasterAutoId)
+            ->where('companySystemID', $paymentVoucherData->companySystemID)
+            ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+            ->first();
+
+        if ($checkBLDataExist) {
+            if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            }
+        }
+
+        return $this->sendResponse($paymentVoucherData, 'Payment voucher pre checked successfully');
     }
 
 

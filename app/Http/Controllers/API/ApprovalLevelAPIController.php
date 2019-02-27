@@ -21,6 +21,7 @@ use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\SegmentMaster;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ApprovalLevelRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -33,7 +34,6 @@ use Response;
  * Class ApprovalLevelController
  * @package App\Http\Controllers\API
  */
-
 class ApprovalLevelAPIController extends AppBaseController
 {
     /** @var  ApprovalLevelRepository */
@@ -73,22 +73,20 @@ class ApprovalLevelAPIController extends AppBaseController
         $input = $request->all();
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
-        $companyID = Company::where('companySystemID',$input["companySystemID"])->first();
+        $companyID = Company::where('companySystemID', $input["companySystemID"])->first();
         $input["companyID"] = $companyID->CompanyID;
 
-        $documentID = DocumentMaster::where('documentSystemID',$input["documentSystemID"])->first();
+        $documentID = DocumentMaster::where('documentSystemID', $input["documentSystemID"])->first();
         $input["documentID"] = $documentID->documentID;
         $input["departmentID"] = $documentID->departmentID;
         $input["departmentSystemID"] = $documentID->departmentSystemID;
 
-        if (isset($request->serviceLineSystemID))
-        {
-            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID',$input["serviceLineSystemID"])->first();
+        if (isset($request->serviceLineSystemID)) {
+            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID', $input["serviceLineSystemID"])->first();
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
         }
 
-        if (isset($request->approvalLevelID))
-        {
+        if (isset($request->approvalLevelID)) {
             $id = $request->approvalLevelID;
             $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
 
@@ -97,7 +95,7 @@ class ApprovalLevelAPIController extends AppBaseController
             }
             $approvalLevel = $this->approvalLevelRepository->update($input, $id);
 
-        }else{
+        } else {
             $approvalLevel = $this->approvalLevelRepository->create($input);
         }
 
@@ -139,17 +137,16 @@ class ApprovalLevelAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
-        $companyID = Company::where('companySystemID',$input["companySystemID"])->first();
+        $companyID = Company::where('companySystemID', $input["companySystemID"])->first();
         $input["companyID"] = $companyID->CompanyID;
 
-        $documentID = DocumentMaster::where('documentSystemID',$input["documentSystemID"])->first();
+        $documentID = DocumentMaster::where('documentSystemID', $input["documentSystemID"])->first();
         $input["documentID"] = $documentID->documentID;
         $input["departmentID"] = $documentID->departmentID;
         $input["departmentSystemID"] = $documentID->departmentSystemID;
 
-        if (isset($request->serviceLineSystemID))
-        {
-            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID',$input["serviceLineSystemID"])->first();
+        if (isset($request->serviceLineSystemID)) {
+            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID', $input["serviceLineSystemID"])->first();
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
         }
 
@@ -190,19 +187,21 @@ class ApprovalLevelAPIController extends AppBaseController
     }
 
 
-    public function getGroupApprovalLevelDatatable(Request $request){
+    public function getGroupApprovalLevelDatatable(Request $request)
+    {
         $input = $request->all();
         $approvalLevel = $this->approvalLevelRepository->getGroupApprovalLevelDatatable($input);
         return $approvalLevel;
     }
 
-    public function getGroupFilterData(Request $request){
+    public function getGroupFilterData(Request $request)
+    {
         /** all Company  Drop Down */
         $selectedCompanyId = $request['selectedCompanyId'];
-        $companiesByGroup="";
-        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
@@ -214,15 +213,19 @@ class ApprovalLevelAPIController extends AppBaseController
         /** all finance category Drop Down */
         $financeCategory = FinanceItemCategoryMaster::all();
 
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
         $output = array('company' => $groupCompany,
             'document' => $document,
             'financeCategory' => $financeCategory,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public function getCompanyServiceLine(Request $request){
+    public function getCompanyServiceLine(Request $request)
+    {
         /** all Service line  Drop Down */
         $selectedCompanyId = $request['companySystemID'];
         $serviceline = \Helper::getCompanyServiceline($selectedCompanyId);
@@ -231,21 +234,22 @@ class ApprovalLevelAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public function activateApprovalLevel(Request $request){
+    public function activateApprovalLevel(Request $request)
+    {
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($request->approvalLevelID);
 
         if (empty($approvalLevel)) {
             return $this->sendError('Approval Level not found');
         }
-        if($request->isActive){
+        if ($request->isActive) {
             $approvalLevel->isActive = -1;
-        }else{
+        } else {
             $approvalLevel->isActive = 0;
         }
         $approvalLevel->save();
 
         $approvalRole = "";
-        if($approvalLevel->isActive) {
+        if ($approvalLevel->isActive) {
             $isExist = ApprovalRole::where('approvalLevelID', $request->approvalLevelID)->exists();
             if (!$isExist) {
                 $approvalRollMaster = [];
@@ -257,13 +261,13 @@ class ApprovalLevelAPIController extends AppBaseController
                 }
             }
         }
-        $approvalRole = ApprovalRole::with(['company' => function($query) {
-           // $query->select('CompanyName');
-        },'department' => function($query) {
+        $approvalRole = ApprovalRole::with(['company' => function ($query) {
+            // $query->select('CompanyName');
+        }, 'department' => function ($query) {
             //$query->select('DepartmentDescription');
-        },'document' => function($query) {
+        }, 'document' => function ($query) {
             //$query->select('documentDescription');
-        },'serviceline' => function($query) {
+        }, 'serviceline' => function ($query) {
             //$query->select('ServiceLineDes');
         }])->where('approvalLevelID', $request->approvalLevelID)->orderBy('rollLevel', 'asc')->get();
 

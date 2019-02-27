@@ -200,7 +200,8 @@ class StockAdjustmentDetails extends Model
         'wacAdjRpt',
         'wacAdjLocalER',
         'currenctStockQty',
-        'timestamp'
+        'timestamp',
+        'timesReferred'
     ];
 
     /**
@@ -234,7 +235,8 @@ class StockAdjustmentDetails extends Model
         'wacAdjRptER' => 'float',
         'wacAdjRpt' => 'float',
         'wacAdjLocalER' => 'float',
-        'currenctStockQty' => 'float'
+        'currenctStockQty' => 'float',
+        'timesReferred' => 'integer'
     ];
 
     /**

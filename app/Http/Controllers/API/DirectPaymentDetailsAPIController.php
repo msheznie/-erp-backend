@@ -400,9 +400,9 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
 
-        $input['localAmount'] = $conversionAmount['localAmount'];
-        $input['comRptAmount'] = $conversionAmount['reportingAmount'];
-        $input['bankAmount'] = $conversionAmount['defaultAmount'];
+        $input['localAmount'] = \Helper::roundValue($conversionAmount['localAmount']);
+        $input['comRptAmount'] = \Helper::roundValue($conversionAmount['reportingAmount']);
+        $input['bankAmount'] = \Helper::roundValue($conversionAmount['defaultAmount']);
 
         if ($directPaymentDetails->glCodeIsBank) {
             $trasToDefaultER = $input["bankCurrencyER"];
@@ -493,11 +493,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $companyCurrencyConversion = \Helper::currencyConversion($directPaymentDetails->companySystemID, $directPaymentDetails->toBankCurrencyID, $directPaymentDetails->toBankCurrencyID, $bankAmount2);
 
             $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            $input['toCompanyLocalCurrencyAmount'] = $companyCurrencyConversion['localAmount'];
+            $input['toCompanyLocalCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
             $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['toCompanyRptCurrencyAmount'] = $companyCurrencyConversion['reportingAmount'];
+            $input['toCompanyRptCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
             $input['toBankCurrencyER'] = $conversion;
-            $input['toBankAmount'] = $bankAmount2;
+            $input['toBankAmount'] = \Helper::roundValue($bankAmount2);
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
@@ -620,13 +620,14 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $input['toCompanyLocalCurrencyID'] = $company->localCurrencyID;
         $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        $input['toCompanyLocalCurrencyAmount'] = $companyCurrencyConversion['localAmount'];
+        $input['toCompanyLocalCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
         $input['toCompanyRptCurrencyID'] = $company->reportingCurrency;
         $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-        $input['toCompanyRptCurrencyAmount'] = $companyCurrencyConversion['reportingAmount'];
+        $input['toCompanyRptCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
         $input['toBankGlCodeSystemID'] = $bankAccount->chartOfAccountSystemID;
         $input['toBankGlCode'] = $chartofaccount->AccountCode;
         $input['toBankGLDescription'] = $chartofaccount->AccountDescription;
+        $input['toBankAmount'] = \Helper::roundValue($input['toBankAmount']);
         unset($input['companySystemID']);
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $input['directPaymentDetailsID']);
@@ -667,7 +668,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
 
-            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
+            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => \Helper::roundValue($bankAmount)];
             return $this->sendResponse($output, 'Successfully data retrieved');
         } else {
             $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];

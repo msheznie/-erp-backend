@@ -553,4 +553,30 @@ class ChartOfAccountAPIController extends AppBaseController
 
         return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account Amend successfully');
     }
+
+    public function getChartOfAccounts(request $request)
+    {
+        $input = $request->all();
+        //$companyID = $input['companyID'];
+
+        $items = ChartOfAccount::where('isActive', 1)->where('isApproved', 1);
+
+        if (isset($input['controllAccountYN'])) {
+            $items = $items->where('controllAccountYN', $input['controllAccountYN']);
+        }
+
+        if (isset($input['isBank'])) {
+            $items = $items->where('isBank', $input['isBank']);
+        }
+
+        if (isset($input['catogaryBLorPL'])) {
+            if($input['catogaryBLorPL']) {
+                $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
+            }
+        }
+
+        $items = $items->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
 }

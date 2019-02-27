@@ -18,6 +18,8 @@
  * -- Date: 05-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingSummaryQRY()
  * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingDetailAdvanceQRY()
  * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingSummaryAdvanceQRY()
+ * -- Date: 27-December 2018 By: Nazir Description: Added new functions named as getSupplierBalanceStatementReconcileQRY()
+ * -- Date: 30-January 2019 By: Nazir Description: Added new functions named as pdfExportReport()
  */
 
 namespace App\Http\Controllers\API;
@@ -36,6 +38,7 @@ use App\Models\Year;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -66,8 +69,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ->pluck('supplierID');*/
 
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
-                                               //->whereIN('supplierCodeSytem', $filterSuppliers)
-                                               ->groupBy('supplierCodeSytem')->get();
+                //->whereIN('supplierCodeSytem', $filterSuppliers)
+                ->groupBy('supplierCodeSytem')->get();
 
         } else {
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
@@ -119,16 +122,34 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSS':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'suppliers' => 'required',
-                    'controlAccountsSystemID' => 'required',
-                    'currencyID' => 'required'
-                ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
-                    return $this->sendError($validator->messages(), 422);
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'SS') {
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required',
+                        'controlAccountsSystemID' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+
+                    if ($validator->fails()) {//echo 'in';exit;
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                } else if ($reportTypeID == 'SBSR') {
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required',
+                        'controlAccountsSystemID' => 'required'
+                    ]);
+
+                    if ($validator->fails()) {//echo 'in';exit;
+                        return $this->sendError($validator->messages(), 422);
+                    }
                 }
                 break;
             case 'APPSY':
@@ -231,7 +252,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
 
@@ -256,24 +277,46 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
                 break;
             case 'APSS': //Supplier Statement Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getSupplierStatementQRY($request);
+                $reportTypeID = $request->reportTypeID;
 
-                $outputArr = array();
+                if ($reportTypeID == 'SS') {
+                    $request->fromPath = 'view';
+                    $output = $this->getSupplierStatementQRY($request);
 
-                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
-                $balanceAmount = array_sum($balanceAmount);
+                    $outputArr = array();
 
-                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                $decimalPlace = array_unique($decimalPlace);
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
 
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                        }
                     }
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+                } else if ($reportTypeID == 'SBSR') {
+                    $output = $this->getSupplierBalanceStatementReconcileQRY($request);
+                    $outputArr = array();
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    /*          if ($output) {
+                                  foreach ($output as $val) {
+                                      $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                                  }
+                              }*/
+                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }
-                return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+
                 break;
             case 'APPSY':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -346,7 +389,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SAD') { //Supplier aging detail
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailQRY($request);
 
@@ -380,9 +423,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryQRY($request);
 
@@ -416,10 +459,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
                 } else if ($reportTypeID == 'SADA') { //Supplier aging detail advance
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
 
@@ -452,7 +495,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'lineGrandTotal' => $lineGrandTotal);
                 } else if ($reportTypeID == 'SASA') { //Supplier aging Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
 
@@ -487,7 +530,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APSBS': //Supplier Balance Summary Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierBalanceSummeryQRY($request);
 
@@ -532,16 +575,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APUGRV': //Unbilled GRV
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $outputArr = array();
                 $grandTotalArr = array('documentLocalAmount' => 0,
-                                       'matchedLocalAmount' => 0,
-                                       'balanceLocalAmount' => 0,
-                                       'documentRptAmount' => 0,
-                                       'matchedRptAmount' => 0,
-                                       'balanceRptAmount' => 0,
-                                      );
+                    'matchedLocalAmount' => 0,
+                    'balanceLocalAmount' => 0,
+                    'documentRptAmount' => 0,
+                    'matchedRptAmount' => 0,
+                    'balanceRptAmount' => 0,
+                );
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
@@ -557,36 +600,36 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
 
                     $output = $this->getUnbilledDetailQRY($request);
-                    if($reportTypeID == 'UGRVD') {
+                    if ($reportTypeID == 'UGRVD') {
                         if ($output) {
                             foreach ($output as $val) {
                                 $outputArr[$val->supplierName][] = $val;
                             }
                         }
-                    }else{
+                    } else {
                         $outputArr = $output;
                     }
 
-                }else if($reportTypeID == 'UGRVAD'){
+                } else if ($reportTypeID == 'UGRVAD') {
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
-                    if($reportTypeID == 'UGRVAD') {
+                    if ($reportTypeID == 'UGRVAD') {
                         if ($output) {
                             foreach ($output as $val) {
                                 $outputArr[$val->supplierName][] = $val;
                             }
                         }
                     }
-                }else if($reportTypeID == 'UGRVAS'){
+                } else if ($reportTypeID == 'UGRVAS') {
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $outputArr = $output;
                 }
 
                 $grandTotalArr['documentLocalAmount'] = array_sum(collect($output)->pluck('documentLocalAmount')->toArray());
-                $grandTotalArr['matchedLocalAmount']  = array_sum(collect($output)->pluck('matchedLocalAmount')->toArray());
-                $grandTotalArr['balanceLocalAmount']  = array_sum(collect($output)->pluck('balanceLocalAmount')->toArray());
-                $grandTotalArr['documentRptAmount']   = array_sum(collect($output)->pluck('documentRptAmount')->toArray());
-                $grandTotalArr['matchedRptAmount']    = array_sum(collect($output)->pluck('matchedRptAmount')->toArray());
-                $grandTotalArr['balanceRptAmount']    = array_sum(collect($output)->pluck('balanceRptAmount')->toArray());
+                $grandTotalArr['matchedLocalAmount'] = array_sum(collect($output)->pluck('matchedLocalAmount')->toArray());
+                $grandTotalArr['balanceLocalAmount'] = array_sum(collect($output)->pluck('balanceLocalAmount')->toArray());
+                $grandTotalArr['documentRptAmount'] = array_sum(collect($output)->pluck('documentRptAmount')->toArray());
+                $grandTotalArr['matchedRptAmount'] = array_sum(collect($output)->pluck('matchedRptAmount')->toArray());
+                $grandTotalArr['balanceRptAmount'] = array_sum(collect($output)->pluck('balanceRptAmount')->toArray());
 
                 $grandTotalArr['case1'] = array_sum(collect($output)->pluck('case1')->toArray());
                 $grandTotalArr['case2'] = array_sum(collect($output)->pluck('case2')->toArray());
@@ -601,6 +644,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 return array('reportData' => $outputArr,
                     'companyName' => $checkIsGroup->CompanyName,
+                    'company' => $checkIsGroup,
                     'grandTotal' => $grandTotalArr,
                     'currencyDecimalPlace' => $decimalPlaces,
                     'count' => count($output));
@@ -806,46 +850,87 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSS':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $output = $this->getSupplierStatementQRY($request);
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Supplier Code'] = $val->SupplierCode;
-                        $data[$x]['Supplier Name'] = $val->suppliername;
-                        $data[$x]['Document ID'] = $val->documentID;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Narration'] = $val->documentNarration;
-                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Age Days'] = $val->ageDays;
-                        $data[$x]['Doc Amount'] = $val->invoiceAmount;
-                        $data[$x]['Balance Amount'] = $val->balanceAmount;
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'SS') {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                    $request->fromPath = 'view';
+                    $output = $this->getSupplierStatementQRY($request);
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Supplier Code'] = $val->SupplierCode;
+                            $data[$x]['Supplier Name'] = $val->suppliername;
+                            $data[$x]['Document ID'] = $val->documentID;
+                            $data[$x]['Document Code'] = $val->documentCode;
+                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Narration'] = $val->documentNarration;
+                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                            $data[$x]['Currency'] = $val->documentCurrency;
+                            $data[$x]['Age Days'] = $val->ageDays;
+                            $data[$x]['Doc Amount'] = $val->invoiceAmount;
+                            $data[$x]['Balance Amount'] = $val->balanceAmount;
 
-                        $x++;
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
                     }
-                } else {
-                    $data = array();
+                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+                } else if ($reportTypeID == 'SBSR') {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
+                    $output = $this->getSupplierBalanceStatementReconcileQRY($request);
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Document Code'] = $val->documentCode;
+                            $data[$x]['Supplier Code'] = $val->SupplierCode;
+                            $data[$x]['Supplier Name'] = $val->suppliername;
+                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                            $data[$x]['Currency'] = $val->documentCurrency;
+                            $data[$x]['Amount'] = $val->invoiceAmountDoc;
+                            $data[$x]['Balance Amount'] = $val->balanceAmountDoc;
+                            $data[$x]['Local Currency'] = $val->documentCurrencyLoc;
+                            $data[$x]['Local Amount'] = $val->invoiceAmountLoc;
+                            $data[$x]['Local Balance Amount'] = $val->balanceAmountLoc;
+                            $data[$x]['Reporting Currency'] = $val->documentCurrencyRpt;
+                            $data[$x]['Reporting Amount'] = $val->invoiceAmountRpt;
+                            $data[$x]['Reporting Balance Amount'] = $val->balanceAmountRpt;
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                    $csv = \Excel::create('supplier_balance_statement', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
             case 'APSL':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $output = $this->getSupplierLedgerQRY($request);
                 if ($output) {
                     $x = 0;
@@ -880,7 +965,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSBS':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $output = $this->getSupplierBalanceSummeryQRY($request);
                 if ($output) {
                     $x = 0;
@@ -912,7 +997,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 if ($reportTypeID == 'SAD') { //supplier aging detail
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -933,14 +1018,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $lineTotal += $val->$val2;
                             }
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal;
+                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SAS') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -958,14 +1043,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $lineTotal += $val->$val2;
                             }
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
-                            $data[$x]['Total'] = $lineTotal;
+                            $data[$x]['Total'] = $lineTotal + $val->unAllocatedAmount;
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -975,6 +1060,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Code'] = $val->documentCode;
+                            $data[$x]['Narration '] = $val->documentNarration;
                             $data[$x]['Supplier Code'] = $val->SupplierCode;
                             $data[$x]['Supplier Name'] = $val->suppliername;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -992,7 +1078,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 } else if ($reportTypeID == 'SASA') { //supplier aging summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -1074,7 +1160,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $name = "";
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
 
                 if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                     $output = $this->getUnbilledDetailQRY($request);
@@ -1082,47 +1168,47 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
                             $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
 
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
 
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
+                } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                     $output = $this->getUnbilledDetailQRY($request);
-                    $name = "aging_detail";
+                    $name = "summary";
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
 
-                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVAD'){ //Unbilled GRV aging detail
+                } else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
 
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
                     $name = "aging_detail";
@@ -1130,39 +1216,39 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
                             $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
-                            if($request->currencyID == 2){
+                            if ($request->currencyID == 2) {
                                 $decimal = 3;
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
-                            }else {
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                            } else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             }
 
-                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
-                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
-                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
-                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
-                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
 
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
-                }else if($reportTypeID == 'UGRVAS'){//Unbilled GRV aging summary
+                } else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
 
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $name = "aging_summary";
@@ -1170,31 +1256,31 @@ class AccountsPayableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            if($request->currencyID == 2){
+                            if ($request->currencyID == 2) {
                                 $decimal = 3;
-                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
-                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
-                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
-                            }else {
-                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
-                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
-                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount, 3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount, 3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount, 3);
+                            } else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount, 2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount, 2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount, 2);
                             }
 
-                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
-                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
-                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
-                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
-                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
-                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
-                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
-                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
-                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
-                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+                            $data[$x]['<=30'] = number_format($val->case1, $decimal);
+                            $data[$x]['31 to 60'] = number_format($val->case2, $decimal);
+                            $data[$x]['61 to 90'] = number_format($val->case3, $decimal);
+                            $data[$x]['91 to 120'] = number_format($val->case4, $decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5, $decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6, $decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7, $decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8, $decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9, $decimal);
+                            $data[$x]['Over 365'] = number_format($val->case10, $decimal);
                             $x++;
                         }
                     } else {
@@ -1269,6 +1355,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     finalAgingDetail.documentSystemID,
                     finalAgingDetail.documentID,
                     finalAgingDetail.documentCode,
+                    finalAgingDetail.documentSystemCode,
                     finalAgingDetail.documentDate,
                     finalAgingDetail.documentNarration,
                     finalAgingDetail.supplierCodeSystem,
@@ -1289,6 +1376,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     MAINQUERY.documentSystemID,
                     MAINQUERY.documentID,
                     MAINQUERY.documentCode,
+                    MAINQUERY.documentSystemCode,
                     MAINQUERY.documentDate,
                     MAINQUERY.documentNarration,
                     MAINQUERY.supplierCodeSystem,
@@ -1353,6 +1441,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     MAINQUERY.documentID,
                     "" as documentCode,
                     "1970-01-01" as documentDate,
+                    MAINQUERY.documentSystemCode,
                     "Opening Balance" as documentNarration,
                     MAINQUERY.supplierCodeSystem,
                     suppliermaster.primarySupplierCode AS SupplierCode,
@@ -1433,6 +1522,14 @@ class AccountsPayableReportAPIController extends AppBaseController
         $controlAccountsSystemID = $request->controlAccountsSystemID;
 
         $currency = $request->currencyID;
+
+        $path = $request->fromPath;
+
+        $filterOrderBy = 'documentDate';
+        if ($path == 'pdf') {
+            $filterOrderBy = 'companySystemID';
+        }
+
         $currencyQry = '';
         $invoiceAmountQry = '';
         $balanceAmountQry = '';
@@ -1464,6 +1561,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
+                                finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -1479,7 +1577,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $balanceAmountQry . ',
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
-                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName
+                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
+                                CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompany
                             FROM
                             (
                             SELECT
@@ -1487,6 +1586,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.companyID,
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
+                                MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -1505,17 +1605,17 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
                                 MAINQUERY.docRptAmount AS documentAmountRpt,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1 AS PaidAmountLocal,
-                            
+
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
-                            
+
                                 MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
-                            
+
                                 MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
-                            
+
                                 MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt
                             FROM
                                 (
@@ -1538,11 +1638,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -1682,12 +1782,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
         //dd(DB::getQueryLog());
         return $output;
     }
@@ -2319,6 +2420,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     currRpt.DecimalPlaces as documentRptDecimalPlaces,
                     erp_paysupplierinvoicemaster.companySystemID,
                     erp_paysupplierinvoicemaster.companyID,
+                    erp_paysupplierinvoicemaster.documentSystemID,
                     companymaster.CompanyName,
                     erp_paysupplierinvoicemaster.BPVcode,
                     erp_paysupplierinvoicemaster.BPVdate,
@@ -2468,10 +2570,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(grandFinal.ageDays > " . $through . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 }
                 $c++;
             }
@@ -2513,6 +2615,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
+                                finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -2537,6 +2640,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.companyID,
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
+                                MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -2588,11 +2692,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                sum(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                sum(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                sum(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -2732,6 +2836,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -2791,10 +2896,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",grandFinal.balanceAmount,0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",grandFinal.balanceAmount,0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 }
                 $c++;
             }
@@ -2913,11 +3018,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3057,6 +3162,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -3157,6 +3263,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
                                 finalAgingDetail.documentSystemID,
+                                finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
                                 finalAgingDetail.documentDate,
@@ -3180,6 +3287,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.companyID,
                                 companymaster.CompanyName,
                                 MAINQUERY.documentSystemID,
+                                MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
                                 MAINQUERY.documentDate,
@@ -3231,11 +3339,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3375,6 +3483,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -3551,11 +3660,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 erp_generalledger.invoiceDate,
                                 erp_generalledger.supplierCodeSystem,
                                 erp_generalledger.documentTransCurrencyID,
-                                erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+                                SUM(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
                                 erp_generalledger.documentLocalCurrencyID,
-                                erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+                                SUM(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
                                 erp_generalledger.documentRptCurrencyID,
-                                erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+                                SUM(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
                             IF
                                 ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
                             IF
@@ -3695,6 +3804,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
@@ -3772,8 +3882,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -3782,22 +3892,23 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "final.*";
 
-        if($reportTypeID == 'UGRVS'){
-            $supplierGroup = "GROUP BY final.supplierID";
+        if ($reportTypeID == 'UGRVS') {
+            $supplierGroup = "GROUP BY final.supplierID,final.companySystemID";
             $finalSelect = "final.companySystemID,
                 final.companyID,
                 final.documentSystemID,
                 final.documentID,
                 final.documentCode,
+                final.documentSystemCode,
                 final.documentDate,
                 final.supplierID,
                 final.supplierCode,
@@ -3810,13 +3921,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                 SUM(final.balanceRptAmount) as balanceRptAmount";
         }
 
-        $qry = 'SELECT '.$finalSelect.',
+        $qry = 'SELECT ' . $finalSelect . ',
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
                 finalUnbilled.documentSystemID,
                 finalUnbilled.documentID,
                 finalUnbilled.documentCode,
+                finalUnbilled.documentSystemCode,
                 docDate.documentDate,
                 finalUnbilled.supplierID,
                 finalUnbilled.supplierCode,
@@ -3958,7 +4070,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup;
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
@@ -3977,9 +4089,9 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
-        $currencyID              = $request->currencyID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
+        $currencyID = $request->currencyID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -3988,45 +4100,46 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "final.*";
         $caseColumn = 'balanceRptAmount';
 
-        if($currencyID == 2){
+        if ($currencyID == 2) {
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal." . $caseColumn . ",0) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                    $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal." . $caseColumn . ",0) as `case" . $c . "`,";
                 }
                 $c++;
             }
         }
 
-        $agingField .= "if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0) as `current`";
+        $agingField .= "if(agingFinal.ageDays <= 0,agingFinal." . $caseColumn . ",0) as `current`";
 
-        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT '.$finalSelect.',
+        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT ' . $finalSelect . ',
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
                 finalUnbilled.documentSystemID,
                 finalUnbilled.documentID,
                 finalUnbilled.documentCode,
+                finalUnbilled.documentSystemCode,
                 docDate.documentDate,
                 finalUnbilled.supplierID,
                 finalUnbilled.supplierCode,
@@ -4039,7 +4152,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
                 round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
-                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+                DATEDIFF("' . $asOfDate . '",DATE(docDate.documentDate)) as ageDays
             FROM
                 (
             SELECT
@@ -4169,7 +4282,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup.') as agingFinal';
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup . ') as agingFinal';
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
@@ -4189,9 +4302,9 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
-        $localOrForeign          = $request->localOrForeign;
-        $reportTypeID            = $request->reportTypeID;
-        $currencyID              = $request->currencyID;
+        $localOrForeign = $request->localOrForeign;
+        $reportTypeID = $request->reportTypeID;
+        $currencyID = $request->currencyID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
 
@@ -4200,17 +4313,17 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countryFilter = '';
 
-        if($localOrForeign == 2){
-            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
-        }else if($localOrForeign == 3){
-            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        if ($localOrForeign == 2) {
+            $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
+        } else if ($localOrForeign == 3) {
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
         }
 
         $supplierGroup = "";
         $finalSelect = "agingFinal.*";
 
-        if($reportTypeID == 'UGRVAS'){
-            $supplierGroup = "GROUP BY supplierID";
+        if ($reportTypeID == 'UGRVAS') {
+            $supplierGroup = "GROUP BY supplierID,companySystemID";
             $finalSelect = "agingFinal.companySystemID,
                 agingFinal.companyID,
                 agingFinal.documentSystemID,
@@ -4230,29 +4343,29 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $caseColumn = 'balanceRptAmount';
 
-        if($currencyID == 2){
+        if ($currencyID == 2) {
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal." . $caseColumn . ",0)) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal." . $caseColumn . ",0)) as `case" . $c . "`,";
                 }
                 $c++;
             }
         }
 
-        $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0)) as `current`";
+        $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal." . $caseColumn . ",0)) as `current`";
 
-        $qry = 'SELECT '.$finalSelect.',' . $agingField . ' FROM (SELECT final.*,
+        $qry = 'SELECT ' . $finalSelect . ',' . $agingField . ' FROM (SELECT final.*,
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
@@ -4271,7 +4384,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
                 round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
-                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+                DATEDIFF("' . $asOfDate . '",DATE(docDate.documentDate)) as ageDays
             FROM
                 (
             SELECT
@@ -4401,12 +4514,379 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter.') as agingFinal '.$supplierGroup;
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ') as agingFinal ' . $supplierGroup;
 
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
         return $output;
 
+    }
+
+    function getSupplierBalanceStatementReconcileQRY($request)
+    {
+        $asOfDate = new Carbon($request->fromDate);
+        //$asOfDate = $asOfDate->addDays(1);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+
+        $qry = 'SELECT
+                              finalAgingDetail.companySystemID,
+                                finalAgingDetail.companyID,
+                                finalAgingDetail.CompanyName,
+                                finalAgingDetail.documentSystemID,
+                                finalAgingDetail.documentSystemCode,
+                                finalAgingDetail.documentID,
+                                finalAgingDetail.documentCode,
+                                finalAgingDetail.documentDate,
+                                finalAgingDetail.documentNarration,
+                                finalAgingDetail.supplierCodeSystem,
+                                finalAgingDetail.SupplierCode,
+                                finalAgingDetail.suppliername,
+                                finalAgingDetail.invoiceNumber,
+                                finalAgingDetail.invoiceDate,
+                                CURDATE() as runDate,
+                                DATEDIFF("' . $asOfDate . '",DATE(finalAgingDetail.documentDate)) as ageDays,
+                                finalAgingDetail.transCurrencyCode AS documentCurrency,
+                                IFNULL(round( finalAgingDetail.documentAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS invoiceAmountDoc,
+                                IFNULL(round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS balanceAmountDoc,
+                                finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlacesDoc,
+                                if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmountDoc,
+                                finalAgingDetail.localCurrencyCode AS documentCurrencyLoc,
+                                IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmountLoc,
+                                IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmountLoc,
+                                finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlacesLoc,
+                                if(finalAgingDetail.balanceAmountLocal<0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmountLoc,
+                                finalAgingDetail.rptCurrencyCode AS documentCurrencyRpt,
+                                IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmountRpt,
+                                IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmountRpt,
+                                finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlacesRpt,
+                                if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmountRpt,
+                                CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName
+                            FROM
+                            (
+                            SELECT
+                                MAINQUERY.companySystemID,
+                                MAINQUERY.companyID,
+                                companymaster.CompanyName,
+                                MAINQUERY.documentSystemID,
+                                MAINQUERY.documentSystemCode,
+                                MAINQUERY.documentID,
+                                MAINQUERY.documentCode,
+                                MAINQUERY.documentDate,
+                                MAINQUERY.documentNarration,
+                                MAINQUERY.supplierCodeSystem,
+                                suppliermaster.primarySupplierCode AS SupplierCode,
+                                suppliermaster.suppliername,
+                                MAINQUERY.invoiceNumber,
+                                MAINQUERY.invoiceDate,
+                                transCurrencyDet.CurrencyCode as transCurrencyCode,
+                                transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
+                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                localCurrencyDet.CurrencyCode as localCurrencyCode,
+                                localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
+                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                rptCurrencyDet.CurrencyCode as rptCurrencyCode,
+                                rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
+                                MAINQUERY.docRptAmount AS documentAmountRpt,
+
+                                (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
+
+                                (MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1 AS PaidAmountLocal,
+
+                                (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
+
+                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+
+                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+
+                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt
+                            FROM
+                                (
+                            SELECT
+                                erp_generalledger.companySystemID,
+                                erp_generalledger.companyID,
+                                erp_generalledger.serviceLineSystemID,
+                                erp_generalledger.serviceLineCode,
+                                erp_generalledger.documentSystemID,
+                                erp_generalledger.documentID,
+                                erp_generalledger.documentSystemCode,
+                                erp_generalledger.documentCode,
+                                erp_generalledger.documentDate,
+                                erp_generalledger.chartOfAccountSystemID,
+                                erp_generalledger.glCode,
+                                erp_generalledger.glAccountType,
+                                erp_generalledger.documentNarration,
+                                erp_generalledger.clientContractID,
+                                erp_generalledger.invoiceNumber,
+                                erp_generalledger.invoiceDate,
+                                erp_generalledger.supplierCodeSystem,
+                                erp_generalledger.documentTransCurrencyID,
+                                sum(erp_generalledger.documentTransAmount) * - 1 AS docTransAmount,
+                                erp_generalledger.documentLocalCurrencyID,
+                                sum(erp_generalledger.documentLocalAmount) * - 1 AS docLocalAmount,
+                                erp_generalledger.documentRptCurrencyID,
+                                sum(erp_generalledger.documentRptAmount) * - 1 AS docRptAmount,
+                            IF
+                                ( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
+                            IF
+                                ( paymentVoucherAmount.PaidPaymentVoucherLocalAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherLocalAmount ) AS PaidPaymentVoucherLocalAmount,
+                            IF
+                                ( paymentVoucherAmount.PaidPaymentVoucherRptAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherRptAmount ) AS PaidPaymentVoucherRptAmount,
+                            IF
+                                ( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountTrans IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountTrans ) AS InvoiceMatchedINMatchingAmountTrans,
+                            IF
+                                ( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountLocal IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountLocal ) AS InvoiceMatchedINMatchingAmountLocal,
+                            IF
+                                ( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountRpt IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountRpt ) AS InvoiceMatchedINMatchingAmountRpt,
+                            IF
+                                ( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountTrans IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountTrans ) AS InvoiceMatchedForpaymentAmountTrans,
+                            IF
+                                ( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountLocal IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountLocal ) AS InvoiceMatchedForpaymentAmountLocal,
+                            IF
+                                ( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountRpt IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountRpt ) AS InvoiceMatchedForpaymentAmountRpt,
+                            IF
+                                ( debitNoteMatched.debitNoteMatchedAmountTrans IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountTrans ) AS debitNoteMatchedAmountTrans,
+                            IF
+                                ( debitNoteMatched.debitNoteMatchedAmountLocal IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountLocal ) AS debitNoteMatchedAmountLocal,
+                            IF
+                                ( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
+                            FROM
+                                erp_generalledger
+                                LEFT JOIN (-- payment voucher matched with invoice or debit note
+                            SELECT
+                                erp_paysupplierinvoicedetail.companySystemID,
+                                erp_paysupplierinvoicedetail.companyID,
+                                erp_paysupplierinvoicemaster.documentSystemID,
+                                erp_paysupplierinvoicemaster.documentID,
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.BPVcode,
+                                sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS PaidPaymentVoucherTransAmount,
+                                sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS PaidPaymentVoucherLocalAmount,
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS PaidPaymentVoucherRptAmount
+                            FROM
+                                erp_paysupplierinvoicedetail
+                                INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+                            WHERE
+                                erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicemaster.approved = -1
+                                AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+                            GROUP BY
+                                companySystemID,
+                                documentSystemID,
+                                PayMasterAutoId
+                                ) AS paymentVoucherAmount ON paymentVoucherAmount.companySystemID = erp_generalledger.companySystemID
+                                AND paymentVoucherAmount.documentSystemID = erp_generalledger.documentSystemID
+                                AND paymentVoucherAmount.PayMasterAutoId = erp_generalledger.documentSystemCode
+                                LEFT JOIN (-- invoice matched in a matching document
+                            SELECT
+                                erp_paysupplierinvoicedetail.companySystemID,
+                                erp_paysupplierinvoicedetail.companyID,
+                                erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                                erp_paysupplierinvoicedetail.addedDocumentID,
+                                erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                                erp_paysupplierinvoicedetail.bookingInvDocCode,
+                                sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
+                                sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+                            FROM
+                                erp_paysupplierinvoicedetail
+                                INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
+                            WHERE
+                                erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_matchdocumentmaster.matchingConfirmedYN = 1
+                                AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+                            GROUP BY
+                                companySystemID,
+                                addedDocumentSystemID,
+                                bookingInvSystemCode
+                                ) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
+                                AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
+                                LEFT JOIN (-- invoice matched in a payment voucher document
+                            SELECT
+                                erp_paysupplierinvoicedetail.companySystemID,
+                                erp_paysupplierinvoicedetail.companyID,
+                                erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                                erp_paysupplierinvoicedetail.addedDocumentID,
+                                erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                                erp_paysupplierinvoicedetail.bookingInvDocCode,
+                                sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
+                                sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+                            FROM
+                                erp_paysupplierinvoicedetail
+                                INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+                            WHERE
+                                erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicemaster.approved = -1
+                                AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+                            GROUP BY
+                                companySystemID,
+                                addedDocumentSystemID,
+                                bookingInvSystemCode
+                                ) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+                                AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
+                                AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
+                                LEFT JOIN (-- matched debit note
+                            SELECT
+                                erp_matchdocumentmaster.companySystemID,
+                                erp_matchdocumentmaster.companyID,
+                                erp_matchdocumentmaster.documentSystemID,
+                                erp_matchdocumentmaster.documentID,
+                                erp_matchdocumentmaster.PayMasterAutoId,
+                                erp_matchdocumentmaster.BPVcode,
+                                sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS debitNoteMatchedAmountTrans,
+                                sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS debitNoteMatchedAmountLocal,
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS debitNoteMatchedAmountRpt
+                            FROM
+                                erp_matchdocumentmaster
+                                INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
+                            WHERE
+                                erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_matchdocumentmaster.matchingConfirmedYN = 1
+                                AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+                            GROUP BY
+                                companySystemID,
+                                documentSystemID,
+                                PayMasterAutoId
+                                ) AS debitNoteMatched ON debitNoteMatched.companySystemID = erp_generalledger.companySystemID
+                                AND debitNoteMatched.documentSystemID = erp_generalledger.documentSystemID
+                                AND debitNoteMatched.PayMasterAutoId = erp_generalledger.documentSystemCode
+                            WHERE
+                                DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+                                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_generalledger.chartOfAccountSystemID  = "' . $controlAccountsSystemID . '"
+                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
+                                ) AS MAINQUERY
+                            LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                            LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
+                            LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
+                            LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) <> 0
+	)
+OR (
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) <> 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) = 0
+	)
+)
+OR (
+	(
+		round(
+			finalAgingDetail.balanceAmountTrans,
+			0
+		) = 0
+		AND round(
+			finalAgingDetail.balanceAmountLocal,
+			0
+		) <> 0
+		AND round(
+			finalAgingDetail.balanceAmountRpt,
+			0
+		) <> 0
+	)
+)
+ORDER BY
+	documentDate ASC';
+        //echo $qry;
+        //exit();
+        return $output = \DB::select($qry);
+        //dd(DB::getQueryLog());
+        //return ['data' => $output];
+    }
+
+    public function pdfExportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'APSS':
+                if ($request->reportTypeID == 'SS') {
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+
+                    $checkIsGroup = Company::find($request->companySystemID);
+
+                    $companyLogo = $checkIsGroup->companyLogo;
+
+                    $request->fromPath = 'pdf';
+                    $output = $this->getSupplierStatementQRY($request);
+
+                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
+                    $grandTotal = array_sum($grandTotal);
+
+                    $outputArr = array();
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->concatCompany][$val->concatSupplierName][] = $val;
+                        }
+                    }
+
+                    //echo '<pre>';print_r($outputArr); echo '</pre>'; die();
+
+
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal);
+
+                    $html = view('print.supplier_statement', $dataArr);
+
+                    $pdf = \App::make('dompdf.wrapper');
+                    $pdf->loadHTML($html);
+
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
     }
 }

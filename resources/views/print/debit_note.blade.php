@@ -261,6 +261,17 @@
                     </tr>
                     <tr>
                         <td width="50px">
+                            <span class="font-weight-bold">Invoice Number</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            {{$entity->invoiceNumber}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50px">
                             <span class="font-weight-bold">Reference Number</span>
                         </td>
                         <td width="10px">
