@@ -657,7 +657,15 @@ class SupplierMasterAPIController extends AppBaseController
             ->groupBy('supplierID')
             ->pluck('supplierID');
         $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
-        return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
+
+        $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
+        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
+
+        $output = array(
+            'controlAccount' => $controlAccount,
+            'suppliers' => $supplierMaster,
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
 
 
