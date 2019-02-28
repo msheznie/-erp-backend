@@ -856,4 +856,8 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\BankLedger', 'PayMasterAutoId', 'documentSystemCode');
     }
 
+    public function modified_by(){
+        return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
+    }
+
 }
