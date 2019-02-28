@@ -136,6 +136,7 @@ class InventoryReportAPIController extends AppBaseController
                                     erp_itemledger.unitOfMeasure as UOM,
                                     erp_itemledger.inOutQty,
                                     erp_itemledger.wacRpt as cost,
+                                    (erp_itemledger.inOutQty* erp_itemledger.wacRpt) as totalCost,
                                     erp_itemledger.comments,
                                     erp_itemledger.transactionDate,
                                     units.UnitShortCode,
@@ -487,6 +488,7 @@ class InventoryReportAPIController extends AppBaseController
                                     erp_itemledger.unitOfMeasure as UOM,
                                     erp_itemledger.inOutQty,
                                     erp_itemledger.wacRpt as cost,
+                                    (erp_itemledger.inOutQty* erp_itemledger.wacRpt) as totalCost,
                                     erp_itemledger.comments,
                                     erp_itemledger.transactionDate,
                                     units.UnitShortCode,
@@ -519,6 +521,7 @@ class InventoryReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output as $val) {
                             $x++;
+                            $data[$x]['Doc ID'] = $val->documentID;
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Trans Date'] = \Helper::dateFormat($val->transactionDate);
                             $data[$x]['Service Line'] = $val->serviceLineCode;
@@ -531,6 +534,7 @@ class InventoryReportAPIController extends AppBaseController
                             $data[$x]['Part #'] = $val->partNumber;
                             $data[$x]['Qty'] = $val->inOutQty;
                             $data[$x]['Cost (USD)'] = round($val->cost, 2);
+                            $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
                             $data[$x]['Account Code'] = $val->AccountCode;
                             $data[$x]['Account Desc'] = $val->AccountDescription;
                         }
