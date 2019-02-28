@@ -2521,8 +2521,9 @@ GROUP BY
         foreach ($columnKeys as $key => $val) {
             $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) AS `' . $val . '`,';
         }
-
-        $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
+        $output = [];
+        if(count($uncategorizeGL) > 0) {
+            $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID,
             chartofaccounts.AccountCode as glCode,
@@ -2536,8 +2537,10 @@ GROUP BY
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
             erp_generalledger.chartOfAccountSystemID) a';
+            $output = \DB::select($sql);
+        }
 
-        $output = \DB::select($sql);
+
         return $output;
     }
 
