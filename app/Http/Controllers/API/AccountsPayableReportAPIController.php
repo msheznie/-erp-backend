@@ -53,7 +53,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         if ($request['reportID'] == 'TS') {
-            $controlAccount = array();
+            $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
+            $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
             $supplierMaster = array();
             $departments = array();
         } else if ($request['reportID'] == 'APUGRV') {
@@ -220,7 +221,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
                     'year' => 'required',
-                    'countries' => 'required'
+                    'countries' => 'required',
+                    'controlAccountsSystemID' => 'required',
                 ]);
 
                 if ($validator->fails()) {
@@ -543,7 +545,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $documentAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 break;
             case 'TS': //Supplier Balance Summary Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTopSupplierQRY($request);
 
@@ -1118,7 +1120,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $type = $request->type;
                 $name = "";
                 if ($reportTypeID == 'TSCW' || $reportTypeID == 'TSC') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getTopSupplierQRY($request);
 
                     if ($reportTypeID == 'TSCW') {
@@ -3861,6 +3863,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND YEAR ( erp_purchaseordermaster.approvedDate ) = ' . $year . ' 
                         AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
                         AND suppliermaster.supplierCountryID IN (' . join(',', $countrySystemID) . ')
+                        AND suppliermaster.liabilityAccountSysemID = ' . $request->controlAccountsSystemID . ' 
                     GROUP BY
                         ' . $companyWise . '
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';

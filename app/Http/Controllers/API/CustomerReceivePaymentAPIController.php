@@ -282,7 +282,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             /* Direct Invoice*/
         }
 
-        if (($input['custPaymentReceiveDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
+        if (($input['custPaymentReceiveDate'] >= $companyfinanceperiod->dateFrom) && ($input['custPaymentReceiveDate'] <= $companyfinanceperiod->dateTo)) {
             $customerReceivePayments = $this->customerReceivePaymentRepository->create($input);
             return $this->sendResponse($customerReceivePayments->toArray(), 'Receipt voucher created successfully');
         } else {
