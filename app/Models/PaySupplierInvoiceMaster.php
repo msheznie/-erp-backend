@@ -851,6 +851,9 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
     }
 
-
+    public function bankledger_by()
+    {
+        return $this->belongsTo('App\Models\BankLedger', 'PayMasterAutoId', 'documentSystemCode');
+    }
 
 }

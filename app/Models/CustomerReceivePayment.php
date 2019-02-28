@@ -655,4 +655,9 @@ class CustomerReceivePayment extends Model
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
     }
+
+    public function bankledger_by()
+    {
+        return $this->belongsTo('App\Models\BankLedger', 'custReceivePaymentAutoID', 'documentSystemCode');
+    }
 }

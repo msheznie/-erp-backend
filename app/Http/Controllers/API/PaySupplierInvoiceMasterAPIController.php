@@ -1034,7 +1034,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Pay Supplier Invoice Master deleted successfully');
     }
 
-    public function getPaymentVoucherMaster(Request $request)
+    public function  getPaymentVoucherMaster(Request $request)
     {
         $input = $request->all();
 
@@ -1044,7 +1044,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 4);
-            }, 'created_by', 'cancelled_by'])->first();
+            }, 'created_by', 'cancelled_by','bankledger_by' => function ($query) {
+                $query->with('bankrec_by');
+                $query->where('documentSystemID', 4);
+            }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
