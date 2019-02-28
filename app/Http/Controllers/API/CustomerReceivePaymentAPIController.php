@@ -1315,7 +1315,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('segment');
-        }, 'details'])->first();
+        }, 'details','bankledger_by' => function ($query) {
+            $query->with('bankrec_by');
+            $query->where('documentSystemID', 21);
+        }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
