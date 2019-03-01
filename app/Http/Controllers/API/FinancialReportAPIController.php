@@ -660,6 +660,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
+                $removedFromArray = [];
                 if (count($headers) > 0) {
                     foreach ($headers as $key => $val) {
                         $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
@@ -667,8 +668,16 @@ class FinancialReportAPIController extends AppBaseController
                         foreach ($details as $key2 => $val2) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
                         }
+                        if($val->itemType != 3) {
+                            if (count($details) == 0) {
+                                $removedFromArray[] = $key;
+                            }
+                        }
                     }
                 }
+
+                //remove records which has no detail except total
+                $headers = collect($headers)->forget($removedFromArray)->values();
 
                 $divisionValue = 1;
                 if ($template) {
@@ -2111,7 +2120,7 @@ AND MASTER .canceledYN = 0';
             $thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             $fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
             $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
-            //$whereQry[] .= 'd.`' . $val . '` != 0';
+            $whereQry[] .= 'IF(masterID is not null , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
         }
 
         $sql = 'SELECT * FROM (SELECT
@@ -2249,7 +2258,7 @@ WHERE
 	AND subCategory IS NOT NULL 
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID 
-	) e ON e.templateDetailID = c.detID) d';
+	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2311,7 +2320,7 @@ GROUP BY
         $whereQry = [];
         foreach ($columnKeys as $val) {
             $secondLinkedcolumnQry .= '((IFNULL(IF(erp_companyreporttemplatelinks.categoryType != erp_companyreporttemplatedetails.categoryType,gl.`' . $val . '`*-1,gl.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
-            //$whereQry[] .= 'a.`' . $val . '` != 0';
+            $whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
         $sql = 'SELECT * FROM (SELECT
@@ -2339,7 +2348,7 @@ FROM
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
-	erp_companyreporttemplatelinks.sortOrder) a';
+	erp_companyreporttemplatelinks.sortOrder) a WHERE (' . join(' OR ', $whereQry) . ')';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2350,7 +2359,7 @@ ORDER BY
         $fromDate = $fromDate->format('Y-m-d');
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
-        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        //$serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
         $glCodes = ReportTemplateLinks::where('templateMasterID', $request->templateType)->whereNotNull('glAutoID')->pluck('glAutoID')->toArray();
@@ -2404,14 +2413,16 @@ ORDER BY
         }
         $secondLinkedcolumnQry = '';
         $thirdLinkedcolumnQry = '';
+        $whereQry = [];
         foreach ($columnKeys as $key => $val) {
             $secondLinkedcolumnQry .= 'IFNULL(SUM(`' . $key . '`),0) AS `' . $key . '`,';
             $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $key . '` * -1,`' . $key . '`),0) AS `' . $key . '`,';
+            $whereQry[] .= 'b.`' . $key . '` != 0';
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
-        $sql = 'SELECT
+        $sql = 'SELECT * FROM (SELECT
 	' . $secondLinkedcolumnQry . ' 
 	templateDetailID,
 	description
@@ -2456,7 +2467,7 @@ FROM
 			)
 	) f
 GROUP BY
-	templateDetailID';
+	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ')';
 
         $output = \DB::select($sql);
         return $output;
