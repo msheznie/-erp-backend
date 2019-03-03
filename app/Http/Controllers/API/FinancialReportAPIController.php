@@ -35,6 +35,7 @@ use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateNumbers;
+use App\Models\SegmentMaster;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -65,7 +66,9 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
-        $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+        $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
+        $departments2 = collect(SegmentMaster::where('serviceLineSystemID',24)->get());
+        $departments = $departments1->merge($departments2)->all();
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
@@ -418,216 +421,21 @@ class FinancialReportAPIController extends AppBaseController
                 $template = ReportTemplate::find($request->templateType);
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
-                $toDate = '';
-                $fromDate = '';
                 $month = '';
                 $period = '';
-                if ($request->dateType == 1) {
-                    $toDate = new Carbon($request->toDate);
-                    $toDate = $toDate->format('Y-m-d');
-                    $fromDate = new Carbon($request->fromDate);
-                    $fromDate = $fromDate->format('Y-m-d');
-                } else {
+                if ($request->dateType != 1) {
                     $period = CompanyFinancePeriod::find($request->month);
                     $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                     $month = Carbon::parse($toDate)->format('Y-m-d');
-                    $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
                 }
 
-                $currencyColumn = '';
-
-                //formula column decode
-                if ($request->currency == 1) {
-                    $currencyColumn = 'documentLocalAmount';
-                } else {
-                    $currencyColumn = 'documentRptAmount';
-                }
-                $columns = ReportTemplateColumns::all();
-                $columnArray = [];
-                $columnHeaderArray = [];
-                $columnHeader = [];
-                $columnHeaderMapping = [];
-                $linkedcolumnArray = [];
-                $linkedcolumnArray2 = [];
-                $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
-                if (count($columns) > 0) {
-                    $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
-                    $currentYearPeriodArr = [];
-                    $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
-                    $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
-                    $lastYearEndDate = Carbon::parse($financeYear->endingDate);
-                    $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
-                    $lastYearPeriod = CarbonPeriod::create($lastYearStartDate, '1 month', $lastYearEndDate);
-                    $lastYearPeriodArr = [];
-                    $linkedcolumnArrayFinal = [];
-                    $linkedcolumnArrayFinal2 = [];
-                    $currentMonth = Carbon::parse($toDate)->format('Y-m');
-                    $currentYear = Carbon::parse($toDate)->format('Y');
-                    $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
-                    $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
-                    $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
-                    $LYear = Carbon::parse($toDate)->subYear()->format('Y');
-                    $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
-                    $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
-                    foreach ($currentYearPeriod as $val) {
-                        $currentYearPeriodArr[] = $val->format('Y-m');
-                    }
-
-                    foreach ($lastYearPeriod as $val) {
-                        $lastYearPeriodArr[] = $val->format('Y-m');
-                    }
-
-                    $currentMonthColumn = collect($columns)->where('type', 3)->values();
-                    $prevMonthColumn = collect($columns)->where('type', 6)->values();
-                    if (count($currentMonthColumn) > 0) {
-                        foreach ($currentMonthColumn as $key => $val) {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
-                        }
-                    }
-
-                    if (count($prevMonthColumn) > 0) {
-                        foreach ($prevMonthColumn as $key => $val) {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
-                        }
-                    }
-
-                    foreach ($columns as $val) {
-                        if ($val->shortCode == 'CM') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $currentMonth;
-                        }
-                        if ($val->shortCode == 'CM-1') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $prevMonth;
-                        }
-                        if ($val->shortCode == 'CM-2') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $prevMonth2;
-                        }
-                        if ($val->shortCode == 'LYCM') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
-                        }
-                        if ($val->shortCode == 'LYCM-1') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $LPrevMonth;
-                        }
-                        if ($val->shortCode == 'LYCM-2') {
-                            $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
-                        }
-                        if ($val->shortCode == 'CYYTD') {
-                            if ($request->accountType == 2) {
-                                if ($request->dateType == 2) {
-                                    $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
-                                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                                }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            } else if ($request->accountType == 1) {
-                                if ($request->dateType == 2) {
-                                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                                }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            } else if ($request->accountType == 3) {
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            }
-
-                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
-                        }
-                        if ($val->shortCode == 'LYYTD') {
-                            if ($request->accountType == 2) {
-                                if ($request->dateType == 2) {
-                                    $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
-                                    $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
-                                }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            } else if ($request->accountType == 1) {
-                                if ($request->dateType == 2) {
-                                    $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
-                                }
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            } else if ($request->accountType == 3) {
-                                $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
-                            }
-
-                            $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
-                        }
-                    }
-                }
-
-                if (count($linkedColumn) > 0) {
-                    foreach ($linkedColumn as $val) {
-                        if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false);
-                        } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
-                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                        } else {
-                            $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                        }
-                    }
-                }
-
-                if (count($linkedcolumnArray2)) {
-                    foreach ($linkedcolumnArray2 as $key => $val) {
-                        if ($key == 'FCA' || $key == 'FCP') {
-                            $linkedcolumnArrayFinal2[$key] = '(' . $val . ') as ' . '`' . $key . '`';
-                        } else {
-                            $linkedcolumnArrayFinal2[$key] = $val . ' as ' . '`' . $key . '`';
-                        }
-                    }
-                }
-
-                $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
-
-                $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
-
-                if (count($linkedColumn) > 0) {
-                    foreach ($linkedColumn as $val) {
-                        if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true);
-                            $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description];
-                            $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
-                        } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
-                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                            $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor];
-                            $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
-                        } else {
-                            $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                            $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M')];
-                            $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M');
-                        }
-                    }
-                }
-
-                $columnKeys = collect($linkedcolumnArray)->keys()->all();
-
-                if (count($linkedcolumnArray)) {
-                    foreach ($linkedcolumnArray as $key => $val) {
-                        if ($key == 'FCA' || $key == 'FCP') {
-                            $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
-                        } else {
-                            $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
-                        }
-                    }
-                }
-
-                $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
+                // get generated customize column qury
+                $generatedColumn = $this->getFinancialCustomizeRptColumnQry($request);
+                $linkedcolumnQry = $generatedColumn['linkedcolumnQry'];
+                $columnKeys = $generatedColumn['columnKeys'];
+                $currencyColumn = $generatedColumn['currencyColumn'];
+                $columnHeader = $generatedColumn['columnHeader'];
+                $columnHeaderMapping = $generatedColumn['columnHeaderMapping'];
 
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
@@ -2661,212 +2469,19 @@ GROUP BY
             $sort = 'desc';
         }
 
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
         $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
+        $period = CompanyFinancePeriod::find($request->month);
 
-        $toDate = '';
-        $fromDate = '';
-        $month = '';
-        $period = '';
-        if ($request->dateType == 1) {
-            $toDate = new Carbon($request->toDate);
-            $toDate = $toDate->format('Y-m-d');
-            $fromDate = new Carbon($request->fromDate);
-            $fromDate = $fromDate->format('Y-m-d');
-        } else {
-            $period = CompanyFinancePeriod::find($request->month);
-            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-            $month = Carbon::parse($toDate)->format('Y-m-d');
-            $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
-        }
+        // get generated customized column
+        $generatedColumn = $this->getFinancialCustomizeRptColumnQry($request);
+        $linkedcolumnQry = $generatedColumn['linkedcolumnQry'];
 
-        $currencyColumn = '';
-
-        //formula column decode
-        if ($request->currency == 1) {
-            $currencyColumn = 'documentLocalAmount';
-        } else {
-            $currencyColumn = 'documentRptAmount';
-        }
-        $columns = ReportTemplateColumns::all();
-        $columnArray = [];
-        $columnHeaderArray = [];
-        $columnHeader = [];
-        $linkedcolumnArray = [];
-        $linkedcolumnArray2 = [];
-        $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
-        if (count($columns) > 0) {
-            $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
-            $currentYearPeriodArr = [];
-            $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
-            $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
-            $lastYearEndDate = Carbon::parse($financeYear->endingDate);
-            $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
-            $lastYearPeriod = CarbonPeriod::create($lastYearStartDate, '1 month', $lastYearEndDate);
-            $lastYearPeriodArr = [];
-            $linkedcolumnArrayFinal = [];
-            $linkedcolumnArrayFinal2 = [];
-            $currentMonth = Carbon::parse($toDate)->format('Y-m');
-            $currentYear = Carbon::parse($toDate)->format('Y');
-            $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
-            $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
-            $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
-            $LYear = Carbon::parse($toDate)->subYear()->format('Y');
-            $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
-            $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
-            foreach ($currentYearPeriod as $val) {
-                $currentYearPeriodArr[] = $val->format('Y-m');
-            }
-
-            foreach ($lastYearPeriod as $val) {
-                $lastYearPeriodArr[] = $val->format('Y-m');
-            }
-
-            $currentMonthColumn = collect($columns)->where('type', 3)->values();
-            $prevMonthColumn = collect($columns)->where('type', 6)->values();
-            if (count($currentMonthColumn) > 0) {
-                foreach ($currentMonthColumn as $key => $val) {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
-                }
-            }
-
-            if (count($prevMonthColumn) > 0) {
-                foreach ($prevMonthColumn as $key => $val) {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
-                }
-            }
-
-            foreach ($columns as $val) {
-                if ($val->shortCode == 'CM') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $currentMonth;
-                }
-                if ($val->shortCode == 'CM-1') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $prevMonth;
-                }
-                if ($val->shortCode == 'CM-2') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $prevMonth2;
-                }
-                if ($val->shortCode == 'LYCM') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
-                }
-                if ($val->shortCode == 'LYCM-1') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $LPrevMonth;
-                }
-                if ($val->shortCode == 'LYCM-2') {
-                    $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
-                }
-                if ($val->shortCode == 'CYYTD') {
-                    if ($request->accountType == 2) {
-                        if ($request->dateType == 2) {
-                            $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
-                            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                        }
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    } else if ($request->accountType == 1) {
-                        if ($request->dateType == 2) {
-                            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                        }
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    } else if ($request->accountType == 3) {
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    }
-
-                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
-                }
-                if ($val->shortCode == 'LYYTD') {
-                    if ($request->accountType == 2) {
-                        if ($request->dateType == 2) {
-                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
-                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
-                        }
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    } else if ($request->accountType == 1) {
-                        if ($request->dateType == 2) {
-                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
-                        }
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    } else if ($request->accountType == 3) {
-                        $columnArray[$val->shortCode] = "IFNULL(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0), 0 )";
-                    }
-
-                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
-                }
-            }
-        }
-
-        if (count($linkedColumn) > 0) {
-            foreach ($linkedColumn as $val) {
-                if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false);
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
-                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                } else {
-                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                }
-            }
-        }
-
-        if (count($linkedcolumnArray2)) {
-            foreach ($linkedcolumnArray2 as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal2[$key] = '(' . $val . ') as ' . '`' . $key . '`';
-                } else {
-                    $linkedcolumnArrayFinal2[$key] = $val . ' as ' . '`' . $key . '`';
-                }
-            }
-        }
-
-        $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
-
-        $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
-
-        if (count($linkedColumn) > 0) {
-            foreach ($linkedColumn as $val) {
-                if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true);
-                    $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor];
-                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
-                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                    $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor];
-                } else {
-                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                    $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor];
-                }
-            }
-        }
-
-        if (count($linkedcolumnArray)) {
-            foreach ($linkedcolumnArray as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
-                } else {
-                    $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
-                }
-            }
-        }
-
-        $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
@@ -2905,19 +2520,25 @@ GROUP BY
             }
         }
 
-        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes FROM (SELECT
+        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID FROM (SELECT
 						' . $firstLinkedcolumnQry . ' 
-						glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes
+						glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes,
+						erp_generalledger.documentNarration,
+						erp_generalledger.clientContractID,
+						IF
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName 
 					FROM
 						erp_generalledger
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					LEFT JOIN serviceline ON serviceline.serviceLineSystemID = erp_generalledger.serviceLineSystemID
+					LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                    LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
 					WHERE
 					    erp_generalledger.chartOfAccountSystemID = '.$input['glAutoID'].' AND
 						erp_generalledger.companySystemID IN (
 							' . join(',
 							', $companyID) . '
-						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.') a';
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a';
 
         $output = DB::select($sql);
 
@@ -2933,5 +2554,227 @@ GROUP BY
             ->make(true);
     }
 
+
+    function getFinancialCustomizeRptColumnQry($request){
+
+        $toDate = '';
+        $fromDate = '';
+        $month = '';
+        $period = '';
+        $currencyColumn = '';
+        $columnArray = [];
+        $columnHeaderArray = [];
+        $columnHeader = [];
+        $columnHeaderMapping = [];
+        $linkedcolumnArray = [];
+        $linkedcolumnArray2 = [];
+
+        $financeYear = CompanyFinanceYear::find($request->companyFinanceYearID);
+        if ($request->dateType == 1) {
+            $toDate = new Carbon($request->toDate);
+            $toDate = $toDate->format('Y-m-d');
+            $fromDate = new Carbon($request->fromDate);
+            $fromDate = $fromDate->format('Y-m-d');
+        } else {
+            $period = CompanyFinancePeriod::find($request->month);
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $month = Carbon::parse($toDate)->format('Y-m-d');
+            $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
+        }
+
+        //formula column decode
+        if ($request->currency == 1) {
+            $currencyColumn = 'documentLocalAmount';
+        } else {
+            $currencyColumn = 'documentRptAmount';
+        }
+
+        $columns = ReportTemplateColumns::all();
+        $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
+        if (count($columns) > 0) {
+            $currentYearPeriod = CarbonPeriod::create($financeYear->bigginingDate, '1 month', $financeYear->endingDate);
+            $currentYearPeriodArr = [];
+            $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+            $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+            $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+            $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+            $lastYearPeriod = CarbonPeriod::create($lastYearStartDate, '1 month', $lastYearEndDate);
+            $lastYearPeriodArr = [];
+            $linkedcolumnArrayFinal = [];
+            $linkedcolumnArrayFinal2 = [];
+            $currentMonth = Carbon::parse($toDate)->format('Y-m');
+            $currentYear = Carbon::parse($toDate)->format('Y');
+            $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
+            $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
+            $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
+            $LYear = Carbon::parse($toDate)->subYear()->format('Y');
+            $LPrevMonth = Carbon::parse($LCurrentMonth)->subMonth()->format('Y-m');
+            $LPrevMonth2 = Carbon::parse($LCurrentMonth)->subMonth(2)->format('Y-m');
+            foreach ($currentYearPeriod as $val) {
+                $currentYearPeriodArr[] = $val->format('Y-m');
+            }
+
+            foreach ($lastYearPeriod as $val) {
+                $lastYearPeriodArr[] = $val->format('Y-m');
+            }
+
+            $currentMonthColumn = collect($columns)->where('type', 3)->values();
+            $prevMonthColumn = collect($columns)->where('type', 6)->values();
+            if (count($currentMonthColumn) > 0) {
+                foreach ($currentMonthColumn as $key => $val) {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
+                }
+            }
+
+            if (count($prevMonthColumn) > 0) {
+                foreach ($prevMonthColumn as $key => $val) {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
+                }
+            }
+
+            foreach ($columns as $val) {
+                if ($val->shortCode == 'CM') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $currentMonth;
+                }
+                if ($val->shortCode == 'CM-1') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $prevMonth;
+                }
+                if ($val->shortCode == 'CM-2') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $prevMonth2;
+                }
+                if ($val->shortCode == 'LYCM') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
+                }
+                if ($val->shortCode == 'LYCM-1') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $LPrevMonth;
+                }
+                if ($val->shortCode == 'LYCM-2') {
+                    $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
+                }
+                if ($val->shortCode == 'CYYTD') {
+                    if ($request->accountType == 2) {
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
+                }
+                if ($val->shortCode == 'LYYTD') {
+                    if ($request->accountType == 2) {
+                        if ($request->dateType == 2) {
+                            $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
+                            $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 1) {
+                        if ($request->dateType == 2) {
+                            $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
+                        }
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    } else if ($request->accountType == 3) {
+                        $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') > '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') < '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+                    }
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
+                }
+            }
+        }
+
+        if (count($linkedColumn) > 0) {
+            foreach ($linkedColumn as $val) {
+                if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
+                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false);
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
+                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                } else {
+                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                }
+            }
+        }
+
+        if (count($linkedcolumnArray2)) {
+            foreach ($linkedcolumnArray2 as $key => $val) {
+                if ($key == 'FCA' || $key == 'FCP') {
+                    $linkedcolumnArrayFinal2[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                } else {
+                    $linkedcolumnArrayFinal2[$key] = $val . ' as ' . '`' . $key . '`';
+                }
+            }
+        }
+
+        $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
+        $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
+
+        if (count($linkedColumn) > 0) {
+            foreach ($linkedColumn as $val) {
+                if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
+                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true);
+                    $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
+                    $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
+                } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
+                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                    $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor,$val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode],'width' => $val->width];
+                    $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
+                } else {
+                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
+                    $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'width' => $val->width];
+                    $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M');
+                }
+            }
+        }
+
+        $columnKeys = collect($linkedcolumnArray)->keys()->all();
+
+        if (count($linkedcolumnArray)) {
+            foreach ($linkedcolumnArray as $key => $val) {
+                if ($key == 'FCA' || $key == 'FCP') {
+                    $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                } else {
+                    $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
+                }
+            }
+        }
+
+        $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
+
+        return [
+            'linkedcolumnQry' => $linkedcolumnQry,
+            'columnArray' => $columnArray,
+            'columnKeys' => $columnKeys,
+            'columnHeader' => $columnHeader,
+            'columnHeaderMapping' => $columnHeaderMapping,
+            'currencyColumn' => $currencyColumn];
+    }
 
 }
