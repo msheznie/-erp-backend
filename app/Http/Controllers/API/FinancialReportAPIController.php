@@ -2281,7 +2281,6 @@ FROM
 	) f
 GROUP BY
 	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ')';
-
         $output = \DB::select($sql);
         return $output;
     }
@@ -2453,6 +2452,8 @@ GROUP BY
                         $replaceVal = '';
                         if (count($detValues) > 0) {
                             $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                        }else{
+                            $replaceVal = '$0';
                         }
                         $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                     }
