@@ -99,10 +99,10 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-/*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
-        if ($supplier) {
-            $input['inDays'] = $supplier->creditPeriod;
-        }*/
+        /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+                if ($supplier) {
+                    $input['inDays'] = $supplier->creditPeriod;
+                }*/
         $input['inDays'] = $purchaseOrder->creditPeriod;
 
         if (!empty($purchaseOrder->createdDateTime) && !empty($purchaseOrder->creditPeriod)) {
@@ -167,6 +167,12 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+        $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
+
+        if (empty($poPaymentTerms)) {
+            return $this->sendError('Po Payment Terms not found');
+        }
+
         /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
                 if ($supplier) {
                     $input['inDays'] = $supplier->creditPeriod;
@@ -178,6 +184,26 @@ class PoPaymentTermsAPIController extends AppBaseController
                     $input['comDate'] = new Carbon($input['comDate']);
                 }
             }
+
+            if ($poPaymentTerms->comDate != $input['comDate']) {
+                $createdDate_format = strtotime($purchaseOrder->createdDateTime);
+                $comDate_format = strtotime($input['comDate']);
+
+                $datediff = $comDate_format - $createdDate_format;
+                $calculatedIndays = round($datediff / (60 * 60 * 24));
+
+                $input['inDays'] = $calculatedIndays;
+                $addedDate = strtotime("+$calculatedIndays day", strtotime($purchaseOrder->createdDateTime));
+                $input['comDate'] = date("Y-m-d", $addedDate);
+
+            } else {
+
+                $calculatedIndays = $input['inDays'];
+
+                $addedDate = strtotime("+$calculatedIndays day", strtotime($purchaseOrder->createdDateTime));
+                $input['comDate'] = date("Y-m-d", $addedDate);
+            }
+
         } else {
             if (!empty($purchaseOrder->createdDateTime) && $daysin != 0) {
                 $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->createdDateTime));
@@ -297,7 +323,7 @@ class PoPaymentTermsAPIController extends AppBaseController
                     ->where('poID', $purchaseOrderID)
                     ->first();
 
-                if(!empty($PoAdvancePaymentFetch)){
+                if (!empty($PoAdvancePaymentFetch)) {
 
                     //update advance payment terms table
                     $advancePaymentTermUpdate = PoAdvancePayment::find($PoAdvancePaymentFetch->poAdvPaymentID);
