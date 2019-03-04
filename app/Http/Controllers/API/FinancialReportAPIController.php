@@ -1152,6 +1152,9 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
 
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         $chartOfAccountID = $request->chartOfAccountSystemID;
@@ -1159,6 +1162,16 @@ class FinancialReportAPIController extends AppBaseController
             $companyID = \Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
+        }
+
+        $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
+        $dateQry = '';
+        if($chartOfAccount){
+            if($chartOfAccount->catogaryBLorPLID == 2){
+                $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+            }else{
+                $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
+            }
         }
 
         $query = 'SELECT erp_generalledger.companyID,
@@ -1179,7 +1192,7 @@ class FinancialReportAPIController extends AppBaseController
                                     erp_generalledger 
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
                                 WHERE
-                                    DATE(erp_generalledger.documentDate) <= "' . $toDate . '"	
+                                    '.$dateQry.'	
                                     AND erp_generalledger.chartOfAccountSystemID  = ' . $chartOfAccountID . '
                                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  ORDER BY erp_generalledger.documentDate;';
 
@@ -2281,7 +2294,6 @@ FROM
 	) f
 GROUP BY
 	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ')';
-
         $output = \DB::select($sql);
         return $output;
     }
@@ -2453,6 +2465,8 @@ GROUP BY
                         $replaceVal = '';
                         if (count($detValues) > 0) {
                             $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                        }else{
+                            $replaceVal = '$0';
                         }
                         $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                     }

@@ -83,10 +83,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
-        if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-            return Storage::disk('public')->download($documentAttachments->path,$documentAttachments->myFileName);
-        } else {
-            return $this->sendError('Attachments not found', 500);
+        if(!is_null($documentAttachments->path)) {
+            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
+                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+        }else{
+            return $this->sendError('Attachment is not attached', 401);
         }
     }
 
