@@ -2440,23 +2440,25 @@ GROUP BY
         }
 
         if ($linkedRows) {
-            $linkedColumnsShortCode = ReportTemplateColumnLink::where('columnLinkID', $linkedColumns)->first();
-            $columnCustomeCode = $linkedColumnsShortCode->shortCode . '-' . $linkedColumns;
-            $explodeLinkedRows = explode(',', $linkedRows);
-            if ($explodeLinkedRows) {
-                foreach ($explodeLinkedRows as $val) {
-                    $searchVal = '$' . $val;
-                    $filtered = $rowValues->where('templateDetailID', $val);
-                    $detValues = $filtered->values();
-                    $replaceVal = '';
-                    if (count($detValues) > 0) {
-                        $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+            $explodedLinkedColumns = explode(',', $linkedColumns);
+            $linkedColumnsShortCode = ReportTemplateColumnLink::whereIN('columnLinkID', $explodedLinkedColumns)->get();
+            foreach($linkedColumnsShortCode as $column){
+                $columnCustomeCode = $column->shortCode . '-' . $column->columnLinkID;
+                $explodeLinkedRows = explode(',', $linkedRows);
+                if ($explodeLinkedRows) {
+                    foreach ($explodeLinkedRows as $val) {
+                        $searchVal = '$' . $val;
+                        $filtered = $rowValues->where('templateDetailID', $val);
+                        $detValues = $filtered->values();
+                        $replaceVal = '';
+                        if (count($detValues) > 0) {
+                            $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
+                        }
+                        $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                     }
-                    $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
                 }
             }
         }
-
         return $globalFormula;
     }
 
