@@ -2373,7 +2373,7 @@ WHERE
     function getAssetRegisterSummaryDrillDownQRY(Request $request)
     {
         $input = $request->all();
-        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2400,17 +2400,30 @@ WHERE
             $currencyColumn = 'costUnitRpt';
             $currencyColumnDep = 'depAmountRpt';
         }
+        $search = $request->input('search.value');
 
         // asset cost
         if ($request->catType == 1) {
             if ($request->subType == 1) { //opening
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereDate('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if($search){
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode','like',$search);
+                }
             }
             if ($request->subType == 2) { //addition
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(postedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if($search){
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode','like',$search);
+                }
             }
             if ($request->subType == 3) {// disposal
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if($search){
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode','like',$search);
+                }
             }
         }
 
@@ -2427,6 +2440,11 @@ WHERE
                     $q->assetType($request->typeID);
                     $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
                     $q->isApproved();
+                    $search = $request->input('search.value');
+                    if($search){
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode','like',$search);
+                    }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
 
@@ -2439,6 +2457,11 @@ WHERE
                 })->whereHas('asset_by', function ($q) use ($request) {
                     $q->assetType($request->typeID);
                     $q->isApproved();
+                    $search = $request->input('search.value');
+                    if($search){
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode','like',$search);
+                    }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
 
@@ -2453,15 +2476,14 @@ WHERE
                     $q->disposed(-1);
                     $q->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
                     $q->isApproved();
+                    $search = $request->input('search.value');
+                    if($search){
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode','like',$search);
+                    }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
         }
-
-        /*$search = $request->input('search.value');
-        if($search){
-            $financeItemCategoryMasters =   $financeItemCategoryMasters->where('categoryDescription','LIKE',"%{$search}%")
-                ->orWhere('itemCodeDef', 'LIKE', "%{$search}%");
-        }*/
 
         $total = $output->get();
         $total = collect($total)->sum('amount');
