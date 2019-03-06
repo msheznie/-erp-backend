@@ -109,7 +109,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             $addedDate = strtotime("+$purchaseOrder->creditPeriod day", strtotime($purchaseOrder->createdDateTime));
             $input['comDate'] = date("Y-m-d", $addedDate);
         } else {
-            $input['comDate'] = '';
+            $input['comDate'] = $purchaseOrder->createdDateTime;
         }
 
         if ($input['LCPaymentYN'] == 1) {
