@@ -1,0 +1,570 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : ConsoleJVMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  General Ledger
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 06 - March 2019
+ * -- Description : This file contains the all CRUD for Console JV
+ * -- REVISION HISTORY
+ * -- Date: 06 - March 2019 By: Mubashir Description: Added new functions named as getAllConsoleJV()
+ * -- Date: 07 - March 2019 By: Mubashir Description: Added new functions named as getConsoleJVMasterFormData()
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateConsoleJVMasterAPIRequest;
+use App\Http\Requests\API\UpdateConsoleJVMasterAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\ConsoleJVDetail;
+use App\Models\ConsoleJVMaster;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
+use App\Models\JvMaster;
+use App\Models\Months;
+use App\Models\SegmentMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Repositories\ConsoleJVMasterRepository;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ConsoleJVMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class ConsoleJVMasterAPIController extends AppBaseController
+{
+    /** @var  ConsoleJVMasterRepository */
+    private $consoleJVMasterRepository;
+
+    public function __construct(ConsoleJVMasterRepository $consoleJVMasterRepo)
+    {
+        $this->consoleJVMasterRepository = $consoleJVMasterRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/consoleJVMasters",
+     *      summary="Get a listing of the ConsoleJVMasters.",
+     *      tags={"ConsoleJVMaster"},
+     *      description="Get all ConsoleJVMasters",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ConsoleJVMaster")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->consoleJVMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->consoleJVMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $consoleJVMasters = $this->consoleJVMasterRepository->all();
+
+        return $this->sendResponse($consoleJVMasters->toArray(), 'Console J V Masters retrieved successfully');
+    }
+
+    /**
+     * @param CreateConsoleJVMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/consoleJVMasters",
+     *      summary="Store a newly created ConsoleJVMaster in storage",
+     *      tags={"ConsoleJVMaster"},
+     *      description="Store ConsoleJVMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ConsoleJVMaster that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ConsoleJVMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ConsoleJVMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateConsoleJVMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = \Validator::make($input, [
+            'consoleJVdate' => 'required|date',
+            'currencyID' => 'required',
+            'consoleJVNarration' => 'required',
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['consoleJVdate'] = new Carbon($input['consoleJVdate']);
+        $input['currencyER'] = 1;
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $documentMaster = DocumentMaster::find($input['documentSystemID']);
+        if ($documentMaster) {
+            $input['documentID'] = $documentMaster->documentID;
+        }
+
+        $lastSerial = ConsoleJVMaster::orderBy('serialNo', 'desc')->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        if ($documentMaster) {
+            $documentCode = ($company->CompanyID . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['consoleJVcode'] = $documentCode;
+        }
+        $input['serialNo'] = $lastSerialNumber;
+
+        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+        if ($companyCurrency) {
+            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+            $input['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+            if ($companyCurrencyConversion) {
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            }
+        }
+
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdPcID'] = gethostname();
+
+        $consoleJVMasters = $this->consoleJVMasterRepository->create($input);
+
+        return $this->sendResponse($consoleJVMasters->toArray(), 'Console JV Master saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/consoleJVMasters/{id}",
+     *      summary="Display the specified ConsoleJVMaster",
+     *      tags={"ConsoleJVMaster"},
+     *      description="Get ConsoleJVMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ConsoleJVMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ConsoleJVMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ConsoleJVMaster $consoleJVMaster */
+        $consoleJVMaster = $this->consoleJVMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
+
+        if (empty($consoleJVMaster)) {
+            return $this->sendError('Console J V Master not found');
+        }
+
+        return $this->sendResponse($consoleJVMaster->toArray(), 'Console J V Master retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateConsoleJVMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/consoleJVMasters/{id}",
+     *      summary="Update the specified ConsoleJVMaster in storage",
+     *      tags={"ConsoleJVMaster"},
+     *      description="Update ConsoleJVMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ConsoleJVMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ConsoleJVMaster that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ConsoleJVMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ConsoleJVMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateConsoleJVMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = \Validator::make($input, [
+            'consoleJVdate' => 'required|date',
+            'currencyID' => 'required',
+            'consoleJVNarration' => 'required',
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        /** @var ConsoleJVMaster $consoleJVMaster */
+        $consoleJVMaster = $this->consoleJVMasterRepository->findWithoutFail($id);
+
+        if (empty($consoleJVMaster)) {
+            return $this->sendError('Console JV Master not found');
+        }
+
+        $input['consoleJVdate'] = new Carbon($input['consoleJVdate']);
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $documentMaster = DocumentMaster::find($input['documentSystemID']);
+        if ($documentMaster) {
+            $input['documentID'] = $documentMaster->documentID;
+        }
+
+        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+        if ($companyCurrency) {
+            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+            $input['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+            if ($companyCurrencyConversion) {
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            }
+        }
+
+        if ($consoleJVMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'consoleJVdate' => 'required',
+                'consoleJVNarration' => 'required',
+                'currencyID' => 'required|numeric|min:1',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $finalError = array(
+                'required_serviceLine' => array(),
+                'active_serviceLine' => array(),
+                'required_glcode' => array(),
+            );
+
+            $error_count = 0;
+
+            $consoleJVDetail = ConsoleJVDetail::ofMaster($id)->get();
+            foreach ($consoleJVDetail as $item) {
+                if ($item->serviceLineSystemID && !is_null($item->serviceLineSystemID)) {
+                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $item->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActive)) {
+                        $item->serviceLineSystemID = null;
+                        $item->serviceLineCode = null;
+                        array_push($finalError['active_serviceLine'], $item->companyID);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine'], $item->companyID);
+                    $error_count++;
+                }
+
+                if (is_null($item->glAccountSystemID) || $item->glAccountSystemID == 0) {
+                    array_push($finalError['required_glcode'], $item->companyID);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $jvDetail = ConsoleJVDetail::selectRAW('SUM(debitAmount) as debitAmount,SUM(creditAmount) as creditAmount,SUM(debitAmount) - SUM(creditAmount) as balance')->ofMaster($id)->first();
+            if($jvDetail){
+                if($jvDetail->balance != 0){
+                    return $this->sendError('Debit and Credit amount not matching',500,['type' => 'confirm']);
+                }
+            }
+
+            $input['confirmedYN'] = 1;
+            $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['confirmedByEmpID'] = \Helper::getEmployeeID();
+            $input['confirmedByName'] = \Helper::getEmployeeName();
+            $input['confirmedDate'] = NOW();
+        }
+
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedPc'] = gethostname();
+
+        $consoleJVMaster = $this->consoleJVMasterRepository->update($input, $id);
+
+        return $this->sendResponse($consoleJVMaster->toArray(), 'ConsoleJVMaster updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/consoleJVMasters/{id}",
+     *      summary="Remove the specified ConsoleJVMaster from storage",
+     *      tags={"ConsoleJVMaster"},
+     *      description="Delete ConsoleJVMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ConsoleJVMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ConsoleJVMaster $consoleJVMaster */
+        $consoleJVMaster = $this->consoleJVMasterRepository->findWithoutFail($id);
+
+        if (empty($consoleJVMaster)) {
+            return $this->sendError('Console J V Master not found');
+        }
+
+        $consoleJVMaster->delete();
+
+        return $this->sendResponse($id, 'Console J V Master deleted successfully');
+    }
+
+
+    public function getAllConsoleJV(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'confirmedYN'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+
+        $consoleJV = ConsoleJVMaster::with(['created_by'])->ofCompany($selectedCompanyId);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $consoleJV->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $consoleJV->whereMonth('consoleJVdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $consoleJV->whereYear('consoleJVdate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $consoleJV = $consoleJV->where(function ($query) use ($search) {
+                $query->where('consoleJVcode', 'LIKE', "%{$search}%");
+                $query->orWhere('consoleJVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($consoleJV)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('consoleJvMasterAutoId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getConsoleJVGL(request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $items = ChartOfAccount::where('controllAccountYN', 0)
+            ->where('isActive', 1)
+            ->where('isApproved', 1);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
+
+    public function getConsoleJVMasterFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+        $month = Months::all();
+
+        $years = ConsoleJVMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+        $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+        $company = Company::where('masterCompanySystemIDReorting',$companyId)->get();
+
+        $segment = SegmentMaster::all();
+
+        $output = array('yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'currencies' => $currencies,
+            'company' => $company,
+            'segments' => $segment,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+}

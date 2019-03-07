@@ -2265,6 +2265,15 @@ class Helper
         return 0;
     }
 
+    public static function getEmployeeName()
+    {
+        $employee = Models\Employee::find(Auth::id());
+        if (!empty($employee)) {
+            return $employee->empName;
+        }
+        return 0;
+    }
+
     public static function getEmployeeID()
     {
         $user = Models\User::find(Auth::id());
@@ -2633,6 +2642,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingExchangeRate';
                 $docInforArr["localCurrencyER"] = 'transactionExchangeRate';
                 $docInforArr["defaultCurrencyER"] = 'transactionExchangeRate';
+                break;
+            case 69: // Console JV
+                $docInforArr["modelName"] = 'ConsoleJVMaster';
+                $docInforArr["transCurrencyID"] = 'currencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'currencyID';
+                $docInforArr["rptCurrencyID"] = 'rptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'currencyER';
+                $docInforArr["rptCurrencyER"] = 'rptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'currencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];

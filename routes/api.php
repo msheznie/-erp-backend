@@ -1424,6 +1424,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
     Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee');
+
+    Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
+    Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
+    Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
+    Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
+    Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
+    Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
 });
 
 
@@ -1462,8 +1469,6 @@ Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfE
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
 Route::get('loginwithToken', 'UserAPIController@loginwithToken');
 
-
-
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
@@ -1491,7 +1496,3 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
-
-
-
-
