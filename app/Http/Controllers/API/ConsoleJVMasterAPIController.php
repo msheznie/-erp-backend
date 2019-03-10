@@ -533,6 +533,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $items = ChartOfAccount::where('controllAccountYN', 0)
             ->where('isActive', 1)
+            ->where('isBank', 0)
             ->where('isApproved', 1);
 
         if (array_key_exists('search', $input)) {
@@ -568,7 +569,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             ->get();
         $company = Company::where('masterCompanySystemIDReorting',$companyId)->get();
 
-        $segment = SegmentMaster::all();
+        $segment = SegmentMaster::where('isActive',1)->get();
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
