@@ -8,6 +8,7 @@
  * -- Create date : 06 - March 2019
  * -- Description : This file contains the all CRUD for Console JV
  * -- Date: 07 - March 2019 By: Mubashir Description: Added new functions named as getConsoleJVDetailByMaster()
+ * -- Date: 10 - March 2019 By: Mubashir Description: Added new functions named as deleteAllConsoleJVDet()
  * -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
@@ -138,6 +139,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
 
         $input['serviceLineSystemID'] = null;
         $input['glAccountSystemID'] = null;
+        $input['glDate'] = $jvMaster->consoleJVdate;
 
         $input['currencyID'] = $jvMaster->currencyID;
         $input['currencyER'] = $jvMaster->currencyER;
@@ -280,12 +282,16 @@ class ConsoleJVDetailAPIController extends AppBaseController
             $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input['debitAmount']);
             $input["localDebitAmount"] = $conversionAmount["localAmount"];
             $input["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+        }else{
+            $input['debitAmount'] = 0;
         }
 
         if($input['creditAmount']){
             $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input["creditAmount"]);
             $input["localCreditAmount"] = $conversionAmount["localAmount"];
             $input["rptCreditAmount"] = $conversionAmount["reportingAmount"];
+        }else{
+            $input['creditAmount'] = 0;
         }
 
         $consoleJVDetail = $this->consoleJVDetailRepository->update($input, $id);
@@ -354,5 +360,10 @@ class ConsoleJVDetailAPIController extends AppBaseController
         }
 
         return $this->sendResponse($consoleJVDetail->toArray(), 'Console JV Detail retrieved successfully');
+    }
+
+    public function deleteAllConsoleJVDet(Request $request){
+        $consoleJVDetail = ConsoleJVDetail::ofMaster($request->consoleJvMasterAutoId)->delete();
+        return $this->sendResponse($consoleJVDetail, 'Console JV Detail deleted successfully');
     }
 }

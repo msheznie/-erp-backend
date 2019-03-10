@@ -322,8 +322,6 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
         if ($companyCurrency) {
-            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-            $input['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
             if ($companyCurrencyConversion) {
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
@@ -346,7 +344,8 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $finalError = array(
                 'required_serviceLine' => array(),
                 'active_serviceLine' => array(),
-                'required_glcode' => array(),
+                'required_glCode' => array(),
+                'active_glCode' => array(),
             );
 
             $error_count = 0;
@@ -368,8 +367,20 @@ class ConsoleJVMasterAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                if (is_null($item->glAccountSystemID) || $item->glAccountSystemID == 0) {
-                    array_push($finalError['required_glcode'], $item->companyID);
+                if ($item->glAccountSystemID && !is_null($item->glAccountSystemID)) {
+                    $checkChartOfAccountActive = ChartOfAccount::where('chartOfAccountSystemID', $item->glAccountSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkChartOfAccountActive)) {
+                        $item->glAccountSystemID = null;
+                        $item->glAccount = null;
+                        $item->glAccountDescription = null;
+                        array_push($finalError['active_glCode'], $item->companyID);
+                        $error_count++;
+                    }
+                }
+                else if (is_null($item->glAccountSystemID) || $item->glAccountSystemID == 0) {
+                    array_push($finalError['required_glCode'], $item->companyID);
                     $error_count++;
                 }
             }
@@ -383,6 +394,10 @@ class ConsoleJVMasterAPIController extends AppBaseController
             if($jvDetail){
                 if($jvDetail->balance != 0){
                     return $this->sendError('Debit and Credit amount not matching',500,['type' => 'confirm']);
+                }
+
+                if($jvDetail->debitAmount == 0 && $jvDetail->creditAmount == 0){
+                    return $this->sendError('Total debit and credit amount cannot be zero',500,['type' => 'confirm']);
                 }
             }
 
