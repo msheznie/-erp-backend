@@ -138,6 +138,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             'consoleJVdate' => 'required|date',
             'currencyID' => 'required',
             'consoleJVNarration' => 'required',
+            'jvType' => 'required',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
@@ -295,6 +296,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             'consoleJVdate' => 'required|date',
             'currencyID' => 'required',
             'consoleJVNarration' => 'required',
+            'jvType' => 'required',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
