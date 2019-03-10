@@ -166,6 +166,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAR': //Asset Register
                 if ($request->reportTypeID == 'ARD') { // Asset Register Detail
                     /*shahmy*/
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $typeID = $request->typeID;
                     $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
                     $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
@@ -197,7 +198,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
                     $financeYear = CompanyFinanceYear::find($request->financeYear);
                     $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
@@ -246,7 +247,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID','typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
@@ -256,6 +257,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAA': //Asset Additions
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                 $output = $this->getAssetAdditionsQRY($request);
 
                 $outputArr = array();
@@ -277,7 +279,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAD': //Asset Disposal
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -332,7 +334,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
 
@@ -356,7 +358,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output['data'], 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $output['month']);
                 } else if ($reportTypeID == 'ADDM') { //Asset Depreciation Detail Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailMonthlyQRY($request);
 
@@ -398,7 +400,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
 
                 } else if ($reportTypeID == 'ADDS') { //Asset Depreciation Detail Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailSummaryQRY($request);
 
@@ -435,7 +437,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCS') { //Asset Depreciation Category Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryQRY($request);
 
@@ -472,7 +474,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCSM') { //Asset Depreciation Category Summary Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryMonthlyQRY($request);
 
@@ -515,7 +517,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
                 break;
             case 'AMACWIP': //Asset CWIP
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
@@ -535,6 +537,7 @@ class AssetManagementReportAPIController extends AppBaseController
         switch ($reportID) {
             case 'AMAR': //Asset Register
                 if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
                     $outputArr = [];
                     if ($output) {
@@ -720,7 +723,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID','typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
@@ -776,7 +779,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                     $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
                     $financeYear = CompanyFinanceYear::find($request->financeYear);
                     $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
@@ -894,6 +897,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAA': //Asset Additions
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                 $type = $request->type;
                 $output = $this->getAssetAdditionsQRY($request);
                 if ($output) {
@@ -940,7 +944,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAD': //Asset Disposal
 
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                 $output = $this->getAssetDisposal($request);
 
                 $data = array();
@@ -987,7 +991,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $data = [];
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
                     if ($output['data']) {
@@ -1091,7 +1095,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
                 break;
             case 'AMACWIP': //Asset CWIP
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
@@ -2202,14 +2206,15 @@ WHERE
         $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
-        $searchText = $request->searchText;
-
 
         $where = "";
-        if ($searchText != '') {
-            $searchText = str_replace("\\", "\\\\", $searchText);
-            $where = " AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+        if(isset($request->searchText)) {
+            $searchText = $request->searchText;
+            if ($searchText != '') {
+                $searchText = str_replace("\\", "\\\\", $searchText);
+                $where = " AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
             erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
+            }
         }
 
         $qry = "
