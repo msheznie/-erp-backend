@@ -444,11 +444,13 @@ class FinancialReportAPIController extends AppBaseController
                 $grandTotalUncatArr = [];
                 $uncategorizeArr = [];
                 $uncategorizeDetailArr = [];
+                $grandTotal = [];
                 if ($request->accountType == 1 || $request->accountType == 2) {
                     $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
-                    $lastColumn = collect($headers)->last(); // considering net total
+                    $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
+                    //$lastColumn = collect($headers)->last(); // considering net total
                     foreach ($columnKeys as $key => $val) {
-                        $grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
+                        //$grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
                         $uncategorizeArr[$val] = $uncategorizeData['output'][0]->$val;
                     }
                     $uncategorizeDetailArr = $uncategorizeData['outputDetail'];
@@ -512,7 +514,7 @@ class FinancialReportAPIController extends AppBaseController
                     'closingBalance' => $outputClosingBalanceArr,
                     'uncategorize' => $uncategorizeArr,
                     'uncategorizeDrillDown' => $uncategorizeDetailArr,
-                    'grandTotalUncatArr' => $grandTotalUncatArr,
+                    'grandTotalUncatArr' => $grandTotal[0],
                     'numbers' => $divisionValue,
                     'month' => $month,
                 );
@@ -1943,7 +1945,6 @@ AND MASTER .canceledYN = 0';
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
-        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $secondLinkedcolumnQry = '';
         //$thirdLinkedcolumnQry = '';
         $fourthLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
@@ -2420,6 +2421,131 @@ GROUP BY
 
 
         return ['output' => $output, 'outputDetail' => $outputDetail];
+    }
+
+    function getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys){
+
+        if ($request->dateType == 1) {
+            $toDate = new Carbon($request->toDate);
+            $toDate = $toDate->format('Y-m-d');
+            $fromDate = new Carbon($request->fromDate);
+            $fromDate = $fromDate->format('Y-m-d');
+        } else {
+            $period = CompanyFinancePeriod::find($request->month);
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
+        }
+
+        $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+        $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+        $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
+
+        $lastYearStartDate = Carbon::parse($financeYear->bigginingDate);
+        $lastYearStartDate = $lastYearStartDate->subYear()->format('Y-m-d');
+        $lastYearEndDate = Carbon::parse($financeYear->endingDate);
+        $lastYearEndDate = $lastYearEndDate->subYear()->format('Y-m-d');
+
+        $dateFilter = '';
+        $documentQry = '';
+        $servicelineQry = '';
+        if ($request->dateType == 1) {
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+        } else {
+            if ($request->accountType == 2) {
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            } else {
+                $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+            }
+        }
+
+        if ($request->accountType == 3) {
+            if (count($documents) > 0) {
+                $documentQry = 'AND erp_generalledger.documentSystemID IN (' . join(',', $documents) . ')';
+            }
+        }
+
+        if ($request->accountType == 2) {
+            if (count($serviceline) > 0) {
+                $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+            }
+        }
+
+        $reportTemplateMaster = ReportTemplate::find($request->templateType);
+        $uncategorizeGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->whereNotExists(function ($query) use ($request) {
+            $query->selectRaw('*')
+                ->from('erp_companyreporttemplatelinks')
+                ->where('templateMasterID', $request->templateType)
+                ->whereRaw('chartofaccounts.chartOfAccountSystemID = erp_companyreporttemplatelinks.glAutoID');
+        })->pluck('chartOfAccountSystemID')->toArray();
+
+        $thirdLinkedcolumnQry = '';
+        $whereQry = [];
+        $secondLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 : '';
+        foreach ($columnKeys as $key => $val) {
+            $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
+            $whereQry[] .= 'b.`' . $val . '` != 0';
+        }
+
+        $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $sql = 'SELECT ' . $secondLinkedcolumnQry . ' FROM (SELECT * FROM (SELECT
+	' . $secondLinkedcolumnQry . '
+FROM
+	(
+		SELECT
+			' . $thirdLinkedcolumnQry . ' 
+			templateDetailID,
+			description
+			FROM
+			(
+				(
+					SELECT
+						' . $firstLinkedcolumnQry . ' 
+						erp_generalledger.chartOfAccountSystemID
+					FROM
+						erp_generalledger
+					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+					WHERE
+						erp_generalledger.companySystemID IN (
+							' . join(',
+							', $companyID) . '
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+					GROUP BY
+						erp_generalledger.chartOfAccountSystemID
+				) g
+				INNER JOIN (
+					SELECT
+						erp_companyreporttemplatelinks.glAutoID,
+						erp_companyreporttemplatelinks.templateDetailID,
+						erp_companyreporttemplatelinks.categoryType AS linkCatType,
+						erp_companyreporttemplatedetails.description,
+						erp_companyreporttemplatedetails.categoryType AS templateCatType
+					FROM
+						erp_companyreporttemplatelinks
+					INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
+					WHERE
+						erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . '
+					ORDER BY
+						erp_companyreporttemplatedetails.sortOrder
+				) AS a ON a.glAutoID = g.chartOfAccountSystemID
+			)
+	) f
+GROUP BY
+	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') UNION SELECT  ' . $secondLinkedcolumnQry . ' FROM (SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID) a) b';
+        $output = \DB::select($sql);
+        return $output;
     }
 
     /**
