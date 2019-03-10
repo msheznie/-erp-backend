@@ -336,6 +336,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'consoleJVdate' => 'required',
                 'consoleJVNarration' => 'required',
+                'jvType' => 'required|not_in:0',
                 'currencyID' => 'required|numeric|min:1',
             ]);
 
