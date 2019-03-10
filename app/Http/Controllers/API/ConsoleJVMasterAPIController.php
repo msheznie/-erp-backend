@@ -138,6 +138,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             'consoleJVdate' => 'required|date',
             'currencyID' => 'required',
             'consoleJVNarration' => 'required',
+            'jvType' => 'required',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
@@ -295,6 +296,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             'consoleJVdate' => 'required|date',
             'currencyID' => 'required',
             'consoleJVNarration' => 'required',
+            'jvType' => 'required',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
@@ -334,6 +336,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'consoleJVdate' => 'required',
                 'consoleJVNarration' => 'required',
+                'jvType' => 'required|not_in:0',
                 'currencyID' => 'required|numeric|min:1',
             ]);
 
