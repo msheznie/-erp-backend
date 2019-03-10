@@ -99,6 +99,7 @@ class ItemAssignedAPIController extends AppBaseController
             }
             $itemAssigneds->isActive = $input['isActive'];
             $itemAssigneds->isAssigned = $input['isAssigned'];
+            $itemAssigneds->itemMovementCategory = $input['itemMovementCategory'];
             $itemAssigneds->save();
         } else {
 
@@ -152,6 +153,7 @@ class ItemAssignedAPIController extends AppBaseController
     public function update($id, UpdateItemAssignedAPIRequest $request)
     {
         $input = array_except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
+        $input = $this->convertArrayToSelectedValue($input,['itemMovementCategory']);
 
         /** @var ItemAssigned $itemAssigned */
         $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
@@ -160,7 +162,7 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError('Item not found');
         }
 
-        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity'];
+        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity','itemMovementCategory'];
 
         $rules = [];
 
