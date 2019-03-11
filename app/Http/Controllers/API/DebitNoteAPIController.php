@@ -328,11 +328,15 @@ class DebitNoteAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DebitNote $debitNote */
-        $debitNote = $this->debitNoteRepository->with(['confirmed_by', 'created_by', 'supplier', 'finance_period_by' => function ($query) {
+        $debitNote = $this->debitNoteRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }, 'transactioncurrency'])->findWithoutFail($id);
+        }, 'supplier' => function($query){
+            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
+        },'transactioncurrency'=> function($query){
+            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,DecimalPlaces,currencyID');
+        }])->findWithoutFail($id);
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
