@@ -1528,7 +1528,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             Storage::disk('local')->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
             })->first()->toArray();
 
             if (count($formatChk) > 0) {
@@ -1537,13 +1537,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
-            $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
             })->select(array('asset_description', 'serial_no'))->get()->toArray();
 
             $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
             $uploadSerialNumberUnique = array_unique($uploadSerialNumber);
 
-            $fixedAsset = $this->fixedAssetMasterRepository->findWhere(['companySystemID' => $input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
+            $fixedAsset = FixedAssetMaster::ofCompany([$input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
 
             if (count($record) > 0) {
                 // check for duplicate serial number in db
@@ -1611,6 +1611,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $data['createdPcID'] = gethostname();
                         $data['createdUserID'] = \Helper::getEmployeeID();
                         $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['timestamp'] = NOW();
                         $finalData[] = $data;
                         $lastSerialNumber++;
                     }
@@ -1624,7 +1625,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     FixedAssetMaster::insert($t);
                 }
             }
-            Storage::disk('local')->delete($originalFileName);
+            Storage::disk('local')->delete('app/' . $originalFileName);
             DB::commit();
             return $this->sendResponse([], 'Assets uploaded successfully');
         } catch (\Exception $exception) {
