@@ -436,7 +436,7 @@ class CreateStockReceive implements ShouldQueue
                                 if (!empty($toCompanyFinancePeriod)) {
                                     $stockReceive->companyFinanceYearID = $toCompanyFinancePeriod->companyFinanceYearID;
                                     $stockReceive->companyFinancePeriodID = $toCompanyFinancePeriod->companyFinancePeriodID;
-                                    $stockReceive->receivedDate = $stMaster->tranferDate;
+                                    $stockReceive->receivedDate = $today;
                                 }
 
                                 if ($companyFinanceYear) {
