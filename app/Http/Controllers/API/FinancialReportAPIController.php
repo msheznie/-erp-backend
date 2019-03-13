@@ -2712,13 +2712,15 @@ GROUP BY
             }
         }
 
-        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID FROM (SELECT
+        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID,documentSystemCode,documentSystemID FROM (SELECT
 						' . $firstLinkedcolumnQry . ' 
 						glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes,
 						erp_generalledger.documentNarration,
 						erp_generalledger.clientContractID,
 						IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName 
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
+                         erp_generalledger.documentSystemCode,
+                         erp_generalledger.documentSystemID
 					FROM
 						erp_generalledger
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
@@ -2730,7 +2732,7 @@ GROUP BY
 						erp_generalledger.companySystemID IN (
 							' . join(',
 							', $companyID) . '
-						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a';
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
 
         $output = DB::select($sql);
 
