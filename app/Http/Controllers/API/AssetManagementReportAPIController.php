@@ -2562,7 +2562,7 @@ WHERE
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
         })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
+	AND "' . $toDate . '" ')->where('erp_grvmaster.capitalizedYN',0);
 
         $output = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
 	approvedDate,
@@ -2578,7 +2578,7 @@ WHERE
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
-        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->union($addCapi)->get();
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->where('erp_grvmaster.capitalizedYN',0)->union($addCapi)->get();
 
         return $output;
     }
