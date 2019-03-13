@@ -837,4 +837,9 @@ class FixedAssetMaster extends Model
         return $this->belongsTo('App\Models\AssetDisposalMaster','assetdisposalMasterAutoID','assetdisposalMasterAutoID');
     }
 
+    public function group_all_to()
+    {
+        return $this->hasMany(FixedAssetMaster::class,'groupTO','faID');
+    }
+
 }

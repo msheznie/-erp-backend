@@ -381,6 +381,14 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
                 }
 
+                $disposalDetailExist = AssetDisposalDetail::with(['asset_by' => function ($query) {
+                    $query->with(['group_all_to']);
+                }])->where('assetdisposalMasterAutoID', $id)->get();
+
+                if (empty($disposalDetailExist)) {
+                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
+                }
+
                 if ($assetDisposalMaster->disposalType == 1) {
                     //For customer check
                     $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
@@ -424,15 +432,9 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
                 }
 
+                if ($assetDisposalMaster->disposalType == 1) {
 
-                if($assetDisposalMaster->disposalType == 1) {
-                    $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
-
-                    if (empty($disposalDetailExist)) {
-                        return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
-                    }
-
-                    $itemAssignToCompany = ItemAssigned::where('companySystemID',$assetDisposalMaster->toCompanySystemID)->where('isActive',1)->where('isAssigned',-1)->pluck('itemCodeSystem')->toArray();
+                    $itemAssignToCompany = ItemAssigned::where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', 1)->where('isAssigned', -1)->pluck('itemCodeSystem')->toArray();
 
                     $finalError = array(
                         'itemcode_not_exist' => array(),
@@ -444,8 +446,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         if (empty($val->itemCode) || $val->itemCode == 0) {
                             array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
                             $error_count++;
-                        }else{
-                            if(!in_array($val->itemCode, $itemAssignToCompany)){
+                        } else {
+                            if (!in_array($val->itemCode, $itemAssignToCompany)) {
                                 array_push($finalError['itemcode_not_assigned_to_company'], 'FA' . ' | ' . $val->faCode);
                                 $error_count++;
                             }
@@ -457,6 +459,26 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
                     }
                 }
+
+                if ($input['confirmType'] == 1) {
+                    $finalError = array(
+                        'asset_group_to' => array(),
+                    );
+                    $error_count = 0;
+                    foreach ($disposalDetailExist as $val) {
+                        if (count($val->asset_by->group_all_to) > 0) {
+                            array_push($finalError['asset_group_to'], 'FA' . ' | ' . $val->faCode);
+                            $error_count++;
+                        }
+                    }
+
+                    $confirm_error = array('type' => 'asset_group_to', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("There is/are asset/s Grouped", 500, $confirm_error);
+                    }
+                }
+
+                unset($input['confirmType']);
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
