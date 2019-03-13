@@ -51,7 +51,8 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
@@ -79,13 +80,14 @@ class FinancialReportAPIController extends AppBaseController
 
         $templateType = ReportTemplate::all();
 
-        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID"));
-        $financePeriod = $financePeriod->where('companySystemID', $selectedCompanyId);
+
+        $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
+        $financePeriod = $financePeriod->whereIN('companySystemID', $companiesByGroup);
         $financePeriod = $financePeriod->where('departmentSystemID', 5);
         if (isset($request['type']) && $request['type'] == 'add') {
             $financePeriod = $financePeriod->where('isActive', -1);
         }
-        $financePeriod = $financePeriod->get();
+        $financePeriod = $financePeriod->groupBy('dateFrom')->get();
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
@@ -97,7 +99,8 @@ class FinancialReportAPIController extends AppBaseController
             'segment' => $departments,
             'company' => $company,
             'financePeriod' => $financePeriod,
-            'companiesByGroup' => $companiesByGroup
+            'companiesByGroup' => $companiesByGroup,
+            'isGroup' => $isGroup,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2386,9 +2389,10 @@ GROUP BY
         $output = [];
         $outputDetail = [];
         if(count($uncategorizeGL) > 0) {
-            $sql = 'SELECT  ' . $thirdLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
+            $sql = 'SELECT  ' . $thirdLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID,
+            erp_generalledger.chartOfAccountSystemID as glAutoID,
             chartofaccounts.AccountCode as glCode,
 	        chartofaccounts.AccountDescription as glDescription 
         FROM
@@ -2402,9 +2406,10 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID) a';
             $output = \DB::select($sql);
 
-            $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription FROM (SELECT
+            $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID,
+            erp_generalledger.chartOfAccountSystemID as glAutoID,
             chartofaccounts.AccountCode as glCode,
 	        chartofaccounts.AccountDescription as glDescription 
         FROM
@@ -2712,13 +2717,15 @@ GROUP BY
             }
         }
 
-        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID FROM (SELECT
+        $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID,documentSystemCode,documentSystemID FROM (SELECT
 						' . $firstLinkedcolumnQry . ' 
 						glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes,
 						erp_generalledger.documentNarration,
 						erp_generalledger.clientContractID,
 						IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName 
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
+                         erp_generalledger.documentSystemCode,
+                         erp_generalledger.documentSystemID
 					FROM
 						erp_generalledger
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
@@ -2730,7 +2737,7 @@ GROUP BY
 						erp_generalledger.companySystemID IN (
 							' . join(',
 							', $companyID) . '
-						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a';
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
 
         $output = DB::select($sql);
 
