@@ -3289,7 +3289,7 @@ WHERE
 	)
  AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
-AND erp_generalledger.documentRptAmount > 0
+AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glaccounttypeID=1
 	) AS collectionDetail
 GROUP BY
 	collectionDetail.companyID,
@@ -4368,7 +4368,7 @@ INNER JOIN erp_bankaccount ON erp_customerreceivepayment.bankAccount = erp_banka
 INNER JOIN currencymaster ON erp_bankaccount.accountCurrencyID = currencymaster.currencyID
 WHERE erp_generalledger.documentSystemID = 21 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
-AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentDate ASC
+AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeID=1 ORDER BY erp_generalledger.documentDate ASC
 	) AS collectionDetail');
 
         return $output;
