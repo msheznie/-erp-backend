@@ -2962,8 +2962,9 @@ GROUP BY
 
         if (count($linkedcolumnArray)) {
             foreach ($linkedcolumnArray as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                $explodedKey = explode('-',$key);
+                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
                 }
@@ -2972,8 +2973,9 @@ GROUP BY
 
         if (count($linkedcolumnArray3)) {
             foreach ($linkedcolumnArray3 as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal3[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                $explodedKey = explode('-',$key);
+                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal3[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal3[$key] = $val . ' as ' . '`' . $key . '`';
                 }
