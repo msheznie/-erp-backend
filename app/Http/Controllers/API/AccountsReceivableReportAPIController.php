@@ -1315,7 +1315,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
                     }
                 }
-
+                $data = [];
                 if ($reportTypeID == 'CCR') { //customer aging detail
 
                     if ($request->excelForm == 'bankReport') {

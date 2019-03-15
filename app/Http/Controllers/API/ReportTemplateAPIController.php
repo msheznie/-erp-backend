@@ -429,7 +429,9 @@ class ReportTemplateAPIController extends AppBaseController
     function getEmployees(Request $request)
     {
         $companySystemID = $request['companySystemID'];
-        $employees = Employee::select('empID', 'empName', 'employeeSystemID')->where('empCompanySystemID', $companySystemID)->where('discharegedYN', 0)->whereNotExists(function ($query) use ($request) {
+        $parentCompany = Company::find($companySystemID);
+        $allCompanies = Company::where('masterCompanySystemIDReorting',$parentCompany->masterCompanySystemIDReorting)->pluck('companySystemID')->toArray();
+        $employees = Employee::select('empID', 'empName', 'employeeSystemID','empCompanySystemID')->with(['company'])->whereIN('empCompanySystemID', $allCompanies)->where('discharegedYN', 0)->whereNotExists(function ($query) use ($request) {
             $query
                 ->select(DB::raw(1))
                 ->from('erp_companyreporttemplateemployees AS te')

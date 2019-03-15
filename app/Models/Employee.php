@@ -275,4 +275,9 @@ class Employee extends Model
     {
         return $this->hasMany('App\Models\OutletUsers','userID','employeeSystemID');
     }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company','empCompanySystemID','companySystemID');
+    }
 }
