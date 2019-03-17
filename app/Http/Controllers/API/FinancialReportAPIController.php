@@ -2127,10 +2127,12 @@ GROUP BY
         $documentQry = '';
         $servicelineQry = '';
         if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
@@ -2238,10 +2240,12 @@ ORDER BY
         $documentQry = '';
         $servicelineQry = '';
         if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
@@ -2454,10 +2458,12 @@ GROUP BY
         $documentQry = '';
         $servicelineQry = '';
         if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
+                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                 $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
@@ -2962,8 +2968,9 @@ GROUP BY
 
         if (count($linkedcolumnArray)) {
             foreach ($linkedcolumnArray as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                $explodedKey = explode('-',$key);
+                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
                 }
@@ -2972,8 +2979,9 @@ GROUP BY
 
         if (count($linkedcolumnArray3)) {
             foreach ($linkedcolumnArray3 as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
-                    $linkedcolumnArrayFinal3[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                $explodedKey = explode('-',$key);
+                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal3[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal3[$key] = $val . ' as ' . '`' . $key . '`';
                 }
