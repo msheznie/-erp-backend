@@ -168,7 +168,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
             $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT * ('.$dpMaster->revenuePercentage.'/100),netBookValueLocal + (netBookValueLocal * ('.$dpMaster->revenuePercentage.'/100)))) as localAmountDetail, 
-            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * ('.$dpMaster->revenuePercentage.'/100),netBookValueRpt + (netBookValueRpt * ('.$dpMaster->revenuePercentage.'/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * ('.$dpMaster->revenuePercentage.'/100),netBookValueRpt + (netBookValueRpt * ('.$dpMaster->revenuePercentage.'/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
             if ($disposalDetail) {
                 $chartofAccount = ChartOfAccount::find(557);
                 $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
@@ -196,8 +196,11 @@ class CreateCustomerInvoice implements ShouldQueue
                     $cusInvoiceDetails['clientContractID'] = 0;
                     $cusInvoiceDetails['performaMasterID'] = 0;
 
-                    $localAmountDetail = $val->localAmountDetail;
-                    $comRptAmountDetail = $val->comRptAmountDetail;
+                    $localAmountDetail = $val->sellingPriceLocal;
+                    $comRptAmountDetail = $val->sellingPriceRpt;
+
+                    /*$localAmountDetail = $val->localAmountDetail;
+                    $comRptAmountDetail = $val->comRptAmountDetail;*/
 
                     /*if (round($val->netBookValueLocal, 2) == 0) {
                         $localAmountDetail = $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);

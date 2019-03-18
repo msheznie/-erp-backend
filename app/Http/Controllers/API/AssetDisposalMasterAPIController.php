@@ -349,6 +349,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $companySystemID = $assetDisposalMaster->companySystemID;
             $documentSystemID = $assetDisposalMaster->documentSystemID;
 
+            $toCompany = Company::find($input['toCompanySystemID']);
+            if ($toCompany) {
+                $input['toCompanyID'] = $toCompany->CompanyID;
+            }
+
             $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
 
             if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {

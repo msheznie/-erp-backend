@@ -166,6 +166,9 @@ class AssetDisposalDetail extends Model
         'ACCDEPGLCODESystemID',
         'DISPOGLCODE',
         'DISPOGLCODESystemID',
+        'revenuePercentage',
+        'sellingPriceLocal',
+        'sellingPriceRpt',
         'timestamp'
     ];
 
@@ -197,7 +200,10 @@ class AssetDisposalDetail extends Model
         'ACCDEPGLCODESystemID' => 'integer',
         'ACCDEPGLCODE' => 'string',
         'DISPOGLCODESystemID' => 'string',
-        'DISPOGLCODE' => 'string'
+        'DISPOGLCODE' => 'string',
+        'revenuePercentage' => 'float',
+        'sellingPriceLocal' => 'float',
+        'sellingPriceRpt' => 'float'
     ];
 
     /**
