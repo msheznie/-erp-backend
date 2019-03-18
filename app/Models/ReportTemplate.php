@@ -108,6 +108,7 @@ class ReportTemplate extends Model
 
     public $fillable = [
         'description',
+        'reportName',
         'reportID',
         'categoryBLorPL',
         'dateType',
@@ -140,6 +141,7 @@ class ReportTemplate extends Model
     protected $casts = [
         'companyReportTemplateID' => 'integer',
         'description' => 'string',
+        'reportName' => 'string',
         'reportID' => 'integer',
         'categoryBLorPL' => 'string',
         'dateType' => 'integer',
