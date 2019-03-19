@@ -191,13 +191,15 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRVDet['prvRecievedQty'] = 1;
                     $directGRVDet['poQty'] = 1;
 
-                    $comRptAmountDetail = 0;
+                    /*$comRptAmountDetail = 0;
 
                     if (round($val->netBookValueRpt, 2) == 0) {
                         $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
                     } else {
                         $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
-                    }
+                    }*/
+
+                    $comRptAmountDetail = $val->sellingPriceRpt;
 
                     $directGRVDet['unitCost'] = $comRptAmountDetail;
                     $directGRVDet['netAmount'] = $comRptAmountDetail;

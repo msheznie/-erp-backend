@@ -17,6 +17,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
+use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -72,10 +73,12 @@ class InventoryReportAPIController extends AppBaseController
 
         $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
+        $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
         $output = array(
             'warehouse' => $warehouse,
             'document' => $document,
+            'segment' => $segment,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

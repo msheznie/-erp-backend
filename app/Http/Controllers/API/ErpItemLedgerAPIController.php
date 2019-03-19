@@ -786,7 +786,8 @@ WHERE
             case 'SL':
                 $validator = \Validator::make($request->all(), [
                     'date' => 'required',
-                    'warehouse' => 'required'
+                    'warehouse' => 'required',
+                    'segment' => 'required'
                 ]);
 
                 if ($validator->fails()) {//echo 'in';exit;
@@ -847,10 +848,16 @@ WHERE
             $subCompanies = [$selectedCompanyId];
         }
         $input = $request->all();
+        $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
+        }
+        $segment = [];
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
         }
         //DB::enableQueryLog();
         $sql = "SELECT
@@ -912,6 +919,7 @@ WHERE
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -953,9 +961,16 @@ WHERE
     {
 
         $input = $request->all();
+        $warehouse=[];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+        }
+
+        $segment = [];
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
         }
 
         $date = new Carbon($input['date']);
@@ -1029,6 +1044,7 @@ WHERE
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
