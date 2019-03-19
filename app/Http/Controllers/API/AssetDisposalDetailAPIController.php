@@ -172,6 +172,22 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["ACCDEPGLCODE"] = $new["ACCDEPGLCODE"];
                     $tempArray["DISPOGLCODESystemID"] = $new["dispglCodeSystemID"];
                     $tempArray["DISPOGLCODE"] = $new["DISPOGLCODE"];
+
+                    if($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6){
+                        $tempArray["revenuePercentage"] = $assetDisposalMaster->revenuePercentage;
+                        if($tempArray["netBookValueRpt"] || $tempArray["netBookValueLocal"]){
+                            $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["netBookValueRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
+                            $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["netBookValueLocal"] * (100 + $tempArray["revenuePercentage"]))/100);
+                        }else if($tempArray["costUnitRpt"] || $tempArray["COSTUNIT"]){
+                            $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["costUnitRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
+                            $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["COSTUNIT"] * (100 + $tempArray["revenuePercentage"]))/100);
+                        }else{
+                            $tempArray["revenuePercentage"] = 0;
+                        }
+                    }else{
+                        $tempArray["revenuePercentage"] = 0;
+                    }
+
                     $assetDisposalDetails = $this->assetDisposalDetailRepository->create($tempArray);
 
                     $updateAsset = FixedAssetMaster::find($new["faID"])
@@ -285,8 +301,8 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function update($id, UpdateAssetDisposalDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['item_by', 'segment_by']);
         $input = $this->convertArrayToValue($input);
-
 
         /** @var AssetDisposalDetail $assetDisposalDetail */
         $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
@@ -301,12 +317,20 @@ class AssetDisposalDetailAPIController extends AppBaseController
             return $this->sendError('Asset Disposal Master not found');
         }
 
-        if($disposalMaster->disposalType == 1){
-            $itemAssign = ItemAssigned::where('companySystemID',$disposalMaster->toCompanySystemID)->where('itemCodeSystem',$input['itemCode'])->where('isActive',1)->where('isAssigned',-1)->first();
-            if(empty($itemAssign)){
-                return $this->sendError('This item is not assigned to '.$disposalMaster->toCompanyID. ' Company',500);
+        if($input['isFromAssign']) {
+            if ($disposalMaster->disposalType == 1) {
+                $itemAssign = ItemAssigned::where('companySystemID', $disposalMaster->toCompanySystemID)->where('itemCodeSystem', $input['itemCode'])->where('isActive', 1)->where('isAssigned', -1)->first();
+                if (empty($itemAssign)) {
+                    return $this->sendError('This item is not assigned to ' . $disposalMaster->toCompanyID . ' Company', 500);
+                }
             }
+        }else{
+            $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $input['sellingPriceRpt']);
+            $input['sellingPriceLocal'] = \Helper::roundValue($currencyConversion['localAmount']);
+            $input['revenuePercentage'] = round($input['revenuePercentage'],7);
         }
+        unset($input['isFromAssign']);
 
         $assetDisposalDetail = $this->assetDisposalDetailRepository->update($input, $id);
 

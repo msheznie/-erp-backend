@@ -108,6 +108,7 @@ class ReportTemplate extends Model
 
     public $fillable = [
         'description',
+        'reportName',
         'reportID',
         'categoryBLorPL',
         'dateType',
@@ -120,6 +121,7 @@ class ReportTemplate extends Model
         'drillDownType',
         'showNumbersIn',
         'showDecimalPlaceYN',
+        'historicalYN',
         'createdPCID',
         'createdUserSystemID',
         'createdUserID',
@@ -139,6 +141,7 @@ class ReportTemplate extends Model
     protected $casts = [
         'companyReportTemplateID' => 'integer',
         'description' => 'string',
+        'reportName' => 'string',
         'reportID' => 'integer',
         'categoryBLorPL' => 'string',
         'dateType' => 'integer',
@@ -151,6 +154,7 @@ class ReportTemplate extends Model
         'drillDownType' => 'integer',
         'showNumbersIn' => 'integer',
         'showDecimalPlaceYN' => 'integer',
+        'historicalYN' => 'integer',
         'createdPCID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
