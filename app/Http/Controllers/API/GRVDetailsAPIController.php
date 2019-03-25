@@ -353,6 +353,20 @@ class GRVDetailsAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+
+                    //check whether the item is already added to another GRV
+                    $alreadyItemPulledCheck = GRVDetails::with('grv_master')->select('*')
+                        ->where('grvAutoID','<>', $grvAutoID)
+                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])->whereHas('grv_master',function ($q) use ($input) {
+                            $q->where('approved', 0);
+                        })
+                        ->first();
+
+                    if($alreadyItemPulledCheck){
+                        return $this->sendError('Cannot proceed. Selected item is already added in '.$alreadyItemPulledCheck->grv_master->grvPrimaryCode.' and it is not approved yet', 422);
+                    }
+
+
                     $grvDetailItem = ProcumentOrderDetail::select('receivedQty')
                         ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
                         ->first();
