@@ -892,7 +892,8 @@ AND accruavalfromopmaster.accJVpostedYN = 0");
 	accruvalfromop.opAmount,
 	accruvalfromop.accMasterID,
 	accruvalfromop.companyID,
-	accruvalfromop.accrualAmount,
+	/*accruvalfromop.accrualAmount,*/
+	IFNULL(accruvalfromop.rptAmount,0) as accrualAmount ,
 	accruvalfromop.GlCode,
 	chartofaccounts.chartOfAccountSystemID,
 	chartofaccounts.AccountDescription
