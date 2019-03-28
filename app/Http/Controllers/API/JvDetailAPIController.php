@@ -637,9 +637,13 @@ class JvDetailAPIController extends AppBaseController
 	accruvalfromop.GlCode,
 	chartofaccounts.AccountDescription,
 	contractmaster.contractUID AS contractSystemID,
-	Sum(
+/*	Sum(
 		accruvalfromop.accrualAmount
+	) AS SumOfaccrualAmount,*/
+		Sum(
+			IFNULL(accruvalfromop.rptAmount,0)
 	) AS SumOfaccrualAmount
+
 FROM
 	accruvalfromop
 INNER JOIN accruavalfromopmaster ON accruvalfromop.accMasterID = accruavalfromopmaster.accruvalMasterID
