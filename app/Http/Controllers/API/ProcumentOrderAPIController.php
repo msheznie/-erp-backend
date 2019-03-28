@@ -809,8 +809,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             //check unit cost should be greater than zero
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
-                ->where('unitCost', '=', 0)
-                ->orWhere('unitCost', '<', 0)
+                ->where('unitCost', '<=', 0)
                 ->count();
 
             if ($checkQuantity > 0) {

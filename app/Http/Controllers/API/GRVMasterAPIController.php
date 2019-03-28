@@ -484,8 +484,7 @@ class GRVMasterAPIController extends AppBaseController
 
             // check order cost should be greater than zero
             $checkCost = GRVDetails::where('grvAutoID', $id)
-                ->whereRaw('(unitcost-addonDistCost) = ?', [0])
-                ->whereRaw('(unitcost-addonDistCost) < ?', [0])
+                ->whereRaw('(unitcost-addonDistCost) <= ?', [0])
                 ->count();
 
             if ($checkCost > 0) {
