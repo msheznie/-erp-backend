@@ -482,6 +482,16 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least a qty', 500);
             }
 
+            // check order cost should be greater than zero
+            $checkCost = GRVDetails::where('grvAutoID', $id)
+                ->whereRaw('(unitcost-addonDistCost) = ?', [0])
+                ->whereRaw('(unitcost-addonDistCost) < ?', [0])
+                ->count();
+
+            if ($checkCost > 0) {
+                return $this->sendError('Every item order cost should be greater than zero', 500);
+            }
+
 
             if ($gRVMaster->grvTypeID == 2) {
                 // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table

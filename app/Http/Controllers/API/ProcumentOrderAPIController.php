@@ -807,6 +807,16 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least one minimum qty requested', 500);
             }
 
+            //check unit cost should be greater than zero
+            $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
+                ->where('unitCost', '=', 0)
+                ->orWhere('unitCost', '<', 0)
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every item unit cost should be greater than zero ', 500);
+            }
+
             //checking atleast one po payment terms should exist
             $PoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
                 ->first();
