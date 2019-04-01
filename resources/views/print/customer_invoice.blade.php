@@ -689,9 +689,9 @@
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-                {{$request->invoicedetail->billmaster->performatemp}}
 
-                @foreach ($request->invoicedetail->billmaster->performatemp->sortBy('sortOrder') as $item)
+
+                @foreach ($request->temp as $item)
 
                     {{$directTraSubTotal +=$item->sumofsumofStandbyAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
