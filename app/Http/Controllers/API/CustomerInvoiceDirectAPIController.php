@@ -1593,15 +1593,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $footerDate = true;
 
 
-        $temp = DB::select("SELECT
-	myStdTitle,sumofsumofStandbyAmount,sortOrder
+        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder FROM (SELECT
+	performaMasterID ,companyID
 FROM
-	erp_custinvoicedirectdet
-	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
-	AND erp_custinvoicedirectdet.companyID = performatemp.companyID
+	erp_custinvoicedirectdet 
 WHERE
-	custInvoiceDirectID = $id AND sumofsumofStandbyAmount <> 0 	
-	ORDER BY sortOrder ASC ");
+	custInvoiceDirectID = $id
+	GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
+	AND erp_custinvoicedirectdet.companyID = performatemp.companyID
+	WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
         switch ($companySystemID) {
             case 7:
                 /*BO*/
