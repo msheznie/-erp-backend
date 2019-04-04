@@ -1541,6 +1541,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+
+
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
             }
@@ -1591,6 +1593,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $footerDate = true;
 
 
+        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder FROM (SELECT
+	performaMasterID ,companyID
+FROM
+	erp_custinvoicedirectdet 
+WHERE
+	custInvoiceDirectID = $id
+	GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
+	AND erp_custinvoicedirectdet.companyID = performatemp.companyID
+	WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1776,6 +1787,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->line_rentalPeriod = $line_rentalPeriod;
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
+        $customerInvoice->temp = $temp;
 
 
         $array = array('request' => $customerInvoice);
