@@ -536,6 +536,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
     Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
     Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
+    Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
 
     Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 

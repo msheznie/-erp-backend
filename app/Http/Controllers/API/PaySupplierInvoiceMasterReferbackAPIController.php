@@ -338,7 +338,7 @@ class PaySupplierInvoiceMasterReferbackAPIController extends AppBaseController
 
     public function paymentVoucherHistoryByPVID(Request $request){
 
-        $paySupplierInvoiceMaster = PaySupplierInvoiceMasterReferback::with(['confirmed_by', 'bankaccount', 'financeperiod_by' => function ($query) {
+        $paySupplierInvoiceMaster = PaySupplierInvoiceMasterReferback::with(['confirmed_by', 'bankaccount','supplier','suppliercurrency', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
