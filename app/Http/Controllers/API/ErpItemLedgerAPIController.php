@@ -797,7 +797,25 @@ WHERE
             default:
                 return $this->sendError('Error Occurred!');
         }
+    }
 
+    public function validateStockTakingReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'date' => 'required',
+                    'warehouse' => 'required',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred!');
+        }
     }
 
     public function getWarehouse(Request $request)
