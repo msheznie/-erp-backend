@@ -1399,7 +1399,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['serviceLineCode'] = 'X';
                                         $data['chartOfAccountSystemID'] = $company->exchangeGainLossGLCodeSystemID;
                                         $data['glCode'] = $company->exchangeGainLossGLCode;
-                                        $data['glAccountType'] = 'BS';
+                                        $data['glAccountType'] = 'PL';
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
 
@@ -1572,7 +1572,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['serviceLineCode'] = 'X';
                                     $data['chartOfAccountSystemID'] = $company->exchangeGainLossGLCodeSystemID;
                                     $data['glCode'] = $company->exchangeGainLossGLCode;
-                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountType'] = 'PL';
                                     $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                     $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
 
