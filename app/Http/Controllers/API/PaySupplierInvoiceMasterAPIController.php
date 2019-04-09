@@ -2255,6 +2255,8 @@ HAVING
             $paymentVoucherData->approvedByUserID = null;
             $paymentVoucherData->approvedDate = null;
             $paymentVoucherData->postedDate = null;
+            $paymentVoucherData->BPVchequeNo = 0;
+            $paymentVoucherData->chequePrintedYN = 0;
             $paymentVoucherData->save();
 
             DB::commit();
