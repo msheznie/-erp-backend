@@ -144,9 +144,9 @@ class ChartOfAccountAPIController extends AppBaseController
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = $empId;
 
-
             $empName = $user->employee['empName'];
             $employeeSystemID = $user->employee['employeeSystemID'];
+
 
             if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
                 $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
@@ -156,6 +156,11 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
             }
 
+            unset($input['confirmedYN']);
+            unset($input['confirmedEmpSystemID']);
+            unset($input['confirmedEmpID']);
+            unset($input['confirmedEmpName']);
+            unset($input['confirmedEmpDate']);
 
             foreach ($input as $key => $value) {
                 $chartOfAccount->$key = $value;
