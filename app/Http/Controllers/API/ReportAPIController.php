@@ -112,7 +112,7 @@ class ReportAPIController extends AppBaseController
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
                      INNER JOIN (SELECT supplierCodeSystem FROM suppliermaster WHERE liabilityAccountSysemID = '.$request->controlAccountsSystemID.') supp ON erp_purchaseordermaster.supplierID = supp.supplierCodeSystem
                      LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE poCancelledYN=0 AND approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');
@@ -303,7 +303,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
@@ -423,7 +423,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID');
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID');
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
@@ -533,7 +533,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('supplierID');
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('supplierID');
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
@@ -664,7 +664,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
                      INNER JOIN (SELECT supplierCodeSystem FROM suppliermaster WHERE liabilityAccountSysemID = '.$request->controlAccountsSystemID.') supp ON erp_purchaseordermaster.supplierID = supp.supplierCodeSystem 
                      LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE poCancelledYN=0 AND approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');
@@ -880,7 +880,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -965,7 +965,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID')->orderBy('CompanyName', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID')->orderBy('CompanyName', 'ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -1043,7 +1043,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierPrimaryCode', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierPrimaryCode', 'ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
