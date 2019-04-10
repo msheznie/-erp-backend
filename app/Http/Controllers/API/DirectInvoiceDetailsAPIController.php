@@ -313,6 +313,11 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             }
         }
 
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+
         if( $input['DIAmount'] == ""){
             $input['DIAmount'] = 0;
         }

@@ -486,6 +486,11 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['clientContractID'] = NULL;
         }
 
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
         $input['unitCost']= ($input['unitCost'] != ''?$input['unitCost']:0);
 
