@@ -425,12 +425,23 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
         }
 
-        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
 
-        if (!empty($supplier)) {
+        if ($supplierAssignedDetail) {
+            $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
+            $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+        }
+
+        //$supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+        /*if (!empty($supplier)) {
             $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
             $input["supplierGLCode"] = $supplier->liabilityAccount;
-        }
+        }*/
 
         if (isset($input['bookingDate'])) {
             if ($input['bookingDate']) {
