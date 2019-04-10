@@ -347,6 +347,11 @@ class DebitNoteDetailsAPIController extends AppBaseController
             }
         }
 
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
 
         $input['localAmount'] = $companyCurrencyConversion['localAmount'];

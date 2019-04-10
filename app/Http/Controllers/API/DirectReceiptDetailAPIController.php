@@ -449,6 +449,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $input['contractUID'] = NULL;
         }
 
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+
         if ($input['DRAmount'] != $detail->DRAmount) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
