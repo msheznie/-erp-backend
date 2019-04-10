@@ -398,6 +398,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
         }
 
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+        }
+
         $conversionAmount = \Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
 
         $input['localAmount'] = \Helper::roundValue($conversionAmount['localAmount']);

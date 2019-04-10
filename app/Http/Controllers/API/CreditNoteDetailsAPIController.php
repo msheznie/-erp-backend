@@ -405,12 +405,16 @@ class CreditNoteDetailsAPIController extends AppBaseController
             $input['clientContractID'] = $contract->ContractNumber;
         }
 
-
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
 
             $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
             $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
+        }
+
+        if($input['serviceLineSystemID'] == 0){
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
         }
 
         if ($master->FYBiggin) {
