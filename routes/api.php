@@ -1320,6 +1320,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
     Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+    Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
 
     Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
     Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
