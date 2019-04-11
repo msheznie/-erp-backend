@@ -2499,6 +2499,21 @@ GROUP BY
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+        $unionQry = '';
+        if(count($uncategorizeGL)> 0) {
+            $unionQry = ' UNION SELECT  ' . $secondLinkedcolumnQry . ' FROM (SELECT
+            ' . $firstLinkedcolumnQry . '
+            erp_generalledger.chartOfAccountSystemID
+        FROM
+            erp_generalledger 
+            INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+        WHERE
+            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
+            erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
+            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY
+            erp_generalledger.chartOfAccountSystemID) a';
+        }
 
         $sql = 'SELECT ' . $secondLinkedcolumnQry . ' FROM (SELECT * FROM (SELECT
 	' . $secondLinkedcolumnQry . '
@@ -2543,18 +2558,7 @@ FROM
 			)
 	) f
 GROUP BY
-	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') UNION SELECT  ' . $secondLinkedcolumnQry . ' FROM (SELECT
-            ' . $firstLinkedcolumnQry . '
-            erp_generalledger.chartOfAccountSystemID
-        FROM
-            erp_generalledger 
-            INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
-        WHERE
-            erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
-            erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
-            ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a) b';
+	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') '.$unionQry.') b';
         $output = \DB::select($sql);
         return $output;
     }
