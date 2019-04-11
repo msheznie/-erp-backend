@@ -172,6 +172,7 @@ class JvDetailAPIController extends AppBaseController
 
         $input['currencyID'] = $jvMaster->currencyID;
         $input['currencyER'] = $jvMaster->currencyER;
+        $input['comments'] = $jvMaster->JVNarration;
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
