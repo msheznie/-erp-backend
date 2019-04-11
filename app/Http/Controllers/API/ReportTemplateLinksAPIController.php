@@ -137,28 +137,45 @@ class ReportTemplateLinksAPIController extends AppBaseController
 
         $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
 
+        $finalError = array(
+            'already_gl_linked' => array(),
+        );
+        $error_count = 0;
+
         if ($input['glAutoID']) {
             foreach ($input['glAutoID'] as $key => $val) {
-                if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {
-                    $data['templateMasterID'] = $input['templateMasterID'];
-                    $data['templateDetailID'] = $input['templateDetailID'];
-                    $data['sortOrder'] = $key + 1;
-                    $data['glAutoID'] = $val['chartOfAccountSystemID'];
-                    $data['glCode'] = $val['AccountCode'];
-                    $data['glDescription'] = $val['AccountDescription'];
-                    $data['companySystemID'] = $input['companySystemID'];
-                    $data['companyID'] = $input['companyID'];
-                    if($input['reportID'] == 1) {
-                        if ($val["controlAccounts"] == 'BSA') {
-                            $data['categoryType'] = 1;
-                        } else {
-                            $data['categoryType'] = 2;
+                if (in_array($val['chartOfAccountSystemID'], $tempDetail)) {
+                    array_push($finalError['already_gl_linked'], $val['AccountCode'] . ' | ' . $val['AccountDescription']);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
+            }else{
+                foreach ($input['glAutoID'] as $key => $val) {
+                    if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {
+                        $data['templateMasterID'] = $input['templateMasterID'];
+                        $data['templateDetailID'] = $input['templateDetailID'];
+                        $data['sortOrder'] = $key + 1;
+                        $data['glAutoID'] = $val['chartOfAccountSystemID'];
+                        $data['glCode'] = $val['AccountCode'];
+                        $data['glDescription'] = $val['AccountDescription'];
+                        $data['companySystemID'] = $input['companySystemID'];
+                        $data['companyID'] = $input['companyID'];
+                        if($input['reportID'] == 1) {
+                            if ($val["controlAccounts"] == 'BSA') {
+                                $data['categoryType'] = 1;
+                            } else {
+                                $data['categoryType'] = 2;
+                            }
                         }
+                        $data['createdPCID'] = gethostname();
+                        $data['createdUserID'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                     }
-                    $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                    $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
             }
         }
@@ -383,6 +400,11 @@ class ReportTemplateLinksAPIController extends AppBaseController
             }
         }
         return $this->sendResponse([], 'Report Template Links saved successfully');
+    }
+
+    public function deleteAllLinkedGLCodes(Request $request){
+        $reportTemplateLinks = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)->delete();
+        return $this->sendResponse([], 'Report Template Links deleted successfully');
     }
 
 
