@@ -452,9 +452,11 @@ class FinancialReportAPIController extends AppBaseController
                     $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
                     $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
                     //$lastColumn = collect($headers)->last(); // considering net total
-                    foreach ($columnKeys as $key => $val) {
-                        //$grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
-                        $uncategorizeArr[$val] = $uncategorizeData['output'][0]->$val;
+                    if($uncategorizeData) {
+                        foreach ($columnKeys as $key => $val) {
+                            //$grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
+                            $uncategorizeArr[$val] = $uncategorizeData['output'][0]->$val;
+                        }
                     }
                     $uncategorizeDetailArr = $uncategorizeData['outputDetail'];
                 }
