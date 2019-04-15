@@ -176,7 +176,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-        $qry = "SELECT * FROM (SELECT
+        $qry = "SELECT t.*,companymaster.*,erp_documentmaster.documentDescription FROM (SELECT
 	*
 FROM
 	(
@@ -585,7 +585,10 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 21 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID
 	) AS PendingReceiptVoucherApprovals
-	)t INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID $where ORDER BY docConfirmedDate $sort";
+	)t 
+	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
+	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 
+	$where ORDER BY docConfirmedDate $sort";
 
 
         $output = DB::select($qry);
