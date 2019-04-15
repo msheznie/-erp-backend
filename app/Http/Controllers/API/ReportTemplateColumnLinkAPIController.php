@@ -134,11 +134,13 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
+        $maxSortOrder = ReportTemplateColumnLink::where('templateID',$input['templateMasterID'])->max('sortOrder');
+
         if ($input['columnID']) {
             foreach ($input['columnID'] as $key => $val) {
                 $data['columnID'] = $val['columnID'];
                 $data['templateID'] = $input['templateMasterID'];
-                $data['sortOrder'] = $key + 1;
+                $data['sortOrder'] = $maxSortOrder + ($key + 1);
                 $data['description'] = $val['description'];
                 $data['shortCode'] = $val['shortCode'];
                 $data['type'] = $val['type'];
