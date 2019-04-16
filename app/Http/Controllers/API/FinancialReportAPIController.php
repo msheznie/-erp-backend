@@ -2923,11 +2923,14 @@ GROUP BY
                 }
             }
         }
-
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false,1);
+                    if($val->formula == null){
+                        $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = 0;
+                    }else{
+                        $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false,1);
+                    }
                 } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                 } else {
@@ -2952,10 +2955,17 @@ GROUP BY
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true,1);
-                    $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
-                    $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
-                    $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true,2);
+                    if($val->formula == null){
+                        $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = 0;
+                        $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
+                        $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
+                        $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 0;
+                    }else {
+                        $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 1);
+                        $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
+                        $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
+                        $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 2);
+                    }
                 } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor,$val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode],'width' => $val->width];
