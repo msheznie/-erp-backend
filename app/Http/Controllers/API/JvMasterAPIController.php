@@ -1197,6 +1197,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
 
         $qry = "SELECT
+    podetail.purchaseOrderDetailsID,
 	pomaster.purchaseOrderID,
 	pomaster.poType,
 	pomaster.purchaseOrderCode,
