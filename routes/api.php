@@ -1317,6 +1317,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
     Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
     Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
+    Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
     Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
     Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
