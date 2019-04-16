@@ -2099,8 +2099,6 @@ WHERE
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID 
 	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
-        echo $sql;
-        exit;
         $output = \DB::select($sql);
         return $output;
     }
