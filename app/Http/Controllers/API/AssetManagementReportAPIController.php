@@ -999,7 +999,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         foreach ($output['data'] as $val) {
                             $data[$x]['Asset Code'] = $val->faCode;
                             $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->Category;
+                            $data[$x]['Category'] = $val->AuditCategory;
                             foreach ($output['month'] as $val2) {
                                 $data[$x][$val2] = $val->$val2;
                             }
@@ -1015,7 +1015,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         foreach ($output as $val) {
                             $data[$x]['Asset Code'] = $val->faCode;
                             $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->Category;
+                            $data[$x]['Category'] = $val->AuditCategory;
                             $data[$x]['Cost Amount'] = $val->cost;
                             $data[$x]['Dep %'] = $val->DEPpercentage;
                             $data[$x]['Dep Amount ' . $arrayMonth[$request->month - 1]] = $val->currentMonthDepreciation;
@@ -1037,7 +1037,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         foreach ($output as $val) {
                             $data[$x]['Asset Code'] = $val->faCode;
                             $data[$x]['Asset Description'] = $val->assetDescription;
-                            $data[$x]['Category'] = $val->Category;
+                            $data[$x]['Category'] = $val->AuditCategory;
                             $data[$x]['Cost Amount'] = $val->cost;
                             $data[$x]['Dep %'] = $val->DEPpercentage;
                             $data[$x]['Dep Amount ' . $arrayMonth[$request->month - 1]] = $val->currentMonthDepreciation;
@@ -1055,7 +1055,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Category'] = $val->Category;
+                            $data[$x]['Category'] = $val->AuditCategory;
                             $data[$x]['Cost Amount'] = $val->cost;
                             $data[$x]['Dep %'] = $val->DEPpercentage;
                             $data[$x]['Current Year Dep'] = $val->currentYearDepAmount;
@@ -1070,7 +1070,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Category'] = $val->Category;
+                            $data[$x]['Category'] = $val->AuditCategory;
                             $data[$x]['Cost Amount'] = $val->cost;
                             $data[$x]['Dep %'] = $val->DEPpercentage;
                             $data[$x]['Current Year Dep'] = $val->currentYearDepAmount;
@@ -1912,7 +1912,7 @@ IF
 	) = 0 
 GROUP BY
 	erp_fa_asset_master.companySystemID,
-erp_fa_asset_master.faCatID;';
+erp_fa_asset_master.AUDITCATOGARY;';
 
         //DB::enableQueryLog();
         $output = \DB::select($sql);
@@ -2097,7 +2097,7 @@ IF
 		0 
 	) = 0 
 GROUP BY
-	erp_fa_asset_master.companySystemID,erp_fa_asset_master.faCatID';
+	erp_fa_asset_master.companySystemID,erp_fa_asset_master.AUDITCATOGARY';
 
         //DB::enableQueryLog();
         $output = \DB::select($sql);
