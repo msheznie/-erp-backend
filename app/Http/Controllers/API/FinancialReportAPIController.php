@@ -68,7 +68,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
         $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
-        $departments2 = collect(SegmentMaster::where('serviceLineSystemID',24)->get());
+        $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
@@ -441,7 +441,7 @@ class FinancialReportAPIController extends AppBaseController
                 $columnHeaderMapping = $generatedColumn['columnHeaderMapping'];
                 $linkedcolumnQry2 = $generatedColumn['linkedcolumnQry2'];
 
-                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry,$linkedcolumnQry2, $columnKeys, $financeYear, $period));
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period));
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
                 $grandTotalUncatArr = [];
@@ -449,10 +449,10 @@ class FinancialReportAPIController extends AppBaseController
                 $uncategorizeDetailArr = [];
                 $grandTotal = [];
                 if ($request->accountType == 1 || $request->accountType == 2) {
-                    $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
-                    $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys));
+                    $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys));
+                    $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys));
                     //$lastColumn = collect($headers)->last(); // considering net total
-                    if($uncategorizeData['output']) {
+                    if ($uncategorizeData['output']) {
                         foreach ($columnKeys as $key => $val) {
                             //$grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
                             $uncategorizeArr[$val] = $uncategorizeData['output'][0]->$val;
@@ -489,7 +489,7 @@ class FinancialReportAPIController extends AppBaseController
                         foreach ($details as $key2 => $val2) {
                             $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
                         }
-                        if($val->itemType != 3) {
+                        if ($val->itemType != 3) {
                             if (count($details) == 0) {
                                 $removedFromArray[] = $key;
                             }
@@ -1175,10 +1175,10 @@ class FinancialReportAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($chartOfAccountID);
         $dateQry = '';
-        if($chartOfAccount){
-            if($chartOfAccount->catogaryBLorPLID == 2){
+        if ($chartOfAccount) {
+            if ($chartOfAccount->catogaryBLorPLID == 2) {
                 $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
-            }else{
+            } else {
                 $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
             }
         }
@@ -1201,7 +1201,7 @@ class FinancialReportAPIController extends AppBaseController
                                     erp_generalledger 
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
                                 WHERE
-                                    '.$dateQry.'	
+                                    ' . $dateQry . '	
                                     AND erp_generalledger.chartOfAccountSystemID  = ' . $chartOfAccountID . '
                                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  ORDER BY erp_generalledger.documentDate;';
 
@@ -1884,7 +1884,7 @@ AND MASTER .canceledYN = 0';
         }
     }
 
-    function getCustomizeFinancialRptQry($request, $linkedcolumnQry,$linkedcolumnQry2, $columnKeys, $financeYear, $period)
+    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2099,6 +2099,8 @@ WHERE
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID 
 	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
+        echo $sql;
+        exit;
         $output = \DB::select($sql);
         return $output;
     }
@@ -2327,7 +2329,7 @@ GROUP BY
     }
 
 
-    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys)
+    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2394,7 +2396,7 @@ GROUP BY
         $thirdLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
         $output = [];
         $outputDetail = [];
-        if(count($uncategorizeGL) > 0) {
+        if (count($uncategorizeGL) > 0) {
             $sql = 'SELECT  ' . $thirdLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID,
@@ -2434,7 +2436,8 @@ GROUP BY
         return ['output' => $output, 'outputDetail' => $outputDetail];
     }
 
-    function getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry,$linkedcolumnQry2, $financeYear, $period, $columnKeys){
+    function getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys)
+    {
 
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2502,7 +2505,7 @@ GROUP BY
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
         $unionQry = '';
-        if(count($uncategorizeGL)> 0) {
+        if (count($uncategorizeGL) > 0) {
             $unionQry = ' UNION SELECT  ' . $secondLinkedcolumnQry . ' FROM (SELECT
             ' . $firstLinkedcolumnQry . '
             erp_generalledger.chartOfAccountSystemID
@@ -2560,7 +2563,7 @@ FROM
 			)
 	) f
 GROUP BY
-	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') '.$unionQry.') b';
+	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b';
         $output = \DB::select($sql);
         return $output;
     }
@@ -2574,7 +2577,7 @@ GROUP BY
      * @param $type
      * @return string
      */
-    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false,$type)
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -2585,7 +2588,7 @@ GROUP BY
         if ($linkedRowHead) {
             $linkedRows = $taxFormula->formulaRowID;
         }
-        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray,$type);
+        $sepFormulaArr = $this->decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $type);
         $globalFormula = '';
         if ($sepFormulaArr) {
             $fomulaFinal = '';
@@ -2612,7 +2615,7 @@ GROUP BY
      * @param $type
      * @return mixed
      */
-    public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray,$type)
+    public function decodeColumnFormula($linkedColumns, $linkedRows, $rowValues, $columnArray, $type)
     {
         global $globalFormula;
         $taxFormula = ReportTemplateColumnLink::whereIn('columnLinkID', explode(',', $linkedColumns))->get();
@@ -2622,7 +2625,7 @@ GROUP BY
                 if (!empty($val['formulaColumnID'])) {
                     $replaceVal = '|(~' . $val['formula'] . '~|)';
                     $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
-                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray,$type);
+                    $return = $this->decodeColumnFormula($val['formulaColumnID'], $val['formulaRowID'], $rowValues, $columnArray, $type);
                     if (is_array($return)) {
                         if ($return[0] == 'e') {
                             return $return;
@@ -2631,10 +2634,10 @@ GROUP BY
                     }
                 } else {
                     $replaceVal = '';
-                    if($type == 1){
+                    if ($type == 1) {
                         $replaceVal = '#' . $columnArray[$val['shortCode']];
-                    }else{
-                        $replaceVal = '#IFNULL(SUM(`'.$val->shortCode . '-' . $val->columnLinkID.'`),0)';
+                    } else {
+                        $replaceVal = '#IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
                     }
 
                     $globalFormula = str_replace_first($searchVal, $replaceVal, $globalFormula);
@@ -2647,7 +2650,7 @@ GROUP BY
         if ($linkedRows) {
             $explodedLinkedColumns = explode(',', $linkedColumns);
             $linkedColumnsShortCode = ReportTemplateColumnLink::whereIN('columnLinkID', $explodedLinkedColumns)->get();
-            foreach($linkedColumnsShortCode as $column){
+            foreach ($linkedColumnsShortCode as $column) {
                 $columnCustomeCode = $column->shortCode . '-' . $column->columnLinkID;
                 $explodeLinkedRows = explode(',', $linkedRows);
                 if ($explodeLinkedRows) {
@@ -2658,7 +2661,7 @@ GROUP BY
                         $replaceVal = '';
                         if (count($detValues) > 0) {
                             $replaceVal = '$' . $detValues[0]->$columnCustomeCode;
-                        }else{
+                        } else {
                             $replaceVal = '$0';
                         }
                         $globalFormula = str_replace($searchVal, $replaceVal, $globalFormula);
@@ -2669,7 +2672,8 @@ GROUP BY
         return $globalFormula;
     }
 
-    public function reportTemplateGLDrillDown(Request $request){
+    public function reportTemplateGLDrillDown(Request $request)
+    {
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -2745,11 +2749,11 @@ GROUP BY
 					LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
 					WHERE
-					    erp_generalledger.chartOfAccountSystemID = '.$input['glAutoID'].' AND
+					    erp_generalledger.chartOfAccountSystemID = ' . $input['glAutoID'] . ' AND
 						erp_generalledger.companySystemID IN (
 							' . join(',
 							', $companyID) . '
-						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry.' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
+						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . ' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
 
         $output = DB::select($sql);
 
@@ -2766,7 +2770,8 @@ GROUP BY
     }
 
 
-    function getFinancialCustomizeRptColumnQry($request){
+    function getFinancialCustomizeRptColumnQry($request)
+    {
 
         $toDate = '';
         $fromDate = '';
@@ -2926,10 +2931,10 @@ GROUP BY
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    if($val->formula == null){
+                    if ($val->formula == null) {
                         $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = 0;
-                    }else{
-                        $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false,1);
+                    } else {
+                        $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false, 1);
                     }
                 } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                     $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
@@ -2941,8 +2946,10 @@ GROUP BY
 
         if (count($linkedcolumnArray2)) {
             foreach ($linkedcolumnArray2 as $key => $val) {
-                if ($key == 'FCA' || $key == 'FCP') {
+                if ($key == 'FCA') {
                     $linkedcolumnArrayFinal2[$key] = '(' . $val . ') as ' . '`' . $key . '`';
+                } else if ($key == 'FCP') {
+                    $linkedcolumnArrayFinal2[$key] = 'ROUND(' . $val . ') as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal2[$key] = $val . ' as ' . '`' . $key . '`';
                 }
@@ -2955,12 +2962,12 @@ GROUP BY
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
-                    if($val->formula == null){
+                    if ($val->formula == null) {
                         $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = 0;
                         $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
                         $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 0;
-                    }else {
+                    } else {
                         $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, $detTotCollect, $columnArray, true, 1);
                         $columnHeader[] = ['description' => $val->description, 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $val->description, 'width' => $val->width];
                         $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $val->description;
@@ -2968,14 +2975,14 @@ GROUP BY
                     }
                 } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
-                    $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor,$val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode],'width' => $val->width];
+                    $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
-                    $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`'.$val->shortCode . '-' . $val->columnLinkID.'`),0)';
+                    $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
                 } else {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M'), 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = Carbon::parse($columnHeaderArray[$val->shortCode])->format('Y-M');
-                    $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`'.$val->shortCode . '-' . $val->columnLinkID.'`),0)';
+                    $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
                 }
             }
         }
@@ -2984,9 +2991,11 @@ GROUP BY
 
         if (count($linkedcolumnArray)) {
             foreach ($linkedcolumnArray as $key => $val) {
-                $explodedKey = explode('-',$key);
-                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                $explodedKey = explode('-', $key);
+                if ($explodedKey[0] == 'FCA') {
                     $linkedcolumnArrayFinal[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
+                } else if ($explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal[$key] = 'ROUND(IFNULL(' . $val . ',0)) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal[$key] = $val . ' as ' . '`' . $key . '`';
                 }
@@ -2995,9 +3004,11 @@ GROUP BY
 
         if (count($linkedcolumnArray3)) {
             foreach ($linkedcolumnArray3 as $key => $val) {
-                $explodedKey = explode('-',$key);
-                if ($explodedKey[0] == 'FCA' || $explodedKey[0] == 'FCP') {
+                $explodedKey = explode('-', $key);
+                if ($explodedKey[0] == 'FCA') {
                     $linkedcolumnArrayFinal3[$key] = 'IFNULL(' . $val . ',0) as ' . '`' . $key . '`';
+                } else if ($explodedKey[0] == 'FCP') {
+                    $linkedcolumnArrayFinal3[$key] = 'ROUND(IFNULL(' . $val . ',0)) as ' . '`' . $key . '`';
                 } else {
                     $linkedcolumnArrayFinal3[$key] = $val . ' as ' . '`' . $key . '`';
                 }
