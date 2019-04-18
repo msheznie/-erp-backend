@@ -126,13 +126,13 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function store(CreateReportTemplateDetailsAPIRequest $request)
     {
         $input = $request->all();
-        //$input = $this->convertArrayToValue($input);
+        $input = $this->convertArrayToValue($input);
         DB::beginTransaction();
         try {
             $validator = \Validator::make($request->all(), [
-                'subCategory.*.description' => 'required',
-                'subCategory.*.itemType' => 'required',
-                'subCategory.*.sortOrder' => 'required',
+                'description' => 'required',
+                'itemType' => 'required',
+                'sortOrder' => 'required',
             ]);
 
             if ($validator->fails()) {//echo 'in';exit;
@@ -144,26 +144,17 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $input['companyID'] = $company->CompanyID;
             }
 
+            if($input['itemType'] == 3){
+                $input['categoryType'] = null;
+            }
+
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-            $subCategory = $input['subCategory'];
-            unset($input['subCategory']);
-            if(count($subCategory) > 0){
-                foreach ($subCategory as $val) {
-                    $input['description'] = $val['description'];
-                    $input['itemType'] = $val['itemType'];
-                    $input['sortOrder'] = $val['sortOrder'];
-                    if($input['itemType'] == 3){
-                        $input['categoryType'] = null;
-                    }
-                    $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
-                }
-            }
+            $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
             DB::commit();
-            return $this->sendResponse([], 'Report Template Details saved successfully');
+            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -401,6 +392,53 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+    }
+
+    public function addSubCategory(Request $request)
+    {
+        $input = $request->all();
+        //$input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+                'subCategory.*.description' => 'required',
+                'subCategory.*.itemType' => 'required',
+                'subCategory.*.sortOrder' => 'required',
+            ]);
+
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $input['fontColor'] = '#000000';
+            $input['createdPCID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $subCategory = $input['subCategory'];
+            unset($input['subCategory']);
+            if(count($subCategory) > 0){
+                foreach ($subCategory as $val) {
+                    $input['description'] = $val['description'];
+                    $input['itemType'] = $val['itemType'];
+                    $input['sortOrder'] = $val['sortOrder'];
+                    if($input['itemType'] == 3){
+                        $input['categoryType'] = null;
+                    }
+                    $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
+                }
+            }
+            DB::commit();
+            return $this->sendResponse([], 'Report Template Details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

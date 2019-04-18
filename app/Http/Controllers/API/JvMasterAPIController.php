@@ -33,6 +33,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -1197,6 +1198,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
 
         $qry = "SELECT
+    podetail.purchaseOrderDetailsID,
 	pomaster.purchaseOrderID,
 	pomaster.poType,
 	pomaster.purchaseOrderCode,
@@ -1512,15 +1514,20 @@ HAVING
 
                 foreach ($record as $val) {
 
+                    $serviceLineSystemID = null;
+                    $serviceLineCode = '';
+                    $chartOfAccountSystemID = null;
+                    $glAccountDescription = '';
+                    $contractUID = null;
+                    $debitAmount = 0;
+                    $creditAmount = 0;
+
                     $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
                         ->where('companySystemID', $jvMasterData->companySystemID)
                         ->first();
-                    $serviceLineSystemID = 0;
-                    $chartOfAccountSystemID = 0;
-                    $debitAmount = 0;
-                    $creditAmount = 0;
                     if ($segmentData) {
                         $serviceLineSystemID = $segmentData['serviceLineSystemID'];
+                        $serviceLineCode = $segmentData['ServiceLineCode'];
                     }
                     $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
                         ->where('companySystemID', $jvMasterData->companySystemID)
@@ -1528,6 +1535,12 @@ HAVING
 
                     if ($chartOfAccountData) {
                         $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
+                        $glAccountDescription = $chartOfAccountData->AccountDescription;
+                    }
+
+                    $contract = Contract::where('ContractNumber',$val['client_contract'])->where('companySystemID', $jvMasterData->companySystemID)->first();
+                    if ($contract) {
+                        $contractUID = $contract->contractUID;
                     }
                     if ($val['debit_amount'] != '') {
                         $debitAmount = $val['debit_amount'];
@@ -1542,10 +1555,11 @@ HAVING
                     $data['companySystemID'] = $jvMasterData->companySystemID;
                     $data['companyID'] = $jvMasterData->companyID;
                     $data['serviceLineSystemID'] = $serviceLineSystemID;
-                    $data['serviceLineCode'] = $val['department'];
+                    $data['serviceLineCode'] = $serviceLineCode;
                     $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
                     $data['glAccount'] = $val['gl_account'];
-                    $data['glAccountDescription'] = $val['gl_account_description'];
+                    $data['glAccountDescription'] = $glAccountDescription;
+                    $data['contractUID'] = $contractUID;
                     $data['clientContractID'] = $val['client_contract'];
                     $data['comments'] = $val['comments'];
                     $data['currencyID'] = $jvMasterData->currencyID;
@@ -1555,6 +1569,8 @@ HAVING
                     $data['createdPcID'] = gethostname();
                     $data['createdUserID'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdDateTime'] = NOW();
+                    $data['timeStamp'] = NOW();
                     $finalData[] = $data;
                 }
             } else {
