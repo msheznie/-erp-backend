@@ -238,9 +238,14 @@ class UserGroupAssignAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['employeeSystemID'];
 
-        $userGroup = EmployeeNavigation::where('employeeSystemID',$empId)
-            ->where('companyID',$request['companyID'])
-            ->first();
+        $userGroup = '';
+        if($request['companyID'] != 'null') {
+            $userGroup = EmployeeNavigation::where('employeeSystemID', $empId)
+                ->where('companyID', $request['companyID'])
+                ->first();
+        }else{
+            return $this->sendError('Company ID not found');
+        }
 
 
         $userGroupID = $userGroup->userGroupID;

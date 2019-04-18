@@ -198,7 +198,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
                     $financeYear = CompanyFinanceYear::find($request->financeYear);
                     $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
@@ -247,7 +247,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
@@ -279,7 +279,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAD': //Asset Disposal
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -334,7 +334,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
 
@@ -358,7 +358,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output['data'], 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $output['month']);
                 } else if ($reportTypeID == 'ADDM') { //Asset Depreciation Detail Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailMonthlyQRY($request);
 
@@ -400,7 +400,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
 
                 } else if ($reportTypeID == 'ADDS') { //Asset Depreciation Detail Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailSummaryQRY($request);
 
@@ -437,7 +437,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCS') { //Asset Depreciation Category Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryQRY($request);
 
@@ -474,7 +474,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCSM') { //Asset Depreciation Category Summary Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryMonthlyQRY($request);
 
@@ -517,7 +517,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
                 break;
             case 'AMACWIP': //Asset CWIP
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
@@ -723,7 +723,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
@@ -779,7 +779,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                     $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
                     $financeYear = CompanyFinanceYear::find($request->financeYear);
                     $beginingFinancialYear = Carbon::parse($financeYear->bigginingDate)->format('d-M-Y');
@@ -944,7 +944,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAD': //Asset Disposal
 
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $output = $this->getAssetDisposal($request);
 
                 $data = array();
@@ -991,7 +991,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $data = [];
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
                     if ($output['data']) {
@@ -1095,7 +1095,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
                 break;
             case 'AMACWIP': //Asset CWIP
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month','typeID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
@@ -2208,7 +2208,7 @@ WHERE
         $assetCategory = join(',', $assetCategory);
 
         $where = "";
-        if(isset($request->searchText)) {
+        if (isset($request->searchText)) {
             $searchText = $request->searchText;
             if ($searchText != '') {
                 $searchText = str_replace("\\", "\\\\", $searchText);
@@ -2411,23 +2411,23 @@ WHERE
         if ($request->catType == 1) {
             if ($request->subType == 1) { //opening
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereDate('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
-                if($search){
+                if ($search) {
                     $search = str_replace("\\", "\\\\", $search);
-                    $output->where('faCode','like',$search);
+                    $output->where('faCode', 'like', $search);
                 }
             }
             if ($request->subType == 2) { //addition
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(postedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
-                if($search){
+                if ($search) {
                     $search = str_replace("\\", "\\\\", $search);
-                    $output->where('faCode','like',$search);
+                    $output->where('faCode', 'like', $search);
                 }
             }
             if ($request->subType == 3) {// disposal
                 $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
-                if($search){
+                if ($search) {
                     $search = str_replace("\\", "\\\\", $search);
-                    $output->where('faCode','like',$search);
+                    $output->where('faCode', 'like', $search);
                 }
             }
         }
@@ -2446,9 +2446,9 @@ WHERE
                     $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
                     $q->isApproved();
                     $search = $request->input('search.value');
-                    if($search){
+                    if ($search) {
                         $search = str_replace("\\", "\\\\", $search);
-                        $q->where('faCode','like',$search);
+                        $q->where('faCode', 'like', $search);
                     }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
@@ -2463,9 +2463,9 @@ WHERE
                     $q->assetType($request->typeID);
                     $q->isApproved();
                     $search = $request->input('search.value');
-                    if($search){
+                    if ($search) {
                         $search = str_replace("\\", "\\\\", $search);
-                        $q->where('faCode','like',$search);
+                        $q->where('faCode', 'like', $search);
                     }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
@@ -2482,9 +2482,9 @@ WHERE
                     $q->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
                     $q->isApproved();
                     $search = $request->input('search.value');
-                    if($search){
+                    if ($search) {
                         $search = str_replace("\\", "\\\\", $search);
-                        $q->where('faCode','like',$search);
+                        $q->where('faCode', 'like', $search);
                     }
                 })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
             }
@@ -2508,6 +2508,183 @@ WHERE
                 'totalAmount' => $total,
             ])
             ->make(true);
+
+    }
+
+    function getAssetRegisterSummaryDrillDownExport(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [$request->companySystemID];
+        }
+
+        $financeYear = CompanyFinanceYear::find($request->financeYear);
+        $financePeriod = CompanyFinancePeriod::find($request->financePeriod);
+
+        $currencyColumn = '';
+        $currencyColumnDep = '';
+        if ($request->currencyID == 2) {
+            $currencyColumn = 'COSTUNIT';
+            $currencyColumnDep = 'depAmountLocal';
+        } else {
+            $currencyColumn = 'costUnitRpt';
+            $currencyColumnDep = 'depAmountRpt';
+        }
+        $search = $request->input('search.value');
+
+        // asset cost
+        if ($request->catType == 1) {
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereDate('postedDate', '<', $financeYear->bigginingDate)->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)')->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if ($search) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode', 'like', $search);
+                }
+            }
+            if ($request->subType == 2) { //addition
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(postedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if ($search) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode', 'like', $search);
+                }
+            }
+            if ($request->subType == 3) {// disposal
+                $output = FixedAssetMaster::selectRaw('faCode,assetDescription,disposedDate,' . $currencyColumn . ' as amount,faCatID,faSubCatID')->with(['category_by', 'sub_category_by'])->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo])->assetType($request->typeID)->ofCompany($companyID)->disposed(-1)->where('AUDITCATOGARY', $request->faFinanceCatID)->isApproved();
+                if ($search) {
+                    $search = str_replace("\\", "\\\\", $search);
+                    $output->where('faCode', 'like', $search);
+                }
+            }
+        }
+
+        if ($request->catType == 2) {
+            // asset depreciation
+
+            if ($request->subType == 1) { //opening
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear) {
+                    $q->whereDate('depDate', '<', $financeYear->bigginingDate);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear) {
+                    $q->assetType($request->typeID);
+                    $q->whereRAW('((DIPOSED = - 1  AND (  DATE(disposedDate) > "' . $financeYear->bigginingDate . '")) OR DIPOSED <>  -1)');
+                    $q->isApproved();
+                    $search = $request->input('search.value');
+                    if ($search) {
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode', 'like', $search);
+                    }
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 2) { //charge
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request) {
+                    $q->assetType($request->typeID);
+                    $q->isApproved();
+                    $search = $request->input('search.value');
+                    if ($search) {
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode', 'like', $search);
+                    }
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+
+            if ($request->subType == 3) { //disposed
+                $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
+                    $q->with(['category_by', 'sub_category_by']);
+                }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
+                    $q->whereDate('depDate', '<', $financePeriod->dateTo);
+                    $q->where('approved', -1);
+                })->whereHas('asset_by', function ($q) use ($request, $financeYear, $financePeriod) {
+                    $q->assetType($request->typeID);
+                    $q->disposed(-1);
+                    $q->whereBetween(DB::raw('DATE(disposedDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
+                    $q->isApproved();
+                    $search = $request->input('search.value');
+                    if ($search) {
+                        $search = str_replace("\\", "\\\\", $search);
+                        $q->where('faCode', 'like', $search);
+                    }
+                })->ofCompany($companyID)->where('faFinanceCatID', $request->faFinanceCatID);
+            }
+        }
+
+        $output = $output->get();
+        $data = [];
+        $x = 0;
+        foreach ($output as $val) {
+            if ($request->catType == 1) {
+                $data[$x]['Asset Code'] = $val->faCode;
+            } else {
+                $data[$x]['Asset Code'] = $val->asset_by->faCode;
+            }
+
+            if ($request->catType == 1) {
+                $data[$x]['Description'] = $val->assetDescription;
+            } else {
+                $data[$x]['Description'] = $val->asset_by->assetDescription;
+            }
+
+            if ($request->subType == 3) {
+                if ($request->catType == 1) {
+                    $data[$x]['Disposed Date'] = \Helper::dateFormat($val->disposedDate);
+                } else {
+                    $data[$x]['Disposed Date'] = \Helper::dateFormat($val->asset_by->disposedDate);
+                }
+            } else {
+                if ($request->catType == 1) {
+                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
+                } else {
+                    $data[$x]['Posted Date'] = \Helper::dateFormat($val->asset_by->postedDate);
+                }
+            }
+
+            if ($request->catType == 1) {
+                $data[$x]['Main Category'] = $val->category_by->catDescription;
+            } else {
+                $data[$x]['Main Category'] = $val->asset_by->category_by->catDescription;
+            }
+
+            if ($request->catType == 1) {
+                $data[$x]['Sub Category'] = $val->sub_category_by->catDescription;
+            } else {
+                $data[$x]['Sub Category'] = $val->asset_by->sub_category_by->catDescription;
+            }
+
+            if ($request->catType == 1) {
+                $data[$x]['Cost('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
+            } else {
+                $data[$x]['Dep Amount('.$request->currencyCode.')'] = round($val->amount, $request->decimalPlaces);
+            }
+            $x++;
+        }
+
+        $csv = \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($request->type);
 
     }
 
@@ -2562,7 +2739,7 @@ WHERE
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
         })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereRAW('DATE(erp_grvmaster.approvedDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ')->where('erp_grvmaster.capitalizedYN',0);
+	AND "' . $toDate . '" ')->where('erp_grvmaster.capitalizedYN', 0);
 
         $output = DB::table('erp_grvmaster')->selectRaw('grvPrimaryCode,
 	approvedDate,
@@ -2578,7 +2755,7 @@ WHERE
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'fa.docOriginSystemCode');
             $query->on('erp_grvmaster.documentSystemID', '=', 'fa.docOriginDocumentSystemID');
-        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->where('erp_grvmaster.capitalizedYN',0)->union($addCapi)->get();
+        })->whereIN('erp_grvmaster.companySystemID', $companyID)->where('erp_grvmaster.approved', -1)->whereDate('erp_grvmaster.approvedDate', '<', $fromDate)->where('erp_grvmaster.capitalizedYN', 0)->union($addCapi)->get();
 
         return $output;
     }

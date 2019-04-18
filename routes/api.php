@@ -353,6 +353,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
     Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
     Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
+    Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
     Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
 
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
