@@ -55,6 +55,23 @@ class InventoryReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'INVSD':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'SD') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required|date',
+                        'warehouse' => 'required',
+                        'segment' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -188,7 +205,14 @@ class InventoryReportAPIController extends AppBaseController
                         $sort = 'desc';
                     }
 
-                    $output = $this->stockAgingQry($input,0);
+                    $output = $this->stockAgingQry($input, 0);
+                    return $this->sendResponse($output, 'Items retrieved successfully');
+                }
+                break;
+            case 'INVSD':
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'SD') {
+                    $output = $this->stockDetailQry($request);
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
@@ -199,7 +223,7 @@ class InventoryReportAPIController extends AppBaseController
     }
 
 
-    public function stockAgingQry($request,$forExcel = 0)
+    public function stockAgingQry($request, $forExcel = 0)
     {
 
         $date = new Carbon($request['asOfDate']);
@@ -241,7 +265,7 @@ class InventoryReportAPIController extends AppBaseController
         $groupByCompanyPlus = "";
         $groupByCompanyMinus = "";
 
-        if($forExcel){
+        if ($forExcel) {
             $groupByCompanyPlus = ",ItemLedger.companySystemID";
             $groupByCompanyMinus = ",erp_itemledger.companySystemID";
         }
@@ -314,7 +338,7 @@ class InventoryReportAPIController extends AppBaseController
                
                 ) AS ItemLedger 
             GROUP BY
-                ItemLedger.itemSystemCode".$groupByCompanyPlus.") as grandFinal";
+                ItemLedger.itemSystemCode" . $groupByCompanyPlus . ") as grandFinal";
         $items = DB::select($sql);
 
 
@@ -330,7 +354,7 @@ class InventoryReportAPIController extends AppBaseController
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 AND erp_itemledger.inOutQty < 0
             GROUP BY
-                erp_itemledger.itemSystemCode".$groupByCompanyMinus;
+                erp_itemledger.itemSystemCode" . $groupByCompanyMinus;
 
 
         $issuedItems = DB::select($issuedSql);
@@ -440,6 +464,292 @@ class InventoryReportAPIController extends AppBaseController
 
         return $output;
 
+    }
+
+    public function stockDetailQry($request)
+    {
+        $input = $request->all();
+        $date = new Carbon($request->date);
+        $date = $date->format('Y-m-d');
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $warehouse = [];
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+        $segment = [];
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+        }
+        //DB::enableQueryLog();
+        $sql = "SELECT
+                ItemLedger.companySystemID,
+                ItemLedger.companyID,
+                ItemLedger.itemSystemCode,
+                ItemLedger.itemPrimaryCode,
+                ItemLedger.itemDescription,
+                ItemLedger.unitOfMeasure,
+                ItemLedger.secondaryItemCode,
+                ItemLedger.UnitShortCode,
+                ItemLedger.categoryDescription,
+                ItemLedger.transactionDate,
+                ItemLedger.LocalCurrencyDecimals,
+                ItemLedger.RptCurrencyDecimals,
+                round(sum(Qty),3) AS Qty,
+                ItemLedger.minimumQty,               
+                ItemLedger.maximunQty,      
+                LocalCurrency,
+            IF
+                ( sum( localAmount ) / round(sum(Qty),3) IS NULL, 0, sum( localAmount ) / round(sum(Qty),3) ) AS WACLocal,
+                sum( localAmount ) AS WacLocalAmount,
+                RepCurrency,
+            IF
+                ( sum( rptAmount ) / round(sum(Qty),3) IS NULL, 0, sum( rptAmount ) / round(sum(Qty),3) ) AS WACRpt,
+                sum( rptAmount ) AS WacRptAmount,
+                round(lastRDate.inOutQty,2) as lastReceiptQty,            
+                lastRDate.transactionDate as lastReceiptDate, 
+                round(lastIDate.inOutQty,2) as lastIssuedQty,            
+                lastIDate.transactionDate as lastIssuedDate
+              
+            FROM
+                (
+            SELECT
+                erp_itemledger.companySystemID,
+                erp_itemledger.companyID,
+                erp_itemledger.documentSystemID,
+                erp_itemledger.documentSystemCode,
+                erp_itemledger.itemSystemCode,
+                erp_itemledger.itemPrimaryCode,
+                erp_itemledger.itemDescription,
+                erp_itemledger.unitOfMeasure,
+                erp_itemledger.transactionDate,
+                financeitemcategorysub.categoryDescription,
+                itemmaster.secondaryItemCode,
+                units.UnitShortCode,
+                round( erp_itemledger.inOutQty, 2 ) AS Qty,
+                currencymaster.CurrencyCode AS LocalCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+                currencymaster_1.CurrencyCode AS RepCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+                itemassigned.minimumQty as minimumQty,               
+                itemassigned.maximunQty as maximunQty      
+            FROM
+                `erp_itemledger`
+                INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+                LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+                LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+                LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
+            WHERE
+                erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                AND itemmaster.financeCategoryMaster = 1 
+                AND DATE(erp_itemledger.transactionDate) <= '$date' 
+                ) AS ItemLedger 
+                 LEFT JOIN (SELECT
+	erp_itemledger.transactionDate,
+	erp_itemledger.itemSystemCode,
+	round( erp_itemledger.inOutQty, 2 ) AS inOutQty
+FROM
+	(
+	( SELECT MAX( itemLedgerAutoID ) AS itemLedgerAutoID, itemSystemCode FROM erp_itemledger WHERE documentSystemID = 3 GROUP BY itemSystemCode ) a
+	LEFT JOIN erp_itemledger ON a.itemLedgerAutoID = erp_itemledger.itemLedgerAutoID 
+	) ) lastRDate ON lastRDate.itemSystemCode =  ItemLedger.itemSystemCode
+	LEFT JOIN (SELECT
+	erp_itemledger.transactionDate,
+	erp_itemledger.itemSystemCode,
+	round( erp_itemledger.inOutQty, 2 ) AS inOutQty
+FROM
+	(
+	( SELECT MAX( itemLedgerAutoID ) AS itemLedgerAutoID, itemSystemCode FROM erp_itemledger WHERE documentSystemID = 8 GROUP BY itemSystemCode ) a
+	LEFT JOIN erp_itemledger ON a.itemLedgerAutoID = erp_itemledger.itemLedgerAutoID 
+	) ) lastIDate ON lastIDate.itemSystemCode =  ItemLedger.itemSystemCode
+            GROUP BY
+                ItemLedger.itemSystemCode";
+        $items = DB::select($sql);
+        //dd(DB::getQueryLog());
+        $finalArray = array();
+        if (!empty($items)) {
+            foreach ($items as $element) {
+                $finalArray[$element->categoryDescription][] = $element;
+            }
+        }
+
+        $GrandWacLocal = collect($items)->pluck('WacLocalAmount')->toArray();
+        $GrandWacLocal = array_sum($GrandWacLocal);
+
+        $GrandWacRpt = collect($items)->pluck('WacRptAmount')->toArray();
+        $GrandWacRpt = array_sum($GrandWacRpt);
+
+        $output = array(
+            'categories' => $finalArray,
+            'date' => $date,
+            'subCompanies' => $subCompanies,
+            'grandWacLocal' => $GrandWacLocal,
+            'grandWacRpt' => $GrandWacRpt,
+            'warehouse' => $request->warehouse
+        );
+
+        return $output;
+    }
+
+
+    public function stockDetailCompanyQry($request)
+    {
+        $input = $request->all();
+        $date = new Carbon($request->date);
+        $date = $date->format('Y-m-d');
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $warehouse = [];
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+        $segment = [];
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+        }
+        //DB::enableQueryLog();
+        $sql = "SELECT
+                ItemLedger.companySystemID,
+                ItemLedger.companyID,
+                ItemLedger.itemSystemCode,
+                ItemLedger.itemPrimaryCode,
+                ItemLedger.itemDescription,
+                ItemLedger.unitOfMeasure,
+                ItemLedger.secondaryItemCode,
+                ItemLedger.UnitShortCode,
+                ItemLedger.categoryDescription,
+                ItemLedger.transactionDate,
+                ItemLedger.LocalCurrencyDecimals,
+                ItemLedger.RptCurrencyDecimals,
+                round(sum(Qty),3) AS Qty,
+                ItemLedger.minimumQty,               
+                ItemLedger.maximunQty,      
+                LocalCurrency,
+            IF
+                ( sum( localAmount ) / round(sum(Qty),3) IS NULL, 0, sum( localAmount ) / round(sum(Qty),3) ) AS WACLocal,
+                sum( localAmount ) AS WacLocalAmount,
+                RepCurrency,
+            IF
+                ( sum( rptAmount ) / round(sum(Qty),3) IS NULL, 0, sum( rptAmount ) / round(sum(Qty),3) ) AS WACRpt,
+                sum( rptAmount ) AS WacRptAmount,
+                round(lastRDate.inOutQty,2) as lastReceiptQty,            
+                lastRDate.transactionDate as lastReceiptDate, 
+                round(lastIDate.inOutQty,2) as lastIssuedQty,            
+                lastIDate.transactionDate as lastIssuedDate
+              
+            FROM
+                (
+            SELECT
+                erp_itemledger.companySystemID,
+                erp_itemledger.companyID,
+                erp_itemledger.documentSystemID,
+                erp_itemledger.documentSystemCode,
+                erp_itemledger.itemSystemCode,
+                erp_itemledger.itemPrimaryCode,
+                erp_itemledger.itemDescription,
+                erp_itemledger.unitOfMeasure,
+                erp_itemledger.transactionDate,
+                financeitemcategorysub.categoryDescription,
+                itemmaster.secondaryItemCode,
+                units.UnitShortCode,
+                round( erp_itemledger.inOutQty, 2 ) AS Qty,
+                currencymaster.CurrencyCode AS LocalCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+                currencymaster_1.CurrencyCode AS RepCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+                itemassigned.minimumQty as minimumQty,               
+                itemassigned.maximunQty as maximunQty      
+            FROM
+                `erp_itemledger`
+                INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+                LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+                LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+                LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
+            WHERE
+                erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                AND itemmaster.financeCategoryMaster = 1 
+                AND DATE(erp_itemledger.transactionDate) <= '$date' 
+                ) AS ItemLedger 
+                 LEFT JOIN (SELECT
+	erp_itemledger.transactionDate,
+	erp_itemledger.itemSystemCode,
+	round( erp_itemledger.inOutQty, 2 ) AS inOutQty,
+	erp_itemledger.companySystemID 
+FROM
+	(
+	( SELECT MAX( itemLedgerAutoID ) AS itemLedgerAutoID, itemSystemCode, companySystemID FROM erp_itemledger WHERE documentSystemID = 3 GROUP BY itemSystemCode,companySystemID ) a
+	LEFT JOIN erp_itemledger ON a.itemLedgerAutoID = erp_itemledger.itemLedgerAutoID AND a.companySystemID = erp_itemledger.companySystemID 
+	) ) lastRDate ON lastRDate.itemSystemCode =  ItemLedger.itemSystemCode AND lastRDate.companySystemID =  ItemLedger.companySystemID
+	LEFT JOIN (SELECT
+	erp_itemledger.transactionDate,
+	erp_itemledger.itemSystemCode,
+	round( erp_itemledger.inOutQty, 2 ) AS inOutQty,
+	erp_itemledger.companySystemID 
+FROM
+	(
+	( SELECT MAX( itemLedgerAutoID ) AS itemLedgerAutoID, itemSystemCode, companySystemID FROM erp_itemledger WHERE documentSystemID = 8 GROUP BY itemSystemCode,companySystemID ) a
+	LEFT JOIN erp_itemledger ON a.itemLedgerAutoID = erp_itemledger.itemLedgerAutoID AND a.companySystemID = erp_itemledger.companySystemID 
+	) ) lastIDate ON lastIDate.itemSystemCode =  ItemLedger.itemSystemCode AND lastIDate.companySystemID =  ItemLedger.companySystemID
+            GROUP BY
+                ItemLedger.companySystemID,
+                ItemLedger.itemSystemCode";
+        $items = DB::select($sql);
+        //dd(DB::getQueryLog());
+        $finalArray = array();
+        if (!empty($items)) {
+            foreach ($items as $element) {
+                $finalArray[$element->categoryDescription][] = $element;
+            }
+        }
+
+        $GrandWacLocal = collect($items)->pluck('WacLocalAmount')->toArray();
+        $GrandWacLocal = array_sum($GrandWacLocal);
+
+        $GrandWacRpt = collect($items)->pluck('WacRptAmount')->toArray();
+        $GrandWacRpt = array_sum($GrandWacRpt);
+
+        $output = array(
+            'categories' => $finalArray,
+            'date' => $date,
+            'subCompanies' => $subCompanies,
+            'grandWacLocal' => $GrandWacLocal,
+            'grandWacRpt' => $GrandWacRpt,
+            'warehouse' => $request->warehouse
+        );
+
+        return $output;
     }
 
     public function exportReport(Request $request)
@@ -556,17 +866,17 @@ class InventoryReportAPIController extends AppBaseController
 
                     return $this->sendResponse(array(), 'successfully export');
 
-                }else if ($reportTypeID == 'SA') { //Stock Aging Report
+                } else if ($reportTypeID == 'SA') { //Stock Aging Report
 
                     $type = $request->type;
                     $input = $request->all();
                     $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
-                    $output = $this->stockAgingQry($input,1);
+                    $output = $this->stockAgingQry($input, 1);
                     $data = array();
                     if ($output) {
                         $x = 0;
 
-                        foreach ($output['categories'] as $key ) {
+                        foreach ($output['categories'] as $key) {
                             foreach ($key as $val) {
                                 $x++;
                                 $data[$x]['Company ID'] = $val->companyID;
@@ -575,71 +885,71 @@ class InventoryReportAPIController extends AppBaseController
                                 $data[$x]['Category'] = $val->categoryDescription;
                                 $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
-                                $data[$x]['Qty'] =  $val->Qty;
+                                $data[$x]['Qty'] = $val->Qty;
 
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['WAC Local'] = number_format($val->WACLocal,$val->LocalCurrencyDecimals);
-                                    $data[$x]['Local Amount'] = number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['WAC Rep'] = number_format($val->WACRpt,$val->RptCurrencyDecimals);
-                                    $data[$x]['Rep Amount'] = number_format($val->WacRptAmount,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['WAC Local'] = number_format($val->WACLocal, $val->LocalCurrencyDecimals);
+                                    $data[$x]['Local Amount'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['WAC Rep'] = number_format($val->WACRpt, $val->RptCurrencyDecimals);
+                                    $data[$x]['Rep Amount'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['<=30 (Qty)'] = $val->case1;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['<=30 (Value)'] = number_format($val->WACLocal * $val->case1,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['<=30 (Value)'] = number_format($val->WACRpt * $val->case1,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['<=30 (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['<=30 (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
                                 }
 
 
                                 $data[$x]['31 to 60 (Qty)'] = $val->case2;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACLocal * $val->case2,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACRpt * $val->case2,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['61 to 90 (Qty)'] = $val->case3;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACLocal * $val->case3,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACRpt * $val->case3,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['91 to 120 (Qty)'] = $val->case4;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACLocal * $val->case4,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACRpt * $val->case4,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['121 to 365 (Qty)'] = $val->case5;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACLocal * $val->case5,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACRpt * $val->case5,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['366 to 730 (Qty)'] = $val->case6;
-                                if($input['currencyID'] == 1){
-                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACLocal * $val->case6,$val->LocalCurrencyDecimals);
-                                }else if($input['currencyID'] == 2){
-                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACRpt * $val->case6,$val->RptCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
+                                } else if ($input['currencyID'] == 2) {
+                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
                                 }
 
                                 $data[$x]['Over 730 (Qty)'] = $val->case7;
-                                if($input['currencyID'] == 1){
-                                    if( $val->Qty == 0){
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals);
-                                    }else{
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7,$val->LocalCurrencyDecimals);
+                                if ($input['currencyID'] == 1) {
+                                    if ($val->Qty == 0) {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
+                                    } else {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals);
                                     }
-                                }else if($input['currencyID'] == 2){
-                                    if( $val->Qty == 0) {
+                                } else if ($input['currencyID'] == 2) {
+                                    if ($val->Qty == 0) {
                                         $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
-                                    }else{
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7,$val->RptCurrencyDecimals);
+                                    } else {
+                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals);
                                     }
                                 }
                             }
@@ -659,6 +969,65 @@ class InventoryReportAPIController extends AppBaseController
 
                     return $this->sendResponse(array(), 'successfully export');
                 }
+            case 'INVSD':
+                $data = [];
+                if($request->detail == 1) {
+                    $output = $this->stockDetailQry($request);
+                    if ($output['categories']) {
+                        foreach ($output['categories'] as $key => $vale) {
+                            foreach ($output['categories'][$key] as $val) {
+                                $data[] = array(
+                                    'Company' => $val->companyID,
+                                    'Item Code' => $val->itemPrimaryCode,
+                                    'Item Description' => $val->itemDescription,
+                                    'UOM' => $val->UnitShortCode,
+                                    'Part Number' => $val->secondaryItemCode,
+                                    'Sub Category' => $val->categoryDescription,
+                                    'Stock Qty' => $val->Qty,
+                                    'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
+                                    'Last Receipt Date' => \Helper::dateFormat($val->lastReceiptDate),
+                                    'Last Receipt Qty' => $val->lastReceiptQty,
+                                    'Last Issued Date' => \Helper::dateFormat($val->lastIssuedDate),
+                                    'Last Issued Qty' => $val->lastIssuedQty
+                                );
+                            }
+                        }
+                    }
+                }else{
+                    $output = $this->stockDetailCompanyQry($request);
+                    if ($output['categories']) {
+                        foreach ($output['categories'] as $key => $vale) {
+                            foreach ($output['categories'][$key] as $val) {
+                                $data[] = array(
+                                    'Company' => $val->companyID,
+                                    'Item Code' => $val->itemPrimaryCode,
+                                    'Item Description' => $val->itemDescription,
+                                    'UOM' => $val->UnitShortCode,
+                                    'Part Number' => $val->secondaryItemCode,
+                                    'Sub Category' => $val->categoryDescription,
+                                    'Stock Qty' => $val->Qty,
+                                    'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
+                                    'Last Receipt Date' => \Helper::dateFormat($val->lastReceiptDate),
+                                    'Last Receipt Qty' => $val->lastReceiptQty,
+                                    'Last Issued Date' => \Helper::dateFormat($val->lastIssuedDate),
+                                    'Last Issued Qty' => $val->lastIssuedQty
+                                );
+                            }
+                        }
+                    }
+                }
+                $csv = \Excel::create('stock_Detail', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download('csv');
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
