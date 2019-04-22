@@ -724,7 +724,7 @@ FROM
 	) ) lastIDate ON lastIDate.itemSystemCode =  ItemLedger.itemSystemCode AND lastIDate.companySystemID =  ItemLedger.companySystemID
             GROUP BY
                 ItemLedger.companySystemID,
-                ItemLedger.itemSystemCode";
+                ItemLedger.itemSystemCode ORDER BY ItemLedger.companySystemID";
         $items = DB::select($sql);
         //dd(DB::getQueryLog());
         $finalArray = array();
@@ -977,7 +977,6 @@ FROM
                         foreach ($output['categories'] as $key => $vale) {
                             foreach ($output['categories'][$key] as $val) {
                                 $data[] = array(
-                                    'Company' => $val->companyID,
                                     'Item Code' => $val->itemPrimaryCode,
                                     'Item Description' => $val->itemDescription,
                                     'UOM' => $val->UnitShortCode,
