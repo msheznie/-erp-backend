@@ -1076,13 +1076,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     {
         $jvMasterData = JvMaster::find($request->jvMasterAutoId);
 
-        if ($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) {
+        if (($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) || $jvMasterData->isReverseAccYN == 0) {
 
             $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if (empty($companyFinanceYear)) {
                 return $this->sendError('Financial year not created or not active for reversal document. You cannot approve this document.');
