@@ -1076,7 +1076,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     {
         $jvMasterData = JvMaster::find($request->jvMasterAutoId);
 
-        if (($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) || $jvMasterData->isReverseAccYN == 0) {
+        if (($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) && $jvMasterData->isReverseAccYN == 0) {
 
             $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
