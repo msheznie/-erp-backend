@@ -673,7 +673,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
-                                       (SUM(budjetAmtRpt) * -1) as totalRpt,
+                                       if((SUM(budjetAmtRpt) * -1) < 0,(SUM(budjetAmtRpt) * -1),(SUM(budjetAmtRpt) * -1)) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
                                        erp_templatesdetails.templateDetailDescription,
                                        erp_templatesdetails.templatesMasterAutoID,
@@ -761,7 +761,7 @@ class BudgetMasterAPIController extends AppBaseController
                 return $product->GRVcostPerUnitComRptCur * $product->noQty;
             });
 
-            $data->balance =  ($data->totalRpt * -1) - ($data->consumed_amount + $data->pending_po_amount);
+            $data->balance =  ($data->totalRpt) - ($data->consumed_amount + $data->pending_po_amount);
         }
 
         $total = array();
