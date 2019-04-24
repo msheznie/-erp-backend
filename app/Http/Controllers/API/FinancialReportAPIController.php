@@ -2390,11 +2390,14 @@ GROUP BY
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $secondLinkedcolumnQry = '';
+        $whereQry = [];
         foreach ($columnKeys as $key => $val) {
             $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) AS `' . $val . '`,';
+            $whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
         $thirdLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
+
         $output = [];
         $outputDetail = [];
         if (count($uncategorizeGL) > 0) {
@@ -2412,7 +2415,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a';
+            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ',$whereQry) ;
             $output = \DB::select($sql);
 
             $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
@@ -2429,7 +2432,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a';
+            erp_generalledger.chartOfAccountSystemID) a WHERE '.join(' OR ',$whereQry);
             $outputDetail = \DB::select($sql);
         }
 
