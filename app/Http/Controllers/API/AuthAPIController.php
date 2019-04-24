@@ -57,14 +57,19 @@ class AuthAPIController extends PassportAccessTokenController
                 $employees = Employee::find($user->employee_id)->increment('isLock');
             }
             return $this->withErrorHandling(function () use($exception,$user) {
-                $employees = Employee::find($user->employee_id);
-                $totalAttempt = 4 - $employees->isLock;
-                //throw $exception;
-                if($totalAttempt == 0){
-                    return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
-                } else {
-                    //throw new OAuthServerException('Invalid username or password. You have ' . $totalAttempt . ' more attempt', 6, 'error', 401);
-                    return response(["message" => 'Invalid username or password. You have ' . $totalAttempt . ' more attempt'], 401);
+
+                if($user) {
+                    $employees = Employee::find($user->employee_id);
+                    $totalAttempt = 4 - $employees->isLock;
+                    //throw $exception;
+                    if ($totalAttempt == 0) {
+                        return Response::json(ResponseUtil::makeError('Your account is blocked', array('type' => '')), 401);
+                    } else {
+                        //throw new OAuthServerException('Invalid username or password. You have ' . $totalAttempt . ' more attempt', 6, 'error', 401);
+                        return response(["message" => 'Invalid username or password. You have ' . $totalAttempt . ' more attempt'], 401);
+                    }
+                }else{
+                    return response(["message" => 'Invalid username or password.'], 401);
                 }
             });
         }
