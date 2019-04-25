@@ -1437,6 +1437,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
     Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
     Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
+
+    Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
+    Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
 });
 
 

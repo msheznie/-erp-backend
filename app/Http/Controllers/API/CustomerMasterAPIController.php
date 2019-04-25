@@ -29,6 +29,7 @@ use App\Models\CustomerMasterRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\SupplierContactType;
 use App\Models\TicketMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
@@ -243,11 +244,14 @@ class CustomerMasterAPIController extends AppBaseController
         /**Country Drop Down */
         $country = CountryMaster::orderBy('countryName', 'asc')->get();
 
+        $contactTypes = SupplierContactType::all();
+
         $output = array(
             'allCompanies' => $allCompanies,
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccounts' => $chartOfAccounts,
-            'country' => $country
+            'country' => $country,
+            'contactTypes' => $contactTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
