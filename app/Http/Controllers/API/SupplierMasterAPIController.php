@@ -19,6 +19,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
@@ -555,13 +556,24 @@ class SupplierMasterAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function show($id)
+    public function show($id,Request $request)
     {
+
+        $companyId = $request->get('company_id');
+
+
+
         /** @var SupplierMaster $supplierMaster */
         $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');
+        }
+
+        if($companyId){
+            $supplierMaster->isLocalSupplier = Helper::isLocalSupplier($id,$companyId);
+        }else{
+            $supplierMaster->isLocalSupplier = false;
         }
 
         return $this->sendResponse($supplierMaster->toArray(), 'Supplier Master retrieved successfully');

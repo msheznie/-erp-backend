@@ -390,7 +390,7 @@ class FinancialReportAPIController extends AppBaseController
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
                 $request = (object)$request->all();
 
-                if ($request->accountType == 1) {
+                if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
                     $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
                     if (!empty($detID->detID) && !is_null($detID->detID)) {
                         $notExistPLAccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->whereDoesntHave('templatelink', function ($query) use ($request, $detID) {
@@ -432,23 +432,23 @@ class FinancialReportAPIController extends AppBaseController
                     $month = Carbon::parse($toDate)->format('Y-m-d');
                 }
 
-                // get generated customize column qury
+                // get generated customize column query
                 $generatedColumn = $this->getFinancialCustomizeRptColumnQry($request);
-                $linkedcolumnQry = $generatedColumn['linkedcolumnQry'];
+                $linkedcolumnQry = $generatedColumn['linkedcolumnQry']; // generated select statement
                 $columnKeys = $generatedColumn['columnKeys'];
-                $currencyColumn = $generatedColumn['currencyColumn'];
-                $columnHeader = $generatedColumn['columnHeader'];
-                $columnHeaderMapping = $generatedColumn['columnHeaderMapping'];
-                $linkedcolumnQry2 = $generatedColumn['linkedcolumnQry2'];
+                $currencyColumn = $generatedColumn['currencyColumn']; // currency column whether local or reporting
+                $columnHeader = $generatedColumn['columnHeader']; // column name with detail
+                $columnHeaderMapping = $generatedColumn['columnHeaderMapping']; // column name
+                $linkedcolumnQry2 = $generatedColumn['linkedcolumnQry2']; // generated select statement
 
-                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period));
-                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period));
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period)); // main query
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period)); // detail query
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
                 $grandTotalUncatArr = [];
                 $uncategorizeArr = [];
                 $uncategorizeDetailArr = [];
                 $grandTotal = [];
-                if ($request->accountType == 1 || $request->accountType == 2) {
+                if ($request->accountType == 1 || $request->accountType == 2) { // get uncategorized value
                     $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys));
                     $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys));
                     //$lastColumn = collect($headers)->last(); // considering net total
@@ -459,12 +459,14 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                     $uncategorizeDetailArr = $uncategorizeData['outputDetail'];
+                }else{
+                    $grandTotal[0] = [];
                 }
 
                 $outputOpeningBalance = '';
                 $outputOpeningBalanceArr = [];
                 $outputClosingBalanceArr = [];
-                if ($request->accountType == 3) {
+                if ($request->accountType == 3) { // if report is cash flow type get opening and closing balance
                     $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn);
                     $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance) ? $outputOpeningBalance->openingBalance : 0;
 
@@ -500,6 +502,7 @@ class FinancialReportAPIController extends AppBaseController
                 //remove records which has no detail except total
                 $headers = collect($headers)->forget($removedFromArray)->values();
 
+                // get devision value
                 $divisionValue = 1;
                 if ($template) {
                     if ($template->showNumbersIn !== 1) {
@@ -2387,11 +2390,14 @@ GROUP BY
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $secondLinkedcolumnQry = '';
+        $whereQry = [];
         foreach ($columnKeys as $key => $val) {
             $secondLinkedcolumnQry .= 'IFNULL(`' . $val . '`,0) AS `' . $val . '`,';
+            $whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
         $thirdLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
+
         $output = [];
         $outputDetail = [];
         if (count($uncategorizeGL) > 0) {
@@ -2409,7 +2415,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a';
+            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ',$whereQry) ;
             $output = \DB::select($sql);
 
             $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
@@ -2426,7 +2432,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a';
+            erp_generalledger.chartOfAccountSystemID) a WHERE '.join(' OR ',$whereQry);
             $outputDetail = \DB::select($sql);
         }
 
@@ -2645,6 +2651,7 @@ GROUP BY
             }
         }
 
+        // if there is a row linked to the formula calculation will be done here
         if ($linkedRows) {
             $explodedLinkedColumns = explode(',', $linkedColumns);
             $linkedColumnsShortCode = ReportTemplateColumnLink::whereIN('columnLinkID', $explodedLinkedColumns)->get();
@@ -2797,7 +2804,7 @@ GROUP BY
             $fromDate = Carbon::parse($period->dateFrom)->format('Y-m-d');
         }
 
-        //formula column decode
+        //assign db currency column
         if ($request->currency == 1) {
             $currencyColumn = 'documentLocalAmount';
         } else {
@@ -2834,6 +2841,7 @@ GROUP BY
                 $lastYearPeriodArr[] = $val->format('Y-m');
             }
 
+            // link queries to selected column
             $currentMonthColumn = collect($columns)->where('type', 3)->values();
             $prevMonthColumn = collect($columns)->where('type', 6)->values();
             if (count($currentMonthColumn) > 0) {
@@ -2926,12 +2934,15 @@ GROUP BY
                 }
             }
         }
+
+        // formatting queries
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
                     if ($val->formula == null) {
                         $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = 0;
                     } else {
+                        // if column has a formula value decoding process is done here
                         $linkedcolumnArray2[$val->shortCode . '-' . $val->columnLinkID] = $this->columnFormulaDecode($val->columnLinkID, [], $columnArray, false, 1);
                     }
                 } else if ($val->shortCode == 'CYYTD' || $val->shortCode == 'LYYTD') {
@@ -2942,6 +2953,7 @@ GROUP BY
             }
         }
 
+        // formatting queries
         if (count($linkedcolumnArray2)) {
             foreach ($linkedcolumnArray2 as $key => $val) {
                 if ($key == 'FCA') {
@@ -2955,8 +2967,11 @@ GROUP BY
         }
 
         $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
+
+        //get linked row sum amount to the formula
         $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2));
 
+        // formatting queries
         if (count($linkedColumn) > 0) {
             foreach ($linkedColumn as $val) {
                 if ($val->shortCode == 'FCA' || $val->shortCode == 'FCP') {
@@ -2986,7 +3001,7 @@ GROUP BY
         }
 
         $columnKeys = collect($linkedcolumnArray)->keys()->all();
-
+        // formatting queries
         if (count($linkedcolumnArray)) {
             foreach ($linkedcolumnArray as $key => $val) {
                 $explodedKey = explode('-', $key);
@@ -2999,7 +3014,7 @@ GROUP BY
                 }
             }
         }
-
+        // formatting queries
         if (count($linkedcolumnArray3)) {
             foreach ($linkedcolumnArray3 as $key => $val) {
                 $explodedKey = explode('-', $key);
@@ -3013,6 +3028,7 @@ GROUP BY
             }
         }
 
+        // final select statements
         $linkedcolumnQry = implode(',', $linkedcolumnArrayFinal);
         $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal3);
 
