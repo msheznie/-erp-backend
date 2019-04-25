@@ -190,7 +190,9 @@ return [
         'itemDescription' => 'Item Description',
         'unit' => 'Unit of Measure',
         'shiftID' => 'Shift',
-        'wareHouseAutoID' => 'Outlet'
+        'wareHouseAutoID' => 'Outlet',
+        'supCategoryICVMasterID' => 'ICV Category',
+        'supCategorySubICVID' => 'ICV Sub Category'
     ],
 
 ];

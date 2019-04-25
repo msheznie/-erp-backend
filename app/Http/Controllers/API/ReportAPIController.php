@@ -215,6 +215,8 @@ WHERE
                             erp_purchaseordermaster.expectedDeliveryDate,
                             erp_purchaseordermaster.budgetYear,
                             erp_purchaseordermaster.purchaseOrderID,
+                            IFNULL(suppliercategoryicvmaster.categoryDescription,"-") as icvMasterDes,
+                            IFNULL(suppliercategoryicvsub.categoryDescription,"-") as icvSubDes,
                             supCont.countryName,
                             IFNULL(podet.TotalPOVal,0) as TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
@@ -228,6 +230,7 @@ WHERE
                             (IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
                             (IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance,
                             ServiceLineDes as segment,
+                            IF( suppliermaster.isLCCYN = 0, "SME", "LCC" ) AS isLcc,
                             IFNULL(adv.AdvanceReleased,0) as advanceReleased,
                             IFNULL(adv.LogisticAdvanceReleased,0) as logisticAdvanceReleased,
                             IFNULL(pr.paymentComRptAmount,0) as paymentReleased,
@@ -261,48 +264,51 @@ WHERE
                             $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
                         })
                         ->leftJoin(DB::raw('(SELECT
-	erp_paysupplierinvoicemaster.companySystemID,
-	erp_paysupplierinvoicemaster.companyID,
-	erp_advancepaymentdetails.purchaseOrderID,
-	sum( erp_advancepaymentdetails.comRptAmount ),
-IF
-	( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
-IF
-	( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
-FROM
-	erp_paysupplierinvoicemaster
-	INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
-	INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
-WHERE
-	erp_advancepaymentdetails.purchaseOrderID > 0 
-	AND erp_paysupplierinvoicemaster.approved =- 1 
-	AND erp_paysupplierinvoicemaster.cancelYN = 0 
-	AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-GROUP BY
-	purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
-                            $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
-                            $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
-                        })
-                        ->leftJoin(DB::raw('(SELECT
-    erp_paysupplierinvoicemaster.companySystemID,
-    erp_paysupplierinvoicemaster.companyID,
-    erp_bookinvsuppdet.purchaseOrderID,
-    sum(erp_bookinvsuppdet.totRptAmount) as paymentComRptAmount
-FROM
-    erp_paysupplierinvoicemaster
-    INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-    INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
-WHERE
-    erp_paysupplierinvoicemaster.approved=- 1 AND  erp_paysupplierinvoicemaster.cancelYN=0
-    AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-    AND erp_paysupplierinvoicedetail.matchingDocID = 0
-     AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
+                        erp_paysupplierinvoicemaster.companySystemID,
+                        erp_paysupplierinvoicemaster.companyID,
+                        erp_advancepaymentdetails.purchaseOrderID,
+                        sum( erp_advancepaymentdetails.comRptAmount ),
+                    IF
+                        ( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
+                    IF
+                        ( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+                        INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
+                    WHERE
+                        erp_advancepaymentdetails.purchaseOrderID > 0 
+                        AND erp_paysupplierinvoicemaster.approved =- 1 
+                        AND erp_paysupplierinvoicemaster.cancelYN = 0 
+                        AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                    GROUP BY
+                        purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
+                                                $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
+                                                $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
+                                            })
+                                            ->leftJoin(DB::raw('(SELECT
+                        erp_paysupplierinvoicemaster.companySystemID,
+                        erp_paysupplierinvoicemaster.companyID,
+                        erp_bookinvsuppdet.purchaseOrderID,
+                        sum(erp_bookinvsuppdet.totRptAmount) as paymentComRptAmount
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
+                        INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
+                    WHERE
+                        erp_paysupplierinvoicemaster.approved=- 1 AND  erp_paysupplierinvoicemaster.cancelYN=0
+                        AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
+                        AND erp_paysupplierinvoicedetail.matchingDocID = 0
+                         AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                    Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
-                        ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
+                        ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
+                        ->leftJoin('suppliercategoryicvmaster', 'erp_purchaseordermaster.supCategoryICVMasterID', '=', 'suppliercategoryicvmaster.supCategoryICVMasterID')
+                        ->leftJoin('suppliercategoryicvsub', 'erp_purchaseordermaster.supCategorySubICVID', '=', 'suppliercategoryicvsub.supCategorySubICVID')
+                        ->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
                         ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
