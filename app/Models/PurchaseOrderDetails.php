@@ -320,4 +320,8 @@ class PurchaseOrderDetails extends Model
     {
         $this->attributes['rpt_total'] = $this->GRVcostPerUnitLocalCur * $this->noQty;
     }
+
+    public function item_ledger(){
+        return $this->hasMany('App\Models\ErpItemLedger', 'itemSystemCode', 'itemCode');
+    }
 }

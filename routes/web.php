@@ -7,3 +7,13 @@ Route::resource('stockAdjustmentDetailsRefferedBacks', 'StockAdjustmentDetailsRe
 Route::resource('consoleJVMasters', 'ConsoleJVMasterController');
 
 Route::resource('consoleJVDetails', 'ConsoleJVDetailController');
+
+
+
+
+
+
+
+
+
+Route::resource('customerContactDetails', 'CustomerContactDetailsController');
