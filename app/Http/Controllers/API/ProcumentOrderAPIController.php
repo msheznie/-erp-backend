@@ -60,6 +60,7 @@ use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\ErpItemLedger;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\PaySupplierInvoiceDetail;
@@ -1501,6 +1502,26 @@ class ProcumentOrderAPIController extends AppBaseController
         }, 'advance_detail' => function ($query) {
             $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
         }, 'company', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
+
+
+        if(!empty($output)){
+
+            foreach ($output->detail as $item){
+
+                $item->inhand = ErpItemLedger::where('itemSystemCode',$item->itemCode)
+                                          ->where('companySystemID',$item->companySystemID)
+                                          ->whereDate('transactionDate','<',new Carbon($output->createdDateTime))
+                                          ->sum('inOutQty');
+
+                /*$item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode',$item->itemCode)
+                    ->where('companySystemID',$item->companySystemID)
+                    ->where('documentSystemID',8)
+                    ->whereDate('transactionDate','<',new Carbon($output->createdDateTime))
+                    ->sum('inOutQty') )* -1;*/
+                $item->lastThreeMonthIssued = 0;
+            }
+
+        }
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
