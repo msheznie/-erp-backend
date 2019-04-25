@@ -1508,17 +1508,22 @@ class ProcumentOrderAPIController extends AppBaseController
 
             foreach ($output->detail as $item){
 
+                $date = $output->createdDateTime;
+
                 $item->inhand = ErpItemLedger::where('itemSystemCode',$item->itemCode)
                                           ->where('companySystemID',$item->companySystemID)
-                                          ->whereDate('transactionDate','<',new Carbon($output->createdDateTime))
+                                          ->whereDate('transactionDate','<',new Carbon($date))
                                           ->sum('inOutQty');
+                $dt          = new Carbon($date);
+                $from        = $dt->subMonths(3);  ;
+                $to          = new Carbon($date);
 
-                /*$item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode',$item->itemCode)
-                    ->where('companySystemID',$item->companySystemID)
-                    ->where('documentSystemID',8)
-                    ->whereDate('transactionDate','<',new Carbon($output->createdDateTime))
-                    ->sum('inOutQty') )* -1;*/
-                $item->lastThreeMonthIssued = 0;
+                $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode',$item->itemCode)
+                                                            ->where('companySystemID',$item->companySystemID)
+                                                            ->where('documentSystemID',8)
+                                                            ->whereBetween('transactionDate',[$from, $to])
+                                                            ->sum('inOutQty') )* -1;
+
             }
 
         }
