@@ -1585,6 +1585,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$x]['Customer Name'] = $val->CustomerName;
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
+                        $data[$x]['Comments'] = $val->documentNarration;
                         $data[$x]['Department'] = $val->ServiceLineDes;
                         $data[$x]['Client Contract ID'] = $val->clientContractID;
                         $data[$x]['GL Code'] = $val->AccountCode;
