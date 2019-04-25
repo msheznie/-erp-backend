@@ -50,6 +50,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\AddonCostCategories;
@@ -70,6 +71,7 @@ use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
 use App\Models\PurchaseOrderMasterRefferedHistory;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
@@ -153,6 +155,21 @@ class ProcumentOrderAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
+
+
+        if(Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])){
+
+            $validator = \Validator::make($input, [
+                'supCategoryICVMasterID' => 'required|numeric|min:1',
+                'supCategorySubICVID' => 'required|numeric|min:1',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+        }
+
         if (isset($input['WO_PeriodFrom'])) {
             if ($input['WO_PeriodFrom']) {
                 $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
@@ -374,6 +391,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrder->isAmendAccess = 1;
         }
 
+        $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID,$procumentOrder->companySystemID);
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -397,7 +415,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isAmendAccess = $input['isAmendAccess'];
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess','supplier','currency']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess','supplier','currency','isLocalSupplier']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -426,6 +444,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
         }
+
 
         if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
             if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
@@ -790,6 +809,20 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
+
+
+            if(Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])){
+
+                $validator = \Validator::make($input, [
+                    'supCategoryICVMasterID' => 'required|numeric|min:1',
+                    'supCategorySubICVID' => 'required|numeric|min:1',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+            }
 
             $poDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -1347,6 +1380,8 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        $icvCategories = SupplierCategoryICVMaster::all();
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1365,7 +1400,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'detailSum' => $detailSum,
             'grvRecieved' => $grvRecieved,
             'invoiceBooked' => $invoiceBooked,
-            'poAddonCategoryDrop' => $poAddonCategoryDrop
+            'poAddonCategoryDrop' => $poAddonCategoryDrop,
+            'icvCategories' => $icvCategories
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

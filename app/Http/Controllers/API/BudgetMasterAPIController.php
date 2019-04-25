@@ -688,7 +688,7 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('erp_templatesdetails.templatesMasterAutoID', $budgetMaster->templateMasterID)
             ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
             ->join('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID')
-            
+
            /* ->join(DB::raw('(SELECT
                                     erp_templatesglcode.templatesDetailsAutoID,
                                     erp_templatesglcode.templateMasterID,

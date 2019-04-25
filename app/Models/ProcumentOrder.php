@@ -295,7 +295,9 @@ class ProcumentOrder extends Model
         'modifiedUser',
         'createdDateTime',
         'isSelected',
-        'timeStamp'
+        'timeStamp',
+        'supCategoryICVMasterID',
+        'supCategorySubICVID'
     ];
 
     /**
@@ -427,7 +429,9 @@ class ProcumentOrder extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'isSelected' => 'boolean'
+        'isSelected' => 'boolean',
+        'supCategoryICVMasterID' => 'integer',
+        'supCategorySubICVID' => 'integer'
     ];
 
     /**
