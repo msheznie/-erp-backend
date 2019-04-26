@@ -2729,10 +2729,10 @@ WHERE
 	0 as opening,
 	IFNULL(grvd.' . $additionColumn . ',0) as addition,
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
-	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')->join('erp_grvdetails', function ($join) {
-            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
-                ->where('itemFinanceCategoryID', 3);
-        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')
+            ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
+            $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+            ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
@@ -2746,10 +2746,10 @@ WHERE
 	IFNULL(grvd.' . $additionColumn . ',0) as opening,
 	0 as addition,
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
-	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')->join('erp_grvdetails', function ($join) {
-            $join->on('erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID')
-                ->where('itemFinanceCategoryID', 3);
-        })->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
+	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')
+            ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
+                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+            ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
 	AND "' . $toDate . '" AND approved = -1 GROUP BY docOriginSystemCode, docOriginDocumentSystemID) as fa'), function ($query) {
