@@ -895,7 +895,9 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'modifiedUser',
         'createdDateTime',
         'isSelected',
-        'timeStamp'
+        'timeStamp',
+        'supCategoryICVMasterID',
+        'supCategorySubICVID'
     ];
 
     /**
@@ -1033,7 +1035,9 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'isSelected' => 'boolean'
+        'isSelected' => 'boolean',
+        'supCategoryICVMasterID' => 'integer',
+        'supCategorySubICVID' => 'integer'
     ];
 
     /**

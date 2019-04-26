@@ -4015,4 +4015,21 @@ class Helper
         $assetCosting = Models\FixedAssetCost::create($cost);
     }
 
+    public static function isLocalSupplier($supplierId,$companyId)
+    {
+        $check = 0;
+        $company = Models\Company::find($companyId);
+
+        if(!empty($company)){
+            $check = Models\SupplierMaster::where('supplierCountryID',$company->companyCountry)
+                ->where('supplierCodeSystem',$supplierId)
+                ->count();
+        }
+
+        if($check > 0){
+            return true;
+        }
+        return false;
+    }
+
 }
