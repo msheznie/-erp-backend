@@ -9,7 +9,9 @@
  * -- Description : This file contains the all CRUD for Warehouse Items
  * -- REVISION HISTORY
  * -- Date: 07-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByWarehouse()
+ * -- Date: 28- April 2019 By: Fayas Description: Added new functions named as exportItemAssignedByWarehouse()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateWarehouseItemsAPIRequest;
@@ -26,7 +28,6 @@ use Response;
  * Class WarehouseItemsController
  * @package App\Http\Controllers\API
  */
-
 class WarehouseItemsAPIController extends AppBaseController
 {
     /** @var  WarehouseItemsRepository */
@@ -224,7 +225,7 @@ class WarehouseItemsAPIController extends AppBaseController
     public function update($id, UpdateWarehouseItemsAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,['binNumber']);
+        $input = $this->convertArrayToSelectedValue($input, ['binNumber']);
         /** @var WarehouseItems $warehouseItems */
         $warehouseItems = $this->warehouseItemsRepository->findWithoutFail($id);
 
@@ -232,7 +233,7 @@ class WarehouseItemsAPIController extends AppBaseController
             return $this->sendError('Warehouse Items not found');
         }
 
-        if(!isset($input['binNumber'])){
+        if (!isset($input['binNumber'])) {
             $input['binNumber'] = 0;
         }
         $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
@@ -304,13 +305,125 @@ class WarehouseItemsAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
-
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+
+        $itemMasters = $this->getAssignedItemsByWareHouse($input);
+
+        $data = \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('warehouseItemsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('current', function ($row) {
+                $data = array('companySystemID' => $row->companySystemID,
+                    'itemCodeSystem' => $row->itemSystemCode,
+                    'wareHouseId' => $row->warehouseSystemCode);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                $array = array('local' => $itemCurrentCostAndQty['wacValueLocalWarehouse'],
+                    'rpt' => $itemCurrentCostAndQty['wacValueReportingWarehouse'],
+                    'wareHouseStock' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
+                    'totalWacCostLocal' => $itemCurrentCostAndQty['totalWacCostLocalWarehouse'],
+                    'totalWacCostRpt' => $itemCurrentCostAndQty['totalWacCostRptWarehouse'],
+                );
+                return $array;
+
+            })
+            ->make(true);
+        return $data;
+    }
+
+
+    public function exportItemAssignedByWarehouse(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $data = array();
+        $output = ($this->getAssignedItemsByWareHouse($input))->orderBy('warehouseItemsID', $sort)->get();
+
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+
+                $data[$x]['Item code'] = $value->itemPrimaryCode;
+                $data[$x]['Item Description'] = $value->itemDescription;
+
+                if ($value->unit) {
+                    $data[$x]['Unit'] = $value->unit->UnitShortCode;
+                } else {
+                    $data[$x]['Unit'] = '-';
+                }
+
+                if ($value->financeSubCategory) {
+                    $data[$x]['Category'] = $value->financeSubCategory->categoryDescription;
+                } else {
+                    $data[$x]['Category'] = '-';
+                }
+
+                if ($value->bin_location) {
+                    $data[$x]['Bin Location'] = $value->bin_location->binLocationDes;
+                } else {
+                    $data[$x]['Bin Location'] = '-';
+                }
+
+                $data[$x]['Min Qty'] = number_format($value->minimumQty, 2);
+                $data[$x]['Max Qty'] = number_format($value->maximunQty, 2);
+
+                $localDecimal = 3;
+                $rptDecimal = 2;
+                if ($value->local_currency) {
+                    $localDecimal = $value->local_currency->DecimalPlaces;
+                }
+                if ($value->rpt_currency) {
+                    $rptDecimal = $value->rpt_currency->DecimalPlaces;
+                }
+
+                $data1 = array('companySystemID' => $value->companySystemID,
+                    'itemCodeSystem' => $value->itemSystemCode,
+                    'wareHouseId' => $value->warehouseSystemCode);
+                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);
+
+                $data[$x]['Stock Qty'] = number_format($itemCurrentCostAndQty['currentWareHouseStockQty'],2);
+                $data[$x]['WAC Local'] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
+                $data[$x]['WAC Rpt'] = number_format($itemCurrentCostAndQty['wacValueReportingWarehouse'],$rptDecimal);
+                $data[$x]['WAC Local Val'] = number_format($itemCurrentCostAndQty['totalWacCostLocalWarehouse'],$localDecimal);
+                $data[$x]['WAC Rpt Val'] = number_format($itemCurrentCostAndQty['totalWacCostRptWarehouse'],$rptDecimal);
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('items_by_warehouse', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function getAssignedItemsByWareHouse($input)
+    {
+
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
 
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
@@ -321,10 +434,10 @@ class WarehouseItemsAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $itemMasters = WarehouseItems::with(['warehouse_by','binLocation','unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
-                                    ->whereIn('companySystemID', $childCompanies)
-                                    ->where('warehouseSystemCode', $input['warehouseSystemCode'])
-                                    ->where('financeCategoryMaster', 1);
+        $itemMasters = WarehouseItems::with(['warehouse_by', 'binLocation', 'unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+            ->whereIn('companySystemID', $childCompanies)
+            ->where('warehouseSystemCode', $input['warehouseSystemCode'])
+            ->where('financeCategoryMaster', 1);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
@@ -357,34 +470,9 @@ class WarehouseItemsAPIController extends AppBaseController
             });
         }
 
-        $data = \DataTables::eloquent($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('warehouseItemsID', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('current', function ($row) {
-                $data = array('companySystemID' => $row->companySystemID,
-                    'itemCodeSystem' => $row->itemSystemCode,
-                    'wareHouseId' => $row->warehouseSystemCode);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-                $array = array('local' => $itemCurrentCostAndQty['wacValueLocalWarehouse'],
-                    'rpt' => $itemCurrentCostAndQty['wacValueReportingWarehouse'],
-                    'wareHouseStock' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
-                    'totalWacCostLocal' => $itemCurrentCostAndQty['totalWacCostLocalWarehouse'],
-                    'totalWacCostRpt' => $itemCurrentCostAndQty['totalWacCostRptWarehouse'],
-                );
-                return $array;
+        return $itemMasters;
 
-            })
-            ->make(true);
-        return $data;
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
+
 }
