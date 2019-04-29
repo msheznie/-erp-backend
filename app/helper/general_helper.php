@@ -4015,7 +4015,7 @@ class Helper
         $assetCosting = Models\FixedAssetCost::create($cost);
     }
 
-    public static function isLocalSupplier($supplierId,$companyId)
+    public static function isLocalSupplier($supplierId,$companyId,$country_id = 0)
     {
         $check = 0;
         $company = Models\Company::find($companyId);

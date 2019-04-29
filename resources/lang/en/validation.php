@@ -192,7 +192,9 @@ return [
         'shiftID' => 'Shift',
         'wareHouseAutoID' => 'Outlet',
         'supCategoryICVMasterID' => 'ICV Category',
-        'supCategorySubICVID' => 'ICV Sub Category'
+        'supCategorySubICVID' => 'ICV Sub Category',
+        'isLCCYN' => 'LCC',
+        'isSMEYN' => 'SME'
     ],
 
 ];
