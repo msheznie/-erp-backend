@@ -466,7 +466,9 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
+
         $input = $request->all();
+
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by']);
         $input = $this->convertArrayToValue($input);
@@ -475,10 +477,15 @@ class SupplierMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+        $input['isLCCYN'] = isset($input['isLCCYN'])?$input['isLCCYN']:null;
+        $input['isSMEYN'] = isset($input['isSMEYN'])?$input['isSMEYN']:null;
+
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
+        }else{
+            return $this->sendError('Company not found');
         }
 
         $isConfirm = $input['supplierConfirmedYN'];
@@ -503,6 +510,21 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if ($isConfirm && $supplierMaster->supplierConfirmedYN == 0) {
+
+
+            //check is supplier is local
+
+            if($company->companyCountry == $input['supplierCountryID']){
+
+                $validator = \Validator::make($input, [
+                    'isLCCYN' => 'required|numeric',
+                    'isSMEYN' => 'required|numeric',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+            }
 
             $checkDefaultCurrency = SupplierCurrency::where('supplierCodeSystem', $id)
                 ->where('isDefault', -1)
