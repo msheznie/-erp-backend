@@ -148,6 +148,7 @@ class SupplierMaster extends Model
         'supCategoryICVMasterID',
         'supCategorySubICVID',
         'isLCCYN',
+        'isSMEYN',
         'refferedBackYN',
         'timesReferred'
     ];
@@ -218,6 +219,7 @@ class SupplierMaster extends Model
         'supCategoryICVMasterID' => 'integer',
         'supCategorySubICVID' => 'integer',
         'isLCCYN' => 'integer',
+        'isSMEYN' => 'integer',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer'
     ];

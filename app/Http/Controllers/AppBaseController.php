@@ -31,7 +31,7 @@ class AppBaseController extends BaseController
                 if(count($input[$key]) > 0){
                     $input[$key] = $input[$key][0];
                 }else{
-                    $input[$key] = 0;
+                    $input[$key] = null;
                 }
             }
         }
