@@ -458,6 +458,11 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['recurringjvMasterAutoId'] = $new['accMasterID'];
             $detail_arr['recurringjvDetailAutoID'] = $new['accruvalDetID'];
             $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
+
+            if($new['serviceLineSystemID']){
+                $detail_arr['isServiceLineExist'] = 1;
+            }
+
             $detail_arr['serviceLineCode'] = $new['serviceLine'];
             $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
             $detail_arr['companyID'] = $jvMasterData->companyID;
