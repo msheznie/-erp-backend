@@ -107,11 +107,18 @@ class ReportAPIController extends AppBaseController
                     narration,
                     approvedDate,
                     erp_purchaseordermaster.companySystemID,
-                    supCont.countryName
-                     FROM erp_purchaseordermaster 
-                     LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
+                    supCont.countryName,
+                    IFNULL(suppliercategoryicvmaster.categoryDescription,"-") as icvMasterDes,
+                    IFNULL(suppliercategoryicvsub.categoryDescription,"-") as icvSubDes,
+                    IF( supCont.isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                    IF( supCont.isSMEYN = 1, "YES", "NO" ) AS isSme
+                    FROM erp_purchaseordermaster 
+                    LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
+                    LEFT JOIN suppliercategoryicvmaster ON erp_purchaseordermaster.supCategoryICVMasterID = suppliercategoryicvmaster.supCategoryICVMasterID
+                    LEFT JOIN suppliercategoryicvsub ON erp_purchaseordermaster.supCategorySubICVID = suppliercategoryicvsub.supCategorySubICVID
+                 
                      INNER JOIN (SELECT supplierCodeSystem FROM suppliermaster WHERE liabilityAccountSysemID = '.$request->controlAccountsSystemID.') supp ON erp_purchaseordermaster.supplierID = supp.supplierCodeSystem
-                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
+                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem,isSMEYN,isLCCYN FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
                      LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE poCancelledYN=0 AND approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
@@ -135,7 +142,8 @@ WHERE
     purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
-                            })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
+                            })
+                        ->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
@@ -230,7 +238,8 @@ WHERE
                             (IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
                             (IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance,
                             ServiceLineDes as segment,
-                            IF( suppliermaster.isLCCYN = 0, "SME", "LCC" ) AS isLcc,
+                            IF( suppliermaster.isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                            IF( suppliermaster.isSMEYN = 1, "YES", "NO" ) AS isSme,
                             IFNULL(adv.AdvanceReleased,0) as advanceReleased,
                             IFNULL(adv.LogisticAdvanceReleased,0) as logisticAdvanceReleased,
                             IFNULL(pr.paymentComRptAmount,0) as paymentReleased,
@@ -665,11 +674,17 @@ WHERE
                     narration,
                     approvedDate,
                     erp_purchaseordermaster.companySystemID,
-                    supCont.countryName
+                    supCont.countryName,
+                    IFNULL(suppliercategoryicvmaster.categoryDescription,"-") as icvMasterDes,
+                    IFNULL(suppliercategoryicvsub.categoryDescription,"-") as icvSubDes,
+                    IF( supCont.isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                    IF( supCont.isSMEYN = 1, "YES", "NO" ) AS isSme
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
+                       LEFT JOIN suppliercategoryicvmaster ON erp_purchaseordermaster.supCategoryICVMasterID = suppliercategoryicvmaster.supCategoryICVMasterID
+                    LEFT JOIN suppliercategoryicvsub ON erp_purchaseordermaster.supCategorySubICVID = suppliercategoryicvsub.supCategorySubICVID
                      INNER JOIN (SELECT supplierCodeSystem FROM suppliermaster WHERE liabilityAccountSysemID = '.$request->controlAccountsSystemID.') supp ON erp_purchaseordermaster.supplierID = supp.supplierCodeSystem 
-                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
+                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem,isLCCYN,isSMEYN FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
                      LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE poCancelledYN=0 AND approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
@@ -746,6 +761,10 @@ WHERE
                             'Supplier Code' => $val->supplierPrimaryCode,
                             'Supplier Name' => $val->supplierName,
                             'Supplier Country' => $val->countryName,
+                            'LCC' => $val->isLcc,
+                            'SME' => $val->isSme,
+                            'ICV Category' => $val->icvMasterDes,
+                            'ICV Sub Category' => $val->icvSubDes,
                             'Credit Period' => $val->creditPeriod,
                             'Delivery Terms' => $val->deliveryTerms,
                             'Payment Terms' => $val->paymentTerms,
@@ -786,7 +805,8 @@ WHERE
                     })->download($type);
 
                     return $this->sendResponse(array(), 'Successfully export');
-                } else if ($request->reportType == 2) { //PO Wise Analysis Report
+                }
+                else if ($request->reportType == 2) { //PO Wise Analysis Report
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
@@ -798,6 +818,10 @@ WHERE
                             erp_purchaseordermaster.expectedDeliveryDate,
                             erp_purchaseordermaster.budgetYear,
                             erp_purchaseordermaster.purchaseOrderID,
+                            IFNULL(suppliercategoryicvmaster.categoryDescription,"-") as icvMasterDes,
+                            IFNULL(suppliercategoryicvsub.categoryDescription,"-") as icvSubDes,
+                            IF( suppliermaster.isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                            IF( suppliermaster.isSMEYN = 1, "YES", "NO" ) AS isSme,
                             supCont.countryName,
                             IFNULL(podet.TotalPOVal,0) as TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
@@ -885,8 +909,19 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
-                        ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')->get();
+                        ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
+                        ->leftJoin('suppliercategoryicvmaster', 'erp_purchaseordermaster.supCategoryICVMasterID', '=', 'suppliercategoryicvmaster.supCategoryICVMasterID')
+                        ->leftJoin('suppliercategoryicvsub', 'erp_purchaseordermaster.supCategorySubICVID', '=', 'suppliercategoryicvsub.supCategorySubICVID')
+                        ->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)
+                        ->where('poCancelledYN',0)
+                        ->where('erp_purchaseordermaster.poType_N', '<>', 5)
+                        ->where('erp_purchaseordermaster.approved', '=', -1)
+                        ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
+                        ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
+                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))
+                        ->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')
+                        ->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -899,6 +934,10 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                             'Supplier Code' => $val->supplierPrimaryCode,
                             'Supplier Name' => $val->supplierName,
                             'Supplier Country' => $val->countryName,
+                            'LCC' => $val->isLcc,
+                            'SME' => $val->isSme,
+                            'ICV Category' => $val->icvMasterDes,
+                            'ICV Sub Category' => $val->icvSubDes,
                             'Budget Year' => $val->budgetYear,
                             'PO Capex Amount' => $val->POCapex,
                             'PO Opex Amount' => $val->POOpex,

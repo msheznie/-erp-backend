@@ -215,7 +215,8 @@ class JvDetail extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
-        'timeStamp'
+        'timeStamp',
+        'isServiceLineExist'
     ];
 
     /**
@@ -251,6 +252,7 @@ class JvDetail extends Model
         'companyIDForConsole' => 'string',
         'selectedForConsole' => 'integer',
         'createdUserSystemID' => 'integer',
+        'isServiceLineExist' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string'
     ];
