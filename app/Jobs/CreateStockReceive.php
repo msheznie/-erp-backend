@@ -5,8 +5,10 @@ namespace App\Jobs;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\GeneralLedger;
 use App\Models\SegmentMaster;
@@ -49,7 +51,7 @@ class CreateStockReceive implements ShouldQueue
     public function handle(CustomerInvoiceDirectRepository $customerInvoiceRep,
                            CustomerInvoiceDirectDetailRepository $customerInvoiceDetailRep,
                            AccountsReceivableLedgerRepository $accountsReceivableLedgerRep,
-                            StockReceiveDetailsRepository $stockReceiveDetailsRepo)
+                           StockReceiveDetailsRepository $stockReceiveDetailsRepo)
     {
         Log::useFiles(storage_path() . '/logs/create_stock_receive_jobs.log');
         $st = $this->stMaster;
@@ -58,9 +60,10 @@ class CreateStockReceive implements ShouldQueue
             DB::beginTransaction();
             try {
                 Log::info('Successfully start  stock_receive' . date('H:i:s'));
-                if ($stMaster->interCompanyTransferYN == -1 && $stMaster->approved == -1) {
+                $today = date('Y-m-d');
+                $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
 
-                    $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
+                if ($stMaster->interCompanyTransferYN == -1 && $stMaster->approved == -1) {
                     $customerInvoiceData = array();
                     $customerInvoiceData['transactionMode'] = null;
                     $customerInvoiceData['companySystemID'] = $stMaster->companyFromSystemID;
@@ -68,14 +71,13 @@ class CreateStockReceive implements ShouldQueue
                     $customerInvoiceData['documentSystemiD'] = 20;
                     $customerInvoiceData['documentID'] = 'INV';
                     $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyFromSystemID)
-                                                                    ->where('departmentSystemID', 4)
-                                                                    ->where('isActive', -1)
-                                                                    //->where('dateFrom', '<', $stMaster->tranferDate)
-                                                                    //->where('dateTo', '>', $stMaster->tranferDate)
-                                                                    ->where('isCurrent', -1)
-                                                                    ->first();
+                        ->where('departmentSystemID', 4)
+                        ->where('isActive', -1)
+                        //->where('dateFrom', '<', $stMaster->tranferDate)
+                        //->where('dateTo', '>', $stMaster->tranferDate)
+                        ->where('isCurrent', -1)
+                        ->first();
 
-                    $today = date('Y-m-d');
                     $comment = "Inter Company Stock Transfer from " . $stMaster->companyFrom . " to " . $stMaster->companyTo . " " . $stMaster->stockTransferCode;
 
                     if (!empty($fromCompanyFinancePeriod)) {
@@ -498,6 +500,173 @@ class CreateStockReceive implements ShouldQueue
                             $stMaster->save();
                             Log::info('Successfully created  stock_receive' . date('H:i:s'));
                         }
+                    }
+                } else if ($stMaster->interCompanyTransferYN == 0 && $stMaster->approved == -1) {
+
+                    $checkPolicy = CompanyPolicyMaster::where('companySystemID', $stMaster->companySystemID)
+                        ->where('companyPolicyCategoryID', 34)
+                        ->where('isYesNO', 1)
+                        ->first();
+
+                    if (!empty($checkPolicy)) {
+                        Log::info('Policy Enabled' . date('H:i:s'));
+
+                        $stockReceive = new StockReceive();
+                        $stockReceive->documentSystemID = 10;
+                        $documentMaster = DocumentMaster::where('documentSystemID', $stockReceive->documentSystemID)->first();
+                        if ($documentMaster) {
+                            $stockReceive->documentID = $documentMaster->documentID;
+                        }
+
+                        $stockReceive->companySystemID = $stMaster->companyToSystemID;
+                        $stockReceive->companyID = $stMaster->companyTo;
+                        $stockReceive->serviceLineSystemID = $stMaster->serviceLineSystemID;
+                        $stockReceive->serviceLineCode = $stMaster->serviceLineCode;
+                        $stockReceive->refNo = $stMaster->refNo;
+                        $stockReceive->comment = $stMaster->comment;
+                        $stockReceive->companyFromSystemID = $stMaster->companyFromSystemID;
+                        $stockReceive->companyFrom = $stMaster->companyFrom;
+                        $stockReceive->companyToSystemID = $stMaster->companyToSystemID;
+                        $stockReceive->companyTo = $stMaster->companyTo;
+                        $stockReceive->locationTo = $stMaster->locationTo;
+                        $stockReceive->locationFrom = $stMaster->locationFrom;
+                        $stockReceive->confirmedYN = $stMaster->confirmedYN;
+                        $stockReceive->confirmedByEmpSystemID = $stMaster->confirmedByEmpSystemID;
+                        $stockReceive->confirmedByEmpID = $stMaster->confirmedByEmpID;
+                        $stockReceive->confirmedByName = $stMaster->confirmedByName;
+                        $stockReceive->confirmedDate = $stMaster->confirmedDate;
+                        $stockReceive->approved = $stMaster->approved;
+                        $stockReceive->approvedDate = $stMaster->approvedDate;
+                        $stockReceive->postedDate = $stMaster->postedDate;
+                        $stockReceive->interCompanyTransferYN = $stMaster->interCompanyTransferYN;
+                        $stockReceive->RollLevForApp_curr = 1;
+                        $stockReceive->createdDateTime = $stMaster->createdDateTime;
+                        $stockReceive->createdUserGroup = $stMaster->createdUserGroup;
+                        $stockReceive->createdPCID = $stMaster->createdPCID;
+                        $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
+                        $stockReceive->createdUserID = $stMaster->createdUserID;
+
+
+                        $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
+                            ->where('departmentSystemID', 10)
+                            ->where('isActive', -1)
+                            //->where('dateFrom', '<', $stMaster->tranferDate)
+                            //->where('dateTo', '>', $stMaster->tranferDate)
+                            ->where('isCurrent', -1)
+                            ->first();
+                        $lastSerialNumber = 1;
+                        if (!empty($toCompanyFinancePeriod)) {
+                            $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                ->where('companySystemID', $stMaster->companyToSystemID)
+                                ->first();
+
+                            $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
+                                ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                ->where('serialNo', '>', 0)
+                                ->orderBy('stockReceiveAutoID', 'desc')
+                                ->first();
+                            if ($lastSerial) {
+                                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                            }
+
+                            if (!empty($companyFinanceYear)) {
+                                $stockReceive->FYBiggin = $companyFinanceYear->bigginingDate;
+                                $stockReceive->FYEnd = $companyFinanceYear->endingDate;
+                            }
+
+                            if (!empty($toCompanyFinancePeriod)) {
+                                $stockReceive->companyFinanceYearID = $toCompanyFinancePeriod->companyFinanceYearID;
+                                $stockReceive->companyFinancePeriodID = $toCompanyFinancePeriod->companyFinancePeriodID;
+                                $stockReceive->receivedDate = $stMaster->tranferDate;
+                            }
+
+                            if ($companyFinanceYear) {
+                                $startYear = $companyFinanceYear['bigginingDate'];
+                                $finYearExp = explode('-', $startYear);
+                                $finYear = $finYearExp[0];
+                            } else {
+                                $finYear = date("Y");
+                            }
+                        }
+
+                        $stockReceive->serialNo = $lastSerialNumber;
+
+                        $stockReceiveCode = ($stockReceive->companyID . '\\' . $finYear . '\\' . $stockReceive->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                        $stockReceive->stockReceiveCode = $stockReceiveCode;
+                        $stockReceive->save();
+
+                        $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
+
+                        foreach ($stDetails as $new) {
+
+                            $item = array();
+                            $item['stockReceiveAutoID'] = $stockReceive->stockReceiveAutoID;
+                            $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
+                            $item['stockTransferAutoID'] = $stMaster->stockTransferAutoID;
+                            $item['stockTransferCode'] = $stMaster->stockTransferCode;
+                            $item['stockTransferDate'] = $today;
+
+                            $item['itemCodeSystem'] = $new['itemCodeSystem'];
+                            $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                            $item['itemDescription'] = $new['itemDescription'];
+                            $item['unitOfMeasure'] = $new['unitOfMeasure'];
+                            $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
+                            $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+                            $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                            $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                            $item['localCurrencyID'] = $toCompany->localCurrencyID;
+                            $item['unitCostLocal'] = $new['unitCostLocal'];
+                            $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
+                            $item['unitCostRpt'] = $new['unitCostRpt'];
+                            $item['qty'] = $new['qty'];
+
+                            if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
+                                // return $this->sendError("Cost is not updated", 500);
+                            } else {
+                                $srdItem = $stockReceiveDetailsRepo->create($item);
+                                Log::info($srdItem);
+                                $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
+                                $stDetail->addedToRecieved = -1;
+                                $stDetail->stockRecieved = -1;
+                                $stDetail->save();
+                            }
+                        }
+
+                        $stMaster->fullyReceived = -1;
+                        $stMaster->save();
+
+                        $approval = DocumentApproved::where('companySystemID',$stMaster->companySystemID)
+                                                     ->where('documentSystemID',$stMaster->documentSystemID)
+                                                     ->where('documentSystemCode',$stMaster->stockTransferAutoID)
+                                                     ->where('approvedYN',-1)
+                                                     ->orderBy('rollLevelOrder','desc')
+                                                     ->first();
+
+                        Log::info('Approval Data' . date('H:i:s'));
+                        Log::info($approval);
+
+                        if(!empty($approval)){
+                            $approval->documentSystemCode = $stockReceive->stockReceiveAutoID;
+                            $approval->documentSystemID = $stockReceive->documentSystemID;
+                            $approval->documentID = $stockReceive->documentID;
+                            unset($approval->documentApprovedID);
+                            DocumentApproved::insert($approval->toArray());
+                            Log::info($approval);
+
+                            $masterData = ['documentSystemID' => $stockReceive->documentSystemID,
+                                'autoID' => $stockReceive->stockReceiveAutoID,
+                                'companySystemID' => $stockReceive->companySystemID,
+                                'employeeSystemID' => $approval->employeeSystemID];
+
+                            $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                            //$jobSI = CreateSupplierInvoice::dispatch($stockReceive);
+                        }
+
+                        Log::info('Successfully created  stock_receive' . date('H:i:s'));
+
+                    } else {
+                        Log::info('Policy Disabled' . date('H:i:s'));
                     }
                 }
                 DB::commit();

@@ -519,6 +519,10 @@ class StockReceiveAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            if ($input['companyFromSystemID'] == $input['companyToSystemID'] && $input['interCompanyTransferYN'] == -1) {
+                return $this->sendError('This receive document is marked as Inter company. Company from and Company to is same.', 500);
+            }
+
             $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->get();
 
 
