@@ -406,8 +406,7 @@ class CreateStockReceive implements ShouldQueue
                             $stockReceive->createdPCID = $stMaster->createdPCID;
                             $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
                             $stockReceive->createdUserID = $stMaster->createdUserID;
-
-
+                            
                             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
                                 ->where('departmentSystemID', 10)
                                 ->where('isActive', -1)
