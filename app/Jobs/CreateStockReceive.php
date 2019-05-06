@@ -537,6 +537,8 @@ class CreateStockReceive implements ShouldQueue
                         $stockReceive->confirmedDate = $stMaster->confirmedDate;
                         $stockReceive->approved = $stMaster->approved;
                         $stockReceive->approvedDate = $stMaster->approvedDate;
+                        $stockReceive->approvedByUserID = $stMaster->approvedByUserID;
+                        $stockReceive->approvedByUserSystemID = $stMaster->approvedByUserSystemID;
                         $stockReceive->postedDate = $stMaster->postedDate;
                         $stockReceive->interCompanyTransferYN = $stMaster->interCompanyTransferYN;
                         $stockReceive->RollLevForApp_curr = 1;
