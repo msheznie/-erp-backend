@@ -406,8 +406,7 @@ class CreateStockReceive implements ShouldQueue
                             $stockReceive->createdPCID = $stMaster->createdPCID;
                             $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
                             $stockReceive->createdUserID = $stMaster->createdUserID;
-
-
+                            
                             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
                                 ->where('departmentSystemID', 10)
                                 ->where('isActive', -1)
@@ -537,6 +536,8 @@ class CreateStockReceive implements ShouldQueue
                         $stockReceive->confirmedDate = $stMaster->confirmedDate;
                         $stockReceive->approved = $stMaster->approved;
                         $stockReceive->approvedDate = $stMaster->approvedDate;
+                        $stockReceive->approvedByUserID = $stMaster->approvedByUserID;
+                        $stockReceive->approvedByUserSystemID = $stMaster->approvedByUserSystemID;
                         $stockReceive->postedDate = $stMaster->postedDate;
                         $stockReceive->interCompanyTransferYN = $stMaster->interCompanyTransferYN;
                         $stockReceive->RollLevForApp_curr = 1;

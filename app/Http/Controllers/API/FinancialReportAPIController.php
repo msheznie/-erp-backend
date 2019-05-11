@@ -180,6 +180,18 @@ class FinancialReportAPIController extends AppBaseController
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
                 }
+
+                if ($request->reportTypeID == 'FTBM') {
+
+                    $validator1 = \Validator::make($request->all(), [
+                        'currencyID' => 'required',
+                    ]);
+
+                    if ($validator1->fails()) {//echo 'in';exit;
+                        return $this->sendError($validator1->messages(), 422);
+                    }
+                }
+
                 break;
 
             case 'FGL':
@@ -241,7 +253,19 @@ class FinancialReportAPIController extends AppBaseController
 
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getTrialBalance($request);
+
+                $type = $request->reportTypeID;
+
+                $output = array();
+                $headers = array();
+
+                if ($type == 'FTB') {
+                    $output = $this->getTrialBalance($request);
+                } else if ($type == 'FTBM') {
+                    $result = $this->getTrialBalanceMonthWise($request);
+                    $output = $result['data'];
+                    $headers = $result['headers'];
+                }
 
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
@@ -276,6 +300,7 @@ class FinancialReportAPIController extends AppBaseController
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
+                    'headers' => $headers,
                     'decimalPlaceLocal' => $decimalPlaceLocal,
                     'decimalPlaceRpt' => $decimalPlaceRpt,
                     'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
@@ -459,7 +484,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                     $uncategorizeDetailArr = $uncategorizeData['outputDetail'];
-                }else{
+                } else {
                     $grandTotal[0] = [];
                 }
 
@@ -533,8 +558,7 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public
-    function exportReport(Request $request)
+    public function exportReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
@@ -545,35 +569,92 @@ class FinancialReportAPIController extends AppBaseController
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
-                if ($request->reportSD == 'company_wise_summary') {
-                    $companyID = "";
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    if ($checkIsGroup->isGroup) {
-                        $companyID = \Helper::getGroupCompany($request->companySystemID);
-                    } else {
-                        $companyID = (array)$request->companySystemID;
-                    }
 
-                    $subCompanies = Company::whereIn('companySystemID', $companyID)->get(['companySystemID', 'CompanyID', 'CompanyName']);
+                if ($reportTypeID == 'FTB') {
+                    if ($request->reportSD == 'company_wise_summary') {
+                        $companyID = "";
+                        $checkIsGroup = Company::find($request->companySystemID);
+                        if ($checkIsGroup->isGroup) {
+                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                        } else {
+                            $companyID = (array)$request->companySystemID;
+                        }
 
-                    $output = $this->getTrialBalanceCompanyWise($request, $subCompanies);
+                        $subCompanies = Company::whereIn('companySystemID', $companyID)->get(['companySystemID', 'CompanyID', 'CompanyName']);
 
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Account Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['Type'] = $val->glAccountType;
-                            foreach ($subCompanies as $company) {
-                                $comCode = $company['CompanyID'];
-                                $data[$x][$comCode] = round($val->$comCode, 2);
+                        $output = $this->getTrialBalanceCompanyWise($request, $subCompanies);
+
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Account Code'] = $val->glCode;
+                                $data[$x]['Account Description'] = $val->AccountDescription;
+                                $data[$x]['Type'] = $val->glAccountType;
+                                foreach ($subCompanies as $company) {
+                                    $comCode = $company['CompanyID'];
+                                    $data[$x][$comCode] = round($val->$comCode, 2);
+                                }
+                                $x++;
                             }
-                            $x++;
+                        }
+
+                    } else {
+                        $output = $this->getTrialBalance($request);
+
+                        $currencyIdLocal = 1;
+                        $currencyIdRpt = 2;
+
+                        $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                        $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                        $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                        $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                        if (!empty($decimalPlaceUniqueLocal)) {
+                            $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                        }
+
+                        if (!empty($decimalPlaceUniqueRpt)) {
+                            $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                        }
+
+                        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                        $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                        $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                        $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                        $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                        if ($output) {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                if ($request->reportSD == 'company_wise') {
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                }
+                                $data[$x]['Account Code'] = $val->glCode;
+                                $data[$x]['Account Description'] = $val->AccountDescription;
+                                $data[$x]['Type'] = $val->glAccountType;
+
+                                if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
+                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                                }
+
+                                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
+                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
+                                $x++;
+                            }
                         }
                     }
+                } else if ($reportTypeID == 'FTBM') {
+                    $result = $this->getTrialBalanceMonthWise($request);
+                    $output = $result['data'];
+                    $headers = $result['headers'];
 
-                } else {
-                    $output = $this->getTrialBalance($request);
 
                     $currencyIdLocal = 1;
                     $currencyIdRpt = 2;
@@ -602,29 +683,34 @@ class FinancialReportAPIController extends AppBaseController
                     $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                     $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
+                    $decimalPlace = 2;
+                    if ($request->currencyID == 1) {
+                        $decimalPlace = $decimalPlaceLocal;
+                    }else if($request->currencyID == 2){
+                        $decimalPlace = $decimalPlaceRpt;
+                    }
+
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            if ($request->reportSD == 'company_wise') {
+                            /*if ($request->reportSD == 'company_wise') {
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
-                            }
+                            }*/
                             $data[$x]['Account Code'] = $val->glCode;
                             $data[$x]['Account Description'] = $val->AccountDescription;
                             $data[$x]['Type'] = $val->glAccountType;
-
-                            if ($checkIsGroup->isGroup == 0) {
-                                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
-                                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                            $data[$x]['Opening Balance'] = round($val->Opening, $decimalPlace);
+                            foreach ($headers as $header){
+                                $closing = $header.'Closing';
+                                $data[$x][$header] = round($val->$header, $decimalPlace);
+                                $data[$x][$header. ' Closing'] = round($val->$closing, $decimalPlace);
                             }
 
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
                             $x++;
                         }
                     }
                 }
-
                 $csv = \Excel::create('trial_balance', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -982,8 +1068,7 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public
-    function getTrialBalance($request)
+    public function getTrialBalance($request)
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $asOfDate->addDays(1);
@@ -1158,8 +1243,431 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
-    public
-    function getTrialBalanceDetails($request)
+    public function getTrialBalanceMonthWise($request)
+    {
+        $fromDate1 = new Carbon($request->fromDate);
+        $fromDate = $fromDate1->format('Y-m-d');
+
+        $toDate1 = new Carbon($request->toDate);
+        $toDate = $toDate1->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        //DB::enableQueryLog();
+
+        $isCompanyWise = '';
+        $isCompanyWiseGL = '';
+        $isCompanyWiseGLGroupBy = '';
+
+        if ($request->reportSD == 'company_wise') {
+            $isCompanyWise = 'companySystemID,';
+            $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
+        }
+
+        $currencyClm = 'erp_generalledger.documentRptAmount';
+        if ($request->currencyID == 1) {
+            $currencyClm = 'erp_generalledger.documentLocalAmount';
+        }
+
+        $defaultMonth = array(
+            'Jan',
+            'Feb',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'Aug',
+            'Sept',
+            'Oct',
+            'Nov',
+            'Dece'
+        );
+
+        $defaultMonthSum = array("IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 1, " . $currencyClm . ", 0 ) AS Jan",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 2, " . $currencyClm . ", 0 ) AS Feb",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 3, " . $currencyClm . ", 0 ) AS March",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 4, " . $currencyClm . ", 0 ) AS April",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 5, " . $currencyClm . ", 0 ) AS May",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 6, " . $currencyClm . ", 0 ) AS June",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 7, " . $currencyClm . ", 0 ) AS July",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 8, " . $currencyClm . ", 0 ) AS Aug",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 9, " . $currencyClm . ", 0 ) AS Sept",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 10, " . $currencyClm . ", 0 ) AS Oct",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 11, " . $currencyClm . ", 0 ) AS Nov",
+            " IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 12, " . $currencyClm . ", 0 ) AS Dece");
+
+        $monthClosing = array(); //'sum(Opening + Jan) AS JanClosing';
+
+        $availableMonth = array();
+        $monthSum = array();
+        $monthZero = array();
+        $month = array();
+
+        $totalMonth = "";
+
+        foreach ($defaultMonth as $key => $value) {
+            if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
+                array_push($availableMonth, $value);
+            }
+        }
+
+        foreach ($defaultMonthSum as $key => $value) {
+            if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
+                array_push($month, $value);
+            }
+        }
+
+
+        foreach ($availableMonth as $value) {
+            array_push($monthSum, 'sum(' . $value . ') as ' . $value);
+            array_push($monthZero, '0 as ' . $value);
+
+
+        }
+
+        foreach ($availableMonth as $key => $value) {
+            if ($key == 0) {
+                $totalMonth = $totalMonth . $value;
+            } else {
+                $totalMonth = $totalMonth . '+' . $value;
+            }
+            $opening = "sum(Opening +" . $totalMonth . ") AS " . $value . 'Closing';
+
+            array_push($monthClosing, $opening);
+        }
+
+
+        $monthArray = implode(",", $availableMonth);
+        $monthSum = implode(",", $monthSum);
+        $monthZero = implode(",", $monthZero);
+        $month = implode(",", $month);
+        $monthClosing = implode(",", $monthClosing);
+
+        /*$monthArray = 'Jan,
+                 Feb,
+                 March,
+                 April,
+                 May,
+                 June,
+                 July,
+                 Aug,
+                 Sept,
+                 Oct,
+                 Nov,
+                 Dece';
+
+        $monthSum = 'sum(Jan) as Jan,
+                    sum(Feb) as Feb,
+                    sum(March) as March,
+                    sum(April) as April,
+                    sum(May) as May,
+                    sum(June) as June,
+                    sum(July) as July,
+                    sum(Aug) as Aug,
+                    sum(Sept) as Sept,
+                    sum(Oct) as Oct,
+                    sum(Nov) as Nov,
+                    sum(Dece) as Dece';
+
+        $monthZero = '0 AS Jan,
+                        0 AS Feb,
+                        0 AS March,
+                        0 AS April,
+                        0 AS May,
+                        0 AS June,
+                        0 AS July,
+                        0 AS Aug,
+                        0 AS Sept,
+                        0 AS Oct,
+                        0 AS Nov,
+                        0 AS Dece';
+
+        $month = 'IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 1, ' . $currencyClm . ', 0 ) AS Jan,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 2, ' . $currencyClm . ', 0 ) AS Feb,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 3, ' . $currencyClm . ', 0 ) AS March,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 4, ' . $currencyClm . ', 0 ) AS April,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 5, ' . $currencyClm . ', 0 ) AS May,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 6, ' . $currencyClm . ', 0 ) AS June,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 7, ' . $currencyClm . ', 0 ) AS July,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 8, ' . $currencyClm . ', 0 ) AS Aug,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 9, ' . $currencyClm . ', 0 ) AS Sept,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 10, ' . $currencyClm . ', 0 ) AS Oct,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 11, ' . $currencyClm . ', 0 ) AS Nov,
+                IF
+                    ( MONTH ( erp_generalledger.documentDate ) = 12, ' . $currencyClm . ', 0 ) AS Dece';
+
+
+        $monthClosing = 'sum(Opening + Jan) AS JanClosing,
+                        sum(Opening + Jan + Feb) AS FebClosing,
+                        sum(Opening + Jan + Feb + March) AS MarchClosing,
+                        sum(Opening + Jan + Feb + March + April) AS AprilClosing,
+                        sum(Opening + Jan + Feb + March + April + May) AS MayClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June) AS JuneClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July) AS JulyClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July + Aug) AS AugClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July + Aug + Sept) AS SeptClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July + Aug + Sept + Oct) AS OctClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July + Aug + Sept + Oct + Nov) AS NovClosing,
+                        sum(Opening + Jan + Feb + March + April + May +  June + July + Aug + Sept + Oct + Nov + Dece) AS DeceClosing';*/
+
+
+        $query = 'SELECT
+                        companySystemID,
+                        companyID,
+                        CompanyName,
+                        chartOfAccountSystemID,
+                        glCode,
+                        AccountDescription,
+                        glAccountType,
+                        documentLocalCurrencyID,
+                        documentRptCurrencyID,
+                        0 AS documentAmountOpening,
+                        ' . $monthSum . '
+                    FROM
+                        (
+      
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        companymaster.CompanyName,
+                        "" AS documentDate,
+                        0 AS chartOfAccountSystemID,
+                        "-" AS glCode,
+                        "BS" AS glAccountType,
+                        "Retained Earning" AS AccountDescription,
+                        erp_generalledger.documentLocalCurrencyID,
+                        erp_generalledger.documentRptCurrencyID,
+                        MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                        ' . $monthZero . '
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    WHERE
+                        erp_generalledger.glAccountType = "BS" 
+                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                    GROUP BY
+                        glCode
+                        ) AS ERP_qry_TBBS_BF_sum 
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentRptCurrencyID,
+                            MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                             ' . $month . '
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "BS" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        ) AS ERP_qry_TBBS 
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentRptCurrencyID,
+                            MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                             ' . $month . '
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "PL" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        ) AS ERP_qry_TBPL 
+                        ) AS FINAL 
+                    GROUP BY
+                        ' . $isCompanyWise . 'chartOfAccountSystemID
+                        order by glAccountType,glCode';
+
+        $query1 = 'SELECT
+                        companySystemID,
+                        companyID,
+                        CompanyName,
+                        chartOfAccountSystemID,
+                        glCode,
+                        AccountDescription,
+                        glAccountType,
+                        documentLocalCurrencyID,
+                        documentRptCurrencyID,
+                        SUM(documentAmount) AS documentAmountOpening,
+                        ' . $monthZero . '
+                    FROM
+                        (
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        companymaster.CompanyName,
+                        "" AS documentDate,
+                        0 AS chartOfAccountSystemID,
+                        "-" AS glCode,
+                        "BS" AS glAccountType,
+                        "Retained Earning" AS AccountDescription,
+                        erp_generalledger.documentLocalCurrencyID,
+                        erp_generalledger.documentRptCurrencyID,
+                        sum( ' . $currencyClm . ' * -1) AS documentAmount
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    WHERE
+                        erp_generalledger.glAccountType = "BS" 
+                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                    GROUP BY
+                        glCode
+                        ) AS ERP_qry_TBBS_BF_sum 
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentRptCurrencyID,
+                            ' . $currencyClm . ' AS documentAmount
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "BS" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                        ) AS ERP_qry_TBBS 
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentRptCurrencyID,
+                            0 AS documentAmount
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "PL" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                        ) AS ERP_qry_TBPL 
+                        ) AS FINAL 
+                    GROUP BY
+                        ' . $isCompanyWise . 'chartOfAccountSystemID
+                        order by glAccountType,glCode';
+
+
+        $finalQry = 'SELECT *,
+                        ' . $monthClosing . '
+                        FROM (SELECT  companySystemID,
+                        companyID,
+                        CompanyName,
+                        chartOfAccountSystemID,
+                        glCode,
+                        AccountDescription,
+                        glAccountType,
+                        documentLocalCurrencyID,
+                        documentRptCurrencyID,
+                        sum(documentAmountOpening) As Opening,
+                        ' . $monthArray . ' FROM (SELECT * FROM (' . $query . ') AS a UNION ALL SELECT * FROM (' . $query1 . ') AS b) AS c GROUP BY
+                        ' . $isCompanyWise . 'chartOfAccountSystemID
+                        order by glAccountType,glCode) f GROUP BY
+                        ' . $isCompanyWise . 'chartOfAccountSystemID
+                        order by glAccountType,glCode';
+
+        //return $finalQry;
+        $output = \DB::select($finalQry);
+        //dd(DB::getQueryLog());
+        return array('data' => $output, 'headers' => $availableMonth);
+
+    }
+
+    public function getTrialBalanceDetails($request)
     {
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
@@ -2415,7 +2923,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ',$whereQry) ;
+            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ', $whereQry);
             $output = \DB::select($sql);
 
             $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
@@ -2432,7 +2940,7 @@ GROUP BY
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a WHERE '.join(' OR ',$whereQry);
+            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ', $whereQry);
             $outputDetail = \DB::select($sql);
         }
 
