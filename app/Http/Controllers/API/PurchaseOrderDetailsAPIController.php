@@ -657,6 +657,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+        if(isset($input['madeLocallyYN']) && $input['madeLocallyYN']){
+            $input['madeLocallyYN'] = -1;
+        }else{
+            $input['madeLocallyYN'] = 0;
+        }
+
         $discountedUnitPrice = $input['unitCost'] - $input['discountAmount'];
 
         if ($discountedUnitPrice > 0) {
