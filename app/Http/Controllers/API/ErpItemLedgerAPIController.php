@@ -1192,12 +1192,12 @@ SELECT
 	wacRpt * inOutQty AS AmountRpt,
 	wacLocal * inOutQty AS AmountLocal,
 	StockTaking_BinLocation.binLocationDes AS BinLocation,
-	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
-	 
+
 FROM
 	erp_itemledger
-	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem
 	AND itemmaster.financeCategoryMaster = 1
 	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
 	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
@@ -1210,24 +1210,24 @@ SELECT
 	warehouseitems.warehouseSystemCode,
 	warehouseitems.itemSystemCode,
 	warehouseitems.binNumber,
-	warehousebinlocationmaster.binLocationDes 
+	warehousebinlocationmaster.binLocationDes
 FROM
 	warehouseitems
-	INNER JOIN warehousebinlocationmaster ON warehouseitems.binNumber = warehousebinlocationmaster.binLocationID 
-	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
-	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
+	INNER JOIN warehousebinlocationmaster ON warehouseitems.binNumber = warehousebinlocationmaster.binLocationID
+	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode
+	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID
 WHERE
 	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
 	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
-	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
-	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
-	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
+	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID
+	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode
+	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode
 WHERE
-	erp_itemledger.fromDamagedTransactionYN = 0 
-	AND DATE(erp_itemledger.transactionDate) <= '$date' 
+	erp_itemledger.fromDamagedTransactionYN = 0
+	AND DATE(erp_itemledger.transactionDate) <= '$date'
 	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
 	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
-	AND itemmaster.financeCategoryMaster = 1  
+	AND itemmaster.financeCategoryMaster = 1
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
 	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode";*/
@@ -1296,33 +1296,17 @@ WHERE
 	) AS ItemLedger 
 GROUP BY
 	ItemLedger.companySystemID,
-	ItemLedger.itemSystemCode 
+	ItemLedger.itemSystemCode,
+	ItemLedger.wareHouseSystemCode
 	HAVING 
 	(StockQty != 0 OR AvgCostLocal != 0 OR TotalCostLocal != 0 OR AvgCostRpt != 0 OR AvgCostRpt != 0 OR TotalCostRpt != 0)";
 
         $data = DB::select($sql);
 
         $dataRec = \DataTables::of($data)
-//            ->order(function ($query) use ($input) {
-//                if (request()->has('order')) {
-//                    if ($input['order'][0]['column'] == 0) {
-//                        $query->orderBy('itemLedgerAutoID', $input['order'][0]['dir']);
-//                    }
-//                }
-//            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-
-//        $output = array(
-//            'categories' => $categories,
-//            'date' => $date,
-//            'subCompanies' => $subCompanies,
-//            'warehouse' => $request->warehouse
-//        );
-
-
-//        return $this->sendResponse($dataRec, 'Erp Stock Taking retrieved successfully');
 
         return $dataRec;
 
@@ -1511,7 +1495,8 @@ WHERE
 	) AS ItemLedger 
 GROUP BY
 	ItemLedger.companySystemID,
-	ItemLedger.itemSystemCode
+	ItemLedger.itemSystemCode,
+	ItemLedger.wareHouseSystemCode
         HAVING
         (StockQty != 0 OR AvgCostLocal != 0 OR TotalCostLocal != 0 OR AvgCostRpt != 0 OR AvgCostRpt != 0 OR TotalCostRpt != 0)";
 
