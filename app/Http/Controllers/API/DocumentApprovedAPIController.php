@@ -810,7 +810,7 @@ WHERE
                             AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
                         AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
                         AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
-        $output = DB::select($qry);
+       // $output = DB::select($qry);
 
         /*$output  = DocumentApproved::where('approvedYN',0)
             ->where('rejectedYN',0)
@@ -818,6 +818,7 @@ WHERE
             ->whereIn('documentSystemID',[1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19,17])
             ->count('documentApprovedID');*/
 
+        return $this->sendResponse(0, 'Document approved count retrieved successfully');
         return $this->sendResponse($output[0]->totalCount, 'Document approved count retrieved successfully');
 
     }

@@ -3703,6 +3703,7 @@ WHERE
                 //$purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefault['documentAmount'];
             }
 
+            $purchaseOrderDetail->madeLocallyYN = 0;
             $purchaseOrderDetail->save();
         }
 
