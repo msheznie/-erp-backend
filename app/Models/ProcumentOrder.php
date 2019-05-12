@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -578,5 +579,10 @@ class ProcumentOrder extends Model
     {
         return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
     }
+
+   /* public function getIsLocalSupplierAttribute()
+    {
+        return Helper::isLocalSupplier(3390,57);
+    }*/
 
 }
