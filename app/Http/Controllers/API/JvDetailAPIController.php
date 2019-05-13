@@ -417,7 +417,7 @@ class JvDetailAPIController extends AppBaseController
             $contractID = $detail->contractUID;
         }
 
-        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE  companySystemID = $master->companySystemID";
         $contract = DB::select($qry);
 
         return $this->sendResponse($contract, 'Record retrived successfully');
