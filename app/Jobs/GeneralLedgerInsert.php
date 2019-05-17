@@ -2140,7 +2140,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->ACCDEPGLCODESystemID;
                                     $data['glCode'] = $val->ACCDEPGLCODE;
-                                    $data['glAccountType'] = $val->accumilated_account->catogaryBLorPL;
+                                    $data['glAccountType'] = $val->accumilated_account?$val->accumilated_account->catogaryBLorPL:null;
                                     $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = 0;
                                     $data['documentLocalAmount'] = ABS($val->depAmountLocal);
@@ -2163,7 +2163,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->COSTGLCODESystemID;
                                     $data['glCode'] = $val->COSTGLCODE;
-                                    $data['glAccountType'] = $val->cost_account->catogaryBLorPL;
+                                    $data['glAccountType'] = $val->accumilated_account?$val->accumilated_account->catogaryBLorPL:null;
                                     $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = 0;
                                     $data['documentLocalAmount'] = ABS($val->COSTUNIT) * -1;
