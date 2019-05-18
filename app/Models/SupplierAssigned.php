@@ -170,7 +170,7 @@ class SupplierAssigned extends Model
     }
 
     public function supplierCurrency(){
-        return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
+        return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','supplierCodeSytem');
     }
 
     public function critical()
