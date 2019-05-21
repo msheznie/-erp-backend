@@ -405,6 +405,20 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError('Debit Note not found');
         }
 
+        if ($debitNote->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
+
+        if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
+
+            $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
+
+            if($detailsCount > 0){
+                return $this->sendError('You cannot change the currency.If you want to change Please delete all details and change it.', 500);
+            }
+        }
+
+
         if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
             $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
                 ->where('supplierID', $input['supplierID'])
@@ -570,15 +584,15 @@ class DebitNoteAPIController extends AppBaseController
             }
 
             $amount = DebitNoteDetails::where('debitNoteAutoID', $id)
-                ->sum('debitAmount');
+                                       ->sum('debitAmount');
 
             $input['debitAmountTrans'] = $amount;
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
             $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['debitAmountRpt']   = $companyCurrencyConversion['reportingAmount'];
+            $input['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
 
             $input['RollLevForApp_curr'] = 1;
