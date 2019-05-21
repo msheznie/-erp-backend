@@ -430,6 +430,7 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
+
         if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
             return $this->sendError("LC Doc Code is required", 500);
         }
