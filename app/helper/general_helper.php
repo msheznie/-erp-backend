@@ -1649,9 +1649,9 @@ class Helper
 
                                 $jvMasterData = $namespacedModel::find($input["documentSystemCode"]);
 
-                                if ($jvMasterData->jvType == 1) {
+                                if ($jvMasterData->jvType == 1 && $jvMasterData->isReverseAccYN == 0) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
-                                } else if ($jvMasterData->jvType == 5) {
+                                } else if ($jvMasterData->jvType == 5 && $jvMasterData->isReverseAccYN == 0) {
                                     $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
 
@@ -2913,7 +2913,7 @@ class Helper
 
         $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
 
-        if ($jvMasterData->jvType == 1) {
+        if ($jvMasterData->jvType == 1 && $jvMasterData->isReverseAccYN == 0) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
                 ->where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
@@ -2995,7 +2995,7 @@ class Helper
 
         $formattedDateJvN = Carbon::parse($jvMasterData->JVdate)->format('M Y');
 
-        if ($jvMasterData->jvType == 5) {
+        if ($jvMasterData->jvType == 5 && $jvMasterData->isReverseAccYN == 0) {
 
             $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
                 ->where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
