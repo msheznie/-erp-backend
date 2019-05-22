@@ -163,9 +163,6 @@ class ChartOfAccountAPIController extends AppBaseController
             }
 
             $chartOfAccount->save();
-
-            //return $chartOfAccount;
-
         } else {
 
             /** Validation : Add Unique */
