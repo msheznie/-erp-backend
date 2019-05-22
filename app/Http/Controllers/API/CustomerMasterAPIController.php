@@ -511,7 +511,7 @@ class CustomerMasterAPIController extends AppBaseController
         $jobs = TicketMaster::whereIn('companySystemID', $companies)
             ->where('clientSystemID', $input['customer_id'])
             ->where('contractUID', $input['contractUIID'])
-            ->where('jobStartedYNBM', 1)
+            //->where('jobStartedYNBM', 1)
             ->where('jobEndYNSup', '!=', 1)
             ->when(request('search', false), function ($q, $search) {
                 return $q->where(function ($query) use ($search) {

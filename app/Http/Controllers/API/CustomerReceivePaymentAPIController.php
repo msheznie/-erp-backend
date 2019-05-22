@@ -672,11 +672,20 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         // calculating bank amount
-        $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
 
-        if ($bankCurrencyConversion) {
-            $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
-            $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
+        if ($input['bankCurrency'] == $input['localCurrencyID']) {
+            $input['bankAmount'] = $input['localAmount'];
+            $input['bankCurrencyER'] = $input['localCurrencyER'];
+        } else if ($input['bankCurrency'] == $input['companyRptCurrencyID']) {
+            $input['bankAmount'] = $input['companyRptAmount'];
+            $input['bankCurrencyER'] = $input['companyRptCurrencyER'];
+        } else {
+            $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
+
+            if ($bankCurrencyConversion) {
+                $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
+                $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
+            }
         }
 
         $itemExistArray = array();
@@ -1100,7 +1109,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID,1);
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
@@ -1315,7 +1324,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('segment');
-        }, 'details','bankledger_by' => function ($query) {
+        }, 'details', 'bankledger_by' => function ($query) {
             $query->with('bankrec_by');
             $query->where('documentSystemID', 21);
         }])->first();
@@ -1808,7 +1817,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $approve = \Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
+            return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
             return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
         }

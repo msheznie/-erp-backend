@@ -127,6 +127,11 @@ class ChartOfAccountAPIController extends AppBaseController
             if (empty($chartOfAccount)) {
                 return $this->sendError('Chart of Account not found!', 404);
             }
+
+            if ($chartOfAccount->isApproved == 1) {
+                return $this->sendError('You cannot edit, This document already confirmed and approved.', 500);
+            }
+
             // $input = array_except($input,['currency_master']); // uses only in sub sub tables
             $input = $this->convertArrayToValue($input);
 
@@ -141,12 +146,9 @@ class ChartOfAccountAPIController extends AppBaseController
             /** End of Validation */
 
 
-            $input['modifiedPc'] = gethostname();
+            $input['modifiedPc']   = gethostname();
             $input['modifiedUser'] = $empId;
-
-            $empName = $user->employee['empName'];
-            $employeeSystemID = $user->employee['employeeSystemID'];
-
+            $input = array_except($input, ['confirmedEmpSystemID','confirmedEmpID','confirmedEmpName','confirmedEmpDate']);
 
             if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
                 $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
@@ -155,21 +157,12 @@ class ChartOfAccountAPIController extends AppBaseController
                     return $this->sendError($confirm["message"]);
                 }
             }
-
-            unset($input['confirmedYN']);
-            unset($input['confirmedEmpSystemID']);
-            unset($input['confirmedEmpID']);
-            unset($input['confirmedEmpName']);
-            unset($input['confirmedEmpDate']);
-
+            $input = array_except($input, ['confirmedYN']);
             foreach ($input as $key => $value) {
                 $chartOfAccount->$key = $value;
             }
 
             $chartOfAccount->save();
-
-            //return $chartOfAccount;
-
         } else {
 
             /** Validation : Add Unique */
@@ -184,9 +177,9 @@ class ChartOfAccountAPIController extends AppBaseController
             /** End of Validation */
 
 
-            $input['createdPcID'] = gethostname();
+            $input['createdPcID']   = gethostname();
             $input['createdUserID'] = $empId;
-            $chartOfAccount = $this->chartOfAccountRepository->create($input);
+            $chartOfAccount         = $this->chartOfAccountRepository->create($input);
         }
 
 
