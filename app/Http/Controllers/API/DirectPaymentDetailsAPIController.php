@@ -474,12 +474,17 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
 
         if ($directPaymentDetails->toBankCurrencyID) {
-            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->toBankCurrencyID)->first();
+            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->supplierTransCurrencyID)->where('subCurrencyID', $directPaymentDetails->toBankCurrencyID)->first();
             $conversion = $conversion->conversion;
             $bankAmount2 = 0;
-            if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
-                $bankAmount2 = $input['DPAmount'];
-            } else {
+            /*if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount2 = $input['DPAmount'];*/
+            if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->localCurrency) {
+                $bankAmount2 = $input['localAmount'];
+            } else if($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->comRptCurrency){
+                $bankAmount2 = $input['comRptAmount'];
+            }else
+             {
                 if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
                     if ($conversion > 1) {
                         $bankAmount2 = $input['DPAmount'] / $conversion;
@@ -653,12 +658,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         if ($request->toBankCurrencyID) {
 
-            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $request->toBankCurrencyID)->first();
+            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->supplierTransCurrencyID)
+                ->where('subCurrencyID', $request->toBankCurrencyID)
+                ->first();
             $conversion = $conversion->conversion;
 
             $bankAmount = 0;
-            if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
-                $bankAmount = $directPaymentDetails->DPAmount;
+            /*if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount = $directPaymentDetails->DPAmount;*/
+
+            if ($request->toBankCurrencyID == $directPaymentDetails->localCurrency) {
+                $bankAmount = $directPaymentDetails->localAmount;
+            } else if($request->toBankCurrencyID == $directPaymentDetails->comRptCurrency){
+                $bankAmount = $directPaymentDetails->comRptAmount;
             } else {
                 if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
                     if ($conversion > 1) {
