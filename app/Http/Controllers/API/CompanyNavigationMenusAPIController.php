@@ -76,13 +76,13 @@ class CompanyNavigationMenusAPIController extends AppBaseController
                     $children1 = $val["children"];
                     foreach ($children1 as $val2) {
                         if($val2["isChecked"]) {
-                            $navigation[] = array("navigationMenuID" => $val2["navigationMenuID"], "description" => $val2["description"], "companyID" => $input["companyID"], "masterID" => $val2["masterID"], "languageID" => $val2["languageID"], "url" => $val2["url"], "pageID" => $val2["pageID"], "pageTitle" => $val2["pageTitle"], "pageIcon" => $val2["pageIcon"], "levelNo" => $val2["levelNo"], "sortOrder" => $val2["sortOrder"], "isSubExist" => $val2["isSubExist"], "isAddon" => $val2["isAddon"],"isPortalYN" => $val["isPortalYN"],"externalLink" => $val["externalLink"]);
+                            $navigation[] = array("navigationMenuID" => $val2["navigationMenuID"], "description" => $val2["description"], "companyID" => $input["companyID"], "masterID" => $val2["masterID"], "languageID" => $val2["languageID"], "url" => $val2["url"], "pageID" => $val2["pageID"], "pageTitle" => $val2["pageTitle"], "pageIcon" => $val2["pageIcon"], "levelNo" => $val2["levelNo"], "sortOrder" => $val2["sortOrder"], "isSubExist" => $val2["isSubExist"], "isAddon" => $val2["isAddon"],"isPortalYN" => $val2["isPortalYN"],"externalLink" => $val2["externalLink"]);
                         }
                         if (isset($val2["children"])) {
                             $children2 = $val2["children"];
                             foreach ($children2 as $val3) {
                                 if($val3["isChecked"]) {
-                                    $navigation[] = array("navigationMenuID" => $val3["navigationMenuID"], "description" => $val3["description"], "companyID" => $input["companyID"], "masterID" => $val3["masterID"], "languageID" => $val3["languageID"], "url" => $val3["url"], "pageID" => $val3["pageID"], "pageTitle" => $val3["pageTitle"], "pageIcon" => $val3["pageIcon"], "levelNo" => $val3["levelNo"], "sortOrder" => $val3["sortOrder"], "isSubExist" => $val3["isSubExist"], "isAddon" => $val3["isAddon"],"isPortalYN" => $val["isPortalYN"],"externalLink" => $val["externalLink"]);
+                                    $navigation[] = array("navigationMenuID" => $val3["navigationMenuID"], "description" => $val3["description"], "companyID" => $input["companyID"], "masterID" => $val3["masterID"], "languageID" => $val3["languageID"], "url" => $val3["url"], "pageID" => $val3["pageID"], "pageTitle" => $val3["pageTitle"], "pageIcon" => $val3["pageIcon"], "levelNo" => $val3["levelNo"], "sortOrder" => $val3["sortOrder"], "isSubExist" => $val3["isSubExist"], "isAddon" => $val3["isAddon"],"isPortalYN" => $val3["isPortalYN"],"externalLink" => $val3["externalLink"]);
                                 }
                             }
                         }
