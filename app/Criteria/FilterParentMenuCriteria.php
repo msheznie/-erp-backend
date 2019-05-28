@@ -35,6 +35,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
         $companyId = $this->request['companyId'];
         $userGroupId = $this->request['userGroupId'];
         return $model->where('masterID',NULL)
+                     ->whereIn('isPortalYN',array(0))
                      ->where('userGroupID',$userGroupId)
                      ->where('companyID',$companyId)
                      ->with(['child' => function ($query) use($companyId,$userGroupId) {
