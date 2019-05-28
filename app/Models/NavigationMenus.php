@@ -65,7 +65,9 @@ class NavigationMenus extends Model
         'addonDescription',
         'addonDetails',
         'isCoreModule',
-        'isGroup'
+        'isGroup',
+         'isPortalYN',
+        'externalLink'
     ];
 
     /**
@@ -89,7 +91,9 @@ class NavigationMenus extends Model
         'addonDescription' => 'string',
         'addonDetails' => 'string',
         'isCoreModule' => 'integer',
-        'isGroup' => 'integer'
+        'isGroup' => 'integer',
+        'isPortalYN' => 'integer',
+        'externalLink' => 'string'
     ];
 
     /**

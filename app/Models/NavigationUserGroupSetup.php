@@ -59,8 +59,10 @@ class NavigationUserGroupSetup extends Model
         'levelNo',
         'sortOrder',
         'isSubExist',
-        'timestamp'
-    ];
+        'timestamp',
+        'isPortalYN',
+        'externalLink'
+        ];
 
     /**
      * The attributes that should be casted to native types.
@@ -80,7 +82,9 @@ class NavigationUserGroupSetup extends Model
         'pageIcon' => 'string',
         'levelNo' => 'integer',
         'sortOrder' => 'integer',
-        'isSubExist' => 'integer'
+        'isSubExist' => 'integer',
+        'isPortalYN' => 'integer',
+        'externalLink' => 'string'
     ];
 
     /**
