@@ -69,7 +69,9 @@ class UserGroupAssign extends Model
         'update',
         'delete',
         'print',
-        'timestamp'
+        'timestamp',
+        'isPortalYN',
+        'externalLink'
     ];
 
     /**
@@ -95,7 +97,9 @@ class UserGroupAssign extends Model
         'create' => 'boolean',
         'update' => 'boolean',
         'delete' => 'boolean',
-        'print' => 'boolean'
+        'print' => 'boolean',
+        'isPortalYN' => 'integer',
+        'externalLink' => 'string'
     ];
 
     /**
