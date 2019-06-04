@@ -408,7 +408,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $PRMaster = PurchaseRequest::find($itemExist['purchaseRequestID']);
 
                 if($purchaseOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID){
-                    return $this->sendError("PR segment is not matched with PO segment");
+                    return $this->sendError("Request department is different from order");
                 }
             }
         }
