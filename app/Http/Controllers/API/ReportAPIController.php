@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\ProcumentOrder;
@@ -626,7 +627,7 @@ WHERE
                     return $dataRec;
                 }
                 break;
-                case 'POI': //PO Analysis Report
+                case 'POI': //Order Inquiry
 
                     $input = $request->all();
                     if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -1161,6 +1162,53 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
 
                     return $this->sendResponse(array(), 'successfully export');
                 }
+                break;
+            case 'POI': //Order Inquiry
+
+                $input = $request->all();
+                if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                    $sort = 'asc';
+                } else {
+                    $sort = 'desc';
+                }
+                $type = $request->type;
+                $output = $this->orderInquiry($input)
+                               ->orderBy('purchaseOrderID',$sort)
+                               ->get();
+
+                foreach ($output as $val) {
+                    $data[] = array(
+                        'Company' => $val->companyID,
+                        'PO Code' => $val->purchaseOrderCode,
+                        'Created Date' => Helper::dateFormat($val->createdDateTime),
+                        'Created By' => $val->created_by?$val->created_by->empFullName:'',
+                        'Supplier Code' => $val->supplierPrimaryCode,
+                        'Supplier Name' => $val->supplierName,
+                        'LCC' => $val->supplier?$val->supplier->isLcc:'',
+                        'SME' => $val->supplier?$val->supplier->isSme:'',
+                        'ICV Category' => $val->icv_category?$val->icv_category->categoryDescription:'',
+                        'ICV Sub Category' => $val->icv_sub_category?$val->icv_sub_category->categoryDescription:'',
+                        'Expected Delivery Date' => Helper::dateFormat($val->expectedDeliveryDate),
+                        'Narration' => $val->narration,
+                        'Segment' => $val->segment?$val->segment->ServiceLineDes:'',
+                        'Currency' => $val->currency?$val->currency->CurrencyCode:'',
+                        'Amount' => number_format($val->poTotalSupplierTransactionCurrency,($val->currency? $val->currency->DecimalPlaces:2)),
+                        'Approved Date' => Helper::dateFormat($val->approvedDate)
+                    );
+                }
+
+                $csv = \Excel::create('order_inquiry', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
