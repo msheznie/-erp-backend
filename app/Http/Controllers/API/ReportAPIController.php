@@ -15,9 +15,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
+use App\Models\ProcumentOrder;
 use Carbon\Carbon;
+use function foo\func;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class ReportAPIController extends AppBaseController
 {
@@ -35,10 +38,21 @@ class ReportAPIController extends AppBaseController
                     'controlAccount' => 'required',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
+                break;
+            case 'POI':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'suppliers' => 'required',
+                    'option' => 'required'
+                ]);
 
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -211,7 +225,8 @@ WHERE
                         ->with('orderCondition', $sort)
                         ->make(true);
 
-                } else if ($request->reportType == 2) {  //PO Wise Analysis Report
+                }
+                else if ($request->reportType == 2) {  //PO Wise Analysis Report
                     //DB::enableQueryLog();
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
@@ -611,6 +626,30 @@ WHERE
                     return $dataRec;
                 }
                 break;
+                case 'POI': //PO Analysis Report
+
+                    $input = $request->all();
+                    if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                        $sort = 'asc';
+                    } else {
+                        $sort = 'desc';
+                    }
+
+                    $output = $this->orderInquiry($input);
+
+                    return \DataTables::eloquent($output)
+                        ->addColumn('Actions', 'Actions', "Actions")
+                        ->order(function ($query) use ($input) {
+                            if (request()->has('order')) {
+                                if ($input['order'][0]['column'] == 0) {
+                                    $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                                }
+                            }
+                        })
+                        ->addIndexColumn()
+                        ->with('orderCondition', $sort)
+                        ->make(true);
+                    break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -1126,5 +1165,49 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function orderInquiry($input){
+
+
+        $startDate = new Carbon($input['fromDate']);
+        $startDate = $startDate->format('Y-m-d');
+
+        $endDate = new Carbon($input['toDate']);
+        $endDate = $endDate->format('Y-m-d');
+
+
+        $companyID = "";
+        $checkIsGroup = Company::find($input['companySystemID']);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($input['companySystemID']);
+        } else {
+            $companyID = (array)$input['companySystemID'];
+        }
+
+        $option = isset($input['option'])?$input['option']:-1;
+
+        $suppliers = (array)$input['suppliers'];
+        $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
+
+        $data = ProcumentOrder::selectRaw('*')->with(['created_by','icv_category','icv_sub_category','currency','segment','supplier' => function($q){
+                    $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                            IF(isSMEYN = 1, "YES", "NO" ) AS isSme,supplierCodeSystem');
+                }])
+            ->whereIn('companySystemID',$companyID)
+            ->whereBetween('createdDateTime',[$startDate,$endDate])
+            ->whereIn('supplierID',$suppliers)
+            ->when( $option >= 0 , function ($q) use($option){
+                if($option == 0 || $option == 1 || $option == 2){
+                     $q->where('grvRecieved',$option);
+                } else if($option == 3){
+                    $q->where('poConfirmedYN',0)
+                      ->where('approved',0);
+                }else if($option == 4){
+                    $q->where('poConfirmedYN',1)
+                        ->where('approved',0);
+                }
+            });
+        return $data;
     }
 }
