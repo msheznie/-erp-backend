@@ -183,6 +183,14 @@ class AssetDisposalMasterAPIController extends AppBaseController
             return $this->sendError('Disposal date is not within financial period!', 500);
         }
 
+        $checkDisposalType = AssetDisposalType::where('disposalTypesID',$input['disposalType'])
+                                                ->where('activeYN',1)
+                                                ->first();
+
+        if (empty($checkDisposalType)) {
+            return $this->sendError('Please select an active Disposal Type ', 500);
+        }
+
         $company = Company::find($input['companySystemID']);
         if ($company) {
             $input['companyID'] = $company->CompanyID;
@@ -384,6 +392,15 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
                 } else {
                     return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
+                }
+
+                $input['disposalType'] = isset($input['disposalType'])?$input['disposalType']:0;
+                $checkDisposalType = AssetDisposalType::where('disposalTypesID',$input['disposalType'])
+                                                       ->where('activeYN',1)
+                                                       ->first();
+
+                if (empty($checkDisposalType)) {
+                    return $this->sendError('Please select an active Disposal Type ', 500, ['type' => 'confirm']);
                 }
 
                 $disposalDetailExist = AssetDisposalDetail::with(['asset_by' => function ($query) {
@@ -654,7 +671,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
         $companyCurrency = \Helper::companyCurrency($companyId);
         $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
-        $disposalType = AssetDisposalType::all();
+        $disposalType = AssetDisposalType::where('activeYN',1)->get();
         $customer = CustomerAssigned::ofCompany($companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $month = Months::all();
         $companies = \Helper::allCompanies();
