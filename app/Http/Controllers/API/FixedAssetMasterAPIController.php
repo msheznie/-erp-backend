@@ -270,6 +270,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                             $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
                         }
 
+                        $checkDuplicate = FixedAssetCost::where('assetID',$fixedAssetMasters['faCode'])
+                                                         ->count();
+
+                        if($checkDuplicate > 0)
+                        {
+                            return $this->sendError('Already created asset costing for '. $fixedAssetMasters['faCode'], 500);
+                        }
+
                         $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
                         $cost['originDocumentID'] = $grvDetails->grv_master->grvPrimaryCode;
                         $cost['faID'] = $fixedAssetMasters['faID'];
@@ -322,6 +330,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                                     $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
                                 }
 
+                                $checkDuplicate = FixedAssetCost::where('assetID',$fixedAssetMasters['faCode'])
+                                                                 ->count();
+
+                                if($checkDuplicate > 0)
+                                {
+                                    return $this->sendError('Already created asset costing for ' .$fixedAssetMasters['faCode'], 500);
+                                }
+                              
                                 $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
                                 $cost['originDocumentID'] = $grvDetails->grv_master->grvPrimaryCode;
                                 $cost['faID'] = $fixedAssetMasters['faID'];
