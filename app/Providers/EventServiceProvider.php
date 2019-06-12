@@ -1,13 +1,10 @@
 <?php
 
 namespace App\Providers;
-
 use App\Events\DocumentCreated;
-use App\Events\logHistory;
+use App\Events\POServiceLineCheck;
 use App\Listeners\AfterDocumentCreated;
-use App\Listeners\AfterLogin;
-use App\Listeners\RevokeOldTokens;
-use App\Models\AccessTokens;
+use App\Listeners\POUpdated;
 use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
@@ -19,11 +16,11 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\ProcumentOrder;
 use App\Models\PurchaseReturn;
 use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
-use App\Models\User;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -47,6 +44,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         DocumentCreated::class => [
             AfterDocumentCreated::class
+        ],
+        POServiceLineCheck::class => [
+            POUpdated::class
         ]
     ];
 
@@ -112,6 +112,11 @@ class EventServiceProvider extends ServiceProvider
         // General Ledger
         JvMaster::created(function (JvMaster $document) {
             event(new DocumentCreated($document));
+        });
+
+        // PO service line check
+        ProcumentOrder::updating(function (ProcumentOrder $order){
+            event(new POServiceLineCheck($order));
         });
 
     }
