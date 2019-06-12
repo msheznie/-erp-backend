@@ -32,7 +32,8 @@ class AssetDisposalType extends Model
     protected $primaryKey = 'disposalTypesID';
 
     public $fillable = [
-        'typeDescription'
+        'typeDescription',
+        'activeYN'
     ];
 
     /**
@@ -42,6 +43,7 @@ class AssetDisposalType extends Model
      */
     protected $casts = [
         'disposalTypesID' => 'integer',
+        'activeYN' => 'integer',
         'typeDescription' => 'string'
     ];
 
