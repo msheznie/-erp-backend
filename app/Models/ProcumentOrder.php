@@ -580,9 +580,14 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
     }
 
-   /* public function getIsLocalSupplierAttribute()
+    public function icv_category()
     {
-        return Helper::isLocalSupplier(3390,57);
-    }*/
+        return $this->belongsTo('App\Models\SupplierCategoryICVMaster', 'supCategoryICVMasterID', 'supCategoryICVMasterID');
+    }
+
+    public function icv_sub_category()
+    {
+        return $this->belongsTo('App\Models\SupplierCategoryICVSub', 'supCategorySubICVID', 'supCategorySubICVID');
+    }
 
 }

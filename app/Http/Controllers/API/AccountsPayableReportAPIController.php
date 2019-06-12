@@ -24,6 +24,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
 use App\Models\ChartOfAccount;
@@ -230,14 +231,28 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APUGRV':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'suppliers' => 'required',
-                    'controlAccountsSystemID' => 'required',
-                    'currencyID' => 'required',
-                    'localOrForeign' => 'required'
-                ]);
+
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+
+                if ($reportTypeID == 'ULD') {
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required'
+                    ]);
+                } else {
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'suppliers' => 'required',
+                        'controlAccountsSystemID' => 'required',
+                        'currencyID' => 'required',
+                        'localOrForeign' => 'required'
+                    ]);
+                }
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -545,7 +560,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $documentAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 break;
             case 'TS': //Supplier Balance Summary Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTopSupplierQRY($request);
 
@@ -624,6 +639,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'UGRVAS') {
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $outputArr = $output;
+                } else if ($reportTypeID == 'ULD') {
+                    $output = $this->getUnbilledLogisticsDetailQRY($request);
+                    $outputArr = $output;
+
+                    $grandTotalArr['LogisticAmountRpt'] = array_sum(collect($output)->pluck('LogisticAmountRpt')->toArray());
+                    $grandTotalArr['PaidAmountRpt'] = array_sum(collect($output)->pluck('PaidAmountRpt')->toArray());
+                    $grandTotalArr['BalanceRptAmount'] = array_sum(collect($output)->pluck('BalanceRptAmount')->toArray());
                 }
 
                 $grandTotalArr['documentLocalAmount'] = array_sum(collect($output)->pluck('documentLocalAmount')->toArray());
@@ -1120,7 +1142,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $type = $request->type;
                 $name = "";
                 if ($reportTypeID == 'TSCW' || $reportTypeID == 'TSC') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getTopSupplierQRY($request);
 
                     if ($reportTypeID == 'TSCW') {
@@ -1210,7 +1232,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                } else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
+                }
+                else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
 
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
                     $name = "aging_detail";
@@ -1250,7 +1273,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                } else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
+                }
+                else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
 
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $name = "aging_summary";
@@ -1290,7 +1314,31 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                 }
-
+                else if ($reportTypeID == 'ULD') {
+                    $output = $this->getUnbilledLogisticsDetailQRY($request);
+                    $name = "logistics_detail";
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['GRV'] = $val->grvPrimaryCode;
+                            $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Trans.Cur'] = $val->TransactionCurrencyCode;
+                            $data[$x]['Logistic Amount Transaction'] = number_format($val->LogisticAmountTransaction,$val->TransactionCurrencyDecimalPlaces);
+                            $data[$x]['Rpt.Cur'] = $val->RptCurrencyCode;
+                            $data[$x]['Logistic Amount Rpt'] = number_format($val->LogisticAmountRpt,$val->RptCurrencyDecimalPlaces);
+                            $data[$x]['Paid Amount Trans'] = number_format($val->PaidAmountTrans,$val->TransactionCurrencyDecimalPlaces);
+                            $data[$x]['Paid Amount Rpt'] =  number_format($val->PaidAmountRpt,$val->RptCurrencyDecimalPlaces);
+                            $data[$x]['Balance Trans'] =  number_format($val->BalanceTransAmount,$val->TransactionCurrencyDecimalPlaces);
+                            $data[$x]['Balance Rpt'] = number_format($val->BalanceRptAmount,$val->RptCurrencyDecimalPlaces);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }
                 $csv = \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -4080,6 +4128,76 @@ class AccountsPayableReportAPIController extends AppBaseController
         return $output;
 
     }
+
+    function getUnbilledLogisticsDetailQRY($request)
+    {
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $qry = 'SELECT
+                erp_grvmaster.companyID,
+                erp_grvmaster.grvPrimaryCode,
+                erp_grvmaster.grvAutoID,
+                erp_grvmaster.documentSystemID,
+                erp_grvmaster.grvDate,
+                suppliermaster.primarySupplierCode,
+                suppliermaster.supplierName,
+                currencymaster.CurrencyCode as TransactionCurrencyCode,
+                currencymaster.DecimalPlaces as TransactionCurrencyDecimalPlaces,
+                erp_unbilledgrvgroupby.totTransactionAmount AS LogisticAmountTransaction,
+                currencymaster_1.CurrencyCode as RptCurrencyCode,
+                currencymaster_1.DecimalPlaces as RptCurrencyDecimalPlaces,
+                erp_unbilledgrvgroupby.totRptAmount AS LogisticAmountRpt,
+                IFNULL(logisticGRV_BookingDetails.SumOftotTransactionAmount,0) AS PaidAmountTrans,
+                IFNULL(logisticGRV_BookingDetails.SumOftotRptAmount,0) AS PaidAmountRpt,
+                IFNULL(erp_unbilledgrvgroupby.totTransactionAmount-logisticGRV_BookingDetails.SumOftotTransactionAmount,0) as BalanceTransAmount,
+                IFNULL(erp_unbilledgrvgroupby.totRptAmount-logisticGRV_BookingDetails.SumOftotRptAmount,0) as BalanceRptAmount
+            FROM
+                erp_grvmaster 
+                INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                INNER JOIN erp_unbilledgrvgroupby ON erp_grvmaster.grvAutoID = erp_unbilledgrvgroupby.grvAutoID
+                INNER JOIN suppliermaster ON erp_unbilledgrvgroupby.supplierID = suppliermaster.supplierCodeSystem 
+                INNER JOIN currencymaster ON erp_unbilledgrvgroupby.supplierTransactionCurrencyID = currencymaster.currencyID 
+                INNER JOIN currencymaster AS currencymaster_1 ON erp_unbilledgrvgroupby.companyReportingCurrencyID = currencymaster_1.currencyID 
+                LEFT JOIN (
+                                SELECT erp_bookinvsuppdet.unbilledgrvAutoID,
+                                Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount,
+                                Sum(erp_bookinvsuppdet.totRptAmount) AS SumOftotRptAmount
+                                FROM erp_bookinvsuppdet
+                                GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID
+            ) AS logisticGRV_BookingDetails	ON erp_unbilledgrvgroupby.unbilledgrvAutoID = logisticGRV_BookingDetails.unbilledgrvAutoID 
+            WHERE
+                erp_grvmaster.grvConfirmedYN = 1
+                AND erp_grvmaster.approved =- 1  
+                AND erp_grvmaster.grvTotalSupplierTransactionCurrency > 0  
+                AND erp_grvdetails.logisticsChargest_RptCur > 0  
+                AND If(erp_grvmaster.supplierID=erp_unbilledgrvgroupby.supplierID,0,1)= 1
+                AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ')
+                AND STR_TO_DATE( DATE_FORMAT( erp_grvmaster.grvDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                AND erp_unbilledgrvgroupby.supplierID IN (' . join(',', $supplierSystemID) . ')
+                GROUP BY
+                erp_unbilledgrvgroupby.unbilledgrvAutoID,
+                erp_grvmaster.grvAutoID,
+                erp_grvmaster.companySystemID;';
+        //DB::enableQueryLog();
+        $output = \DB::select($qry);
+
+        return $output;
+
+    }
+
 
     function getUnbilledGRVDetailAgingQRY($request)
     {

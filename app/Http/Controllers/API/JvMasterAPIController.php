@@ -1198,81 +1198,82 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
 
         $qry = "SELECT
-    podetail.purchaseOrderDetailsID,
-	pomaster.purchaseOrderID,
-	pomaster.poType,
-	pomaster.purchaseOrderCode,
-	pomaster.serviceLineSystemID,
-	pomaster.serviceLine,
-	pomaster.expectedDeliveryDate,
-	pomaster.approvedDate,
-	podetail.itemPrimaryCode,
-	podetail.itemDescription,
-	IF (
-	podetail.financeGLcodePL IS NULL
-	OR podetail.financeGLcodePL = '',
-	podetail.financeGLcodebBS,
-	podetail.financeGLcodePL
-) AS glCode,
-IF (
-	podetail.financeGLcodePL IS NULL
-	OR podetail.financeGLcodePL = '',
-	podetail.financeGLcodebBSSystemID,
-	podetail.financeGLcodePLSystemID
-) AS glCodeSystemID,
-	pomaster.supplierName,
-	podetail.poSum AS poCost,
-	IFNULL(grvdetail.grvSum, 0) AS grvCost,
-	(
-		podetail.poSum - IFNULL(grvdetail.grvSum, 0)
-	) AS balanceCost
-FROM
-	erp_purchaseordermaster AS pomaster
-INNER JOIN (
-	SELECT
-        GRVcostPerUnitComRptCur * noQty AS poSum,
-        purchaseOrderDetailsID,
-		purchaseOrderMasterID,
-		itemCode,
-		itemPrimaryCode,
-		itemDescription,
-		financeGLcodePL,
-		financeGLcodePLSystemID,
-		financeGLcodebBS,
-		financeGLcodebBSSystemID
-	FROM
-		erp_purchaseorderdetails
-) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
-LEFT JOIN (
-	SELECT
-		purchaseOrderMastertID,
-		purchaseOrderDetailsID,
-		sum(GRVcostPerUnitComRptCur * noQty) as GRVSum
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		grvTypeID = 2
-	AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
-    group by purchaseOrderDetailsID
-) AS grvdetail ON grvdetail.purchaseOrderDetailsID = podetail.purchaseOrderDetailsID
-INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
-WHERE
-	pomaster.companySystemID = $companySystemID
-AND pomaster.poConfirmedYN = 1
-AND pomaster.poCancelledYN = 0
-AND pomaster.approved = - 1
-AND pomaster.poType_N <> 5
-AND pomaster.manuallyClosed = 0
-AND pomaster.financeCategory IN (2, 4)
-AND date(pomaster.approvedDate) >= '2016-05-01'
-AND date(
-	pomaster.expectedDeliveryDate
-) <= '$formattedJVdate'
-{$filter}
-AND supmaster.companyLinkedToSystemID IS NULL
-HAVING
-	round(balanceCost, 2) > 0";
+                podetail.purchaseOrderDetailsID,
+                pomaster.purchaseOrderID,
+                pomaster.poType,
+                pomaster.purchaseOrderCode,
+                pomaster.serviceLineSystemID,
+                pomaster.serviceLine,
+                pomaster.expectedDeliveryDate,
+                pomaster.approvedDate,
+                podetail.itemPrimaryCode,
+                podetail.itemDescription,
+                IF (
+                podetail.financeGLcodePL IS NULL
+                OR podetail.financeGLcodePL = '',
+                podetail.financeGLcodebBS,
+                podetail.financeGLcodePL
+            ) AS glCode,
+            IF (
+                podetail.financeGLcodePL IS NULL
+                OR podetail.financeGLcodePL = '',
+                podetail.financeGLcodebBSSystemID,
+                podetail.financeGLcodePLSystemID
+            ) AS glCodeSystemID,
+                pomaster.supplierName,
+                podetail.poSum AS poCost,
+                IFNULL(grvdetail.grvSum, 0) AS grvCost,
+                (
+                    podetail.poSum - IFNULL(grvdetail.grvSum, 0)
+                ) AS balanceCost
+            FROM
+                erp_purchaseordermaster AS pomaster
+            INNER JOIN (
+                SELECT
+                    GRVcostPerUnitComRptCur * noQty AS poSum,
+                    purchaseOrderDetailsID,
+                    purchaseOrderMasterID,
+                    itemCode,
+                    itemPrimaryCode,
+                    itemDescription,
+                    financeGLcodePL,
+                    financeGLcodePLSystemID,
+                    financeGLcodebBS,
+                    financeGLcodebBSSystemID
+                FROM
+                    erp_purchaseorderdetails
+                    WHERE erp_purchaseorderdetails.itemFinanceCategoryID IN (2, 4)
+            ) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
+            LEFT JOIN (
+                SELECT
+                    purchaseOrderMastertID,
+                    purchaseOrderDetailsID,
+                    sum(GRVcostPerUnitComRptCur * noQty) as GRVSum
+                FROM
+                    erp_grvdetails
+                INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                WHERE
+                    grvTypeID = 2
+                AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
+                group by purchaseOrderDetailsID
+            ) AS grvdetail ON grvdetail.purchaseOrderDetailsID = podetail.purchaseOrderDetailsID
+            INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
+            WHERE
+                pomaster.companySystemID = $companySystemID
+            AND pomaster.poConfirmedYN = 1
+            AND pomaster.poCancelledYN = 0
+            AND pomaster.approved = - 1
+            AND pomaster.poType_N <> 5
+            AND pomaster.manuallyClosed = 0
+            AND pomaster.financeCategory IN (2, 4)
+            AND date(pomaster.approvedDate) >= '2016-05-01'
+            AND date(
+                pomaster.expectedDeliveryDate
+            ) <= '$formattedJVdate'
+            {$filter}
+            AND supmaster.companyLinkedToSystemID IS NULL
+            HAVING
+                round(balanceCost, 2) > 0";
 
         //echo $qry;
         //exit();

@@ -846,6 +846,18 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('unitCost', '<=', 0)
                 ->count();
 
+            //check PO and PR service line
+
+            $details = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
+                                           ->get();
+
+            foreach ($details as $detail) {
+                $PRMaster = PurchaseRequest::find($detail['purchaseRequestID']);
+                if($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID){
+                    return $this->sendError("Added Request department is different from order");
+                }
+            }
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item unit cost should be greater than zero ', 500);
             }

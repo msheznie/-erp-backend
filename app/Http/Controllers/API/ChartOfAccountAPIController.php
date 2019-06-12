@@ -158,11 +158,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
             }
             $input = array_except($input, ['confirmedYN']);
-            foreach ($input as $key => $value) {
-                $chartOfAccount->$key = $value;
-            }
-
-            $chartOfAccount->save();
+            $this->chartOfAccountRepository->update($input,$input['chartOfAccountSystemID']);
         } else {
 
             /** Validation : Add Unique */
