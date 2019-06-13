@@ -484,14 +484,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
+        foreach ($input as $key => $value) {
+            $procumentOrderUpdate->$key = $value;
+        }
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $procumentOrderUpdate->serviceLine = $segment->ServiceLineCode;
         }
 
-        foreach ($input as $key => $value) {
-            $procumentOrderUpdate->$key = $value;
-        }
 
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
