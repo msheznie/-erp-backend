@@ -18,12 +18,14 @@
  * -- Date: 01 January 2019 By: Nazir Description: Added new functions named as customerInvoiceCancel()
  * -- Date: 11 January 2019 By: Mubashir Description: Added new functions named as approvalPreCheckCustomerInvoice()
  * -- Date: 06 February 2019 By: Fayas Description: Added new functions named as updateCustomerInvoiceGRV()
+ * -- Date: 13 June 2019 By: Fayas Description: Added new functions named as amendCustomerInvoiceReview()
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
+use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
@@ -33,7 +35,9 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
 use App\Models\CustomerInvoiceDirectRefferedback;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentReferedHistory;
+use App\Models\GeneralLedger;
 use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
 use App\Models\Unit;
@@ -2302,6 +2306,115 @@ WHERE
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }
+    
+    public function amendCustomerInvoiceReview(Request $request)
+    {
+        $input = $request->all();
 
+        $id = $input['custInvoiceDirectAutoID'];
 
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = CustomerInvoiceDirect::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
+        }
+
+        // checking document matched in machmaster
+        $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('addedDocumentSystemID', $masterData->documentSystemiD)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. Customer Invoice is added to payment');
+        }
+
+        $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bookingInvCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemiD,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->bookingInvCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemiD,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->bookingInvCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from accounts receivable
+            $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approved = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->postedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Customer Invoice amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }

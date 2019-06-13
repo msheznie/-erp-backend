@@ -15,7 +15,8 @@
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getApprovedRVForCurrentUser(),
  * -- Date: 21-November 2018 By: Nazir Description: Added new function amendReceiptVoucher(),
  * -- Date: 31-December 2018 By: Nazir Description: Added new function receiptVoucherCancel(),
- * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckReceiptVoucher(),
+ * -- Date: 11-January 2019 By: Mubashir Description: Added new function approvalPreCheckReceiptVoucher()
+ * -- Date: 13-June 2019 By: Fayas Description: Added new function amendReceiptVoucherReview()
  */
 
 namespace App\Http\Controllers\API;
@@ -23,6 +24,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerReceivePaymentAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
@@ -42,6 +44,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
+use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
@@ -1823,4 +1826,164 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
     }
+
+    public function amendReceiptVoucherReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['custReceivePaymentAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = $this->customerReceivePaymentRepository->findWithoutFail($id);
+        if (empty($masterData)) {
+            return $this->sendError('Receipt Voucher Master not found');
+        }
+
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend, this Receipt Voucher, it is not confirmed');
+        }
+
+        // checking document matched in matchmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemID)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('You cannot return back to amend. this Receipt Voucher is added to matching');
+        }
+
+        $checkBLDataExist = BankLedger::where('documentSystemCode', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemID)
+            ->first();
+
+        if ($checkBLDataExist) {
+            if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
+                return $this->sendError('Bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+            } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+            }
+        }
+
+        $emailBody = '<p>' . $masterData->custPaymentReceiveCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+
+        $emailSubject = $masterData->custPaymentReceiveCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->custPaymentReceiveCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->custPaymentReceiveCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            //deleting records from accounts payable
+            $deleteAPData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            /*if ($masterData->invoiceType == 3) {
+                if ($masterData->expenseClaimOrPettyCash == 6 || $masterData->expenseClaimOrPettyCash == 7) {
+
+                    //deleting records from customer receive voucher master
+                    $deleteCRVData = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)
+                        ->where('companySystemID', $masterData->interCompanyToSystemID)
+                        ->where('documentSystemID', 21)
+                        ->delete();
+
+                    //deleting records from customer receive voucher detail
+                    $deleteCRVDetailData = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                        ->where('companySystemID', $masterData->interCompanyToSystemID)
+                        ->delete();
+                } else {
+                    //deleting records from customer receive voucher master
+                    $deleteCRVData = CustomerReceivePayment::where('PayMasterAutoId', $id)
+                        ->where('companySystemID', $masterData->companySystemID)
+                        ->where('documentSystemID', $masterData->documentSystemID)
+                        ->delete();
+                }
+            }*/
+
+            //deleting records from bank ledger
+            $deleteBLData = BankLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approved = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->postedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Receipt Voucher return back to amend successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 }
