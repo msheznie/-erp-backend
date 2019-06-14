@@ -1250,6 +1250,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
             ->when( $option >= 0 , function ($q) use($option){
                 if($option == 0 || $option == 1 || $option == 2){
                      $q->where('grvRecieved',$option)
+                         ->where('poClosedYN',0)
                          ->where('poConfirmedYN',1)
                          ->where('approved',-1);
                 } else if($option == 3){
