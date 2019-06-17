@@ -639,7 +639,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'UGRVAS') {
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $outputArr = $output;
-                } else if ($reportTypeID == 'ULD') {
+                }
+                else if ($reportTypeID == 'ULD') {
                     $output = $this->getUnbilledLogisticsDetailQRY($request);
                     $outputArr = $output;
 
@@ -1321,6 +1322,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['PO Number'] = $val->purchaseOrderCode;
                             $data[$x]['GRV'] = $val->grvPrimaryCode;
                             $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
                             $data[$x]['Supplier Code'] = $val->primarySupplierCode;
@@ -4148,6 +4150,9 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $qry = 'SELECT
                 erp_grvmaster.companyID,
+                erp_grvdetails.purchaseOrderMastertID,
+                erp_purchaseordermaster.purchaseOrderCode,
+                erp_purchaseordermaster.documentSystemID as poDocumentSystemID,
                 erp_grvmaster.grvPrimaryCode,
                 erp_grvmaster.grvAutoID,
                 erp_grvmaster.documentSystemID,
@@ -4167,6 +4172,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             FROM
                 erp_grvmaster 
                 INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                LEFT JOIN  erp_purchaseordermaster ON erp_grvdetails.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
                 INNER JOIN erp_unbilledgrvgroupby ON erp_grvmaster.grvAutoID = erp_unbilledgrvgroupby.grvAutoID
                 INNER JOIN suppliermaster ON erp_unbilledgrvgroupby.supplierID = suppliermaster.supplierCodeSystem 
                 INNER JOIN currencymaster ON erp_unbilledgrvgroupby.supplierTransactionCurrencyID = currencymaster.currencyID 
