@@ -1193,7 +1193,8 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         'Segment' => $val->segment?$val->segment->ServiceLineDes:'',
                         'Currency' => $val->currency?$val->currency->CurrencyCode:'',
                         'Amount' => number_format($val->poTotalSupplierTransactionCurrency,($val->currency? $val->currency->DecimalPlaces:2)),
-                        'Approved Date' => Helper::dateFormat($val->approvedDate)
+                        'Approved Date' => Helper::dateFormat($val->approvedDate),
+                        'Status' => $val->manuallyClosed?'Manually Closed':''
                     );
                 }
 
@@ -1238,7 +1239,8 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
         $suppliers = (array)$input['suppliers'];
         $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-        $data = ProcumentOrder::selectRaw('*')->with(['created_by','icv_category','icv_sub_category','currency','segment','supplier' => function($q){
+        $data = ProcumentOrder::selectRaw('*')
+            ->with(['created_by','icv_category','icv_sub_category','currency','segment','supplier' => function($q){
                     $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,
                             IF(isSMEYN = 1, "YES", "NO" ) AS isSme,supplierCodeSystem');
                 }])
@@ -1247,7 +1249,10 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
             ->whereIn('supplierID',$suppliers)
             ->when( $option >= 0 , function ($q) use($option){
                 if($option == 0 || $option == 1 || $option == 2){
-                     $q->where('grvRecieved',$option);
+                     $q->where('grvRecieved',$option)
+                         ->where('poClosedYN',0)
+                         ->where('poConfirmedYN',1)
+                         ->where('approved',-1);
                 } else if($option == 3){
                     $q->where('poConfirmedYN',0)
                       ->where('approved',0);
