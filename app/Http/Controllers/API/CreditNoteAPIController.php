@@ -11,16 +11,21 @@
  * -- Date: 26-November 2018 By: Nazir Description: Added new function amendCreditNote(),
  * -- Date: 11-January 2019 By: Muabashir Description: Added new function approvalPreCheckCreditNote(),
  * -- Date: 23-January 2019 By: Nazir Store function, update function issues fixed and modified,
+ * -- Date: 13-June 2019 By: Fayas Description: Added new function amendCreditNoteReview(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
+use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNoteDetailsRefferdback;
 use App\Models\CreditNoteReferredback;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentReferedHistory;
+use App\Models\GeneralLedger;
+use App\Models\MatchDocumentMaster;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -1211,8 +1216,127 @@ WHERE
         } else {
             return $this->sendResponse(array('type' => $approve["type"]), $approve["message"]);
         }
-
     }
 
 
+    public function amendCreditNoteReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['creditNoteAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = CreditNote::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Credit Note not found');
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this Credit Note, it is not confirmed');
+        }
+
+        // checking document matched in receive payment
+        $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('addedDocumentSystemID', $masterData->documentSystemiD)
+            ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. Credit Note is added to payment');
+        }
+
+        // checking document matched in erp_matchdocumentmaster
+        $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $id)
+                                                    ->where('companySystemID', $masterData->companySystemID)
+                                                    ->where('documentSystemID', $masterData->documentSystemiD)
+                                                    ->first();
+
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. credit note is added to matching');
+        }
+
+        $emailBody = '<p>' . $masterData->creditNoteCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->creditNoteCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemiD,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->creditNoteCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemiD,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->creditNoteCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from accounts receivable
+            $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approved = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->postedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Credit Note amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }
