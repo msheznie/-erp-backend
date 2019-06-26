@@ -2333,7 +2333,7 @@ WHERE
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. Customer Invoice is added to payment');
+            return $this->sendError('Cannot return back to amend. Customer Invoice is added to receipt');
         }
 
         $emailBody = '<p>' . $masterData->bookingInvCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

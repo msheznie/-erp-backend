@@ -1935,28 +1935,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
-            /*if ($masterData->invoiceType == 3) {
-                if ($masterData->expenseClaimOrPettyCash == 6 || $masterData->expenseClaimOrPettyCash == 7) {
-
-                    //deleting records from customer receive voucher master
-                    $deleteCRVData = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)
-                        ->where('companySystemID', $masterData->interCompanyToSystemID)
-                        ->where('documentSystemID', 21)
-                        ->delete();
-
-                    //deleting records from customer receive voucher detail
-                    $deleteCRVDetailData = DirectReceiptDetail::where('directReceiptAutoID', $id)
-                        ->where('companySystemID', $masterData->interCompanyToSystemID)
-                        ->delete();
-                } else {
-                    //deleting records from customer receive voucher master
-                    $deleteCRVData = CustomerReceivePayment::where('PayMasterAutoId', $id)
-                        ->where('companySystemID', $masterData->companySystemID)
-                        ->where('documentSystemID', $masterData->documentSystemID)
-                        ->delete();
-                }
-            }*/
-
             //deleting records from bank ledger
             $deleteBLData = BankLedger::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)

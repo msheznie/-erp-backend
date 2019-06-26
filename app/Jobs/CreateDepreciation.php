@@ -53,7 +53,20 @@ class CreateDepreciation implements ShouldQueue
                         $query->where('approved', -1);
                     });
                     $query->groupBy('faID');
-                }])->isDisposed()->ofCompany([$depMaster->companySystemID])->isApproved()->assetType(1)->orderBy('faID', 'desc')->get();
+                }])
+                ->where(function($q) use($depDate){
+                    $q->isDisposed()
+                        ->orWhere(function ($q1) use($depDate){
+                            $q1->disposed(-1)
+                                ->WhereDate('disposedDate','>',$depDate);
+                        });
+                })
+                ->ofCompany([$depMaster->companySystemID])
+                ->isApproved()
+                ->assetType(1)
+                ->orderBy('faID', 'desc')
+                ->get();
+
                 $depAmountRptTotal = 0;
                 $depAmountLocalTotal = 0;
                 if (count($faMaster) > 0) {
