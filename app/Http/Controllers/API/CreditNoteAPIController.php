@@ -1245,7 +1245,7 @@ WHERE
             ->first();
 
         if ($checkDetailExistMatch) {
-            return $this->sendError('Cannot return back to amend. Credit Note is added to payment');
+            return $this->sendError('Cannot return back to amend. Credit Note is added to receipt');
         }
 
         // checking document matched in erp_matchdocumentmaster
