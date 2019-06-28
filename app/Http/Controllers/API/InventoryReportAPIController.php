@@ -204,6 +204,8 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $sort = 'desc';
                     }
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
 
                     $output = $this->stockAgingQry($input, 0);
                     return $this->sendResponse($output, 'Items retrieved successfully');
@@ -245,14 +247,23 @@ class InventoryReportAPIController extends AppBaseController
         }
 
         $aging = ['0-30', '31-60', '61-90', '91-120', '121-365', '366-730', '> 730'];
+
+        if($input['reportCategory'] == 2){
+            $aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
+        }
+
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
-                if ($count == $c) {
+                if ($count == $c && $input['reportCategory'] == 1) {
                     $agingField .= "SUM(if(ItemLedger.ageDays   > " . 730 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
-                } else {
+                }
+                else if($count == $c && $input['reportCategory'] == 2){
+                    $agingField .= "SUM(if(ItemLedger.ageDays   > " . 1826 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
+                }
+                else {
                     $list = explode("-", $val);
                     $agingField .= "SUM(if(ItemLedger.ageDays >= " . $list[0] . " AND ItemLedger.ageDays <= " . $list[1] . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
                 }
@@ -369,7 +380,7 @@ class InventoryReportAPIController extends AppBaseController
                 }
             }
 
-            if ($issuedQty > 0 && $item->case7 > 0) {
+            if ($issuedQty > 0 && $input['reportCategory'] == 1 && $item->case7 > 0) {
                 if ($item->case7 >= $issuedQty) {
                     $item->case7 = $item->case7 - $issuedQty;
                     $issuedQty = 0;
@@ -866,11 +877,13 @@ FROM
 
                     return $this->sendResponse(array(), 'successfully export');
 
-                } else if ($reportTypeID == 'SA') { //Stock Aging Report
+                }
+                else if ($reportTypeID == 'SA') { //Stock Aging Report
 
                     $type = $request->type;
                     $input = $request->all();
-                    $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
                     $output = $this->stockAgingQry($input, 1);
                     $data = array();
                     if ($output) {
@@ -895,62 +908,114 @@ FROM
                                     $data[$x]['Rep Amount'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
                                 }
 
-                                $data[$x]['<=30 (Qty)'] = $val->case1;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['<=30 (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['<=30 (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
-                                }
+                                if($input['reportCategory'] == 2){ // yearly
+                                    //$aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
 
-
-                                $data[$x]['31 to 60 (Qty)'] = $val->case2;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['31 to 60 (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
-                                }
-
-                                $data[$x]['61 to 90 (Qty)'] = $val->case3;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['61 to 90 (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
-                                }
-
-                                $data[$x]['91 to 120 (Qty)'] = $val->case4;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['91 to 120 (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
-                                }
-
-                                $data[$x]['121 to 365 (Qty)'] = $val->case5;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['121 to 365 (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
-                                }
-
-                                $data[$x]['366 to 730 (Qty)'] = $val->case6;
-                                if ($input['currencyID'] == 1) {
-                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
-                                } else if ($input['currencyID'] == 2) {
-                                    $data[$x]['366 to 730 (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
-                                }
-
-                                $data[$x]['Over 730 (Qty)'] = $val->case7;
-                                if ($input['currencyID'] == 1) {
-                                    if ($val->Qty == 0) {
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
-                                    } else {
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals);
+                                    $data[$x]['<= 1 year (Qty)'] = $val->case1;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['<= 1 year (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['<= 1 year (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
                                     }
-                                } else if ($input['currencyID'] == 2) {
-                                    if ($val->Qty == 0) {
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
-                                    } else {
-                                        $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals);
+
+
+                                    $data[$x]['1 to 2 years (Qty)'] = $val->case2;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['1 to 2 years (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['1 to 2 years (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
                                     }
+
+                                    $data[$x]['2 to 3 years (Qty)'] = $val->case3;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['2 to 3 years (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['2 to 3 years (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['3 to 4 years (Qty)'] = $val->case4;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['3 to 4 years (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['3 to 4 years (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['4 to 5 years (Qty)'] = $val->case5;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['4 to 5 years (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['4 to 5 years (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['Over 5 years (Qty)'] = $val->case6;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['Over 5 years (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['Over 5 years (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
+                                    }
+
+                                }else{ // 0 - 730 days
+
+                                    $data[$x]['<=30 (Qty)'] = $val->case1;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['<=30 (Value)'] = number_format($val->WACLocal * $val->case1, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['<=30 (Value)'] = number_format($val->WACRpt * $val->case1, $val->RptCurrencyDecimals);
+                                    }
+
+
+                                    $data[$x]['31 to 60 (Qty)'] = $val->case2;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['31 to 60 (Value)'] = number_format($val->WACLocal * $val->case2, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['31 to 60 (Value)'] = number_format($val->WACRpt * $val->case2, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['61 to 90 (Qty)'] = $val->case3;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['61 to 90 (Value)'] = number_format($val->WACLocal * $val->case3, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['61 to 90 (Value)'] = number_format($val->WACRpt * $val->case3, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['91 to 120 (Qty)'] = $val->case4;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['91 to 120 (Value)'] = number_format($val->WACLocal * $val->case4, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['91 to 120 (Value)'] = number_format($val->WACRpt * $val->case4, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['121 to 365 (Qty)'] = $val->case5;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['121 to 365 (Value)'] = number_format($val->WACLocal * $val->case5, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['121 to 365 (Value)'] = number_format($val->WACRpt * $val->case5, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['366 to 730 (Qty)'] = $val->case6;
+                                    if ($input['currencyID'] == 1) {
+                                        $data[$x]['366 to 730 (Value)'] = number_format($val->WACLocal * $val->case6, $val->LocalCurrencyDecimals);
+                                    } else if ($input['currencyID'] == 2) {
+                                        $data[$x]['366 to 730 (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
+                                    }
+
+                                    $data[$x]['Over 730 (Qty)'] = $val->case7;
+                                    if ($input['currencyID'] == 1) {
+                                        if ($val->Qty == 0) {
+                                            $data[$x]['Over 730 (Value)'] = number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals);
+                                        } else {
+                                            $data[$x]['Over 730 (Value)'] = number_format($val->WACLocal * $val->case7, $val->LocalCurrencyDecimals);
+                                        }
+                                    } else if ($input['currencyID'] == 2) {
+                                        if ($val->Qty == 0) {
+                                            $data[$x]['Over 730 (Value)'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
+                                        } else {
+                                            $data[$x]['Over 730 (Value)'] = number_format($val->WACRpt * $val->case7, $val->RptCurrencyDecimals);
+                                        }
+                                    }
+
+
+
                                 }
                             }
                         }
