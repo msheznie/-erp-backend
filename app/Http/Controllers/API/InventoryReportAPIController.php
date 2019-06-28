@@ -48,7 +48,7 @@ class InventoryReportAPIController extends AppBaseController
                         'asOfDate' => 'required|date',
                         'warehouse' => 'required',
                         'currencyID' => 'required',
-                        'reportTypeID' => 'required',
+                        'reportTypeID' => 'required'
                     ]);
                 }
                 if ($validator->fails()) {
