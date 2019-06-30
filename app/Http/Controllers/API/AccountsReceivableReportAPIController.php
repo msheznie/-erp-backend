@@ -4170,7 +4170,7 @@ FROM
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
-	erp_generalledger.documentSystemID = 21
+	erp_generalledger.documentSystemID = 21 AND erp_generalledger.glaccounttypeID = 1
 AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
