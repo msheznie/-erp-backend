@@ -500,4 +500,8 @@ class BankLedger extends Model
     {
         return $this->belongsTo('App\Models\BankReconciliation', 'bankRecAutoID', 'bankRecAutoID');
     }
+
+    public function bank_transfer(){
+        return $this->hasOne('App\Models\PaymentBankTransfer','paymentBankTransferID','paymentBankTransferID');
+    }
 }
