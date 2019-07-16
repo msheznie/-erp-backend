@@ -1043,13 +1043,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail', 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'modified_by','cheque_treasury_by', 'directdetail' => function ($query) {
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail',
+                'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
+                'modified_by','cheque_treasury_by', 'directdetail' => function ($query) {
                 $query->with('segment');
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 4);
             }, 'created_by', 'cancelled_by','bankledger_by' => function ($query) {
-                $query->with('bankrec_by');
+                $query->with(['bankrec_by','bank_transfer']);
                 $query->where('documentSystemID', 4);
             }])->first();
 
