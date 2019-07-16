@@ -780,6 +780,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Customer Invoice found');
         }
 
+        if($customerInvoiceDirect->interCompanyTransferYN == -1){
+            return $this->sendError('This is an intercompany transfer, You can not assign GRV.',500,array('type' => 'grvAssigned'));
+        }
+
         if(isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']){
             $checkGrv  = CustomerInvoiceDirect::where('custInvoiceDirectAutoID','!=',$id)
                                                ->where('customerGRVAutoID',$input['customerGRVAutoID'])

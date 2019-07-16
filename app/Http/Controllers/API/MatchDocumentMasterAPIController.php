@@ -20,9 +20,11 @@
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
  * -- Date: 10-January 2019 By: Nazir Description: Added new functions named as printPaymentMatching()
  * -- Date: 17-January 2019 By: Nazir Description: Added new functions named as deleteAllPVMDetails()
+ * -- Date: 09-July 2019 By: Fayas Description: Added new functions named as amendReceiptMatchingReview()
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -2203,6 +2205,62 @@ ORDER BY
         }
 
         return $this->sendResponse($matchDocumentMasterAutoID, 'Details deleted successfully');
+    }
+
+    public function amendReceiptMatchingReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['matchDocumentMasterAutoID'];
+
+        $employee = Helper::getEmployeeInfo();
+        $emails = array();
+        $masterData = MatchDocumentMaster::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Receipt Matching Document Master not found');
+        }
+
+        if ($masterData->matchingConfirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this Receipt Matching Document, it is not confirmed');
+        }
+
+        $emailBody = '<p>' . $masterData->matchingDocCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->matchingDocCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->matchingDocCode
+                );
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            // updating fields
+            $masterData->matchingConfirmedYN = 0 ;
+            $masterData->matchingConfirmedByEmpSystemID = null;
+            $masterData->matchingConfirmedByEmpID = null;
+            $masterData->matchingConfirmedByName = null;
+            $masterData->matchingConfirmedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Receipt Matching Document amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }
