@@ -78,18 +78,16 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['idyesNoselection']);
         unset( $input['YesNo']);
 
-        if (is_array($input['supplierCountryID']))
+        $input = array_except($input, ['final_approved_by']);
+        $input = $this->convertArrayToValue($input);
+        /*if (is_array($input['supplierCountryID']))
             $input['supplierCountryID'] = $input['supplierCountryID'][0];
-
         if (is_array($input['currency']))
             $input['currency'] = $input['currency'][0];
-
         if (is_array($input['supCategoryMasterID']))
             $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
-
         if (is_array($input['supCategoryMasterID']))
             $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
-
         if (is_array($input['companySystemID']))
             $input['companySystemID'] = $input['companySystemID'][0];
         if (is_array($input['liabilityAccountSysemID']))
@@ -113,21 +111,16 @@ class SupplierAssignedAPIController extends AppBaseController
         if (is_array($input['supCategorySubICVID']))
             $input['supCategorySubICVID'] = $input['supCategorySubICVID'][0];
         if (is_array($input['isLCCYN']))
-            $input['isLCCYN'] = $input['isLCCYN'][0];
+            $input['isLCCYN'] = $input['isLCCYN'][0];*/
 
 
         $company = Company::where('companySystemID',$input['companySystemID'])->first();
-
         $supplier = SupplierMaster::where('supplierCodeSystem',$input['supplierCodeSytem'])->first();
-
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
         $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
-
         $input['companyID'] = $company['CompanyID'];
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
-
-
 
         if( array_key_exists ('supplierAssignedID' , $input )){
 
