@@ -342,8 +342,9 @@ class GRVDetailsAPIController extends AppBaseController
         $frontDetailcount = count(array_filter($size));
 
         if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->where('goodsRecievedYN', '<>', 2)
-                ->count();
+            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])
+                                                    ->where('goodsRecievedYN', '<>', 2)
+                                                    ->count();
             if ($poDetailTotal != $frontDetailcount) {
                 return $this->sendError('All PO detail items should be pulled for this grv', 422);
             }
@@ -357,7 +358,8 @@ class GRVDetailsAPIController extends AppBaseController
                     //check whether the item is already added to another GRV
                     $alreadyItemPulledCheck = GRVDetails::with('grv_master')->select('*')
                         ->where('grvAutoID','<>', $grvAutoID)
-                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])->whereHas('grv_master',function ($q) use ($input) {
+                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
+                        ->whereHas('grv_master',function ($q) use ($input) {
                             $q->where('approved', 0);
                         })
                         ->first();
