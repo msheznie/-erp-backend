@@ -4003,16 +4003,18 @@ class Helper
 
     public static function generateAssetCosting($masterData)
     {
-        $companyCurrency = self::companyCurrency($masterData->companySystemID);
-        $cost['faID'] = $masterData->faID;
-        $cost['assetID'] = $masterData->faCode;
-        $cost['assetDescription'] = $masterData->assetDescription;
-        $cost['costDate'] = $masterData->dateAQ;
-        $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
-        $cost['localAmount'] = $masterData->COSTUNIT;
-        $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
-        $cost['rptAmount'] = $masterData->costUnitRpt;
-        $assetCosting = Models\FixedAssetCost::create($cost);
+        if($masterData && is_null($masterData->docOriginSystemCode)) {
+            $companyCurrency = self::companyCurrency($masterData->companySystemID);
+            $cost['faID'] = $masterData->faID;
+            $cost['assetID'] = $masterData->faCode;
+            $cost['assetDescription'] = $masterData->assetDescription;
+            $cost['costDate'] = $masterData->dateAQ;
+            $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
+            $cost['localAmount'] = $masterData->COSTUNIT;
+            $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
+            $cost['rptAmount'] = $masterData->costUnitRpt;
+            $assetCosting = Models\FixedAssetCost::create($cost);
+        }
     }
 
     public static function isLocalSupplier($supplierId,$companyId,$country_id = 0)
