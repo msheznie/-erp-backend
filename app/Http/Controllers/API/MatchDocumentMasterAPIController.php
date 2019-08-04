@@ -2217,12 +2217,21 @@ ORDER BY
         $emails = array();
         $masterData = MatchDocumentMaster::find($id);
 
+        $documentName = "";
+
+
         if (empty($masterData)) {
-            return $this->sendError('Receipt Matching Document Master not found');
+            return $this->sendError('Document not found');
+        }
+
+        if($masterData->documentSystemID == 19  || $masterData->documentSystemID == 21){
+            $documentName = 'Receipt Matching';
+        }else if($masterData->documentSystemID == 4  || $masterData->documentSystemID == 15){
+            $documentName = 'Payment Voucher Matching';
         }
 
         if ($masterData->matchingConfirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this Receipt Matching Document, it is not confirmed');
+            return $this->sendError('You cannot return back to amend this '.$documentName.' Document, it is not confirmed');
         }
 
         $emailBody = '<p>' . $masterData->matchingDocCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -2256,7 +2265,7 @@ ORDER BY
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Receipt Matching Document amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), $documentName.' Document amend saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
