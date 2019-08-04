@@ -426,7 +426,6 @@ class GRVDetailsAPIController extends AppBaseController
                         return $this->sendError('Selected item is already added from the same order.', 422);
                     }
 
-
                     $totalAddedQty = $new['noQty'] + $new['receivedQty'];
 
                     if ($new['poQty'] == $totalAddedQty) {
