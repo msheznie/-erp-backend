@@ -13,8 +13,11 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\email;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
+use App\Models\DocumentApproved;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimType;
@@ -24,6 +27,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ExpenseClaimRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -513,5 +517,88 @@ class ExpenseClaimAPIController extends AppBaseController
 
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+
+    public function amendExpenseClaimReview(Request $request){
+
+        $input = $request->all();
+
+        $id = $input['expenseClaimMasterAutoID'];
+        $employee = Helper::getEmployeeInfo();
+        $emails = array();
+        $masterData = ExpenseClaim::find($id);
+        $documentName = "Expense Claim";
+
+        if (empty($masterData)) {
+            return $this->sendError($documentName.' not found');
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this '.$documentName.', it is not confirmed');
+        }
+
+        $emailBody = '<p>' . $masterData->expenseClaimCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->expenseClaimCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->expenseClaimCode
+                );
+            }
+
+            $documentApproval =  DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $masterData->expenseClaimCode);
+                }
+            }
+
+            $sendEmail = email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0 ;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+
+            $masterData->approved = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedDate = null;
+
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }
