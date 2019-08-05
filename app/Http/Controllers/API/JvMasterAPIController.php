@@ -468,15 +468,16 @@ class JvMasterAPIController extends AppBaseController
                 $updateItem = JvDetail::find($item['jvDetailAutoID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
-
-                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
-                        ->where('isActive', 1)
-                        ->first();
-                    if (empty($checkDepartmentActive)) {
-                        $updateItem->serviceLineSystemID = null;
-                        $updateItem->serviceLineCode = null;
-                        array_push($finalError['active_serviceLine'], $updateItem->glAccount);
-                        $error_count++;
+                    if($jvMaster->jvType != 5) {
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glAccount);
+                            $error_count++;
+                        }
                     }
                 } else {
                     array_push($finalError['required_serviceLine'], $updateItem->glAccount);

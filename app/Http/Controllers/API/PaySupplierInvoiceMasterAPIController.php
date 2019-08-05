@@ -629,10 +629,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
 
-                    $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
+                    $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')
+                                                                   ->where('PayMasterAutoId', $id)
+                                                                   ->first();
 
-                    if ($checkAmountGreater['supplierPaymentAmount'] < 0) {
-                        return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
+                    if (round($checkAmountGreater['supplierPaymentAmount'],3) < 0) {
+                            return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
                     }
 
                     $checkAmount = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
@@ -741,9 +743,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
 
-                    $checkAmountGreater = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
+                    $checkAmountGreater = AdvancePaymentDetails::selectRaw('PayMasterAutoId,SUM(paymentAmount) as supplierPaymentAmount')
+                                                                 ->where('PayMasterAutoId', $id)
+                                                                 ->first();
 
-                    if ($checkAmountGreater['paymentAmount'] < 0) {
+                    if (round($checkAmountGreater['paymentAmount'],3) < 0) {
                         return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
                     }
 
