@@ -1822,7 +1822,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                     'docSystemID' => $bookInvSuppMasterData->documentSystemID,
                     'alertMessage' => $emailSubject,
                     'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+                    'docSystemCode' => $bookInvSuppMasterData->bookingSuppMasInvAutoID);
             }
 
             $documentApproval = DocumentApproved::where('companySystemID', $bookInvSuppMasterData->companySystemID)
@@ -1837,7 +1837,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                         'docSystemID' => $bookInvSuppMasterData->documentSystemID,
                         'alertMessage' => $emailSubject,
                         'emailAlertMessage' => $emailBody,
-                        'docSystemCode' => $bookInvSuppMasterData->bookingInvCode);
+                        'docSystemCode' => $bookInvSuppMasterData->bookingSuppMasInvAutoID);
                 }
             }
 

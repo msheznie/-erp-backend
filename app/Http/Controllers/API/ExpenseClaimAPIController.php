@@ -550,8 +550,7 @@ class ExpenseClaimAPIController extends AppBaseController
                     'docSystemID' => $masterData->documentSystemID,
                     'alertMessage' => $emailSubject,
                     'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $id,
-                    'docCode' => $masterData->expenseClaimCode
+                    'docSystemCode' => $masterData->expenseClaimMasterAutoID
                 );
             }
 
@@ -567,7 +566,7 @@ class ExpenseClaimAPIController extends AppBaseController
                         'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
                         'emailAlertMessage' => $emailBody,
-                        'docSystemCode' => $masterData->expenseClaimCode);
+                        'docSystemCode' => $masterData->expenseClaimMasterAutoID);
                 }
             }
 
