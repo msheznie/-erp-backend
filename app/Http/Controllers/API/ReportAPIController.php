@@ -1239,12 +1239,19 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
         $suppliers = (array)$input['suppliers'];
         $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
+        //poType_N: 5  -- main work order
+        //poType_N: 6  -- sub work order
+
         $data = ProcumentOrder::selectRaw('*')
             ->with(['created_by','icv_category','icv_sub_category','currency','segment','supplier' => function($q){
                     $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,
                             IF(isSMEYN = 1, "YES", "NO" ) AS isSme,supplierCodeSystem');
                 }])
             ->whereIn('companySystemID',$companyID)
+            ->where(function ($q){
+               $q->where('poType_N','!=',5);
+                 //->orWhere('documentSystemID','!=',5);
+            })
             ->whereBetween('createdDateTime',[$startDate,$endDate])
             ->whereIn('supplierID',$suppliers)
             ->when( $option >= 0 , function ($q) use($option){
