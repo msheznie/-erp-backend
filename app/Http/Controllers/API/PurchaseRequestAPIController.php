@@ -1326,6 +1326,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
+
+        if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
+            $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
+            $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+        }
+
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
 
