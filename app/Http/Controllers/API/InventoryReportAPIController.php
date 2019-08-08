@@ -265,7 +265,7 @@ class InventoryReportAPIController extends AppBaseController
                 }
                 else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(ItemLedger.ageDays >= " . $list[0] . " AND ItemLedger.ageDays <= " . $list[1] . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(ItemLedger.ageDays > " . $list[0] . " AND ItemLedger.ageDays <= " . $list[1] . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
                 }
                 $c++;
             }

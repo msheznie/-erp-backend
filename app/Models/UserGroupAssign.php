@@ -69,6 +69,7 @@ class UserGroupAssign extends Model
         'update',
         'delete',
         'print',
+        'export',
         'timestamp',
         'isPortalYN',
         'externalLink'
@@ -94,6 +95,7 @@ class UserGroupAssign extends Model
         'sortOrder' => 'integer',
         'isSubExist' => 'integer',
         'readonly' => 'boolean',
+        'export' => 'boolean',
         'create' => 'boolean',
         'update' => 'boolean',
         'delete' => 'boolean',
