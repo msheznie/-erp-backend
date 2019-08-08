@@ -2293,5 +2293,24 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
     }
 
+    public function amendPurchaseRequest(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = isset($input['purchaseRequestID'])?$input['purchaseRequestID']:0;
+
+        $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($purchaseRequestId);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->budgetBlockYN == -1) {
+            return $this->sendError('Already removed budget block');
+        }
+
+        $this->purchaseRequestRepository->update(['budgetBlockYN' => -1],$purchaseRequestId);
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request budget block removed successfully');
+    }
 
 }
