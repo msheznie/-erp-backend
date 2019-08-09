@@ -158,6 +158,7 @@ class ProcumentOrder extends Model
     protected $primaryKey = 'purchaseOrderID';
 
     protected $dates = ['deleted_at'];
+    protected $appends = ['isWoAmendAccess'];
 
     public $fillable = [
         'poProcessId',
@@ -298,7 +299,7 @@ class ProcumentOrder extends Model
         'isSelected',
         'timeStamp',
         'supCategoryICVMasterID',
-        'supCategorySubICVID'
+        'supCategorySubICVID',
     ];
 
     /**
@@ -588,6 +589,17 @@ class ProcumentOrder extends Model
     public function icv_sub_category()
     {
         return $this->belongsTo('App\Models\SupplierCategoryICVSub', 'supCategorySubICVID', 'supCategorySubICVID');
+    }
+
+    public function getIsWoAmendAccessAttribute()
+    {
+        $value = false;
+        $empId = Helper::getEmployeeSystemID();
+        if($this->documentSystemID == 5 && $this->poType_N == 6 && $this->WO_confirmedYN == 0 &&
+            $this->WO_amendYN == -1 && $this->WO_amendRequestedByEmpSystemID == $empId){
+            $value = true;
+        }
+        return $value;
     }
 
 }

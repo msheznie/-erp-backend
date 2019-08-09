@@ -50,6 +50,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
@@ -68,6 +69,7 @@ use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
 use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTermsRefferedback;
+use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
 use App\Models\PurchaseOrderMasterRefferedHistory;
@@ -388,7 +390,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
         $procumentOrder->isAmendAccess = 0;
-        if ($procumentOrder->WO_amendYN == -1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
+        if ($procumentOrder->WO_amendYN == -1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID
+            && $procumentOrder->documentSystemID != 5 && $procumentOrder->poType_N != 6) {
             $procumentOrder->isAmendAccess = 1;
         }
 
@@ -416,7 +419,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isAmendAccess = $input['isAmendAccess'];
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess','supplier','currency','isLocalSupplier']);
+        $input = array_except($input, ['isWoAmendAccess','created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess','supplier','currency','isLocalSupplier']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -1694,6 +1697,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('poCancelledYN', 0)
+            ->where('poType_N','!=',6)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -5251,5 +5255,113 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrderMasterData->save();
 
         return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
+    }
+
+    public function amendProcumentSubWorkOrder(Request $request)
+    {
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+        $employee = Helper::getEmployeeInfo();
+        $purchaseOrder = ProcumentOrder::where('documentSystemID',5)
+            ->where('poType_N',6)
+            ->where('purchaseOrderID',$id)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if (!$purchaseOrder->isWoAmendAccess) {
+            return $this->sendError('You cannot amend this sub work order.');
+        }
+
+        $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderMasterID',$purchaseOrder->WO_purchaseOrderID)
+            ->sum('netAmount');
+
+        $subWoTotal = ProcumentOrderDetail::where('WO_purchaseOrderMasterID',$purchaseOrder->WO_purchaseOrderID)
+            ->sum('netAmount');
+
+        if($subWoTotal > $mainWoTotal){
+            return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.');
+        }
+
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+                                            ->where('purchaseOrderMasterID', $id)
+                                            ->first();
+
+        //getting addon Total for PO
+        $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
+                                    ->where('poId', $id)
+                                    ->first();
+
+        $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+        $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
+
+
+        $newlyUpdatedPoTotalAmount = $poMasterSumRounded + $poAddonMasterSumRounded;
+
+        if ($purchaseOrder->poDiscountAmount > $newlyUpdatedPoTotalAmount) {
+            return $this->sendError('Discount Amount should be less than order amount.', 500);
+        }
+
+        $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+        $currencyConversionMaster = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
+
+        ProcumentOrder::where('purchaseOrderID', $id)
+            ->update([
+                'WO_confirmedYN' => 1,
+                'WO_confirmedDate' => now(),
+                'WO_confirmedByEmpID' => $employee->employeeSystemID,
+                'poTotalSupplierTransactionCurrency' => $poMasterSumDeducted,
+                'poTotalSupplierDefaultCurrency' => \Helper::roundValue($currencyConversionMaster['documentAmount']),
+                'poTotalComRptCurrency' => \Helper::roundValue($currencyConversionMaster['reportingAmount']),
+                'poTotalLocalCurrency' => \Helper::roundValue($currencyConversionMaster['localAmount']),
+                'companyReportingER' => round($currencyConversionMaster['trasToRptER'], 8),
+                'localCurrencyER' => round($currencyConversionMaster['trasToLocER'], 8)
+            ]);
+
+        return $this->sendResponse($purchaseOrder, 'Sub work order amend successfully ');
+    }
+
+    public function amendProcumentSubWorkOrderReview(Request $request){
+
+        $input = $request->all();
+        $id = $input['purchaseOrderID'];
+        $employee = Helper::getEmployeeInfo();
+        $masterData = ProcumentOrder::where('documentSystemID',5)
+                                     ->where('poType_N',6)
+                                     ->where('purchaseOrderID',$id)
+                                     ->first();
+        $documentName = "Sub Work Order";
+
+        if (empty($masterData)) {
+            return $this->sendError($documentName.' not found');
+        }
+
+        if ($masterData->poConfirmedYN != 1 || $masterData->approved != -1 ||
+            $masterData->poCancelledYN != 0 || $masterData->grvRecieved != 0 ||
+            $masterData->WO_amendYN != 0 || $masterData->WO_confirmedYN !=1) {
+            return $this->sendError('You cannot amend this '.$documentName);
+        }
+
+        DB::beginTransaction();
+        try {
+            $masterData->WO_confirmedYN  = 0;
+            $masterData->WO_amendYN = -1;
+            $masterData->WO_amendRequestedDate  = now();
+            $masterData->WO_amendRequestedByEmpID  = $employee->empID;
+            $masterData->WO_amendRequestedByEmpSystemID  = $employee->employeeSystemID;
+            $masterData->WO_confirmedDate  = null;
+            $masterData->WO_confirmedByEmpID  = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

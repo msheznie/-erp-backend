@@ -28,6 +28,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
+use App\Models\ExpenseClaim;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVMaster;
@@ -336,6 +337,13 @@ class email
                     if (!empty($quotationMaster)) {
                         $data['docApprovedYN'] = $quotationMaster->approvedYN;
                         $data['docCode'] = $quotationMaster->quotationCode;
+                    }
+                    break;
+                case 6:
+                    $expenseClaim = ExpenseClaim::find($data['docSystemCode']);
+                    if (!empty($expenseClaim)) {
+                        $data['docApprovedYN'] = $expenseClaim->approved;
+                        $data['docCode'] = $expenseClaim->expenseClaimCode;
                     }
                     break;
                 default:

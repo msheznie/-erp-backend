@@ -249,7 +249,7 @@ class InventoryReportAPIController extends AppBaseController
         $aging = ['0-30', '31-60', '61-90', '91-120', '121-365', '366-730', '> 730'];
 
         if($input['reportCategory'] == 2){
-            $aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
+            $aging = ['0-365', '366-730', '731-1095', '1096-1460', '1461-1826', '> 1826‬'];
         }
 
         $agingField = '';

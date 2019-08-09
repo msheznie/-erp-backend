@@ -484,11 +484,12 @@ class GRVMasterAPIController extends AppBaseController
 
             // check order cost should be greater than zero
             $checkCost = GRVDetails::where('grvAutoID', $id)
-                ->whereRaw('(unitcost-addonDistCost) <= ?', [0])
+                ->whereRaw('ROUND((unitcost-addonDistCost),3) < ?', [0])
+                ->selectRaw('ROUND((unitcost-addonDistCost),3)')
                 ->count();
 
-            if ($checkCost > 0) {
-                return $this->sendError('Every item order cost should be greater than zero', 500);
+            if ($checkCost > 0) { // remove validation GWL-601
+                 return $this->sendError('Every item order cost should be greater than or equal to zero', 500);
             }
 
 

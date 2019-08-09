@@ -43,6 +43,7 @@ use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -937,6 +938,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         array_push($finalData, $data);
 
+                        /*$exchangeGainServiceLine = SegmentMaster::where('companySystemID',$DebitNoteMasterExData->companySystemID)
+                            ->where('isPublic',1)
+                            ->where('isActive',1)
+                            ->first();
+                        if(!empty($exchangeGainServiceLine)){
+                            $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
+                            $data['serviceLineCode']     = $exchangeGainServiceLine->ServiceLineCode;
+                        }else{
+                        }*/
+
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
                         $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
@@ -1046,8 +1057,18 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         array_push($finalData, $data);
 
-                        $data['serviceLineSystemID'] = 24;
-                        $data['serviceLineCode'] = 'X';
+                        $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$PaySupplierInvoiceMasterExData->companySystemID)
+                            ->where('isPublic',1)
+                            ->where('isActive',1)
+                            ->first();
+
+                        if(!empty($exchangeGainServiceLine)){
+                            $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
+                            $data['serviceLineCode']     = $exchangeGainServiceLine->ServiceLineCode;
+                        }else{
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                        }
                         $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
                         $data['glCode'] = $companyData->exchangeGainLossGLCode;
                         $data['glAccountType'] = 'PL';
