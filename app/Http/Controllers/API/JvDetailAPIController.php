@@ -939,4 +939,43 @@ GROUP BY
     }
 
 
+    public function jvDetailsExportToCSV(Request $request){
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+        $jvMaster = JvMaster::find($id);
+        $data = array();
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+        $x = 0;
+        foreach ($jvMaster->detail as $item){
+            $decimal = 2;
+            if($item->currency_by){
+                $decimal = $item->currency_by->DecimalPlaces;
+            }
+            $data[$x]['GL Code'] = $item->glAccount;
+            $data[$x]['GL Description'] = $item->glAccountDescription;
+            $data[$x]['Department'] = $item->segment?$item->segment->ServiceLineDes:'-';
+            $data[$x]['Contract'] = $item->clientContractID;
+            $data[$x]['Comment'] = $item->comments;
+            $data[$x]['Currency'] = $item->currency_by?$item->currency_by->CurrencyCode:'-';
+            $data[$x]['Debit'] = round($item->debitAmount,$decimal);
+            $data[$x]['Credit'] = round($item->creditAmount,$decimal);
+            $x++;
+        }
+
+        $csv = \Excel::create('jv_details', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('csv');
+    }
+
+
 }
