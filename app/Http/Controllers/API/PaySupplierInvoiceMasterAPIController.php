@@ -1474,7 +1474,7 @@ LEFT JOIN (
 )
 WHERE
 	approved = - 1
-AND invoiceType = 5
+AND invoiceType = 5    
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
