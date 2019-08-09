@@ -38,6 +38,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
+use App\Models\SegmentMaster;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetails;
 use App\Models\StockReceive;
@@ -1395,8 +1396,25 @@ class GeneralLedgerInsert implements ShouldQueue
                                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
                                         $company = Company::find($masterData->companySystemID);
-                                        $data['serviceLineSystemID'] = 24;
-                                        $data['serviceLineCode'] = 'X';
+
+                                        $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$masterData->companySystemID)
+                                                                                 ->where('isPublic',1)
+                                                                                 ->where('isActive',1)
+                                                                                 ->first();
+                                        Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
+                                        Log::info($exchangeGainServiceLine);
+
+                                        if(!empty($exchangeGainServiceLine)){
+                                            Log::info('Payment Voucher ---- GL ----- Exist' . date('H:i:s'));
+                                            $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
+                                            $data['serviceLineCode']     = $exchangeGainServiceLine->ServiceLineCode;
+                                        }else{
+                                            $data['serviceLineSystemID'] = 24;
+                                            $data['serviceLineCode'] = 'X';
+                                        }
+
+                                        Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
+
                                         $data['chartOfAccountSystemID'] = $company->exchangeGainLossGLCodeSystemID;
                                         $data['glCode'] = $company->exchangeGainLossGLCode;
                                         $data['glAccountType'] = 'PL';

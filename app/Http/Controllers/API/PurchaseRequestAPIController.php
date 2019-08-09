@@ -1326,6 +1326,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
+
+        if($input['serviceLineSystemID'] != $purchaseRequest->serviceLineSystemID){
+            $code = str_pad($purchaseRequest->serialNumber, 6, '0', STR_PAD_LEFT);
+            $input['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $purchaseRequest->departmentID . '\\' . $input['serviceLineCode'] . '\\' . $purchaseRequest->documentID . $code;
+        }
+
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
 
@@ -2293,5 +2299,24 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
     }
 
+    public function amendPurchaseRequest(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = isset($input['purchaseRequestID'])?$input['purchaseRequestID']:0;
+
+        $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($purchaseRequestId);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->budgetBlockYN == -1) {
+            return $this->sendError('Already removed budget block');
+        }
+
+        $this->purchaseRequestRepository->update(['budgetBlockYN' => -1],$purchaseRequestId);
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request budget block removed successfully');
+    }
 
 }

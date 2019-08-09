@@ -2253,7 +2253,10 @@ class Helper
     public static function getEmployeeSystemID()
     {
         $user = Models\User::find(Auth::id());
-        return $user->employee_id;
+        if(!empty($user)){
+            return $user->employee_id;
+        }
+        return 0;
     }
 
     public static function getEmployeeCode($empId)

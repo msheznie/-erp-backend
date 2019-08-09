@@ -39,6 +39,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
 use App\Models\JvDetail;
 use App\Models\JvDetailsReferredback;
 use App\Models\JvMaster;
@@ -468,15 +469,16 @@ class JvMasterAPIController extends AppBaseController
                 $updateItem = JvDetail::find($item['jvDetailAutoID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
-
-                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
-                        ->where('isActive', 1)
-                        ->first();
-                    if (empty($checkDepartmentActive)) {
-                        $updateItem->serviceLineSystemID = null;
-                        $updateItem->serviceLineCode = null;
-                        array_push($finalError['active_serviceLine'], $updateItem->glAccount);
-                        $error_count++;
+                    if($jvMaster->jvType != 5) {
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glAccount);
+                            $error_count++;
+                        }
                     }
                 } else {
                     array_push($finalError['required_serviceLine'], $updateItem->glAccount);
@@ -1787,5 +1789,97 @@ HAVING
         })->download($type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function amendJournalVoucherReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['jvMasterAutoId'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $jvMaster = JvMaster::find($id);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal voucher not found');
+        }
+
+        if ($jvMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this journal voucher, it is not confirmed');
+        }
+
+        $emailBody = '<p>' . $jvMaster->JVcode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $jvMaster->JVcode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($jvMaster->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $jvMaster->confirmedByEmpSystemID,
+                    'companySystemID' => $jvMaster->companySystemID,
+                    'docSystemID' => $jvMaster->documentSystemID,
+                    'docSystemCode' => $jvMaster->jvMasterAutoId,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $jvMaster->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $jvMaster->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $jvMaster->companySystemID,
+                        'docSystemID' => $jvMaster->documentSystemID,
+                        'docSystemCode' => $jvMaster->jvMasterAutoId,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody);
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $jvMaster->companySystemID)
+                ->where('documentSystemID', $jvMaster->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $jvMaster->companySystemID)
+                ->where('documentSystemID', $jvMaster->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $jvMaster->confirmedYN = 0;
+            $jvMaster->confirmedByEmpSystemID = null;
+            $jvMaster->confirmedByEmpID = null;
+            $jvMaster->confirmedByName = null;
+            $jvMaster->confirmedDate = null;
+            $jvMaster->RollLevForApp_curr = 1;
+
+            $jvMaster->approved = 0;
+            $jvMaster->approvedByUserSystemID = null;
+            $jvMaster->approvedByUserID = null;
+            $jvMaster->approvedDate = null;
+            $jvMaster->postedDate = null;
+            $jvMaster->save();
+
+
+            DB::commit();
+            return $this->sendResponse($jvMaster->toArray(), 'Journal voucher amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

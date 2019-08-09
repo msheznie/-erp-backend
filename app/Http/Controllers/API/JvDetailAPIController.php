@@ -566,9 +566,11 @@ class JvDetailAPIController extends AppBaseController
                     // Fetching HRMS JvDetailtable
                     $updateHRMSJvDetailData = HRMSJvDetails::find($cvDeatil['recurringjvDetailAutoID']);
 
-                    // updating fields
-                    $updateHRMSJvDetailData->jvMasterAutoID = 0;
-                    $updateHRMSJvDetailData->save();
+                    if(!empty($updateHRMSJvDetailData)){
+                        // updating fields
+                        $updateHRMSJvDetailData->jvMasterAutoID = 0;
+                        $updateHRMSJvDetailData->save();
+                    }
 
                     JvDetail::where('jvDetailAutoID', $cvDeatil['jvDetailAutoID'])->delete();
                 }
@@ -589,7 +591,8 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('e', 'Error occurred in detail deleting');
+            //return $this->sendError($exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError('Error occurred in detail deleting',500);
         }
 
     }
