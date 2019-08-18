@@ -1267,15 +1267,15 @@ UNION ALL
             return $this->sendError('You cannot return back to amend this debit note, it is not confirmed');
         }
 
-        /*        // checking document matched in machmaster
-                $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
-                    ->where('companySystemID', $debitNoteMasterData->companySystemID)
-                    ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
-                    ->first();
+        // checking document matched in payment
+        $checkDetailExistMatch = PaySupplierInvoiceDetail::where('bookingInvSystemCode', $debitNoteAutoID)
+            ->where('companySystemID', $debitNoteMasterData->companySystemID)
+            ->where('addedDocumentSystemID', $debitNoteMasterData->documentSystemID)
+            ->first();
 
-                if ($checkDetailExistMatch) {
-                    return $this->sendError('Cannot return back to amend. debit note is added to matching');
-                }*/
+        if ($checkDetailExistMatch) {
+            return $this->sendError('Cannot return back to amend. debit note is added to payment');
+        }
 
         // checking document matched in machmaster
         $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $debitNoteAutoID)
