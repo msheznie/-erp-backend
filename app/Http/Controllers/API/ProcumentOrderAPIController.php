@@ -5325,19 +5325,40 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $this->sendResponse($purchaseOrder, 'Sub work order amend successfully ');
     }
 
-    public function amendProcumentSubWorkOrderReview(Request $request){
+    public function amendProcumentSubWorkOrderReview(Request $request)
+    {
 
         $input = $request->all();
         $id = $input['purchaseOrderID'];
         $employee = Helper::getEmployeeInfo();
-        $masterData = ProcumentOrder::where('documentSystemID',5)
-                                     ->where('poType_N',6)
-                                     ->where('purchaseOrderID',$id)
-                                     ->first();
+        $masterData = ProcumentOrder::where('documentSystemID', 5)
+            ->where('poType_N', 6)
+            ->where('purchaseOrderID', $id)
+            ->first();
         $documentName = "Sub Work Order";
 
         if (empty($masterData)) {
-            return $this->sendError($documentName.' not found');
+            return $this->sendError($documentName . ' not found');
+        }
+
+        if ($masterData->poConfirmedYN == 0 || $masterData->approved == 0) {
+            return $this->sendError($documentName . ' is not approved. You cannot amend.');
+        }
+
+        if ($masterData->poConfirmedYN == 1 && $masterData->approved == -1 && $masterData->poCancelledYN == -1) {
+            return $this->sendError($documentName . ' is cancelled. You cannot amend.');
+        }
+
+        if ($masterData->poConfirmedYN == 1 && $masterData->approved == -1 &&
+            $masterData->poCancelledYN == 0 && $masterData->grvRecieved != 0) {
+            return $this->sendError($documentName . ' is received. You cannot amend');
+        }
+
+
+        if ($masterData->poConfirmedYN == 1 && $masterData->approved == -1 &&
+                $masterData->poCancelledYN == 0 && $masterData->grvRecieved == 0 &&
+                        $masterData->WO_amendYN == -1 && $masterData->WO_confirmedYN != 1) {
+            return $this->sendError($documentName . ' is already amended. You cannot amend again.');
         }
 
         if ($masterData->poConfirmedYN != 1 || $masterData->approved != -1 ||
