@@ -17,6 +17,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
+use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use Carbon\Carbon;
@@ -204,8 +205,8 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $sort = 'desc';
                     }
-                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
-                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
 
                     $output = $this->stockAgingQry($input, 0);
                     return $this->sendResponse($output, 'Items retrieved successfully');
@@ -248,7 +249,7 @@ class InventoryReportAPIController extends AppBaseController
 
         $aging = ['0-30', '31-60', '61-90', '91-120', '121-365', '366-730', '> 730'];
 
-        if($input['reportCategory'] == 2){
+        if ($input['reportCategory'] == 2) {
             $aging = ['0-365', '366-730', '731-1095', '1096-1460', '1461-1826', '> 1826‬'];
         }
 
@@ -259,11 +260,9 @@ class InventoryReportAPIController extends AppBaseController
             foreach ($aging as $val) {
                 if ($count == $c && $input['reportCategory'] == 1) {
                     $agingField .= "SUM(if(ItemLedger.ageDays   > " . 730 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
-                }
-                else if($count == $c && $input['reportCategory'] == 2){
+                } else if ($count == $c && $input['reportCategory'] == 2) {
                     $agingField .= "SUM(if(ItemLedger.ageDays   > " . 1826 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
-                }
-                else {
+                } else {
                     $list = explode("-", $val);
                     $agingField .= "SUM(if(ItemLedger.ageDays >= " . $list[0] . " AND ItemLedger.ageDays <= " . $list[1] . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
                 }
@@ -877,13 +876,12 @@ FROM
 
                     return $this->sendResponse(array(), 'successfully export');
 
-                }
-                else if ($reportTypeID == 'SA') { //Stock Aging Report
+                } else if ($reportTypeID == 'SA') { //Stock Aging Report
 
                     $type = $request->type;
                     $input = $request->all();
-                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
-                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
                     $output = $this->stockAgingQry($input, 1);
                     $data = array();
                     if ($output) {
@@ -908,7 +906,7 @@ FROM
                                     $data[$x]['Rep Amount'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
                                 }
 
-                                if($input['reportCategory'] == 2){ // yearly
+                                if ($input['reportCategory'] == 2) { // yearly
                                     //$aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
 
                                     $data[$x]['<= 1 year (Qty)'] = $val->case1;
@@ -954,7 +952,7 @@ FROM
                                         $data[$x]['Over 5 years (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
                                     }
 
-                                }else{ // 0 - 730 days
+                                } else { // 0 - 730 days
 
                                     $data[$x]['<=30 (Qty)'] = $val->case1;
                                     if ($input['currencyID'] == 1) {
@@ -1015,7 +1013,6 @@ FROM
                                     }
 
 
-
                                 }
                             }
                         }
@@ -1036,7 +1033,7 @@ FROM
                 }
             case 'INVSD':
                 $data = [];
-                if($request->detail == 1) {
+                if ($request->detail == 1) {
                     $output = $this->stockDetailQry($request);
                     if ($output['categories']) {
                         foreach ($output['categories'] as $key => $vale) {
@@ -1057,7 +1054,7 @@ FROM
                             }
                         }
                     }
-                }else{
+                } else {
                     $output = $this->stockDetailCompanyQry($request);
                     if ($output['categories']) {
                         foreach ($output['categories'] as $key => $vale) {
@@ -1099,5 +1096,57 @@ FROM
         }
     }
 
+    public function minAndMaxAnalysis(Request $request)
+    {
 
+        $input = $request->all();
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+        $items = ItemAssigned::where('companySystemID', $companySystemID)->with(['unit' => function($q){
+               $q->select('UnitID','UnitShortCode');
+            },'item_ledger' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->groupBy('itemSystemCode')
+                    ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+            },'po_detail' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->whereHas('order',function ($q){
+                        $q->where('approved',-1)
+                            ->where('poCancelledYN',0);
+                    })
+                    ->groupBy('itemCode')
+                    ->selectRaw('sum(noQty) AS po_total,itemCode');
+            },'grv_detail' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->whereHas('grv_master',function ($q){
+                        $q->where('approved',-1)
+                          ->where('grvTypeID',2);
+                    })
+                    ->groupBy('itemCode')
+                    ->selectRaw('sum(noQty) AS grv_total,itemCode');
+            }])
+            ->limit(10)
+            ->get(["idItemAssigned",
+                "companySystemID",
+                "itemUnitOfMeasure",
+                "itemCodeSystem",
+                "itemPrimaryCode",
+                "secondaryItemCode",
+                "maximunQty",
+                "minimumQty",
+                "rolQuantity"]);
+
+        foreach ($items as $item){
+            $po_total = 0;
+            $grv_total = 0;
+            if(count($item['po_detail']) > 0){
+                $po_total = $item['po_detail'][0]['po_total'];
+            }
+            if(count($item['grv_detail']) > 0){
+                $grv_total = $item['grv_detail'][0]['grv_total'];
+            }
+            $item->onOrder = $po_total - $grv_total;
+        }
+
+        return $this->sendResponse($items, 'successfully retrieve data');
+    }
 }

@@ -82,6 +82,7 @@ class GeneralLedgerInsert implements ShouldQueue
     public function handle()
     {
         Log::useFiles(storage_path() . '/logs/general_ledger_jobs.log');
+        Log::info('---- GL  Start-----' . date('H:i:s'));
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -1356,10 +1357,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
                                         $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
                                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = ($si->transAmount / $si->localAmount);
+                                        $data['documentLocalCurrencyER'] = $si->localAmount !=0 ?($si->transAmount / $si->localAmount):0;
                                         $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount) * -1;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                        $data['documentRptCurrencyER'] = ($si->transAmount / $si->rptAmount);
+                                        $data['documentRptCurrencyER'] = $si->rptAmount != 0 ?($si->transAmount / $si->rptAmount):0;
                                         $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount) * -1;
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
@@ -2364,11 +2365,15 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                     }
                     DB::commit();
+                    Log::info('---- GL End Successfully -----' . date('H:i:s'));
                 }
 
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
+                Log::info('Error Line No: ' .$e->getLine());
+                Log::info($e->getMessage());
+                Log::info('---- GL  End with Error-----' . date('H:i:s'));
             }
         }
     }
