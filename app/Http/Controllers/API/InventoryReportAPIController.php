@@ -219,6 +219,13 @@ class InventoryReportAPIController extends AppBaseController
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
+            case 'INVMMA':
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'INVMMA') {
+                    $output = $this->minAndMaxAnalysis($request);
+                    return $this->sendResponse($output, 'Items retrieved successfully');
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
 
@@ -876,7 +883,8 @@ FROM
 
                     return $this->sendResponse(array(), 'successfully export');
 
-                } else if ($reportTypeID == 'SA') { //Stock Aging Report
+                }
+                else if ($reportTypeID == 'SA') { //Stock Aging Report
 
                     $type = $request->type;
                     $input = $request->all();
@@ -1054,7 +1062,8 @@ FROM
                             }
                         }
                     }
-                } else {
+                }
+                else {
                     $output = $this->stockDetailCompanyQry($request);
                     if ($output['categories']) {
                         foreach ($output['categories'] as $key => $vale) {
@@ -1090,6 +1099,36 @@ FROM
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'INVMMA':
+                $reportTypeID = $request->reportTypeID;
+                $data = array();
+                if ($reportTypeID == 'INVMMA') {
+                    $output = $this->minAndMaxAnalysis($request);
+                    $x = 0;
+                    foreach ($output as $item){
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Item Description'] = $item->itemDescription;
+                        $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
+                        $data[$x]['Stock Qty'] = $item->stock;
+                        $data[$x]['Qty On Order'] = $item->onOrder;
+                        $data[$x]['Max Qty'] = $item->maximunQty;
+                        $data[$x]['Min Qty'] = $item->minimumQty;
+                        $data[$x]['Rol Qty'] = $item->rolQuantity;
+                        $x ++;
+                    }
+                }
+                $csv = \Excel::create('stock_Detail', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download('csv');
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
 
@@ -1106,7 +1145,7 @@ FROM
             },'item_ledger' => function ($q) use ($companySystemID) {
                 $q->where('companySystemID', $companySystemID)
                     ->groupBy('itemSystemCode')
-                    ->selectRaw('sum(inOutQty) AS stock,itemSystemCode');
+                    ->selectRaw('Round(sum(inOutQty)) AS stock,itemSystemCode');
             },'po_detail' => function ($q) use ($companySystemID) {
                 $q->where('companySystemID', $companySystemID)
                     ->whereHas('order',function ($q){
@@ -1124,29 +1163,35 @@ FROM
                     ->groupBy('itemCode')
                     ->selectRaw('sum(noQty) AS grv_total,itemCode');
             }])
-            ->limit(10)
+            //->limit(100)
             ->get(["idItemAssigned",
                 "companySystemID",
                 "itemUnitOfMeasure",
                 "itemCodeSystem",
                 "itemPrimaryCode",
+                "itemDescription",
                 "secondaryItemCode",
                 "maximunQty",
                 "minimumQty",
                 "rolQuantity"]);
 
         foreach ($items as $item){
-            $po_total = 0;
-            $grv_total = 0;
+            $item->po_total = 0;
+            $item->grv_total = 0;
+            $item->stock = 0;
+            if(count($item['item_ledger']) > 0){
+                $item->stock = $item['item_ledger'][0]['stock'];
+            }
             if(count($item['po_detail']) > 0){
-                $po_total = $item['po_detail'][0]['po_total'];
+                $item->po_total = $item['po_detail'][0]['po_total'];
             }
             if(count($item['grv_detail']) > 0){
-                $grv_total = $item['grv_detail'][0]['grv_total'];
+                $item->grv_total = $item['grv_detail'][0]['grv_total'];
             }
-            $item->onOrder = $po_total - $grv_total;
+            $item->onOrder =  round(($item->po_total - $item->grv_total),2);
         }
 
+        return $items;
         return $this->sendResponse($items, 'successfully retrieve data');
     }
 }
