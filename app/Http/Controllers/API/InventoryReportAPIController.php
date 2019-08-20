@@ -17,6 +17,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
+use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use Carbon\Carbon;
@@ -204,8 +205,8 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $sort = 'desc';
                     }
-                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
-                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
 
                     $output = $this->stockAgingQry($input, 0);
                     return $this->sendResponse($output, 'Items retrieved successfully');
@@ -215,6 +216,13 @@ class InventoryReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SD') {
                     $output = $this->stockDetailQry($request);
+                    return $this->sendResponse($output, 'Items retrieved successfully');
+                }
+                break;
+            case 'INVMMA':
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'INVMMA') {
+                    $output = $this->minAndMaxAnalysis($request);
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
@@ -248,7 +256,7 @@ class InventoryReportAPIController extends AppBaseController
 
         $aging = ['0-30', '31-60', '61-90', '91-120', '121-365', '366-730', '> 730'];
 
-        if($input['reportCategory'] == 2){
+        if ($input['reportCategory'] == 2) {
             $aging = ['0-365', '366-730', '731-1095', '1096-1460', '1461-1826', '> 1826‬'];
         }
 
@@ -259,11 +267,9 @@ class InventoryReportAPIController extends AppBaseController
             foreach ($aging as $val) {
                 if ($count == $c && $input['reportCategory'] == 1) {
                     $agingField .= "SUM(if(ItemLedger.ageDays   > " . 730 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
-                }
-                else if($count == $c && $input['reportCategory'] == 2){
+                } else if ($count == $c && $input['reportCategory'] == 2) {
                     $agingField .= "SUM(if(ItemLedger.ageDays   > " . 1826 . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
-                }
-                else {
+                } else {
                     $list = explode("-", $val);
                     $agingField .= "SUM(if(ItemLedger.ageDays >= " . $list[0] . " AND ItemLedger.ageDays <= " . $list[1] . " AND ItemLedger.Qty >0,ItemLedger.Qty,0)) as `case" . $c . "`,";
                 }
@@ -882,8 +888,8 @@ FROM
 
                     $type = $request->type;
                     $input = $request->all();
-                    $input = $this->convertArrayToSelectedValue($input, array('currencyID','reportCategory'));
-                    $input['reportCategory'] = isset($input['reportCategory'])?$input['reportCategory']:1;
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'reportCategory'));
+                    $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
                     $output = $this->stockAgingQry($input, 1);
                     $data = array();
                     if ($output) {
@@ -908,7 +914,7 @@ FROM
                                     $data[$x]['Rep Amount'] = number_format($val->WacRptAmount, $val->RptCurrencyDecimals);
                                 }
 
-                                if($input['reportCategory'] == 2){ // yearly
+                                if ($input['reportCategory'] == 2) { // yearly
                                     //$aging = ['0-365', '366-730', '730-1095', '1096-1460', '1461-1825', '> 1826‬'];
 
                                     $data[$x]['<= 1 year (Qty)'] = $val->case1;
@@ -954,7 +960,7 @@ FROM
                                         $data[$x]['Over 5 years (Value)'] = number_format($val->WACRpt * $val->case6, $val->RptCurrencyDecimals);
                                     }
 
-                                }else{ // 0 - 730 days
+                                } else { // 0 - 730 days
 
                                     $data[$x]['<=30 (Qty)'] = $val->case1;
                                     if ($input['currencyID'] == 1) {
@@ -1015,7 +1021,6 @@ FROM
                                     }
 
 
-
                                 }
                             }
                         }
@@ -1036,7 +1041,7 @@ FROM
                 }
             case 'INVSD':
                 $data = [];
-                if($request->detail == 1) {
+                if ($request->detail == 1) {
                     $output = $this->stockDetailQry($request);
                     if ($output['categories']) {
                         foreach ($output['categories'] as $key => $vale) {
@@ -1057,7 +1062,8 @@ FROM
                             }
                         }
                     }
-                }else{
+                }
+                else {
                     $output = $this->stockDetailCompanyQry($request);
                     if ($output['categories']) {
                         foreach ($output['categories'] as $key => $vale) {
@@ -1093,11 +1099,99 @@ FROM
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'INVMMA':
+                $reportTypeID = $request->reportTypeID;
+                $data = array();
+                if ($reportTypeID == 'INVMMA') {
+                    $output = $this->minAndMaxAnalysis($request);
+                    $x = 0;
+                    foreach ($output as $item){
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Item Description'] = $item->itemDescription;
+                        $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
+                        $data[$x]['Stock Qty'] = $item->stock;
+                        $data[$x]['Qty On Order'] = $item->onOrder;
+                        $data[$x]['Max Qty'] = $item->maximunQty;
+                        $data[$x]['Min Qty'] = $item->minimumQty;
+                        $data[$x]['Rol Qty'] = $item->rolQuantity;
+                        $x ++;
+                    }
+                }
+                $csv = \Excel::create('stock_Detail', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download('csv');
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
 
         }
     }
 
+    public function minAndMaxAnalysis(Request $request)
+    {
 
+        $input = $request->all();
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+        $items = ItemAssigned::where('companySystemID', $companySystemID)->with(['unit' => function($q){
+               $q->select('UnitID','UnitShortCode');
+            },'item_ledger' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->groupBy('itemSystemCode')
+                    ->selectRaw('Round(sum(inOutQty)) AS stock,itemSystemCode');
+            },'po_detail' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->whereHas('order',function ($q){
+                        $q->where('approved',-1)
+                            ->where('poCancelledYN',0);
+                    })
+                    ->groupBy('itemCode')
+                    ->selectRaw('sum(noQty) AS po_total,itemCode');
+            },'grv_detail' => function ($q) use ($companySystemID) {
+                $q->where('companySystemID', $companySystemID)
+                    ->whereHas('grv_master',function ($q){
+                        $q->where('approved',-1)
+                          ->where('grvTypeID',2);
+                    })
+                    ->groupBy('itemCode')
+                    ->selectRaw('sum(noQty) AS grv_total,itemCode');
+            }])
+            //->limit(100)
+            ->get(["idItemAssigned",
+                "companySystemID",
+                "itemUnitOfMeasure",
+                "itemCodeSystem",
+                "itemPrimaryCode",
+                "itemDescription",
+                "secondaryItemCode",
+                "maximunQty",
+                "minimumQty",
+                "rolQuantity"]);
+
+        foreach ($items as $item){
+            $item->po_total = 0;
+            $item->grv_total = 0;
+            $item->stock = 0;
+            if(count($item['item_ledger']) > 0){
+                $item->stock = $item['item_ledger'][0]['stock'];
+            }
+            if(count($item['po_detail']) > 0){
+                $item->po_total = $item['po_detail'][0]['po_total'];
+            }
+            if(count($item['grv_detail']) > 0){
+                $item->grv_total = $item['grv_detail'][0]['grv_total'];
+            }
+            $item->onOrder =  round(($item->po_total - $item->grv_total),2);
+        }
+
+        return $items;
+        return $this->sendResponse($items, 'successfully retrieve data');
+    }
 }

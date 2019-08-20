@@ -29,6 +29,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Models\GeneralLedger;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
@@ -833,6 +834,105 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
 
+    public function amendAssetDepreciationReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = isset($input['id'])?$input['id']:0;
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
+        if (empty($masterData)) {
+            return $this->sendError('Asset depreciation not found');
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this asset depreciation, it is not confirmed');
+        }
+
+
+        // checking document matched in depreciation
+        $maxDepAsset = FixedAssetDepreciationMaster::where('companySystemID',$masterData->companySystemID)
+                                                  ->where('depMasterAutoID','>',$id)
+                                                  ->count();
+
+        if($maxDepAsset > 0){
+            return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+        }
+
+        $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->faCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id);
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id);
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            //deleting from general ledger table
+            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByEmpName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approved = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

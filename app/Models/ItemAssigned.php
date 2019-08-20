@@ -192,5 +192,11 @@ class ItemAssigned extends Model
         return $this->hasMany('App\Models\ErpItemLedger','itemSystemCode','itemCodeSystem');
     }
 
+    public function po_detail(){
+        return $this->hasMany('App\Models\PurchaseOrderDetails','itemCode','itemCodeSystem');
+    }
 
+    public function grv_detail(){
+        return $this->hasMany('App\Models\GRVDetails','itemCode','itemCodeSystem');
+    }
 }

@@ -2310,11 +2310,11 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
-        if ($purchaseRequest->budgetBlockYN == -1) {
+        if ($purchaseRequest->budgetBlockYN == 0) {
             return $this->sendError('Already removed budget block');
         }
 
-        $this->purchaseRequestRepository->update(['budgetBlockYN' => -1],$purchaseRequestId);
+        $this->purchaseRequestRepository->update(['budgetBlockYN' => 0],$purchaseRequestId);
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request budget block removed successfully');
     }
