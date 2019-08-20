@@ -282,9 +282,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
     public function getAllAssetFinanceCategory(Request $request){
             $this->assetFinanceCategoryRepository->pushCriteria(new RequestCriteria($request));
             $this->assetFinanceCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
-            //$assetFinanceCategories = $this->assetFinanceCategoryRepository->all();
+            $assetFinanceCategories = AssetFinanceCategory::orderBy('faFinanceCatID');
 
-            return \DataTables::of($this->assetFinanceCategoryRepository)
+            return \DataTables::of($assetFinanceCategories)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->make(true);
