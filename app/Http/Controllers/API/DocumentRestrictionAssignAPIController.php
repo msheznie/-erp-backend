@@ -307,10 +307,14 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
         $id = Auth::id();
         $user = User::with(['employee'])->find($id);
         $empId = $user->employee['employeeSystemID'];
-
+        $permission = false;
         $userGroup = EmployeeNavigation::where('employeeSystemID',$empId)
-            ->where('companyID',$request['companySystemID'])
-            ->first();
+                                        ->where('companyID',$request['companySystemID'])
+                                        ->first();
+
+        if(empty($userGroup)){
+            return $this->sendResponse($permission, 'Restriction assign permission retrieve successfully');
+        }
 
         $userGroupID = $userGroup->userGroupID;
 
@@ -319,7 +323,6 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
                                                 ->where('userGroupID',$userGroupID)
                                                ->count();
 
-        $permission = false;
 
         if($checkCount > 0){
             $permission = true;

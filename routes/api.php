@@ -654,6 +654,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
 
     Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+    Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
     Route::resource('years', 'YearAPIController');
     Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
     Route::resource('employee_profiles', 'EmployeeProfileAPIController');
@@ -1067,6 +1068,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
     Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
     Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
+    Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
 
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
@@ -1080,6 +1082,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
     Route::post('referBackDepreciation', 'FixedAssetDepreciationMasterAPIController@referBackDepreciation');
+    Route::post('amendAssetDepreciationReview', 'FixedAssetDepreciationMasterAPIController@amendAssetDepreciationReview');
     Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
@@ -1114,6 +1117,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
     Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
+    Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview');
+
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
     Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
@@ -1496,8 +1501,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 41, 'autoID' => 307, 'companySystemID' => 57, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 
 
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
@@ -1506,7 +1511,7 @@ Route::get('runQueue', function () {
     //$master = \App\Models\AssetDisposalMaster::find(261);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
-    $job = \App\Jobs\CreateDepreciation::dispatch(100000656);
+    //$job = \App\Jobs\CreateDepreciation::dispatch(100000656);
     //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
     //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
     //$job = \App\Helper\Helper::generateAssetDisposal($master);
@@ -1519,3 +1524,4 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');

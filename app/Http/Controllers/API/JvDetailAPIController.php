@@ -944,7 +944,7 @@ GROUP BY
         $id = isset($input['id'])?$input['id']:0;
         $jvMaster = JvMaster::find($id);
         $data = array();
-
+        $type = isset($input['type'])?$input['type']:'csv';
         if (empty($jvMaster)) {
             return $this->sendError('Journal Voucher not found');
         }
@@ -960,21 +960,32 @@ GROUP BY
             $data[$x]['Contract'] = $item->clientContractID;
             $data[$x]['Comment'] = $item->comments;
             $data[$x]['Currency'] = $item->currency_by?$item->currency_by->CurrencyCode:'-';
-            $data[$x]['Debit'] = round($item->debitAmount,$decimal);
-            $data[$x]['Credit'] = round($item->creditAmount,$decimal);
+            $data[$x]['Debit'] = sprintf("%.".$decimal."f", $item->debitAmount);
+            $data[$x]['Credit'] = sprintf("%.".$decimal."f", $item->creditAmount);
             $x++;
         }
 
         $csv = \Excel::create('jv_details', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
+                $sheet->setColumnFormat(array(
+                    'A' => '@',
+                    'C' => '@',
+                    'D' => '@',
+                    'E' => '@',
+                    'F' => '@',
+                    'G' => '@',
+                    'H' => '@'
+                ));
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                $sheet->getStyle('A1:H1')->getAlignment()->setWrapText(true);
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
+            $excel->getActiveSheet()->getStyle('A1:H1' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 
