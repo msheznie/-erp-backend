@@ -278,4 +278,15 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Asset Finance Category deleted successfully');
     }
+
+    public function getAllAssetFinanceCategory(Request $request){
+            $this->assetFinanceCategoryRepository->pushCriteria(new RequestCriteria($request));
+            $this->assetFinanceCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
+            //$assetFinanceCategories = $this->assetFinanceCategoryRepository->all();
+
+            return \DataTables::of($this->assetFinanceCategoryRepository)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->make(true);
+    }
 }
