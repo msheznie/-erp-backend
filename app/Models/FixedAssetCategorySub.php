@@ -91,7 +91,7 @@ class FixedAssetCategorySub extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
-
+    protected $primaryKey = 'faCatSubID';
 
 
     public $fillable = [
@@ -167,5 +167,8 @@ class FixedAssetCategorySub extends Model
         
     ];
 
-    
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
 }
