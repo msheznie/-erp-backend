@@ -655,6 +655,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
     Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
+    Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData');
     Route::resource('years', 'YearAPIController');
     Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
     Route::resource('employee_profiles', 'EmployeeProfileAPIController');
@@ -1138,11 +1139,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
     Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+    Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory');
+    Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
     Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
     Route::resource('asset_types', 'AssetTypeAPIController');
     Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+    Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain');
+
     Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
     Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
     Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');

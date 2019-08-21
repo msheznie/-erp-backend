@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateFixedAssetCategoryAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetCategoryAPIRequest;
+use App\Models\Company;
 use App\Models\FixedAssetCategory;
+use App\Models\FixedAssetCategorySub;
+use App\Models\YesNoSelection;
 use App\Repositories\FixedAssetCategoryRepository;
+use App\Scopes\ActiveScope;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -109,10 +114,30 @@ class FixedAssetCategoryAPIController extends AppBaseController
     public function store(CreateFixedAssetCategoryAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required|numeric|min:1',
+            'isActive' => 'required|numeric|min:0',
+            'catDescription' => 'required',
+        ]);
 
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::find($input['companySystemID']);
+
+        if(empty($company)){
+            return $this->sendError('Company not found');
+        }
+
+        $input['companyID'] = $company->CompanyID;
+        $input['createdPcID'] = gethostname();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $fixedAssetCategories = $this->fixedAssetCategoryRepository->create($input);
 
-        return $this->sendResponse($fixedAssetCategories->toArray(), 'Fixed Asset Category saved successfully');
+        return $this->sendResponse($fixedAssetCategories->toArray(), 'Asset Category saved successfully');
     }
 
     /**
@@ -156,10 +181,10 @@ class FixedAssetCategoryAPIController extends AppBaseController
     public function show($id)
     {
         /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = $this->fixedAssetCategoryRepository->findWithoutFail($id);
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Fixed Asset Category not found');
+            return $this->sendError('Asset Category not found');
         }
 
         return $this->sendResponse($fixedAssetCategory->toArray(), 'Fixed Asset Category retrieved successfully');
@@ -215,16 +240,39 @@ class FixedAssetCategoryAPIController extends AppBaseController
     {
         $input = $request->all();
 
+
         /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = $this->fixedAssetCategoryRepository->findWithoutFail($id);
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
             return $this->sendError('Fixed Asset Category not found');
         }
 
-        $fixedAssetCategory = $this->fixedAssetCategoryRepository->update($input, $id);
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required|numeric|min:1',
+            'isActive' => 'required|numeric|min:0',
+            'catDescription' => 'required',
+        ]);
 
-        return $this->sendResponse($fixedAssetCategory->toArray(), 'FixedAssetCategory updated successfully');
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::find($input['companySystemID']);
+
+        if(empty($company)){
+            return $this->sendError('Company not found');
+        }
+
+        $input['companyID'] = $company->CompanyID;
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
+
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('faCatID',$id)->update($input);
+
+        return $this->sendResponse($fixedAssetCategory, 'Asset Category updated successfully');
     }
 
     /**
@@ -268,14 +316,81 @@ class FixedAssetCategoryAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = $this->fixedAssetCategoryRepository->findWithoutFail($id);
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
 
         if (empty($fixedAssetCategory)) {
-            return $this->sendError('Fixed Asset Category not found');
+            return $this->sendError('Asset Category not found');
         }
+
+        FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
 
         $fixedAssetCategory->delete();
 
-        return $this->sendResponse($id, 'Fixed Asset Category deleted successfully');
+        return $this->sendResponse($id, 'Asset Category deleted successfully');
+    }
+
+    public function getAllAssetCategory(Request $request){
+
+
+        $input = $request->all();
+        $selectedCompanyId = isset($input['companyId'])?$input['companyId']:0;
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $assetCategories = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)
+                                                ->with(['company'])
+                                                ->orderBy('faCatID',$sort);
+
+        if(isset($input['isAll']) && !$input['isAll']){
+            $assetCategories = $assetCategories->whereIn('companySystemID',$subCompanies);
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCategories = $assetCategories->where(function ($query) use ($search) {
+                $query->where('catDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetCategories)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    public function getAssetCategoryFormData(Request $request)
+    {
+        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companies = Company::whereIn('companySystemID',$subCompanies)
+            ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
+            ->get();
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'companies' => $companies,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
