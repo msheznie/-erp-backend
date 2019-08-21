@@ -93,10 +93,10 @@ class FixedAssetCategory extends Model
 
     public $table = 'erp_fa_category';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
 
-
+    protected $primaryKey = 'faCatID';
 
 
     public $fillable = [
@@ -157,5 +157,8 @@ class FixedAssetCategory extends Model
         return $query->whereIN('companySystemID',  $type);
     }
 
-    
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
 }

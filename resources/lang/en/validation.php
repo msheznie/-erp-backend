@@ -194,7 +194,12 @@ return [
         'supCategoryICVMasterID' => 'ICV Category',
         'supCategorySubICVID' => 'ICV Sub Category',
         'isLCCYN' => 'LCC',
-        'isSMEYN' => 'SME'
+        'COSTGLCODESystemID' => 'Cost Account',
+        'ACCDEPGLCODESystemID' => 'Acc Depreciation Account',
+        'DEPGLCODESystemID' => 'Depreciation Account',
+        'DISPOGLCODESystemID' => 'Disposal Account',
+        'financeCatDescription' => 'Category Description',
+        'catDescription' => 'Category Description'
     ],
 
 ];
