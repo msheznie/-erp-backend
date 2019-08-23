@@ -12,8 +12,10 @@
  * addCurrencyToSupplier(),updateCurrencyToSupplier()
  * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as getCompanyLocalCurrency()
  */
+
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCurrencyMasterAPIRequest;
 use App\Http\Requests\API\UpdateCurrencyMasterAPIRequest;
 use App\Models\BankMemoSupplier;
@@ -21,9 +23,11 @@ use App\Models\BankMemoSupplierMaster;
 use App\Models\BankMemoTypes;
 use App\Models\CurrencyMaster;
 use App\Models\Company;
+use App\Repositories\CurrencyConversionRepository;
 use App\Repositories\CurrencyMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -42,10 +46,13 @@ class CurrencyMasterAPIController extends AppBaseController
     /** @var  CurrencyMasterRepository */
     private $currencyMasterRepository;
     private $userRepository;
+    private $currencyConversionRepository;
 
-    public function __construct(CurrencyMasterRepository $currencyMasterRepo, UserRepository $userRepo)
+    public function __construct(CurrencyMasterRepository $currencyMasterRepo, UserRepository $userRepo,
+                                CurrencyConversionRepository $currencyConversionRepo)
     {
         $this->currencyMasterRepository = $currencyMasterRepo;
+        $this->currencyConversionRepository = $currencyConversionRepo;
         $this->userRepository = $userRepo;
     }
 
@@ -114,6 +121,31 @@ class CurrencyMasterAPIController extends AppBaseController
         return $this->sendResponse($supplierCurrencies, 'Supplier Currencies retrieved successfully');
     }
 
+    public function getAllConversionByCurrency(Request $request)
+    {
+
+        $id = isset($request['id']) ? $request['id'] : 0;
+        $currencyMaster = $this->currencyMasterRepository->findWithoutFail($id);
+        $reportingId = 0;
+        if (empty($currencyMaster)) {
+            return $this->sendError('Currency Master not found');
+        }
+        $employee = Helper::getEmployeeInfo();
+        if(!empty($employee)){
+            $company = Helper::companyCurrency($employee->empCompanySystemID);
+            if(!empty($company)){
+                $reportingId =  $company->reportingCurrency;
+            }
+        }
+
+        $conversions = $this->currencyConversionRepository->with(['sub_currency'])->findWhere(['masterCurrencyID' => $id]);
+        $array = array(
+            'reportingCurrency' => $reportingId,
+            'conversions' => $conversions->toArray()
+        );
+        return $this->sendResponse($array, 'Currency conversions retrieved successfully');
+    }
+
     /**
      * Store a newly created CurrencyMaster in storage.
      * POST /addCurrencyToSupplier
@@ -164,7 +196,7 @@ class CurrencyMasterAPIController extends AppBaseController
      * Update Supplier currency assign.
      * Post /updateCurrencyToSupplier
      *
-     * @param  Request $request
+     * @param Request $request
      *
      * @return Response
      */
@@ -209,17 +241,67 @@ class CurrencyMasterAPIController extends AppBaseController
     public function store(CreateCurrencyMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'CurrencyName' => 'required',
+            'CurrencyCode' => 'required|unique:currencymaster',
+            'DecimalPlaces' => 'required|numeric',
+        ]);
 
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['ExchangeRate'] = 1;
+        $input['isLocal'] = 0;
         $currencyMasters = $this->currencyMasterRepository->create($input);
+        $allCurrency     = CurrencyMaster::all();
 
+        DB::beginTransaction();
+        try {
+        foreach ($allCurrency as $currency) {
+            $conversion = 0;
+            $subConversion = 0;
+            if ($currencyMasters->currencyID == $currency->currencyID) {
+                $conversion = 1;
+            }
+
+            $temData = array(
+                'masterCurrencyID' => $currencyMasters->currencyID,
+                'subCurrencyID' => $currency->currencyID,
+                'conversion' => $conversion
+            );
+
+            if($conversion != 0){
+                $subConversion = round((1/$conversion),8);
+            }
+
+            $this->currencyConversionRepository->create($temData);
+
+            if ($currencyMasters->currencyID != $currency->currencyID) {
+                $temData1 = array(
+                    'masterCurrencyID' => $currency->currencyID,
+                    'subCurrencyID' => $currencyMasters->currencyID,
+                    'conversion' => $subConversion
+                );
+                $this->currencyConversionRepository->create($temData1);
+            }
+        }
+        DB::commit();
         return $this->sendResponse($currencyMasters->toArray(), 'Currency Master saved successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage(), 500);
+        }
     }
 
     /**
      * Display the specified CurrencyMaster.
      * GET|HEAD /currencyMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -239,7 +321,7 @@ class CurrencyMasterAPIController extends AppBaseController
      * Update the specified CurrencyMaster in storage.
      * PUT/PATCH /currencyMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      * @param UpdateCurrencyMasterAPIRequest $request
      *
      * @return Response
@@ -255,16 +337,32 @@ class CurrencyMasterAPIController extends AppBaseController
             return $this->sendError('Currency Master not found');
         }
 
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'CurrencyName' => 'required',
+            'CurrencyCode' => ['required', Rule::unique('currencymaster')->ignore($id, 'currencyID')],
+            'DecimalPlaces' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = Helper::getEmployeeID();
+        $input['DateModified'] = Helper::getEmployeeID();
+        $input['DateModified'] = now();
+
         $currencyMaster = $this->currencyMasterRepository->update($input, $id);
 
-        return $this->sendResponse($currencyMaster->toArray(), 'CurrencyMaster updated successfully');
+        return $this->sendResponse($currencyMaster->toArray(), 'Currency Master updated successfully');
     }
 
     /**
      * Remove the specified CurrencyMaster from storage.
      * DELETE /currencyMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -278,6 +376,9 @@ class CurrencyMasterAPIController extends AppBaseController
         }
 
         $currencyMaster->delete();
+
+        $this->currencyConversionRepository->deleteWhere(['masterCurrencyID' => $id]);
+        $this->currencyConversionRepository->deleteWhere(['subCurrencyID' => $id]);
 
         return $this->sendResponse($id, 'Currency Master deleted successfully');
     }
@@ -293,9 +394,9 @@ class CurrencyMasterAPIController extends AppBaseController
             return $this->sendError('Company Master not found');
         }
 
-        if(!empty($company->localCurrencyID)){
+        if (!empty($company->localCurrencyID)) {
             $localCurrency = $company->localCurrencyID;
-        }else{
+        } else {
             return $this->sendError('Company local currency not found');
         }
 
@@ -314,9 +415,9 @@ class CurrencyMasterAPIController extends AppBaseController
             return $this->sendError('Company Master not found');
         }
 
-        if(!empty($company->reportingCurrency)){
+        if (!empty($company->reportingCurrency)) {
             $reportingCurrency = $company->reportingCurrency;
-        }else{
+        } else {
             return $this->sendError('Company reporting currency not found');
         }
 

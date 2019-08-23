@@ -17,3 +17,5 @@ Route::resource('consoleJVDetails', 'ConsoleJVDetailController');
 
 
 Route::resource('customerContactDetails', 'CustomerContactDetailsController');
+
+Route::resource('currencyConversionHistories', 'CurrencyConversionHistoryController');

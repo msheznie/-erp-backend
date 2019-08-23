@@ -2270,7 +2270,7 @@ class Helper
 
     public static function getEmployeeName()
     {
-        $employee = Models\Employee::find(Auth::id());
+        $employee = Models\Employee::find(self::getEmployeeSystemID());
         if (!empty($employee)) {
             return $employee->empName;
         }
