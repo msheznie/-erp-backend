@@ -33,7 +33,7 @@ class CurrencyConversion extends Model
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-
+    protected $primaryKey  = 'currencyConversionAutoID';
 
     protected $dates = ['deleted_at'];
 
@@ -66,5 +66,9 @@ class CurrencyConversion extends Model
         
     ];
 
-    
+    public function sub_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'subCurrencyID','currencyID');
+    }
+
 }

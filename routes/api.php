@@ -45,6 +45,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier');
 
     Route::get('allCurrencies', 'CurrencyMasterAPIController@getAllCurrencies');
+    Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency');
     Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier');
 
     Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
@@ -302,6 +303,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
 
     Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+    Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
 
     Route::resource('bank_accounts', 'BankAccountAPIController');
     Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
@@ -1462,6 +1464,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
+    Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
 });
 
 
@@ -1530,3 +1533,4 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
