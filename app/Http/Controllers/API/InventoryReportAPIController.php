@@ -1163,6 +1163,7 @@ FROM
                     ->groupBy('itemCode')
                     ->selectRaw('sum(noQty) AS grv_total,itemCode');
             }])
+            ->where('financeCategoryMaster',1)
             //->limit(100)
             ->get(["idItemAssigned",
                 "companySystemID",
