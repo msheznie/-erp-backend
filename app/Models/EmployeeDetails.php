@@ -607,4 +607,12 @@ class EmployeeDetails extends Model
     public function designation(){
         return $this->hasOne('App\Models\Designation', 'designationID','designationID');
     }
+
+    public function maritial_status(){
+        return $this->hasOne('App\Models\MaritialStatus','maritialstatusID','maritialStatus');
+    }
+
+    public function country(){
+        return $this->hasOne('App\Models\CountryMaster','countryCode','countryCode');
+    }
 }
