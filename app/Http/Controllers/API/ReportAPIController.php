@@ -232,6 +232,7 @@ WHERE
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
+                            erp_purchaseordermaster.manuallyClosed,
                             erp_purchaseordermaster.narration,
                             erp_purchaseordermaster.approvedDate as orderDate,
                             erp_purchaseordermaster.serviceLine,
@@ -853,6 +854,7 @@ WHERE
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
+                            IF( erp_purchaseordermaster.manuallyClosed = 1, "YES", "NO" ) AS manuallyClosed,
                             erp_purchaseordermaster.narration,
                             erp_purchaseordermaster.approvedDate as orderDate,
                             erp_purchaseordermaster.serviceLine,
@@ -994,6 +996,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                             'Logistic Advance Released' => $val->logisticAdvanceReleased,
                             'Payment Released (From Invoice)' => $val->paymentReleased,
                             'Balance To Be Paid' => $val->balanceToBePaid,
+                            'Is Manually Closed' => $val->manuallyClosed,
                         );
                     }
 

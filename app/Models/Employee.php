@@ -280,4 +280,14 @@ class Employee extends Model
     {
         return $this->belongsTo('App\Models\Company','empCompanySystemID','companySystemID');
     }
+
+    public function religions()
+    {
+        return $this->hasOne('App\Models\Religion','religionID','religion');
+    }
+
+    public function genders()
+    {
+        return $this->hasOne('App\Models\Gender','genderID','gender');
+    }
 }

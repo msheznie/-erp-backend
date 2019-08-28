@@ -1465,6 +1465,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
     Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
+
+    Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
+
+    /* For Profile -> Payslip */
+    Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
+    Route::post('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
+
+
 });
 
 

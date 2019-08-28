@@ -12,10 +12,12 @@
  * -- Date: 18-December 2018 By: Nazir Description: Added new functions named as getEmployeeMasterView(),
  * -- Date: 18-December 2018 By: Nazir Description: Added new functions named as confirmEmployeePasswordReset(),
  * -- Date: 19-December 2018 By: Nazir Description: Added new functions named as getEmployeeMasterData(),
+ * -- Date: 27-August 2019 By: Rilwan Description: Added new functions amed as getProfileDetails()
  */
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateEmployeeAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeAPIRequest;
 use App\Models\Alert;
@@ -334,5 +336,42 @@ class EmployeeAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getProfileDetails()
+    {
+        $employee = Helper::getEmployeeInfo();
 
+        if(!empty($employee)){
+            $personal_details = [
+                'empID' => $employee->empID,
+                'CompanyName' => isset($employee->company->CompanyName)?$employee->company->CompanyName:null,
+                'empFullName' => $employee->empFullName,
+                'empEmail' => $employee->empEmail,
+                'empTelOffice' => $employee->empTelOffice,
+                'empTelMobile' => $employee->empTelMobile,
+                'extNo' => $employee->extNo,
+                'DOB' => isset($employee->details->DOB)?$employee->details->DOB:null,
+                'dateAssumed' => isset($employee->details->dateAssumed)?$employee->details->dateAssumed:null,
+                'designation' => isset($employee->details->designation->designation)?$employee->details->designation->designation:null,
+                'description' => isset($employee->details->maritial_status->description)?$employee->details->maritial_status->description:null,
+                'religionName' => isset($employee->religions->religionName)?$employee->religions->religionName:null,
+                'name' => isset($employee->genders->name)?$employee->genders->name:null,
+                'countryName' => isset($employee->details->country->countryName)?$employee->details->country->countryName:null,
+
+            ];
+
+            $reporting_manager =[
+                'profileImage' => isset($employee->profilepic->profileImage)?$employee->profilepic->profileImage:null,
+                'designation' => isset($employee->manager->details->designation->designation)?$employee->manager->details->designation->designation:null,
+                'empFullName' => isset($employee->manager->empFullName)?$employee->manager->empFullName:null,
+            ];
+
+            $output = [
+                'personal_details'=>$personal_details,
+                'reporting_manager'=>$reporting_manager,
+            ];
+            return $this->sendResponse($output, 'Employee profile details retrieved successfully');
+        }else{
+            return $this->sendError('Employee profile details not found');
+        }
+    }
 }
