@@ -1468,10 +1468,18 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
+
+    Route::resource('genders', 'GenderAPIController');
+
+    Route::resource('maritial_statuses', 'MaritialStatusAPIController');
+
+    Route::resource('religions', 'ReligionAPIController');
+
+    Route::resource('salary_process_details', 'SalaryProcessDetailAPIController');
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
-    Route::post('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
-
+    Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
 
 });
 
@@ -1541,4 +1549,7 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+
+
 

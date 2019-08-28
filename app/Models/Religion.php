@@ -1,25 +1,40 @@
 <?php
-/**
- * =============================================
- * -- File Name : Religion.php
- * -- Project Name : ERP
- * -- Module Name : Employee Details
- * -- Author : Mohamed Rilwan
- * -- Create date : 27- August 2019
- * -- Description :
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
+/**
+ * @SWG\Definition(
+ *      definition="Religion",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="religionID",
+ *          description="religionID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="religionName",
+ *          description="religionName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
+ *      )
+ * )
+ */
 class Religion extends Model
 {
-    public $table = 'hrms_religion';
 
+    public $table = 'hrms_religion';
+    
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-    protected $primaryKey = 'religionID';
+
 
 
     public $fillable = [
@@ -34,7 +49,8 @@ class Religion extends Model
      */
     protected $casts = [
         'religionID' => 'integer',
-        'religionName' => 'string'
+        'religionName' => 'string',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -43,7 +59,8 @@ class Religion extends Model
      * @var array
      */
     public static $rules = [
-
+        'religionID' => 'required'
     ];
 
+    
 }
