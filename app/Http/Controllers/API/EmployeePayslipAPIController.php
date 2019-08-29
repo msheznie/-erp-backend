@@ -53,7 +53,9 @@ class EmployeePayslipAPIController extends AppBaseController
         $payslip_details = $this->getPayslipDetails($periodMasterID,$empID);
         $company_id = isset($payslip_details->companyID)?$payslip_details->companyID:null;
         $salaryProcessMasterID =  isset($payslip_details->salaryProcessMasterID)?$payslip_details->salaryProcessMasterID:null;
-
+        if($salaryProcessMasterID==null){
+            return $this->sendError('Salary Payslip details not found',200);
+        }
         $company_details = $this->getCompanyData($company_id);
 
         $company = [];
