@@ -614,12 +614,7 @@ class ExpenseClaimAPIController extends AppBaseController
             'comments','confirmedYN','approved','addedForPayment','expenseClaimMasterAutoID','myConfirmed','expenseClaimCode')
             ->where('createdUserID',$emp_id)
             ->get();
-
-        if(collect($expenseClaim)->count())
-        {
-            return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Details retrieved successfully');
-        }
-        return $this->sendError('Expense Claim details not found');
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Details retrieved successfully');
     }
 
     public function getExpenseClaimHistory()
@@ -629,12 +624,7 @@ class ExpenseClaimAPIController extends AppBaseController
             'expenseClaimTypeDescription','paymentProcessingInProgress','paymentConfirmed','paymentApproved','expenseClaimMasterAutoID')
             ->where('createdUserID',$emp_id)
             ->get();
-
-        if(collect($expenseClaim)->count())
-        {
-            return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim history retrieved successfully');
-        }
-        return $this->sendError('Expense Claim history not found');
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim history retrieved successfully');
     }
 
     public function getExpenseClaimDepartment()
@@ -646,11 +636,6 @@ class ExpenseClaimAPIController extends AppBaseController
             ->orWhere('seniormanagerID',$emp_id)
             ->groupBy('expenseClaimMasterAutoID')
             ->get();
-
-        if(collect($expenseClaim)->count())
-        {
-            return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Department details retrieved successfully');
-        }
-        return $this->sendError('Expense Claim Department details not found');
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Department details retrieved successfully');
     }
 }

@@ -298,11 +298,6 @@ class LeaveDataMasterAPIController extends AppBaseController
             'approvedYN','confirmedYN','leavedatamasterID','LeaveApplicationTypeID')
             ->where('empID',$emp_id)
             ->get();
-
-        if(collect($leaveHistory)->count())
-        {
-            return $this->sendResponse($leaveHistory->toArray(), 'Leave history details retrieved successfully');
-        }
-        return $this->sendError('Leave history details not found');
+        return $this->sendResponse($leaveHistory->toArray(), 'Leave history details retrieved successfully');
     }
 }
