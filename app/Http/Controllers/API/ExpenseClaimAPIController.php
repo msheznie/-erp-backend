@@ -10,7 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getExpenseClaimByCompany(),getExpenseClaimFormData()
  * -- Date: 11- September 2018 By: Fayas Description: Added new function getExpenseClaimAudit(),printExpenseClaim(),getPaymentStatusHistory()
- * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim(),getExpenseClaimHistory(),getExpenseClaimDepartment()
+ * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim(),getExpenseClaimHistory(),getExpenseClaimDepartment(),deleteExpenseClaim()
  */
 namespace App\Http\Controllers\API;
 
@@ -19,8 +19,10 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
+use App\Models\ExpenseClaimDetails;
 use App\Models\ExpenseClaimType;
 use App\Models\QryExpenseClaimDepViewClaim2;
 use App\Models\QryExpenseClaimUserViewHsitory;

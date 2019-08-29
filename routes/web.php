@@ -27,3 +27,5 @@ Route::resource('maritialStatuses', 'MaritialStatusController');
 Route::resource('religions', 'ReligionController');
 
 Route::resource('salaryProcessDetails', 'SalaryProcessDetailController');
+
+Route::resource('leaveDataMasters', 'LeaveDataMasterController');
