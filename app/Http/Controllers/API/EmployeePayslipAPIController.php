@@ -8,7 +8,7 @@
  * -- Create date : 27 - August 2019
  * -- Description : This file contains the all functions for Employee Leave Application
  * -- REVISION HISTORY
- * -- Date: 27 - August 2019By: Rilwan Description: Added new functions named as getPeriodsForPayslip(),getEmployeePayslip()
+ * -- Date: 27 - August 2019By: Rilwan Description: Added new functions named as getPeriodsForPayslip(),getEmployeePayslip(),getPayslipDetails(),getCompanyData(),getAdditionDetailsForPayslip(),getDeductionDetailsForPayslip(),getBankDetailsForPayslip()
  */
 namespace App\Http\Controllers\API;
 

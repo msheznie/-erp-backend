@@ -1466,8 +1466,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
     Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
 
+    /* For Profile -> Profile */
     Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
-
 
     Route::resource('genders', 'GenderAPIController');
 
@@ -1480,6 +1480,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
+
+    /* For Profile -> Expenses Claim */
+    Route::get('getExpenseClaim', 'ExpenseClaimAPIController@getExpenseClaim');
+    Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
+    Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
 
 });
 

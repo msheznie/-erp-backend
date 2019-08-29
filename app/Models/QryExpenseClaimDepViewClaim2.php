@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : QryPayslipBankTransfer.php
+ * -- File Name : QryExpenseClaimDepViewClaim2.php
  * -- Project Name : ERP
- * -- Module Name : Employee Payslip
+ * -- Module Name : Expenses Claim
  * -- Author : Mohamed Rilwan
- * -- Create date : 28- August 2019
+ * -- Create date : 29- August 2019
  * -- Description : this is a model for mysqlview
  * -- REVISION HISTORY
  */
@@ -13,7 +13,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class QryPayslipBankTransfer extends Model
+class QryExpenseClaimDepViewClaim2 extends Model
 {
-    public $table = 'hrms_qry_payslipbanktransfer';
+    public $table = 'erp_qry_expenseclaimdepview_claim2';
 }
