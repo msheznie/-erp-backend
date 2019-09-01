@@ -1478,6 +1478,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('salary_process_details', 'SalaryProcessDetailAPIController');
 
     Route::resource('leave_data_masters', 'LeaveDataMasterAPIController');
+
+    Route::resource('leave_masters', 'LeaveMasterAPIController');
+
+    Route::resource('calender_masters', 'CalenderMasterAPIController');
+
+    Route::resource('schedule_masters', 'ScheduleMasterAPIController');
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1489,6 +1496,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     /* For Profile -> Leave Application */
     Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
+    Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
+    Route::get('getLeaveDetailsForEmployee', 'LeaveDataMasterAPIController@getLeaveDetailsForEmployee');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1556,6 +1565,8 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+
 
 
 

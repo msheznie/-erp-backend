@@ -205,9 +205,9 @@ class LeaveDataMaster extends Model
 {
 
     public $table = 'hrms_leavedatamaster';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    protected $primaryKey = 'leavedatamasterID';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
 
 
@@ -295,7 +295,7 @@ class LeaveDataMaster extends Model
      * @var array
      */
     public static $rules = [
-        'leavedatamasterID' => 'required'
+//        'leavedatamasterID' => 'required'
     ];
 
     
