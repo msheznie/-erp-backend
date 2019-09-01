@@ -356,7 +356,7 @@ class EmployeeAPIController extends AppBaseController
                 'religionName' => isset($employee->religions->religionName)?$employee->religions->religionName:null,
                 'name' => isset($employee->genders->name)?$employee->genders->name:null,
                 'countryName' => isset($employee->details->country->countryName)?$employee->details->country->countryName:null,
-
+                'profileImage'=> isset($employee->profilepic->profileImage)?$employee->profilepic->profileImage:null,
             ];
 
             $reporting_manager =[

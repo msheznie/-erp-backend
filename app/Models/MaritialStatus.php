@@ -1,25 +1,55 @@
 <?php
-/**
- * =============================================
- * -- File Name : MaritialStatus.php
- * -- Project Name : ERP
- * -- Module Name : Employee Details
- * -- Author : Mohamed Rilwan
- * -- Create date : 27- August 2019
- * -- Description :
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
+/**
+ * @SWG\Definition(
+ *      definition="MaritialStatus",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="maritialstatusID",
+ *          description="maritialstatusID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="code",
+ *          description="code",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="description",
+ *          description="description",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="description_O",
+ *          description="other language",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="noOfkids",
+ *          description="noOfkids",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
+ *      )
+ * )
+ */
 class MaritialStatus extends Model
 {
-    public $table = 'hrms_maritialstatus';
 
+    public $table = 'hrms_maritialstatus';
+    
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-    protected $primaryKey = 'maritialstatusID';
+
 
 
     public $fillable = [
@@ -38,8 +68,10 @@ class MaritialStatus extends Model
     protected $casts = [
         'maritialstatusID' => 'integer',
         'code' => 'string',
+        'description' => 'string',
         'description_O' => 'string',
         'noOfkids' => 'string',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -48,8 +80,8 @@ class MaritialStatus extends Model
      * @var array
      */
     public static $rules = [
-
+        'maritialstatusID' => 'required'
     ];
 
-
+    
 }

@@ -1466,15 +1466,30 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
     Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
 
+    /* For Profile -> Profile */
     Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
+    Route::resource('genders', 'GenderAPIController');
+
+    Route::resource('maritial_statuses', 'MaritialStatusAPIController');
+
+    Route::resource('religions', 'ReligionAPIController');
+
+    Route::resource('salary_process_details', 'SalaryProcessDetailAPIController');
+
+    Route::resource('leave_data_masters', 'LeaveDataMasterAPIController');
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
-    Route::post('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
+    Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
 
+    /* For Profile -> Expenses Claim */
+    Route::get('getExpenseClaim', 'ExpenseClaimAPIController@getExpenseClaim');
+    Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
+    Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
 
+    /* For Profile -> Leave Application */
+    Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
 });
-
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
@@ -1541,4 +1556,7 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+
+
 
