@@ -8,7 +8,8 @@
  * -- Create date : 29 - August 2019
  * -- Description : This file contains the all related functions for leave appliation
  * -- REVISION HISTORY
- * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim()
+ * -- Date: 29- August 2019 By: Rilwan Description: Added new function getLeaveHistory()
+ * -- Date: 01- September 2019 By: Rilwan Description: Added new function getLeaveDetailsForEmployee(),getLeaveAvailableForEmployee
  */
 namespace App\Http\Controllers\API;
 
@@ -305,12 +306,22 @@ class LeaveDataMasterAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var LeaveDataMaster $leaveDataMaster */
+
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
             return $this->sendError('Leave Data Master not found');
         }
 
+        // check is claim data
+        if($leaveDataMaster->claimedLeavedatamasterID != null && $leaveDataMaster->EntryType==2){
+            $date_time = date('Y-m-d H:i:s');
+            $this->leaveDataMasterRepository->update(['claimedYN' => 0, 'timestamp' => $date_time], $leaveDataMaster->claimedLeavedatamasterID);
+        }
+
+        if(!empty($leaveDataMaster->detail())){
+            $leaveDataMaster->detail()->delete();
+        }
         $leaveDataMaster->delete();
 
         return $this->sendResponse($id, 'Leave Data Master deleted successfully');

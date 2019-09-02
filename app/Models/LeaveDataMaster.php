@@ -298,5 +298,8 @@ class LeaveDataMaster extends Model
 //        'leavedatamasterID' => 'required'
     ];
 
-    
+    public function detail()
+    {
+        return $this->hasOne('App\Models\LeaveDataDetail','leavedatamasterID','leavedatamasterID');
+    }
 }

@@ -1485,6 +1485,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('schedule_masters', 'ScheduleMasterAPIController');
 
+    Route::resource('leave_data_details', 'LeaveDataDetailAPIController');
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1565,9 +1567,4 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
-
-
-
-
-
 
