@@ -355,7 +355,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                 });
                             })
                             ->when(request('grv') == 'inComplete', function ($q) {
-                                return $q->whereIn('goodsRecievedYN', [0, 1]);
+                                return $q->whereIn('goodsRecievedYN', [0, 1])
+                                         ->where('manuallyClosed',0);
                             });
                     })
                         ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
@@ -390,7 +391,6 @@ class PurchaseRequestAPIController extends AppBaseController
                 }
             })
             ->with(['confirmed_by', 'details' => function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch) {
-
                 $prd->when(request('date_by') == 'approvedDate' ||
                     request('date_by') == 'grvDate' ||
                     request('grv') == 'inComplete' ||
@@ -400,16 +400,16 @@ class PurchaseRequestAPIController extends AppBaseController
                     $q->whereHas('podetail', function ($q) use ($from, $to, $documentSearch) {
 
                         $q->when(request('date_by') == 'approvedDate' || request('documentId') == 2, function ($q) use ($from, $to, $documentSearch) {
-                            return $q->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
-                                $q->where('poConfirmedYN', 1)
-                                    ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
-                                        return $q->whereBetween('approvedDate', [$from, $to]);
-                                    })
-                                    ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
-                                        return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
-                                    });
-                            });
-                        })
+                                return $q->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
+                                    $q->where('poConfirmedYN', 1)
+                                        ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                            return $q->whereBetween('approvedDate', [$from, $to]);
+                                        })
+                                        ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                            return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                        });
+                                });
+                            })
                             ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
                                 $q->whereHas('grv_details', function ($q) use ($from, $to) {
                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
@@ -418,7 +418,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                 });
                             })
                             ->when(request('grv') == 'inComplete', function ($q) {
-                                return $q->whereIn('goodsRecievedYN', [0, 1]);
+                                return $q->whereIn('goodsRecievedYN', [0, 1])
+                                          ->where('manuallyClosed',0);
                             });
                     });
 
@@ -461,7 +462,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                     }]);
                             }])
                             ->when(request('grv') == 'inComplete', function ($q) {
-                                return $q->whereIn('goodsRecievedYN', [0, 1]);
+                                return $q->whereIn('goodsRecievedYN', [0, 1])
+                                         ->where('manuallyClosed',0);
                             });
                     }])
                     ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
@@ -561,7 +563,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['Supplier Name'] = '';
                                 }
 
-                                $data[$x]['PO Qty'] = round($poDetail->noQty, 2);
+                                $data[$x]['PO Qty'] = $poDetail->manuallyClosed == 1 ?  round($poDetail->receivedQty,2) :  round($poDetail->noQty,2);
 
                                 if ($poDetail->reporting_currency) {
                                     $data[$x]['Currency'] = $poDetail->reporting_currency->CurrencyCode;
@@ -626,14 +628,18 @@ class PurchaseRequestAPIController extends AppBaseController
                                         }
                                         $data[$x]['Receipt Qty'] = $grvDetail->noQty;
 
-
-                                        if ($poDetail->goodsRecievedYN == 2) {
+                                        if($poDetail->manuallyClosed == 1){
                                             $data[$x]['Receipt Status'] = "Fully Received";
-                                        } else if ($poDetail->goodsRecievedYN == 0) {
-                                            $data[$x]['Receipt Status'] = "Not Received";
-                                        } else if ($poDetail->goodsRecievedYN == 1) {
-                                            $data[$x]['Receipt Status'] = "Partially Received";
+                                        }else{
+                                            if ($poDetail->goodsRecievedYN == 2) {
+                                                $data[$x]['Receipt Status'] = "Fully Received";
+                                            } else if ($poDetail->goodsRecievedYN == 0) {
+                                                $data[$x]['Receipt Status'] = "Not Received";
+                                            } else if ($poDetail->goodsRecievedYN == 1) {
+                                                $data[$x]['Receipt Status'] = "Partially Received";
+                                            }
                                         }
+
                                         $grvCount++;
                                     }
                                 } else {
