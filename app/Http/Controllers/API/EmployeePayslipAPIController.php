@@ -155,21 +155,22 @@ class EmployeePayslipAPIController extends AppBaseController
             if($additions_details->count()){
                 $addition= $additions_details->groupBy('paysheetgroup')->toArray();
                 $addition_total = $additions_details->sum('amount');
-
+                $temp_array = array();
                 foreach ($addition as $key => $val){
 
                     foreach ($val as $data){
-                        $temp_array=array([
+                        $temp_array[]=array([
                             'Naration'=>$data['Naration'],
                             'amount'=>$data['amount'],
                             'Rate'=>$data['Rate'],
                             'dayPerHour'=>$data['dayPerHour']
                         ]);
-                        $addition_array[] = array(
-                            'paysheetGroup'=>$key,
-                            'items'=>$temp_array
-                        );
+
                     }
+                    $addition_array[] = array(
+                        'paysheetGroup'=>$key,
+                        'items'=>$temp_array
+                    );
                 }
                 return array(
                     'tableData'=>$addition_array,
@@ -197,19 +198,19 @@ class EmployeePayslipAPIController extends AppBaseController
                 $deduction_total = $deductions_details->sum('amounts');
 
                 foreach ($deduction as $key => $val){
-
+                    $temp_array = array();
                     foreach ($val as $data){
-                        $temp_array=array([
+                        $temp_array[]=array([
                             'Naration'=>$data['Naration'],
                             'amounts'=>$data['amounts'],
                             'Rate'=>$data['Rate'],
                             'dayPerHour'=>$data['dayPerHour']
                         ]);
-                        $deduction_array[] = array(
-                            'paysheetGroup'=>$key,
-                            'items'=>$temp_array
-                        );
                     }
+                    $deduction_array[] = array(
+                        'paysheetGroup'=>$key,
+                        'items'=>$temp_array
+                    );
                 }
                 return array(
                     'tableData'=>$deduction_array,
