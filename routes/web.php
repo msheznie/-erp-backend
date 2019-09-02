@@ -29,3 +29,11 @@ Route::resource('religions', 'ReligionController');
 Route::resource('salaryProcessDetails', 'SalaryProcessDetailController');
 
 Route::resource('leaveDataMasters', 'LeaveDataMasterController');
+
+Route::resource('leaveMasters', 'LeaveMasterController');
+
+Route::resource('calenderMasters', 'CalenderMasterController');
+
+Route::resource('scheduleMasters', 'ScheduleMasterController');
+
+Route::resource('leaveDataDetails', 'LeaveDataDetailController');
