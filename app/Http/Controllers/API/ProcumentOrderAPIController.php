@@ -4869,6 +4869,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->addColumn('grvMasters', function ($row) {
                 return $this->getPOtoPaymentChain($row);
             })
+            ->addColumn('poTotalComRptCurrency', function ($row) {
+                if($row->manuallyClosed == 1){
+                    return floatval(array_sum(collect($this->getPOtoPaymentChain($row))->pluck('rptAmount')->toArray()));
+                }else{
+                    return $row->poTotalComRptCurrency;
+                }
+            })
             ->make(true);
 
         return $data;
@@ -4877,7 +4884,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     function getPOtoPaymentChain($row)
     {
         $grvMasters = GRVDetails::selectRaw('sum(noQty*GRVcostPerUnitLocalCur) as localAmount,
-                                        sum(noQty*GRVcostPerUnitComRptCur) as rptAmount,purchaseOrderMastertID,grvAutoID')
+                                        sum(noQty*GRVcostPerUnitComRptCur) as rptAmount,
+                                        purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
             ->with(['grv_master'])
             ->groupBy('grvAutoID')
@@ -4992,6 +5000,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         foreach ($output as $row) {
             $row->grvMasters = $this->getPOtoPaymentChain($row);
+
+            if($row->manuallyClosed == 1){
+                 $row->poTotalComRptCurrency = floatval(array_sum(collect($row->grvMasters)->pluck('rptAmount')->toArray()));
+            }
         }
 
         $type = $request->type;
