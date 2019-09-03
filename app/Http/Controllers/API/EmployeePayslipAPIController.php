@@ -159,12 +159,12 @@ class EmployeePayslipAPIController extends AppBaseController
                 foreach ($addition as $key => $val){
 
                     foreach ($val as $data){
-                        $temp_array[]=array([
+                        $temp_array[]=[
                             'Naration'=>$data['Naration'],
                             'amount'=>$data['amount'],
                             'Rate'=>$data['Rate'],
                             'dayPerHour'=>$data['dayPerHour']
-                        ]);
+                        ];
 
                     }
                     $addition_array[] = array(
@@ -200,12 +200,13 @@ class EmployeePayslipAPIController extends AppBaseController
                 foreach ($deduction as $key => $val){
                     $temp_array = array();
                     foreach ($val as $data){
-                        $temp_array[]=array([
+                        $temp_array[]=[
+
                             'Naration'=>$data['Naration'],
                             'amounts'=>$data['amounts'],
                             'Rate'=>$data['Rate'],
                             'dayPerHour'=>$data['dayPerHour']
-                        ]);
+                        ];
                     }
                     $deduction_array[] = array(
                         'paysheetGroup'=>$key,
