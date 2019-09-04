@@ -615,4 +615,8 @@ class EmployeeDetails extends Model
     public function country(){
         return $this->hasOne('App\Models\CountryMaster','countryCode','countryCode');
     }
+
+    public function schedule(){
+        return $this->hasOne('App\Models\ScheduleMaster','schedulemasterID','schedulemasterID');
+    }
 }

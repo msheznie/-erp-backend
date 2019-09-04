@@ -104,6 +104,7 @@ class ReportAPIController extends AppBaseController
                 if ($request->reportType == 1) { //PO Analysis Item Detail Report
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
+                    manuallyClosed,
                     ServiceLineDes as segment,
                     purchaseOrderID,
                     erp_purchaseordermaster.companyID,
@@ -147,14 +148,14 @@ class ReportAPIController extends AppBaseController
                             $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet.purchaseOrderDetailsID');
                         })->leftJoin(
                             DB::raw('(SELECT
-    max(erp_grvmaster.grvDate) AS lastOfgrvDate,
-    erp_grvdetails.purchaseOrderDetailsID 
-FROM
-    (
-    erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
-    ) 
-WHERE
-    purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
+                                        max(erp_grvmaster.grvDate) AS lastOfgrvDate,
+                                        erp_grvdetails.purchaseOrderDetailsID 
+                                        FROM
+                                            (
+                                            erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
+                                            ) 
+                                        WHERE
+                                        purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })
@@ -162,8 +163,10 @@ WHERE
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
-                    IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
+                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
+                    /*IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,*/
+                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0))) as qtyToReceive,
+                    IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) as noQty,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
                     erp_purchaseorderdetails.itemFinanceCategorySubID,
@@ -172,11 +175,12 @@ WHERE
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
                     IF( erp_purchaseorderdetails.madeLocallyYN = -1, "YES", "NO" ) AS isLocalMade,
-                    erp_purchaseorderdetails.noQty,( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
+                    /*erp_purchaseorderdetails.noQty,*/
+                    ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
                     erp_purchaseorderdetails.GRVcostPerUnitComRptCur as unitCostWithDiscount,
                     erp_purchaseorderdetails.discountPercentage,
                     ( ( ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) ) - erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS discountAmount,
-                    ( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS total,
+                    ( IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS total,
                     financeitemcategorymaster.categoryDescription as financecategory,
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
@@ -244,7 +248,8 @@ WHERE
                             IFNULL(suppliercategoryicvmaster.categoryDescription,"-") as icvMasterDes,
                             IFNULL(suppliercategoryicvsub.categoryDescription,"-") as icvSubDes,
                             supCont.countryName,
-                            IFNULL(podet.TotalPOVal,0) as TotalPOVal,
+                            /*IFNULL(podet.TotalPOVal,0) as TotalPOVal,*/
+                            IF( erp_purchaseordermaster.manuallyClosed = 1, IFNULL(grvdet.TotalGRVValue,0), IFNULL(podet.TotalPOVal,0) ) AS TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
                             podet.Type,
                             IFNULL(podet.POCapex,0) as POCapex,
@@ -313,21 +318,31 @@ WHERE
                                                 $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
                                                 $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
                                             })
-                                            ->leftJoin(DB::raw('(SELECT
-                        erp_paysupplierinvoicemaster.companySystemID,
-                        erp_paysupplierinvoicemaster.companyID,
-                        erp_bookinvsuppdet.purchaseOrderID,
-                        sum(erp_bookinvsuppdet.totRptAmount) as paymentComRptAmount
+                                            ->leftJoin(DB::raw('
+                        (SELECT erp_bookinvsuppdet.purchaseOrderID,
+                         sum(erp_bookinvsuppdet.totRptAmount) AS paymentComRptAmount,
+                          qry.companySystemID
+                          FROM (SELECT
+                       	 erp_paysupplierinvoicemaster.companySystemID,
+                         erp_paysupplierinvoicemaster.PayMasterAutoId,
+                         erp_paysupplierinvoicemaster.BPVcode,
+                         erp_paysupplierinvoicedetail.bookingInvSystemCode
                     FROM
                         erp_paysupplierinvoicemaster
                         INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
                         INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
                     WHERE
-                        erp_paysupplierinvoicemaster.approved=- 1 AND  erp_paysupplierinvoicemaster.cancelYN=0
+                        erp_paysupplierinvoicemaster.approved= -1 
+                        AND  erp_paysupplierinvoicemaster.cancelYN=0
                         AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-                        AND erp_paysupplierinvoicedetail.matchingDocID = 0
+                        /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
                          AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                    Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
+                         ) as qry
+	                 inner join erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID= qry.bookingInvSystemCode
+                     GROUP BY
+                     qry.companySystemID,
+                     /*qry.bookingInvSystemCode,*/
+                     erp_bookinvsuppdet.purchaseOrderID ) pr'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
@@ -336,13 +351,20 @@ WHERE
                         ->leftJoin('suppliercategoryicvmaster', 'erp_purchaseordermaster.supCategoryICVMasterID', '=', 'suppliercategoryicvmaster.supCategoryICVMasterID')
                         ->leftJoin('suppliercategoryicvsub', 'erp_purchaseordermaster.supCategorySubICVID', '=', 'suppliercategoryicvsub.supCategorySubICVID')
                         ->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)
+                        ->where('poCancelledYN',0)
+                        ->where('erp_purchaseordermaster.poType_N', '<>', 5)
+                        ->where('erp_purchaseordermaster.approved', '=', -1)
+                        ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
+                        ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
+                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
                     if ($search) {
                         $output = $output->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
-                            ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
+                            ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")
+                            ->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
                     $output->orderBy('erp_purchaseordermaster.approvedDate', 'ASC');
                     $outputSUM = $output->get();
@@ -418,7 +440,7 @@ WHERE
                         ->selectRaw('
                             companymaster.CompanyID,                      
                             companymaster.CompanyName,                      
-                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IF(erp_purchaseordermaster.manuallyClosed =1,IFNULL(grvdet.TotalGRVValue,0),IFNULL(podet.TotalPOVal,0))) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
                             SUM(IFNULL(podet.POOpex,0)) as POOpex,
@@ -525,7 +547,7 @@ WHERE
                             supplierPrimaryCode as supplierID,
                             erp_purchaseordermaster.supplierName,                     
                             supCont.countryName,                     
-                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IF(erp_purchaseordermaster.manuallyClosed =1,IFNULL(grvdet.TotalGRVValue,0),IFNULL(podet.TotalPOVal,0))) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
                             SUM(IFNULL(podet.POOpex,0)) as POOpex,
@@ -571,7 +593,7 @@ WHERE
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
                     if ($search) {
-                        $output = $output->where('supplierName', 'LIKE', "%{$search}%");
+                        $output = $output->where('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
                     $output->orderBy('supplierPrimaryCode', 'ASC');
                     $outputSUM = $output->get();
@@ -698,6 +720,7 @@ WHERE
                 if ($request->reportType == 1) {
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
+                        manuallyClosed,
                     ServiceLineDes as segment,
                     purchaseOrderID,
                     erp_purchaseordermaster.companyID,
@@ -751,23 +774,27 @@ WHERE
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
-                        erp_purchaseorderdetails.purchaseOrderDetailsID,
+                          erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
-                    IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
+                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
+                    /*IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,*/
+                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0))) as qtyToReceive,
+                    IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) as noQty,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
                     erp_purchaseorderdetails.itemFinanceCategorySubID,
+                    erp_purchaseorderdetails.itemCode,
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
                     IF( erp_purchaseorderdetails.madeLocallyYN = -1, "YES", "NO" ) AS isLocalMade,
-                    erp_purchaseorderdetails.noQty,( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
+                    /*erp_purchaseorderdetails.noQty,*/
+                    ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
                     erp_purchaseorderdetails.GRVcostPerUnitComRptCur as unitCostWithDiscount,
                     erp_purchaseorderdetails.discountPercentage,
                     ( ( ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) ) - erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS discountAmount,
-                    ( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS total,
+                    ( IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS total,
                     financeitemcategorymaster.categoryDescription as financecategory,
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
@@ -793,6 +820,7 @@ WHERE
                     }
 
                     $output = $output->get();
+                    $data = array();
                     foreach ($output as $val) {
                         $data[] = array(
                             'CompanyID' => $val->companyID,
@@ -868,7 +896,8 @@ WHERE
                             IF( suppliermaster.isLCCYN = 1, "YES", "NO" ) AS isLcc,
                             IF( suppliermaster.isSMEYN = 1, "YES", "NO" ) AS isSme,
                             supCont.countryName,
-                            IFNULL(podet.TotalPOVal,0) as TotalPOVal,
+                            IF( erp_purchaseordermaster.manuallyClosed = 1, IFNULL(grvdet.TotalGRVValue,0), IFNULL(podet.TotalPOVal,0) ) AS TotalPOVal,
+                            /*IFNULL(podet.TotalPOVal,0) as TotalPOVal,*/
                             IFNULL(podet.POQty,0) as POQty,
                             podet.Type,
                             IFNULL(podet.POCapex,0) as POCapex,
@@ -947,7 +976,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.approved=- 1 AND  erp_paysupplierinvoicemaster.cancelYN=0
     AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-    AND erp_paysupplierinvoicedetail.matchingDocID = 0
+    /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
      AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
 Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
@@ -1018,7 +1047,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->selectRaw('
                             companymaster.CompanyID,                      
                             companymaster.CompanyName,                      
-                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IF(erp_purchaseordermaster.manuallyClosed =1,IFNULL(grvdet.TotalGRVValue,0),IFNULL(podet.TotalPOVal,0))) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
                             SUM(IFNULL(podet.POOpex,0)) as POOpex,
@@ -1093,7 +1122,7 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                             supplierPrimaryCode as supplierID,
                             erp_purchaseordermaster.supplierName,                  
                             supCont.countryName,                     
-                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IF(erp_purchaseordermaster.manuallyClosed =1,IFNULL(grvdet.TotalGRVValue,0),IFNULL(podet.TotalPOVal,0))) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
                             SUM(IFNULL(podet.POOpex,0)) as POOpex,
@@ -1134,7 +1163,16 @@ Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchas
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')->where('liabilityAccountSysemID',$request->controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN',0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierPrimaryCode', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)
+                        ->where('poCancelledYN',0)
+                        ->where('erp_purchaseordermaster.poType_N', '<>', 5)
+                        ->where('erp_purchaseordermaster.approved', '=', -1)
+                        ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
+                        ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
+                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))
+                        ->groupBy('supplierID')
+                        ->orderBy('supplierPrimaryCode', 'ASC')
+                        ->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
