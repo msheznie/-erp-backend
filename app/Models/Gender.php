@@ -2,15 +2,44 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Eloquent as Model;
 
+/**
+ * @SWG\Definition(
+ *      definition="Gender",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="genderID",
+ *          description="genderID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="name",
+ *          description="name",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="localizedValue",
+ *          description="localizedValue",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
+ *      )
+ * )
+ */
 class Gender extends Model
 {
-    public $table = 'hrms_gender';
 
+    public $table = 'hrms_gender';
+    
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-    protected $primaryKey = 'genderID';
+
 
 
     public $fillable = [
@@ -27,7 +56,8 @@ class Gender extends Model
     protected $casts = [
         'genderID' => 'integer',
         'name' => 'string',
-        'localizedValue' => 'string'
+        'localizedValue' => 'string',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -36,7 +66,8 @@ class Gender extends Model
      * @var array
      */
     public static $rules = [
-
+        'genderID' => 'required'
     ];
 
+    
 }

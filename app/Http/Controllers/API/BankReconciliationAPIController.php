@@ -765,7 +765,9 @@ class BankReconciliationAPIController extends AppBaseController
             }
         }
 
-        $array = array('entity' => $bankReconciliation, 'decimalPlaces' => $decimalPlaces);
+        $array = array('entity' => $bankReconciliation,
+                       'decimalPlaces' => $decimalPlaces,
+                       'date' => Carbon::now());
         $time = strtotime("now");
         $fileName = 'bank_reconciliation' . $id . '_' . $time . '.pdf';
         $html = view('print.bank_reconciliation', $array);

@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getExpenseClaimByCompany(),getExpenseClaimFormData()
  * -- Date: 11- September 2018 By: Fayas Description: Added new function getExpenseClaimAudit(),printExpenseClaim(),getPaymentStatusHistory()
+ * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim(),getExpenseClaimHistory(),getExpenseClaimDepartment(),deleteExpenseClaim()
  */
 namespace App\Http\Controllers\API;
 
@@ -18,9 +19,14 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
+use App\Models\ExpenseClaimDetails;
 use App\Models\ExpenseClaimType;
+use App\Models\QryExpenseClaimDepViewClaim2;
+use App\Models\QryExpenseClaimUserViewHsitory;
+use App\Models\QryExpenseClaimUserViewNewClaim;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -599,5 +605,37 @@ class ExpenseClaimAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function getExpenseClaim()
+    {
+        $emp_id = Helper::getEmployeeID();
+        $expenseClaim = QryExpenseClaimUserViewNewClaim::select('CompanyName','expenseClaimDate','expenseClaimTypeDescription',
+            'comments','confirmedYN','approved','addedForPayment','expenseClaimMasterAutoID','myConfirmed','expenseClaimCode')
+            ->where('createdUserID',$emp_id)
+            ->get();
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Details retrieved successfully');
+    }
+
+    public function getExpenseClaimHistory()
+    {
+        $emp_id = Helper::getEmployeeID();
+        $expenseClaim = QryExpenseClaimUserViewHsitory::select('CompanyName','expenseClaimDate','expenseClaimCode','comments',
+            'expenseClaimTypeDescription','paymentProcessingInProgress','paymentConfirmed','paymentApproved','expenseClaimMasterAutoID')
+            ->where('createdUserID',$emp_id)
+            ->get();
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim history retrieved successfully');
+    }
+
+    public function getExpenseClaimDepartment()
+    {
+        $emp_id = Helper::getEmployeeID();
+        $expenseClaim = QryExpenseClaimDepViewClaim2::select('CompanyName','expenseClaimDate','expenseClaimCode','comments',
+            'expenseClaimTypeDescription','clamiedByName','confirmedYN','approved','addedForPayment','expenseClaimMasterAutoID')
+            ->where('managerID',$emp_id)
+            ->orWhere('seniormanagerID',$emp_id)
+            ->groupBy('expenseClaimMasterAutoID')
+            ->get();
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Department details retrieved successfully');
     }
 }
