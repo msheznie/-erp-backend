@@ -378,7 +378,9 @@ class LeaveDataMasterAPIController extends AppBaseController
             ->leftJoin('hrms_leaveapplicationtype', 'hrms_leavedatamaster.EntryType', '=', 'hrms_leaveapplicationtype.LeaveApplicationTypeID')
             ->leftJoin('hrms_leavemaster', 'hrms_leavedatamaster.leaveType', '=', 'hrms_leavemaster.leavemasterID')
             ->leftJoin('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
-            ->where('hrms_leavedatamaster.empID', $emp_id)->get();
+            ->where('hrms_leavedatamaster.empID', $emp_id)
+            ->orderBy('hrms_leavedatamaster.leavedatamasterID','DESC')
+            ->get();
 
 
         return $this->sendResponse($leaveHistory->toArray(), 'Leave history details retrieved successfully');
