@@ -36,7 +36,7 @@
         }
 
         table > tbody > tr > td {
-            font-size: 11.5px;
+            font-size: 10px;
         }
 
         .theme-tr-head {
@@ -60,7 +60,7 @@
         }
 
         tr td {
-            padding: 5px 0;
+            padding: 0 0;
         }
 
         .table thead th {
@@ -91,7 +91,7 @@
         }
 
         .table th, .table td {
-            padding: 6.4px !important;
+            padding: 5px !important;
         }
 
         table.table-bordered {
@@ -103,12 +103,12 @@
         }
 
         table > thead > tr > th {
-            font-size: 11.5px;
+            font-size: 11px;
         }
 
         hr {
-            margin-top: 16px;
-            margin-bottom: 16px;
+            margin-top: 5px;
+            margin-bottom: 5px;
             border: 0;
             border-top: 1px solid;
             color: #e2e3e5;
@@ -158,6 +158,7 @@
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
+    <div class="text-right" style="font-size: 10px">{{\App\helper\Helper::dateFormat($date) }}</div>
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
@@ -298,7 +299,7 @@
         </tr>
     </table>
     <hr>
-    <table style="margin-top: 5px" width="100%">
+    <table width="100%">
         <tr width="100%">
             <td width="50%">
                 Closing Bank Balance
@@ -309,9 +310,8 @@
         </tr>
     </table>
     <hr>
-    <div style="color: #0F6AB4;margin-top: 30px">Un-Cleared Receipt</div>
-    <hr>
-    <div style="margin-top: 10px">
+    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px">Un-Cleared Receipt</div>
+    <div>
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
@@ -344,10 +344,8 @@
             </tbody>
         </table>
     </div>
-
-    <div style="color: #0F6AB4;margin-top: 30px"> Un-Cleared Payment</div>
-    {{--<hr>--}}
-    <div style="margin-top: 10px">
+    <div style="color: #0F6AB4;margin-top: 10px;margin-bottom: 5px"> Un-Cleared Payment</div>
+    <div >
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
@@ -385,8 +383,7 @@
             </tbody>
         </table>
     </div>
-    {{--<hr>--}}
-    <div class="row" style="margin-top: 60px;margin-left: -8px">
+    <div class="row" style="margin-top: 10px;margin-left: -8px">
         <table>
             <tr width="100%">
                 <td width="60%">
