@@ -44,7 +44,7 @@ class EmployeePayslipAPIController extends AppBaseController
         $periodMasterID = $request['periodMasterID'];
 
         if($periodMasterID==null){
-            return $this->sendResponse([],'Salary Payslip details not found');
+            return $this->sendError('Salary Payslip details not found',200);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -203,7 +203,7 @@ class EmployeePayslipAPIController extends AppBaseController
                         $temp_array[]=[
 
                             'Naration'=>$data['Naration'],
-                            'amounts'=>$data['amounts'],
+                            'amount'=>$data['amounts'],
                             'Rate'=>$data['Rate'],
                             'dayPerHour'=>$data['dayPerHour']
                         ];

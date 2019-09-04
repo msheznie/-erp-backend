@@ -302,4 +302,9 @@ class LeaveDataMaster extends Model
     {
         return $this->hasOne('App\Models\LeaveDataDetail','leavedatamasterID','leavedatamasterID');
     }
+
+    public function application_type()
+    {
+        return $this->belongsTo('App\Models\LeaveApplicationType','EntryType','LeaveApplicationTypeID');
+    }
 }
