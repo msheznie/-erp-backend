@@ -307,4 +307,5 @@ class LeaveDataMaster extends Model
     {
         return $this->belongsTo('App\Models\LeaveApplicationType','EntryType','LeaveApplicationTypeID');
     }
+
 }

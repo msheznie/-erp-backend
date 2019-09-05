@@ -86,7 +86,7 @@ class LeaveDataMasterRepository extends BaseRepository
                 'noOfWorkingDays' =>isset($data['noOfWorkingDays'])?$data['noOfWorkingDays']:null,
                 'noOfNonWorkingDays' =>isset($data['noOfNonWorkingDays'])?$data['noOfNonWorkingDays']:0,
                 'totalDays' =>isset($data['totalDays'])?$data['totalDays']:0,
-                'calculatedDays' =>$calculatedDays,
+                'calculatedDays' =>isset($data['calculatedDays'])?$data['calculatedDays']:0,
                 'comment' =>isset($data['comment'])?$data['comment']:null,
                 'modifieduser' =>isset($data['modifieduser'])?$data['modifieduser']:null,
                 'modifiedpc' =>isset($data['modifiedpc'])?$data['modifiedpc']:null,
@@ -97,8 +97,7 @@ class LeaveDataMasterRepository extends BaseRepository
         return false;
     }
 
-    public function
-    updateLeaveDataMaster($data = null,$ishrapproval = 0)
+    public function updateLeaveDataMaster($data = null,$ishrapproval = 0)
     {
         if($data != null){
 
@@ -122,17 +121,7 @@ class LeaveDataMasterRepository extends BaseRepository
                     'hrapprovalYN' => -1,
                     'RollLevForApp_curr' => 2
                 );
-                $res = LeaveDataMaster::where('leavedatamasterID', $data['leavedatamasterID'])->update($update_array);
-
-                if (isset($data['leaveType']) && $data['entryType'] == 2) {
-                    $update_claim_array = array(
-                        'claimedLeavedatamasterID' => isset($data['claimedLeavedatamasterID']) ? $data['claimedLeavedatamasterID'] : null,
-                        'claimedYN' => isset($data['claimedYN']) ? $data['claimedYN'] : null
-                    );
-
-                    $res = LeaveDataMaster::where('leavedatamasterID', $data['leavedatamasterID'])->update($update_claim_array);
-                }
-                return $res;
+                return LeaveDataMaster::where('leavedatamasterID', $data['leavedatamasterID'])->update($update_array);
             }
             return false;
         }
@@ -142,25 +131,15 @@ class LeaveDataMasterRepository extends BaseRepository
     public function insertLeaveDataDetails($data = null)
     {
         if($data != null){
-            $leaveMasterID = isset($data['leavemasterID'])?$data['leavemasterID']:null;
-
-            $calculateDate = 0;
-            if($leaveMasterID == 16 || $leaveMasterID == 13 || $leaveMasterID == 2 || $leaveMasterID == 3 || $leaveMasterID == 4 || $leaveMasterID == 21 || $leaveMasterID == 5){
-                $calculatedDays = $data['noOfWorkingDays'] + $data['noOfNonWorkingDays'];
-            }
-            else{
-                $calculatedDays = $data['noOfWorkingDays'];
-            }
-
             $insert_array = array(
                 'leavedatamasterID' =>isset($data['leavedatamasterID'])?$data['leavedatamasterID']:null,
-                'leavemasterID' =>$leaveMasterID,
+                'leavemasterID' =>isset($data['leavemasterID'])?$data['leavemasterID']:null,
                 'startDate' =>isset($data['startDate'])?$data['startDate']:null,
                 'endDate' =>isset($data['endDate'])?$data['endDate']:null,
                 'noOfWorkingDays' =>isset($data['noOfWorkingDays'])?$data['noOfWorkingDays']:null,
                 'noOfNonWorkingDays' =>isset($data['noOfNonWorkingDays'])?$data['noOfNonWorkingDays']:0,
                 'totalDays' =>isset($data['totalDays'])?$data['totalDays']:0,
-                'calculatedDays' =>$calculatedDays,
+                'calculatedDays' =>isset($data['calculatedDays'])?$data['calculatedDays']:0,
                 'comment' =>isset($data['comment'])?$data['comment']:null,
                 'modifieduser' =>isset($data['modifieduser'])?$data['modifieduser']:null,
                 'modifiedpc' =>isset($data['modifiedpc'])?$data['modifiedpc']:null,
@@ -171,5 +150,6 @@ class LeaveDataMasterRepository extends BaseRepository
         }
         return false;
     }
+
 
 }

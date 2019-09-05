@@ -217,7 +217,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found');
+            return $this->sendError('Leave Data Master not found',200);
         }
 
         return $this->sendResponse($leaveDataMaster->toArray(), 'Leave Data Master retrieved successfully');
@@ -277,7 +277,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found');
+            return $this->sendError('Leave Data Master not found',200);
         }
 
         $leaveDataMaster = $this->leaveDataMasterRepository->update($input, $id);
@@ -330,7 +330,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveDataMaster = $this->leaveDataMasterRepository->findWithoutFail($id);
 
         if (empty($leaveDataMaster)) {
-            return $this->sendError('Leave Data Master not found');
+            return $this->sendError('Leave Data Master not found',200);
         }
 
         // check is claim data
@@ -379,21 +379,21 @@ class LeaveDataMasterAPIController extends AppBaseController
             ->leftJoin('hrms_leavemaster', 'hrms_leavedatamaster.leaveType', '=', 'hrms_leavemaster.leavemasterID')
             ->leftJoin('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
             ->where('hrms_leavedatamaster.empID', $emp_id)
-            ->orderBy('hrms_leavedatamaster.leavedatamasterID','DESC')
+            ->orderBy('hrms_leavedatamaster.leavedatamasterID', 'DESC')
             ->get();
 
 
         return $this->sendResponse($leaveHistory->toArray(), 'Leave history details retrieved successfully');
     }
 
-    public function getLeaveDetailsForEmployee(Request $request)
+    public function getLeaveAvailability(Request $request)
     {
         $fromDate = isset($request['fromDate']) ? $request['fromDate'] : null;
         $toDate = isset($request['toDate']) ? $request['toDate'] : null;
         $leaveMasterID = isset($request['leaveMasterID']) ? $request['leaveMasterID'] : null;
 
         if ($leaveMasterID == null) {
-            return $this->sendResponse([], 'Leave details not found');
+            return $this->sendError('Leave details not found',200);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -479,7 +479,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         return 0;
     }
 
-    public function saveLeaveDetails(Request $request)
+    public function saveLeaveDetailsBacks(Request $request)
     {
         $input = $request->all();
 
@@ -520,20 +520,22 @@ class LeaveDataMasterAPIController extends AppBaseController
         try {
 
             if (isset($input['empID'])) {
-                $employee = Employee::where('empID',$input['empID'])->first();
+                $employee = Employee::where('empID', $input['empID'])->first();
             } else {
                 $employee = Helper::getEmployeeInfo();
             }
             $empID = $employee->empID;
 
-            $createdLeaveData = $this->saveLeaveDataMaster();
-            $input['leavedatamasterID'] = $createdLeaveData->leavedatamasterID;
+            if (!isset($input['leavedatamasterID'])) {
+                $createdLeaveData = $this->saveLeaveDataMaster();
+                $input['leavedatamasterID'] = $createdLeaveData->leavedatamasterID;
+            }
             $leaveDataMasterID = $input['leavedatamasterID'];
 
             $documentCode = "LA";
-            $input['documentSystemID']=null;
-            $input['companySystemID']=null;
-            $input['empSystemID']=$employee->employeeSystemID;
+            $input['documentSystemID'] = null;
+            $input['companySystemID'] = null;
+            $input['empSystemID'] = $employee->employeeSystemID;
 
             $documentMaster = DocumentMaster::where('documentID', $documentCode)->first();
             if ($documentMaster) {
@@ -547,7 +549,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
             if (empty($leaveDataMasters)) {
-                return $this->sendError("Leave Master Data not found", 500);
+                return $this->sendError("Leave Master Data not found", 200);
             }
 
             if ($leaveType == 2) {
@@ -564,7 +566,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveMasters = LeaveMaster::find($leaveMasterID);
             if (empty($leaveMasters)) {
-                return $this->sendError("Leave Master not found", 500);
+                return $this->sendError("Leave Master not found", 200);
             }
             $restrictDays = $leaveMasters->restrictDays;
 
@@ -585,14 +587,14 @@ class LeaveDataMasterAPIController extends AppBaseController
                 }
 
                 $files = $request->file('file');
-                $attach=[
-                    'companyID'=>$employee->empCompanyID,
-                    'companySystemID'=>$input['companySystemID'],
-                    'documentSystemCode'=>$leaveDataMasterID,
-                    'documentID'=>$documentCode,
-                    'documentSystemID'=>$input['documentSystemID']
+                $attach = [
+                    'companyID' => $employee->empCompanyID,
+                    'companySystemID' => $input['companySystemID'],
+                    'documentSystemCode' => $leaveDataMasterID,
+                    'documentID' => $documentCode,
+                    'documentSystemID' => $input['documentSystemID']
                 ];
-                $this->saveDocumentAttachments($files, $input['attachmentDescription'],$attach);
+                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
             }
 
             $attachmentStatus = 0;
@@ -617,19 +619,19 @@ class LeaveDataMasterAPIController extends AppBaseController
                 ->count();
 
             if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($status != 1) && ($leaveMasterID == 1) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave for past days');
+                return $this->sendError('You cannot apply leave for past days',422);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($status != 1) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
-                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',422);
             } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
-                return $this->sendError('You cannot obtain any leave in your probation period');
+                return $this->sendError('You cannot obtain any leave in your probation period',422);
             } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
-                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave');
+                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave',422);
             } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
-                return $this->sendError('Attachment is required');
+                return $this->sendError('Attachment is required',422);
             } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days');
+                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',422);
             } else if ($isAlreadyApplied && $leaveType == 1) {
-                return $this->sendError('You have already taken leave in this period');
+                return $this->sendError('You have already taken leave in this period',422);
             } else {
 
                 $input['startDate'] = $startDate;
@@ -768,7 +770,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                                         if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                             DB::commit();
-                                            return $this->sendResponse([], 'Successfully leave application applied');
+                                            return $this->sendResponse((object)[], 'Successfully leave application applied');
                                         } else {
 
                                             $input["confirmedby"] = NULL;
@@ -781,7 +783,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                                             );
 
                                             LeaveDataMaster::where('leavedatamasterID', $leaveDataMasterID)->update($update_array);
-                                            return $this->sendError('Error Occurred! Please contact the administration');
+                                            return $this->sendError('Error Occurred! Please contact the administration',500);
                                         }
                                     } else {
 
@@ -819,7 +821,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                                 if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                     DB::commit();
-                                    return $this->sendResponse([], 'Successfully leave application applied');
+                                    return $this->sendResponse((object)[], 'Successfully leave application applied');
                                 } else {
                                     return $this->sendError('Error Occurred! Please contact the administration');
                                 }
@@ -833,7 +835,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                             $isLeaveDataMasterUpdate = $this->leaveDataMasterRepository->updateLeaveDataMaster($input);
 
-                            if ($input["confirmedYN"] == 1 ) {
+                            if ($input["confirmedYN"] == 1) {
 
                                 $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
                                 $department = isset($employee->details->departmentMaster) ? $employee->details->departmentMaster : null;
@@ -915,7 +917,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                                         if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                             DB::commit();
-                                            return $this->sendResponse([], 'Successfully leave application applied');
+                                            return $this->sendResponse((object)[], 'Successfully leave application applied');
                                         } else {
                                             $input["confirmedby"] = NULL;
                                             $input["confirmedDate"] = NULL;
@@ -963,9 +965,9 @@ class LeaveDataMasterAPIController extends AppBaseController
                             } else {
                                 if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                     DB::commit();
-                                    return $this->sendResponse([], 'Successfully leave application applied');
+                                    return $this->sendResponse((object)[], 'Successfully leave application applied');
                                 } else {
-                                    return $this->sendError('Error Occurred! Please contact the administration', 500);
+                                    return $this->sendError('Error Occurred! Please contact the administration');
                                 }
                             }
                         }
@@ -1074,7 +1076,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                                             if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                                 DB::commit();
-                                                return $this->sendResponse([], 'Successfully leave application applied');
+                                                return $this->sendResponse((object)[], 'Successfully leave application applied');
                                             } else {
 
                                                 $input["confirmedby"] = NULL;
@@ -1125,7 +1127,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                                     if (!empty($leaveDataMasters) && $isLeaveDataMasterUpdate) {
                                         DB::commit();
-                                        return $this->sendResponse([], 'Successfully leave application applied');
+                                        return $this->sendResponse((object)[], 'Successfully leave application applied');
                                     } else {
                                         return $this->sendError('Error Occurred! Please contact the administration');
                                     }
@@ -1147,10 +1149,10 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     }
 
-    public function saveDocumentAttachments($files = [], $attachmentDescription = [],$attach=[])
+    public function saveDocumentAttachments($files = [], $attachmentDescription = [], $attach = [])
     {
         if (!empty($files) && !empty($attachmentDescription)) {
-            $i=0;
+            $i = 0;
             foreach ($files as $file) {
                 $size = $file->getSize();
                 $sizeInKbs = 0;
@@ -1166,7 +1168,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                     'fileType' => $file->getClientOriginalExtension(),
                     'originalFileName' => $file->getClientOriginalName(),
                     'sizeInKbs' => $sizeInKbs,
-                    'attachmentDescription'=>$attachmentDescription[$i]
+                    'attachmentDescription' => $attachmentDescription[$i]
                 ];
 
                 $this->saveAttachments($data, $file);
@@ -1177,7 +1179,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     }
 
-    private function saveAttachments($data, $file)
+    private function saveAttachments($data, $file, $is_on_update=0)
     {
         $extension = $data['fileType'];
 
@@ -1222,4 +1224,527 @@ class LeaveDataMasterAPIController extends AppBaseController
 
         DocumentAttachments::where('attachmentID', $documentAttachments->attachmentID)->update($data_update);
     }
+
+    public function getLeaveDetails(Request $request)
+    {
+
+        $input = $request->all();
+
+        if (isset($input['leavedatamasterID']) && $input['leavedatamasterID']) {
+
+            $leaveDataMaster = LeaveDataMaster::find($input['leavedatamasterID']);
+            if (collect($leaveDataMaster)->count() == 0) {
+                return $this->sendError('Leave Details Not Found', 200);
+            }
+
+            $leaveArray = $leaveDataMaster->toArray();
+
+            $employee = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
+
+            $approvManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->approvedby)->first();
+            $hrManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->hrapprovedby)->first();
+
+            $leaveDataDetail = collect($leaveDataMaster->detail)
+                ->only(['leavemasterID', 'startDate', 'endDate', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays', 'calculatedDays', 'comment'])->toArray();
+            $application_type = collect($leaveDataMaster->application_type)->only(['Type'])->toArray();
+
+            $output = array_merge($leaveArray, $leaveDataDetail);
+            $output = array_merge($output, $application_type);
+
+            $output['employee'] = $employee;
+            $output['approver'] = $approvManager;
+            $output['hr'] = $hrManager;
+            $output['attachmets'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
+
+            return $this->sendResponse($output, 'Leave details retrieved successfully');
+        }
+        return $this->sendError('leavedatamasterID Not Found', 200);
+    }
+
+    private function getAttachments($company_id, $document_code, $documentSystemCode)
+    {
+        $res = DocumentAttachments::where('companyID', $company_id)->where('documentID', $document_code)
+            ->where('documentSystemCode', $documentSystemCode)
+            ->get();
+        if (collect($res->count())) {
+            return $res->toArray();
+        }
+        return [];
+
+    }
+
+    public function saveLeaveDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $messages = [
+            'leavemasterID.required' => 'Leave Type field is required'
+        ];
+
+        $validator = \Validator::make($input, [
+            'leavemasterID' => 'required',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'comment' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $leaveMasterID = $input['leavemasterID'];
+        $leaveType = isset($input['leaveType']) ? $input['leaveType'] : null;
+
+        $startDate_o = Carbon::parse($input['startDate']);   // Carbon time object
+        $endDate_o = Carbon::parse($input['endDate']);       // Carbon time object
+        $dateDiff = $startDate_o->diffInDays($endDate_o);
+
+        $startDate = Carbon::parse($input['startDate'])->format('Y-m-d');        //to date format
+        $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
+
+        if ($leaveMasterID == 15) {
+            $policy_validator = \Validato::make($input, [
+                'policytype' => 'required'
+            ]);
+            if ($policy_validator->fails()) {
+                return $this->sendError($policy_validator->messages(), 422);
+            }
+        }
+        DB::beginTransaction();
+        try {
+
+            if (isset($input['empID'])) {
+                $employee = Employee::where('empID', $input['empID'])->first();
+            } else {
+                $employee = Helper::getEmployeeInfo();
+            }
+            $empID = $employee->empID;
+
+            if (!isset($input['leavedatamasterID'])) {
+                $createdLeaveData = $this->saveLeaveDataMaster();
+                $input['leavedatamasterID'] = $createdLeaveData->leavedatamasterID;
+            }
+
+            $leaveDataMasterID = $input['leavedatamasterID'];
+            $documentCode = "LA";
+            $input['documentSystemID'] = Helper::getDocumentSystemIDByCode($documentCode);
+            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);;
+            $input['empSystemID'] = $employee->employeeSystemID;
+
+            $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
+            if (empty($leaveDataMasters)) {
+                return $this->sendError("Leave Master Data not found", 200);
+            }
+
+            $leaveMasters = LeaveMaster::find($leaveMasterID);
+            if (empty($leaveMasters)) {
+                return $this->sendError("Leave Master not found", 200);
+            }
+            $restrictDays = $leaveMasters->restrictDays;
+
+            $dateAssumed = isset($employee->details->dateAssumed) ? $employee->details->dateAssumed : null;
+            $diffInMonths = 0;
+            if ($dateAssumed != null) {
+                $date_assumed_o = Carbon::parse($dateAssumed);
+                $diffInMonths = $startDate_o->diffInMonths($date_assumed_o);
+            }
+
+            //save attachemnts
+            if ($request->hasFile('file')) {
+                $type_validator = \Validator::make($input, [
+                    'attachmentDescription' => 'required'
+                ]);
+
+                if ($type_validator->fails()) {
+                    return $this->sendError($type_validator->messages(), 422);
+                }
+
+                $files = $request->file('file');
+                $attach = [
+                    'companyID' => $employee->empCompanyID,
+                    'companySystemID' => $input['companySystemID'],
+                    'documentSystemCode' => $leaveDataMasterID,
+                    'documentID' => $documentCode,
+                    'documentSystemID' => $input['documentSystemID']
+                ];
+                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
+            }
+            //end of save attachemnts
+
+            $attachmentStatus = 0;
+            $attachments = DocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
+                            ->where('documentID', $documentCode)
+                            ->count();
+            if ($attachments) {
+                $attachmentStatus = 1;
+            }
+
+            $workingDays = CalenderMaster::where('isWorkingDay', -1)->whereBetween('calDate', [$startDate, $endDate])->count();
+
+            $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
+                ->where('hrms_leavedatamaster.empID', $empID)
+                ->where('hrms_leavedatamaster.claimedYN', 0)
+                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
+                    $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
+                })
+                ->count();
+
+            if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
+                return $this->sendError('You cannot apply leave for past days');
+            } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
+                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+            } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
+                return $this->sendError('You cannot obtain any leave in your probation period');
+            } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
+                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave');
+            } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
+                return $this->sendError('Attachment is required');
+            } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
+                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days');
+            } else if ($isAlreadyApplied && $leaveType == 1) {
+                return $this->sendError('You have already taken leave in this period');
+            }
+
+            $input['startDate'] = $startDate;
+            $input['endDate'] = $endDate;
+            $input['modifieduser'] = $empID;
+            $input['modifiedpc'] = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
+            $input['entryType'] = $leaveType;
+            $input['leaveType'] = $leaveMasterID;
+            $input['endFinalDate'] = $endDate;
+            $input['confirmedby'] = null;
+            $input['confirmedDate'] = null;
+
+            if (isset($input["confirmedYN"]) && $input["confirmedYN"] == 1) {
+                $input['confirmedby'] = $empID;
+                $input['confirmedDate'] = date('Y-m-d');
+            }
+
+            $multiple = $leaveMasters->allowMultipleLeave;
+            $pending = LeaveDataMaster::where('empID', $empID)
+                ->where('leaveType', $leaveMasterID)
+                ->where('EntryType', $leaveType)
+                ->where('approvedYN', 0)
+                ->count();
+
+            if ($multiple || $pending == 0) {
+
+                $input['calculatedDays'] = $this->getCalculatedDays($leaveMasterID, $input);
+
+                if (!empty($leaveDataMasters->detail)) {
+                    $is_update = $this->leaveDataMasterRepository->updateLeaveDataDetails($input);
+                } else {
+                    $is_update = $this->leaveDataMasterRepository->insertLeaveDataDetails($input);
+                }
+
+                if (!empty($is_update)) {
+
+                    $input['hrapprovalYN'] = -1;
+                    $input['RollLevForApp_curr'] = 2;
+                    $updateArray = array_only($input,['leaveType','confirmedYN','confirmedby','confirmedDate','hrapprovalYN','RollLevForApp_curr']);
+
+                    $this->leaveDataMasterRepository->update($updateArray,$leaveDataMasterID);
+
+                    if (isset($input["confirmedYN"]) && $input["confirmedYN"] == 1) {
+
+                        $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
+
+                        $department = isset($employee->details->departmentMaster) ? $employee->details->departmentMaster : null;
+
+                        if ($department != null) {
+                            $hrApprovalLevels = isset($department->hrLeaveApprovalLevels) ? $department->hrLeaveApprovalLevels : 0;
+                            $this->approveAndSendMails($hrApprovalLevels, $employee, $input, $leaveDataMasters);
+                            DB::commit();
+                            return $this->sendResponse((object)[], 'Successfully leave application applied');
+                        }
+
+                    } else {
+                        DB::commit();
+                        return $this->sendResponse((object)[], 'Successfully leave application applied');
+                    }
+                }
+            } else {
+                return $this->sendError('You cannot create  leave Application there are pending leave application to be approved',200);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError($e->getMessage(), 500);
+        }
+
+    }
+
+    private function approveAndSendMails($hrApprovalLevels, Employee $employee, $input, LeaveDataMaster $leaveDataMasters)
+    {
+
+        if (isset($input["leaveType"]) && $input["leaveType"] == 1) {
+            $myDocumentName = "Leave Application";
+        } else {
+            $myDocumentName = "Leave Claim";
+        }
+
+        for ($i = 1; $i <= $hrApprovalLevels; $i++) {
+            $doc["companyID"] = $employee->empCompanyID;
+            $doc["employeeID"] = $input['empID'];
+            $doc["departmentID"] = 'HRMS';
+            $doc["serviceLineCode"] = 'x';
+            $doc["documentID"] = 'LA';
+            $doc["documentSystemCode"] = $input["leavedatamasterID"];
+            $doc["documentCode"] = isset($leaveDataMasters->leaveDataMasterCode) ? $leaveDataMasters->leaveDataMasterCode : null;
+            $doc["docConfirmedByEmpID"] = $input['empID'];
+            $doc["requesterID"] = Helper::getEmployeeID();
+            $doc["Approver"] = Helper::getEmployeeID();
+            $doc["rollLevelOrder"] = $i;
+            $doc["approvedYN"] = 0;
+            $doc["rejectedYN"] = 0;
+            $doc["docConfirmedDate"] = date('Y-m-d');
+            LeaveDocumentApproved::create($doc);
+        }
+
+        $managers = EmployeeManagers::where('empID', $input['empID'])->get();
+
+        foreach ($managers as $manager) {
+
+            $empManager = Employee::where('empID', $manager->managerID)->first();
+            $alert["companyID"] = $empManager->empCompanyID;
+            $alert["documentSystemID"] = $input['documentSystemID'];
+            $alert["companySystemID"] = $input['companySystemID'];
+            $alert["empSystemID"] = $input['empSystemID'];
+            $alert["empID"] = $manager->managerID;
+            $alert["docID"] = 'LA';
+            $alert["docApprovedYN"] = 0;
+            $alert["docSystemCode"] = $input['leavedatamasterID'];
+            $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
+            $alert["alertMessage"] = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
+            $alert["alertDateTime"] = date('Y-m-d');
+            $alert["alertViewedYN"] = 0;
+            $alert["alertViewedDateTime"] = Null;
+            $alert["empName"] = $empManager->empName;
+            $alert["empEmail"] = $empManager->empEmail;
+            $alert["emailAlertMessage"] = "Hi " . $empManager->empName . ",<p>" . $myDocumentName . " <b> LA </b> is pending for your approval from <b>" . $employee->empName . "<b/>.<a href=http://gears.gulfenergy-int.com/portal/leave_approval.php>Click here to approve.</a>.<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            $alert["isEmailSend"] = 0;
+            $alert["timeStamp"] = date('Y-m-d');
+            Alert::create($alert);
+        }
+
+        $alert["companyID"] = $employee->empCompanyID;
+        $alert["documentSystemID"] = $input['documentSystemID'];
+        $alert["companySystemID"] = $input['companySystemID'];
+        $alert["empSystemID"] = $input['empSystemID'];
+        $alert["empID"] = $manager->managerID;
+        $alert["docID"] = 'LA';
+        $alert["docApprovedYN"] = 0;
+        $alert["docSystemCode"] = $input['leavedatamasterID'];
+        $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
+        $alert["alertMessage"] = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";
+        $alert["alertDateTime"] = date('Y-m-d');
+        $alert["alertViewedYN"] = 0;
+        $alert["alertViewedDateTime"] = Null;
+        $alert["empName"] = $employee->empName;
+        $alert["empEmail"] = $employee->empEmail;
+        $alert["emailAlertMessage"] = "Hi " . $employee->empName . ",<p>Your Leave Application <b>" . $leaveDataMasters->leaveDataMasterCode . "<b/> has been submitted to <b>" . $empManager->empName . "<b/> for Approval.<br><p style='color:#FF0000'><b>Note : Employees are strictly instructed not to go on the applied leave until they receive an approval of the leave application from their Supervisor/Manager.<b/></p><br><font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+        $alert["isEmailSend"] = 0;
+        $alert["timeStamp"] = date('Y-m-d');
+        Alert::create($alert);
+
+
+    }
+
+    private function getCalculatedDays($leaveMasterID, $data)
+    {
+        if ($leaveMasterID == 16 || $leaveMasterID == 13 || $leaveMasterID == 2 || $leaveMasterID == 3 || $leaveMasterID == 4 || $leaveMasterID == 21 || $leaveMasterID == 5) {
+            return $data['noOfWorkingDays'] + $data['noOfNonWorkingDays'];
+        } else {
+            return $data['noOfWorkingDays'];
+        }
+    }
+
+    public function updateLeaveDetails(Request $request){
+        $input = $request->all();
+
+        $messages = [
+            'leavemasterID.required' => 'Leave Type field is required'
+        ];
+
+        $validator = \Validator::make($input, [
+            'leavemasterID' => 'required',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'comment' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $leaveMasterID = $input['leavemasterID'];
+        $leaveType = isset($input['leaveType']) ? $input['leaveType'] : null;
+
+        $startDate_o = Carbon::parse($input['startDate']);   // Carbon time object
+        $endDate_o = Carbon::parse($input['endDate']);       // Carbon time object
+        $dateDiff = $startDate_o->diffInDays($endDate_o);
+
+        $startDate = Carbon::parse($input['startDate'])->format('Y-m-d');        //to date format
+        $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
+
+        if ($leaveMasterID == 15) {
+            $policy_validator = \Validato::make($input, [
+                'policytype' => 'required'
+            ]);
+            if ($policy_validator->fails()) {
+                return $this->sendError($policy_validator->messages(), 422);
+            }
+        }
+        DB::beginTransaction();
+        try {
+
+            if (isset($input['empID'])) {
+                $employee = Employee::where('empID', $input['empID'])->first();
+            } else {
+                $employee = Helper::getEmployeeInfo();
+            }
+            $empID = $employee->empID;
+
+            if (!isset($input['leavedatamasterID'])) {
+                $createdLeaveData = $this->saveLeaveDataMaster();
+                $input['leavedatamasterID'] = $createdLeaveData->leavedatamasterID;
+            }
+
+            $leaveDataMasterID = $input['leavedatamasterID'];
+            $documentCode = "LA";
+            $input['documentSystemID'] = Helper::getDocumentSystemIDByCode($documentCode);
+            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);;
+            $input['empSystemID'] = $employee->employeeSystemID;
+
+            $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
+            if (empty($leaveDataMasters)) {
+                return $this->sendError("Leave Master Data not found", 200);
+            }
+
+            $leaveMasters = LeaveMaster::find($leaveMasterID);
+            if (empty($leaveMasters)) {
+                return $this->sendError("Leave Master not found", 200);
+            }
+            $restrictDays = $leaveMasters->restrictDays;
+
+            $dateAssumed = isset($employee->details->dateAssumed) ? $employee->details->dateAssumed : null;
+            $diffInMonths = 0;
+            if ($dateAssumed != null) {
+                $date_assumed_o = Carbon::parse($dateAssumed);
+                $diffInMonths = $startDate_o->diffInMonths($date_assumed_o);
+            }
+
+            //save attachemnts
+            if ($request->hasFile('file')) {
+                $type_validator = \Validator::make($input, [
+                    'attachmentDescription' => 'required'
+                ]);
+
+                if ($type_validator->fails()) {
+                    return $this->sendError($type_validator->messages(), 200);
+                }
+
+                $files = $request->file('file');
+                $attach = [
+                    'companyID' => $employee->empCompanyID,
+                    'companySystemID' => $input['companySystemID'],
+                    'documentSystemCode' => $leaveDataMasterID,
+                    'documentID' => $documentCode,
+                    'documentSystemID' => $input['documentSystemID']
+                ];
+                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
+            }
+            //end of save attachemnts
+
+            $attachmentStatus = 0;
+            $attachments = DocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
+                ->where('documentID', $documentCode)
+                ->count();
+            if ($attachments) {
+                $attachmentStatus = 1;
+            }
+
+            $workingDays = CalenderMaster::where('isWorkingDay', -1)->whereBetween('calDate', [$startDate, $endDate])->count();
+
+            $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
+                ->where('hrms_leavedatamaster.empID', $empID)
+                ->where('hrms_leavedatamaster.claimedYN', 0)
+                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
+                    $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
+                })
+                ->count();
+
+            if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
+                return $this->sendError('You cannot apply leave for past days');
+            } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
+                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+            } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
+                return $this->sendError('You cannot obtain any leave in your probation period');
+            } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
+                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave');
+            } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
+                return $this->sendError('Attachment is required');
+            } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
+                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days');
+            } else if ($isAlreadyApplied && $leaveType == 1) {
+                return $this->sendError('You have already taken leave in this period');
+            }
+
+            $leaveDataDetail = $leaveDataMasters->detail;
+
+            if (!empty($leaveDataDetail)) {
+                if ($restrictDays != -1 && $startDate != $leaveDataDetail->startDate && $dateDiff < $restrictDays && $leaveMasterID == 1 &&
+                    ($workingDays > 2) && $leaveType == 1) {
+                    return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+
+                } else if (($restrictDays != -1) && $startDate != date("Y-m-d", strtotime($leaveDataDetail->startDate)) && (date("Y-m-d", strtotime($leaveDataDetail->startDate)) > $startDate) && ($leaveMasterID == 1) && ($leaveType == 1)) {
+                    return $this->sendError('You cannot apply leave for past days');
+
+                }
+                $input['startDate'] = $startDate;
+                $input['endDate'] = $endDate;
+                $input['modifieduser'] = $empID;
+                $input['modifiedpc'] = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
+                $input['entryType'] = $leaveType;
+                $input['leaveType'] = $leaveMasterID;
+                $input['endFinalDate'] = $endDate;
+                if (isset($input["confirmedYN"]) && $input["confirmedYN"] == 1) {
+                    $input['confirmedby'] = $empID;
+                    $input['confirmedDate'] = date('Y-m-d');
+                }
+                $input['calculatedDays'] = $this->getCalculatedDays($leaveMasterID, $input);
+                $is_update = $this->leaveDataMasterRepository->updateLeaveDataDetails($input);
+                if($is_update){
+                    $this->leaveDataMasterRepository->updateLeaveDataMaster($input);
+
+                    if (isset($input["confirmedYN"]) && $input["confirmedYN"] == 1) {
+
+                        $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
+                        $department = isset($employee->details->departmentMaster) ? $employee->details->departmentMaster : null;
+
+                        if ($department != null) {
+                            $hrApprovalLevels = isset($department->hrLeaveApprovalLevels) ? $department->hrLeaveApprovalLevels : 0;
+                            $this->approveAndSendMails($hrApprovalLevels, $employee, $input, $leaveDataMasters);
+                            DB::commit();
+                            return $this->sendResponse((object)[], 'Successfully leave application applied');
+                        }
+
+                    } else {
+                        DB::commit();
+                        return $this->sendResponse((object)[], 'Successfully leave application applied');
+                    }
+                }
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
 }

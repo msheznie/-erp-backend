@@ -1505,8 +1505,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     /* For Profile -> Leave Application */
     Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
     Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
-    Route::get('getLeaveDetailsForEmployee', 'LeaveDataMasterAPIController@getLeaveDetailsForEmployee');
+    Route::get('getLeaveAvailability', 'LeaveDataMasterAPIController@getLeaveAvailability');
     Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
+    Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
+    Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
 
 });
 
