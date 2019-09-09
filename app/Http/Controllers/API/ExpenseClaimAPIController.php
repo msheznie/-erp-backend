@@ -11,6 +11,8 @@
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getExpenseClaimByCompany(),getExpenseClaimFormData()
  * -- Date: 11- September 2018 By: Fayas Description: Added new function getExpenseClaimAudit(),printExpenseClaim(),getPaymentStatusHistory()
  * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim(),getExpenseClaimHistory(),getExpenseClaimDepartment(),deleteExpenseClaim()
+ * -- Date 06 -September 2019 B Rilwan Description: Added new functions - getExpenseDropDownData()
+ * -- Date 09 September  2019 By Rilwan Description: Modified Destroy functions with detail table removals
  */
 
 namespace App\Http\Controllers\API;
@@ -19,6 +21,7 @@ use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
+use App\Models\CurrencyMaster;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
@@ -363,7 +366,9 @@ class ExpenseClaimAPIController extends AppBaseController
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
         }
-
+        if (!empty($expenseClaim->details())) {
+            $expenseClaim->details()->delete();
+        }
         $expenseClaim->delete();
 
         return $this->sendResponse($id, 'Expense Claim deleted successfully');
@@ -703,5 +708,25 @@ class ExpenseClaimAPIController extends AppBaseController
             ->groupBy('expenseClaimMasterAutoID')
             ->get();
         return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Department details retrieved successfully');
+    }
+
+    public function getExpenseDropDownData(Request $request)
+    {
+        $input = $request->all();
+
+        $output['currency']= CurrencyMaster::all();
+        $output['claim_category']= ExpenseClaimCategories::select('expenseClaimCategoriesAutoID','claimCategoriesDescription')
+            ->orderBy('claimCategoriesDescription')
+            ->get();
+        $output['expense_claim_type'] = ExpenseClaimType::all();
+
+        if(isset($input['expenseClaimID'])&&$input['expenseClaimID']){
+            $expense_claim = ExpenseClaim::find($input['expenseClaimID']);
+            if(!empty($expense_claim)){
+                $output['department'] = SegmentMaster::where('companyID',$expense_claim->companyID)->where('isActive',1)->get();
+            }
+        }
+
+        return $this->sendResponse($output, 'Expense Claim Department details retrieved successfully');
     }
 }
