@@ -11,8 +11,10 @@
  * -- Date: 29- August 2019 By: Rilwan Description: Added new function getLeaveHistory()
  * -- Date: 01- September 2019 By: Rilwan Description: Added new function getLeaveDetailsForEmployee(),getLeaveAvailableForEmployee
  * -- Date: 02- September 2019 By: Rilwan Description: Added new function saveLeaveDetails()
- *      saveLeaveDetails() - No Analyzing, discuss with shafri,fayas. shafri discuss with zahlan and asked to translate whole code into Laravel and without analyzig
+ *      saveLeaveDetails(),updateLeaveDetails - No Analyzing, discuss with shafri,fayas. shafri discuss with zahlan and asked to translate whole code into Laravel without analyzig
  * -- Date: 04- September 2019 By Rilwan saveDocumentAttachments(),saveAttachment() - to save attachments
+ * -- Date 05 - September 2019 By Rilwan getLeaveDetails()
+ * -- Date 06- Spetember 2019 By Rilwan updateLeaveDetails()
  */
 
 namespace App\Http\Controllers\API;
@@ -1238,23 +1240,78 @@ class LeaveDataMasterAPIController extends AppBaseController
             }
 
             $leaveArray = $leaveDataMaster->toArray();
-
+            $leaveArray = array_except($leaveArray,['approvedYN','approvedby','approvedDate','hrapprovalYN','hrapprovedby','hrapprovedDate','leaveType',
+                'modifieduser','modifiedpc','createduserGroup','createdpc','timestamp']);
             $employee = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
 
+            // approver details
+            $approved_details = array(
+                'approvedYN' => $leaveDataMaster->approvedYN,
+                'approvedby' => $leaveDataMaster->approvedby,
+                'approvedDate' => (isset($leaveDataMaster->approvedDate)&&$leaveDataMaster->approvedDate)?Carbon::parse($leaveDataMaster->approvedDate)->format('Y-m-d'):null,
+                'empTitle'=>null,
+                'empFullName'=>null
+            );
+
+            //hr approve details
+            $hrapproved_details = array(
+                'hrapprovalYN' => $leaveDataMaster->hrapprovalYN,
+                'hrapprovedby' => $leaveDataMaster->hrapprovedby,
+                'hrapprovedDate' => (isset($leaveDataMaster->hrapprovedDate)&&$leaveDataMaster->hrapprovedDate)?Carbon::parse($leaveDataMaster->hrapprovedDate)->format('Y-m-d'):null,
+                'empTitle'=>null,
+                'empFullName'=>null
+            );
+
+            //get approve manager details
             $approvManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->approvedby)->first();
+
+            //get hr manager details
             $hrManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->hrapprovedby)->first();
 
+            //get leave details
             $leaveDataDetail = collect($leaveDataMaster->detail)
-                ->only(['leavemasterID', 'startDate', 'endDate', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays', 'calculatedDays', 'comment'])->toArray();
+                ->only(['leavemasterID','startDate', 'endDate', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays', 'calculatedDays', 'comment'])->toArray();
+
+            //get availabilty array
+            $availability = $this->leaveDataMasterRepository->getLeaveAvailabilityArray($leaveDataDetail['leavemasterID'],$leaveDataDetail['noOfWorkingDays'],$leaveDataDetail['noOfNonWorkingDays'],$leaveDataDetail['totalDays'],$leaveDataMaster['leaveAvailable'],$leaveDataMaster['empID']);
+
+            // remove array elements from details array, because those elemts set on availability array
+            $leaveDataDetail = array_except($leaveDataDetail,['leavemasterID', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays']);
+
+            //get application type (New leave application or Claim)
             $application_type = collect($leaveDataMaster->application_type)->only(['Type'])->toArray();
 
+            //merge leavedata and leave detail array
             $output = array_merge($leaveArray, $leaveDataDetail);
             $output = array_merge($output, $application_type);
 
+            //set leave master to output array
+            $leave_master = null;
+            if($leaveDataMaster->detail->leave_master){
+                $output['leave_master'] = collect($leaveDataMaster->detail->leave_master)->only(['leavemasterID','leavetype'])->toArray();
+            }
+            //set employee master to output array
             $output['employee'] = $employee;
-            $output['approver'] = $approvManager;
-            $output['hr'] = $hrManager;
-            $output['attachmets'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
+
+            //set approver details to output array
+            if(!empty($approvManager)){
+                $output['approver'] = array_merge($approved_details,$approvManager->toArray());
+            }else{
+                $output['approver'] = $approved_details;
+            }
+
+            //set hr approve details to output array
+            if(!empty($hrManager)){
+                $output['hr'] = array_merge($hrapproved_details,$hrManager->toArray());
+            }else{
+                $output['hr'] = $hrapproved_details;
+            }
+
+            //set leave availability details to output array
+            $output['availability'] = $availability;
+
+            //set leave availability details to output array
+            $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
 
             return $this->sendResponse($output, 'Leave details retrieved successfully');
         }
@@ -1609,8 +1666,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $empID = $employee->empID;
 
             if (!isset($input['leavedatamasterID'])) {
-                $createdLeaveData = $this->saveLeaveDataMaster();
-                $input['leavedatamasterID'] = $createdLeaveData->leavedatamasterID;
+                return $this->sendError("Leave Master Data not found", 200);
             }
 
             $leaveDataMasterID = $input['leavedatamasterID'];
