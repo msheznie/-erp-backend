@@ -619,4 +619,8 @@ class EmployeeDetails extends Model
     public function schedule(){
         return $this->hasOne('App\Models\ScheduleMaster','schedulemasterID','schedulemasterID');
     }
+
+    public function departmentMaster(){
+        return $this->belongsTo('App\Models\DepartmentMaster','functionalDepartmentID','DepartmentID');
+    }
 }

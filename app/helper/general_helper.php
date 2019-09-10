@@ -4062,4 +4062,22 @@ class Helper
         return false;
     }
 
+    public static function getDocumentSystemIDByCode($code)
+    {
+        $doc = Models\DocumentMaster::where('documentID', $code)->first();
+        if($doc){
+            return $doc->documentSystemID;
+        }
+        return null;
+    }
+
+    public static function getCompanySystemIDByCode($code)
+    {
+        $company = Models\Company::where('companyID', $code)->first();
+        if($company){
+            return $company->companySystemID;
+        }
+        return null;
+    }
+
 }

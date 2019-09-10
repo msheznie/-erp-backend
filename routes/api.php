@@ -1488,6 +1488,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('leave_data_details', 'LeaveDataDetailAPIController');
 
+    Route::resource('leave_application_types', 'LeaveApplicationTypeAPIController');
+
+    Route::resource('leave_document_approveds', 'LeaveDocumentApprovedAPIController');
+
+    Route::resource('employee_managers', 'EmployeeManagersAPIController');
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1500,7 +1506,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     /* For Profile -> Leave Application */
     Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
     Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
-    Route::get('getLeaveDetailsForEmployee', 'LeaveDataMasterAPIController@getLeaveDetailsForEmployee');
+    Route::get('getLeaveAvailability', 'LeaveDataMasterAPIController@getLeaveAvailability');
+    Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
+    Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
+    Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
