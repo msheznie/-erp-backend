@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -495,6 +496,14 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'bookingInvSystemCode', 'bookingSuppMasInvAutoID');
     }
 
+    public function setBookingDateAttribute($value)
+    {
+        $this->attributes['bookingDate'] = Helper::dateAddTime($value);
+    }
 
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 
 }

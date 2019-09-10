@@ -877,7 +877,7 @@ class ProcumentOrderAPIController extends AppBaseController
             // checking payment term amount value 0
 
             $checkPoPaymentTermsAmount = PoPaymentTerms::where('poID', $id)
-                ->where('comAmount', '<', 1)
+                ->where('comAmount', '<=', 0)
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {

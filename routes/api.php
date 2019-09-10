@@ -1465,6 +1465,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
     Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
+    Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
 
     /* For Profile -> Profile */
     Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
@@ -1545,8 +1546,6 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 Route::get('runQueue', function () {
     $master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-
-
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
@@ -1563,8 +1562,10 @@ Route::get('runQueue', function () {
 Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
+    $date = '2019-09-10 23:59:59';
+    return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
 });
 
 Route::post('login', 'AuthAPIController@auth');
-Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
 

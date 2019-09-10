@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use App\Traits\ApproveTrait;
 use Eloquent as Model;
 
@@ -840,6 +841,21 @@ class FixedAssetMaster extends Model
     public function group_all_to()
     {
         return $this->hasMany(FixedAssetMaster::class,'groupTO','faID');
+    }
+
+    public function setDateAQAttribute($value)
+    {
+        $this->attributes['dateAQ'] = Helper::dateAddTime($value);
+    }
+
+    public function setDateDEPAttribute($value)
+    {
+        $this->attributes['dateDEP'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 
 }

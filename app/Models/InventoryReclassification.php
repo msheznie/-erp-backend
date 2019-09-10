@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -318,5 +319,13 @@ class InventoryReclassification extends Model
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
+    public function setInventoryReclassificationDateAttribute($value)
+    {
+        $this->attributes['inventoryReclassificationDate'] = Helper::dateAddTime($value);
+    }
 
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 }
