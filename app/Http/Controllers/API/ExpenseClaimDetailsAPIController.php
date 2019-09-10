@@ -399,18 +399,12 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
-        $insert_array = $this->setExpenseClaimDetailsArray($inputArray);
-        $expenseClaimDetails = ExpenseClaimDetails::insert($insert_array);
-        if($expenseClaimDetails){
-            return $this->sendResponse([], 'Expense Claim Details saved successfully');
-        }
-        return $this->sendError('Error Occured !!!!',200);
+        $this->saveExpenseClaimDetailsArray($inputArray);
+        return $this->sendResponse([], 'Expense Claim Details saved successfully');
     }
 
-    private function setExpenseClaimDetailsArray($inputArray)
+    private function saveExpenseClaimDetailsArray($inputArray)
     {
-        $array = [];
         foreach ($inputArray['details'] as $input){
 
             $detail_messages = [
@@ -468,7 +462,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
             $companyCurrencyConversion = Helper::currencyConversion($companySystemID, $input['currencyID'],$input['currencyID'], $input['amount']);
 
-            $array[] =  array(
+            $array =  array(
                 'chartOfAccountSystemID'=>$chartOfAccountSystemID,
                 'glCode'=>$glCode,
                 'glCodeDescription'=>$glCodeDescription,
@@ -494,8 +488,15 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
                 'currencyID'=>$input['currencyID'],
             );
 
+            if(isset($input['expenseClaimDetailsID']) && $input['expenseClaimDetailsID']!=0){
+                //update
+                ExpenseClaimDetails::where('expenseClaimDetailsID',$input['expenseClaimDetailsID'])->update($array);
+            }else{
+                //insert
+                ExpenseClaimDetails::insert($array);
+            }
+
         }
-        return $array;
 
     }
 
@@ -574,5 +575,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
         return $this->sendError('Please attach an attachments',422);
     }
+
+
 
 }

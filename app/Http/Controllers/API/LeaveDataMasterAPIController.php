@@ -1248,7 +1248,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $approved_details = array(
                 'approvedYN' => $leaveDataMaster->approvedYN,
                 'approvedby' => $leaveDataMaster->approvedby,
-                'approvedDate' => (isset($leaveDataMaster->approvedDate)&&$leaveDataMaster->approvedDate)?Carbon::parse($leaveDataMaster->approvedDate)->format('Y-m-d'):null,
+                'approvedDate' => (isset($leaveDataMaster->approvedDate)&&$leaveDataMaster->approvedDate)?Carbon::parse($leaveDataMaster->approvedDate)->format('Y-m-d H:i:s'):null,
                 'empTitle'=>null,
                 'empFullName'=>null
             );
@@ -1257,7 +1257,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $hrapproved_details = array(
                 'hrapprovalYN' => $leaveDataMaster->hrapprovalYN,
                 'hrapprovedby' => $leaveDataMaster->hrapprovedby,
-                'hrapprovedDate' => (isset($leaveDataMaster->hrapprovedDate)&&$leaveDataMaster->hrapprovedDate)?Carbon::parse($leaveDataMaster->hrapprovedDate)->format('Y-m-d'):null,
+                'hrapprovedDate' => (isset($leaveDataMaster->hrapprovedDate)&&$leaveDataMaster->hrapprovedDate)?Carbon::parse($leaveDataMaster->hrapprovedDate)->format('Y-m-d H:i:s'):null,
                 'empTitle'=>null,
                 'empFullName'=>null
             );
@@ -1269,13 +1269,18 @@ class LeaveDataMasterAPIController extends AppBaseController
             $hrManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->hrapprovedby)->first();
 
             //get leave details
-            $leaveDataDetail = collect($leaveDataMaster->detail)
+             $leaveDataDetail = collect($leaveDataMaster->detail)
                 ->only(['leavemasterID','startDate', 'endDate', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays', 'calculatedDays', 'comment'])->toArray();
+
+            if(empty($leaveDataDetail)){
+                return $this->sendError("Leave Details Not Found",200);
+            }
 
             //get availabilty array
             $availability = $this->leaveDataMasterRepository->getLeaveAvailabilityArray($leaveDataDetail['leavemasterID'],$leaveDataDetail['noOfWorkingDays'],$leaveDataDetail['noOfNonWorkingDays'],$leaveDataDetail['totalDays'],$leaveDataMaster['leaveAvailable'],$leaveDataMaster['empID']);
 
             // remove array elements from details array, because those elemts set on availability array
+
             $leaveDataDetail = array_except($leaveDataDetail,['leavemasterID', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays']);
 
             //get application type (New leave application or Claim)
@@ -1323,6 +1328,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $res = DocumentAttachments::where('companyID', $company_id)->where('documentID', $document_code)
             ->where('documentSystemCode', $documentSystemCode)
             ->get();
+
         if (collect($res->count())) {
             return $res->toArray();
         }
