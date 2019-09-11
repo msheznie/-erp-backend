@@ -29,6 +29,7 @@ use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimDetails;
 use App\Models\ExpenseClaimType;
+use App\Models\LeaveDocumentApproved;
 use App\Models\QryExpenseClaimDepViewClaim2;
 use App\Models\QryExpenseClaimUserViewHsitory;
 use App\Models\QryExpenseClaimUserViewNewClaim;
@@ -626,14 +627,14 @@ class ExpenseClaimAPIController extends AppBaseController
                 );
             }
 
-            $documentApproval = DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->get();
+            $documentApproval = LeaveDocumentApproved::where('documentSystemCode', $id)
+                                                    ->where('companySystemID', $masterData->companySystemID)
+                                                    ->where('documentSystemID', $masterData->documentSystemID)
+                                                    ->get();
 
             foreach ($documentApproval as $da) {
                 if ($da->approvedYN == -1) {
-                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    $emails[] = array('empSystemID' => $da->empSystemID,
                         'companySystemID' => $masterData->companySystemID,
                         'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
@@ -647,7 +648,7 @@ class ExpenseClaimAPIController extends AppBaseController
                 return $this->sendError($sendEmail["message"], 500);
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            $deleteApproval = LeaveDocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
