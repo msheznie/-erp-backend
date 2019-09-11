@@ -1493,6 +1493,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('employee_managers', 'EmployeeManagersAPIController');
 
+    Route::resource('document_managements', 'DocumentManagementAPIController');
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1581,4 +1583,6 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+
 

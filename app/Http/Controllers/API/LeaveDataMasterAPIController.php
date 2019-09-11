@@ -1734,7 +1734,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
                 ->where('hrms_leavedatamaster.empID', $empID)
                 ->where('hrms_leavedatamaster.claimedYN', 0)
-                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
+                ->where('hrms_leavedatamaster.leavedatamasterID','!=', $leaveDataMasterID)
                 ->where(function ($query) use ($startDate, $endDate) {
                     $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
                     $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
@@ -1742,19 +1742,19 @@ class LeaveDataMasterAPIController extends AppBaseController
                 ->count();
 
             if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave for past days');
+                return $this->sendError('You cannot apply leave for past days',200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
-                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
             } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
-                return $this->sendError('You cannot obtain any leave in your probation period');
+                return $this->sendError('You cannot obtain any leave in your probation period',200);
             } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
-                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave');
+                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave',200);
             } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
-                return $this->sendError('Attachment is required');
+                return $this->sendError('Attachment is required',200);
             } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days');
+                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
-                return $this->sendError('You have already taken leave in this period');
+                return $this->sendError('You have already taken leave in this period',200);
             }
 
             $leaveDataDetail = $leaveDataMasters->detail;

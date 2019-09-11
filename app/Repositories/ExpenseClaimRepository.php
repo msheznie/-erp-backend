@@ -72,6 +72,7 @@ class ExpenseClaimRepository extends BaseRepository
     public function getClaimFullHistory()
     {
         $emp_id = Helper::getEmployeeID();
+        $emp_id = "E-074";
         return ExpenseClaim::selectRaw('
                                     erp_expenseclaimmaster.expenseClaimMasterAutoID AS expenseClaimMasterAutoID,
                                     erp_expenseclaimmaster.expenseClaimDate AS expenseClaimDate,
@@ -84,13 +85,13 @@ class ExpenseClaimRepository extends BaseRepository
                                     IF(( `erp_expenseclaimmaster`.`confirmedYN` = 1 ), 1, 0)  AS `myConfirmed`,
 	                                IF( ( ( `erp_qry_expenseclaimstatus`.`confirmedYN` = 1 ) OR ( `erp_qry_expenseclaimstatus_monthlyaddition`.`confirmedYN` = 1 ) ), 1, 0 ) AS `paymentConfirmed`,
                                     IF(( ( `erp_qry_expenseclaimstatus`.`approved` = - ( 1 ) ) OR ( `erp_qry_expenseclaimstatus_monthlyaddition`.`approvedYN` = - ( 1 ) ) ),- ( 1 ),0) AS `paymentApproved`')
-                                    ->join('companymaster','erp_expenseclaimmaster.companyID','=','companymaster.CompanyID')
                                     ->leftJoin('erp_qry_expenseclaimstatus','erp_expenseclaimmaster.expenseClaimMasterAutoID','=','erp_qry_expenseclaimstatus.expenseClaimMasterAutoID')
                                     ->leftJoin('erp_expenseclaimtype','erp_expenseclaimmaster.pettyCashYN','=','erp_expenseclaimtype.expenseClaimTypeID')
                                     ->leftJoin('erp_qry_expenseclaimstatus_monthlyaddition','erp_qry_expenseclaimstatus_monthlyaddition.expenseClaimMasterAutoID','=','erp_expenseclaimmaster.expenseClaimMasterAutoID')
                                     ->where('erp_expenseclaimmaster.createdUserID',$emp_id)
+                                    ->groupBy('erp_expenseclaimmaster.expenseClaimMasterAutoID')
                                     ->orderBy('erp_expenseclaimmaster.expenseClaimMasterAutoID','DESC')
-                                    ->get();
+                                    ->paginate(10);
 
     }
 }
