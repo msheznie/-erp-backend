@@ -1680,7 +1680,35 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $detail = DB::select('SELECT erp_bookinvsuppmaster.bookingSuppMasInvAutoID,erp_bookinvsuppmaster.companyID,erp_bookinvsuppdet.purchaseOrderID,erp_bookinvsuppmaster.documentID,erp_grvmaster.grvPrimaryCode,erp_bookinvsuppmaster.bookingInvCode,erp_bookinvsuppmaster.bookingDate,erp_bookinvsuppmaster.comments,erp_bookinvsuppmaster.supplierInvoiceNo,erp_bookinvsuppmaster.confirmedYN,erp_bookinvsuppmaster.confirmedByName,erp_bookinvsuppmaster.approved,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_bookinvsuppdet.totTransactionAmount,	erp_bookinvsuppdet.grvAutoID,erp_bookinvsuppmaster.bookingSuppMasInvAutoID FROM erp_bookinvsuppmaster INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID WHERE purchaseOrderID = ' . $purchaseOrderID . ' ');
+        $detail = DB::select('SELECT
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+                                erp_bookinvsuppmaster.companyID,
+                                erp_bookinvsuppdet.purchaseOrderID,
+                                erp_bookinvsuppmaster.documentID,
+                                erp_grvmaster.grvPrimaryCode,
+                                erp_bookinvsuppmaster.bookingInvCode,
+                                erp_bookinvsuppmaster.bookingDate,
+                                erp_bookinvsuppmaster.comments,
+                                erp_bookinvsuppmaster.supplierInvoiceNo,
+                                erp_bookinvsuppmaster.confirmedYN,
+                                erp_bookinvsuppmaster.confirmedByName,
+                                erp_bookinvsuppmaster.approved,
+                                currencymaster.CurrencyCode,
+                                currencymaster.DecimalPlaces AS transDeci,
+                                erp_bookinvsuppdet.totTransactionAmount,
+                                rptCurrency.CurrencyCode As rptCurrencyCode,
+                                rptCurrency.DecimalPlaces AS rptDecimalPlaces,
+                                erp_bookinvsuppdet.totRptAmount,
+                                erp_bookinvsuppdet.grvAutoID,
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID 
+                            FROM
+                                erp_bookinvsuppmaster
+                                INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                                LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+                                LEFT JOIN currencymaster rptCurrency ON erp_bookinvsuppmaster.companyReportingCurrencyID = rptCurrency.currencyID
+                                LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID 
+                            WHERE
+                                purchaseOrderID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
