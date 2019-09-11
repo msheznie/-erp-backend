@@ -1496,6 +1496,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('document_managements', 'DocumentManagementAPIController');
 
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');

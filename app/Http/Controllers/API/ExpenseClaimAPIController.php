@@ -164,12 +164,7 @@ class ExpenseClaimAPIController extends AppBaseController
         }
 
         $employeeInfo = Helper::getEmployeeInfo();
-        if(isset($input['confirmedYN']) && $input['confirmedYN']==1){
-            $input['confirmedByEmpSystemID'] = $employeeInfo->employeeSystemID;
-            $input['confirmedByEmpID'] = $employeeInfo->empID;
-            $input['confirmedByName'] = $employeeInfo->empFullName;
-            $input['confirmedDate'] = Carbon::now()->toDateTimeString();
-        }
+
         if (isset($input['expenseClaimMasterAutoID']) && $input['expenseClaimMasterAutoID'] > 0) {
             /** update */
             $document = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
@@ -210,10 +205,15 @@ class ExpenseClaimAPIController extends AppBaseController
         $document->expenseClaimDate = Carbon::parse($input['expenseClaimDate'] . date('H:i:s'))->format('Y-m-d H:i:s');
         $document->comments = $input['comments'];
         $document->pettyCashYN = $input['pettyCashYN'];
-        $document->confirmedYN = $input['confirmedYN'];
-        $document->confirmedByEmpSystemID = $input['confirmedByEmpSystemID'];
-        $document->confirmedByName = $input['confirmedByName'];
-        $document->confirmedDate = $input['confirmedDate'];
+
+        if(isset($input['confirmedYN']) && $input['confirmedYN']==1){
+            $document->confirmedYN = $input['confirmedYN'];
+            $document->confirmedByEmpSystemID = $employeeInfo->employeeSystemID;
+            $document->confirmedByEmpID = $employeeInfo->empID;
+            $document->confirmedByName = $employeeInfo->empFullName;
+            $document->confirmedDate = Carbon::now()->toDateTimeString();
+        }
+
         $document->save();
         return $this->sendResponse($document, 'Expense Claim header saved successfully');
     }
