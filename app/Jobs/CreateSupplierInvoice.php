@@ -61,7 +61,7 @@ class CreateSupplierInvoice implements ShouldQueue
                         ->where('isCurrent', -1)
                         ->first();
 
-                    $today = date('Y-m-d');
+                    $today = date('Y-m-d H:i:s');
 
                     $bookingInvLastSerial = BookInvSuppMaster::where('companySystemID', $srMaster->companyToSystemID)
                         ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)

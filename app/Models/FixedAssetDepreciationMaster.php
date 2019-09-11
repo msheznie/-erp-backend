@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -247,5 +248,8 @@ class FixedAssetDepreciationMaster extends Model
     {
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'depMasterAutoID', 'depMasterAutoID');
     }
-
+    public function setDepDateAttribute($value)
+    {
+        $this->attributes['depDate'] = Helper::dateAddTime($value);
+    }
 }

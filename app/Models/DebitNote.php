@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -467,5 +468,15 @@ class DebitNote extends Model
     public function final_approved_by()
     {
         return $this->belongsTo('App\Models\Employee', 'approvedByUserSystemID', 'employeeSystemID');
+    }
+
+    public function setDebitNoteDateAttribute($value)
+    {
+        $this->attributes['debitNoteDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 }

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -491,5 +492,8 @@ class ItemIssueMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
-
+    public function setIssueDateAttribute($value)
+    {
+        $this->attributes['issueDate'] = Helper::dateAddTime($value);
+    }
 }

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -372,4 +373,15 @@ class StockReceive extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function setReceivedDateAttribute($value)
+    {
+        $this->attributes['receivedDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
+
 }

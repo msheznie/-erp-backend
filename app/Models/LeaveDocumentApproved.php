@@ -193,6 +193,8 @@ class LeaveDocumentApproved extends Model
         'serviceLineCode',
         'documentID',
         'documentSystemCode',
+        'companySystemID',
+        'documentSystemID',
         'documentCode',
         'approvalLevelID',
         'rollID',
@@ -216,7 +218,8 @@ class LeaveDocumentApproved extends Model
         'approvedPCID',
         'timeStamp',
         'approvalGroupID',
-        'hrApproval'
+        'hrApproval',
+        'empSystemID'
     ];
 
     /**
@@ -231,6 +234,9 @@ class LeaveDocumentApproved extends Model
         'serviceLineCode' => 'string',
         'documentID' => 'string',
         'documentSystemCode' => 'integer',
+        'documentSystemID' => 'integer',
+        'companySystemID' => 'integer',
+        'empSystemID' => 'integer',
         'documentCode' => 'string',
         'approvalLevelID' => 'integer',
         'rollID' => 'integer',

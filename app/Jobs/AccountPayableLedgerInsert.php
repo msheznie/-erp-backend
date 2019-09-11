@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppMaster;
 use App\Models\DebitNote;
-use App\Models\DebitNoteDetails;
 use App\Models\Employee;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
@@ -291,7 +290,12 @@ class AccountPayableLedgerInsert implements ShouldQueue
                 }
                 if ($finalData) {
                     Log::info($finalData);
-                    $apLedgerInsert = AccountsPayableLedger::insert($finalData);
+                    //$apLedgerInsert = AccountsPayableLedger::insert($finalData);
+                    foreach ($finalData as $data)
+                    {
+                        AccountsPayableLedger::create($data);
+                    }
+
                     Log::info('Successfully inserted to AP table ' . date('H:i:s'));
                     DB::commit();
                 }
