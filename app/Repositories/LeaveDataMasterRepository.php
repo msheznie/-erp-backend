@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Employee;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
 use InfyOm\Generator\Common\BaseRepository;
@@ -151,5 +152,37 @@ class LeaveDataMasterRepository extends BaseRepository
         return false;
     }
 
+    public function getLeaveAvailabilityArray($leaveMasterID,$workingDays,$nonWorkingDays,$total_days_applied,$available,$empID){
 
+        $balance = 0;
+        $day_type = "Working Days";
+
+        if ($leaveMasterID == 16 || $leaveMasterID == 18 || $leaveMasterID == 3 || $leaveMasterID == 13 || $leaveMasterID == 2 || $leaveMasterID == 3 || $leaveMasterID == 4 || $leaveMasterID == 21 || $leaveMasterID == 5 || $leaveMasterID == 11) {
+            $balance = $available - ($workingDays + $nonWorkingDays);
+            $day_type = "Total days applied";
+        } else {
+
+            if ($leaveMasterID == 1) {
+                $employee = Employee::find($empID);
+                $calculateCalendarDays = isset($employee->details->schedule->calculateCalendarDays) ? $employee->details->schedule->calculateCalendarDays : 0;
+                if ($calculateCalendarDays == -1) {
+                    $balance = $available - ($workingDays + $nonWorkingDays);
+                } else {
+                    $balance = $available - $workingDays;
+                }
+            } else {
+                $balance = $available - $workingDays;
+            }
+
+        }
+        return array(
+            'leave_available' => $available,
+            'working_days' => $workingDays,
+            'non_working_days' => $nonWorkingDays,
+            'total_days_applied' => $total_days_applied,
+            'balance' => $balance,
+            'day_type' => $day_type
+        );
+
+    }
 }
