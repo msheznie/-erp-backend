@@ -1506,7 +1506,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
     Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
     Route::get('getExpenseDropDownData', 'ExpenseClaimAPIController@getExpenseDropDownData');
-    Route::post('saveExpenseClaimDetails', 'ExpenseClaimDetailsAPIController@saveExpenseClaimDetails');
+    Route::post('saveExpenseClaimDetails', 'ExpenseClaimDetailsAPIController@saveExpenseClaimDetailsSingle');
     Route::post('saveExpenseClaimAttachments', 'ExpenseClaimDetailsAPIController@saveAttachments');
     Route::get('getExpenseClaimDetails', 'ExpenseClaimAPIController@getExpenseClaimDetails');
 

@@ -168,6 +168,9 @@ class ExpenseClaimAPIController extends AppBaseController
         if (isset($input['expenseClaimMasterAutoID']) && $input['expenseClaimMasterAutoID'] > 0) {
             /** update */
             $document = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+            if(empty($document)){
+               return $this->sendError("Master Details Not Found",200);
+            }
         } else {
             /** insert */
             $document = new ExpenseClaim();
@@ -202,7 +205,7 @@ class ExpenseClaimAPIController extends AppBaseController
 
         }
 
-        $document->expenseClaimDate = Carbon::parse($input['expenseClaimDate'] . date('H:i:s'))->format('Y-m-d H:i:s');
+        $document->expenseClaimDate = Carbon::parse($input['expenseClaimDate'] ." ". date('H:i:s'))->format('Y-m-d H:i:s');
         $document->comments = $input['comments'];
         $document->pettyCashYN = $input['pettyCashYN'];
 
