@@ -657,13 +657,13 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
             $documentAttachments = $this->documentAttachmentsRepo->create($input);
 
-            $decodeFile = base64_decode($file);
+            //$decodeFile = base64_decode($file);
 
             $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
             $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
 
-            Storage::disk('public')->put($path, $decodeFile);
+            Storage::disk('public')->put($path, file_get_contents($file));
 
             $input['isUploaded'] = 1;
             $input['path'] = $path;
