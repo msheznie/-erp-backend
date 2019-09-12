@@ -470,6 +470,11 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
+    public function amend_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'WO_amendRequestedByEmpSystemID', 'employeeSystemID');
+    }
+
     public function sent_supplier_by()
     {
         return $this->belongsTo('App\Models\Employee', 'sentToSupplierByEmpSystemID', 'employeeSystemID');

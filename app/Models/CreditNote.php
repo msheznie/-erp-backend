@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -456,5 +457,14 @@ class CreditNote extends Model
     public function companydocumentattachment_by()
     {
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
+    }
+
+    public function setCreditNoteDateAttribute($value)
+    {
+        $this->attributes['creditNoteDate'] = Helper::dateAddTime($value);
+    }
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 }

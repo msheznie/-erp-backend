@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -311,5 +312,10 @@ class StockAdjustment extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
-    
+
+    public function setStockAdjustmentDateAttribute($value)
+    {
+        $this->attributes['stockAdjustmentDate'] = Helper::dateAddTime($value);
+    }
+
 }

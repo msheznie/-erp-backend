@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -554,5 +555,13 @@ class CustomerInvoice extends Model
         
     ];
 
-    
+    public function setBookingDateAttribute($value)
+    {
+        $this->attributes['bookingDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 }

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -503,5 +504,15 @@ class BankLedger extends Model
 
     public function bank_transfer(){
         return $this->hasOne('App\Models\PaymentBankTransfer','paymentBankTransferID','paymentBankTransferID');
+    }
+
+    public function setDocumentDateAttribute($value)
+    {
+        $this->attributes['documentDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 }

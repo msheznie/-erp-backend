@@ -37,3 +37,13 @@ Route::resource('calenderMasters', 'CalenderMasterController');
 Route::resource('scheduleMasters', 'ScheduleMasterController');
 
 Route::resource('leaveDataDetails', 'LeaveDataDetailController');
+
+Route::resource('documentAttachments', 'DocumentAttachmentsController');
+
+Route::resource('leaveApplicationTypes', 'LeaveApplicationTypeController');
+
+Route::resource('leaveDocumentApproveds', 'LeaveDocumentApprovedController');
+
+Route::resource('employeeManagers', 'EmployeeManagersController');
+
+Route::resource('documentManagements', 'DocumentManagementController');

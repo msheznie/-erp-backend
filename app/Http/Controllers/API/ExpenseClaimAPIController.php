@@ -11,19 +11,28 @@
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getExpenseClaimByCompany(),getExpenseClaimFormData()
  * -- Date: 11- September 2018 By: Fayas Description: Added new function getExpenseClaimAudit(),printExpenseClaim(),getPaymentStatusHistory()
  * -- Date: 29- August 2019 By: Rilwan Description: Added new function getExpenseClaim(),getExpenseClaimHistory(),getExpenseClaimDepartment(),deleteExpenseClaim()
+ * -- Date 06 -September 2019 B Rilwan Description: Added new functions - getExpenseDropDownData()
+ * -- Date 09 September  2019 By Rilwan Description: Modified Destroy functions with detail table removals
  */
+
 namespace App\Http\Controllers\API;
 
 use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
+use App\Models\CurrencyMaster;
+use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
+use App\Models\DocumentManagement;
+use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimDetails;
 use App\Models\ExpenseClaimType;
+use App\Models\LeaveDocumentApproved;
 use App\Models\QryExpenseClaimDepViewClaim2;
 use App\Models\QryExpenseClaimUserViewHsitory;
 use App\Models\QryExpenseClaimUserViewNewClaim;
@@ -31,18 +40,21 @@ use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ExpenseClaimRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\Validator;
+
 use Response;
 
 /**
  * Class ExpenseClaimController
  * @package App\Http\Controllers\API
  */
-
 class ExpenseClaimAPIController extends AppBaseController
 {
     /** @var  ExpenseClaimRepository */
@@ -57,6 +69,7 @@ class ExpenseClaimAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      *
+     * @throws \Prettus\Repository\Exceptions\RepositoryException
      * @SWG\Get(
      *      path="/expenseClaims",
      *      summary="Get a listing of the ExpenseClaims.",
@@ -98,6 +111,7 @@ class ExpenseClaimAPIController extends AppBaseController
      * @param CreateExpenseClaimAPIRequest $request
      * @return Response
      *
+     * @throws \Prettus\Validator\Exceptions\ValidatorException
      * @SWG\Post(
      *      path="/expenseClaims",
      *      summary="Store a newly created ExpenseClaim in storage",
@@ -134,11 +148,77 @@ class ExpenseClaimAPIController extends AppBaseController
      */
     public function store(CreateExpenseClaimAPIRequest $request)
     {
+
         $input = $request->all();
 
-        $expenseClaims = $this->expenseClaimRepository->create($input);
+        $validator = Validator::make($input, [
+            //'companyID' => 'required',
+            //'departmentID' => 'required',
+            'pettyCashYN' => 'required',
+            'comments' => 'required',
+            'expenseClaimDate' => 'required'
+        ]);
+        if ($validator->fails()) {
+            //return $result = $validator->messages();
+            return $this->sendError('Some required fields are missing!', 200);
+        }
 
-        return $this->sendResponse($expenseClaims->toArray(), 'Expense Claim saved successfully');
+        $employeeInfo = Helper::getEmployeeInfo();
+
+        if (isset($input['expenseClaimMasterAutoID']) && $input['expenseClaimMasterAutoID'] > 0) {
+            /** update */
+            $document = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+            if(empty($document)){
+               return $this->sendError("Master Details Not Found",200);
+            }
+        } else {
+            /** insert */
+            $document = new ExpenseClaim();
+            $SL = ExpenseClaim::select('serialNo')->orderBy('expenseClaimMasterAutoID', 'DESC')->first();
+
+            $SL_b = DocumentManagement::select('bigginingSerialNumber as serialNo', 'numberOfSerialNoDigits')->where('documentID', 'EX')
+                ->where('companyID', $employeeInfo->empCompanyID)
+                ->first();
+
+            if (!empty($SL)) {
+                $serialNo = $SL->serialNo;
+            } else {
+                $serialNo = $SL_b->serialNo;
+            }
+            $serialNo = ($serialNo + 1);
+            $document->serialNo = $serialNo;
+            $tmpCode = str_pad($serialNo, $SL_b->numberOfSerialNoDigits, '0', STR_PAD_LEFT);
+            $emp = Employee::where('empID', Helper::getEmployeeID())->first();
+            $Code = 'EX' . $tmpCode;
+            $document->expenseClaimCode = $Code;
+            $document->createdUserID = $emp->empID;
+            $document->createdPcID = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
+            $document->documentID = 'EX';
+            $documentMaster = DocumentMaster::where('documentID', $document->documentID)->first();
+            $document->documentSystemID = $documentMaster->documentSystemID;
+            $document->departmentSystemID = $employeeInfo->details->departmentMaster->departmentSystemID;
+            $document->departmentID = $employeeInfo->details->departmentMaster->DepartmentID;
+            $document->clamiedByName = $emp->empName;
+            $document->seniorManager = isset($employeeInfo->manager->empManagerAttached) ? $employeeInfo->manager->empManagerAttached : null;
+            $document->companySystemID = $employeeInfo->empCompanySystemID;
+            $document->companyID = $employeeInfo->empCompanyID;
+
+        }
+
+        $document->expenseClaimDate = Carbon::parse($input['expenseClaimDate'] ." ". date('H:i:s'))->format('Y-m-d H:i:s');
+        $document->comments = $input['comments'];
+        $document->pettyCashYN = $input['pettyCashYN'];
+
+        if(isset($input['confirmedYN']) && $input['confirmedYN']==1){
+            $document->confirmedYN = $input['confirmedYN'];
+            $document->confirmedByEmpSystemID = $employeeInfo->employeeSystemID;
+            $document->confirmedByEmpID = $employeeInfo->empID;
+            $document->confirmedByName = $employeeInfo->empFullName;
+            $document->confirmedDate = Carbon::now()->toDateTimeString();
+        }
+
+        $document->save();
+        return $this->sendResponse($document, 'Expense Claim header saved successfully');
     }
 
     /**
@@ -196,6 +276,7 @@ class ExpenseClaimAPIController extends AppBaseController
      * @param UpdateExpenseClaimAPIRequest $request
      * @return Response
      *
+     * @throws \Prettus\Validator\Exceptions\ValidatorException
      * @SWG\Put(
      *      path="/expenseClaims/{id}",
      *      summary="Update the specified ExpenseClaim in storage",
@@ -299,13 +380,16 @@ class ExpenseClaimAPIController extends AppBaseController
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
         }
-
+        if (!empty($expenseClaim->details())) {
+            $expenseClaim->details()->delete();
+        }
         $expenseClaim->delete();
 
         return $this->sendResponse($id, 'Expense Claim deleted successfully');
     }
 
-    public function getExpenseClaimByCompany(Request $request){
+    public function getExpenseClaimByCompany(Request $request)
+    {
 
         $input = $request->all();
 
@@ -347,7 +431,7 @@ class ExpenseClaimAPIController extends AppBaseController
                 $expenseClaims = $expenseClaims->where('glCodeAssignedYN', '=', $input['glCodeAssignedYN']);
             }
         }
-        
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -400,7 +484,7 @@ class ExpenseClaimAPIController extends AppBaseController
      * Display the specified Expense Claim Audit.
      * GET|HEAD /getExpenseClaimAudit
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -436,20 +520,20 @@ class ExpenseClaimAPIController extends AppBaseController
         $grandTotal = collect($expenseClaim->details)->pluck('localAmount')->toArray();
         $expenseClaim->total = array_sum($grandTotal);
 
-        foreach ($expenseClaim->details as $item){
+        foreach ($expenseClaim->details as $item) {
             $item->currencyDecimal = 2;
             $item->localDecimal = 3;
 
-            if($item->currency){
+            if ($item->currency) {
                 $item->currencyDecimal = $item->currency->DecimalPlaces;
             }
-            if($item->local_currency){
+            if ($item->local_currency) {
                 $item->localDecimal = $item->local_currency->DecimalPlaces;
             }
         }
 
-        if($expenseClaim->company){
-            if($expenseClaim->company->localcurrency){
+        if ($expenseClaim->company) {
+            if ($expenseClaim->company->localcurrency) {
                 $expenseClaim->localDecimal = $expenseClaim->company->localcurrency->DecimalPlaces;
                 $expenseClaim->localCurrencyCode = $expenseClaim->company->localcurrency->CurrencyCode;
             }
@@ -488,7 +572,7 @@ class ExpenseClaimAPIController extends AppBaseController
                                 ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
                                 LEFT JOIN employees ON erp_paysupplierinvoicemaster.createdUserID = employees.empID 
                             WHERE
-                                erp_directpaymentdetails.expenseClaimMasterAutoID = '.$id.'
+                                erp_directpaymentdetails.expenseClaimMasterAutoID = ' . $id . '
                             GROUP BY
                                 erp_paysupplierinvoicemaster.PayMasterAutoId,
                                 erp_paysupplierinvoicemaster.documentSystemID,
@@ -510,7 +594,7 @@ class ExpenseClaimAPIController extends AppBaseController
                                 ( hrms_monthlyadditionsmaster INNER JOIN hrms_monthlyadditiondetail ON hrms_monthlyadditionsmaster.monthlyAdditionsMasterID = hrms_monthlyadditiondetail.monthlyAdditionsMasterID )
                                 LEFT JOIN employees ON hrms_monthlyadditionsmaster.modifieduser = employees.empID 
                             WHERE
-                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID = '.$id.'
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID = ' . $id . '
                             GROUP BY
                                 hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
                                 hrms_monthlyadditionsmaster.monthlyAdditionsCode,
@@ -525,7 +609,8 @@ class ExpenseClaimAPIController extends AppBaseController
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
-    public function amendExpenseClaimReview(Request $request){
+    public function amendExpenseClaimReview(Request $request)
+    {
 
         $input = $request->all();
 
@@ -536,11 +621,11 @@ class ExpenseClaimAPIController extends AppBaseController
         $documentName = "Expense Claim";
 
         if (empty($masterData)) {
-            return $this->sendError($documentName.' not found');
+            return $this->sendError($documentName . ' not found');
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this '.$documentName.', it is not confirmed');
+            return $this->sendError('You cannot return back to amend this ' . $documentName . ', it is not confirmed');
         }
 
         $emailBody = '<p>' . $masterData->expenseClaimCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
@@ -560,14 +645,14 @@ class ExpenseClaimAPIController extends AppBaseController
                 );
             }
 
-            $documentApproval =  DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->get();
+            $documentApproval = LeaveDocumentApproved::where('documentSystemCode', $id)
+                                                    ->where('companySystemID', $masterData->companySystemID)
+                                                    ->where('documentSystemID', $masterData->documentSystemID)
+                                                    ->get();
 
             foreach ($documentApproval as $da) {
                 if ($da->approvedYN == -1) {
-                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    $emails[] = array('empSystemID' => $da->empSystemID,
                         'companySystemID' => $masterData->companySystemID,
                         'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
@@ -581,13 +666,13 @@ class ExpenseClaimAPIController extends AppBaseController
                 return $this->sendError($sendEmail["message"], 500);
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            $deleteApproval = LeaveDocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             // updating fields
-            $masterData->confirmedYN = 0 ;
+            $masterData->confirmedYN = 0;
             $masterData->confirmedByEmpSystemID = null;
             $masterData->confirmedByEmpID = null;
             $masterData->confirmedByName = null;
@@ -600,7 +685,7 @@ class ExpenseClaimAPIController extends AppBaseController
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), $documentName . ' amend saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -609,20 +694,34 @@ class ExpenseClaimAPIController extends AppBaseController
 
     public function getExpenseClaim()
     {
-        $emp_id = Helper::getEmployeeID();
-        $expenseClaim = QryExpenseClaimUserViewNewClaim::select('CompanyName','expenseClaimDate','expenseClaimTypeDescription',
-            'comments','confirmedYN','approved','addedForPayment','expenseClaimMasterAutoID','myConfirmed','expenseClaimCode')
-            ->where('createdUserID',$emp_id)
-            ->get();
-        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Details retrieved successfully');
+
+        $expenseClaim = $this->expenseClaimRepository->getClaimFullHistory();
+        $paginate = [];
+        if($expenseClaim->count()){
+            $data = [];
+            $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
+            foreach ($expenseClaim as $key=> $claim){
+                $currency = null;
+                if(isset($claim->details[0]->currencyID)) {
+                    $currency = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode','DecimalPlaces')->find($claim->details[0]->currencyID);
+                }
+                $data[$key] = $claim;
+                $data[$key]['total_amount']=$claim->details->sum('amount');
+                $data[$key]['currency']=$currency;
+                $data[$key] = array_except($data[$key] ,['details']);
+            }
+            $paginate['data'] = $data;
+        }
+
+        return $this->sendResponse($paginate, 'Expense Claim Details retrieved successfully');
     }
 
     public function getExpenseClaimHistory()
     {
         $emp_id = Helper::getEmployeeID();
-        $expenseClaim = QryExpenseClaimUserViewHsitory::select('CompanyName','expenseClaimDate','expenseClaimCode','comments',
-            'expenseClaimTypeDescription','paymentProcessingInProgress','paymentConfirmed','paymentApproved','expenseClaimMasterAutoID')
-            ->where('createdUserID',$emp_id)
+        $expenseClaim = QryExpenseClaimUserViewHsitory::select('CompanyName', 'expenseClaimDate', 'expenseClaimCode', 'comments',
+            'expenseClaimTypeDescription', 'paymentProcessingInProgress', 'paymentConfirmed', 'paymentApproved', 'expenseClaimMasterAutoID')
+            ->where('createdUserID', $emp_id)
             ->get();
         return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim history retrieved successfully');
     }
@@ -630,12 +729,86 @@ class ExpenseClaimAPIController extends AppBaseController
     public function getExpenseClaimDepartment()
     {
         $emp_id = Helper::getEmployeeID();
-        $expenseClaim = QryExpenseClaimDepViewClaim2::select('CompanyName','expenseClaimDate','expenseClaimCode','comments',
-            'expenseClaimTypeDescription','clamiedByName','confirmedYN','approved','addedForPayment','expenseClaimMasterAutoID')
-            ->where('managerID',$emp_id)
-            ->orWhere('seniormanagerID',$emp_id)
-            ->groupBy('expenseClaimMasterAutoID')
+        $emp_id = "E-1004";
+        $expenseClaim = QryExpenseClaimDepViewClaim2::select('CompanyName', 'expenseClaimDate', 'expenseClaimCode', 'erp_qry_expenseclaimdepview_claim2.comments',
+            'expenseClaimTypeDescription', 'clamiedByName', 'confirmedYN', 'approved', 'addedForPayment', 'erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
+            ->selectRaw('null as myConfirmed,null as paymentConfirmed,null as paymentApproved, sum(amount) as total_amount,currencyID')// required by dilan
+            ->leftJoin('erp_expenseclaimdetails','erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID','=','erp_expenseclaimdetails.expenseClaimMasterAutoID')
+            ->where('managerID', $emp_id)
+            ->orWhere('seniormanagerID', $emp_id)
+            ->groupBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
+            ->orderBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID','DESC')
+            ->paginate(10);
+        $paginate = [];
+        if($expenseClaim->count()){
+            $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
+            $data = [];
+            foreach ($expenseClaim as $key => $claim){
+                $currency = null;
+                if($claim->currencyID) {
+                    $currency = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode','DecimalPlaces')->find($claim->currencyID);
+                }
+                $data[$key] = $claim;
+                $data[$key]['currency'] = $currency;
+
+            }
+            $paginate['data'] = $data;
+        }
+
+        return $this->sendResponse($paginate, 'Expense Claim Department details retrieved successfully');
+    }
+
+    public function getExpenseDropDownData(Request $request)
+    {
+        $input = $request->all();
+        $employee = Helper::getEmployeeInfo();
+        $company_id = $employee->empCompanyID;
+
+        $output['currency'] = CurrencyMaster::select('currencyID', 'CurrencyName', 'CurrencyCode', 'DecimalPlaces')->get();
+
+        $output['claim_category'] = ExpenseClaimCategories::select('expenseClaimCategoriesAutoID', 'claimCategoriesDescription')
+            ->orderBy('claimCategoriesDescription')
             ->get();
-        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim Department details retrieved successfully');
+
+        $output['expense_claim_type'] = ExpenseClaimType::all();
+
+        $output['department'] = [];
+        if ($company_id) {
+            $output['department'] = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode', 'serviceLineMasterCode', 'ServiceLineDes')
+                                                ->where('companyID', $company_id)
+                                                ->where('isActive', 1)
+                                                ->get();
+        }
+
+        return $this->sendResponse($output, 'Expense Claim Department details retrieved successfully');
+    }
+
+    public function getExpenseClaimDetails(Request $request)
+    {
+
+        $input = $request->all();
+
+        if (!isset($input['expenseClaimMasterAutoID']) || $input['expenseClaimMasterAutoID'] == 0) {
+            $this->sendError('Master ID Not Found', 422);
+        }
+
+        $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim Details Not Found', 200);
+        }
+
+        $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments']);
+        $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
+
+        $output['details'] = ExpenseClaimDetails::select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
+            ->where('expenseClaimMasterAutoID', $input['expenseClaimMasterAutoID'])
+            ->get();
+
+        $output['attachements'] = DocumentAttachments::where('companyID', $expenseClaim->companyID)
+            ->where('documentID', $expenseClaim->documentID)
+            ->where('documentSystemCode', $expenseClaim->expenseClaimMasterAutoID)
+            ->get();
+
+        return $this->sendResponse($output, 'Expense Claim Details retrieved successfully');
     }
 }

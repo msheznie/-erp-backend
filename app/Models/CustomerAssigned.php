@@ -78,6 +78,7 @@ class CustomerAssigned extends Model
         'isAssigned',
         'vatEligible',
         'vatNumber',
+        'vendorCode',
         'vatPercentage',
         'timeStamp'
     ];
@@ -110,6 +111,7 @@ class CustomerAssigned extends Model
         'isAssigned' => 'integer',
         'vatEligible' => 'integer',
         'vatNumber' => 'string',
+        'vendorCode' => 'string',
         'vatPercentage' => 'integer'
     ];
 

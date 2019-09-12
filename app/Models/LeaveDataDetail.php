@@ -215,5 +215,8 @@ class LeaveDataDetail extends Model
     public static $rules = [
     ];
 
-    
+    public function leave_master()
+    {
+        return $this->belongsTo('App\Models\LeaveMaster','leavemasterID','leavemasterID');
+    }
 }

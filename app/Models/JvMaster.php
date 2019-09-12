@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -371,5 +372,14 @@ class JvMaster extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'jvMasterAutoId');
     }
 
+    public function setJVdateAttribute($value)
+    {
+        $this->attributes['JVdate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 
 }

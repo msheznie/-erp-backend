@@ -13,6 +13,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -272,6 +273,11 @@ class AssetDisposalMaster extends Model
     public function modified_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function setDisposalDocumentDateAttribute($value)
+    {
+        $this->attributes['disposalDocumentDate'] = Helper::dateAddTime($value);
     }
 
 }

@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -860,4 +861,13 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
     }
 
+    public function setBPVdateAttribute($value)
+    {
+        $this->attributes['BPVdate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 }

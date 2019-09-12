@@ -2283,7 +2283,12 @@ class GeneralLedgerInsert implements ShouldQueue
 
                 if ($finalData) {
                     Log::info($finalData);
-                    $generalLedgerInsert = GeneralLedger::insert($finalData);
+                    //$generalLedgerInsert = GeneralLedger::insert($finalData);
+                    foreach ($finalData as $data)
+                    {
+                        GeneralLedger::create($data);
+                    }
+                    $generalLedgerInsert = true;
                     Log::info('Successfully inserted to GL table ' . date('H:i:s'));
 
                     if ($generalLedgerInsert) {

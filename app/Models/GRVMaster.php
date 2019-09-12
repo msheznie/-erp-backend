@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -353,5 +354,8 @@ class GRVMaster extends Model
         return $this->belongsTo('App\Models\GRVTypes', 'grvTypeID', 'grvTypeID');
     }
 
-    
+    public function setGrvDateAttribute($value)
+    {
+        $this->attributes['grvDate'] = Helper::dateAddTime($value);
+    }
 }

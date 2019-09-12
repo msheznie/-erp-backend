@@ -13,6 +13,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -659,5 +660,15 @@ class CustomerReceivePayment extends Model
     public function bankledger_by()
     {
         return $this->belongsTo('App\Models\BankLedger', 'custReceivePaymentAutoID', 'documentSystemCode');
+    }
+
+    public function setCustPaymentReceiveDateAttribute($value)
+    {
+        $this->attributes['custPaymentReceiveDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 }

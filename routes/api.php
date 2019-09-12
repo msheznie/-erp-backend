@@ -1465,6 +1465,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
     Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
     Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
+    Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
 
     /* For Profile -> Profile */
     Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
@@ -1487,6 +1488,15 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('leave_data_details', 'LeaveDataDetailAPIController');
 
+    Route::resource('leave_application_types', 'LeaveApplicationTypeAPIController');
+
+    Route::resource('leave_document_approveds', 'LeaveDocumentApprovedAPIController');
+
+    Route::resource('employee_managers', 'EmployeeManagersAPIController');
+
+    Route::resource('document_managements', 'DocumentManagementAPIController');
+
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1495,11 +1505,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getExpenseClaim', 'ExpenseClaimAPIController@getExpenseClaim');
     Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
     Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
+    Route::get('getExpenseDropDownData', 'ExpenseClaimAPIController@getExpenseDropDownData');
+    Route::post('saveExpenseClaimDetails', 'ExpenseClaimDetailsAPIController@saveExpenseClaimDetailsSingle');
+    Route::post('saveExpenseClaimAttachments', 'ExpenseClaimDetailsAPIController@saveAttachments');
+    Route::get('getExpenseClaimDetails', 'ExpenseClaimAPIController@getExpenseClaimDetails');
 
     /* For Profile -> Leave Application */
     Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
     Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
-    Route::get('getLeaveDetailsForEmployee', 'LeaveDataMasterAPIController@getLeaveDetailsForEmployee');
+    Route::get('getLeaveAvailability', 'LeaveDataMasterAPIController@getLeaveAvailability');
+    Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
+    Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
+    Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1545,8 +1563,6 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 Route::get('runQueue', function () {
     $master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-
-
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
@@ -1563,8 +1579,12 @@ Route::get('runQueue', function () {
 Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
+    $date = '2019-09-10 23:59:59';
+    return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
 });
 
 Route::post('login', 'AuthAPIController@auth');
-Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+
+
 

@@ -1554,7 +1554,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
             }
-
         }
 
 
@@ -1602,14 +1601,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder FROM (SELECT
-	performaMasterID ,companyID
-FROM
-	erp_custinvoicedirectdet 
-WHERE
-	custInvoiceDirectID = $id
-	GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
-	AND erp_custinvoicedirectdet.companyID = performatemp.companyID
-	WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
+                            performaMasterID ,companyID
+                        FROM
+                            erp_custinvoicedirectdet 
+                        WHERE
+                            custInvoiceDirectID = $id
+                            GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
+                            AND erp_custinvoicedirectdet.companyID = performatemp.companyID
+                            WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1628,7 +1627,6 @@ WHERE
                     $line_subcontractNo = false;
                     $lineSecondAddress = true;
                     $lineApprovedBy = true;
-
                 }
 
                 break;
@@ -1672,15 +1670,9 @@ WHERE
 
                     if (in_array($companySystemID,[42,31,24])  ) {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate,  qty * rate  AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID  ORDER BY  t.mitID ASC");
-
-                      
                     }else{
                         $invoiceDetails = DB::select("SELECT ClientRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
-
-
                     }
-
-
                 } else {
                     $linePageNo = true;
                     $template = 2;
@@ -1696,7 +1688,6 @@ WHERE
                 /*$linefooterAddress = true;*/
 
                 if ($master->isPerforma == 1) {
-
                     if ($master->customerID == 79 ) {
                         $footerDate = false;
                         $logo = false;
@@ -1728,14 +1719,11 @@ WHERE
                         $line_customerShortCode = false;
                         $linePageNo = true;
                     }
-
-
                 } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-
                 }
                 break;
             default:
@@ -1746,13 +1734,11 @@ WHERE
                     $line_contractNo = false;
                     $line_dueDate = false;
                     $line_customerShortCode = false;
-
                 } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-
                 }
         }
 
@@ -1796,6 +1782,24 @@ WHERE
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
         $customerInvoice->temp = $temp;
+
+        $customerInvoice->is_pdo_vendor = false;
+        $customerInvoice->vatNumber = '';
+        $customerInvoice->vendorCode = '';
+
+        if($customerInvoice->customerID == 79){
+            $customerInvoice->is_pdo_vendor = true;
+            $customerInvoice->bookingInvCode = str_replace('INV','', $customerInvoice->bookingInvCode);
+
+            $customerAssign = CustomerAssigned::where('customerCodeSystem',$customerInvoice->customerID)
+                                                ->where('companySystemID',$customerInvoice->companySystemID)
+                                                ->first();
+
+            if(!empty($customerAssign)){
+                $customerInvoice->vatNumber = $customerAssign->vatNumber;
+                $customerInvoice->vendorCode = $customerAssign->vendorCode;
+            }
+        }
 
 
         $array = array('request' => $customerInvoice);

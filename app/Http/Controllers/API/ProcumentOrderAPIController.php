@@ -877,7 +877,7 @@ class ProcumentOrderAPIController extends AppBaseController
             // checking payment term amount value 0
 
             $checkPoPaymentTermsAmount = PoPaymentTerms::where('poID', $id)
-                ->where('comAmount', '<', 1)
+                ->where('comAmount', '<=', 0)
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {
@@ -1680,7 +1680,35 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $detail = DB::select('SELECT erp_bookinvsuppmaster.bookingSuppMasInvAutoID,erp_bookinvsuppmaster.companyID,erp_bookinvsuppdet.purchaseOrderID,erp_bookinvsuppmaster.documentID,erp_grvmaster.grvPrimaryCode,erp_bookinvsuppmaster.bookingInvCode,erp_bookinvsuppmaster.bookingDate,erp_bookinvsuppmaster.comments,erp_bookinvsuppmaster.supplierInvoiceNo,erp_bookinvsuppmaster.confirmedYN,erp_bookinvsuppmaster.confirmedByName,erp_bookinvsuppmaster.approved,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_bookinvsuppdet.totTransactionAmount,	erp_bookinvsuppdet.grvAutoID,erp_bookinvsuppmaster.bookingSuppMasInvAutoID FROM erp_bookinvsuppmaster INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID WHERE purchaseOrderID = ' . $purchaseOrderID . ' ');
+        $detail = DB::select('SELECT
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+                                erp_bookinvsuppmaster.companyID,
+                                erp_bookinvsuppdet.purchaseOrderID,
+                                erp_bookinvsuppmaster.documentID,
+                                erp_grvmaster.grvPrimaryCode,
+                                erp_bookinvsuppmaster.bookingInvCode,
+                                erp_bookinvsuppmaster.bookingDate,
+                                erp_bookinvsuppmaster.comments,
+                                erp_bookinvsuppmaster.supplierInvoiceNo,
+                                erp_bookinvsuppmaster.confirmedYN,
+                                erp_bookinvsuppmaster.confirmedByName,
+                                erp_bookinvsuppmaster.approved,
+                                currencymaster.CurrencyCode,
+                                currencymaster.DecimalPlaces AS transDeci,
+                                erp_bookinvsuppdet.totTransactionAmount,
+                                rptCurrency.CurrencyCode As rptCurrencyCode,
+                                rptCurrency.DecimalPlaces AS rptDecimalPlaces,
+                                erp_bookinvsuppdet.totRptAmount,
+                                erp_bookinvsuppdet.grvAutoID,
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID 
+                            FROM
+                                erp_bookinvsuppmaster
+                                INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                                LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+                                LEFT JOIN currencymaster rptCurrency ON erp_bookinvsuppmaster.companyReportingCurrencyID = rptCurrency.currencyID
+                                LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID 
+                            WHERE
+                                purchaseOrderID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
@@ -3835,7 +3863,7 @@ WHERE
         $id = $request->get('id');
 
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by',
-            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by', 'approved_by' => function ($query) {
+            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by','amend_by','approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [2, 5, 52]);
             }])->findWithoutFail($id);
@@ -5275,9 +5303,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $id = isset($input['id'])?$input['id']:0;
         $employee = Helper::getEmployeeInfo();
         $purchaseOrder = ProcumentOrder::where('documentSystemID',5)
-            ->where('poType_N',6)
-            ->where('purchaseOrderID',$id)
-            ->first();
+                                        ->where('poType_N',6)
+                                        ->where('purchaseOrderID',$id)
+                                        ->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');

@@ -11,17 +11,25 @@
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getDetailsByExpenseClaim()
  * -- Date: 23- November 2018 By: Fayas Description: Added new function preCheckECDetailEdit()
  */
+
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimDetailsAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimDetailsAPIRequest;
 use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\CountryMaster;
+use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimDetails;
+use App\Models\SegmentMaster;
+use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\ExpenseClaimDetailsRepository;
 use App\Repositories\ExpenseClaimRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -30,17 +38,18 @@ use Response;
  * Class ExpenseClaimDetailsController
  * @package App\Http\Controllers\API
  */
-
 class ExpenseClaimDetailsAPIController extends AppBaseController
 {
     /** @var  ExpenseClaimDetailsRepository */
     private $expenseClaimDetailsRepository;
     private $expenseClaimRepository;
+    private $documentAttachmentsRepo;
 
-    public function __construct(ExpenseClaimDetailsRepository $expenseClaimDetailsRepo,ExpenseClaimRepository $expenseClaimRepo)
+    public function __construct(ExpenseClaimDetailsRepository $expenseClaimDetailsRepo, ExpenseClaimRepository $expenseClaimRepo, DocumentAttachmentsRepository $documentAttachmentsRepo)
     {
         $this->expenseClaimDetailsRepository = $expenseClaimDetailsRepo;
         $this->expenseClaimRepository = $expenseClaimRepo;
+        $this->documentAttachmentsRepo = $documentAttachmentsRepo;
     }
 
     /**
@@ -230,7 +239,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function update($id, UpdateExpenseClaimDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment','chart_of_account','currency','category','local_currency']);
+        $input = array_except($input, ['segment', 'chart_of_account', 'currency', 'category', 'local_currency']);
         $input = $this->convertArrayToValue($input);
         $validator = \Validator::make($input, [
             'expenseClaimCategoriesAutoID' => 'required'
@@ -268,22 +277,23 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
             return $this->sendError('Category not found');
         }
 
-        $chartOfAccount = ChartOfAccount::where('AccountCode',$category->glCode)->first();
+        $chartOfAccount = ChartOfAccount::where('AccountCode', $category->glCode)->first();
 
         if (empty($chartOfAccount)) {
             return $this->sendError('GL Code not found');
         }
 
         $updateArray = ['expenseClaimCategoriesAutoID' => $input['expenseClaimCategoriesAutoID'],
-                                                                    'chartOfAccountSystemID' => $chartOfAccount->chartOfAccountSystemID,
-                                                                    'glCode' => $chartOfAccount->AccountCode , 'glCodeDescription' => $chartOfAccount->AccountDescription];
+            'chartOfAccountSystemID' => $chartOfAccount->chartOfAccountSystemID,
+            'glCode' => $chartOfAccount->AccountCode, 'glCodeDescription' => $chartOfAccount->AccountDescription];
 
         $expenseClaimDetails = $this->expenseClaimDetailsRepository->update($updateArray, $id);
 
         return $this->sendResponse($expenseClaimDetails->toArray(), 'ExpenseClaimDetails updated successfully');
     }
 
-    public function preCheckECDetailEdit(Request $request){
+    public function preCheckECDetailEdit(Request $request)
+    {
         $input = $request->all();
         $id = $input['id'];
         /** @var ExpenseClaimDetails $expenseClaimDetails */
@@ -369,9 +379,303 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
         $id = $input['expenseClaimMasterAutoID'];
 
         $items = ExpenseClaimDetails::where('expenseClaimMasterAutoID', $id)
-                                ->with(['segment','chart_of_account','currency','category','local_currency'])
-                                ->get();
+            ->with(['segment', 'chart_of_account', 'currency', 'category', 'local_currency'])
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Expense Claim Details retrieved successfully');
     }
+
+    public function saveExpenseClaimDetails(CreateExpenseClaimDetailsAPIRequest $request)
+    {
+
+        $inputArray = $request->all();
+
+        $messages = [
+            'details.required' => 'Expense claim details is required.',
+        ];
+
+        $validator = \Validator::make($inputArray, [
+            'expenseClaimMasterAutoID' => 'required',
+            'details' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $this->saveExpenseClaimDetailsMultipleArray($inputArray);
+        return $this->sendResponse([], 'Expense Claim Details saved successfully');
+    }
+
+    private function saveExpenseClaimDetailsMultipleArray($inputArray)
+    {
+        foreach ($inputArray['details'] as $input) {
+
+            $detail_messages = [
+                'expenseClaimCategoriesAutoID.required' => 'Claim Category is required.',
+                'serviceLineCode.required' => 'Department is required.',
+                'currencyID.required' => 'Currency is required.',
+            ];
+
+            $detail_validator = \Validator::make($input, [
+                'expenseClaimCategoriesAutoID' => 'required',
+                'serviceLineCode' => 'required',
+                'currencyID' => 'required',
+                'amount' => 'required',
+                'description' => 'required',
+                'docRef' => 'required',
+                'amount' => 'required'
+            ], $detail_messages);
+
+            if ($detail_validator->fails()) {
+                return $this->sendError($detail_validator->messages(), 422);
+            }
+
+            $expenseClaim = ExpenseClaim::find($inputArray['expenseClaimMasterAutoID']);
+            if ($inputArray['expenseClaimMasterAutoID'] == 0 || empty($expenseClaim)) {
+                return $this->sendError('Expense Claim Master Not Found', 422);
+            }
+
+            $companyID = $expenseClaim->companyID;
+            $companySystemID = $expenseClaim->companySystemID;
+
+            $localCurrency = null;
+            $reportingCurrency = null;
+            $company = Company::find($companySystemID);
+            if (!empty($company)) {
+                $localCurrency = $company->localCurrencyID;
+                $reportingCurrency = $company->reportingCurrency;
+            }
+
+            $claimCategories = ExpenseClaimCategories::select('glCode', 'glCodeDescription', 'chartOfAccountSystemID')
+                ->where('expenseClaimCategoriesAutoID', $input['expenseClaimCategoriesAutoID'])
+                ->first();
+
+            $chartOfAccountSystemID = 0;
+            $glCode = null;
+            $glCodeDescription = null;
+
+            if (!empty($claimCategories)) {
+                $chartOfAccountSystemID = $claimCategories->chartOfAccountSystemID;
+                $glCode = $claimCategories->glCode;
+                $glCodeDescription = $claimCategories->glCodeDescription;
+            }
+
+            $serviceLine = SegmentMaster::where('ServiceLineCode', $input['serviceLineCode'])->first();
+            $serviceLineSystemID = $serviceLine->serviceLineSystemID;
+
+            $companyCurrencyConversion = Helper::currencyConversion($companySystemID, $input['currencyID'], $input['currencyID'], $input['amount']);
+
+            $array = array(
+                'chartOfAccountSystemID' => $chartOfAccountSystemID,
+                'glCode' => $glCode,
+                'glCodeDescription' => $glCodeDescription,
+                'companyID' => $companyID,
+                'companySystemID' => $companySystemID,
+
+                'localCurrency' => $companyCurrencyConversion['trasToLocER'],
+                'comRptCurrency' => $companyCurrencyConversion['trasToRptER'],
+                'localCurrencyER' => $localCurrency,
+                'comRptCurrencyER' => $reportingCurrency,
+                'currencyER' => 1,
+
+                'comRptAmount' => $companyCurrencyConversion['reportingAmount'],
+                'localAmount' => $companyCurrencyConversion['localAmount'],
+                'amount' => $input['amount'],
+
+                'expenseClaimMasterAutoID' => $inputArray['expenseClaimMasterAutoID'],
+                'expenseClaimCategoriesAutoID' => $input['expenseClaimCategoriesAutoID'],
+                'description' => $input['description'],
+                'docRef' => $input['docRef'],
+                'serviceLineCode' => $input['serviceLineCode'],
+                'serviceLineSystemID' => $serviceLineSystemID,
+                'currencyID' => $input['currencyID'],
+            );
+
+            if (isset($input['expenseClaimDetailsID']) && $input['expenseClaimDetailsID'] != 0) {
+                //update
+                ExpenseClaimDetails::where('expenseClaimDetailsID', $input['expenseClaimDetailsID'])->update($array);
+            } else {
+                //insert
+                ExpenseClaimDetails::insert($array);
+            }
+
+        }
+
+    }
+
+    public function saveExpenseClaimDetailsSingle(CreateExpenseClaimDetailsAPIRequest $request)
+    {
+        $input = $request->all();
+        $detail_messages = [
+            'expenseClaimCategoriesAutoID.required' => 'Claim Category is required.',
+            'serviceLineCode.required' => 'Department is required.',
+            'currencyID.required' => 'Currency is required.',
+        ];
+
+        $detail_validator = \Validator::make($input, [
+            'expenseClaimCategoriesAutoID' => 'required',
+            'serviceLineCode' => 'required',
+            'currencyID' => 'required',
+            'amount' => 'required',
+            'description' => 'required',
+            'docRef' => 'required',
+            'amount' => 'required'
+        ], $detail_messages);
+
+        if ($detail_validator->fails()) {
+            return $this->sendError($detail_validator->messages(), 422);
+        }
+        if(isset($input['expenseClaimMasterAutoID'])&&$input['expenseClaimMasterAutoID']>0){
+            $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+            if (empty($expenseClaim)) {
+                return $this->sendError('Expense Claim Master Not Found', 422);
+            }
+        }else{
+            return $this->sendError('Expense Claim Master Not Found', 422);
+        }
+
+        $companyID = $expenseClaim->companyID;
+        $companySystemID = $expenseClaim->companySystemID;
+
+        $localCurrency = null;
+        $reportingCurrency = null;
+        $company = Company::find($companySystemID);
+        if (!empty($company)) {
+            $localCurrency = $company->localCurrencyID;
+            $reportingCurrency = $company->reportingCurrency;
+        }
+
+        $claimCategories = ExpenseClaimCategories::select('glCode', 'glCodeDescription', 'chartOfAccountSystemID')
+            ->where('expenseClaimCategoriesAutoID', $input['expenseClaimCategoriesAutoID'])
+            ->first();
+
+        $chartOfAccountSystemID = 0;
+        $glCode = null;
+        $glCodeDescription = null;
+
+        if (!empty($claimCategories)) {
+            $chartOfAccountSystemID = $claimCategories->chartOfAccountSystemID;
+            $glCode = $claimCategories->glCode;
+            $glCodeDescription = $claimCategories->glCodeDescription;
+        }
+
+        $serviceLine = SegmentMaster::where('ServiceLineCode', $input['serviceLineCode'])->first();
+        $serviceLineSystemID = $serviceLine->serviceLineSystemID;
+
+        $companyCurrencyConversion = Helper::currencyConversion($companySystemID, $input['currencyID'], $input['currencyID'], $input['amount']);
+
+        $array = array(
+            'chartOfAccountSystemID' => $chartOfAccountSystemID,
+            'glCode' => $glCode,
+            'glCodeDescription' => $glCodeDescription,
+            'companyID' => $companyID,
+            'companySystemID' => $companySystemID,
+
+            'localCurrency' => $companyCurrencyConversion['trasToLocER'],
+            'comRptCurrency' => $companyCurrencyConversion['trasToRptER'],
+            'localCurrencyER' => $localCurrency,
+            'comRptCurrencyER' => $reportingCurrency,
+            'currencyER' => 1,
+
+            'comRptAmount' => $companyCurrencyConversion['reportingAmount'],
+            'localAmount' => $companyCurrencyConversion['localAmount'],
+            'amount' => $input['amount'],
+
+            'expenseClaimCategoriesAutoID' => $input['expenseClaimCategoriesAutoID'],
+            'description' => $input['description'],
+            'docRef' => $input['docRef'],
+            'serviceLineCode' => $input['serviceLineCode'],
+            'serviceLineSystemID' => $serviceLineSystemID,
+            'currencyID' => $input['currencyID'],
+        );
+
+        if (isset($input['expenseClaimDetailsID']) && $input['expenseClaimDetailsID'] != 0) {
+            //update
+            $details = $this->expenseClaimDetailsRepository->update($array, $input['expenseClaimDetailsID']);
+        } else {
+            //insert
+            $array['expenseClaimMasterAutoID'] = $input['expenseClaimMasterAutoID'];
+            $details = $this->expenseClaimDetailsRepository->create($array);
+        }
+            return $this->sendResponse($details,'Expense Claim Details Saved Successfully');
+    }
+
+
+    public function saveAttachments(Request $request)
+    {
+
+        $input = $request->all();
+
+        if ($request->hasFile('file')) {
+
+            $file = $request->file('file');
+
+            $validator = \Validator::make($input, [
+                'attachmentDescription' => 'required',
+                'expenseClaimMasterAutoID' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+            if (empty($expenseClaim)) {
+                return $this->sendError("Expense Claim Master Details Not Found", 200);
+            }
+
+            $input['companySystemID'] = $expenseClaim->companySystemID;
+            $input['companyID'] = $expenseClaim->companyID;
+            $input['documentSystemID'] = $expenseClaim->documentSystemID;
+            $input['documentID'] = $expenseClaim->documentID;
+            $input['documentSystemCode'] = $expenseClaim->expenseClaimMasterAutoID;
+
+            $size = $file->getSize();
+            $sizeInKbs = 0;
+            if ($size) {
+                $sizeInKbs = $size / 1024;
+            }
+
+            if ($sizeInKbs > 31457280) {
+                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+            }
+
+            $extension = $file->getClientOriginalExtension();
+            $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+                'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+                'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+                'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+                'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+                'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+                'xbap', 'xnk', 'php'];
+
+            if (in_array($extension, $blockExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
+            }
+
+            $input['originalFileName'] = $file->getClientOriginalName();
+
+            $documentAttachments = $this->documentAttachmentsRepo->create($input);
+
+            $decodeFile = base64_decode($file);
+
+            $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
+
+            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+
+            Storage::disk('public')->put($path, $decodeFile);
+
+            $input['isUploaded'] = 1;
+            $input['path'] = $path;
+
+            $documentAttachments = $this->documentAttachmentsRepo->update($input, $documentAttachments->attachmentID);
+
+            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+
+        }
+
+        return $this->sendError('Please attach an attachments', 422);
+    }
+
+
 }

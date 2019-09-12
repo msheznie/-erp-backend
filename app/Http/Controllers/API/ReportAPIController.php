@@ -341,7 +341,7 @@ class ReportAPIController extends AppBaseController
 	                 inner join erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID= qry.bookingInvSystemCode
                      GROUP BY
                      qry.companySystemID,
-                     /*qry.bookingInvSystemCode,*/
+                     qry.bookingInvSystemCode,
                      erp_bookinvsuppdet.purchaseOrderID ) pr'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
@@ -942,43 +942,52 @@ WHERE
                             $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
                         })
                         ->leftJoin(DB::raw('(SELECT
-	erp_paysupplierinvoicemaster.companySystemID,
-	erp_paysupplierinvoicemaster.companyID,
-	erp_advancepaymentdetails.purchaseOrderID,
-	sum( erp_advancepaymentdetails.comRptAmount ),
-IF
-	( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
-IF
-	( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
-FROM
-	erp_paysupplierinvoicemaster
-	INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
-	INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
-WHERE
-	erp_advancepaymentdetails.purchaseOrderID > 0 
-	AND erp_paysupplierinvoicemaster.approved =- 1 
-	AND erp_paysupplierinvoicemaster.cancelYN = 0 
-	AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-GROUP BY
-	purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
+                                erp_paysupplierinvoicemaster.companySystemID,
+                                erp_paysupplierinvoicemaster.companyID,
+                                erp_advancepaymentdetails.purchaseOrderID,
+                                sum( erp_advancepaymentdetails.comRptAmount ),
+                            IF
+                                ( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
+                            IF
+                                ( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
+                            FROM
+                                erp_paysupplierinvoicemaster
+                                INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+                                INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
+                            WHERE
+                                erp_advancepaymentdetails.purchaseOrderID > 0 
+                                AND erp_paysupplierinvoicemaster.approved =- 1 
+                                AND erp_paysupplierinvoicemaster.cancelYN = 0 
+                                AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                            GROUP BY
+                                purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
                         })
-                        ->leftJoin(DB::raw('(SELECT
-    erp_paysupplierinvoicemaster.companySystemID,
-    erp_paysupplierinvoicemaster.companyID,
-    erp_bookinvsuppdet.purchaseOrderID,
-    sum(erp_bookinvsuppdet.totRptAmount) as paymentComRptAmount
-FROM
-    erp_paysupplierinvoicemaster
-    INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-    INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
-WHERE
-    erp_paysupplierinvoicemaster.approved=- 1 AND  erp_paysupplierinvoicemaster.cancelYN=0
-    AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-    /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
-     AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-Group By erp_paysupplierinvoicemaster.companySystemID,erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
+                        ->leftJoin(DB::raw('(SELECT erp_bookinvsuppdet.purchaseOrderID,
+                         sum(erp_bookinvsuppdet.totRptAmount) AS paymentComRptAmount,
+                          qry.companySystemID
+                          FROM (SELECT
+                       	 erp_paysupplierinvoicemaster.companySystemID,
+                         erp_paysupplierinvoicemaster.PayMasterAutoId,
+                         erp_paysupplierinvoicemaster.BPVcode,
+                         erp_paysupplierinvoicedetail.bookingInvSystemCode
+                    FROM
+                        erp_paysupplierinvoicemaster
+                        INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
+                        INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
+                    WHERE
+                        erp_paysupplierinvoicemaster.approved= -1 
+                        AND  erp_paysupplierinvoicemaster.cancelYN=0
+                        AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
+                        /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
+                         AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                         ) as qry
+	                 inner join erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID= qry.bookingInvSystemCode
+                     GROUP BY
+                     qry.companySystemID,
+                     qry.bookingInvSystemCode,
+                     erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
