@@ -212,14 +212,15 @@
                                         {{$request->createduser->empName}}
                                     @endif
                                 </td>
-                                <td width="15%">
-                                    <span class="font-weight-bold">Checked By :</span>
-                                </td>
-                                <td width="15%">
-                                    <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
-                                </td>
-
-                                @if($request->lineApprovedBy)
+                                @if(!$request->is_pdo_vendor)
+                                    <td width="15%">
+                                        <span class="font-weight-bold">Checked By :</span>
+                                    </td>
+                                    <td width="15%">
+                                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
+                                    </td>
+                                @endif
+                                @if($request->lineApprovedBy && !$request->is_pdo_vendor)
                                     <td width="15%">
                                         <span class="font-weight-bold">Approved By :</span>
                                     </td>
@@ -228,7 +229,6 @@
                                     </td>
                                 @endif
                             </tr>
-
                         </table>
                     </div>
 
@@ -354,6 +354,9 @@
                         </h3>
 
                         <h3 class="font-weight-bold">
+                            @if($request->is_pdo_vendor)
+                                Tax
+                            @endif
                             Invoice
                         </h3>
                     </div>
@@ -369,6 +372,7 @@
 
     <div class="row">
         <table style="width:100%">
+            <tr>
             <td style="width: 40%">
                 <fieldset class="scheduler-border" style="background-color: #f1f1f1">
                     <legend class="scheduler-border" style="background-color: white;border: 1px solid black">Customer
@@ -405,7 +409,6 @@
                             <tr>
                                 <td>{{$request->customer->customerCity}}</td>
                             </tr>
-
                             <tr>
                                 <td></td>
                             </tr>
@@ -415,26 +418,26 @@
                             <tr>
                                 <td></td>
                             </tr>
+                        @endif
+                        <tr>
+                            <td>
+                                @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif
+                            </td>
+                        </tr>
+                        @if($request->is_pdo_vendor)
                             <tr>
-                                <td></td>
+                                <td>
+                                    &nbsp;
+                                </td>
                             </tr>
-                            {{-- <tr>
-                                 <td></td>
-                             </tr>
-                             <tr>
-                                 <td></td>
-                             </tr>
-                             <tr>
-                                 <td></td>
-                             </tr>
-                             <tr>
-                                 <td></td>
-                             </tr>--}}
+                            <tr>
+                                <td>
+                                    &nbsp;
+                                </td>
+                            </tr>
                         @endif
                     </table>
                 </fieldset>
-
-
             </td>
 
             <td style="width: 10%"></td>
@@ -502,7 +505,6 @@
 
                             </tr>
                         @endif
-
                         @if($request->line_paymentTerms)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Payment Terms</span></td>
@@ -511,7 +513,6 @@
 
                             </tr>
                         @endif
-
                         @if ($request->line_unit)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Unit</span></td>
@@ -532,47 +533,25 @@
 
                                     </span></td>
                             </tr>
-                            @endif
-
-                            {{-- @if (!$request->template)
-                                 <tr>
-                                     <td width="120px"><span class="font-weight-bold">Rig</span></td>
-                                     <td width="10px"><span class="font-weight-bold">-</span></td>
-                                     <td><span>{{$request->rigNo}}</span></td>
-                                 </tr>
-                                 <tr>
-                                     <td width="150px"><span class="font-weight-bold">Well</span></td>
-                                     <td width="10px">
-                             <span class="font-weight-bold">
-                               -
-                              </span>
-                                     </td>
-
-                                     <td>
-
-
-                                         @if($request->invoicedetails[0]->performadetails )
-                                             <span>
-                                       @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field )
-                                                     {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field->fieldShortCode}}
-                                                     |
-                                                 @endif
-                                                 @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster )
-                                                     {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->wellNo}}
-                                                 @endif
-
-                                                 @endif </span>
-                                     </td>
-                                     @endif
-     --}}
-
+                        @endif
+                        @if ($request->is_pdo_vendor)
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">TRN</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>-</span></td>
                             </tr>
-
-
+                        @endif
+                        @if ($request->is_pdo_vendor)
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">VAT Number</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>{{$request->vatNumber}}</span></td>
+                            </tr>
+                        @endif
                     </table>
                 </fieldset>
-
             </td>
+            </tr>
         </table>
 
     </div>
@@ -788,11 +767,11 @@
                     </td>
                     <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                <span class="font-weight-bold">
+                            <span class="font-weight-bold">
 
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
+                                    {{number_format($directTraSubTotal, $numberFormatting)}}
 
-                </span>
+                            </span>
                     </td>
                 </tr>
             @endif
