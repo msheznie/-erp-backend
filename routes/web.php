@@ -45,3 +45,5 @@ Route::resource('leaveApplicationTypes', 'LeaveApplicationTypeController');
 Route::resource('leaveDocumentApproveds', 'LeaveDocumentApprovedController');
 
 Route::resource('employeeManagers', 'EmployeeManagersController');
+
+Route::resource('documentManagements', 'DocumentManagementController');
