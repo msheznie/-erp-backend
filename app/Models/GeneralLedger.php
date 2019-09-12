@@ -12,6 +12,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -448,5 +449,8 @@ class GeneralLedger extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'documentRptCurrencyID','currencyID');
     }
 
-    
+    public function setDocumentDateAttribute($value)
+    {
+        $this->attributes['documentDate'] = Helper::dateAddTime($value);
+    }
 }

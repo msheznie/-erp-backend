@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -274,5 +275,8 @@ class AccountsReceivableLedger extends Model
         
     ];
 
-    
+    public function setDocumentDateAttribute($value)
+    {
+        $this->attributes['documentDate'] = Helper::dateAddTime($value);
+    }
 }

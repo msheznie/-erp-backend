@@ -2236,6 +2236,31 @@ class Helper
 
     }
 
+    public static function dateAddTime($date)
+    {
+        if ($date) {
+
+            $time = (new Carbon($date))->format('H:i:s');
+           if($time != '00:00:00'){
+               return new Carbon($date);
+           }
+
+            $date = self::dateOnlyFormat($date);
+            return new Carbon($date. ' ' .date("h:i:sa"));
+        } else {
+            return '';
+        }
+    }
+
+    public static function dateOnlyFormat($date)
+    {
+        if ($date) {
+            return (new Carbon($date))->format('Y-m-d');
+        } else {
+            return '';
+        }
+    }
+
     public static function checkIsCompanyGroup($companyID)
     {
         $isCompaniesGroup = Models\Company::where('companySystemID', $companyID)->where('isGroup', -1)->exists();
@@ -4035,6 +4060,24 @@ class Helper
             return true;
         }
         return false;
+    }
+
+    public static function getDocumentSystemIDByCode($code)
+    {
+        $doc = Models\DocumentMaster::where('documentID', $code)->first();
+        if($doc){
+            return $doc->documentSystemID;
+        }
+        return null;
+    }
+
+    public static function getCompanySystemIDByCode($code)
+    {
+        $company = Models\Company::where('companyID', $code)->first();
+        if($company){
+            return $company->companySystemID;
+        }
+        return null;
     }
 
 }

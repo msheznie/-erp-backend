@@ -12,6 +12,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -691,11 +692,13 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\GRVMaster', 'customerGRVAutoID', 'grvAutoID');
     }
 
+    public function setBookingDateAttribute($value)
+    {
+        $this->attributes['bookingDate'] = Helper::dateAddTime($value);
+    }
 
-
-
-
-
-
-
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 }

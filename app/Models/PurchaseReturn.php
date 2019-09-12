@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -472,4 +473,10 @@ class PurchaseReturn extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function setPurchaseReturnDateAttribute($value)
+    {
+        $this->attributes['purchaseReturnDate'] = Helper::dateAddTime($value);
+    }
+
 }

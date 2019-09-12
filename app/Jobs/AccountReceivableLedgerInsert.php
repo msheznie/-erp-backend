@@ -219,7 +219,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                 }
                 if ($finalData) {
                     Log::info($finalData);
-                    $apLedgerInsert = AccountsReceivableLedger::insert($finalData);
+                    //$apLedgerInsert = AccountsReceivableLedger::insert($finalData);
+                    foreach ($finalData as $data)
+                    {
+                        AccountsReceivableLedger::create($data);
+                    }
                     Log::info('Successfully inserted to AR table ' . date('H:i:s'));
                     DB::commit();
                 }

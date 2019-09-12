@@ -1,4 +1,4 @@
-<?php
+<?php namespace Tests\Traits;
 
 use Faker\Factory as Faker;
 use App\Models\DocumentAttachments;

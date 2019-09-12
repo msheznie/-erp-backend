@@ -60,7 +60,7 @@ class CreateStockReceive implements ShouldQueue
             DB::beginTransaction();
             try {
                 Log::info('Successfully start  stock_receive' . date('H:i:s'));
-                $today = date('Y-m-d');
+                $today = date('Y-m-d H:i:s');
                 $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
 
                 if ($stMaster->interCompanyTransferYN == -1 && $stMaster->approved == -1) {

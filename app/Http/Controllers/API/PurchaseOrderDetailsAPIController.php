@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
+use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
@@ -662,107 +663,119 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }else{
             $input['madeLocallyYN'] = 0;
         }
+        DB::beginTransaction();
+            try{
+                $discountedUnitPrice = $input['unitCost'] - $input['discountAmount'];
 
-        $discountedUnitPrice = $input['unitCost'] - $input['discountAmount'];
+                if ($discountedUnitPrice > 0) {
+                    $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
-        if ($discountedUnitPrice > 0) {
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
+                    $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+                    $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
+                    $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
 
-            $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
-            $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
+                    $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+                    $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
+                    $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
+                }
 
-            $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
-            $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
-        }
+                // adding supplier Default CurrencyID base currency conversion
+                if ($discountedUnitPrice > 0) {
+                    $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $discountedUnitPrice);
 
-        // adding supplier Default CurrencyID base currency conversion
-        if ($discountedUnitPrice > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $discountedUnitPrice);
+                    $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
+                    $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
+                }
 
-            $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
-            $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
-        }
+                $input['modifiedPc'] = gethostname();
+                $input['modifiedUser'] = $user->employee['empID'];
 
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $user->employee['empID'];
+                $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
 
-        $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
-
-        //calculate tax amount according to the percantage for tax update
-
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderMasterID'])
-            ->first();
-
-        // updating master and detail table number of qty
-
-        if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
-
-            //checking the fullyOrdered or partial in po
-            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
-                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->first();
-
-            $updatedPRQty = $detailSum['totalPoqty'];
-
-            $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
-
-            $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
-
-            if ($checkQuentity == 0) {
-                $fullyOrdered = 2;
-                $prClosedYN = -1;
-                $selectedForPO = -1;
-            } else {
-                $fullyOrdered = 1;
-                $prClosedYN = 0;
-                $selectedForPO = 0;
-            }
-
-
-            $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
-
-            //check all details fullyOrdered in PR Master
-            $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $purchaseOrderDetails->purchaseRequestID)
-                ->whereIn('fullyOrdered', [1, 0])
-                ->get()->toArray();
-
-            if (empty($prMasterfullyOrdered)) {
-                $updatePRMaster = PurchaseRequest::find($purchaseOrderDetails->purchaseRequestID)
-                    ->update(['selectedForPO' => -1, 'prClosedYN' => -1, 'supplyChainOnGoing' => -1]);
-            } else {
-                $updatePRMaster = PurchaseRequest::find($purchaseOrderDetails->purchaseRequestID)
-                    ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
-            }
-
-        }
-
-        /*        //calculate tax amount according to the percantage for tax update
+                //calculate tax amount according to the percantage for tax update
 
                 //getting total sum of PO detail Amount
                 $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
                     ->where('purchaseOrderMasterID', $input['purchaseOrderMasterID'])
                     ->first();
 
-                //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
-                if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
-                    $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
+                 // updating master and detail table number of qty
 
-                    $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
+                if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
 
-                    $updatePOMaster = ProcumentOrder::find($input['purchaseOrderMasterID'])
-                        ->update([
-                            'VATAmount' => $calculatVatAmount,
-                            'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                            'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
-                        ]);
-                }*/
+                    //checking the fullyOrdered or partial in po
+                    $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                        ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                        ->first();
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
+                    $updatedPRQty = $detailSum['totalPoqty'];
+
+                    $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
+
+                    $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
+
+                    if ($checkQuentity == 0) {
+                        $fullyOrdered = 2;
+                        $prClosedYN = -1;
+                        $selectedForPO = -1;
+                    } else {
+                        $fullyOrdered = 1;
+                        $prClosedYN = 0;
+                        $selectedForPO = 0;
+                    }
+
+
+                    $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                        ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
+
+                    //check all details fullyOrdered in PR Master
+                    $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $purchaseOrderDetails->purchaseRequestID)
+                        ->whereIn('fullyOrdered', [1, 0])
+                        ->get()->toArray();
+
+                    if (empty($prMasterfullyOrdered)) {
+                        $updatePRMaster = PurchaseRequest::find($purchaseOrderDetails->purchaseRequestID)
+                            ->update(['selectedForPO' => -1, 'prClosedYN' => -1, 'supplyChainOnGoing' => -1]);
+                    } else {
+                        $updatePRMaster = PurchaseRequest::find($purchaseOrderDetails->purchaseRequestID)
+                            ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
+                    }
+                }
+
+                if($purchaseOrder->documentSystemID == 5 && $purchaseOrder->poType_N == 6) {
+
+                    $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderDetailsID', $purchaseOrderDetails->WP_purchaseOrderDetailsID)
+                                                        ->sum('noQty');
+
+                    $subWoTotal = ProcumentOrderDetail::where('WO_purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
+                                                        ->where('itemCode', $purchaseOrderDetails->itemCode)
+                                                        ->where('WP_purchaseOrderDetailsID', $purchaseOrderDetails->WP_purchaseOrderDetailsID)
+                                                        ->sum('noQty');
+
+                    if ($subWoTotal > $mainWoTotal) {
+                        DB::rollback();
+                        return $this->sendError('Sub work order is exceeding the main work order total qty. Cannot amend.', 500);
+                    }
+
+                    $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderDetailsID', $purchaseOrderDetails->WP_purchaseOrderDetailsID)
+                        ->sum('netAmount');
+
+                    $subWoTotal = ProcumentOrderDetail::where('WO_purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
+                        ->where('itemCode', $purchaseOrderDetails->itemCode)
+                        ->where('WP_purchaseOrderDetailsID', $purchaseOrderDetails->WP_purchaseOrderDetailsID)
+                        ->sum('netAmount');
+
+                    if ($subWoTotal > $mainWoTotal) {
+                        DB::rollback();
+                        return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.', 500);
+                    }
+                }
+                DB::commit();
+                return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
+            }catch (\Exception $ex){
+                DB::rollback();
+            }
+
     }
 
     /**

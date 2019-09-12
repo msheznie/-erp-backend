@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -207,4 +208,8 @@ class UnbilledGrvGroupBy extends Model
         return $this->hasMany('App\Models\BookInvSuppDet', 'unbilledgrvAutoID', 'unbilledgrvAutoID');
     }
 
+    public function setGrvDateAttribute($value)
+    {
+        $this->attributes['grvDate'] = Helper::dateAddTime($value);
+    }
 }

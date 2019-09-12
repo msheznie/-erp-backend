@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -327,5 +328,13 @@ class StockTransfer extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
-    
+    public function setTranferDateAttribute($value)
+    {
+        $this->attributes['tranferDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
 }

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -348,5 +349,15 @@ class ItemReturnMaster extends Model
     public function finance_year_by()
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function setReturnDateAttribute($value)
+    {
+        $this->attributes['ReturnDate'] = Helper::dateAddTime($value);
+    }
+
+    public function setPostedDateAttribute($value)
+    {
+        $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 }

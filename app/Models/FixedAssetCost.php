@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -149,5 +150,9 @@ class FixedAssetCost extends Model
         return $this->hasOne('App\Models\CurrencyMaster',  'currencyID', 'rptCurrencyID');
     }
 
+    public function setCostDateAttribute($value)
+    {
+        $this->attributes['costDate'] = Helper::dateAddTime($value);
+    }
     
 }

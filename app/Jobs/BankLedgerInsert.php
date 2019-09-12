@@ -239,7 +239,11 @@ class BankLedgerInsert implements ShouldQueue
                 }
                 if ($finalData) {
                     Log::info($finalData);
-                    $bankLedgerInsert = BankLedger::insert($finalData);
+                    //$bankLedgerInsert = BankLedger::insert($finalData);
+                    foreach ($finalData as $data)
+                    {
+                        BankLedger::create($data);
+                    }
                     Log::info('Successfully inserted to bank ledger table ' . date('H:i:s'));
                     DB::commit();
                 }
