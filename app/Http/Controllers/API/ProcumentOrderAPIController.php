@@ -5002,6 +5002,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->when(request('supplierID', false), function ($q) use ($input) {
                 return $q->where('supplierID', $input['supplierID']);
             })
+            ->when(request('financeCategory', false), function ($q) use ($input) {
+                return $q->where('financeCategory', $input['financeCategory']);
+            })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('purchaseOrderCode', 'LIKE', "%{$search}%")
@@ -5067,6 +5070,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $data[$x]['Company ID'] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['PO Number'] = '';
+                            $data[$x]['Category'] = '';
                             $data[$x]['PO Approved Date'] = '';
                             $data[$x]['Narration'] = '';
                             $data[$x]['Supplier Code'] = '';
@@ -5092,11 +5096,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $data[$x]['Company ID'] = '';
                                     //$data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['PO Number'] = '';
+                                    $data[$x]['Category'] = '';
                                     $data[$x]['PO Approved Date'] = '';
                                     $data[$x]['Narration'] = '';
                                     $data[$x]['Supplier Code'] = '';
                                     $data[$x]['Supplier Name'] = '';
-                                    $data[$x]['Amount'] = '';
+                                    $data[$x]['PO Amount'] = '';
                                     $data[$x]['GRV Code'] = '';
                                     $data[$x]['GRV Date'] = '';
                                     $data[$x]['GRV Amount'] = '';
@@ -5119,11 +5124,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $data[$x]['Company ID'] = '';
                                             //$data[$x]['Company Name'] = $val->CompanyName;
                                             $data[$x]['PO Number'] = '';
+                                            $data[$x]['Category'] = '';
                                             $data[$x]['PO Approved Date'] = '';
                                             $data[$x]['Narration'] = '';
                                             $data[$x]['Supplier Code'] = '';
                                             $data[$x]['Supplier Name'] = '';
-                                            $data[$x]['Amount'] = '';
+                                            $data[$x]['PO Amount'] = '';
                                             $data[$x]['GRV Code'] = '';
                                             $data[$x]['GRV Date'] = '';
                                             $data[$x]['GRV Amount'] = '';
@@ -5215,8 +5221,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
+
+        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
-        $output = array('suppliers' => $suppliers);
+        $output = array('suppliers' => $suppliers,'categories' => $categories);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
