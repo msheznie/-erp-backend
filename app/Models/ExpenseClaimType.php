@@ -35,9 +35,9 @@ class ExpenseClaimType extends Model
 
     public $table = 'erp_expenseclaimtype';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
+    protected $primaryKey = 'expenseClaimTypeID';
 
 
     public $fillable = [

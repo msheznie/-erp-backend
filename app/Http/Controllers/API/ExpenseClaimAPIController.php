@@ -696,7 +696,7 @@ class ExpenseClaimAPIController extends AppBaseController
     {
 
         $expenseClaim = $this->expenseClaimRepository->getClaimFullHistory();
-        $paginate = [];
+        $paginate = $expenseClaim;
         if($expenseClaim->count()){
             $data = [];
             $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
@@ -729,7 +729,7 @@ class ExpenseClaimAPIController extends AppBaseController
     public function getExpenseClaimDepartment()
     {
         $emp_id = Helper::getEmployeeID();
-        $emp_id = "E-1004";
+
         $expenseClaim = QryExpenseClaimDepViewClaim2::select('CompanyName', 'expenseClaimDate', 'expenseClaimCode', 'erp_qry_expenseclaimdepview_claim2.comments',
             'expenseClaimTypeDescription', 'clamiedByName', 'confirmedYN', 'approved', 'addedForPayment', 'erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
             ->selectRaw('null as myConfirmed,null as paymentConfirmed,null as paymentApproved, sum(amount) as total_amount,currencyID')// required by dilan
@@ -738,8 +738,8 @@ class ExpenseClaimAPIController extends AppBaseController
             ->orWhere('seniormanagerID', $emp_id)
             ->groupBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
             ->orderBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID','DESC')
-            ->paginate(10);
-        $paginate = [];
+            ->paginate(50);
+        $paginate = $expenseClaim;
         if($expenseClaim->count()){
             $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
             $data = [];
@@ -792,18 +792,40 @@ class ExpenseClaimAPIController extends AppBaseController
             $this->sendError('Master ID Not Found', 422);
         }
 
+        /*set Claim Array*/
         $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim Details Not Found', 200);
         }
-
+        $claimType = [];
+        if(!empty($expenseClaim->expense_claim_type)){
+            $claimType = $expenseClaim->expense_claim_type;
+        }
         $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments']);
         $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
+        $output['claim']['claim_type'] = $claimType;
 
-        $output['details'] = ExpenseClaimDetails::select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
+
+        /*set Detail Array*/
+        $expenseClaimDetails = ExpenseClaimDetails::
+        with(
+            array(
+                'currency'=>function($query){
+                    $query->select('currencyID','CurrencyName','CurrencyCode','DecimalPlaces');
+                },
+                'segment'=>function($query){
+                    $query->select('serviceLineSystemID','ServiceLineCode','serviceLineMasterCode','ServiceLineDes');
+                },
+                'category'=>function($query){
+                    $query->select('expenseClaimCategoriesAutoID','claimcategoriesDescription');
+                },))
+            ->select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'serviceLineSystemID', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
             ->where('expenseClaimMasterAutoID', $input['expenseClaimMasterAutoID'])
             ->get();
 
+        $output['details'] = $expenseClaimDetails->toArray();
+
+        /*set attachemnt Array*/
         $output['attachements'] = DocumentAttachments::where('companyID', $expenseClaim->companyID)
             ->where('documentID', $expenseClaim->documentID)
             ->where('documentSystemCode', $expenseClaim->expenseClaimMasterAutoID)
