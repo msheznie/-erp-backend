@@ -27,6 +27,7 @@ use App\Models\SegmentMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\ExpenseClaimDetailsRepository;
 use App\Repositories\ExpenseClaimRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
@@ -604,97 +605,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function saveAttachmentsBacks(Request $request)
     {
 
-        $input = $request->all();
-        //  $extension = $input['fileType'];
-        if ($request->hasFile('file')) {
-
-            $file = $request->file('file');
-            $data = base64_encode(file_get_contents($file));
-
-
-            $validator = \Validator::make($input, [
-                'attachmentDescription' => 'required',
-                'expenseClaimMasterAutoID' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-
-            $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
-            if (empty($expenseClaim)) {
-                return $this->sendError("Expense Claim Master Details Not Found", 200);
-            }
-
-            $input['companySystemID'] = $expenseClaim->companySystemID;
-            $input['companyID'] = $expenseClaim->companyID;
-            $input['documentSystemID'] = $expenseClaim->documentSystemID;
-            $input['documentID'] = $expenseClaim->documentID;
-            $input['documentSystemCode'] = $expenseClaim->expenseClaimMasterAutoID;
-
-
-            if (isset($input['size'])) {
-                if ($input['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
-                }
-            }
-            $input = $this->convertArrayToValue($input);
-            $size = $file->getSize();
-            $sizeInKbs = 0;
-            if ($size) {
-                $sizeInKbs = $size / 1024;
-            }
-
-            if ($sizeInKbs > 31457280) {
-                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
-            }
-
-            $extension = $file->getClientOriginalExtension();
-            $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
-                'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
-                'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
-                'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
-                'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
-                'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
-                'xbap', 'xnk', 'php'];
-
-            if (in_array($extension, $blockExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
-            }
-
-            $input['originalFileName'] = $file->getClientOriginalName();
-
-            $documentAttachments = $this->documentAttachmentsRepo->create($input);
-
-            //$file = $request->request->get('file');
-
-            $decodeFile = base64_encode($data);
-            //$encodedData = str_replace(' ','+',$file);
-            //$decodeFile = base64_decode($decodeFile);
-
-            $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
-
-            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-
-            Storage::disk('public')->put($path, $decodeFile);
-
-
-            $input['isUploaded'] = 1;
-            $input['path'] = $path;
-
-            $documentAttachments = $this->documentAttachmentsRepo->update($input, $documentAttachments->attachmentID);
-
-            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
-
-        }
-
-        return $this->sendError('Please attach an attachments', 422);
-    }
-
-    public function saveAttachments(Request $request)
-    {
-
-        $input = $request->all();
+        /*$input = $request->all();
         if ($request->has('file')) {
             $file = $request->file('file');
 
@@ -738,7 +649,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
             $decodeFile = base64_decode($data);
             $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
-            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+            return $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
 
             Storage::disk('public')->put($path, $decodeFile);
 
@@ -750,8 +661,70 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
             return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
 
+        }*/
+    }
+
+    public function saveAttachments(Request $request)
+    {
+        $input = $request->all();
+        $extension = $input['fileType'];//originalFileName
+
+        $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+            'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+            'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+            'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+            'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+            'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+            'xbap', 'xnk','php'];
+
+        if (in_array($extension, $blockExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.',500);
         }
 
-        return $this->sendError('Please attach an attachments', 422);
+        if(isset($input['size'])){
+            if ($input['size'] > 31457280) {
+                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.",500);
+            }
+        }
+
+        if (isset($input['docExpirtyDate'])) {
+            if ($input['docExpirtyDate']) {
+                $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+            }
+        }
+
+        $input = $this->convertArrayToValue($input);
+
+        if(isset($input['expenseClaimMasterAutoID'])){
+            $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
+            if (empty($expenseClaim)) {
+                return $this->sendError("Expense Claim Master Details Not Found", 200);
+            }
+        }else{
+            return $this->sendError("Expense Claim Master ID Not Set", 200);
+        }
+
+        $input['companySystemID'] = $expenseClaim->companySystemID;
+        $input['companyID'] = $expenseClaim->companyID;
+        $input['documentSystemID'] = $expenseClaim->documentSystemID;
+        $input['documentID'] = $expenseClaim->documentID;
+        $input['documentSystemCode'] = $expenseClaim->expenseClaimMasterAutoID;
+        $documentAttachments = $this->documentAttachmentsRepo->create($input);
+        $file = $request->request->get('file');
+        $decodeFile = base64_decode($file);
+
+        $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
+
+        $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+
+        Storage::disk('public')->put($path, $decodeFile);
+
+        $input['isUploaded'] = 1;
+        $input['path'] = $path;
+
+        $documentAttachments = $this->documentAttachmentsRepo->update($input, $documentAttachments->attachmentID);
+
+        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
     }
 }
