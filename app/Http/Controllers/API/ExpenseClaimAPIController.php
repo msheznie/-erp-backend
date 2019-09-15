@@ -696,7 +696,7 @@ class ExpenseClaimAPIController extends AppBaseController
     {
 
         $expenseClaim = $this->expenseClaimRepository->getClaimFullHistory();
-        $paginate = [];
+        $paginate = $expenseClaim;
         if($expenseClaim->count()){
             $data = [];
             $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
@@ -739,7 +739,7 @@ class ExpenseClaimAPIController extends AppBaseController
             ->groupBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
             ->orderBy('erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID','DESC')
             ->paginate(50);
-        $paginate = [];
+        $paginate = $expenseClaim;
         if($expenseClaim->count()){
             $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
             $data = [];
