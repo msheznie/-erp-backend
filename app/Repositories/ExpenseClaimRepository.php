@@ -72,7 +72,6 @@ class ExpenseClaimRepository extends BaseRepository
     public function getClaimFullHistory()
     {
         $emp_id = Helper::getEmployeeID();
-        $emp_id = "E-074";
         return ExpenseClaim::selectRaw('
                                     erp_expenseclaimmaster.expenseClaimMasterAutoID AS expenseClaimMasterAutoID,
                                     erp_expenseclaimmaster.expenseClaimDate AS expenseClaimDate,

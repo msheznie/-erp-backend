@@ -1165,7 +1165,8 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $validator = \Validator::make($file, [
                     'fileType' => 'required',
                     'originalFileName' => 'required',
-                    'size' => 'required|max:31457280',
+//                    'size' => 'required|max:31457280',
+                    'size' => 'required|max:30',
                     'attachmentDescription' => 'required'
                 ]);
 

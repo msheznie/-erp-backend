@@ -729,7 +729,7 @@ class ExpenseClaimAPIController extends AppBaseController
     public function getExpenseClaimDepartment()
     {
         $emp_id = Helper::getEmployeeID();
-        $emp_id = "E-1004";
+
         $expenseClaim = QryExpenseClaimDepViewClaim2::select('CompanyName', 'expenseClaimDate', 'expenseClaimCode', 'erp_qry_expenseclaimdepview_claim2.comments',
             'expenseClaimTypeDescription', 'clamiedByName', 'confirmedYN', 'approved', 'addedForPayment', 'erp_qry_expenseclaimdepview_claim2.expenseClaimMasterAutoID')
             ->selectRaw('null as myConfirmed,null as paymentConfirmed,null as paymentApproved, sum(amount) as total_amount,currencyID')// required by dilan
