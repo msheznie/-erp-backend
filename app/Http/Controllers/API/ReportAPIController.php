@@ -319,32 +319,38 @@ class ReportAPIController extends AppBaseController
                                                 $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
                                             })
                                             ->leftJoin(DB::raw('
-                        (SELECT erp_bookinvsuppdet.purchaseOrderID,
-                         sum(erp_bookinvsuppdet.totRptAmount) AS paymentComRptAmount,
-                          qry.companySystemID
-                          FROM (SELECT
-                       	 erp_paysupplierinvoicemaster.companySystemID,
-                         erp_paysupplierinvoicemaster.PayMasterAutoId,
-                         erp_paysupplierinvoicemaster.BPVcode,
-                         erp_paysupplierinvoicedetail.bookingInvSystemCode
-                    FROM
-                        erp_paysupplierinvoicemaster
-                        INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                        INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
-                    WHERE
-                        erp_paysupplierinvoicemaster.approved= -1 
-                        AND  erp_paysupplierinvoicemaster.cancelYN=0
-                        AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-                        /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
-                         AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                         ) as qry
-	                 inner join erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID= qry.bookingInvSystemCode
-                     GROUP BY
-                     qry.companySystemID,
-                     qry.bookingInvSystemCode,
-                     erp_bookinvsuppdet.purchaseOrderID ) pr'), function ($join) use ($companyID) {
+                                            (select
+                                            purchaseOrderID,
+                                            sum(totRptAmount) as paymentComRptAmount
+                                            from
+                                            (SELECT
+                                                erp_bookinvsuppdet.purchaseOrderID,
+                                                erp_bookinvsuppdet.totRptAmount,
+                                                qry.bookingInvSystemCode 
+                                            FROM
+                                                (
+                                            SELECT
+                                                erp_paysupplierinvoicemaster.companySystemID,
+                                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                                erp_paysupplierinvoicemaster.BPVcode,
+                                                erp_paysupplierinvoicedetail.bookingInvSystemCode 
+                                            FROM
+                                                erp_paysupplierinvoicemaster
+                                                INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId 
+                                            WHERE
+                                                erp_paysupplierinvoicemaster.approved = - 1 
+                                                AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+                                                AND erp_paysupplierinvoicedetail.matchingDocID = 0 
+                                                AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                                                ) AS qry
+                                                INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID = qry.bookingInvSystemCode 
+                                            GROUP BY
+                                                qry.companySystemID,
+                                                qry.bookingInvSystemCode,
+                                                erp_bookinvsuppdet.purchaseOrderID,
+                                                erp_bookinvsuppdet.totRptAmount
+                                                ) as pr1  GROUP BY purchaseOrderID) pr '), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
-                            $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
@@ -964,32 +970,38 @@ WHERE
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
                             $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
                         })
-                        ->leftJoin(DB::raw('(SELECT erp_bookinvsuppdet.purchaseOrderID,
-                         sum(erp_bookinvsuppdet.totRptAmount) AS paymentComRptAmount,
-                          qry.companySystemID
-                          FROM (SELECT
-                       	 erp_paysupplierinvoicemaster.companySystemID,
-                         erp_paysupplierinvoicemaster.PayMasterAutoId,
-                         erp_paysupplierinvoicemaster.BPVcode,
-                         erp_paysupplierinvoicedetail.bookingInvSystemCode
-                    FROM
-                        erp_paysupplierinvoicemaster
-                        INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                        INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID=erp_paysupplierinvoicedetail.bookingInvSystemCode
-                    WHERE
-                        erp_paysupplierinvoicemaster.approved= -1 
-                        AND  erp_paysupplierinvoicemaster.cancelYN=0
-                        AND erp_paysupplierinvoicedetail.addedDocumentSystemID=11
-                        /*AND erp_paysupplierinvoicedetail.matchingDocID = 0*/
-                         AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                         ) as qry
-	                 inner join erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID= qry.bookingInvSystemCode
-                     GROUP BY
-                     qry.companySystemID,
-                     qry.bookingInvSystemCode,
-                     erp_bookinvsuppdet.purchaseOrderID) pr'), function ($join) use ($companyID) {
+                        ->leftJoin(DB::raw('(select
+                                            purchaseOrderID,
+                                            sum(totRptAmount) as paymentComRptAmount
+                                            from
+                                            (SELECT
+                                                erp_bookinvsuppdet.purchaseOrderID,
+                                                erp_bookinvsuppdet.totRptAmount,
+                                                qry.bookingInvSystemCode 
+                                            FROM
+                                                (
+                                            SELECT
+                                                erp_paysupplierinvoicemaster.companySystemID,
+                                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                                erp_paysupplierinvoicemaster.BPVcode,
+                                                erp_paysupplierinvoicedetail.bookingInvSystemCode 
+                                            FROM
+                                                erp_paysupplierinvoicemaster
+                                                INNER JOIN erp_paysupplierinvoicedetail ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId 
+                                            WHERE
+                                                erp_paysupplierinvoicemaster.approved = - 1 
+                                                AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+                                                AND erp_paysupplierinvoicedetail.matchingDocID = 0 
+                                                AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                                                ) AS qry
+                                                INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppdet.bookingSuppMasInvAutoID = qry.bookingInvSystemCode 
+                                            GROUP BY
+                                                qry.companySystemID,
+                                                qry.bookingInvSystemCode,
+                                                erp_bookinvsuppdet.purchaseOrderID,
+                                                erp_bookinvsuppdet.totRptAmount
+                                                ) as pr1  GROUP BY purchaseOrderID) pr '), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
-                            $join->on('erp_purchaseordermaster.companySystemID', '=', 'pr.companySystemID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
