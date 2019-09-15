@@ -258,6 +258,10 @@ class ExpenseClaim extends Model
     {
         return $this->hasMany('App\Models\ExpenseClaimDetails','expenseClaimMasterAutoID','expenseClaimMasterAutoID');
     }
+    public function expense_claim_type()
+    {
+        return $this->hasOne('App\Models\ExpenseClaimType','expenseClaimTypeID','pettyCashYN');
+    }
 
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','expenseClaimMasterAutoID');

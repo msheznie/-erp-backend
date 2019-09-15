@@ -667,7 +667,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function saveAttachments(Request $request)
     {
         $input = $request->all();
-        $extension = $input['fileType'];//originalFileName
+        $extension = $input['fileType'];
 
         $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
             'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',

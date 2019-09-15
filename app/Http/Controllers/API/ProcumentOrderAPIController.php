@@ -3950,81 +3950,81 @@ ORDER BY
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $detail = DB::select('SELECT
-	*
-FROM
-	(
-		SELECT
-			erp_paysupplierinvoicedetail.PayMasterAutoId AS PayMasterAutoId,
-			erp_paysupplierinvoicemaster.documentID,
-			erp_paysupplierinvoicedetail.companyID,
-			"Invoice Payment" AS paymentType,
-			erp_paysupplierinvoicemaster.BPVcode,
-			erp_paysupplierinvoicemaster.BPVdate,
-			erp_paysupplierinvoicedetail.supplierInvoiceNo,
-			erp_paysupplierinvoicedetail.supplierInvoiceDate,
-			erp_bookinvsuppdet.purchaseOrderID,
-			erp_paysupplierinvoicedetail.supplierPaymentAmount AS TransAmount,
-			erp_paysupplierinvoicedetail.paymentLocalAmount AS LocalAmount,
-			erp_paysupplierinvoicedetail.paymentComRptAmount AS RptAmount,
-			erp_paysupplierinvoicemaster.trsClearedDate,
-			erp_paysupplierinvoicemaster.bankClearedDate,
-			erp_paysupplierinvoicemaster.approvedDate,
-			erp_paysupplierinvoicemaster.invoiceType,
-			erp_paysupplierinvoicemaster.confirmedYN,
-			erp_paysupplierinvoicemaster.approved,
-			cm1.CurrencyCode AS transactionCurrency,
-			cm2.CurrencyCode AS localCurrency,
-			cm3.CurrencyCode AS reportingCurrency,
-			cm1.DecimalPlaces AS transactionDeci,
-			cm2.DecimalPlaces AS localDeci,
-			cm3.DecimalPlaces AS reportingDec
-		FROM
-			erp_paysupplierinvoicedetail
-		INNER JOIN erp_bookinvsuppdet ON erp_paysupplierinvoicedetail.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID
-		INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
-		INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_bookinvsuppdet.supplierTransactionCurrencyID
-		INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_bookinvsuppdet.localCurrencyID
-		INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_bookinvsuppdet.companyReportingCurrencyID
-		WHERE
-			erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
-		AND erp_bookinvsuppdet.purchaseOrderID = ' . $purchaseOrderID . '
-		AND erp_paysupplierinvoicemaster.invoiceType = 2
-		UNION ALL
-			SELECT
-				erp_paysupplierinvoicemaster.PayMasterAutoId AS PayMasterAutoId,
-				erp_paysupplierinvoicemaster.documentID,
-				erp_paysupplierinvoicemaster.companyID,
-				"Advance Payment" AS paymentType,
-				erp_paysupplierinvoicemaster.BPVcode,
-				erp_paysupplierinvoicemaster.BPVdate,
-				"-" AS supplierInvoiceNo,
-				"-" AS supplierInvoiceDate,
-				erp_advancepaymentdetails.purchaseOrderID,
-				erp_advancepaymentdetails.supplierTransAmount AS TransAmount,
-				erp_advancepaymentdetails.localAmount AS LocalAmount,
-				erp_advancepaymentdetails.comRptAmount AS RptAmount,
-				erp_paysupplierinvoicemaster.trsClearedDate,
-				erp_paysupplierinvoicemaster.bankClearedDate,
-				erp_paysupplierinvoicemaster.approvedDate,
-				erp_paysupplierinvoicemaster.invoiceType,
-				erp_paysupplierinvoicemaster.confirmedYN,
-				erp_paysupplierinvoicemaster.approved,
-				cm1.CurrencyCode AS transactionCurrency,
-			    cm2.CurrencyCode AS localCurrency,
-			    cm3.CurrencyCode AS reportingCurrency,
-			    cm1.DecimalPlaces AS transactionDeci,
-				cm2.DecimalPlaces AS localDeci,
-				cm3.DecimalPlaces AS reportingDec
-			FROM
-				erp_paysupplierinvoicemaster
-			INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
-			INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_advancepaymentdetails.supplierTransCurrencyID
-			INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_advancepaymentdetails.localCurrencyID
-			INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_advancepaymentdetails.comRptCurrencyID
-			WHERE
-				erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
-			AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
-	) AS POPaymentDetails');
+                                *
+                            FROM
+                                (
+                                    SELECT
+                                        erp_paysupplierinvoicedetail.PayMasterAutoId AS PayMasterAutoId,
+                                        erp_paysupplierinvoicemaster.documentID,
+                                        erp_paysupplierinvoicedetail.companyID,
+                                        "Invoice Payment" AS paymentType,
+                                        erp_paysupplierinvoicemaster.BPVcode,
+                                        erp_paysupplierinvoicemaster.BPVdate,
+                                        erp_paysupplierinvoicedetail.supplierInvoiceNo,
+                                        erp_paysupplierinvoicedetail.supplierInvoiceDate,
+                                        erp_bookinvsuppdet.purchaseOrderID,
+                                        erp_paysupplierinvoicedetail.supplierPaymentAmount AS TransAmount,
+                                        erp_paysupplierinvoicedetail.paymentLocalAmount AS LocalAmount,
+                                        erp_paysupplierinvoicedetail.paymentComRptAmount AS RptAmount,
+                                        erp_paysupplierinvoicemaster.trsClearedDate,
+                                        erp_paysupplierinvoicemaster.bankClearedDate,
+                                        erp_paysupplierinvoicemaster.approvedDate,
+                                        erp_paysupplierinvoicemaster.invoiceType,
+                                        erp_paysupplierinvoicemaster.confirmedYN,
+                                        erp_paysupplierinvoicemaster.approved,
+                                        cm1.CurrencyCode AS transactionCurrency,
+                                        cm2.CurrencyCode AS localCurrency,
+                                        cm3.CurrencyCode AS reportingCurrency,
+                                        cm1.DecimalPlaces AS transactionDeci,
+                                        cm2.DecimalPlaces AS localDeci,
+                                        cm3.DecimalPlaces AS reportingDec
+                                    FROM
+                                        erp_paysupplierinvoicedetail
+                                    INNER JOIN erp_bookinvsuppdet ON erp_paysupplierinvoicedetail.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+                                    INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+                                    INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_bookinvsuppdet.supplierTransactionCurrencyID
+                                    INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_bookinvsuppdet.localCurrencyID
+                                    INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_bookinvsuppdet.companyReportingCurrencyID
+                                    WHERE
+                                        erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+                                    AND erp_bookinvsuppdet.purchaseOrderID = ' . $purchaseOrderID . '
+                                    AND erp_paysupplierinvoicemaster.invoiceType = 2
+                                    UNION ALL
+                                        SELECT
+                                            erp_paysupplierinvoicemaster.PayMasterAutoId AS PayMasterAutoId,
+                                            erp_paysupplierinvoicemaster.documentID,
+                                            erp_paysupplierinvoicemaster.companyID,
+                                            "Advance Payment" AS paymentType,
+                                            erp_paysupplierinvoicemaster.BPVcode,
+                                            erp_paysupplierinvoicemaster.BPVdate,
+                                            "-" AS supplierInvoiceNo,
+                                            "-" AS supplierInvoiceDate,
+                                            erp_advancepaymentdetails.purchaseOrderID,
+                                            erp_advancepaymentdetails.supplierTransAmount AS TransAmount,
+                                            erp_advancepaymentdetails.localAmount AS LocalAmount,
+                                            erp_advancepaymentdetails.comRptAmount AS RptAmount,
+                                            erp_paysupplierinvoicemaster.trsClearedDate,
+                                            erp_paysupplierinvoicemaster.bankClearedDate,
+                                            erp_paysupplierinvoicemaster.approvedDate,
+                                            erp_paysupplierinvoicemaster.invoiceType,
+                                            erp_paysupplierinvoicemaster.confirmedYN,
+                                            erp_paysupplierinvoicemaster.approved,
+                                            cm1.CurrencyCode AS transactionCurrency,
+                                            cm2.CurrencyCode AS localCurrency,
+                                            cm3.CurrencyCode AS reportingCurrency,
+                                            cm1.DecimalPlaces AS transactionDeci,
+                                            cm2.DecimalPlaces AS localDeci,
+                                            cm3.DecimalPlaces AS reportingDec
+                                        FROM
+                                            erp_paysupplierinvoicemaster
+                                        INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+                                        INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_advancepaymentdetails.supplierTransCurrencyID
+                                        INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_advancepaymentdetails.localCurrencyID
+                                        INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_advancepaymentdetails.comRptCurrencyID
+                                        WHERE
+                                            erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+                                        AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
+                                ) AS POPaymentDetails GROUP BY PayMasterAutoId');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
@@ -5002,6 +5002,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->when(request('supplierID', false), function ($q) use ($input) {
                 return $q->where('supplierID', $input['supplierID']);
             })
+            ->when(request('financeCategory', false), function ($q) use ($input) {
+                return $q->where('financeCategory', $input['financeCategory']);
+            })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('purchaseOrderCode', 'LIKE', "%{$search}%")
@@ -5067,6 +5070,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $data[$x]['Company ID'] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['PO Number'] = '';
+                            $data[$x]['Category'] = '';
                             $data[$x]['PO Approved Date'] = '';
                             $data[$x]['Narration'] = '';
                             $data[$x]['Supplier Code'] = '';
@@ -5092,11 +5096,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $data[$x]['Company ID'] = '';
                                     //$data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['PO Number'] = '';
+                                    $data[$x]['Category'] = '';
                                     $data[$x]['PO Approved Date'] = '';
                                     $data[$x]['Narration'] = '';
                                     $data[$x]['Supplier Code'] = '';
                                     $data[$x]['Supplier Name'] = '';
-                                    $data[$x]['Amount'] = '';
+                                    $data[$x]['PO Amount'] = '';
                                     $data[$x]['GRV Code'] = '';
                                     $data[$x]['GRV Date'] = '';
                                     $data[$x]['GRV Amount'] = '';
@@ -5119,11 +5124,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $data[$x]['Company ID'] = '';
                                             //$data[$x]['Company Name'] = $val->CompanyName;
                                             $data[$x]['PO Number'] = '';
+                                            $data[$x]['Category'] = '';
                                             $data[$x]['PO Approved Date'] = '';
                                             $data[$x]['Narration'] = '';
                                             $data[$x]['Supplier Code'] = '';
                                             $data[$x]['Supplier Name'] = '';
-                                            $data[$x]['Amount'] = '';
+                                            $data[$x]['PO Amount'] = '';
                                             $data[$x]['GRV Code'] = '';
                                             $data[$x]['GRV Date'] = '';
                                             $data[$x]['GRV Amount'] = '';
@@ -5215,8 +5221,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
+
+        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
-        $output = array('suppliers' => $suppliers);
+        $output = array('suppliers' => $suppliers,'categories' => $categories);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }

@@ -485,6 +485,8 @@ class LeaveDataMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        return $input['files'];
+        return $input;
         $messages = [
             'leavemasterID.required' => 'Leave Type field is required'
         ];
@@ -579,7 +581,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $diffInMonths = $startDate_o->diffInMonths($date_assumed_o);
             }
 
-            if ($request->hasFile('file')) {
+            if (isset($input['files'])) {return "sdsdfsf";
                 $type_validator = \Validator::make($input, [
                     'attachmentDescription' => 'required'
                 ]);
@@ -589,14 +591,15 @@ class LeaveDataMasterAPIController extends AppBaseController
                 }
 
                 $files = $request->file('file');
+
                 $attach = [
                     'companyID' => $employee->empCompanyID,
                     'companySystemID' => $input['companySystemID'],
                     'documentSystemCode' => $leaveDataMasterID,
                     'documentID' => $documentCode,
-                    'documentSystemID' => $input['documentSystemID']
+                    'documentID' => $input['documentSystemID']
                 ];
-                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
+                $this->saveDocumentAttachments($files, $attach);
             }
 
             $attachmentStatus = 0;
@@ -1151,37 +1154,48 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     }
 
-    public function saveDocumentAttachments($files = [], $attachmentDescription = [], $attach = [])
+    public function saveDocumentAttachments($files = [],$attach = [])
     {
-        if (!empty($files) && !empty($attachmentDescription)) {
-            $i = 0;
+
+        if (!empty($files) && !empty($attach)) {
+
             foreach ($files as $file) {
-                $size = $file->getSize();
-                $sizeInKbs = 0;
-                if ($size) {
-                    $sizeInKbs = $size / 1024;
+
+                /*Validation*/
+                $validator = \Validator::make($file, [
+                    'fileType' => 'required',
+                    'originalFileName' => 'required',
+//                    'size' => 'required|max:31457280',
+                    'size' => 'required|max:30',
+                    'attachmentDescription' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
                 }
+                /*Validation*/
+
                 $data = [
                     'companyID' => $attach['companyID'],
                     'companySystemID' => $attach['companySystemID'],
                     'documentSystemCode' => $attach['documentSystemCode'],
                     'documentSystemID' => $attach['documentSystemID'],
                     'documentID' => $attach['documentID'],
-                    'fileType' => $file->getClientOriginalExtension(),
-                    'originalFileName' => $file->getClientOriginalName(),
-                    'sizeInKbs' => $sizeInKbs,
-                    'attachmentDescription' => $attachmentDescription[$i]
+                    'fileType' => $file['fileType'],
+                    'originalFileName' => $file['originalFileName'],
+                    'attachmentDescription' =>$file['attachmentDescription'],
+                    'file' =>$file['file'],
                 ];
 
-                $this->saveAttachments($data, $file);
-                $i++;
+                $this->saveAttachments($data);
+
             }
 
         }
 
     }
 
-    private function saveAttachments($data, $file, $is_on_update=0)
+    private function saveAttachments($data)
     {
         $extension = $data['fileType'];
 
@@ -1197,11 +1211,11 @@ class LeaveDataMasterAPIController extends AppBaseController
             return $this->sendError('This type of file not allow to upload.', 500);
         }
 
-        if (isset($data['size'])) {
-            if ($data['size'] > 31457280) {
-                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
-            }
-        }
+//        if (isset($data['size'])) {
+//            if ($data['size'] > 31457280) {
+//                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+//            }
+//        }
 
         if (isset($data['docExpirtyDate'])) {
             if ($data['docExpirtyDate']) {
@@ -1212,8 +1226,8 @@ class LeaveDataMasterAPIController extends AppBaseController
         $data = $this->convertArrayToValue($data);
 
         $documentAttachments = DocumentAttachments::create($data);
-        $encoded_file = base64_encode(file_get_contents($file));
-        $decodeFile = base64_decode($encoded_file);
+
+        $decodeFile = base64_decode($data['file']);
 
         $data_update['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
@@ -1338,6 +1352,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     public function saveLeaveDetails(Request $request)
     {
+
         $input = $request->all();
 
         $messages = [
@@ -1413,16 +1428,9 @@ class LeaveDataMasterAPIController extends AppBaseController
             }
 
             //save attachemnts
-            if ($request->hasFile('file')) {
-                $type_validator = \Validator::make($input, [
-                    'attachmentDescription' => 'required'
-                ]);
 
-                if ($type_validator->fails()) {
-                    return $this->sendError($type_validator->messages(), 422);
-                }
+            if (isset($input['files'])) {
 
-                $files = $request->file('file');
                 $attach = [
                     'companyID' => $employee->empCompanyID,
                     'companySystemID' => $input['companySystemID'],
@@ -1430,8 +1438,9 @@ class LeaveDataMasterAPIController extends AppBaseController
                     'documentID' => $documentCode,
                     'documentSystemID' => $input['documentSystemID']
                 ];
-                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
+                $this->saveDocumentAttachments($input['files'], $attach);
             }
+
             //end of save attachemnts
 
             $attachmentStatus = 0;
@@ -1700,16 +1709,9 @@ class LeaveDataMasterAPIController extends AppBaseController
             }
 
             //save attachemnts
-            if ($request->hasFile('file')) {
-                $type_validator = \Validator::make($input, [
-                    'attachmentDescription' => 'required'
-                ]);
 
-                if ($type_validator->fails()) {
-                    return $this->sendError($type_validator->messages(), 200);
-                }
+            if (isset($input['files'])) {
 
-                $files = $request->file('file');
                 $attach = [
                     'companyID' => $employee->empCompanyID,
                     'companySystemID' => $input['companySystemID'],
@@ -1717,8 +1719,9 @@ class LeaveDataMasterAPIController extends AppBaseController
                     'documentID' => $documentCode,
                     'documentSystemID' => $input['documentSystemID']
                 ];
-                $this->saveDocumentAttachments($files, $input['attachmentDescription'], $attach);
+                $this->saveDocumentAttachments($input['files'], $attach);
             }
+
             //end of save attachemnts
 
             $attachmentStatus = 0;
