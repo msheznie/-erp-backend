@@ -91,7 +91,7 @@ class ExpenseClaimRepository extends BaseRepository
                                     ->where('erp_expenseclaimmaster.createdUserID',$emp_id)
                                     ->groupBy('erp_expenseclaimmaster.expenseClaimMasterAutoID')
                                     ->orderBy('erp_expenseclaimmaster.expenseClaimMasterAutoID','DESC')
-                                    ->paginate(10);
+                                    ->paginate(50);
 
     }
 }
