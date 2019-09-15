@@ -1212,8 +1212,8 @@ class LeaveDataMasterAPIController extends AppBaseController
         $data = $this->convertArrayToValue($data);
 
         $documentAttachments = DocumentAttachments::create($data);
-        $encoded_file = base64_encode(file_get_contents($file));
-        $decodeFile = base64_decode($encoded_file);
+
+        $decodeFile = base64_decode($file);
 
         $data_update['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 

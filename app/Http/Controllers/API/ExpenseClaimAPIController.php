@@ -792,18 +792,40 @@ class ExpenseClaimAPIController extends AppBaseController
             $this->sendError('Master ID Not Found', 422);
         }
 
+        /*set Claim Array*/
         $expenseClaim = ExpenseClaim::find($input['expenseClaimMasterAutoID']);
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim Details Not Found', 200);
         }
-
+        $claimType = [];
+        if(!empty($expenseClaim->expense_claim_type)){
+            $claimType = $expenseClaim->expense_claim_type;
+        }
         $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments']);
         $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
+        $output['claim']['claim_type'] = $claimType;
 
-        $output['details'] = ExpenseClaimDetails::select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
+
+        /*set Detail Array*/
+        $expenseClaimDetails = ExpenseClaimDetails::
+        with(
+            array(
+                'currency'=>function($query){
+                    $query->select('currencyID','CurrencyName','CurrencyCode','DecimalPlaces');
+                },
+                'segment'=>function($query){
+                    $query->select('serviceLineSystemID','ServiceLineCode','serviceLineMasterCode','ServiceLineDes');
+                },
+                'category'=>function($query){
+                    $query->select('expenseClaimCategoriesAutoID','claimcategoriesDescription');
+                },))
+            ->select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'serviceLineSystemID', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
             ->where('expenseClaimMasterAutoID', $input['expenseClaimMasterAutoID'])
             ->get();
 
+        $output['details'] = $expenseClaimDetails->toArray();
+
+        /*set attachemnt Array*/
         $output['attachements'] = DocumentAttachments::where('companyID', $expenseClaim->companyID)
             ->where('documentID', $expenseClaim->documentID)
             ->where('documentSystemCode', $expenseClaim->expenseClaimMasterAutoID)
