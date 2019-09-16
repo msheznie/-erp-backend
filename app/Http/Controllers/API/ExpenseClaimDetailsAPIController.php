@@ -686,6 +686,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
             if ($input['size'] > 31457280) {
                 return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.",500);
             }
+            $input['sizeInKbs'] = $input['size'];
         }
 
         if (isset($input['docExpirtyDate'])) {
