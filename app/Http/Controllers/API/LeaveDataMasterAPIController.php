@@ -1165,8 +1165,6 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $validator = \Validator::make($file, [
                     'fileType' => 'required',
                     'originalFileName' => 'required',
-//                    'size' => 'required|max:31457280',
-                    'size' => 'required|max:30',
                     'attachmentDescription' => 'required'
                 ]);
 
@@ -1185,6 +1183,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                     'originalFileName' => $file['originalFileName'],
                     'attachmentDescription' =>$file['attachmentDescription'],
                     'file' =>$file['file'],
+                    'size' =>$file['size']
                 ];
 
                 $this->saveAttachments($data);
@@ -1211,11 +1210,12 @@ class LeaveDataMasterAPIController extends AppBaseController
             return $this->sendError('This type of file not allow to upload.', 500);
         }
 
-//        if (isset($data['size'])) {
-//            if ($data['size'] > 31457280) {
-//                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
-//            }
-//        }
+        if (isset($data['size'])) {
+            if ($data['size'] > 31457280) {
+                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+            }
+            $data['sizeInKbs'] = $data['size'];
+        }
 
         if (isset($data['docExpirtyDate'])) {
             if ($data['docExpirtyDate']) {
