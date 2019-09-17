@@ -23,50 +23,47 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\chartOfAccount;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\Contract;
 use App\Models\CustomerAssigned;
+use App\Models\customercurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
 use App\Models\CustomerInvoiceDirectRefferedback;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\EmployeesDepartment;
+use App\Models\FreeBillingMasterPerforma;
 use App\Models\GeneralLedger;
+use App\Models\Months;
 use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
+use App\Models\SegmentMaster;
+use App\Models\Taxdetail;
+use App\Models\TicketMaster;
 use App\Models\Unit;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
-use App\Models\Months;
-use App\Models\Taxdetail;
-use App\Models\Company;
-use App\Models\customercurrency;
-use App\Models\CompanyFinanceYear;
-use App\Models\CurrencyMaster;
-use App\Models\TicketMaster;
-use App\Models\Contract;
-use App\Models\chartOfAccount;
-use App\Models\DocumentApproved;
-use App\Models\DocumentMaster;
-use App\Models\CompanyDocumentAttachment;
-use App\Models\EmployeesDepartment;
-use App\Models\SegmentMaster;
-use App\Models\FreeBillingMasterPerforma;
-use App\Models\GRVMaster;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
-use App\Models\BankMaster;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
-use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -444,15 +441,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['PONumber'] = $input['PONumber'];
         $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
 
-        if(isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']){
-            $checkGrv  = CustomerInvoiceDirect::where('custInvoiceDirectAutoID','!=',$id)
-                ->where('customerGRVAutoID',$input['customerGRVAutoID'])
+        if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
+            $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)
+                ->where('customerGRVAutoID', $input['customerGRVAutoID'])
                 ->first();
 
-            if(!empty($checkGrv)){
-                return $this->sendError('Selected GRV is already assigned to '.$checkGrv->bookingInvCode,500,array('type' => 'grvAssigned'));
+            if (!empty($checkGrv)) {
+                return $this->sendError('Selected GRV is already assigned to ' . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
             }
-        }else{
+        } else {
             $input['customerGRVAutoID'] = null;
         }
 
@@ -516,7 +513,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if ($bank) {
                     $_post['bankID'] = $bank->bankmasterAutoID;
                     $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
-                    if($bankAccount){
+                    if ($bankAccount) {
                         $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
                     }
                 }
@@ -772,7 +769,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function updateCustomerInvoiceGRV(Request $request)
     {
         $input = $request->all();
-        $id = isset($input['custInvoiceDirectAutoID'])?$input['custInvoiceDirectAutoID']:0;
+        $id = isset($input['custInvoiceDirectAutoID']) ? $input['custInvoiceDirectAutoID'] : 0;
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
 
@@ -780,19 +777,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Customer Invoice found');
         }
 
-        if($customerInvoiceDirect->interCompanyTransferYN == -1){
-            return $this->sendError('This is an intercompany transfer, You can not assign GRV.',500,array('type' => 'grvAssigned'));
+        if ($customerInvoiceDirect->interCompanyTransferYN == -1) {
+            return $this->sendError('This is an intercompany transfer, You can not assign GRV.', 500, array('type' => 'grvAssigned'));
         }
 
-        if(isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']){
-            $checkGrv  = CustomerInvoiceDirect::where('custInvoiceDirectAutoID','!=',$id)
-                                               ->where('customerGRVAutoID',$input['customerGRVAutoID'])
-                                               ->first();
+        if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
+            $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)
+                ->where('customerGRVAutoID', $input['customerGRVAutoID'])
+                ->first();
 
-            if(!empty($checkGrv)){
-                return $this->sendError('Selected GRV is already assigned to '.$checkGrv->bookingInvCode,500,array('type' => 'grvAssigned'));
+            if (!empty($checkGrv)) {
+                return $this->sendError('Selected GRV is already assigned to ' . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
             }
-        }else{
+        } else {
             $input['customerGRVAutoID'] = null;
         }
 
@@ -865,7 +862,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'
         => function ($query) {
-                $query->with(['unit', 'department', 'performadetails' => function ($query) {
+                $query->with(['unit', 'department', 'contract' => function ($q) {
+                    $q->with(['secondary_bank_account']);
+                }, 'performadetails' => function ($query) {
                     $query->with(['freebillingmaster' => function ($query) {
                         $query->with(['ticketmaster' => function ($query) {
                             $query->with(['field']);
@@ -1266,7 +1265,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount,$transDecimalPlace);
+                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
                 $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];;
@@ -1668,9 +1667,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                     /*requested by zahlan on 2018-12-20 remove group for midwest company*/
 
-                    if (in_array($companySystemID,[42,31,24])  ) {
+                    if (in_array($companySystemID, [42, 31, 24])) {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate,  qty * rate  AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID  ORDER BY  t.mitID ASC");
-                    }else{
+                    } else {
                         $invoiceDetails = DB::select("SELECT ClientRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
                     }
                 } else {
@@ -1688,7 +1687,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 /*$linefooterAddress = true;*/
 
                 if ($master->isPerforma == 1) {
-                    if ($master->customerID == 79 ) {
+                    if ($master->customerID == 79) {
                         $footerDate = false;
                         $logo = false;
                         $line_seNo = false;
@@ -1787,22 +1786,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->vatNumber = '';
         $customerInvoice->vendorCode = '';
 
-        if($customerInvoice->customerID == 79){
+        if ($customerInvoice->customerID == 79) {
             $customerInvoice->is_pdo_vendor = true;
-            $customerInvoice->bookingInvCode = str_replace('INV','', $customerInvoice->bookingInvCode);
+            $customerInvoice->bookingInvCode = str_replace('INV', '', $customerInvoice->bookingInvCode);
 
-            $customerAssign = CustomerAssigned::where('customerCodeSystem',$customerInvoice->customerID)
-                                                ->where('companySystemID',$customerInvoice->companySystemID)
-                                                ->first();
+            $customerAssign = CustomerAssigned::where('customerCodeSystem', $customerInvoice->customerID)
+                ->where('companySystemID', $customerInvoice->companySystemID)
+                ->first();
 
-            if(!empty($customerAssign)){
+            if (!empty($customerAssign)) {
                 $customerInvoice->vatNumber = $customerAssign->vatNumber;
                 $customerInvoice->vendorCode = $customerAssign->vendorCode;
             }
         }
 
+        $secondaryBankAccount = (object)[];
+        if ($customerInvoice->secondaryLogoCompanySystemID) {
+            $secondaryBankAccount = CustomerInvoiceDirectDetail::with(['contract' => function ($q) {
+                $q->with(['secondary_bank_account']);
+            }])->where('contractID','>',0)
+                ->where('custInvoiceDirectID', $id)->first();
+        }
 
-        $array = array('request' => $customerInvoice);
+
+        $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $html = view('print.customer_invoice', $array);
@@ -2314,7 +2321,7 @@ WHERE
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }
-    
+
     public function amendCustomerInvoiceReview(Request $request)
     {
         $input = $request->all();

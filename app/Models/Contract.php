@@ -509,6 +509,8 @@ class Contract extends Model
         'contractSubType',
         'bankID',
         'accountID',
+        'secondaryBankID',
+        'secondaryAccountID',
         'vendonCode',
         'paymentInDaysForJob',
         'ticketClientSerialStart',
@@ -665,6 +667,9 @@ class Contract extends Model
         return $this->belongsTo('App\Models\SegmentMaster','ServiceLineCode','ServiceLineCode');
     }
 
-
+    public function secondary_bank_account()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'secondaryAccountID', 'bankAccountAutoID');
+    }
     
 }
