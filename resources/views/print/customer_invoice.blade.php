@@ -182,19 +182,52 @@
                         </tr>
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
-                            <td> - {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}</td>
+                            <td> -
+                                @if($request->secondaryLogoCompanySystemID)
+                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                        {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
+                                      @endif
+                                    @else
+                                    {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Branch </span></td>
-                            <td> - {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}</td>
+                            <td> -
+                                @if($request->secondaryLogoCompanySystemID)
+                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                        {{$secondaryBankAccount->contract->secondary_bank_account->bankBranch}}
+                                    @endif
+                                @else
+                                    {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Ac Num </span></td>
-                            <td> - {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}</td>
+                            <td> -
+                                @if($request->secondaryLogoCompanySystemID)
+                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}}
+                                    @endif
+                                @else
+                                    {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}
+                                @endif
+
+                            </td>
                         </tr>
                         <tr>
                             <td width="100px"><span class="font-weight-bold">SWIFT Code </span></td>
-                            <td> - {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}</td>
+                            <td> -
+                                @if($request->secondaryLogoCompanySystemID)
+                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                        {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
+                                    @endif
+                                @else
+                                    {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </div>
