@@ -1518,6 +1518,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
     Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
 
+    /*Company Document Attachments*/
+    Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
+    Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

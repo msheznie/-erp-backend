@@ -8,12 +8,17 @@
  * -- Create date : 04- May 2018
  * -- Description : This file contains the all CRUD for  Company Document Attachment
  * -- REVISION HISTORY
+ * -- functions : getAllCompanyDocumentAttachment() - created by Rilwan 2019-09-17
+ * -- functions : getCompanyPolicyFilterOptions() - created by Rilwan 2019-09-18
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyDocumentAttachmentAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDocumentAttachmentAPIRequest;
+use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentMaster;
 use App\Repositories\CompanyDocumentAttachmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -102,7 +107,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        /** @var CompanyDocumentAttachment $companyDocumentAttachment */
+        $input = array_except($input, ['companySystemID','companyID','documentSystemID','documentID','timeStamp','company','document']);
+
+        $input = $this->convertArrayToValue($input);
+
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachment)) {
@@ -111,7 +119,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);
 
-        return $this->sendResponse($companyDocumentAttachment->toArray(), 'CompanyDocumentAttachment updated successfully');
+        return $this->sendResponse($companyDocumentAttachment->toArray(), 'Company Document Attachment updated successfully');
     }
 
     /**
@@ -134,5 +142,88 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment->delete();
 
         return $this->sendResponse($id, 'Company Document Attachment deleted successfully');
+    }
+
+
+    /**
+     * Get company document attachment data for list
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllCompanyDocumentAttachment(Request $request){
+
+        $input = $request->all();
+        $search = $request->input('search.value');
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companySystemID'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $companyDocumentAttachment = CompanyDocumentAttachment::with(
+            [
+                'company'=>function($query) use($search){
+                    $query->when($search, function ($q) use ($search) {
+                        return $q->where('CompanyName', 'LIKE', "%{$search}%");
+                });
+                },
+                'document'=>function($query) use($search){
+                    $query->when($search, function ($q) use ($search) {
+                        return $q->where('documentDescription', 'LIKE', "%{$search}%");
+                    });
+                }
+            ]
+        )->whereIn('companySystemID',$childCompanies);
+
+        if (array_key_exists('documentSystemID', $input)) {
+            $companyDocumentAttachment = $companyDocumentAttachment->where('documentSystemID', $input['documentSystemID']);
+        }
+
+        if($search){
+            $companyDocumentAttachment =   $companyDocumentAttachment->where('docRefNumber','LIKE',"%{$search}%");
+        }
+        return \DataTables::eloquent($companyDocumentAttachment)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('companyDocumentAttachmentID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+        return $this->sendResponse($companyDocumentAttachment->toArray(), 'Company Document Attachments Retrieved Successfully');
+    }
+
+    /*
+     * get company or subcompanies
+     * */
+    public function getCompanyDocumentFilterOptions(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+        /**  Companies by group  Drop Down */
+        $output['companies'] = Company::whereIn("companySystemID",$subCompanies)->get();
+        $output['documents'] = DocumentMaster::select('documentSystemID','documentID','documentDescription')->get();
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
