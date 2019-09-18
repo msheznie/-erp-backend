@@ -47,3 +47,5 @@ Route::resource('leaveDocumentApproveds', 'LeaveDocumentApprovedController');
 Route::resource('employeeManagers', 'EmployeeManagersController');
 
 Route::resource('documentManagements', 'DocumentManagementController');
+
+Route::resource('hrmsDocumentAttachments', 'HrmsDocumentAttachmentsController');
