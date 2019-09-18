@@ -280,7 +280,7 @@ class CustomerInvoiceDirectDetail extends Model
 
     public function contract()
     {
-        return $this->belongsTo('App\Models\Contract', 'clientContractID', 'ContractNumber');
+        return $this->belongsTo('App\Models\Contract', 'contractID', 'contractUID');
     }
 
     public function billmaster()

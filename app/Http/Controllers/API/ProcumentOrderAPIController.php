@@ -4897,6 +4897,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->addColumn('grvMasters', function ($row) {
                 return $this->getPOtoPaymentChain($row);
             })
+            ->addColumn('logisticTotal', function ($row) {
+                return $this->getPoLogisticTotal($row);
+            })
             ->addColumn('poTotalComRptCurrency', function ($row) {
                 if($row->manuallyClosed == 1){
                     return floatval(array_sum(collect($this->getPOtoPaymentChain($row))->pluck('rptAmount')->toArray()));
@@ -4907,6 +4910,17 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->make(true);
 
         return $data;
+    }
+
+    function getPoLogisticTotal($row){
+
+        return PoAdvancePayment::where('poID', $row->purchaseOrderID)
+                                    ->where('poTermID', 0)
+                                    ->where('confirmedYN', 1)
+                                    ->where('isAdvancePaymentYN', 1)
+                                    ->where('approvedYN', -1)
+                                    ->sum('reqAmountInPORptCur');
+
     }
 
     function getPOtoPaymentChain($row)
@@ -5012,12 +5026,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 });
             })
             ->with(['supplier','fcategory']);
-        /*->with(['supplier', 'detail' => function ($poDetail) {
-            $poDetail->with([
-                'grv_details' => function ($q) {
-                    $q->with(['grv_master']);
-                }]);
-        }]);*/
+            /*->with(['supplier', 'detail' => function ($poDetail) {
+                $poDetail->with([
+                    'grv_details' => function ($q) {
+                        $q->with(['grv_master']);
+                    }]);
+            }]);*/
 
         return $purchaseOrder;
     }
@@ -5035,6 +5049,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             if($row->manuallyClosed == 1){
                  $row->poTotalComRptCurrency = floatval(array_sum(collect($row->grvMasters)->pluck('rptAmount')->toArray()));
             }
+
+            $row->logisticTotal =  $this->getPoLogisticTotal($row);
         }
 
         $type = $request->type;
@@ -5061,6 +5077,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Supplier Name'] = '';
                 }
                 $data[$x]['PO Amount'] = number_format($value->poTotalComRptCurrency, 2);
+                $data[$x]['Logistic Amount'] = number_format($value->logisticTotal, 2);
 
                 if (count($value->grvMasters) > 0) {
                     $grvMasterCount = 0;
@@ -5076,6 +5093,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $data[$x]['Supplier Code'] = '';
                             $data[$x]['Supplier Name'] = '';
                             $data[$x]['PO Amount'] = '';
+                            $data[$x]['Logistic Amount'] = '';
                         }
 
                         if ($grv['grv_master']) {
@@ -5102,6 +5120,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $data[$x]['Supplier Code'] = '';
                                     $data[$x]['Supplier Name'] = '';
                                     $data[$x]['PO Amount'] = '';
+                                    $data[$x]['Logistic Amount'] = '';
                                     $data[$x]['GRV Code'] = '';
                                     $data[$x]['GRV Date'] = '';
                                     $data[$x]['GRV Amount'] = '';
@@ -5130,6 +5149,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $data[$x]['Supplier Code'] = '';
                                             $data[$x]['Supplier Name'] = '';
                                             $data[$x]['PO Amount'] = '';
+                                            $data[$x]['Logistic Amount'] = '';
                                             $data[$x]['GRV Code'] = '';
                                             $data[$x]['GRV Date'] = '';
                                             $data[$x]['GRV Amount'] = '';
