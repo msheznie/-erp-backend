@@ -25,10 +25,10 @@ use App\Http\Requests\API\UpdateLeaveDataMasterAPIRequest;
 use App\Models\Alert;
 use App\Models\CalenderMaster;
 use App\Models\Company;
-use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\EmployeeManagers;
+use App\Models\HrmsDocumentAttachments;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
@@ -1180,10 +1180,8 @@ class LeaveDataMasterAPIController extends AppBaseController
                     'documentSystemID' => $attach['documentSystemID'],
                     'documentID' => $attach['documentID'],
                     'fileType' => $file['fileType'],
-                    'originalFileName' => $file['originalFileName'],
                     'attachmentDescription' =>$file['attachmentDescription'],
-                    'file' =>$file['file'],
-                    'size' =>$file['size']
+                    'file' =>$file['file']
                 ];
 
                 $this->saveAttachments($data);
@@ -1210,13 +1208,6 @@ class LeaveDataMasterAPIController extends AppBaseController
             return $this->sendError('This type of file not allow to upload.', 500);
         }
 
-        if (isset($data['size'])) {
-            if ($data['size'] > 31457280) {
-                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
-            }
-            $data['sizeInKbs'] = $data['size'];
-        }
-
         if (isset($data['docExpirtyDate'])) {
             if ($data['docExpirtyDate']) {
                 $data['docExpirtyDate'] = new Carbon($data['docExpirtyDate']);
@@ -1224,21 +1215,16 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
 
         $data = $this->convertArrayToValue($data);
-
-        $documentAttachments = DocumentAttachments::create($data);
+        $documentAttachments = HrmsDocumentAttachments::create($data);
 
         $decodeFile = base64_decode($data['file']);
 
         $data_update['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
-        $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $data_update['myFileName'];
+        Storage::disk('public')->put($data_update['myFileName'], $decodeFile);
 
-        Storage::disk('public')->put($path, $decodeFile);
+        HrmsDocumentAttachments::where('attachmentID', $documentAttachments->attachmentID)->update($data_update);
 
-        $data_update['isUploaded'] = 1;
-        $data_update['path'] = $path;
-
-        DocumentAttachments::where('attachmentID', $documentAttachments->attachmentID)->update($data_update);
     }
 
     public function getLeaveDetails(Request $request)
@@ -1339,7 +1325,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     private function getAttachments($company_id, $document_code, $documentSystemCode)
     {
-        $res = DocumentAttachments::where('companyID', $company_id)->where('documentID', $document_code)
+        $res = HrmsDocumentAttachments::where('companyID', $company_id)->where('documentID', $document_code)
             ->where('documentSystemCode', $documentSystemCode)
             ->get();
 
@@ -1444,7 +1430,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             //end of save attachemnts
 
             $attachmentStatus = 0;
-            $attachments = DocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
+            $attachments = HrmsDocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
                             ->where('documentID', $documentCode)
                             ->count();
             if ($attachments) {
@@ -1725,7 +1711,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             //end of save attachemnts
 
             $attachmentStatus = 0;
-            $attachments = DocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
+            $attachments = HrmsDocumentAttachments::where('documentSystemCode', $leaveDataMasterID)
                 ->where('documentID', $documentCode)
                 ->count();
             if ($attachments) {

@@ -92,5 +92,14 @@ class CompanyDocumentAttachment extends Model
         
     ];
 
-    
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
+    }
+
 }
