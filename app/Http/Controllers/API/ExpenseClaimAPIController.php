@@ -199,6 +199,7 @@ class ExpenseClaimAPIController extends AppBaseController
             $document->departmentSystemID = $employeeInfo->details->departmentMaster->departmentSystemID;
             $document->departmentID = $employeeInfo->details->departmentMaster->DepartmentID;
             $document->clamiedByName = $emp->empName;
+            $document->clamiedByNameSystemID = $emp->employeeSystemID;
             $document->seniorManager = isset($employeeInfo->manager->empManagerAttached) ? $employeeInfo->manager->empManagerAttached : null;
             $document->companySystemID = $employeeInfo->empCompanySystemID;
             $document->companyID = $employeeInfo->empCompanyID;
