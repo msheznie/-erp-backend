@@ -1496,6 +1496,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('document_managements', 'DocumentManagementAPIController');
 
+    Route::resource('hrms_document_attachments', 'HrmsDocumentAttachmentsAPIController');
 
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
@@ -1517,6 +1518,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
     Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
     Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
+    Route::get('downloadHrmsFile', 'HrmsDocumentAttachmentsAPIController@downloadFile');
+
+    /*Company Document Attachments*/
+    Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
+    Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
 
 });
 
@@ -1584,6 +1590,8 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
 
 
 
