@@ -5502,7 +5502,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if($procumentOrder->grvRecieved == 1){ // Default 0, partially received =1 and fully received 2
             return $this->sendError("Selected order partially grv received. Cannot be ".$array['text'],500);
         }elseif ($procumentOrder->grvRecieved == 2){
-            return $this->sendError("Selected order fully grv received. ".$array['text'],500);
+            return $this->sendError("Selected order fully grv received. Cannot be ".$array['text'],500);
         }
 
         if($update_array != null){
