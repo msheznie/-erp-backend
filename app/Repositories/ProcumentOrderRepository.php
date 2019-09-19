@@ -152,4 +152,21 @@ class ProcumentOrderRepository extends BaseRepository
     {
         return ProcumentOrder::class;
     }
+
+    public function swapValue ($value){
+
+        if($value == -1){
+             return [
+                'value'=>0,
+                'text'=>'Deactivated'
+                ];
+
+        }elseif ($value == 0) {
+            return [
+                'value'=>-1,
+                'text'=>'Activated'
+            ];
+        }
+
+    }
 }

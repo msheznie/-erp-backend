@@ -105,6 +105,7 @@ use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use function PHPSTORM_META\type;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
@@ -1837,7 +1838,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.documentSystemID',
                 'erp_purchaseordermaster.sentToSupplier',
-                'erp_purchaseordermaster.poType_N'
+                'erp_purchaseordermaster.poType_N',
+                'erp_purchaseordermaster.partiallyGRVAllowed',
+                'erp_purchaseordermaster.logisticsAvailable'
             ]);
 
         $search = $request->input('search.value');
@@ -5453,5 +5456,59 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function updateGRVLogistic(Request $request) {
+
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'purchaseOrderID' => 'required',
+            'type' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $procumentOrder = ProcumentOrder::find($input['purchaseOrderID']);
+        if(empty($procumentOrder)){
+            return $this->sendError('Order Detail not found');
+        }
+
+        $update_array = null;
+        $is_update = null;
+        if($input['type'] == 1) {   // logistic
+
+            $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
+
+            $message = "Logistic ".$array['text']." successfully";
+            $update_array = array(
+                'logisticsAvailable' => $array['value']
+            );
+
+        }else if($input['type'] == 2) { //grv
+
+            $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
+            $message = "Partially GRV Allowed ".$array['text']." successfully";
+            $update_array = array(
+                'partiallyGRVAllowed' => $array['value']
+            );
+        }else{
+            $array = [];
+        }
+
+        // Don't allow user to update above option, if Purchase order \ Work order \ Direct order added partially or fully in the GRV
+        if($procumentOrder->grvRecieved == 1){ // Default 0, partially received =1 and fully received 2
+            return $this->sendError("Selected order partially grv received. Cannot be ".$array['text'],500);
+        }elseif ($procumentOrder->grvRecieved == 2){
+            return $this->sendError("Selected order fully grv received. ".$array['text'],500);
+        }
+
+        if($update_array != null){
+            $is_update = $this->procumentOrderRepository->update($update_array,$input['purchaseOrderID']);
+            return $this->sendResponse($is_update,$message);
+        }
+
     }
 }
