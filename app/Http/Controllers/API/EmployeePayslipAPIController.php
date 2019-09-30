@@ -37,6 +37,7 @@ class EmployeePayslipAPIController extends AppBaseController
         $processPeriods =  QrySalaryProcessedPeriods::select('periodMonth','periodMasterID','periodYear')->get();
         $processPeriods = $processPeriods->map(function ($value, $key) {
             $value['periodMonth'] = (string)$value['periodMonth'];
+            $value['periodMasterID'] = (int)$value['periodMasterID'];
             return $value;
         });
 
