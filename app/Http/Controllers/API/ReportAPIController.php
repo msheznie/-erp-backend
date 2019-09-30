@@ -265,32 +265,33 @@ class ReportAPIController extends AppBaseController
                             IF( suppliermaster.isSMEYN = 1, "YES", "NO" ) AS isSme,
                             IFNULL(adv.AdvanceReleased,0) as advanceReleased,
                             IFNULL(adv.LogisticAdvanceReleased,0) as logisticAdvanceReleased,
+                            IFNULL(lg.logisticAmount,0) as logisticAmount,
                             IFNULL(pr.paymentComRptAmount,0) as paymentReleased,
                             (IFNULL(podet.TotalPOVal,0) - IFNULL(pr.paymentComRptAmount,0) - IFNULL(adv.AdvanceReleased,0)) as balanceToBePaid'
                         )
                         ->join(DB::raw('(SELECT 
                         erp_purchaseorderdetails.companySystemID,
-                    erp_purchaseorderdetails.purchaseOrderMasterID,
-                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
-                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
-                    IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
-	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
-	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
-                     FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
-                            $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
+                        erp_purchaseorderdetails.purchaseOrderMasterID,
+                        SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
+                        SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                        IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
+                        SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
+                        SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
+                         FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                                $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
                         })
                         ->leftJoin(DB::raw('(SELECT 
-                    SUM( erp_grvdetails.noQty ) GRVQty,
-	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
-	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
-	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
-	                erp_grvdetails.purchaseOrderMastertID,
-	                approved,
-	                erp_grvdetails.companySystemID
-                     FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
-                     GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
-                            $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                            SUM( erp_grvdetails.noQty ) GRVQty,
+                            SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
+                            SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+                            SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
+                            erp_grvdetails.purchaseOrderMastertID,
+                            approved,
+                            erp_grvdetails.companySystemID
+                             FROM erp_grvdetails 
+                             INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                             GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
+                                    $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin(DB::raw('(SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
@@ -300,21 +301,21 @@ class ReportAPIController extends AppBaseController
                         erp_paysupplierinvoicemaster.companyID,
                         erp_advancepaymentdetails.purchaseOrderID,
                         sum( erp_advancepaymentdetails.comRptAmount ),
-                    IF
-                        ( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
-                    IF
-                        ( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
-                    FROM
-                        erp_paysupplierinvoicemaster
-                        INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
-                        INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
-                    WHERE
-                        erp_advancepaymentdetails.purchaseOrderID > 0 
-                        AND erp_paysupplierinvoicemaster.approved =- 1 
-                        AND erp_paysupplierinvoicemaster.cancelYN = 0 
-                        AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                    GROUP BY
-                        purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
+                        IF
+                            ( poTermID = 0, 0, ( sum( comRptAmount ) ) ) AS AdvanceReleased,
+                        IF
+                            ( poTermID = 0, ( sum( comRptAmount ) ), 0 ) AS LogisticAdvanceReleased 
+                        FROM
+                            erp_paysupplierinvoicemaster
+                            INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+                            INNER JOIN erp_purchaseorderadvpayment ON erp_advancepaymentdetails.poAdvPaymentID = erp_purchaseorderadvpayment.poAdvPaymentID 
+                        WHERE
+                            erp_advancepaymentdetails.purchaseOrderID > 0 
+                            AND erp_paysupplierinvoicemaster.approved =- 1 
+                            AND erp_paysupplierinvoicemaster.cancelYN = 0 
+                            AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                        GROUP BY
+                            purchaseOrderID,companySystemID) adv'), function ($join) use ($companyID) {
                                                 $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'adv.purchaseOrderID');
                                                 $join->on('erp_purchaseordermaster.companySystemID', '=', 'adv.companySystemID');
                                             })
@@ -352,6 +353,20 @@ class ReportAPIController extends AppBaseController
                                                 ) as pr1  GROUP BY purchaseOrderID) pr '), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                         })
+                        ->leftJoin(DB::raw('(SELECT
+                                                poID,
+                                                SUM( reqAmountInPORptCur ) as logisticAmount
+                                            FROM
+                                                `erp_purchaseorderadvpayment` 
+                                            WHERE
+                                                poTermID = 0 
+                                                AND confirmedYN = 1 
+                                                AND isAdvancePaymentYN = 1 
+                                                AND approvedYN = - 1 
+                                            GROUP BY
+                                                poID) lg '), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'lg.poID');
+                        })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
                         ->leftJoin('suppliercategoryicvmaster', 'erp_purchaseordermaster.supCategoryICVMasterID', '=', 'suppliercategoryicvmaster.supCategoryICVMasterID')
@@ -388,6 +403,9 @@ class ReportAPIController extends AppBaseController
 
                     $TotalGRVValue = collect($outputSUM)->pluck('TotalGRVValue')->toArray();
                     $TotalGRVValue = array_sum($TotalGRVValue);
+
+                    $TotalLogisticAmount = collect($outputSUM)->pluck('logisticAmount')->toArray();
+                    $TotalLogisticAmount = array_sum($TotalLogisticAmount);
 
                     $GRVCapex = collect($outputSUM)->pluck('GRVCapex')->toArray();
                     $GRVCapex = array_sum($GRVCapex);
@@ -427,6 +445,7 @@ class ReportAPIController extends AppBaseController
                             'POCapex' => $POCapex,
                             'POOpex' => $POOpex,
                             'TotalGRVValue' => $TotalGRVValue,
+                            'TotalLogisticAmount' => $TotalLogisticAmount,
                             'GRVCapex' => $GRVCapex,
                             'GRVOpex' => $GRVOpex,
                             'capexBalance' => $capexBalance,
@@ -917,6 +936,7 @@ WHERE
                             ServiceLineDes as segment,
                             IFNULL(adv.AdvanceReleased,0) as advanceReleased,
                             IFNULL(adv.LogisticAdvanceReleased,0) as logisticAdvanceReleased,
+                            IFNULL(lg.logisticAmount,0) as logisticAmount,
                             IFNULL(pr.paymentComRptAmount,0) as paymentReleased,
                             (IFNULL(podet.TotalPOVal,0) - IFNULL(pr.paymentComRptAmount,0) - IFNULL(adv.AdvanceReleased,0)) as balanceToBePaid'
                         )
@@ -1003,6 +1023,20 @@ WHERE
                                                 ) as pr1  GROUP BY purchaseOrderID) pr '), function ($join) use ($companyID) {
                             $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'pr.purchaseOrderID');
                         })
+                        ->leftJoin(DB::raw('(SELECT
+                                                poID,
+                                                SUM( reqAmountInPORptCur ) as logisticAmount
+                                            FROM
+                                                `erp_purchaseorderadvpayment` 
+                                            WHERE
+                                                poTermID = 0 
+                                                AND confirmedYN = 1 
+                                                AND isAdvancePaymentYN = 1 
+                                                AND approvedYN = - 1 
+                                            GROUP BY
+                                                poID) lg '), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.purchaseOrderID', '=', 'lg.poID');
+                        })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
                         ->leftJoin('suppliercategoryicvmaster', 'erp_purchaseordermaster.supCategoryICVMasterID', '=', 'suppliercategoryicvmaster.supCategoryICVMasterID')
@@ -1037,6 +1071,7 @@ WHERE
                             'PO Capex Amount' => $val->POCapex,
                             'PO Opex Amount' => $val->POOpex,
                             'Total PO Amount' => $val->TotalPOVal,
+                            'Logistic Amount' => $val->logisticAmount,
                             'GRV Capex Amount' => $val->GRVCapex,
                             'GRV Opex Amount' => $val->GRVOpex,
                             'Total GRV Amount' => $val->TotalGRVValue,
