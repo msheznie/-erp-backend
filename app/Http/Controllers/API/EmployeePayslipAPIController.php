@@ -34,7 +34,12 @@ class EmployeePayslipAPIController extends AppBaseController
 
     public function getPeriodsForPayslip()
     {
-        $processPeriods =  QrySalaryProcessedPeriods::selectRaw('CAST(periodMonth as CHAR) as periodMonth,periodMasterID,periodYear')->get();
+        $processPeriods =  QrySalaryProcessedPeriods::select('periodMonth','periodMasterID','periodYear')->get();
+        $processPeriods = $processPeriods->map(function ($value, $key) {
+            $value['periodMonth'] = (string)$value['periodMonth'];
+            return $value;
+        });
+
         $output = array('processPeriods' => $processPeriods->toArray());
         return $this->sendResponse($output, 'Salary Process Periods retrieved successfully');
     }
