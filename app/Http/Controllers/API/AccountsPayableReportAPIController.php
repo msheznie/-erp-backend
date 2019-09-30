@@ -27,6 +27,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
+use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
@@ -70,9 +71,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ->groupBy('supplierID')
                 ->pluck('supplierID');*/
 
+            $unbilledGrvSup = collect(UnbilledGrvGroupBy::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
+            $erp_bookinvsuppmaster = collect(BookInvSuppMaster::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
+            $filterSuppliers = array_merge($unbilledGrvSup,$erp_bookinvsuppmaster);
+
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
-                //->whereIN('supplierCodeSytem', $filterSuppliers)
-                ->groupBy('supplierCodeSytem')->get();
+                ->whereIN('supplierCodeSytem', $filterSuppliers)
+                ->groupBy('supplierCodeSytem')
+                ->get();
 
         } else {
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');

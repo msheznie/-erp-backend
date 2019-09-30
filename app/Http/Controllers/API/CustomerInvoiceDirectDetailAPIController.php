@@ -430,7 +430,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, array('unit', 'department','performadetails'));
+        $input = array_except($input, array('unit', 'department','performadetails','contract'));
         $input = $this->convertArrayToValue($input);
         $id = $input['custInvDirDetAutoID'];
 
