@@ -171,27 +171,21 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $companyDocumentAttachment = CompanyDocumentAttachment::with(
-            [
-                'company'=>function($query) use($search){
-                    $query->when($search, function ($q) use ($search) {
-                        return $q->where('CompanyName', 'LIKE', "%{$search}%");
-                });
-                },
-                'document'=>function($query) use($search){
-                    $query->when($search, function ($q) use ($search) {
-                        return $q->where('documentDescription', 'LIKE', "%{$search}%");
-                    });
-                }
-            ]
-        )->whereIn('companySystemID',$childCompanies);
+        $companyDocumentAttachment = CompanyDocumentAttachment::whereIn('companySystemID',$childCompanies)->with(['company','document']);
 
         if (array_key_exists('documentSystemID', $input)) {
             $companyDocumentAttachment = $companyDocumentAttachment->where('documentSystemID', $input['documentSystemID']);
         }
 
         if($search){
-            $companyDocumentAttachment =   $companyDocumentAttachment->where('docRefNumber','LIKE',"%{$search}%");
+            $companyDocumentAttachment = $companyDocumentAttachment
+                ->where(function ($query) use($search){
+                    $query->whereHas('company', function ($q) use ($search) {
+                        $q->where('CompanyName','LIKE',"%{$search}%");
+                    })->orWhereHas('document', function ($q) use ($search) {
+                        $q->where('documentDescription','LIKE',"%{$search}%");
+                    })->orWhere('docRefNumber','LIKE',"%{$search}%");
+                });
         }
         return \DataTables::eloquent($companyDocumentAttachment)
             ->order(function ($query) use ($input) {
