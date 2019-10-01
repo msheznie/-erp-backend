@@ -592,7 +592,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyER'] = 1;
 
                     $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
                     $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
