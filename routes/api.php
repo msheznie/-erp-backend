@@ -1524,6 +1524,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
     Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
 
+    Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
