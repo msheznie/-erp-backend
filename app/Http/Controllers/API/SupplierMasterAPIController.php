@@ -509,6 +509,35 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Master not found');
         }
 
+        if($supplierMaster->approvedYN){
+
+            //check policy 3
+
+            $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],3);
+
+            if($policy){
+
+                if($company->companyCountry == $input['supplierCountryID']){
+
+                    $validator = \Validator::make($input, [
+                        'isLCCYN' => 'required|numeric',
+                        'isSMEYN' => 'required|numeric',
+                    ]);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                }
+
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID']), $id);
+
+                return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+            }
+
+            return $this->sendError('Supplier Master is already approved , You cannot update.',500);
+        }
+
+
         if ($isConfirm && $supplierMaster->supplierConfirmedYN == 0) {
 
 

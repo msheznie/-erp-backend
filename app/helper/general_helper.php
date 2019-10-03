@@ -28,7 +28,10 @@ use App\Jobs\RollBackApproval;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
 use App\Models\CustomerReceivePayment;
+use App\Models\DocumentRestrictionAssign;
 use App\Models\Employee;
+use App\Models\EmployeeNavigation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -4080,4 +4083,30 @@ class Helper
         return null;
     }
 
+    public static function checkRestrictionByPolicy($companySystemID,$documentRestrictionPolicyID){
+
+        $permission = false;
+        if (!$companySystemID && $$documentRestrictionPolicyID) {
+            return $permission;
+        }
+        $id = Auth::id();
+        $user = User::with(['employee'])->find($id);
+        $empId = $user->employee['employeeSystemID'];
+        $permission = false;
+        $userGroup = EmployeeNavigation::where('employeeSystemID',$empId)
+            ->where('companyID',$companySystemID)
+            ->first();
+        if(empty($userGroup)){
+            return $permission;
+        }
+        $userGroupID = $userGroup->userGroupID;
+        $checkCount = DocumentRestrictionAssign::where('companySystemID',$companySystemID)
+            ->where('documentRestrictionPolicyID',$documentRestrictionPolicyID)
+            ->where('userGroupID',$userGroupID)
+            ->count();
+        if($checkCount > 0){
+            $permission = true;
+        }
+        return $permission;
+    }
 }

@@ -11,6 +11,7 @@
  */
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -79,7 +80,7 @@ class SupplierMaster extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'supplierCodeSystem';
-
+    protected $appends = ['isSUPDAmendAccess'];
 
     protected $dates = ['deleted_at'];
 
@@ -296,6 +297,11 @@ class SupplierMaster extends Model
     public function critical()
     {
         return $this->belongsTo('App\Models\SupplierCritical', 'isCriticalYN', 'suppliercriticalID');
+    }
+
+    public function getIsSUPDAmendAccessAttribute()
+    {
+        return true;
     }
 
 }
