@@ -1726,7 +1726,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('poCancelledYN', 0)
-            ->where('poType_N','!=',6)
+            ->where('poType_N','!=',5)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
