@@ -1498,6 +1498,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('hrms_document_attachments', 'HrmsDocumentAttachmentsAPIController');
 
+
     /* For Profile -> Payslip */
     Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
     Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
@@ -1525,6 +1526,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
 
     Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
+    
+    /* ChequeRegister */
+    Route::resource('cheque_registers', 'ChequeRegisterAPIController');
+
+    Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
+
+    Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
+    Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
+
+    Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
+    Route::post('getAllChequeRegisterDetails', 'ChequeRegisterDetailAPIController@getAllChequeRegisterDetails');
+    Route::get('getAllUnusedCheckDetails', 'ChequeRegisterDetailAPIController@getAllUnusedCheckDetails');
+    Route::post('chequeRegisterDetailCancellation', 'ChequeRegisterDetailAPIController@chequeRegisterDetailCancellation');
+    Route::post('chequeRegisterDetailSwitch', 'ChequeRegisterDetailAPIController@chequeRegisterDetailSwitch');
+    Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData');
 
 });
 
@@ -1592,6 +1608,8 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
 
 
 

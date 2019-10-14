@@ -1636,7 +1636,8 @@ class Helper
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
                                 $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
-                                $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
+                                $supData = array_except($supplierMaster->toArray(),'isSUPDAmendAccess');
+                                $supplierAssign = Models\SupplierAssigned::insert($supData);
                             }
 
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
