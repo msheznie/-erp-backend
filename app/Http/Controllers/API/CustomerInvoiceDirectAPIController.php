@@ -1697,7 +1697,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_dueDate = false;
                         $line_jobNo = false;
                         $lineSecondAddress = true;
-                        $line_poNumber = false;
+                        $line_poNumber = true;
                         $line_performaCode = true;
                         $line_paymentTerms = true;
                         $line_rentalPeriod = true;
