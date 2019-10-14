@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\ChequeRegisterDetail;
+use App\Models\CompanyPolicyMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -134,4 +136,55 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
     {
         return PaySupplierInvoiceMaster::class;
     }
+
+    public function getLastUsedChequeID($company_system_id, $bank_account_id) {
+        $usedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use($company_system_id,$bank_account_id) {
+            $q->where('bank_account_id', $bank_account_id)
+                ->where('company_id', $company_system_id);
+        })
+            ->where(function ($q) {
+            $q->where('status', 1)  // status = 1 => used
+                ->orWhere('status', 2); // // status = 2 => cancelled
+        })
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if(!empty($usedCheque)){
+            return $usedCheque->id;
+        }
+        return null;
+    }
+
+    public function is_exist_policy($policy_id,$company_id) {
+        $is_exist_policy = CompanyPolicyMaster::where('companySystemID',$company_id)
+            ->where('companyPolicyCategoryID',$policy_id)
+            ->where('isYesNO',1)
+            ->first();
+
+        if(!empty($is_exist_policy)){
+            return true;
+        }
+        return false;
+    }
+
+    public function releaseChequeDetails($company_id, $bank_account_id, $cheque_no){
+
+        $is_exist_policy = $this->is_exist_policy(35,$company_id);  // policy id = 35 = Get cheque number from cheque register
+
+        if($is_exist_policy){
+            $update_array = [
+                'document_id' => null,
+                'document_master_id' => null,
+                'status' => 0,
+            ];
+            ChequeRegisterDetail::whereHas('master', function ($q) use($company_id,$bank_account_id) {
+                    $q->where('bank_account_id', $bank_account_id)
+                        ->where('company_id', $company_id);
+                })
+                ->where('cheque_no',$cheque_no)
+                ->update($update_array);
+        }
+
+    }
+
 }
