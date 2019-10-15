@@ -207,4 +207,9 @@ class StockReceiveDetails extends Model
     {
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
     }
+
+    public function transfer()
+    {
+        return $this->belongsTo('App\Models\StockTransfer', 'stockTransferAutoID', 'stockTransferAutoID');
+    }
 }

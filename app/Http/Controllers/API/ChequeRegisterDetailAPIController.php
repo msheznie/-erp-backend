@@ -1,5 +1,22 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : ChequeRegisterDetailAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Cheque Registry
+ * -- Author : Mohamed Rilwan
+ * -- Create date : 24 - September 2019
+ * -- Description : This file contains the all CRUD for Cheque Registry master
+ * -- REVISION HISTORY
 
+ * --  By: Rilwan Description: Added new functions named as getAllChequeRegisterDetails()
+ * --  By: Rilwan Description: Added new functions named as chequeRegisterDetailCancellation()
+ * --  By: Rilwan Description: Added new functions named as getAllUnusedCheckDetails()
+ * --  By: Rilwan Description: Added new functions named as getChequeSwitchFormData()
+ * --  By: Rilwan Description: Added new functions named as chequeRegisterDetailSwitch()
+ * --  Date: 14 - October 2019 By: Rilwan Description: Added new functions named as chequeRegisterDetailsAudit()
+
+ */
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
@@ -314,9 +331,8 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $chequeRegisterDetails = $chequeRegisterDetails->where(function ($query) use ($search) {
                 $query->whereHas('document', function ($q) use ($search) {
-                    return $q->where('BPVcode', 'LIKE', "%{$search}%");
+                    $q->where('BPVcode', 'LIKE', "%{$search}%");
                 })
-                    ->orWhere('description', 'LIKE', "%{$search}%")
                     ->orWhere('cheque_no', 'LIKE', "%{$search}%");
             });
         }
@@ -564,9 +580,26 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             return $this->sendError($exception->getMessage(),500);
         }
 
+    }
 
+    public function chequeRegisterDetailsAudit(Request $request) {
 
+        $input = $request->all();
+        $messages = [
+            'id.required' => 'Cheque register details id is required.'
+        ];
 
+        $validator = \Validator::make($input, [
+            'id' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $chequeRegisterDetails = ChequeRegisterDetail::with(['document','createdBy','updatedBy'])->where('id', $input['id'])->first();
+        $output['auditDetails'] = $chequeRegisterDetails;
+        return $this->sendResponse($output,'Audit details retrieved successfully');
     }
 
 }

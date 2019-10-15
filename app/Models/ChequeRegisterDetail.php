@@ -166,5 +166,15 @@ class ChequeRegisterDetail extends Model
         return $this->belongsTo('App\Models\ChequeRegister', 'cheque_register_master_id', 'id');
     }
 
+    public function createdBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'updated_by', 'employeeSystemID');
+    }
+
 
 }
