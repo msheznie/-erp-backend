@@ -1,5 +1,20 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : ChequeRegisterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Cheque Registry
+ * -- Author : Mohamed Rilwan
+ * -- Create date : 24 - September 2019
+ * -- Description : This file contains the all CRUD for Cheque Registry master
+ * -- REVISION HISTORY
 
+ * --  By: Rilwan Description: Added new functions named as getChequeRegisterFormData()
+ * --  By: Rilwan Description: Added new functions named as getAllChequeRegistersByCompany()
+ * --  By: Rilwan Description: Added new functions named as getChequeRegisterByMasterID()
+ * --  By: Rilwan Description: Added new functions named as getChequeRegisterFormData()
+ * -- Date: 15- October 2019 By: Rilwan Description: Added new functions named as exportChequeRegistry()
+ */
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
@@ -407,6 +422,24 @@ class ChequeRegisterAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
+        $output['cheque_statuses'] = array(
+            [
+                'cheque_status_id' => '',
+                'cheque_status' => 'All'
+            ], [
+                'cheque_status_id' => 0,
+                'cheque_status' => 'Un used'
+            ],
+            [
+                'cheque_status_id' => 1,
+                'cheque_status' => 'Used'
+            ],
+            [
+                'cheque_status_id' => 2,
+                'cheque_status' => 'Cancelled'
+            ],
+        );
+
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -454,14 +487,35 @@ class ChequeRegisterAPIController extends AppBaseController
                 $q->where('status', 0);
             }]);
 
+        if (array_key_exists('bank_id', $input)) {
+            if ($input['bank_id'] != null) {
+                $chequeRegister->where('bank_id', $input['bank_id']);
+            }
+        }
+
+        if (array_key_exists('bank_acc_id', $input)) {
+            if ($input['bank_acc_id'] != null) {
+                $chequeRegister->where('bank_account_id', $input['bank_acc_id']);
+            }
+        }
+
+        if (array_key_exists('cheque_status_id', $input)) {
+            if ($input['cheque_status_id'] != null) {
+                $chequeRegister->whereHas('details', function ($q) use ($input) {
+                    return $q->where('status', $input['cheque_status_id']);
+                });
+            }
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $chequeRegister = $chequeRegister->where(function ($query) use ($search) {
-                $query->where('started_cheque_no', 'LIKE', "%{$search}%")
-                    ->orWhere('ended_cheque_no', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%")
+                $query->where('description', 'LIKE', "%{$search}%")
                     ->orWhereHas('bank', function ($q) use ($search) {
                         return $q->where('bankName', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('details', function ($q) use ($search) {
+                        return $q->where('cheque_no', 'LIKE', "%{$search}%");
                     })->orWhereHas('bank_account', function ($q) use ($search) {
                         return $q->where('AccountNo', 'LIKE', "%{$search}%")
                             ->orWhere('glCodeLinked', 'LIKE', "%{$search}%");
@@ -508,6 +562,100 @@ class ChequeRegisterAPIController extends AppBaseController
             return $this->sendError('Cheque register data not found', 404);
         }
         return $this->sendResponse($chequeRegister->toArray(), 'Cheque Register data received');
+    }
+
+    public function exportChequeRegistry(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('bank_id','bank_acc_id','cheque_status_id','companySystemID'));
+        $type = $input['type'];
+        $data = array();
+        $output = ChequeRegisterDetail::with(['document','master']);
+
+        if (array_key_exists('company_id', $input)) {
+            if ($input['company_id'] != null) {
+                $output->where('company_id', $input['company_id']);
+            }
+        }
+
+        if (array_key_exists('bank_id', $input)) {
+            if ($input['bank_id'] != null) {
+                $output->whereHas('master', function ($q) use ($input) {
+                    return $q->where('bank_id', $input['bank_id']);
+                });
+            }
+        }
+
+        if (array_key_exists('bank_acc_id', $input)) {
+            if ($input['bank_acc_id'] != null) {
+                $output->whereHas('master', function ($q) use ($input) {
+                    return $q->where('bank_account_id', $input['bank_acc_id']);
+                });
+            }
+        }
+
+        if (array_key_exists('cheque_status_id', $input)) {
+            if ($input['cheque_status_id'] != null) {
+                $output->where('status', $input['cheque_status_id']);
+            }
+        }
+
+        $output = $output->get();
+
+        if(!empty($output)){
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Cheque No'] = $value->cheque_no;
+                $data[$x]['Cheque Date'] = isset($value->document->BPVchequeDate)?$value->document->BPVchequeDate:'';
+                $data[$x]['PV No'] = isset($value->document->BPVcode)?$value->document->BPVcode:'';
+                if($value->status==1){
+                    $data[$x]['Cheque Status'] = 'Used';
+                }elseif($value->status==2){
+                    $data[$x]['Cheque Status'] = 'Cancelled';
+                }else{
+                    $data[$x]['Cheque Status'] = 'Un Used';
+                }
+
+                $data[$x]['Last Modifed By'] = isset($value->updatedBy->empFullName)?$value->updatedBy->empFullName:'';
+                if($data[$x]['Last Modifed By'] != ''){
+                    $data[$x]['Last Modifed Date'] = $value->updated_at;
+                }else{
+                    $data[$x]['Last Modifed Date'] = '';
+                }
+
+
+                if(isset($value->document->chequePrintedYN)) {
+
+                    if($value->document->chequePrintedYN==-1) {
+                        $data[$x]['Print Status'] = 'Printed';
+                    }else{
+                        $data[$x]['Print Status'] = 'Not Printed';
+                    }
+
+                    $data[$x]['Print By'] = $value->document->chequePrintedByEmpName;
+                    $data[$x]['Print Date'] = $value->document->chequePrintedDateTime;
+
+                }else{
+                    $data[$x]['Print Status'] = '';
+                    $data[$x]['Print By'] = '';
+                    $data[$x]['Print Date'] = '';
+                }
+                $x++;
+            }
+
+        }
+        $csv = \Excel::create('cheque_registry', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle("A1:I1")->getFont()->setBold( true );
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+
     }
 
 }

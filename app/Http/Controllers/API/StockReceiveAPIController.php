@@ -523,13 +523,21 @@ class StockReceiveAPIController extends AppBaseController
                 return $this->sendError('This receive document is marked as Inter company. Company from and Company to is same.', 500);
             }
 
-            $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->get();
-
+            $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->with(['transfer'])->get();
 
             if ($stockReceive->interCompanyTransferYN == -1) {
                 $notAssignItems = "";
                 $count = 0;
                 foreach ($stockReceiveDetails as $srDetail) {
+
+                    // check transfer date less than receive date
+                    if(!empty($srDetail->transfer)){
+                        $transferDate = $srDetail->transfer->tranferDate;
+                        if($transferDate>$documentDate){
+                            return $this->sendError('Receive date can not be less than transfer date', 500);
+                        }
+                    }
+
                     $itemAssign = ItemAssigned::where("companySystemID", $stockReceive->companySystemID)
                         ->where("itemCodeSystem", $srDetail->itemCodeSystem)
                         ->first();
