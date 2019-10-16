@@ -1689,7 +1689,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if ($master->isPerforma == 1) {
                     if ($master->customerID == 79) {
                         $footerDate = false;
-                        $logo = false;
+                        $logo = true;
                         $line_seNo = false;
                         $line_subcontractNo = false;
                         $line_contractNo = true;
