@@ -532,7 +532,8 @@ class StockReceiveAPIController extends AppBaseController
 
                     // check transfer date less than receive date
                     if(!empty($srDetail->transfer)){
-                        $transferDate = $srDetail->transfer->tranferDate;
+                        $transferDate = Carbon::parse($srDetail->transfer->tranferDate)->format('Y-m-d');
+                        $documentDate = Carbon::parse($documentDate)->format('Y-m-d');
                         if($transferDate>$documentDate){
                             return $this->sendError('Receive date can not be less than transfer date', 500);
                         }
