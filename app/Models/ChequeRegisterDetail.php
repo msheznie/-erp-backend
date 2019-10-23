@@ -117,6 +117,9 @@ class ChequeRegisterDetail extends Model
         'created_pc',
         'updated_by',
         'updated_pc',
+        'isPrinted',
+        'cheque_printed_at',
+        'cheque_print_by',
         'company_id',
         'document_id',
         'document_master_id',
@@ -138,9 +141,11 @@ class ChequeRegisterDetail extends Model
         'created_pc' => 'string',
         'updated_by' => 'integer',
         'updated_pc' => 'string',
+        'isPrinted' => 'integer',
+        'cheque_printed_at' => 'datetime',
+        'cheque_print_by' => 'integer',
         'company_id' => 'integer',
         'document_id' => 'integer',
-        'document_master_id' => 'integer',
         'document_master_id' => 'integer',
         'cancel_narration' => 'string',
         'status' => 'integer'
@@ -172,6 +177,11 @@ class ChequeRegisterDetail extends Model
     }
 
     public function updatedBy()
+    {
+        return $this->belongsTo('App\Models\Employee', 'updated_by', 'employeeSystemID');
+    }
+
+    public function printBy()
     {
         return $this->belongsTo('App\Models\Employee', 'updated_by', 'employeeSystemID');
     }
