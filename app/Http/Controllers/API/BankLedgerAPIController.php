@@ -27,7 +27,9 @@ use App\Models\BankMaster;
 use App\Models\BankMemoSupplier;
 use App\Models\BankReconciliation;
 use App\Models\BankReconciliationRefferedBack;
+use App\Models\ChequeRegisterDetail;
 use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
 use App\Models\GeneralLedger;
@@ -1154,7 +1156,72 @@ class BankLedgerAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $bankLedger = $this->chequeListQrt($input, $search, 0);
+
+        //$bankLedger = $this->chequeListQrt($input, $search, 0);
+
+        $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
+
+        $selectedCompanyId = $input['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $bankAccount = null;
+        if($input['bankID'] && $input['bankAccountID']){
+            $bankAccount = BankAccount::where('bankmasterAutoID', $input['bankID'])
+                ->where('bankAccountAutoID', $input['bankAccountID'])
+                ->with(['currency'])
+                ->first();
+        }
+
+        $bank_currency_id = 2;
+        if ($bankAccount && $bankAccount->currency) {
+            $bank_currency_id = $bankAccount->currency->currencyID;
+        }
+
+        $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
+            ->where("confirmedYN", 1)
+            ->whereRaw('RollLevForApp_curr <=> noOfApprovalLevels')
+            ->where("refferedBackYN", 0)
+            ->where("cancelYN", 0)
+            ->where("BPVchequeNo",'!=',0)
+            ->where("BPVsupplierID",'!=', null)
+            ->when(!empty($input['invoiceType']) && $input['invoiceType'] >0, function ($q) use ($input) {
+                return $q->where('invoiceType', $input['invoiceType']);
+            })
+            ->when(!empty($input['option']) && $input['option'] != -99, function ($q) use ($input) {
+                return $q->where('chequePaymentYN', $input['option']);
+            })
+            ->when(!empty($input['bankID']) && $input['bankID'] >0, function ($q) use ($input) {
+                return $q->where('BPVbank', $input['bankID']);
+            })
+            ->when(!empty($input['bankAccountID']) && $input['bankAccountID']>0, function ($q) use ($input) {
+                return $q->where('BPVAccount', $input['bankAccountID']);
+            })
+            ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($bank_currency_id) {
+                $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id) {
+                    $q4->where('currencyID', $bank_currency_id)
+                        ->with(['bankMemo_by']);
+                }]);
+            }]);
+            if(isset($input['isPrinted']) && $input['isPrinted']==1){
+                $bankLedger->where("chequePrintedYN", -1);
+            }else{
+                $bankLedger->where("chequePrintedYN", 0);
+            }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                return $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('directPaymentPayee', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVchequeNo', 'LIKE', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($bankLedger)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1242,9 +1309,10 @@ class BankLedgerAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $bankLedger = $bankLedger->where(function ($query) use ($search) {
-                $query->where('documentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('documentNarration', 'LIKE', "%{$search}%")
-                    ->orWhere('payeeName', 'LIKE', "%{$search}%");
+                return $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('directPaymentPayee', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVchequeNo', 'LIKE', "%{$search}%");
             });
         }
 
@@ -1252,6 +1320,287 @@ class BankLedgerAPIController extends AppBaseController
     }
 
     public function updatePrintChequeItems(Request $request)
+    {
+        $input = $request->all();
+        $search = $request->input('search.value');
+        $htmlName = '';
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $employee = \Helper::getEmployeeInfo();
+
+        /*validation for cheque print*/
+        if(isset($input['selectedForPrint']) && is_array($input['selectedForPrint']) && count($input['selectedForPrint'])>0){
+            $chequeCount = 0;
+            $transferCount = 0;
+            $pv = PaySupplierInvoiceMaster::whereIn('PayMasterAutoId',$input['selectedForPrint'])->get();
+            if(!empty($pv)){
+
+                foreach ($pv as $value){
+                    if ($value->chequePaymentYN == -1){
+                        $chequeCount++;
+                    }elseif($value->chequePaymentYN == 0){
+                        $transferCount++;
+                    }
+
+                }
+
+                /*
+                 * User Should able select multiple Bank transfer and print for same supplier
+                 * ( If Supplier, Bank, account and Transaction currency are same)
+                 * */
+                $supplierCountArray = collect($pv)->groupBy('BPVsupplierID');
+                $supplierArrayKeys = array_keys($supplierCountArray->toArray());
+                if(count($supplierCountArray->toArray())>1){
+                    return $this->sendError('Different suppliers found. You can not select different suppliers vouchers',500);
+                }
+//                if(in_array('',$supplierArrayKeys) || in_array(null,$supplierArrayKeys)){
+//                    return $this->sendError('supplier ID field is can not be empty on db',500);
+//                }
+
+                $accountCountArray = collect($pv)->groupBy('BPVAccount');
+                $accountArrayKeys = array_keys($accountCountArray->toArray());
+                if(count($accountCountArray->toArray())>1){
+                    return $this->sendError('Different accounts found. You can not select different suppliers vouchers',500);
+                }
+                if(in_array(null,$accountArrayKeys) || in_array('',$accountArrayKeys)){
+                    return $this->sendError('Account field is can not be empty on db',500);
+                }
+
+                $currencyCountArray = collect($pv)->groupBy('supplierTransCurrencyID');
+                $currencyArrayKeys = array_keys($currencyCountArray->toArray());
+                if(count($currencyCountArray->toArray())>1){
+                    return $this->sendError('Different currencies found. You can not select different accounts vouchers',500);
+                }
+                if(in_array(null,$currencyArrayKeys) || in_array('',$currencyArrayKeys)){
+                    return $this->sendError('Null currency field is found',500);
+                }
+                ////////////
+
+                /*
+                 * Don't allow user to Select different Transaction type (Cheques and Transfer) and Print
+                 * Don't allow user to select multiple Cheques and Print
+                 *
+                 * */
+                if($chequeCount ==0 && $transferCount ==0){
+                    return $this->sendError('Please select an item to print',500);
+                }elseif ($chequeCount >0 && $transferCount >0){
+                    return $this->sendError('You can not print cheque payment and bank transfer at a time',500);
+                }elseif ($chequeCount >1){
+                    return $this->sendError('You can print only one cheque payment at a time',500);
+                }
+                //////////////
+                if($chequeCount>0){
+                    $htmlName='cheque';
+                }elseif ($transferCount>0){
+                    $htmlName='bank_transfer';
+                }
+            }
+
+            $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
+
+            $selectedCompanyId = $input['companySystemID'];
+            $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+            if ($isGroup) {
+                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            } else {
+                $subCompanies = [$selectedCompanyId];
+            }
+            $bankAccount = null;
+            if($input['bankID'] && $input['bankAccountID']){
+                $bankAccount = BankAccount::where('bankmasterAutoID', $input['bankID'])
+                    ->where('bankAccountAutoID', $input['bankAccountID'])
+                    ->with(['currency'])
+                    ->first();
+            }
+
+            $bank_currency_id = 2;
+            if ($bankAccount && $bankAccount->currency) {
+                $bank_currency_id = $bankAccount->currency->currencyID;
+            }
+
+            $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
+                ->where("confirmedYN", 1)
+                ->whereRaw('RollLevForApp_curr <=> noOfApprovalLevels')
+                ->where("refferedBackYN", 0)
+                ->where("cancelYN", 0)
+                ->where("BPVchequeNo",'!=',0)
+                ->where("chequePrintedYN", 0)
+                ->where("BPVsupplierID",'!=', null)
+                ->when($input['selectedForPrint'], function ($q) use ($input) {
+                    $q->whereIn('PayMasterAutoId', $input['selectedForPrint']);
+                })
+                ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($bank_currency_id) {
+                    $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id) {
+                        $q4->where('currencyID', $bank_currency_id)
+                            ->with(['bankMemo_by']);
+                    }]);
+                }])
+                ->orderBy('PayMasterAutoId', $sort)
+                ->get();
+
+            if (count($bankLedger) == 0) {
+                return $this->sendError('No items found for print', 500);
+            }
+
+            DB::beginTransaction();
+            try {
+                $time = strtotime("now");
+                $fileName = 'cheque' . $time . '.pdf';
+                $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+                $totalAmount = 0;
+                foreach ($bankLedger as $item) {
+                    $temArray = array();
+                    $temArray['chequePrintedYN'] = -1;
+                    $temArray['chequePrintedDateTime'] = now();
+                    $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
+                    $temArray['chequePrintedByEmpID'] = $employee->empID;
+                    $temArray['chequePrintedByEmpName'] = $employee->empName;
+                    $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+
+                    /*
+                     * update cheque registry table print status if GCNFCR policy is on
+                     * */
+                    $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID',$item->companySystemID)
+                        ->where('companyPolicyCategoryID',35)
+                        ->where('isYesNO',1)
+                        ->first();
+                    if(!empty($is_exist_policy_GCNFCR)) {
+                            $check_registry = [
+                                'isPrinted' => -1,
+                                'cheque_printed_at' => now(),
+                                'cheque_print_by' => $employee->employeeSystemID
+                            ];
+                            ChequeRegisterDetail::where('cheque_no',$item->BPVchequeNo)
+                                ->where('company_id',$item->companySystemID)
+                                ->where('document_id',$item->PayMasterAutoId)
+                                ->update($check_registry);
+                    }
+
+                    $item['decimalPlaces'] = 2;
+                    if ($item['bankcurrency']) {
+                        $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
+                    }
+
+                    $item->memos = isset($item['supplier']['supplierCurrency'][0]['bankMemo_by'])?$item['supplier']['supplierCurrency'][0]['bankMemo_by']:null;
+                    $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['PayMasterAutoId'])
+                        ->first();
+
+                    if (!empty($temDetails)) {
+                        if ($temDetails->invoiceType == 2) {
+                            $item['details'] = $temDetails->supplierdetail;
+                        } else if ($temDetails->invoiceType == 3) {
+                            $item['details'] = $temDetails->directdetail;
+                        } else if ($temDetails->invoiceType == 5) {
+                            $item['details'] = $temDetails->advancedetail;
+                        } else {
+                            $item['details'] = [];
+                        }
+                    } else {
+                        $item['details'] = [];
+                    }
+                    $totalAmount = $totalAmount+$item->payAmountBank;
+                }
+                $entities = $bankLedger;
+                if(count($entities) && isset($entities[0])){
+                    $entity = $entities[0];
+                    $entity->totalAmount = $totalAmount;
+
+                    $amountSplit = explode(".", $totalAmount);
+                    $intAmt = 0;
+                    $floatAmt = 00;
+
+                    if (count($amountSplit) == 1) {
+                        $intAmt = $amountSplit[0];
+                        $floatAmt = 00;
+                    } else if (count($amountSplit) == 2) {
+                        $intAmt = $amountSplit[0];
+                        $floatAmt = $amountSplit[1];
+                    }
+
+                    $entity->floatAmt = (string)$floatAmt;
+                    $entity->amount_word = ucwords($f->format($intAmt));
+                    $entity->chequePrintedByEmpName = $employee->empName;
+                }else{
+                    $entity = null;
+                }
+
+                $array = array('entity' => $entity, 'date' => now());
+                if ($htmlName) {
+                    $html = view('print.' . $htmlName, $array)->render();;
+                    DB::commit();
+                    return $this->sendResponse($html, 'Print successfully');
+                } else {
+                    return $this->sendError('Error', 500);
+                }
+            } catch (\Exception $e) {
+                DB::rollback();
+                return ['success' => false, 'message' => $e . 'Error'];
+            }
+
+        }else{
+            return $this->sendError('Please select an item to print',500);
+        }
+
+    }
+
+    public function revertChequePrint(Request $request){
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::where('PayMasterAutoId',$input['id'])->first();
+        if(empty($paySupplierInvoiceMaster)){
+            return $this->sendError('Pay Supplier Invoice Master Not Found',500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $temArray['chequePrintedYN'] = 0;
+        $temArray['chequePrintedDateTime'] = '';
+        $temArray['chequePrintedByEmpSystemID'] = '';
+        $temArray['chequePrintedByEmpID'] = '';
+        $temArray['chequePrintedByEmpName'] = '';
+        $temArray['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $temArray['modifiedUser'] = $employee->empID;
+        $temArray['modifiedPc'] = gethostname();
+        $this->paySupplierInvoiceMasterRepository->update($temArray, $paySupplierInvoiceMaster->PayMasterAutoId);
+
+        /*
+         * update cheque registry table print status if GCNFCR policy is on
+         * */
+        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID',$paySupplierInvoiceMaster->companySystemID)
+            ->where('companyPolicyCategoryID',35)
+            ->where('isYesNO',1)
+            ->first();
+        if(!empty($is_exist_policy_GCNFCR)) {
+            $check_registry = [
+                'isPrinted' => 0,
+                'cheque_printed_at' => '',
+                'cheque_print_by' => '',
+                'updated_at' => now(),
+                'updated_by' => $employee->employeeSystemID,
+                'updated_pc' => gethostname()
+            ];
+            ChequeRegisterDetail::where('cheque_no',$paySupplierInvoiceMaster->BPVchequeNo)
+                ->where('company_id',$paySupplierInvoiceMaster->companySystemID)
+                ->where('document_id',$paySupplierInvoiceMaster->PayMasterAutoId)
+                ->update($check_registry);
+        }
+
+        return $this->sendResponse([],'Print reverted Successfully');
+    }
+
+    public function updatePrintChequeItemsBacksUp(Request $request)
     {
         $input = $request->all();
         $search = $request->input('search.value');
@@ -1279,96 +1628,114 @@ class BankLedgerAPIController extends AppBaseController
             ->get();
 
         if (count($bankLedger) == 0) {
-            return $this->sendError('No any item found for print', 500);
+            return $this->sendError('No items found for print', 500);
         }
         DB::beginTransaction();
         try {
-        $time = strtotime("now");
-        $fileName = 'cheque' . $time . '.pdf';
-        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+            $time = strtotime("now");
+            $fileName = 'cheque' . $time . '.pdf';
+            $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
 
-        foreach ($bankLedger as $item) {
-            $temArray = array();
-            $temArray['chequePrintedYN'] = -1;
-            $temArray['chequePrintedDateTime'] = now();
-            $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
-            $temArray['chequePrintedByEmpID'] = $employee->empID;
-            $temArray['chequePrintedByEmpName'] = $employee->empName;
-            $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+            foreach ($bankLedger as $item) {
+                $temArray = array();
+                $temArray['chequePrintedYN'] = -1;
+                $temArray['chequePrintedDateTime'] = now();
+                $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
+                $temArray['chequePrintedByEmpID'] = $employee->empID;
+                $temArray['chequePrintedByEmpName'] = $employee->empName;
+                $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
 
+                /*
+                 * update check registry table print status
+                 * */
+//            $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID',$item->companySystemID)
+//                ->where('companyPolicyCategoryID',35)
+//                ->where('isYesNO',1)
+//                ->first();
+//            if(!empty($is_exist_policy_GCNFCR)) {
+                $check_registry = [
+                    'isPrinted' => -1,
+                    'cheque_printed_at' => now(),
+                    'cheque_print_by' => $employee->employeeSystemID
+                ];
+                ChequeRegisterDetail::where('cheque_no',$item->BPVchequeNo)
+                    ->where('company_id',$item->companySystemID)
+                    ->update($check_registry);
+//            }
+                /**/
 
-            $temArray['chequePrintedYN'] = -1;
-            $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+                $temArray['chequePrintedYN'] = -1;
+                $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
 
-            $amountSplit = explode(".", $item->payAmountBank);
-            $intAmt = 0;
-            $floatAmt = 00;
-
-            if (count($amountSplit) == 1) {
-                $intAmt = $amountSplit[0];
+                $amountSplit = explode(".", $item->payAmountBank);
+                $intAmt = 0;
                 $floatAmt = 00;
-            } else if (count($amountSplit) == 2) {
-                $intAmt = $amountSplit[0];
-                $floatAmt = $amountSplit[1];
-            }
 
-            $item['amount_word'] = ucwords($f->format($intAmt));
-            if ($item['supplier']) {
-                if ($item['supplier']['supplierCurrency']) {
-                    if ($item['supplier']['supplierCurrency'][0]['bankMemo_by']) {
-                        $memos = $item['supplier']['supplierCurrency'][0]['bankMemo_by'];
-                        $item->memos = $memos;
+                if (count($amountSplit) == 1) {
+                    $intAmt = $amountSplit[0];
+                    $floatAmt = 00;
+                } else if (count($amountSplit) == 2) {
+                    $intAmt = $amountSplit[0];
+                    $floatAmt = $amountSplit[1];
+                }
+
+                $item['amount_word'] = ucwords($f->format($intAmt));
+                if ($item['supplier']) {
+                    if ($item['supplier']['supplierCurrency']) {
+                        if ($item['supplier']['supplierCurrency'][0]['bankMemo_by']) {
+                            $memos = $item['supplier']['supplierCurrency'][0]['bankMemo_by'];
+                            $item->memos = $memos;
+                        }
                     }
                 }
-            }
-            $item['decimalPlaces'] = 2;
-            $item['floatAmt'] = (string)$floatAmt;
-            if ($item['bankcurrency']) {
-                $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
-            }
+                $item['decimalPlaces'] = 2;
+                $item['floatAmt'] = (string)$floatAmt;
+                if ($item['bankcurrency']) {
+                    $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
+                }
 
-            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['PayMasterAutoId'])
-                ->first();
+                $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['PayMasterAutoId'])
+                    ->first();
 
-            if (!empty($temDetails)) {
-                if ($input['invoiceType'] == 2) {
-                    $item['details'] = $temDetails->supplierdetail;
-                } else if ($input['invoiceType'] == 3) {
-                    $item['details'] = $temDetails->directdetail;
-                } else if ($input['invoiceType'] == 5) {
-                    $item['details'] = $temDetails->advancedetail;
+                if (!empty($temDetails)) {
+                    if ($input['invoiceType'] == 2) {
+                        $item['details'] = $temDetails->supplierdetail;
+                    } else if ($input['invoiceType'] == 3) {
+                        $item['details'] = $temDetails->directdetail;
+                    } else if ($input['invoiceType'] == 5) {
+                        $item['details'] = $temDetails->advancedetail;
+                    } else {
+                        $item['details'] = [];
+                    }
                 } else {
                     $item['details'] = [];
                 }
-            } else {
-                $item['details'] = [];
             }
-        }
 
-        $htmlName = '';
-        if ($input['option'] == -1) {
-            $htmlName = 'cheque';
-        } else if ($input['option'] == 0) {
-            $htmlName = 'bank_transfer';
-        }
-        $array = array('entities' => $bankLedger, 'date' => now());
-        if ($htmlName) {
-            $html = view('print.' . $htmlName, $array)->render();;
-            //$pdf = \App::make('dompdf.wrapper');
-            //$pdf->loadHTML($html);
-            //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
-            //'landscape'
-            DB::commit();
-           // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
-            return $this->sendResponse($html, 'Print successfully');
-        } else {
-            return $this->sendError('Error', 500);
-        }
+            $htmlName = '';
+            if ($input['option'] == -1) {
+                $htmlName = 'cheque';
+            } else if ($input['option'] == 0) {
+                $htmlName = 'bank_transfer';
+            }
+            $array = array('entities' => $bankLedger, 'date' => now());
+            if ($htmlName) {
+                $html = view('print.' . $htmlName, $array)->render();;
+                //$pdf = \App::make('dompdf.wrapper');
+                //$pdf->loadHTML($html);
+                //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
+                //'landscape'
+                DB::commit();
+                // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+                return $this->sendResponse($html, 'Print successfully');
+            } else {
+                return $this->sendError('Error', 500);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => $e . 'Error'];
         }
-       // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+        // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
     }
 
     public function printChequeItems(Request $request)

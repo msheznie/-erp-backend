@@ -195,4 +195,8 @@ class PurchaseRequestDetails extends Model
     public function purchase_order_process_detail(){
         return $this->belongsTo('App\Models\PurchaseOrderProcessDetails','purchaseRequestID','purchaseRequestID');
     }
+
+    public function closed_by(){
+        return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
+    }
 }

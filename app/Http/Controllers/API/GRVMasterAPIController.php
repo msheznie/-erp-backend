@@ -482,16 +482,29 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least a qty', 500);
             }
 
+            //  remove validation GWL-657
             // check order cost should be greater than zero
-            $checkCost = GRVDetails::where('grvAutoID', $id)
-                ->whereRaw('ROUND((unitcost-addonDistCost),3) < ?', [0])
-                ->selectRaw('ROUND((unitcost-addonDistCost),3)')
-                ->count();
+//            $checkCost = GRVDetails::where('grvAutoID', $id)
+//                ->whereRaw('ROUND((unitcost-addonDistCost),3) < ?', [0])
+//                ->selectRaw('ROUND((unitcost-addonDistCost),3)')
+//                ->count();
 
-            if ($checkCost > 0) { // remove validation GWL-601
-                 return $this->sendError('Every item order cost should be greater than or equal to zero', 500);
+
+//            if ($checkCost > 0) { // remove validation GWL-601
+//                 return $this->sendError('Every item order cost should be greater than or equal to zero', 500);
+//            }
+
+            $checkNetAmount = GRVDetails::where('grvAutoID', $id)
+                ->whereRaw('ROUND(netAmount,3) < ?', [0])
+                ->selectRaw('ROUND(netAmount,3)')
+                ->count();
+            if ($checkNetAmount > 0) {
+                 return $this->sendError('Every item net amount should be greater than or equal to zero', 500);
             }
 
+            if ($grvMasterSum->masterTotalSum < 0) {
+                return $this->sendError('Total net amount should be greater than or equal to zero', 500);
+            }
 
             if ($gRVMaster->grvTypeID == 2) {
                 // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table

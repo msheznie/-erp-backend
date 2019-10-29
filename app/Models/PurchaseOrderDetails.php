@@ -326,4 +326,8 @@ class PurchaseOrderDetails extends Model
     public function item_ledger(){
         return $this->hasMany('App\Models\ErpItemLedger', 'itemSystemCode', 'itemCode');
     }
+
+    public function closed_by(){
+        return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
+    }
 }
