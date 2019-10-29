@@ -488,9 +488,10 @@ class GRVMasterAPIController extends AppBaseController
                 ->selectRaw('ROUND((unitcost-addonDistCost),3)')
                 ->count();
 
-            if ($checkCost > 0) { // remove validation GWL-601
-                 return $this->sendError('Every item order cost should be greater than or equal to zero', 500);
-            }
+            // remove validation GWL-657
+//            if ($checkCost > 0) { // remove validation GWL-601
+//                 return $this->sendError('Every item order cost should be greater than or equal to zero', 500);
+//            }
 
 
             if ($gRVMaster->grvTypeID == 2) {
