@@ -1544,7 +1544,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData');
     Route::post('exportChequeRegistry', 'ChequeRegisterAPIController@exportChequeRegistry');
     Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
-
+    Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
+    Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
 
 });
 

@@ -26,6 +26,7 @@
  * -- Date: 11-June 2018 By: Fayas Description: Added new functions named as getReportOpenRequest(),exportReportOpenRequest()
  * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReopen()
  * -- Date: 01-August 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReferBack()
+ * * -- Date: 28-Oct 2019 By: Rilwan Description: Added new functions named as getCancelledDetails(),getClosedDetails
  */
 namespace App\Http\Controllers\API;
 
@@ -41,6 +42,8 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\Months;
@@ -316,7 +319,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
             ->where('PRConfirmedYN', 1)
-            ->where('cancelledYN', 0)
+//            ->where('cancelledYN', 0)
             ->when(request('date_by') == 'PRRequestedDate', function ($q) use ($from, $to) {
                 return $q->whereBetween('PRRequestedDate', [$from, $to]);
             })
@@ -521,6 +524,13 @@ class PurchaseRequestAPIController extends AppBaseController
                             $data[$x]['PR Approved'] = '';
                         }
 
+                        if($value->cancelledYN) {
+                            $data[$x]['PR Status'] = 'Cancelled';
+                        }elseif ($item->manuallyClosed){
+                            $data[$x]['PR Status'] = 'Closed';
+                        }else{
+                            $data[$x]['PR Status'] = '';
+                        }
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
                         $data[$x]['Part Number'] = $item->partNumber;
@@ -544,6 +554,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['PR Date'] = '';
                                     $data[$x]['PR Comment'] = '';
                                     $data[$x]['PR Approved'] = '';
+                                    $data[$x]['PR Status'] = '';
                                     $data[$x]['Item Code'] = '';
                                     $data[$x]['Item Description'] = '';
                                     $data[$x]['Part Number'] = '';
@@ -590,6 +601,14 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['Approved Date'] = '';
                                 }
 
+                                if($poDetail->order && $poDetail->order->cancelledYN) {
+                                    $data[$x]['PO Status'] = 'Cancelled';
+                                }elseif ($poDetail->manuallyClosed){
+                                    $data[$x]['PO Status'] = 'Closed';
+                                }else{
+                                    $data[$x]['PO Status'] = '';
+                                }
+
                                 if (count($poDetail->grv_details) > 0) {
                                     $grvCount = 0;
                                     foreach ($poDetail->grv_details as $grvDetail) {
@@ -603,6 +622,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['PR Date'] = '';
                                             $data[$x]['PR Comment'] = '';
                                             $data[$x]['PR Approved'] = '';
+                                            $data[$x]['PR Status'] = '';
                                             $data[$x]['Item Code'] = '';
                                             $data[$x]['Item Description'] = '';
                                             $data[$x]['Part Number'] = '';
@@ -617,6 +637,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['PO Cost'] = '';
                                             $data[$x]['PO Approved Status'] = '';
                                             $data[$x]['Approved Date'] = '';
+                                            $data[$x]['PO Status'] = '';
                                         }
 
                                         if ($grvDetail->grv_master) {
@@ -627,6 +648,12 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['Receipt Date'] = '';
                                         }
                                         $data[$x]['Receipt Qty'] = $grvDetail->noQty;
+
+                                        if($grvDetail->grv_master && $grvDetail->grv_master->cancelledYN) {
+                                            $data[$x]['GRV Status'] = 'Cancelled';
+                                        }else{
+                                            $data[$x]['GRV Status'] = '';
+                                        }
 
                                         if($poDetail->manuallyClosed == 1){
                                             $data[$x]['Receipt Status'] = "Fully Received";
@@ -646,6 +673,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['Receipt Doc Number'] = '';
                                     $data[$x]['Receipt Date'] = '';
                                     $data[$x]['Receipt Qty'] = '';
+                                    $data[$x]['GRV Status'] = '';
                                     $data[$x]['Receipt Status'] = "Not Received";
                                 }
                                 $poCount++;
@@ -660,9 +688,11 @@ class PurchaseRequestAPIController extends AppBaseController
                             $data[$x]['PO Cost'] = '';
                             $data[$x]['PO Approved Status'] = '';
                             $data[$x]['Approved Date'] = '';
+                            $data[$x]['PO Status'] = '';
                             $data[$x]['Receipt Doc Number'] = '';
                             $data[$x]['Receipt Date'] = '';
                             $data[$x]['Receipt Qty'] = '';
+                            $data[$x]['GRV Status'] = '';
                             $data[$x]['Receipt Status'] = "Not Received";
                         }
                         $itemCount++;
@@ -682,9 +712,11 @@ class PurchaseRequestAPIController extends AppBaseController
                     $data[$x]['PO Cost'] = '';
                     $data[$x]['PO Approved Status'] = '';
                     $data[$x]['Approved Date'] = '';
+                    $data[$x]['PO Status'] = '';
                     $data[$x]['Receipt Doc Number'] = '';
                     $data[$x]['Receipt Date'] = '';
                     $data[$x]['Receipt Qty'] = '';
+                    $data[$x]['GRV Status'] = '';
                     $data[$x]['Receipt Status'] = "Not Received";
                 }
                 $x++;
@@ -2323,6 +2355,77 @@ class PurchaseRequestAPIController extends AppBaseController
         $this->purchaseRequestRepository->update(['checkBudgetYN' => 0],$purchaseRequestId);
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Request budget check removed successfully');
+    }
+
+    /**
+     * get Approval Details
+     * GET /getCancelledDetails
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getCancelledDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+        $type = $input['type'];
+        $cancelList = [];
+        if($type == 'PR'){
+            $cancelledDetails = PurchaseRequest::where('purchaseRequestID', $id)
+                ->with(['cancelled_by'])
+                ->first();
+            $cancelList = $cancelledDetails;
+        }elseif ($type == 'PO'){
+            $cancelledDetails = ProcumentOrder::where('purchaseOrderID', $id)
+                ->with(['cancelled_by'])
+                ->first();
+            $cancelList = [
+                'cancelledYN'=>$cancelledDetails->poCancelledYN,
+                'cancelledDate'=>$cancelledDetails->poCancelledDate,
+                'cancelledComments'=>$cancelledDetails->cancelledComments,
+                'cancelled_by'=>$cancelledDetails->cancelled_by,
+            ];
+        }elseif ($type == 'GRV'){
+            $cancelledDetails = GRVMaster::where('grvAutoID', $id)
+                ->with(['cancelled_by'])
+                ->first();
+            $cancelList = [
+                'cancelledYN'=>$cancelledDetails->grvCancelledYN,
+                'cancelledDate'=>$cancelledDetails->grvCancelledDate,
+                'cancelledComments'=>'',
+                'cancelled_by'=>$cancelledDetails->cancelled_by,
+            ];
+        }
+        return $this->sendResponse($cancelList, 'Record retrieved successfully');
+    }
+
+    /**
+     * get Approval Details
+     * GET /getClosedDetails
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getClosedDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+        $type = $input['type'];
+        $closedDetails = [];
+        if($type == 'PR'){
+            $closedDetails = PurchaseRequestDetails::where('purchaseRequestDetailsID', $id)
+                ->with(['closed_by'])
+                ->first();
+        }elseif ($type == 'PO'){
+            $closedDetails = PurchaseOrderDetails::where('purchaseOrderDetailsID', $id)
+                ->with(['closed_by'])
+                ->first();
+        }
+        return $this->sendResponse($closedDetails, 'Record retrieved successfully');
     }
 
 }
