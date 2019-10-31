@@ -901,6 +901,7 @@ FROM
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
+                                $data[$x]['Part Number'] = $val->secondaryItemCode;
                                 $data[$x]['Category'] = $val->categoryDescription;
                                 $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
@@ -1108,6 +1109,7 @@ FROM
                     foreach ($output as $item){
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
+                        $data[$x]['Part Number'] = $item->secondaryItemCode;
                         $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
                         $data[$x]['Stock Qty'] = $item->stock;
                         $data[$x]['Qty On Order'] = $item->onOrder;
