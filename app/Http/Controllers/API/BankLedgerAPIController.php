@@ -1184,7 +1184,8 @@ class BankLedgerAPIController extends AppBaseController
 
         $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
             ->where("confirmedYN", 1)
-            ->whereRaw('RollLevForApp_curr <=> noOfApprovalLevels')
+            ->where("approved", 0)
+            ->where('RollLevForApp_curr','>',1)
             ->where("refferedBackYN", 0)
             ->where("cancelYN", 0)
             ->where("BPVchequeNo",'!=',0)
@@ -1424,7 +1425,8 @@ class BankLedgerAPIController extends AppBaseController
 
             $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
                 ->where("confirmedYN", 1)
-                ->whereRaw('RollLevForApp_curr <=> noOfApprovalLevels')
+                ->where("approved", 0)
+                ->where('RollLevForApp_curr','>',1)
                 ->where("refferedBackYN", 0)
                 ->where("cancelYN", 0)
                 ->where("BPVchequeNo",'!=',0)

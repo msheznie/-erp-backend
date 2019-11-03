@@ -601,7 +601,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['Approved Date'] = '';
                                 }
 
-                                if($poDetail->order && $poDetail->order->cancelledYN) {
+                                if($poDetail->order && $poDetail->order->poCancelledYN) {
                                     $data[$x]['PO Status'] = 'Cancelled';
                                 }elseif ($poDetail->manuallyClosed){
                                     $data[$x]['PO Status'] = 'Closed';
@@ -649,7 +649,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                         }
                                         $data[$x]['Receipt Qty'] = $grvDetail->noQty;
 
-                                        if($grvDetail->grv_master && $grvDetail->grv_master->cancelledYN) {
+                                        if($grvDetail->grv_master && $grvDetail->grv_master->grvCancelledYN) {
                                             $data[$x]['GRV Status'] = 'Cancelled';
                                         }else{
                                             $data[$x]['GRV Status'] = '';

@@ -726,6 +726,7 @@ WHERE
             $data[] = array(
                 'Item Code' => $val->itemPrimaryCode,
                 'Item Description' => $val->itemDescription,
+                'Part No' => $val->secondaryItemCode,
                 'Tran Type' => $val->documentID,
                 'Document Code' => $val->documentCode,
                 'Warehouse' => $val->wareHouseDescription,
