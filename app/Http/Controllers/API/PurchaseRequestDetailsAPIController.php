@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Purchase Request Details
  * -- REVISION HISTORY
  * -- Date: 29-March 2018 By: Fayas Description: Added new functions named as getItemsByPurchaseRequest()
+ * -- Date: 29-Oct 2019 By: Rilwan Description: Added new functions named as getQtyOrderDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -516,5 +517,39 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
 
+    }
+
+    public function getQtyOrderDetails(Request $request){
+
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'itemCode' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $companySystemID = $input['companySystemID'];
+        $itemCode = $input['itemCode'];
+
+        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID)
+                ->where('approved', -1)
+                ->where('poCancelledYN', 0);
+        })
+            ->where('itemCode', $itemCode)
+            ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID){
+                $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
+                    ->whereHas('grv_master',function ($query) use($companySystemID){
+                        $query->where('companySystemID', $companySystemID)->where('grvTypeID', 2);
+                    });
+            }])
+            ->with(['order.currency','unit','order.location'])->get();
+
+        $result['item'] = ItemAssigned::where('companySystemID',$companySystemID)->where('itemCodeSystem',$itemCode)->first();
+
+        return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
     }
 }
