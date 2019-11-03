@@ -810,7 +810,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $supplierArray = $supplier->toArray();
-
+        $supplierArray = array_except($supplierArray,['isSUPDAmendAccess']);
         $storeHistory = SupplierMasterRefferedBack::insert($supplierArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
