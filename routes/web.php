@@ -53,3 +53,5 @@ Route::resource('hrmsDocumentAttachments', 'HrmsDocumentAttachmentsController');
 Route::resource('chequeRegisters', 'ChequeRegisterController');
 
 Route::resource('chequeRegisterDetails', 'ChequeRegisterDetailController');
+
+Route::resource('userActivityLogs', 'UserActivityLogController');

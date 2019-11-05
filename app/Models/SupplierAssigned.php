@@ -182,4 +182,16 @@ class SupplierAssigned extends Model
     {
         return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');
     }
+
+    public function supplierICVCategories(){
+
+        return $this->belongsTo('App\Models\SupplierCategoryICVMaster','supCategoryICVMasterID','supCategoryICVMasterID');
+
+    }
+
+    public function supplierICVSubCategories(){
+
+        return $this->belongsTo('App\Models\SupplierCategoryICVSub','supCategorySubICVID','supCategorySubICVID');
+
+    }
 }

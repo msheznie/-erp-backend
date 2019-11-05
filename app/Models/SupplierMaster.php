@@ -304,4 +304,16 @@ class SupplierMaster extends Model
         return true;
     }
 
+    public function supplierICVCategories(){
+
+        return $this->belongsTo('App\Models\SupplierCategoryICVMaster','supCategoryICVMasterID','supCategoryICVMasterID');
+
+    }
+
+    public function supplierICVSubCategories(){
+
+        return $this->belongsTo('App\Models\SupplierCategoryICVSub','supCategorySubICVID','supCategorySubICVID');
+
+    }
+
 }

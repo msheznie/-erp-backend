@@ -1584,6 +1584,7 @@ Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQu
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
 Route::get('loginwithToken', 'UserAPIController@loginwithToken');
+Route::resource('user_activity_logs', 'UserActivityLogAPIController');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 Route::get('getBcryptPassword/{password}', function ($password) {
