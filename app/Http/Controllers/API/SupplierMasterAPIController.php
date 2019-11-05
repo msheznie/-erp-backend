@@ -34,6 +34,7 @@ use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
 use App\Models\SupplierMasterRefferedBack;
 use App\Repositories\SupplierMasterRepository;
+use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Input;
@@ -177,6 +178,11 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['Website'] = $val->webAddress;
             $data[$x]['Credit Limit'] = $val->creditLimit;
             $data[$x]['Credit Period'] = $val->creditPeriod;
+            $data[$x]['ICV Category'] = ($val->supplierICVCategories!=null && isset($val->supplierICVCategories->categoryDescription))?$val->supplierICVCategories->categoryDescription:'';
+            $data[$x]['ICV Sub Category'] = ($val->supplierICVSubCategories!=null && isset($val->supplierICVSubCategories->categoryDescription))?$val->supplierICVSubCategories->categoryDescription:'';
+            $data[$x]['Critical Status'] = isset($val->critical->description)?$val->critical->description:'';
+            $data[$x]['LCC'] = ($val->isLCCYN==1)?'Yes':'No';
+            $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
         }
 
         $csv = \Excel::create('supplier_master', function ($excel) use ($data) {
@@ -242,13 +248,13 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if ($request['type'] == 'all') {
-            $supplierMasters = SupplierMaster::with(['categoryMaster', 'critical', 'country', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierMaster::with(['categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }]);
         } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'critical', 'country', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
@@ -504,7 +510,7 @@ class SupplierMasterAPIController extends AppBaseController
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
 
         $supplierMaster = SupplierMaster::where('supplierCodeSystem', $id)->first();
-
+        $supplierMasterOld = $supplierMaster->toArray();
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');
         }
@@ -529,8 +535,20 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID']), $id);
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']), $id);
+                // user activity log table
+                if($supplierMaster){
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']);
 
+                    // update in to user log table
+                    foreach ($old_array as $key => $old){
+                        if($old != $modified_array[$key]){
+                            $description = $employee->empName." Updated supplier (".$supplierMaster->supplierCodeSystem.") from ".$old." To ".$modified_array[$key]."";
+                            UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$supplierMaster->documentSystemID,$supplierMaster->supplierCodeSystem,$description,$modified_array[$key],$old);
+                        }
+                    }
+                }
                 return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
             }
 
