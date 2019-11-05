@@ -536,6 +536,7 @@ class SupplierMasterAPIController extends AppBaseController
                 }
 
                 $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']));
                 // user activity log table
                 if($supplierMaster){
                     $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod']);
