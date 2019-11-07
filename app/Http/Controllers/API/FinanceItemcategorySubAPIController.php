@@ -15,6 +15,7 @@ use App\Http\Requests\API\CreateFinanceItemCategorySubAPIRequest;
 use App\Http\Requests\API\UpdateFinanceItemCategorySubAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\FinanceItemCategorySub;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\FinanceItemCategorySubRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -59,8 +60,27 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function getSubcategoriesBymainCategory(Request $request){
 
-        if($request->get('itemCategoryID')){
-            $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))->get();
+        if($request->get('itemCategoryID')) {
+            if($request->get('primaryCompanySystemID')){
+                $companyId = $request->get('primaryCompanySystemID');
+
+                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+                if ($isGroup) {
+                    $companyID = \Helper::getGroupCompany($companyId);
+                } else {
+                    $companyID = [$companyId];
+                }
+
+                $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$request->get('itemCategoryID'))
+                                                    ->where('isActive',1)
+                                                    ->whereIn('companySystemID',$companyID)
+                                                    ->where('isAssigned',-1)
+                                                    ->groupBy('itemCategorySubID')
+                                                    ->get();
+            }else{
+                $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))->get();
+            }
         }else{
             $subCategories = [];
         }
