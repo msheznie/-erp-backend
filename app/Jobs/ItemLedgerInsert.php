@@ -310,19 +310,43 @@ class ItemLedgerInsert implements ShouldQueue
                         $data = [];
                         $i = 0;
                         foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
+
                             foreach ($detailColumnArray as $column => $value) {
                                 if($column == 'inOutQty') {
                                     if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 ) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
+                                    }else if($masterModel["documentSystemID"] == 7){    // stock adjustment
+                                        if($masterRec['stockAdjustmentType']==2){       // cost adjustment
+                                            $data[$i][$column] = 1;
+                                            Log::info('qty is'.$data[$i][$column]);
+                                        }else{
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+                                    }else{
+                                        $data[$i][$column] = $detail[$value];
+                                    }
+                                }else if ($column == 'wacLocal'){
+                                    if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){ // stock adjustment, cost adjustment
+                                        $data[$i][$column] = (($detail['wacAdjLocal'])-($detail['currentWaclocal']))*$detail['currenctStockQty'];
+
+                                    }else{
+                                        $data[$i][$column] = $detail[$value];
+                                    }
+                                }else if ($column == 'wacRpt'){
+                                    if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2) { // stock adjustment, cost adjustment
+                                        $data[$i][$column] = (($detail['wacAdjRpt'])-($detail['currentWacRpt']))*$detail['currenctStockQty'];
+
                                     }else{
                                         $data[$i][$column] = $detail[$value];
                                     }
                                 }else{
                                     $data[$i][$column] = $detail[$value];
                                 }
+
                             }
+
                             foreach ($masterColumnArray as $column => $value) {
                                 $data[$i][$column] = $masterRec[$value];
                             }
@@ -333,6 +357,41 @@ class ItemLedgerInsert implements ShouldQueue
                             $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
                             $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
+
+                            /*
+                             * stock adjustment
+                             * cost adjustment
+                             * if cost adjustment, add one more row to balance qty
+                             *
+                             * */
+
+                            if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){
+
+                                foreach ($detailColumnArray as $column => $value) {
+                                    if($column == 'inOutQty') {
+                                        $data[$i][$column] = -1;
+                                    }elseif ($column == 'wacLocal') {
+                                        $data[$i][$column] = 0;
+                                    }elseif ($column == 'wacRpt'){
+                                        $data[$i][$column] = 0;
+                                    }else{
+                                        $data[$i][$column] = $detail[$value];
+                                    }
+
+                                }
+
+                                foreach ($masterColumnArray as $column => $value) {
+                                    $data[$i][$column] = $masterRec[$value];
+                                }
+                                $data[$i]['documentSystemCode'] = $masterModel["autoID"];
+                                $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data[$i]['createdUserID'] = $empID->empID;
+                                $data[$i]['fromDamagedTransactionYN'] = 0;
+                                $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                                $data[$i]['timestamp'] = date('Y-m-d H:i:s');
+                                $i++;
+                            }
+                            // end stock adjustment
                         }
                         if($data){
                             Log::info($data);

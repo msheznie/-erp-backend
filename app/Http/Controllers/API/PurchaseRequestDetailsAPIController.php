@@ -358,6 +358,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
+                ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                 ->where('poCancelledYN', 0);
              })
             ->where('itemCode', $input['itemCode'])
@@ -537,6 +538,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
+                ->whereIn('goodsRecievedYN', [0,1])
+                ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                 ->where('poCancelledYN', 0);
         })
             ->where('itemCode', $itemCode)
