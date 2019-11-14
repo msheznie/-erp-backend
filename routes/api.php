@@ -1548,6 +1548,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
     Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
 
+    Route::resource('allocation_masters', 'AllocationMasterAPIController');
+
+    Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
+
+    Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
+
+    Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1615,6 +1623,8 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
 
 
 

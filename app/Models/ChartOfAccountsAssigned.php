@@ -112,5 +112,20 @@ class ChartOfAccountsAssigned extends Model
     public function chartofaccount(){
         return $this->belongsTo('App\Models\ChartOfAccount','chartOfAccountSystemID','chartOfAccountSystemID');
     }
-    
+    public function controlAccount()
+    {
+        /** one control account  can have many chart of accounts */
+        return $this->belongsTo('App\Models\ControlAccount', 'controlAccountsSystemID', 'controlAccountsSystemID');
+    }
+
+    public function accountType()
+    {
+        /** one Account Type can related to many chart of accounts */
+        return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID', 'accountsType');
+    }
+
+    public function allocation()
+    {
+        return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
+    }
 }
