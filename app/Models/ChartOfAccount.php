@@ -172,5 +172,10 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\ReportTemplateLinks','chartOfAccountSystemID','glAutoID');
     }
 
+    public function allocation()
+    {
+        return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
+    }
+
 
 }

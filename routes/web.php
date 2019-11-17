@@ -55,3 +55,9 @@ Route::resource('chequeRegisters', 'ChequeRegisterController');
 Route::resource('chequeRegisterDetails', 'ChequeRegisterDetailController');
 
 Route::resource('userActivityLogs', 'UserActivityLogController');
+
+Route::resource('allocationMasters', 'AllocationMasterController');
+
+Route::resource('chartOfAccountAllocationMasters', 'ChartOfAccountAllocationMasterController');
+
+Route::resource('chartOfAccountAllocationDetails', 'ChartOfAccountAllocationDetailController');

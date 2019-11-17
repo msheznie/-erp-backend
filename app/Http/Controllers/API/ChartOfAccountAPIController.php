@@ -17,6 +17,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
+use App\Models\AllocationMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccountsRefferedBack;
@@ -317,9 +318,19 @@ class ChartOfAccountAPIController extends AppBaseController
         }else{
             $childCompanies = [$companyId];
         }
+        if ($request['type'] == 'all') {
+            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType','allocation']);
+            // ->whereIn('primaryCompanySystemID',$childCompanies);
+        }else{
+            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType','allocation'])
+                ->whereIn('CompanySystemID', $childCompanies)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+            if(isset($input['isAllocation']) && $input['isAllocation']==1){
+                $chartOfAccount = $chartOfAccount->where('AllocationID','!=',null);
+            }
+        }
 
-        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
-                                       // ->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('controlAccountsSystemID', $input)) {
             if ($input['controlAccountsSystemID'] && !is_null($input['controlAccountsSystemID'])) {
@@ -338,7 +349,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
-        $chartOfAccount->select('chartofaccounts.*');
+//        $chartOfAccount->select('chartofaccounts.*');
 
         $search = $request->input('search.value');
         if($search){
@@ -442,6 +453,9 @@ class ChartOfAccountAPIController extends AppBaseController
         /** all Account Types */
         $accountsType = AccountsType::all();
 
+        /** all allocation Types */
+        $allocationType = AllocationMaster::all();
+
         /** all Account Types */
         $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
         //$chartOfAccount = ChartOfAccount::all('AccountCode', 'AccountDescription');
@@ -468,6 +482,7 @@ class ChartOfAccountAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccount' => $chartOfAccount,
             'allCompanies' => $allCompanies,
+            'allocationType' => $allocationType,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

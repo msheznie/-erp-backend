@@ -1189,12 +1189,28 @@ class BankLedgerAPIController extends AppBaseController
             ->where("refferedBackYN", 0)
             ->where("cancelYN", 0)
             ->where("BPVchequeNo",'!=',0)
-            ->where("BPVsupplierID",'!=', null)
-            ->when(!empty($input['invoiceType']) && $input['invoiceType'] >0, function ($q) use ($input) {
-                return $q->where('invoiceType', $input['invoiceType']);
+//            ->where("BPVsupplierID",'!=', null) // check supplier id only for direct. not for cheque
+            ->where(function ($q) use($input) {
+                $q->where(function ($q){
+                    $q->where('invoiceType', '!=',3)->where("BPVsupplierID", '!=', null);;
+                })->orWhere(function($q){
+                    $q->where('invoiceType', 3);
+
+                });
             })
-            ->when(!empty($input['option']) && $input['option'] != -99, function ($q) use ($input) {
-                return $q->where('chequePaymentYN', $input['option']);
+            ->when(!empty($input['invoiceType']) && $input['invoiceType'] >0, function ($q) use ($input) {
+                if($input['invoiceType'] == 3){
+                    return $q->where('invoiceType', $input['invoiceType']);
+                }else{
+                    return $q->where('invoiceType', $input['invoiceType'])->where("BPVsupplierID", '!=', null);
+                }
+            })
+            ->when(isset($input['option']) && !empty($input['option']), function ($q) use ($input) {
+                if($input['option']==-99){
+                    return $q->where('chequePaymentYN', 0);
+                }else{
+                    return $q->where('chequePaymentYN', $input['option']);
+                }
             })
             ->when(!empty($input['bankID']) && $input['bankID'] >0, function ($q) use ($input) {
                 return $q->where('BPVbank', $input['bankID']);
@@ -1431,7 +1447,7 @@ class BankLedgerAPIController extends AppBaseController
                 ->where("cancelYN", 0)
                 ->where("BPVchequeNo",'!=',0)
                 ->where("chequePrintedYN", 0)
-                ->where("BPVsupplierID",'!=', null)
+
                 ->when($input['selectedForPrint'], function ($q) use ($input) {
                     $q->whereIn('PayMasterAutoId', $input['selectedForPrint']);
                 })
