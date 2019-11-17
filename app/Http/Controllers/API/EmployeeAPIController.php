@@ -25,6 +25,7 @@ use App\Models\Company;
 use App\Models\Employee;
 use App\Models\User;
 use App\Repositories\EmployeeRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -349,8 +350,8 @@ class EmployeeAPIController extends AppBaseController
                 'empTelOffice' => $employee->empTelOffice,
                 'empTelMobile' => $employee->empTelMobile,
                 'extNo' => $employee->extNo,
-                'DOB' => isset($employee->details->DOB)?$employee->details->DOB:null,
-                'dateAssumed' => isset($employee->details->dateAssumed)?$employee->details->dateAssumed:null,
+                'DOB' => isset($employee->details->DOB)?Carbon::parse($employee->details->DOB)->format('Y-m-d'):null,
+                'dateAssumed' => isset($employee->details->dateAssumed)?Carbon::parse($employee->details->dateAssumed)->format('Y-m-d'):null,
                 'designation' => isset($employee->details->designation->designation)?$employee->details->designation->designation:null,
                 'description' => isset($employee->details->maritial_status->description)?$employee->details->maritial_status->description:null,
                 'religionName' => isset($employee->religions->religionName)?$employee->religions->religionName:null,
@@ -360,7 +361,7 @@ class EmployeeAPIController extends AppBaseController
             ];
 
             $reporting_manager =[
-                'profileImage' => isset($employee->profilepic->profileImage)?$employee->profilepic->profileImage:null,
+                'profileImage' => isset($employee->manager->profilepic->profileImage)?$employee->manager->profilepic->profileImage:null,
                 'designation' => isset($employee->manager->details->designation->designation)?$employee->manager->details->designation->designation:null,
                 'empFullName' => isset($employee->manager->empFullName)?$employee->manager->empFullName:null,
             ];
