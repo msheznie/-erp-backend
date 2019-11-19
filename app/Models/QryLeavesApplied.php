@@ -16,4 +16,9 @@ use Illuminate\Database\Eloquent\Model;
 class QryLeavesApplied extends Model
 {
     public $table = 'hrms_qry_leavesapplied';
+
+    public function leaveMaster()
+    {
+        return $this->belongsTo('App\Models\LeaveMaster','leavemasterID',  'leavemasterID');
+    }
 }

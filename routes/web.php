@@ -61,3 +61,9 @@ Route::resource('allocationMasters', 'AllocationMasterController');
 Route::resource('chartOfAccountAllocationMasters', 'ChartOfAccountAllocationMasterController');
 
 Route::resource('chartOfAccountAllocationDetails', 'ChartOfAccountAllocationDetailController');
+
+Route::resource('hRMSLeaveAccrualMasters', 'HRMSLeaveAccrualMasterController');
+
+Route::resource('hRMSLeaveAccrualDetails', 'HRMSLeaveAccrualDetailController');
+
+Route::resource('hRMSPeriodMasters', 'HRMSPeriodMasterController');

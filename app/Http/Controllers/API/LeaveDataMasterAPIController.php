@@ -15,6 +15,8 @@
  * -- Date: 04- September 2019 By Rilwan saveDocumentAttachments(),saveAttachment() - to save attachments
  * -- Date 05 - September 2019 By Rilwan getLeaveDetails()
  * -- Date 06- Spetember 2019 By Rilwan updateLeaveDetails()
+ * -- Date 18- November 2019 By Rilwan getLeaveBalance() - get leave balance, old portal code get this from mysql views. it consumes too much time. so i used particular table for retrieving data
+ * -- Date 19- November 2019 By Rilwan getLeaveTypeWithBalance() - combine leave balance array with leave type
  */
 
 namespace App\Http\Controllers\API;
@@ -29,6 +31,7 @@ use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\EmployeeManagers;
 use App\Models\HrmsDocumentAttachments;
+use App\Models\HRMSLeaveAccrualDetail;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
@@ -1439,15 +1442,25 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $workingDays = CalenderMaster::where('isWorkingDay', -1)->whereBetween('calDate', [$startDate, $endDate])->count();
 
-            $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
-                ->where('hrms_leavedatamaster.empID', $empID)
-                ->where('hrms_leavedatamaster.claimedYN', 0)
-                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
-                ->where(function ($query) use ($startDate, $endDate) {
-                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
-                    $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
-                })
-                ->count();
+//            $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
+//                ->where('hrms_leavedatamaster.empID', $empID)
+//                ->where('hrms_leavedatamaster.claimedYN', 0)
+//                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
+//                ->where(function ($query) use ($startDate, $endDate) {
+//                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
+//                    $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
+//                })
+//                ->count();
+
+            $isAlreadyApplied = LeaveDataMaster::with(['detail'])
+                                ->where('empID',$empID)
+                                ->where('claimedYN',0)
+                                ->where('leavedatamasterID',$leaveDataMasterID)
+                                ->whereHas('detail', function ($query) use ($startDate, $endDate) {
+                                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate")
+                                        ->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
+                                })
+                                ->count();
 
             if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
                 return $this->sendError('You cannot apply leave for past days');
@@ -1468,7 +1481,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $input['startDate'] = $startDate;
             $input['endDate'] = $endDate;
             $input['modifieduser'] = $empID;
-            $input['modifiedpc'] = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
+            $input['modifiedpc'] = gethostname();
             $input['entryType'] = $leaveType;
             $input['leaveType'] = $leaveMasterID;
             $input['endFinalDate'] = $endDate;
@@ -1798,4 +1811,309 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
     }
 
+    public function getLeaveTypeWithBalance(){
+        $leaveBalance = $this->getLeaveBalance();
+        $leaveMasters =LeaveMaster::select('leavemasterID','leavetype')->get();
+        $output = [];
+        $i = 0;
+        if(!empty($leaveMasters)){
+            foreach ($leaveMasters as $type){
+                $output[$i]['leavemasterID'] = $type->leavemasterID;
+                $output[$i]['leavetype'] = $type->leavetype;
+                $balanceLeave = 0;
+                if(!empty($leaveBalance)){
+
+                    foreach ($leaveBalance as $balance){
+                        if($balance['leavemasterID'] == $type->leavemasterID){
+                            $balanceLeave = $balance['balance'];
+                        }
+                    }
+                }
+                $output[$i]['balance'] = $balanceLeave;
+                $i++;
+            }
+        }
+
+        return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
+    }
+
+    public function getLeaveBalanceTest(){
+        /*
+         * getting from my sql view.
+         *
+         * */
+        $employee = $employee = \Helper::getEmployeeInfo();
+        $i = 0;
+        $calculated  = 0;
+        $track=0;
+        $leaveBalance = [];
+        $leaveAcc = $this->getLeaveAccured($employee->empID);
+        //        return QryLeavesAccrued::with(['leaveMaster'])
+//            ->selectRaw('SUM(IFNULL(SumOfdaysEntitled,0)) as SumOfdaysEntitled,leaveType')
+//            ->where('empID',$empID)
+//            ->groupBy('leaveType')
+//            ->get();
+
+        $leaveApplied = $this->getLeaveApplied($employee->empID);
+        //        return QryLeavesApplied::with(['leaveMaster'])
+//            ->selectRaw('SUM(IFNULL(calculatedDays,0)) as calculatedDays,SUM(totalDays) as totalDays,leavemasterID')
+//            ->where('empID',$empID)
+//            ->groupBy('leavemasterID')
+//            ->get();
+        
+        if(!empty($leaveAcc)){
+            foreach ($leaveAcc as $val){
+
+                if($val->leaveType == 16 || $val->leaveType == 2 || $val->leaveType == 3 || $val->leaveType == 4 || $val->leaveType == 21){
+                    $leaveBal = $this->getLeaveAccuredYearBalance($employee->empID,$val->leaveType,date('Y'));
+                    //        return QryLeavesAccrued::with(['leaveMaster'])
+//            ->selectRaw('SUM(IFNULL(SumOfdaysEntitled,0)) as SumOfdaysEntitled,leaveType')
+//            ->where('empID',$empID)
+//            ->where('leaveType',$type)
+//            ->where('periodYear',$year)
+//            ->groupBy('leaveType')
+//            ->first();
+                    $calculated = isset($leaveBal->SumOfdaysEntitled)?$leaveBal->SumOfdaysEntitled:0;
+
+                }else{
+                    $calculated	=	$val->SumOfdaysEntitled;
+                }
+
+                if(!empty($leaveApplied)){
+
+                    foreach ($leaveApplied as $value){
+
+                        if( $val->leaveType == $value->leavemasterID ){
+
+                            if($value->leavemasterID == 16 || $value->leavemasterID == 2 || $value->leavemasterID == 3 || $value->leavemasterID == 4 || $value->leavemasterID == 21){
+                                $leaveBal = $this->getLeaveAppliedYearBalance($employee->empID,$value->leavemasterID,date('Y'));
+                                //        return QryLeavesApplied::with(['leaveMaster'])
+//            ->selectRaw('SUM(IFNULL(calculatedDays,0)) as calculatedDays,leavemasterID')
+//            ->where('empID',$empID)
+//            ->where('leavemasterID',$type)
+//            ->where('CYear',$year)
+//            ->groupBy('leavemasterID')
+//            ->first();
+                                $leaveBalanceapplied = isset($leaveBal->calculatedDays)?$leaveBal->calculatedDays:0;
+                                $calculated = $calculated - $leaveBalanceapplied;
+
+                            }else{
+                                $calculated = $calculated - $value->calculatedDays;
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                if($val->leaveType == 2 || $val->leaveType == 3 || $val->leaveType == 4 || $val->leaveType == 21 ) {
+
+                    if($val->leaveType == 2){
+                        if($calculated == 0){
+                            $track = 1;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                    if($val->leaveType == 3 && $track == 1){
+                        if($calculated == 0){
+                            $track = 2;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                    if($val->leaveType == 4 && $track == 2){
+                        if($calculated == 0){
+                            $track = 3;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                }else if($val->leaveType == 13 || $val->leaveType == 20){
+
+                    if($calculated < 0){
+                        $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                        $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                        $leaveBalance [$i++]['balance'] = 0;
+                    }else{
+                        $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                        $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                        $leaveBalance [$i++]['balance'] = $calculated;
+                    }
+
+                }else{
+
+                    $leaveBalance [$i]['leaveType'] = $val->leaveMaster->leavetype;
+                    $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                    $leaveBalance [$i++]['balance'] = $calculated;
+
+                }
+            }
+        }
+        return $leaveBalance;
+    }
+
+    private function getLeaveAccured($empID) {
+
+        return HRMSLeaveAccrualDetail::selectRaw('empID,leaveType,SUM(IFNULL(daysEntitled,0)) as SumOfdaysEntitled, leaveType, YEAR(endDate) as CYear')
+            ->groupBy('leaveType')
+            ->whereHas('master', function ($q) {
+                $q->where('approvedYN',-1);
+            })
+            ->where('empID',$empID)
+            ->with(['master','leave_master'])
+            ->get();
+
+    }
+
+    private function getLeaveAccuredYearBalance($empID, $type, $year) {
+
+        return HRMSLeaveAccrualDetail::selectRaw('empID,leaveType,SUM(IFNULL(daysEntitled,0)) as SumOfdaysEntitled, leaveType, YEAR(startDate) as CYear')
+            ->groupBy('leaveType')
+            ->whereHas('master', function ($q) {
+                $q->where('approvedYN',-1);
+            })
+            ->whereHas('period', function($q) use($year){
+                $q->where('periodYear',$year);
+            })
+            ->where('empID',$empID)
+            ->where('leaveType',$type)
+            ->with(['master','leave_master'])
+            ->first();
+
+    }
+
+    private function getLeaveApplied($empID) {
+
+        return LeaveDataDetail::selectRaw('SUM(IFNULL(noOfWorkingDays,0)) as SumOfnoOfWorkingDays,SUM(IFNULL(totalDays,0)) as totalDays,SUM(IFNULL(calculatedDays,0)) as calculatedDays, leavemasterID, YEAR(endDate) as CYear')
+            ->groupBy(DB::raw('leavemasterID,YEAR (endDate)'))
+            ->whereHas('master', function ($q) use($empID){
+                $q->where('approvedYN',-1);
+                $q->where('empID',$empID);
+            })
+            ->with(['master','leave_master'])
+            ->get();
+
+    }
+
+    private function getLeaveAppliedYearBalance($empID, $type, $year) {
+
+        return LeaveDataDetail::selectRaw('SUM(IFNULL(noOfWorkingDays,0)) as SumOfnoOfWorkingDays,SUM(IFNULL(totalDays,0)) as totalDays,SUM(IFNULL(calculatedDays,0)) as calculatedDays, leavemasterID, YEAR(endDate) as CYear')
+            ->groupBy(DB::raw('leavemasterID,YEAR (endDate)'))
+            ->whereHas('master', function ($q) use($empID){
+                $q->where('approvedYN',-1);
+                $q->where('empID',$empID);
+            })
+            ->where('leavemasterID',$type)
+            ->whereRaw('YEAR(endDate)='.$year)
+            ->with(['master','leave_master'])
+            ->first();
+
+    }
+
+    public function getLeaveBalance(){
+
+        $employee = $employee = \Helper::getEmployeeInfo();
+        $i = 0;
+        $calculated  = 0;
+        $track=0;
+        $leaveBalance = [];
+        $leaveAcc = $this->getLeaveAccured($employee->empID);
+        $leaveApplied = $this->getLeaveApplied($employee->empID);
+
+        if(!empty($leaveAcc)){
+            foreach ($leaveAcc as $val){
+
+                if($val->leaveType == 16 || $val->leaveType == 2 || $val->leaveType == 3 || $val->leaveType == 4 || $val->leaveType == 21){
+                    $leaveBal = $this->getLeaveAccuredYearBalance($employee->empID,$val->leaveType,date('Y'));
+                    $calculated = isset($leaveBal->SumOfdaysEntitled)?$leaveBal->SumOfdaysEntitled:0;
+                }else{
+                    $calculated	=	$val->SumOfdaysEntitled;
+                }
+
+                if(!empty($leaveApplied)){
+
+                    foreach ($leaveApplied as $value){
+
+                        if( $val->leaveType == $value->leavemasterID ){
+
+                            if($value->leavemasterID == 16 || $value->leavemasterID == 2 || $value->leavemasterID == 3 || $value->leavemasterID == 4 || $value->leavemasterID == 21){
+
+                                $leaveBal = $this->getLeaveAppliedYearBalance($employee->empID,$val->leaveType,date('Y'));
+                                $leaveBalanceapplied = isset($leaveBal->calculatedDays)?$leaveBal->calculatedDays:0;
+                                $calculated = $calculated - $leaveBalanceapplied;
+                            }else{
+                                $calculated = $calculated - $value->calculatedDays;
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                if($val->leaveType == 2 || $val->leaveType == 3 || $val->leaveType == 4 || $val->leaveType == 21 ) {
+
+                    if($val->leaveType == 2){
+                        if($calculated == 0){
+                            $track = 1;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                    if($val->leaveType == 3 && $track == 1){
+                        if($calculated == 0){
+                            $track = 2;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                    if($val->leaveType == 4 && $track == 2){
+                        if($calculated == 0){
+                            $track = 3;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+                    }
+
+                }else if($val->leaveType == 13 || $val->leaveType == 20){
+
+                    if($calculated < 0){
+                        $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                        $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                        $leaveBalance [$i++]['balance'] = 0;
+                    }else{
+                        $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                        $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                        $leaveBalance [$i++]['balance'] = $calculated;
+                    }
+
+                }else{
+                    $leaveBalance [$i]['leaveType'] = $val->leave_master->leavetype;
+                    $leaveBalance [$i]['leavemasterID'] = $val->leaveType;
+                    $leaveBalance [$i++]['balance'] = $calculated;
+
+                }
+            }
+        }
+        return $leaveBalance;
+    }
 }
