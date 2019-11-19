@@ -1556,6 +1556,14 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
 
+    Route::get('getLeaveTypeWithBalance', 'LeaveDataMasterAPIController@getLeaveTypeWithBalance');
+
+    Route::resource('hrms_leave_accrual_masters', 'HRMSLeaveAccrualMasterAPIController');
+
+    Route::resource('hrms_leave_accrual_details', 'HRMSLeaveAccrualDetailAPIController');
+
+    Route::resource('hrms_period_masters', 'HRMSPeriodMasterAPIController');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1623,6 +1631,9 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
+
 
 
 
