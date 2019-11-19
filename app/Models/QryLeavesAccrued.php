@@ -16,4 +16,9 @@ use Illuminate\Database\Eloquent\Model;
 class QryLeavesAccrued extends Model
 {
     public $table = 'hrms_qry_leavesaccrued';
+
+    public function leaveMaster()
+    {
+        return $this->belongsTo('App\Models\LeaveMaster','leaveType',  'leavemasterID');
+    }
 }
