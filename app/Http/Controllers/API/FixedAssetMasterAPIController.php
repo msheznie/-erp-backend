@@ -287,9 +287,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $cost['assetDescription'] = $fixedAssetMasters['assetDescription'];
                         $cost['costDate'] = $input['dateAQ'];
                         $cost['localCurrencyID'] = $grvDetails->localCurrencyID;
-                        $cost['localAmount'] = $grvDetails->landingCost_LocalCur;
+                        $cost['localAmount'] = $grvDetails->landingCost_LocalCur * $grvDetails->noQty;
                         $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
-                        $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
+                        $cost['rptAmount'] = $grvDetails->landingCost_RptCur * $grvDetails->noQty;
                         $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
                     } else {
                         $qtyRange = range(1, $grvDetails->noQty);
