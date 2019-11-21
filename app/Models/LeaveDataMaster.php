@@ -308,4 +308,19 @@ class LeaveDataMaster extends Model
         return $this->belongsTo('App\Models\LeaveApplicationType','EntryType','LeaveApplicationTypeID');
     }
 
+    public function approved()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedby','empID');
+    }
+
+    public function hrapproved()
+    {
+        return $this->belongsTo('App\Models\Employee','hrapprovedby','empID');
+    }
+
+    public function leave_type()
+    {
+        return $this->belongsTo('App\Models\LeaveMaster','leaveType','leavemasterID');
+    }
+
 }

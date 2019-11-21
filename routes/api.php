@@ -1564,6 +1564,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('hrms_period_masters', 'HRMSPeriodMasterAPIController');
 
+    Route::resource('hrms_personal_documents', 'HRMSPersonalDocumentsAPIController');
+
+    Route::get('getLeaveApproval', 'LeaveDocumentApprovedAPIController@getLeaveApproval');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1631,16 +1635,3 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
-
-
-
-
-
-
-
-
-
-
-
-
-

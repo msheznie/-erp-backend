@@ -290,4 +290,11 @@ class Employee extends Model
     {
         return $this->hasOne('App\Models\Gender','genderID','gender');
     }
+
+    public function personaldoc()
+    {
+        return $this->hasMany('App\Models\HRMSPersonalDocuments','empID','empID');
+       // return $this->hasMany('App\Models\HRMSPersonalDocuments','employeeSystemID','employeeSystemID');  // change insert and update function and use employeeSystemID
+    }
+
 }
