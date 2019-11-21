@@ -1477,27 +1477,28 @@ class BankLedgerAPIController extends AppBaseController
                     $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
                     $temArray['chequePrintedByEmpID'] = $employee->empID;
                     $temArray['chequePrintedByEmpName'] = $employee->empName;
-                    $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
+                    if(isset($input['isPrint']) && $input['isPrint']) {
+                        $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
 
-                    /*
-                     * update cheque registry table print status if GCNFCR policy is on
-                     * */
-                    $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID',$item->companySystemID)
-                        ->where('companyPolicyCategoryID',35)
-                        ->where('isYesNO',1)
-                        ->first();
-                    if(!empty($is_exist_policy_GCNFCR)) {
+                        /*
+                         * update cheque registry table print status if GCNFCR policy is on
+                         * */
+                        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $item->companySystemID)
+                            ->where('companyPolicyCategoryID', 35)
+                            ->where('isYesNO', 1)
+                            ->first();
+                        if (!empty($is_exist_policy_GCNFCR)) {
                             $check_registry = [
                                 'isPrinted' => -1,
                                 'cheque_printed_at' => now(),
                                 'cheque_print_by' => $employee->employeeSystemID
                             ];
-                            ChequeRegisterDetail::where('cheque_no',$item->BPVchequeNo)
-                                ->where('company_id',$item->companySystemID)
-                                ->where('document_id',$item->PayMasterAutoId)
+                            ChequeRegisterDetail::where('cheque_no', $item->BPVchequeNo)
+                                ->where('company_id', $item->companySystemID)
+                                ->where('document_id', $item->PayMasterAutoId)
                                 ->update($check_registry);
+                        }
                     }
-
                     $item['decimalPlaces'] = 2;
                     if ($item['bankcurrency']) {
                         $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
@@ -1546,11 +1547,16 @@ class BankLedgerAPIController extends AppBaseController
                     $entity = null;
                 }
 
-                $array = array('entity' => $entity, 'date' => now());
+                $array = array('entity' => $entity, 'date' => now(),'type'=>$htmlName);
                 if ($htmlName) {
                     $html = view('print.' . $htmlName, $array)->render();;
                     DB::commit();
-                    return $this->sendResponse($html, 'Print successfully');
+                    if(isset($input['isPrint']) && $input['isPrint']) {
+                        return $this->sendResponse($html, 'Print successfully');
+                    }else{
+                        return $this->sendResponse($array, 'Retrieved successfully');
+                    }
+
                 } else {
                     return $this->sendError('Error', 500);
                 }

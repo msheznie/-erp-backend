@@ -274,7 +274,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         if (empty($hrmsDocumentAttachments)) {
             return $this->sendError('Hrms Document Attachments not found');
         }
-        $path = $hrmsDocumentAttachments->path;
+        $path = $hrmsDocumentAttachments->myFileName;
         if ($exists = Storage::disk('public')->exists($path)) {
             Storage::disk('public')->delete($path);
         }
@@ -292,7 +292,6 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
      */
     public function downloadFile(Request $request)
     {
-
         $input = $request->all();
 
         $hrmsDocumentAttachments = $this->hrmsDocumentAttachmentsRepository->findWithoutFail($input['id']);
@@ -301,11 +300,11 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
-        if(!is_null($hrmsDocumentAttachments->path)) {
-            if ($exists = Storage::disk('public')->exists($hrmsDocumentAttachments->path)) {
-                return Storage::disk('public')->download($hrmsDocumentAttachments->path, $hrmsDocumentAttachments->myFileName);
+        if(!is_null($hrmsDocumentAttachments->myFileName)) {
+            if ($exists = Storage::disk('public')->exists($hrmsDocumentAttachments->myFileName)) {
+                return Storage::disk('public')->download($hrmsDocumentAttachments->myFileName);
             } else {
-                return $this->sendError('Attachments not found', 200);
+                return $this->sendError('Attachments detail not found');
             }
         }else{
             return $this->sendError('Attachment is not attached', 401);
