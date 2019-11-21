@@ -23,6 +23,7 @@ use App\Http\Requests\API\UpdateEmployeeAPIRequest;
 use App\Models\Alert;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\HRMSPersonalDocuments;
 use App\Models\User;
 use App\Repositories\EmployeeRepository;
 use Carbon\Carbon;
@@ -358,6 +359,7 @@ class EmployeeAPIController extends AppBaseController
                 'name' => isset($employee->genders->name)?$employee->genders->name:null,
                 'countryName' => isset($employee->details->country->countryName)?$employee->details->country->countryName:null,
                 'profileImage'=> isset($employee->profilepic->profileImage)?$employee->profilepic->profileImage:null,
+                'department'=> isset($employee->details->departmentMaster->DepartmentDescription)?$employee->details->departmentMaster->DepartmentDescription:null,
             ];
 
             $reporting_manager =[
@@ -366,13 +368,27 @@ class EmployeeAPIController extends AppBaseController
                 'empFullName' => isset($employee->manager->empFullName)?$employee->manager->empFullName:null,
             ];
 
+            $department = isset($employee->details->departmentMaster)?$employee->details->departmentMaster:null;
+
+            $passport = $this->getEmployeePersonalDetailsByType($employee->empID,1); // type = 1 =>passport
+
+            $resident_card = $this->getEmployeePersonalDetailsByType($employee->empID,4); // type = 4 =>Resident Card
+
             $output = [
                 'personal_details'=>$personal_details,
                 'reporting_manager'=>$reporting_manager,
+                'passport'=>$passport,
+                'resident_card'=>$resident_card,
+                'department'=>$department,
             ];
             return $this->sendResponse($output, 'Employee profile details retrieved successfully');
         }else{
             return $this->sendError('Employee profile details not found');
         }
+    }
+
+    public function getEmployeePersonalDetailsByType($empID,$type) {
+        // after changing personaldocuments crud using employeesystemid, use employeeSystemID, until use empID
+        return HRMSPersonalDocuments::where('empID',$empID)->where('documentType',$type)->first();
     }
 }

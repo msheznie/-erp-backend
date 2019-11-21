@@ -272,5 +272,13 @@ class LeaveDocumentApproved extends Model
         //'documentApprovedID' => 'required'
     ];
 
-    
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','empSystemID','employeeSystemID');
+    }
+
+    public function leave()
+    {
+        return $this->belongsTo('App\Models\LeaveDataMaster','documentSystemCode','leavedatamasterID');
+    }
+
 }

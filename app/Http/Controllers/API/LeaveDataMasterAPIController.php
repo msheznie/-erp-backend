@@ -1237,6 +1237,42 @@ class LeaveDataMasterAPIController extends AppBaseController
 
         if (isset($input['leavedatamasterID']) && $input['leavedatamasterID']) {
 
+            $leaveDataMaster = LeaveDataMaster::with(['detail','application_type','approved','hrapproved'])->find($input['leavedatamasterID']);
+            if (empty($leaveDataMaster)) {
+                return $this->sendError('Leave Details Not Found');
+            }
+            $leaveDataDetail = $leaveDataMaster->detail;
+            $output = $leaveDataMaster->toArray();
+//            $output['approver'] = $leaveDataMaster->approved;
+//            $output['hr'] = $leaveDataMaster->hrapproved;
+//            $output['application_type'] = $leaveDataMaster->application_type;
+
+            $output['employee'] = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
+
+            //get availabilty array
+            $output['availability'] = $this->leaveDataMasterRepository->getLeaveAvailabilityArray($leaveDataDetail['leavemasterID'],$leaveDataDetail['noOfWorkingDays'],$leaveDataDetail['noOfNonWorkingDays'],$leaveDataDetail['totalDays'],$leaveDataMaster['leaveAvailable'],$leaveDataMaster['empID']);
+
+            //set leave master to output array
+            $leave_master = null;
+            if(isset($leaveDataDetail->leave_master) && !empty($leaveDataDetail->leave_master)){
+                $output['leave_master'] = collect($leaveDataDetail->leave_master)->only(['leavemasterID','leavetype'])->toArray();
+            }
+
+            //set leave availability details to output array
+            $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
+
+            return $this->sendResponse($output, 'Leave details retrieved successfully');
+        }
+        return $this->sendError('leavedatamasterID Not Found', 200);
+    }
+
+    public function getLeaveDetailsBacks(Request $request)
+    {
+
+        $input = $request->all();
+
+        if (isset($input['leavedatamasterID']) && $input['leavedatamasterID']) {
+
             $leaveDataMaster = LeaveDataMaster::find($input['leavedatamasterID']);
             if (collect($leaveDataMaster)->count() == 0) {
                 return $this->sendError('Leave Details Not Found', 200);
@@ -1251,9 +1287,12 @@ class LeaveDataMasterAPIController extends AppBaseController
             $approved_details = array(
                 'approvedYN' => $leaveDataMaster->approvedYN,
                 'approvedby' => $leaveDataMaster->approvedby,
+                'approvedby' => $leaveDataMaster->approvedby,
                 'approvedDate' => (isset($leaveDataMaster->approvedDate)&&$leaveDataMaster->approvedDate)?Carbon::parse($leaveDataMaster->approvedDate)->format('Y-m-d H:i:s'):null,
+                'reportingMangerComment' => $leaveDataMaster->detail->reportingMangerComment,
                 'empTitle'=>null,
-                'empFullName'=>null
+                'empFullName'=>null,
+
             );
 
             //hr approve details
@@ -1261,6 +1300,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'hrapprovalYN' => $leaveDataMaster->hrapprovalYN,
                 'hrapprovedby' => $leaveDataMaster->hrapprovedby,
                 'hrapprovedDate' => (isset($leaveDataMaster->hrapprovedDate)&&$leaveDataMaster->hrapprovedDate)?Carbon::parse($leaveDataMaster->hrapprovedDate)->format('Y-m-d H:i:s'):null,
+                'reportingMangerComment' => null,
                 'empTitle'=>null,
                 'empFullName'=>null
             );
@@ -1272,7 +1312,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $hrManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->hrapprovedby)->first();
 
             //get leave details
-             $leaveDataDetail = collect($leaveDataMaster->detail)
+            $leaveDataDetail = collect($leaveDataMaster->detail)
                 ->only(['leavemasterID','startDate', 'endDate', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays', 'calculatedDays', 'comment'])->toArray();
 
             if(empty($leaveDataDetail)){

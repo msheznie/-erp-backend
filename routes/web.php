@@ -67,3 +67,5 @@ Route::resource('hRMSLeaveAccrualMasters', 'HRMSLeaveAccrualMasterController');
 Route::resource('hRMSLeaveAccrualDetails', 'HRMSLeaveAccrualDetailController');
 
 Route::resource('hRMSPeriodMasters', 'HRMSPeriodMasterController');
+
+Route::resource('hRMSPersonalDocuments', 'HRMSPersonalDocumentsController');

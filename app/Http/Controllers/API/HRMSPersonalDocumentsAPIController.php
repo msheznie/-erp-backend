@@ -1,11 +1,20 @@
 <?php
-
+/**
+=============================================
+-- File Name : HRMSPersonalDocumentsAPIController.php
+-- Project Name : ERP
+-- Module Name :  LEAVE
+-- Author : Mohamed Rilwan
+-- Create date : 20 - November 2019
+-- Description :
+-- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateLeaveDocumentApprovedAPIRequest;
-use App\Http\Requests\API\UpdateLeaveDocumentApprovedAPIRequest;
-use App\Models\LeaveDocumentApproved;
-use App\Repositories\LeaveDocumentApprovedRepository;
+use App\Http\Requests\API\CreateHRMSPersonalDocumentsAPIRequest;
+use App\Http\Requests\API\UpdateHRMSPersonalDocumentsAPIRequest;
+use App\Models\HRMSPersonalDocuments;
+use App\Repositories\HRMSPersonalDocumentsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +22,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class LeaveDocumentApprovedController
+ * Class HRMSPersonalDocumentsController
  * @package App\Http\Controllers\API
  */
 
-class LeaveDocumentApprovedAPIController extends AppBaseController
+class HRMSPersonalDocumentsAPIController extends AppBaseController
 {
-    /** @var  LeaveDocumentApprovedRepository */
-    private $leaveDocumentApprovedRepository;
+    /** @var  HRMSPersonalDocumentsRepository */
+    private $hRMSPersonalDocumentsRepository;
 
-    public function __construct(LeaveDocumentApprovedRepository $leaveDocumentApprovedRepo)
+    public function __construct(HRMSPersonalDocumentsRepository $hRMSPersonalDocumentsRepo)
     {
-        $this->leaveDocumentApprovedRepository = $leaveDocumentApprovedRepo;
+        $this->hRMSPersonalDocumentsRepository = $hRMSPersonalDocumentsRepo;
     }
 
     /**
@@ -32,10 +41,10 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/leaveDocumentApproveds",
-     *      summary="Get a listing of the LeaveDocumentApproveds.",
-     *      tags={"LeaveDocumentApproved"},
-     *      description="Get all LeaveDocumentApproveds",
+     *      path="/hRMSPersonalDocuments",
+     *      summary="Get a listing of the HRMSPersonalDocuments.",
+     *      tags={"HRMSPersonalDocuments"},
+     *      description="Get all HRMSPersonalDocuments",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +58,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/LeaveDocumentApproved")
+     *                  @SWG\Items(ref="#/definitions/HRMSPersonalDocuments")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +70,29 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->leaveDocumentApprovedRepository->pushCriteria(new RequestCriteria($request));
-        $this->leaveDocumentApprovedRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $leaveDocumentApproveds = $this->leaveDocumentApprovedRepository->all();
+        $this->hRMSPersonalDocumentsRepository->pushCriteria(new RequestCriteria($request));
+        $this->hRMSPersonalDocumentsRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->all();
 
-        return $this->sendResponse($leaveDocumentApproveds->toArray(), 'Leave Document Approveds retrieved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents retrieved successfully');
     }
 
     /**
-     * @param CreateLeaveDocumentApprovedAPIRequest $request
+     * @param CreateHRMSPersonalDocumentsAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/leaveDocumentApproveds",
-     *      summary="Store a newly created LeaveDocumentApproved in storage",
-     *      tags={"LeaveDocumentApproved"},
-     *      description="Store LeaveDocumentApproved",
+     *      path="/hRMSPersonalDocuments",
+     *      summary="Store a newly created HRMSPersonalDocuments in storage",
+     *      tags={"HRMSPersonalDocuments"},
+     *      description="Store HRMSPersonalDocuments",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="LeaveDocumentApproved that should be stored",
+     *          description="HRMSPersonalDocuments that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/LeaveDocumentApproved")
+     *          @SWG\Schema(ref="#/definitions/HRMSPersonalDocuments")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +105,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveDocumentApproved"
+     *                  ref="#/definitions/HRMSPersonalDocuments"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +115,13 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateLeaveDocumentApprovedAPIRequest $request)
+    public function store(CreateHRMSPersonalDocumentsAPIRequest $request)
     {
         $input = $request->all();
 
-        $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->create($input);
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->create($input);
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'Leave Document Approved saved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents saved successfully');
     }
 
     /**
@@ -120,14 +129,14 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/leaveDocumentApproveds/{id}",
-     *      summary="Display the specified LeaveDocumentApproved",
-     *      tags={"LeaveDocumentApproved"},
-     *      description="Get LeaveDocumentApproved",
+     *      path="/hRMSPersonalDocuments/{id}",
+     *      summary="Display the specified HRMSPersonalDocuments",
+     *      tags={"HRMSPersonalDocuments"},
+     *      description="Get HRMSPersonalDocuments",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveDocumentApproved",
+     *          description="id of HRMSPersonalDocuments",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +152,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveDocumentApproved"
+     *                  ref="#/definitions/HRMSPersonalDocuments"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +164,30 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var LeaveDocumentApproved $leaveDocumentApproved */
-        $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
+        /** @var HRMSPersonalDocuments $hRMSPersonalDocuments */
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
-        if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+        if (empty($hRMSPersonalDocuments)) {
+            return $this->sendError('H R M S Personal Documents not found');
         }
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'Leave Document Approved retrieved successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'H R M S Personal Documents retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateLeaveDocumentApprovedAPIRequest $request
+     * @param UpdateHRMSPersonalDocumentsAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/leaveDocumentApproveds/{id}",
-     *      summary="Update the specified LeaveDocumentApproved in storage",
-     *      tags={"LeaveDocumentApproved"},
-     *      description="Update LeaveDocumentApproved",
+     *      path="/hRMSPersonalDocuments/{id}",
+     *      summary="Update the specified HRMSPersonalDocuments in storage",
+     *      tags={"HRMSPersonalDocuments"},
+     *      description="Update HRMSPersonalDocuments",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveDocumentApproved",
+     *          description="id of HRMSPersonalDocuments",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +195,9 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="LeaveDocumentApproved that should be updated",
+     *          description="HRMSPersonalDocuments that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/LeaveDocumentApproved")
+     *          @SWG\Schema(ref="#/definitions/HRMSPersonalDocuments")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +210,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveDocumentApproved"
+     *                  ref="#/definitions/HRMSPersonalDocuments"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +220,20 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateLeaveDocumentApprovedAPIRequest $request)
+    public function update($id, UpdateHRMSPersonalDocumentsAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var LeaveDocumentApproved $leaveDocumentApproved */
-        $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
+        /** @var HRMSPersonalDocuments $hRMSPersonalDocuments */
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
-        if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+        if (empty($hRMSPersonalDocuments)) {
+            return $this->sendError('H R M S Personal Documents not found');
         }
 
-        $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->update($input, $id);
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->update($input, $id);
 
-        return $this->sendResponse($leaveDocumentApproved->toArray(), 'LeaveDocumentApproved updated successfully');
+        return $this->sendResponse($hRMSPersonalDocuments->toArray(), 'HRMSPersonalDocuments updated successfully');
     }
 
     /**
@@ -232,14 +241,14 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/leaveDocumentApproveds/{id}",
-     *      summary="Remove the specified LeaveDocumentApproved from storage",
-     *      tags={"LeaveDocumentApproved"},
-     *      description="Delete LeaveDocumentApproved",
+     *      path="/hRMSPersonalDocuments/{id}",
+     *      summary="Remove the specified HRMSPersonalDocuments from storage",
+     *      tags={"HRMSPersonalDocuments"},
+     *      description="Delete HRMSPersonalDocuments",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveDocumentApproved",
+     *          description="id of HRMSPersonalDocuments",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,28 +276,15 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var LeaveDocumentApproved $leaveDocumentApproved */
-        $leaveDocumentApproved = $this->leaveDocumentApprovedRepository->findWithoutFail($id);
+        /** @var HRMSPersonalDocuments $hRMSPersonalDocuments */
+        $hRMSPersonalDocuments = $this->hRMSPersonalDocumentsRepository->findWithoutFail($id);
 
-        if (empty($leaveDocumentApproved)) {
-            return $this->sendError('Leave Document Approved not found');
+        if (empty($hRMSPersonalDocuments)) {
+            return $this->sendError('H R M S Personal Documents not found');
         }
 
-        $leaveDocumentApproved->delete();
+        $hRMSPersonalDocuments->delete();
 
-        return $this->sendResponse($id, 'Leave Document Approved deleted successfully');
-    }
-
-    public function getLeaveApproval(){
-
-        return LeaveDocumentApproved::with(['employee','leave','leave.leave_type'])
-            ->where('approvedYN',0)
-            ->where('rejectedYN',0)
-            ->where('hrApproval',0)
-            ->where('rollLevelOrder',1)
-            ->where('documentID','LA')
-            ->get();
-
-
+        return $this->sendResponse($id, 'H R M S Personal Documents deleted successfully');
     }
 }
