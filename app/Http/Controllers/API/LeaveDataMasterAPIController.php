@@ -809,26 +809,15 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $workingDays = CalenderMaster::where('isWorkingDay', -1)->whereBetween('calDate', [$startDate, $endDate])->count();
 
-//            $isAlreadyApplied = LeaveDataMaster::join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
-//                ->where('hrms_leavedatamaster.empID', $empID)
-//                ->where('hrms_leavedatamaster.claimedYN', 0)
-//                ->where('hrms_leavedatamaster.leavedatamasterID', $leaveDataMasterID)
-//                ->where(function ($query) use ($startDate, $endDate) {
-//                    $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate");
-//                    $query->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
-//                })
-//                ->count();
-
             $isAlreadyApplied = LeaveDataMaster::with(['detail'])
                                 ->where('empID',$empID)
                                 ->where('claimedYN',0)
-                                ->where('leavedatamasterID',$leaveDataMasterID)
+                                ->where('leavedatamasterID','!=',$leaveDataMasterID)
                                 ->whereHas('detail', function ($query) use ($startDate, $endDate) {
                                     $query->whereRaw("'$startDate' BETWEEN startDate AND endFinalDate")
                                         ->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
                                 })
                                 ->count();
-
             if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
                 return $this->sendError('You cannot apply leave for past days');
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
