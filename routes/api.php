@@ -1567,6 +1567,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('hrms_personal_documents', 'HRMSPersonalDocumentsAPIController');
 
     Route::get('getLeaveApproval', 'LeaveDocumentApprovedAPIController@getLeaveApproval');
+    Route::post('leaveReferBack', 'LeaveDocumentApprovedAPIController@leaveReferBack');
+    Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
 
 });
 

@@ -1,13 +1,34 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : LeaveDocumentApprovedAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Leave Application
+ * -- Author :
+ * -- Create date :
+ * -- Description : This file contains the all CRUD for Leave Document Approved
+ * -- REVISION HISTORY
+ * -- Date: 20 -November 2019 By: Rilwan Description: Added new functions named as getLeaveApproval()
+ * -- Date: 21 -November 2019 By: Rilwan Description: Added new functions named as referBack()
+ *
+ */
 namespace App\Http\Controllers\API;
 
+use App\helper\email;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateLeaveDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateLeaveDocumentApprovedAPIRequest;
+use App\Models\Company;
+use App\Models\Employee;
+use App\Models\EmployeeManagers;
+use App\Models\LeaveDataDetail;
+use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
+use App\Models\LeaveMaster;
 use App\Repositories\LeaveDocumentApprovedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -279,16 +300,230 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         return $this->sendResponse($id, 'Leave Document Approved deleted successfully');
     }
 
-    public function getLeaveApproval(){
+    public function getLeaveApproval(Request $request){
 
-        return LeaveDocumentApproved::with(['employee','leave','leave.leave_type'])
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $user = Helper::getEmployeeInfo();
+
+        $leave = LeaveDocumentApproved::
+            with(['employee','leave','leave.leave_type'])
             ->where('approvedYN',0)
             ->where('rejectedYN',0)
             ->where('hrApproval',0)
             ->where('rollLevelOrder',1)
             ->where('documentID','LA')
-            ->get();
+            ->whereHas('leave', function ($q) use ($user){
+                $q->whereHas('employee', function ($q) use ($user){
+                    $q->whereHas('employee_managers' , function ($query) use ($user){
+                        $query->where('managerID', $user->empID);
+                    });
+                });
+            });
 
+//        $search = $request->input('search.value');
+//        if($search){
+//            $leave =   $leave->where(function ($query) use($search){
+//                $query->where('leaveDataMasterCode','LIKE',"%{$search}%");
+//            });
+//        }
+
+        return \DataTables::eloquent($leave)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
 
     }
+
+    public function leaveReferBack(Request $request){
+
+        $input = $request->all();
+        $user = Helper::getEmployeeInfo();
+        $validator = \Validator::make($input, [
+            'rejectedComments' => 'required',
+            'documentApprovedID' => 'required|numeric|min:1'
+
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $input = $this->convertArrayToSelectedValue($input, array('rejectedComments', 'documentApprovedID'));
+
+        $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
+
+        if(empty($leaveDocumentApproved)){
+            return $this->sendError('Leave Document Approved Details Not Found');
+        }
+
+        $input['companySystemID'] = $leaveDocumentApproved->companySystemID;
+        $input['documentSystemID'] = $leaveDocumentApproved->documentSystemID;
+        $input['empSystemID'] = $leaveDocumentApproved->empSystemID;
+        $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
+
+        $company= Company::find($input['companySystemID']);
+        $companyName = $company->CompanyName;
+
+        $leaveDetails = LeaveDataMaster::with(['detail'])
+                                    ->where('leavedatamasterID',$documentSystemCode)
+                                    ->whereHas('detail')
+                                    ->first();
+        if(empty($leaveDetails)){
+            return $this->sendError('Leave Details Not Found');
+        }
+        DB::beginTransaction();
+
+        try {
+
+            $isDelete = LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->delete();
+            if($isDelete){
+                $this->updateLeaveMaster($documentSystemCode);
+                $this->updateLeaveDetail($documentSystemCode,$input['rejectedComments']);
+
+                $documentName = ($leaveDetails->EntryType == 1)? "Leave Application":"Leave Claim";
+
+                $originator = Employee::where('empID',$leaveDetails->confirmedby)->first();
+
+                $emails[] = array('empSystemID' => $input['empSystemID'],
+                    'companySystemID' => $input['companySystemID'],
+                    'docSystemID' => $input['documentSystemID'],
+                    'alertMessage' => "Referred Back ".$documentName." ".$leaveDetails->leaveDataMasterCode,
+                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDetails->leaveDataMasterCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'docSystemCode' => $documentSystemCode);
+
+                $isSendMail = email::sendEmail($emails);
+                if(isset($isSendMail['success']) && $isSendMail['success']){
+                    DB::commit();
+                    return $this->sendResponse([],'Successfully Referred back');
+                }
+            }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    private function updateLeaveMaster($leavedatamasterID){
+        $updateArray = [
+            'confirmedYN' =>0,
+            'hrapprovalYN' =>0,
+            'approvedYN' =>0,
+        ];
+        return LeaveDataMaster::where('leavedatamasterID',$leavedatamasterID)->update($updateArray);
+    }
+
+    private function updateLeaveDetail($leavedatamasterID,$reportingMangerComment){
+        $updateArray = [
+            'reportingMangerComment' => $reportingMangerComment
+        ];
+        return LeaveDataDetail::where('leavedatamasterID',$leavedatamasterID)->update($updateArray);
+    }
+
+    public function approveLeave(Request $request) {
+
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'documentApprovedID' => 'required|numeric|min:1'
+
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
+        if(empty($leaveDocumentApproved)){
+            return $this->sendError('Leave Document Approved Details Not Found');
+        }
+        $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
+
+        $leaveDetails = LeaveDataMaster::with(['detail'])
+            ->where('leavedatamasterID',$documentSystemCode)
+            ->whereHas('detail')
+            ->first();
+
+        if(empty($leaveDetails)){
+            return $this->sendError('Leave Details Not Found');
+        }
+
+        $user = Helper::getEmployeeInfo();
+
+        $isManagerMatch = EmployeeManagers::where('empID',$leaveDetails->empID)
+                            ->where('managerID',$user->empID)
+                            ->first();
+
+        if(empty($isManagerMatch)){
+            return $this->sendError('Not Allowed, Only Reporting Manager can approve');
+        }
+
+        //update document approved
+        DB::beginTransaction();
+        try{
+            $updateApproveArray = [
+                'approvedYN'=>-1,
+                'employeeID'=>$user->empID,
+                'approvedDate'=>date('Y-m-d H:i:s')
+            ];
+            LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->update($updateApproveArray);
+            // To do - if leave claim pending mail should go
+
+            $updateArray = [
+                'approvedYN'=>-1,
+                'approvedby'=>$user->empID,
+                'approvedDate'=>date('Y-m-d H:i:s')
+            ];
+            LeaveDataMaster::where('leavedatamasterID',$leaveDetails->leavedatamasterID)->update($updateArray);
+
+            $empData = Employee::where('empID',$leaveDetails->confirmedby)->first();
+
+            $documentName = ($leaveDetails->EntryType == 1)? "Leave Application":"Leave Claim";
+            $emails[] = array(
+                'empSystemID' => $empData->employeeSystemID,
+                'companySystemID' => $empData->empCompanySystemID,
+                'docSystemID' => 37,
+                'alertMessage' => "Approved " .$leaveDetails->leaveDataMasterCode,
+                'emailAlertMessage' => $documentName ." <b>".$leaveDetails->leaveDataMasterCode."</b> has been approved.",
+                'docSystemCode' => $documentSystemCode);
+
+            if($leaveDetails->hrapprovedby){
+                $hr = Employee::where('empID',$leaveDetails->hrapprovedby)->first();
+
+                if(!empty($hr)) {
+                    $emails[] = array(
+                        'empSystemID' => $hr->employeeSystemID,
+                        'companySystemID' => $hr->empCompanySystemID,
+                        'docSystemID' => 37,
+                        'alertMessage' => "Approved " .$leaveDetails->leaveDataMasterCode,
+                        'emailAlertMessage' => $documentName ." <b>".$leaveDetails->leaveDataMasterCode."</b> has been approved.",
+                        'docSystemCode' => $documentSystemCode);
+                }
+            }
+
+            $isSendMail = email::sendEmail($emails);
+            if(isset($isSendMail['success']) && $isSendMail['success']){
+                DB::commit();
+                return $this->sendResponse([],'Successfully Approved');
+            }
+
+        }catch(\Exception $exception){
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
 }
