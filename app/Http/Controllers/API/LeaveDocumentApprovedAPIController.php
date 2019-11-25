@@ -313,7 +313,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
         $user = Helper::getEmployeeInfo();
 
         $leave = LeaveDocumentApproved::
-            with(['employee','leave','leave.leave_type'])
+            with(['leave.employee','leave','leave.leave_type'])
             ->where('approvedYN',0)
             ->where('rejectedYN',0)
             ->where('hrApproval',0)
@@ -479,7 +479,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 'approvedDate'=>date('Y-m-d H:i:s')
             ];
             LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->update($updateApproveArray);
-            // To do - if leave claim pending mail should go
+            // To do - if leave claim pending mail should go - claim process
 
             $updateArray = [
                 'approvedYN'=>-1,

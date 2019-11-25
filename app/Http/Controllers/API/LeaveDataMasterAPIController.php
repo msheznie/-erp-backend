@@ -737,7 +737,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
 
         if ($leaveMasterID == 15) {
-            $policy_validator = \Validato::make($input, [
+            $policy_validator = \Validator::make($input, [
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
