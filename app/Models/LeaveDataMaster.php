@@ -327,5 +327,9 @@ class LeaveDataMaster extends Model
         return $this->belongsTo('App\Models\Employee','empID','empID');
     }
 
+    public function policy(){
+        return $this->belongsTo('App\Models\HRMSLeaveAccrualPolicyType','policytype','leaveaccrualpolicyTypeID');
+    }
+
 
 }

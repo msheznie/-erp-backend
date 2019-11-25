@@ -526,4 +526,109 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
     }
 
+
+    /*
+     * documentID
+     *
+     * */
+
+    public function getHRMSApproval(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $user = Helper::getEmployeeInfo();
+
+        $leave = LeaveDocumentApproved::with(['company'=>function($q){
+                $q->select('companySystemID','CompanyID','CompanyName');
+            }])
+            ->where('approvedYN',0)
+            ->where('rejectedYN',0)
+            ->where(function($query) use($user) {
+                // for Leave Application
+                $query->where(function($q) use($user){
+                    $q->where('documentSystemID',37)
+                        ->where('hrApproval',0)
+                        ->where('rollLevelOrder',1)
+                        ->whereHas('leave', function ($q) use ($user){
+                            $q->whereHas('employee', function ($q) use ($user){
+                                $q->whereHas('employee_managers' , function ($query) use ($user){
+                                    $query->where('managerID', $user->empID);
+                                });
+                            });
+                        });
+                });
+
+                // for Expense Claim
+
+                $query->orWhere(function($q) use($user){
+                    $q->where('documentSystemID',6)
+                        ->whereHas('expenseClaim', function ($q) use ($user){
+                            $q->whereHas('created_by', function ($q) use ($user){
+                                $q->whereHas('employee_managers' , function ($query) use ($user){
+                                    $query->where('managerID', $user->empID);
+                                });
+                            });
+                        });
+                });
+
+                // To do for Travel Claim
+
+            });
+
+        $search = $request->input('search.value');
+        if($search){
+            $leave =   $leave->where(function ($query) use($search){
+                $query->where('documentCode','LIKE',"%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($leave)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addColumn('details', function ($row) {
+
+                if($row->documentSystemID == 6){    // for expense claim
+                    return array(
+                       'requester' => $row->expenseClaim->created_by->empFullName,
+                       'requesterSystemID' => $row->expenseClaim->created_by->employeeSystemID,
+                       'typeID' => $row->expenseClaim->expense_claim_type->expenseClaimTypeID,
+                       'typeDescription' => $row->expenseClaim->expense_claim_type->expenseClaimTypeDescription,
+                       'tableMasterID' => $row->expenseClaim->expenseClaimMasterAutoID,
+                    );
+                }else if($row->documentSystemID == 37){ // for leave
+                    return array(
+                        'requester' => $row->leave->employee->empFullName,
+                        'requesterSystemID' => $row->leave->employee->employeeSystemID,
+                        'typeID' => $row->leave->leave_type->leavemasterID,
+                        'typeDescription' => $row->leave->leave_type->leavetype,
+                        'tableMasterID' => $row->leave->leavedatamasterID,
+                    );
+                }
+                return [];
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    ///
+    // if leave
+    // $row->leave
+    // if excc
+    // &grgr
+    // return $row
+
 }

@@ -565,7 +565,6 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     public function getLeaveDetailsBacks(Request $request)
     {
-
         $input = $request->all();
 
         if (isset($input['leavedatamasterID']) && $input['leavedatamasterID']) {
@@ -638,6 +637,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'empFullName'=>null
             );
 
+
             //get approve manager details
             $approvManager = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->approvedby)->first();
 
@@ -694,6 +694,10 @@ class LeaveDataMasterAPIController extends AppBaseController
             //set leave availability details to output array
             $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
 
+            $output['policy'] = array(
+                'leaveaccrualpolicyTypeID'=>isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID)?$leaveDataMaster->policy->leaveaccrualpolicyTypeID:null,
+                'description'=>isset($leaveDataMaster->policy->description)?$leaveDataMaster->policy->description:null
+            );
             return $this->sendResponse($output, 'Leave details retrieved successfully');
         }
         return $this->sendError('leavedatamasterID Not Found', 200);
@@ -747,9 +751,14 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError($policy_validator->messages(), 422);
+                return $this->sendError($policy_validator->messages(), 200);
             }
         }
+
+        if(!isset($input['policytype'])){
+            $input['policytype'] = null;
+        }
+
         DB::beginTransaction();
         try {
 
@@ -876,7 +885,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                     $input['hrapprovalYN'] = -1;
                     $input['RollLevForApp_curr'] = 2;
-                    $updateArray = array_only($input,['leaveType','confirmedYN','confirmedby','confirmedDate','hrapprovalYN','RollLevForApp_curr']);
+                    $updateArray = array_only($input,['policytype','leaveType','confirmedYN','confirmedby','confirmedDate','hrapprovalYN','RollLevForApp_curr']);
 
                     $this->leaveDataMasterRepository->update($updateArray,$leaveDataMasterID);
 
@@ -1033,6 +1042,9 @@ class LeaveDataMasterAPIController extends AppBaseController
             if ($policy_validator->fails()) {
                 return $this->sendError($policy_validator->messages(), 422);
             }
+        }
+        if(!isset($input['policytype'])){
+            $input['policytype'] = null;
         }
         DB::beginTransaction();
         try {
