@@ -452,9 +452,15 @@ class LeaveDataMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Leave details retrieved successfully');
     }
 
-    private function getLeaveAvailableForEmployee($empID, $leaveMasterID = null, $date = null)
-    {
-        if ($empID != null && $leaveMasterID != null) {
+    private function getLeaveAvailableForEmployee($empID, $leaveMasterID = null, $date = null, $policy=null)
+    {   $balance = 0;
+        if($policy != null){
+            $policyBalance = HRMSLeaveAccrualPolicyType::select('daysEntitled')
+                                ->where('policyType',$policy)
+                                ->first();
+
+            $balance = $policyBalance->daysEntitled;
+        }elseif ($empID != null && $leaveMasterID != null) {
 
             $leave_accured = QryLeavesAccrued::selectRaw('SUM(SumOfDaysEntitled) as leaveBalanceaccrued')
                 ->where('empID', $empID)
@@ -478,11 +484,10 @@ class LeaveDataMasterAPIController extends AppBaseController
                 ->first();
 
             $leave_applied = isset($leave_applied->leaveBalanceapplied) ? $leave_applied->leaveBalanceapplied : 0;
-
             $balance = $leave_accured - $leave_applied;
-            return $balance;
+
         }
-        return 0;
+        return $balance;
     }
 
     public function saveDocumentAttachments($files = [],$attach = [])
