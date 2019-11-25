@@ -32,6 +32,7 @@ use App\Models\Employee;
 use App\Models\EmployeeManagers;
 use App\Models\HrmsDocumentAttachments;
 use App\Models\HRMSLeaveAccrualDetail;
+use App\Models\HRMSLeaveAccrualPolicyType;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
@@ -736,7 +737,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         $startDate = Carbon::parse($input['startDate'])->format('Y-m-d');        //to date format
         $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
 
-        if ($leaveMasterID == 15) {
+        if ($leaveMasterID == 15) { // compassionate leave
             $policy_validator = \Validator::make($input, [
                 'policytype' => 'required'
             ]);
@@ -1171,8 +1172,11 @@ class LeaveDataMasterAPIController extends AppBaseController
     }
 
     public function getLeaveTypeWithBalance(){
+
+        $policyArray = $this->getPolicyArray();
+
         $leaveBalance = $this->getLeaveBalance();
-        $leaveMasters =LeaveMaster::select('leavemasterID','leavetype')->get();
+        $leaveMasters = LeaveMaster::select('leavemasterID','leavetype')->get();
         $output = [];
         $i = 0;
         if(!empty($leaveMasters)){
@@ -1189,9 +1193,22 @@ class LeaveDataMasterAPIController extends AppBaseController
                     }
                 }
                 $output[$i]['balance'] = $balanceLeave;
+
+                // set policy
+                if($type->leavemasterID==15){
+                    $output[$i]['policy'] = $policyArray;
+                }else{
+                    $output[$i]['policy'] = [];
+                }
+
+
                 $i++;
             }
         }
+
+
+
+
 
         return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
     }
@@ -1475,4 +1492,34 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
         return $leaveBalance;
     }
+
+    private function getPolicyArray(){
+
+        $employee = Helper::getEmployeeInfo();
+         $checkEmployee = Employee::where('employeeSystemID',$employee->employeeSystemID)
+                                ->with('details')
+                                ->first();
+        $checkEmployee->details->isLocal;
+        $religion = ($employee->religion==1)?-1:0;
+        $gender = ((isset($checkEmployee->details->gender)) && ($checkEmployee->details->gender==2))?-1:0;
+        $isLocal = ((isset($checkEmployee->details->isLocal)) && ($checkEmployee->details->isLocal==1))?-1:0;
+
+        $policy = HRMSLeaveAccrualPolicyType::select('leaveaccrualpolicyTypeID','description')
+            ->where(function ($q) use($isLocal,$religion,$gender){
+            if($isLocal){
+                $q->where(function($q) use($religion,$gender){
+                    $q->where('isExpat',0)
+                        ->orWhere(function($q) use($religion,$gender){
+                            $q->where('isOnlyFemale',$gender)
+                                ->where('isOnlyMuslim',$religion);
+                        });
+                });
+            }else{
+                $q->where('isExpat',-1);
+            }
+        })->get();
+
+        return $policy->toArray();
+    }
+
 }

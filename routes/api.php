@@ -1570,6 +1570,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('leaveReferBack', 'LeaveDocumentApprovedAPIController@leaveReferBack');
     Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
 
+    Route::resource('hrms_leave_accrual_policy_types', 'HRMSLeaveAccrualPolicyTypeAPIController');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1637,3 +1639,5 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
