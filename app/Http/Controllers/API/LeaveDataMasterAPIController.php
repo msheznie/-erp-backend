@@ -613,6 +613,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $leaveArray = $leaveDataMaster->toArray();
             $leaveArray = array_except($leaveArray,['approvedYN','approvedby','approvedDate','hrapprovalYN','hrapprovedby','hrapprovedDate','leaveType',
                 'modifieduser','modifiedpc','createduserGroup','createdpc','timestamp']);
+
             $employee = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
 
             // approver details
@@ -693,11 +694,15 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             //set leave availability details to output array
             $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
+            if(isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID) && isset($leaveDataMaster->policy->description)){
+                $output['policy'] = array(
+                    'leaveaccrualpolicyTypeID'=>isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID)?$leaveDataMaster->policy->leaveaccrualpolicyTypeID:null,
+                    'description'=>isset($leaveDataMaster->policy->description)?$leaveDataMaster->policy->description:null
+                );
+            }else{
+                $output['policy'] = null;
+            }
 
-            $output['policy'] = array(
-                'leaveaccrualpolicyTypeID'=>isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID)?$leaveDataMaster->policy->leaveaccrualpolicyTypeID:null,
-                'description'=>isset($leaveDataMaster->policy->description)?$leaveDataMaster->policy->description:null
-            );
             return $this->sendResponse($output, 'Leave details retrieved successfully');
         }
         return $this->sendError('leavedatamasterID Not Found', 200);

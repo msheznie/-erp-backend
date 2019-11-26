@@ -26,6 +26,7 @@ use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
 use App\Models\LeaveMaster;
 use App\Repositories\LeaveDocumentApprovedRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -529,9 +530,9 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
     /*
      * documentID
-     *
+     *important. all response data will cast to string because of yajra datatable issue. if it fixed by library,
+     * mobile developer should warn. other wise mobile app will crack. library issue hasnot fix until V9.7.2
      * */
-
     public function getHRMSApproval(Request $request){
 
         $input = $request->all();
@@ -565,7 +566,6 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 });
 
                 // for Expense Claim
-
                 $query->orWhere(function($q) use($user){
                     $q->where('documentSystemID',6)
                         ->whereHas('expenseClaim', function ($q) use ($user){
@@ -606,6 +606,9 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                        'typeID' => $row->expenseClaim->expense_claim_type->expenseClaimTypeID,
                        'typeDescription' => $row->expenseClaim->expense_claim_type->expenseClaimTypeDescription,
                        'tableMasterID' => $row->expenseClaim->expenseClaimMasterAutoID,
+                       'total_amount' => $row->expenseClaim->details->sum('amount'),
+                       'comment' => $row->expenseClaim->comment,
+                       'currency' => $row->expenseClaim->details[0]->currency->only('currencyID','CurrencyName','CurrencyCode','DecimalPlaces'),
                     );
                 }else if($row->documentSystemID == 37){ // for leave
                     return array(
@@ -614,6 +617,11 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         'typeID' => $row->leave->leave_type->leavemasterID,
                         'typeDescription' => $row->leave->leave_type->leavetype,
                         'tableMasterID' => $row->leave->leavedatamasterID,
+                        'start' => $row->leave->leavedatamasterID,
+                        'tableMasterID' => $row->leave->leavedatamasterID,
+                        'startDate' => Carbon::parse($row->leave->detail->startDate)->format('Y-m-d'),
+                        'endDate' => Carbon::parse($row->leave->detail->endDate)->format('Y-m-d'),
+                        'comment' => $row->leave->detail->comment,
                     );
                 }
                 return [];
