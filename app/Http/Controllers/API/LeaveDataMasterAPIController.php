@@ -1040,14 +1040,14 @@ class LeaveDataMasterAPIController extends AppBaseController
         $startDate = Carbon::parse($input['startDate'])->format('Y-m-d');        //to date format
         $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
 
-        if ($leaveMasterID == 15) {
-            $policy_validator = \Validato::make($input, [
-                'policytype' => 'required'
-            ]);
-            if ($policy_validator->fails()) {
-                return $this->sendError('Policy type is required', 200);
-            }
-        }
+//        if ($leaveMasterID == 15) {
+//            $policy_validator = \Validato::make($input, [
+//                'policytype' => 'required'
+//            ]);
+//            if ($policy_validator->fails()) {
+//                return $this->sendError('Policy type is required', 200);
+//            }
+//        }
         if(!isset($input['policytype'])){
             $input['policytype'] = null;
         }
@@ -1195,7 +1195,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     public function getLeaveTypeWithBalance(){
 
-        $policyArray = $this->getPolicyArray();
+//        $policyArray = $this->getPolicyArray();
 
         $leaveBalance = $this->getLeaveBalance();
         $leaveMasters = LeaveMaster::select('leavemasterID','leavetype')->get();
@@ -1217,11 +1217,11 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $output[$i]['balance'] = $balanceLeave;
 
                 // set policy
-                if($type->leavemasterID==15){
-                    $output[$i]['policy'] = $policyArray;
-                }else{
-                    $output[$i]['policy'] = [];
-                }
+//                if($type->leavemasterID==15){
+//                    $output[$i]['policy'] = $policyArray;
+//                }else{
+//                    $output[$i]['policy'] = [];
+//                }
 
 
                 $i++;
