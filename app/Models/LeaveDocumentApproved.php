@@ -278,7 +278,18 @@ class LeaveDocumentApproved extends Model
 
     public function leave()
     {
-        return $this->belongsTo('App\Models\LeaveDataMaster','documentSystemCode','leavedatamasterID');
+        return $this->belongsTo('App\Models\LeaveDataMaster','documentSystemCode','leavedatamasterID')
+            ->where('documentID','LA');
+    }
+
+    public function expenseClaim()
+    {
+        return $this->belongsTo('App\Models\ExpenseClaim','documentSystemCode','expenseClaimMasterAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
 }

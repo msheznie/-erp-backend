@@ -37,6 +37,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
+use App\Models\LeaveDataMaster;
 use App\Models\MaterielRequest;
 use App\Models\MonthlyAdditionsMaster;
 use App\Models\PaymentBankTransfer;
@@ -75,8 +76,8 @@ class email
 
 
         foreach ($array as $data) {
-            $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
 
+            $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
 
             if (!empty($employee)) {
                 $data['empID'] = $employee->empID;
@@ -344,6 +345,13 @@ class email
                     if (!empty($expenseClaim)) {
                         $data['docApprovedYN'] = $expenseClaim->approved;
                         $data['docCode'] = $expenseClaim->expenseClaimCode;
+                    }
+                    break;
+                case 37:
+                    $leaveMaster = LeaveDataMaster::find($data['docSystemCode']);
+                    if (!empty($leaveMaster)) {
+                        $data['docApprovedYN'] = $leaveMaster->approvedYN;
+                        $data['docCode'] = $leaveMaster->leaveDataMasterCode;
                     }
                     break;
                 default:
