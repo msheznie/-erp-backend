@@ -19,7 +19,9 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateLeaveDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateLeaveDocumentApprovedAPIRequest;
 use App\Models\Company;
+use App\Models\DepartmentMaster;
 use App\Models\Employee;
+use App\Models\employeeDepartmentDelegation;
 use App\Models\EmployeeManagers;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
@@ -477,6 +479,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $updateApproveArray = [
                 'approvedYN'=>-1,
                 'employeeID'=>$user->empID,
+                'empSystemID'=>$user->employeeSystemID,
                 'approvedDate'=>date('Y-m-d H:i:s')
             ];
             LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->update($updateApproveArray);
@@ -485,6 +488,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $updateArray = [
                 'approvedYN'=>-1,
                 'approvedby'=>$user->empID,
+                'approvedByUserSystemID'=>$user->employeeSystemID,
                 'approvedDate'=>date('Y-m-d H:i:s')
             ];
             LeaveDataMaster::where('leavedatamasterID',$leaveDetails->leavedatamasterID)->update($updateArray);
@@ -533,7 +537,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
      *important. all response data will cast to string because of yajra datatable issue. if it fixed by library,
      * mobile developer should warn. other wise mobile app will crack. library issue hasnot fix until V9.7.2
      * */
-    public function getHRMSApproval(Request $request){
+    public function getHRMSApprovals(Request $request){
 
         $input = $request->all();
 
@@ -597,6 +601,16 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     }
                 }
             })
+            ->addColumn('documentDescription', function ($row) {
+                if($row->documentSystemID == 37){
+                    return "Leave";
+                }elseif($row->documentSystemID == 6){
+                    return "Expense Claim";
+                }else{
+                    return "";
+                }
+
+            })
             ->addColumn('details', function ($row) {
 
                 if($row->documentSystemID == 6){    // for expense claim
@@ -617,7 +631,6 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         'typeID' => $row->leave->leave_type->leavemasterID,
                         'typeDescription' => $row->leave->leave_type->leavetype,
                         'tableMasterID' => $row->leave->leavedatamasterID,
-                        'start' => $row->leave->leavedatamasterID,
                         'tableMasterID' => $row->leave->leavedatamasterID,
                         'startDate' => Carbon::parse($row->leave->detail->startDate)->format('Y-m-d'),
                         'endDate' => Carbon::parse($row->leave->detail->endDate)->format('Y-m-d'),
@@ -632,11 +645,209 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
     }
 
-    ///
-    // if leave
-    // $row->leave
-    // if excc
-    // &grgr
-    // return $row
+    /**
+     * function for approve HRMS documents
+     * @param $input - documentApprovedID
+     * @return mixed
+     */
+    public function approveHRMSDocument(Request $request) {
+
+        $docInforArr =  array(
+            'tableName' => 'erp_expenseclaimmaster',
+            'modelName' => 'ExpenseClaim',
+            'primarykey' => 'expenseClaimMasterAutoID',
+            'child' => ''
+        );
+        $input = $request->all();
+        $validator = \Validator::make($input, [
+            'documentApprovedID' => 'required|numeric|min:1'
+
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
+        if(empty($leaveDocumentApproved)){
+            return $this->sendError('Leave Document Approved Details Not Found');
+        }
+
+        // check already approved
+        if($leaveDocumentApproved->approvedYN == -1){
+            return $this->sendError('Document Already Approved');
+        }
+
+
+        $documentSystemID = $leaveDocumentApproved->documentSystemID;
+        switch ($documentSystemID){
+
+            case 6:
+                $docInforArr =  array(
+                    'tableName' => 'erp_expenseclaimmaster',
+                    'modelName' => 'ExpenseClaim',
+                    'primarykey' => 'expenseClaimMasterAutoID',
+                    'child' => 'details',
+                    'documentName'=> 'Expense Claim'
+                );
+                break;
+            case 37:
+                $docInforArr =  array(
+                    'tableName' => 'hrms_leavedatamaster',
+                    'modelName' => 'LeaveDataMaster',
+                    'primarykey' => 'leavedatamasterID',
+                    'child' => 'detail',
+                    'documentName'=> 'Leave Application'
+                );
+                break;
+            default:
+                return $this->sendError('Document ID Not Found');
+        }
+
+        $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
+        $email_message = $docInforArr['documentName'] ." <b>".$leaveDocumentApproved->documentCode."</b> has been approved.";
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $namespacedModelChild = $docInforArr["child"]; // Model name
+        $modelDetails = $namespacedModel::with([$namespacedModelChild])
+            ->where($docInforArr["primarykey"],$documentSystemCode)
+            ->whereHas($namespacedModelChild)
+            ->first();
+
+        if(empty($modelDetails)){
+            return $this->sendError('Leave Details Not Found');
+        }
+
+        $user = Helper::getEmployeeInfo();
+
+        $emailEmployeeList = [];
+        $empData = [];
+        if($documentSystemID==37){
+
+            $empData = Employee::where('empID',$modelDetails->confirmedby)->first();
+
+            $isManagerMatch = EmployeeManagers::where('empID',$modelDetails->empID)
+                ->where('managerID',$user->empID)
+                ->first();
+
+            if(empty($isManagerMatch)){
+                return $this->sendError('Not Allowed, Only Reporting Manager can approve');
+            }
+        }elseif ($documentSystemID==6){
+
+            $empData = Employee::where('employeeSystemID',$modelDetails->confirmedByEmpSystemID)->first();
+
+            if($modelDetails->departmentSystemID){
+                $emailEmployeeList = employeeDepartmentDelegation::with(['employee','company'])->where('companySystemID',$modelDetails->companySystemID)
+                                    ->where('departmentSystemID',$modelDetails->departmentSystemID)
+                                    ->where('documentSystemID',$documentSystemID)
+                                    ->get();
+
+                if(!empty($emailEmployeeList)){
+                    $del_emp_name = [];
+                    foreach ($emailEmployeeList as $value){
+                        $del_emp_name[] = $value->employee->empName;
+                    }
+                    $email_message .= " It is being processed by ".join($del_emp_name,',');
+
+                }
+            }
+        }
+
+        //update document approved
+        DB::beginTransaction();
+        try{
+
+            $updateApproveArray = [
+                'approvedYN'=>-1,
+                'employeeID'=>$user->empID,
+                'empSystemID'=>$user->employeeSystemID,
+                'approvedDate'=>date('Y-m-d H:i:s')
+            ];
+            LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->update($updateApproveArray);
+
+            // because different column names in tables
+            if($documentSystemID==37){
+                $updateArray = [
+                    'approvedYN'=>-1,
+                    'approvedby'=>$user->empID,
+                    'approvedByUserSystemID'=>$user->employeeSystemID,
+                    'approvedDate'=>date('Y-m-d H:i:s')
+                ];
+                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('CompanyID',$modelDetails->companyID)->update($updateArray);
+            }elseif($documentSystemID == 6){
+                $updateArray = [
+                    'approved'=>-1,
+                    'approvedByUserSystemID'=>$user->employeeSystemID,
+                    'approvedDate'=>date('Y-m-d H:i:s')
+                ];
+                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
+            }
+
+
+
+
+            $emails[] = array(
+                'empSystemID' => $empData->employeeSystemID,
+                'companySystemID' => $empData->empCompanySystemID,
+                'docSystemID' => $documentSystemID,
+                'alertMessage' => "Approved " .$leaveDocumentApproved->documentCode,
+                'emailAlertMessage' => $email_message,
+                'docSystemCode' => $documentSystemCode);
+
+            if($documentSystemID==6 ){
+                if($modelDetails->departmentSystemID){
+
+                    $emailEmployeeList = employeeDepartmentDelegation::with(['employee','company'])->where('companySystemID',$modelDetails->companySystemID)
+                        ->where('departmentSystemID',$modelDetails->departmentSystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->get();
+
+                    if(!empty($emailEmployeeList)) {
+                        foreach ($emailEmployeeList as $value){
+                            if(!empty($value->employee)){
+                                $empCompany = $value->company->CompanyName;
+                                $emails[] = array(
+                                    'empSystemID' => $value->employee->employeeSystemID,
+                                    'companySystemID' => $value->employee->empCompanySystemID,
+                                    'docSystemID' => $documentSystemID,
+                                    'alertMessage' => $docInforArr['documentName']." Approved Mail to Account Payable Department",
+                                    'emailAlertMessage' => "Dear " .$value->employee->empName. ",<p>Expense Claim <strong>". $leaveDocumentApproved->documentCode ."</strong> is approved in <strong>". $empCompany ."<strong/> Please process the payment.<br><br>Regards,<br>Team Gears<br>",
+                                    'docSystemCode' => $documentSystemCode);
+                            }
+
+                        }
+
+                    }
+                }
+
+            }elseif ($documentSystemID==37) {
+
+                if($modelDetails->hrapprovedby){
+                    $hr = Employee::where('empID',$modelDetails->hrapprovedby)->first();
+
+                    if(!empty($hr)) {
+                        $emails[] = array(
+                            'empSystemID' => $hr->employeeSystemID,
+                            'companySystemID' => $hr->empCompanySystemID,
+                            'docSystemID' => $documentSystemID,
+                            'alertMessage' => "Approved " .$modelDetails->leaveDataMasterCode,
+                            'emailAlertMessage' => $docInforArr['documentName'] ." <b>".$modelDetails->leaveDataMasterCode."</b> has been approved.",
+                            'docSystemCode' => $documentSystemCode);
+                    }
+                }
+
+            }
+
+            $isSendMail = email::sendEmail($emails);
+            if(isset($isSendMail['success']) && $isSendMail['success']){
+                DB::commit();
+                return $this->sendResponse([],'Successfully Approved');
+            }
+
+        }catch(\Exception $exception){
+            DB::rollBack();
+            return $this->sendError($exception->getLine().$exception->getMessage());
+        }
+
+    }
 
 }

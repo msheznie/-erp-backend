@@ -1572,6 +1572,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
     Route::resource('hrms_leave_accrual_policy_types', 'HRMSLeaveAccrualPolicyTypeAPIController');
 
+    Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
+    Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
