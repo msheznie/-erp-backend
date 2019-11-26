@@ -756,7 +756,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError($policy_validator->messages(), 200);
+                return $this->sendError('Policy type is required', 200);
             }
         }
 
@@ -1045,7 +1045,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError($policy_validator->messages(), 422);
+                return $this->sendError('Policy type is required', 200);
             }
         }
         if(!isset($input['policytype'])){
