@@ -297,4 +297,10 @@ class Employee extends Model
        // return $this->hasMany('App\Models\HRMSPersonalDocuments','employeeSystemID','employeeSystemID');  // change insert and update function and use employeeSystemID
     }
 
+    public function employee_managers()
+    {
+        return $this->hasMany('App\Models\EmployeeManagers','empID','empID');
+        // return $this->hasMany('App\Models\HRMSPersonalDocuments','employeeSystemID','employeeSystemID');  // change insert and update function and use employeeSystemID
+    }
+
 }
