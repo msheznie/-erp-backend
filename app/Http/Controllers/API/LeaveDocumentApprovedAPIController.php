@@ -23,6 +23,7 @@ use App\Models\DepartmentMaster;
 use App\Models\Employee;
 use App\Models\employeeDepartmentDelegation;
 use App\Models\EmployeeManagers;
+use App\Models\ExpenseClaim;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
 use App\Models\LeaveDocumentApproved;
@@ -555,6 +556,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             ->where('approvedYN',0)
             ->where('rejectedYN',0)
             ->where(function($query) use($user) {
+
                 // for Leave Application
                 $query->where(function($q) use($user){
                     $q->where('documentSystemID',37)
@@ -599,6 +601,8 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     {
                         $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
+                }else{
+                    $query->orderBy('documentApprovedID', 'DESC');
                 }
             })
             ->addColumn('documentDescription', function ($row) {
@@ -782,9 +786,6 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
             }
 
-
-
-
             $emails[] = array(
                 'empSystemID' => $empData->employeeSystemID,
                 'companySystemID' => $empData->empCompanySystemID,
@@ -848,6 +849,111 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             return $this->sendError($exception->getLine().$exception->getMessage());
         }
 
+    }
+
+    public function referBackHRMSDocument(Request $request){
+
+        $input = $request->all();
+        $user = Helper::getEmployeeInfo();
+        $validator = \Validator::make($input, [
+            'rejectedComments' => 'required',
+            'documentApprovedID' => 'required|numeric|min:1'
+
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $input = $this->convertArrayToSelectedValue($input, array('rejectedComments', 'documentApprovedID'));
+
+        $leaveDocumentApproved = LeaveDocumentApproved::find($input['documentApprovedID']);
+
+        if(empty($leaveDocumentApproved)){
+            return $this->sendError('Leave Document Approved Details Not Found');
+        }
+
+        if(!$leaveDocumentApproved->companySystemID){
+            return $this->sendError('Company System ID Not Found on document approved table');
+        }
+
+        if(!$leaveDocumentApproved->documentSystemID){
+            return $this->sendError('Document System ID Not Found on document approved table');
+        }
+
+        $input['companySystemID'] = $leaveDocumentApproved->companySystemID;
+        $input['documentSystemID'] = $leaveDocumentApproved->documentSystemID;
+        $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
+
+        $company= Company::find($input['companySystemID']);
+        $companyName = $company->CompanyName;
+
+        DB::beginTransaction();
+
+        try {
+
+            $isDelete = LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->delete();
+            if($isDelete){
+
+                if($input['documentSystemID'] == 6){
+
+                    $documentName = "Expense Claim";
+
+                    $entityDetail = ExpenseClaim::with(['details'])
+                        ->where('expenseClaimMasterAutoID',$documentSystemCode)
+                        ->whereHas('details')
+                        ->first();
+
+                    if(empty($entityDetail)){
+                        return $this->sendError('Expense Claim Details Not Found');
+                    }
+
+                    $confirmEmployee = $entityDetail->confirmedByEmpID;
+
+                    $updateArray = [
+                        'rejectedComment' => $input['rejectedComments'],
+                        'rejectedYN' => -1,
+                        'confirmedYN' => 0
+                    ];
+                    return ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->update($updateArray);
+
+                }else if($input['documentSystemID'] == 37){
+
+                    $documentName = "Leave Application";
+
+                    $entityDetail = LeaveDataMaster::with(['detail'])
+                        ->where('leavedatamasterID',$documentSystemCode)
+                        ->whereHas('detail')
+                        ->first();
+                    if(empty($entityDetail)){
+                        return $this->sendError('Leave Details Not Found');
+                    }
+
+                    $confirmEmployee = $entityDetail->confirmedby;
+
+                    $this->updateLeaveMaster($documentSystemCode);
+                    $this->updateLeaveDetail($documentSystemCode,$input['rejectedComments']);
+                }
+
+                $originator = Employee::where('empID',$confirmEmployee)->first();
+
+                 $emails[] = array(
+                    'empSystemID' => $originator->employeeSystemID,
+                    'companySystemID' => $input['companySystemID'],
+                    'docSystemID' => $input['documentSystemID'],
+                    'alertMessage' => "Referred Back ".$documentName." ".$leaveDocumentApproved->documentCode,
+                    'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDocumentApproved->documentCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
+                    'docSystemCode' => $documentSystemCode);
+
+                $isSendMail = email::sendEmail($emails);
+                if(isset($isSendMail['success']) && $isSendMail['success']){
+                    DB::commit();
+                    return $this->sendResponse([],'Successfully Referred back');
+                }
+            }
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

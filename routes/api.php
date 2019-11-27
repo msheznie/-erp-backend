@@ -1574,6 +1574,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
     Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
+    Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
