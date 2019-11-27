@@ -635,7 +635,6 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         'typeID' => $row->leave->leave_type->leavemasterID,
                         'typeDescription' => $row->leave->leave_type->leavetype,
                         'tableMasterID' => $row->leave->leavedatamasterID,
-                        'tableMasterID' => $row->leave->leavedatamasterID,
                         'startDate' => Carbon::parse($row->leave->detail->startDate)->format('Y-m-d'),
                         'endDate' => Carbon::parse($row->leave->detail->endDate)->format('Y-m-d'),
                         'comment' => $row->leave->detail->comment,
