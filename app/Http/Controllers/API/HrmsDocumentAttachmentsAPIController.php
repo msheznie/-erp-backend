@@ -307,7 +307,7 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
                 return $this->sendError('Attachments detail not found');
             }
         }else{
-            return $this->sendError('Attachment is not attached', 401);
+            return $this->sendError('Attachment is not attached', 404);
         }
     }
 

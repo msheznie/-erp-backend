@@ -90,7 +90,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 return $this->sendError('Attachments not found', 500);
             }
         }else{
-            return $this->sendError('Attachment is not attached', 401);
+            return $this->sendError('Attachment is not attached', 404);
         }
     }
 
