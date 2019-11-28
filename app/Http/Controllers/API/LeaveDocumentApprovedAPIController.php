@@ -913,7 +913,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         'rejectedYN' => -1,
                         'confirmedYN' => 0
                     ];
-                    return ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->update($updateArray);
+                    ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->update($updateArray);
 
                 }else if($input['documentSystemID'] == 37){
 

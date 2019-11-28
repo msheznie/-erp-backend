@@ -1125,7 +1125,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 })
                 ->count();
 
-            if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
+            if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16])) && ($leaveType == 1)) {
                 return $this->sendError('You cannot apply leave for past days',200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
                 return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
