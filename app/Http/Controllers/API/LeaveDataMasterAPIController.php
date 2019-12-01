@@ -1196,15 +1196,14 @@ class LeaveDataMasterAPIController extends AppBaseController
     public function getLeaveTypeWithBalance(){
 
         $policyArray = $this->getPolicyArray();
-
+        $employee = Helper::getEmployeeInfo();
         $leaveBalance = $this->getLeaveBalance();
         $leaveMasters = LeaveMaster::select('leavemasterID','leavetype')->get();
         $output = [];
         $i = 0;
         if(!empty($leaveMasters)){
             foreach ($leaveMasters as $type){
-                $output[$i]['leavemasterID'] = $type->leavemasterID;
-                $output[$i]['leavetype'] = $type->leavetype;
+
                 $balanceLeave = 0;
                 if(!empty($leaveBalance)){
 
@@ -1214,13 +1213,40 @@ class LeaveDataMasterAPIController extends AppBaseController
                         }
                     }
                 }
-                $output[$i]['balance'] = $balanceLeave;
 
-                // set policy
+                if(in_array($type->leavemasterID,[2,3,4,21])){
+
+                    if($balanceLeave!=0){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                    }
+
+                }elseif ($type->leavemasterID == 11){ // meternity
+                    if(isset($employee->details->gender) && $employee->details->gender==2){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                    }
+
+                }elseif ($type->leavemasterID == 13){   // Haj
+                    if($employee->religion==1){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                    }
+
+                }else{
+                    $output[$i]['leavemasterID'] = $type->leavemasterID;
+                    $output[$i]['leavetype'] = $type->leavetype;
+                    $output[$i]['balance'] = $balanceLeave;
+                    $output[$i]['policy'] = [];
+                }
                 if($type->leavemasterID==15){
                     $output[$i]['policy'] = $policyArray;
-                }else{
-                    $output[$i]['policy'] = [];
                 }
 
 
