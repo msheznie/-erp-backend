@@ -838,7 +838,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                                         ->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
                                 })
                                 ->count();
-            if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16])) && ($leaveType == 1)) {
+            if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16,21])) && ($leaveType == 1)) {
                 return $this->sendError('You cannot apply leave for past days',200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
                 return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
@@ -1196,15 +1196,14 @@ class LeaveDataMasterAPIController extends AppBaseController
     public function getLeaveTypeWithBalance(){
 
         $policyArray = $this->getPolicyArray();
-
+        $employee = Helper::getEmployeeInfo();
         $leaveBalance = $this->getLeaveBalance();
         $leaveMasters = LeaveMaster::select('leavemasterID','leavetype')->get();
         $output = [];
         $i = 0;
         if(!empty($leaveMasters)){
             foreach ($leaveMasters as $type){
-                $output[$i]['leavemasterID'] = $type->leavemasterID;
-                $output[$i]['leavetype'] = $type->leavetype;
+
                 $balanceLeave = 0;
                 if(!empty($leaveBalance)){
 
@@ -1214,22 +1213,48 @@ class LeaveDataMasterAPIController extends AppBaseController
                         }
                     }
                 }
-                $output[$i]['balance'] = $balanceLeave;
 
-                // set policy
-                if($type->leavemasterID==15){
-                    $output[$i]['policy'] = $policyArray;
+                if(in_array($type->leavemasterID,[2,3,4,21])){
+
+                    if($balanceLeave!=0){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                        $i++;
+                    }
+
+                }elseif ($type->leavemasterID == 11){ // meternity
+                    if(isset($employee->details->gender) && $employee->details->gender==2){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                        $i++;
+                    }
+
+                }elseif ($type->leavemasterID == 13){   // Haj
+                    if($employee->religion==1){
+                        $output[$i]['leavemasterID'] = $type->leavemasterID;
+                        $output[$i]['leavetype'] = $type->leavetype;
+                        $output[$i]['balance'] = $balanceLeave;
+                        $output[$i]['policy'] = [];
+                        $i++;
+                    }
+
                 }else{
+                    $output[$i]['leavemasterID'] = $type->leavemasterID;
+                    $output[$i]['leavetype'] = $type->leavetype;
+                    $output[$i]['balance'] = $balanceLeave;
                     $output[$i]['policy'] = [];
+                    if($type->leavemasterID==15){
+                        $output[$i]['policy'] = $policyArray;
+                    }
+                    $i++;
                 }
 
-
-                $i++;
             }
         }
-
-
-
 
 
         return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
