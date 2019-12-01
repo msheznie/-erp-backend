@@ -1221,6 +1221,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                         $output[$i]['leavetype'] = $type->leavetype;
                         $output[$i]['balance'] = $balanceLeave;
                         $output[$i]['policy'] = [];
+                        $i++;
                     }
 
                 }elseif ($type->leavemasterID == 11){ // meternity
@@ -1229,6 +1230,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                         $output[$i]['leavetype'] = $type->leavetype;
                         $output[$i]['balance'] = $balanceLeave;
                         $output[$i]['policy'] = [];
+                        $i++;
                     }
 
                 }elseif ($type->leavemasterID == 13){   // Haj
@@ -1237,6 +1239,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                         $output[$i]['leavetype'] = $type->leavetype;
                         $output[$i]['balance'] = $balanceLeave;
                         $output[$i]['policy'] = [];
+                        $i++;
                     }
 
                 }else{
@@ -1244,18 +1247,14 @@ class LeaveDataMasterAPIController extends AppBaseController
                     $output[$i]['leavetype'] = $type->leavetype;
                     $output[$i]['balance'] = $balanceLeave;
                     $output[$i]['policy'] = [];
-                }
-                if($type->leavemasterID==15){
-                    $output[$i]['policy'] = $policyArray;
+                    if($type->leavemasterID==15){
+                        $output[$i]['policy'] = $policyArray;
+                    }
+                    $i++;
                 }
 
-
-                $i++;
             }
         }
-
-
-
 
 
         return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
