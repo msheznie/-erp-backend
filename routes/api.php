@@ -1566,13 +1566,15 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('hrms_personal_documents', 'HRMSPersonalDocumentsAPIController');
 
-    Route::get('getHRMSApproval', 'LeaveDocumentApprovedAPIController@getHRMSApproval');
+    Route::get('getHRMSApprovals', 'LeaveDocumentApprovedAPIController@getHRMSApprovals');
     Route::get('getLeaveApproval', 'LeaveDocumentApprovedAPIController@getLeaveApproval');
     Route::post('leaveReferBack', 'LeaveDocumentApprovedAPIController@leaveReferBack');
     Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
-
     Route::resource('hrms_leave_accrual_policy_types', 'HRMSLeaveAccrualPolicyTypeAPIController');
 
+    Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
+    Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
+    Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
