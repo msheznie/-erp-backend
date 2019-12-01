@@ -613,6 +613,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $leaveArray = $leaveDataMaster->toArray();
             $leaveArray = array_except($leaveArray,['approvedYN','approvedby','approvedDate','hrapprovalYN','hrapprovedby','hrapprovedDate','leaveType',
                 'modifieduser','modifiedpc','createduserGroup','createdpc','timestamp']);
+
             $employee = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
 
             // approver details
@@ -693,11 +694,15 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             //set leave availability details to output array
             $output['attachments'] = $this->getAttachments($leaveDataMaster->CompanyID, $leaveDataMaster->documentID, $leaveDataMaster->leavedatamasterID);
+            if(isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID) && isset($leaveDataMaster->policy->description)){
+                $output['policy'] = array(
+                    'leaveaccrualpolicyTypeID'=>isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID)?$leaveDataMaster->policy->leaveaccrualpolicyTypeID:null,
+                    'description'=>isset($leaveDataMaster->policy->description)?$leaveDataMaster->policy->description:null
+                );
+            }else{
+                $output['policy'] = null;
+            }
 
-            $output['policy'] = array(
-                'leaveaccrualpolicyTypeID'=>isset($leaveDataMaster->policy->leaveaccrualpolicyTypeID)?$leaveDataMaster->policy->leaveaccrualpolicyTypeID:null,
-                'description'=>isset($leaveDataMaster->policy->description)?$leaveDataMaster->policy->description:null
-            );
             return $this->sendResponse($output, 'Leave details retrieved successfully');
         }
         return $this->sendError('leavedatamasterID Not Found', 200);
@@ -751,7 +756,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError($policy_validator->messages(), 200);
+                return $this->sendError('Policy type is required', 200);
             }
         }
 
@@ -833,20 +838,20 @@ class LeaveDataMasterAPIController extends AppBaseController
                                         ->orWhereRaw("'$endDate' BETWEEN startDate AND endFinalDate");
                                 })
                                 ->count();
-            if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave for past days');
+            if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16])) && ($leaveType == 1)) {
+                return $this->sendError('You cannot apply leave for past days',200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
-                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval');
+                return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);
             } else if (($leaveMasters->isProbation == -1) && ($diffInMonths < 3)) {
-                return $this->sendError('You cannot obtain any leave in your probation period');
+                return $this->sendError('You cannot obtain any leave in your probation period',200);
             } else if (($diffInMonths < 12) && ($leaveMasterID == 13)) {
-                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave');
+                return $this->sendError('You must complete 1 year of service with the company to be eligible for Hajj leave',200);
             } else if ($leaveMasters->isAttachmentMandatory == -1 && ($attachmentStatus == 0)) {
-                return $this->sendError('Attachment is required');
+                return $this->sendError('Attachment is required',200);
             } else if (($workingDays > $leaveMasters->maxDays) && ($leaveMasters->maxDays != 0) && ($leaveType == 1)) {
-                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days');
+                return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
-                return $this->sendError('You have already taken leave in this period');
+                return $this->sendError('You have already taken leave in this period',200);
             }
 
             $input['startDate'] = $startDate;
@@ -1036,11 +1041,11 @@ class LeaveDataMasterAPIController extends AppBaseController
         $endDate = Carbon::parse($input['endDate'])->format('Y-m-d');            //to date format
 
         if ($leaveMasterID == 15) {
-            $policy_validator = \Validato::make($input, [
+            $policy_validator = \Validator::make($input, [
                 'policytype' => 'required'
             ]);
             if ($policy_validator->fails()) {
-                return $this->sendError($policy_validator->messages(), 422);
+                return $this->sendError('Policy type is required', 200);
             }
         }
         if(!isset($input['policytype'])){
@@ -1120,7 +1125,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 })
                 ->count();
 
-            if (($restrictDays != -1) && $startDate < date('Y-m-d') && ($leaveMasterID == 1) && ($leaveType == 1)) {
+            if ($startDate < date('Y-m-d') && (!in_array($leaveMasterID, [2,3,4,15,16])) && ($leaveType == 1)) {
                 return $this->sendError('You cannot apply leave for past days',200);
             } else if (($restrictDays != -1) && ($dateDiff < $restrictDays) && ($leaveMasterID == 1) && (($workingDays > 2)) && ($leaveType == 1)) {
                 return $this->sendError('Please apply the leave before' . $restrictDays . ' days interval',200);

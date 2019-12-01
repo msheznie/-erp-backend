@@ -802,9 +802,10 @@ class ExpenseClaimAPIController extends AppBaseController
         if(!empty($expenseClaim->expense_claim_type)){
             $claimType = $expenseClaim->expense_claim_type;
         }
-        $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments']);
+        $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments','confirmedYN','addedForPayment','approved']);
         $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
         $output['claim']['claim_type'] = $claimType;
+        $output['claim']['currency'] = isset($expenseClaim->details[0]->currency) ? array_only($expenseClaim->details[0]->currency->toArray(),['currencyID','CurrencyName','CurrencyCode','DecimalPlaces']) : NULL;;
 
 
         /*set Detail Array*/
@@ -823,7 +824,7 @@ class ExpenseClaimAPIController extends AppBaseController
             ->select('expenseClaimDetailsID', 'expenseClaimMasterAutoID', 'serviceLineCode', 'serviceLineSystemID', 'expenseClaimCategoriesAutoID', 'description', 'docRef', 'currencyID', 'amount')
             ->where('expenseClaimMasterAutoID', $input['expenseClaimMasterAutoID'])
             ->get();
-
+        $output['claim']['totalAmount'] = (double)$expenseClaimDetails->sum('amount');
         $output['details'] = $expenseClaimDetails->toArray();
 
         /*set attachemnt Array*/

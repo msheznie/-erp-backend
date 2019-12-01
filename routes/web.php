@@ -71,3 +71,5 @@ Route::resource('hRMSPeriodMasters', 'HRMSPeriodMasterController');
 Route::resource('hRMSPersonalDocuments', 'HRMSPersonalDocumentsController');
 
 Route::resource('hRMSLeaveAccrualPolicyTypes', 'HRMSLeaveAccrualPolicyTypeController');
+
+Route::resource('employeeDepartmentDelegations', 'employeeDepartmentDelegationController');
