@@ -768,6 +768,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->update($updateApproveArray);
 
             // because different column names in tables
+
             if($documentSystemID==37){
                 $updateArray = [
                     'approvedYN'=>-1,
@@ -775,14 +776,14 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'approvedByUserSystemID'=>$user->employeeSystemID,
                     'approvedDate'=>date('Y-m-d H:i:s')
                 ];
-                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('CompanyID',$modelDetails->companyID)->update($updateArray);
+                LeaveDataMaster::where('leavedatamasterID',$documentSystemCode)->where('CompanyID',$modelDetails->CompanyID)->update($updateArray);
             }elseif($documentSystemID == 6){
                 $updateArray = [
                     'approved'=>-1,
                     'approvedByUserSystemID'=>$user->employeeSystemID,
                     'approvedDate'=>date('Y-m-d H:i:s')
                 ];
-                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
+                ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
             }
 
             $emails[] = array(

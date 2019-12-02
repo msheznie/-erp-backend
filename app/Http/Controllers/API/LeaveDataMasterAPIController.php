@@ -383,7 +383,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             ->leftJoin('hrms_category', 'hrms_leavedatamaster.location', '=', 'hrms_category.categoryID')
             ->leftJoin('hrms_leaveapplicationtype', 'hrms_leavedatamaster.EntryType', '=', 'hrms_leaveapplicationtype.LeaveApplicationTypeID')
             ->leftJoin('hrms_leavemaster', 'hrms_leavedatamaster.leaveType', '=', 'hrms_leavemaster.leavemasterID')
-            ->leftJoin('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
+            ->join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
             ->where('hrms_leavedatamaster.empID', $emp_id)
             ->orderBy('hrms_leavedatamaster.leavedatamasterID', 'DESC')
             ->get();
@@ -571,8 +571,13 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveDataMaster = LeaveDataMaster::with(['detail','application_type','approved','hrapproved'])->find($input['leavedatamasterID']);
             if (empty($leaveDataMaster)) {
+                return $this->sendError('Leave Data Not Found');
+            }
+
+            if(empty($leaveDataMaster->detail)){
                 return $this->sendError('Leave Details Not Found');
             }
+
             $leaveDataDetail = $leaveDataMaster->detail;
             $output = $leaveDataMaster->toArray();
 //            $output['approver'] = $leaveDataMaster->approved;
@@ -852,6 +857,12 @@ class LeaveDataMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
                 return $this->sendError('You have already taken leave in this period',200);
+            }
+
+            if(isset($input['totBalance']) && $input['totBalance']){
+                if(!in_array($leaveMasterID, [1,10]) && $input['totBalance']<0){
+                    return $this->sendError('You do not have leave balance to apply',200);
+                }
             }
 
             $input['startDate'] = $startDate;
@@ -1139,6 +1150,11 @@ class LeaveDataMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
                 return $this->sendError('You have already taken leave in this period',200);
+            }
+            if(isset($input['totBalance']) && $input['totBalance']){
+                if(!in_array($leaveMasterID, [1,10]) && $input['totBalance']<0){
+                    return $this->sendError('You do not have leave balance to apply',200);
+                }
             }
 
             $leaveDataDetail = $leaveDataMasters->detail;
@@ -1544,12 +1560,12 @@ class LeaveDataMasterAPIController extends AppBaseController
 
         $employee = Helper::getEmployeeInfo();
          $checkEmployee = Employee::where('employeeSystemID',$employee->employeeSystemID)
-                                ->with('details')
-                                ->first();
-        $checkEmployee->details->isLocal;
+                                ->with(['details'=> function($q) {
+                                    $q->with(['country']);
+                                }])->first();
         $religion = ($employee->religion==1)?-1:0;
         $gender = ((isset($checkEmployee->details->gender)) && ($checkEmployee->details->gender==2))?-1:0;
-        $isLocal = ((isset($checkEmployee->details->isLocal)) && ($checkEmployee->details->isLocal==1))?-1:0;
+        $isLocal = ((isset($checkEmployee->details->country->isLocal)) && ($checkEmployee->details->country->isLocal==1))?1:0;
 
         $policy = HRMSLeaveAccrualPolicyType::select('leaveaccrualpolicyTypeID','description')
             ->where(function ($q) use($isLocal,$religion,$gender){

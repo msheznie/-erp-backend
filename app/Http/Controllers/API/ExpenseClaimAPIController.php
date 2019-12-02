@@ -171,6 +171,41 @@ class ExpenseClaimAPIController extends AppBaseController
             if(empty($document)){
                return $this->sendError("Master Details Not Found",200);
             }
+
+            /**/
+            if(isset($input['confirmedYN']) && $input['confirmedYN']==1){
+                // check document approved table data
+                $is_approved_data = LeaveDocumentApproved::where('documentSystemCode',$document->expenseClaimMasterAutoID)
+                    ->where('companySystemID',$document->companySystemID)
+                    ->where('documentSystemID',6)
+                    ->first();
+
+                if(empty($is_approved_data)){
+
+                    $employee = Helper::getEmployeeInfo();
+
+                    $insert_array = [
+                        'companySystemID' =>$document->companySystemID,
+                        'companyID' => $document->companyID,
+                        'departmentID' => $document->departmentID,
+                        'serviceLineCode'=>'x',
+                        'documentSystemID'=>$document->documentSystemID,
+                        'documentID'=>$document->documentID,
+                        'documentSystemCode'=>$document->expenseClaimMasterAutoID,
+                        'documentCode'=>$document->expenseClaimCode,
+                        'rollLevelOrder'=>1,
+                        'Approver'=>$employee->empManagerAttached,
+                        'docConfirmedDate'=>date('Y-m-d'),
+                        'docConfirmedByEmpID'=>$employee->empID,
+                        'requesterID'=>$employee->empID,
+                        'approvedYN'=>0,
+                        'rejectedYN'=>0
+                    ];
+                    LeaveDocumentApproved::create($insert_array);
+                }
+
+            }
+
         } else {
             /** insert */
             $document = new ExpenseClaim();
@@ -192,6 +227,7 @@ class ExpenseClaimAPIController extends AppBaseController
             $Code = 'EX' . $tmpCode;
             $document->expenseClaimCode = $Code;
             $document->createdUserID = $emp->empID;
+            $document->createdUserSystemID = $emp->employeeSystemID;
             $document->createdPcID = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
             $document->documentID = 'EX';
             $documentMaster = DocumentMaster::where('documentID', $document->documentID)->first();
