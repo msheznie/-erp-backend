@@ -227,6 +227,7 @@ class ExpenseClaimAPIController extends AppBaseController
             $Code = 'EX' . $tmpCode;
             $document->expenseClaimCode = $Code;
             $document->createdUserID = $emp->empID;
+            $document->createdUserSystemID = $emp->employeeSystemID;
             $document->createdPcID = strtoupper(gethostbyaddr($_SERVER['REMOTE_ADDR']));
             $document->documentID = 'EX';
             $documentMaster = DocumentMaster::where('documentID', $document->documentID)->first();
