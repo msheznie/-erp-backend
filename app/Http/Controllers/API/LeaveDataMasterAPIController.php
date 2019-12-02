@@ -571,8 +571,13 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             $leaveDataMaster = LeaveDataMaster::with(['detail','application_type','approved','hrapproved'])->find($input['leavedatamasterID']);
             if (empty($leaveDataMaster)) {
+                return $this->sendError('Leave Data Not Found');
+            }
+
+            if(empty($leaveDataMaster->detail)){
                 return $this->sendError('Leave Details Not Found');
             }
+
             $leaveDataDetail = $leaveDataMaster->detail;
             $output = $leaveDataMaster->toArray();
 //            $output['approver'] = $leaveDataMaster->approved;
