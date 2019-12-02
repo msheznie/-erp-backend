@@ -1544,12 +1544,12 @@ class LeaveDataMasterAPIController extends AppBaseController
 
         $employee = Helper::getEmployeeInfo();
          $checkEmployee = Employee::where('employeeSystemID',$employee->employeeSystemID)
-                                ->with('details')
-                                ->first();
-        $checkEmployee->details->isLocal;
+                                ->with(['details'=> function($q) {
+                                    $q->with(['country']);
+                                }])->first();
         $religion = ($employee->religion==1)?-1:0;
         $gender = ((isset($checkEmployee->details->gender)) && ($checkEmployee->details->gender==2))?-1:0;
-        $isLocal = ((isset($checkEmployee->details->isLocal)) && ($checkEmployee->details->isLocal==1))?-1:0;
+        $isLocal = ((isset($checkEmployee->details->country->isLocal)) && ($checkEmployee->details->country->isLocal==1))?1:0;
 
         $policy = HRMSLeaveAccrualPolicyType::select('leaveaccrualpolicyTypeID','description')
             ->where(function ($q) use($isLocal,$religion,$gender){
