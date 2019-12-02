@@ -859,6 +859,12 @@ class LeaveDataMasterAPIController extends AppBaseController
                 return $this->sendError('You have already taken leave in this period',200);
             }
 
+            if(isset($input['totBalance']) && $input['totBalance']){
+                if(!in_array($leaveMasterID, [1,10]) && $input['totBalance']<0){
+                    return $this->sendError('You do not have leave balance to apply',200);
+                }
+            }
+
             $input['startDate'] = $startDate;
             $input['endDate'] = $endDate;
             $input['modifieduser'] = $empID;
@@ -1144,6 +1150,11 @@ class LeaveDataMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot apply leave more than ' . $leaveMasters->maxDays . ' days',200);
             } else if ($isAlreadyApplied && $leaveType == 1) {
                 return $this->sendError('You have already taken leave in this period',200);
+            }
+            if(isset($input['totBalance']) && $input['totBalance']){
+                if(!in_array($leaveMasterID, [1,10]) && $input['totBalance']<0){
+                    return $this->sendError('You do not have leave balance to apply',200);
+                }
             }
 
             $leaveDataDetail = $leaveDataMasters->detail;
