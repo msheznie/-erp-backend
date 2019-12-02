@@ -775,14 +775,14 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'approvedByUserSystemID'=>$user->employeeSystemID,
                     'approvedDate'=>date('Y-m-d H:i:s')
                 ];
-                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('CompanyID',$modelDetails->companyID)->update($updateArray);
+                LeaveDataMaster::where('leavedatamasterID',$documentSystemCode)->where('CompanyID',$modelDetails->companyID)->update($updateArray);
             }elseif($documentSystemID == 6){
                 $updateArray = [
                     'approved'=>-1,
                     'approvedByUserSystemID'=>$user->employeeSystemID,
                     'approvedDate'=>date('Y-m-d H:i:s')
                 ];
-                $namespacedModel::where($docInforArr["primarykey"],$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
+                ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->where('companySystemID',$modelDetails->companySystemID)->update($updateArray);
             }
 
             $emails[] = array(

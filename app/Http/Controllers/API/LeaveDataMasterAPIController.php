@@ -383,7 +383,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             ->leftJoin('hrms_category', 'hrms_leavedatamaster.location', '=', 'hrms_category.categoryID')
             ->leftJoin('hrms_leaveapplicationtype', 'hrms_leavedatamaster.EntryType', '=', 'hrms_leaveapplicationtype.LeaveApplicationTypeID')
             ->leftJoin('hrms_leavemaster', 'hrms_leavedatamaster.leaveType', '=', 'hrms_leavemaster.leavemasterID')
-            ->leftJoin('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
+            ->join('hrms_leavedatadetail', 'hrms_leavedatamaster.leavedatamasterID', '=', 'hrms_leavedatadetail.leavedatamasterID')
             ->where('hrms_leavedatamaster.empID', $emp_id)
             ->orderBy('hrms_leavedatamaster.leavedatamasterID', 'DESC')
             ->get();
