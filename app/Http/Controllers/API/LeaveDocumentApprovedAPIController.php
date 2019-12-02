@@ -776,7 +776,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'approvedByUserSystemID'=>$user->employeeSystemID,
                     'approvedDate'=>date('Y-m-d H:i:s')
                 ];
-                return LeaveDataMaster::where('leavedatamasterID',$documentSystemCode)->where('CompanyID',$modelDetails->CompanyID)->update($updateArray);
+                LeaveDataMaster::where('leavedatamasterID',$documentSystemCode)->where('CompanyID',$modelDetails->CompanyID)->update($updateArray);
             }elseif($documentSystemID == 6){
                 $updateArray = [
                     'approved'=>-1,
