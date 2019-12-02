@@ -340,7 +340,7 @@ class LeaveDataMasterAPIController extends AppBaseController
         }
 
         if($leaveDataMaster->confirmedYN == 1){
-            return $this->sendError('You can not delete confirmed leave',200);
+            return $this->sendError('You can not delete confirmed leave',500);
         }
 
         // check is claim data
