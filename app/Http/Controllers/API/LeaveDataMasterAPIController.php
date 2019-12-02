@@ -339,6 +339,10 @@ class LeaveDataMasterAPIController extends AppBaseController
             return $this->sendError('Leave Data Master not found',200);
         }
 
+        if($leaveDataMaster->confirmedYN == 1){
+            return $this->sendError('You can not delete confirmed leave',200);
+        }
+
         // check is claim data
         if ($leaveDataMaster->claimedLeavedatamasterID != null && $leaveDataMaster->EntryType == 2) {
             $date_time = date('Y-m-d H:i:s');
