@@ -4087,7 +4087,7 @@ class Helper
     public static function checkRestrictionByPolicy($companySystemID,$documentRestrictionPolicyID){
 
         $permission = false;
-        if (!$companySystemID && $$documentRestrictionPolicyID) {
+        if (!$companySystemID && $documentRestrictionPolicyID) {
             return $permission;
         }
         $id = Auth::id();

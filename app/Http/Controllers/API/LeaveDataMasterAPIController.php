@@ -416,7 +416,6 @@ class LeaveDataMasterAPIController extends AppBaseController
         } else {
             $available = $this->getLeaveAvailableForEmployee($empID, $leaveMasterID);
         }
-
         if ($fromDate != null && $toDate != null) {
 
             $workingDays = CalenderMaster::where('isWorkingDay', -1)->whereBetween('calDate', [$fromDate, $toDate])->get()->count();
@@ -1470,7 +1469,8 @@ class LeaveDataMasterAPIController extends AppBaseController
         $leaveAcc = $this->getLeaveAccured($employee->empID);
         $leaveApplied = $this->getLeaveApplied($employee->empID);
 
-        if(!empty($leaveAcc)){
+        if(count($leaveAcc)){
+
             foreach ($leaveAcc as $val){
 
                 if($val->leaveType == 16 || $val->leaveType == 2 || $val->leaveType == 3 || $val->leaveType == 4 || $val->leaveType == 21){
@@ -1552,6 +1552,74 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                 }
             }
+        }else{
+
+            if(!empty($leaveApplied)){
+
+                foreach ($leaveApplied as $value){
+
+                        if($value->leavemasterID == 16 || $value->leavemasterID == 2 || $value->leavemasterID == 3 || $value->leavemasterID == 4 || $value->leavemasterID == 21){
+                            $leaveBal = $this->getLeaveAppliedYearBalance($employee->empID,$value->leavemasterID,date('Y'));
+                            $leaveBalanceapplied = isset($leaveBal->calculatedDays)?$leaveBal->calculatedDays:0;
+                            $calculated = $calculated - $leaveBalanceapplied;
+                        }else{
+                            $calculated = $calculated - $value->calculatedDays;
+                        }
+
+                    if($value->leavemasterID == 2 || $value->leavemasterID == 3 || $value->leavemasterID == 4 || $value->leavemasterID == 21 ) {
+
+                        if($value->leavemasterID == 2){
+                            if($calculated == 0){
+                                $track = 1;
+                            }else{
+                                $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                                $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                                $leaveBalance [$i++]['balance'] = $calculated;
+                            }
+                        }
+
+                        if($value->leavemasterID == 3 && $track == 1){
+                            if($calculated == 0){
+                                $track = 2;
+                            }else{
+                                $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                                $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                                $leaveBalance [$i++]['balance'] = $calculated;
+                            }
+                        }
+
+                        if($value->leavemasterID == 4 && $track == 2){
+                            if($calculated == 0){
+                                $track = 3;
+                            }else{
+                                $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                                $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                                $leaveBalance [$i++]['balance'] = $calculated;
+                            }
+                        }
+
+                    }else if($value->leavemasterID == 13 || $value->leavemasterID == 20){
+
+                        if($calculated < 0){
+                            $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                            $leaveBalance [$i++]['balance'] = 0;
+                        }else{
+                            $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                            $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                            $leaveBalance [$i++]['balance'] = $calculated;
+                        }
+
+                    }else{
+                        $leaveBalance [$i]['leaveType'] = $value->leave_master->leavetype;
+                        $leaveBalance [$i]['leavemasterID'] = $value->leavemasterID;
+                        $leaveBalance [$i++]['balance'] = $calculated;
+
+                    }
+                }
+
+            }
+
         }
         return $leaveBalance;
     }
