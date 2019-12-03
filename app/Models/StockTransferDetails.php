@@ -235,4 +235,9 @@ class StockTransferDetails extends Model
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
     }
 
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
+    }
+
 }

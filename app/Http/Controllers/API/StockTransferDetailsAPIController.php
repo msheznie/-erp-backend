@@ -558,7 +558,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $items = StockTransferDetails::select(DB::raw('stockTransferDetailsID,"" as totalCost,unitCostRpt,unitOfMeasure,itemCodeSystem,itemPrimaryCode,itemDescription,qty, currentStockQty,warehouseStockQty'))
             ->where('stockTransferAutoID', $stockTransferAutoID)
             ->with(['unit_by' => function ($query) {
-            }])
+            },'item_by'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Stock Transfer details retrieved successfully');
