@@ -1101,16 +1101,17 @@ function getPaymentVoucherMaster(Request $request)
     $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
         ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail',
             'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
-            'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) use($input) {
+            'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query)  {
                 $query->with('segment');
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 4);
-            }, 'created_by', 'cancelled_by', 'bankledger_by' => function ($query) use($input){
+            }, 'created_by', 'cancelled_by', 'bankledgers' => function ($query) {
                 $query->where('documentSystemID', 4);
-                $query->where('bankAccountID', function ($query) use($input){
-                    $query->select('BPVAccount')->from('erp_paysupplierinvoicemaster')->where('PayMasterAutoId',$input['PayMasterAutoId']);
-                });
+                $query->with(['bankrec_by']);
+            },
+            'bankledger_by' => function ($query) {
+                $query->where('documentSystemID', 4);
                 $query->with(['bankrec_by', 'bank_transfer']);
             }])->first();
 
