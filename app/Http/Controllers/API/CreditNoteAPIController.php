@@ -23,6 +23,7 @@ use App\Models\CreditNoteDetails;
 use App\Models\CreditNoteDetailsRefferdback;
 use App\Models\CreditNoteReferredback;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DebitNote;
 use App\Models\DocumentReferedHistory;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
@@ -273,6 +274,8 @@ class CreditNoteAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'debitNote' =>function($query){
+            $query->select('debitNoteAutoID','debitNoteCode');
         }])->findWithoutFail($id);
 
         if (empty($creditNote)) {
@@ -599,6 +602,7 @@ class CreditNoteAPIController extends AppBaseController
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+
                 break;
             case 'getCurrency':
                 $customerID = $input['customerID'];
@@ -628,6 +632,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+
                 break;
             case 'editAmend' :
                 $id = $input['id'];
@@ -1338,5 +1343,20 @@ WHERE
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function getFilteredDebitNote(Request $request)
+    {
+        $input = $request->all();
+        $seachText = $input['seachText'];
+        $seachText = str_replace("\\", "\\\\", $seachText);
+        $debitNote = DebitNote::select('debitNoteAutoID', 'debitNoteCode')
+            ->where('approved', -1)
+            ->where('refferedBackYN', 0)
+            ->where('debitNoteAutoID', 'LIKE', "%{$seachText}%")
+            ->orderBy('debitNoteAutoID', 'desc')
+            ->take(30)
+            ->get()->toArray();
+        return $this->sendResponse($debitNote, 'Data retrieved successfully');
     }
 }

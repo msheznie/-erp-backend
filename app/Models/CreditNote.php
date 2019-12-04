@@ -292,6 +292,7 @@ class CreditNote extends Model
         'customerID',
         'customerGLCodeSystemID',
         'customerGLCode',
+        'debitNoteAutoID',
         'customerCurrencyID',
         'customerCurrencyER',
         'companyReportingCurrencyID',
@@ -355,6 +356,7 @@ class CreditNote extends Model
         'customerID' => 'integer',
         'customerGLCodeSystemID' => 'integer',
         'customerGLCode' => 'string',
+        'debitNoteAutoID' => 'integer',
         'customerCurrencyID' => 'integer',
         'customerCurrencyER' => 'float',
         'companyReportingCurrencyID' => 'integer',
@@ -466,5 +468,10 @@ class CreditNote extends Model
     public function setPostedDateAttribute($value)
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
+
+    public function debitNote()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'debitNoteAutoID', 'debitNoteAutoID');
     }
 }
