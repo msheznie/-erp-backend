@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
+use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
 use App\Models\ProcumentOrder;
 use App\Models\UnbilledGrvGroupBy;
@@ -397,7 +398,6 @@ class BookInvSuppDetAPIController extends AppBaseController
         $prDetail_arr = array();
         $validator = array();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
-
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
             return $this->sendError("No GRV selected to add.");
@@ -425,8 +425,50 @@ class BookInvSuppDetAPIController extends AppBaseController
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
+
+            }
+
+        }
+
+        /*
+        * GWL-713
+         * documentType == 0  -   invoice type - PO
+        *  check policy 11 - Allow multiple GRV in One Invoice
+        * if policy 11 is 1 allow to add multiple different PO's
+        * if policy 11 is 0 do not allow multiple different PO's
+         */
+        if($bookInvSuppMaster->documentType==0){
+            $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
+                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                ->first();
+
+            if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
+                $poId = 0;
+
+                $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
+                if(count($details)){
+
+                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();;
+
+                    if (count(array_unique($poIdArray)) > 1) {
+                        return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                    }
+                    $poId = $poIdArray[0];
+                }
+
+                $inputDetails = $input['detailTable'];
+                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();;
+                if (count(array_unique($inputPoIdArray)) > 1) {
+                    return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected details');
+                }
+                $inputPoId = $inputPoIdArray[0];
+
+                if($poId != 0 && $poId != $inputPoId){
+                    return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected and already saved details');
+                }
             }
         }
+
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {

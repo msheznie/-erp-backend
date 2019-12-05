@@ -564,6 +564,33 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            /*
+        * GWL-713
+         * documentType == 0  -   invoice type - PO
+        *  check policy 11 - Allow multiple GRV in One Invoice
+        * if policy 11 is 1 allow to add multiple different PO's
+        * if policy 11 is 0 do not allow multiple different PO's
+         */
+            if($input['documentType'] == 0){
+
+                $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
+                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                    ->first();
+
+                if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
+
+                    $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)->get();
+                    if(count($details)){
+
+                        $poIdArray = $details->pluck('purchaseOrderID')->toArray();
+                        if (count(array_unique($poIdArray)) > 1) {
+                            return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                        }
+                    }
+
+                }
+            }
+
             $checkItems = 0;
             if ($input['documentType'] == 1) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
