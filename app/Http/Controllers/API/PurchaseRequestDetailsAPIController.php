@@ -526,27 +526,38 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $validator = \Validator::make($input, [
             'companySystemID' => 'required',
-            'itemCode' => 'required'
+            'itemCode' => 'required',
+            'requestId' =>'required'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+
+        $pr = PurchaseRequest::where('purchaseRequestID',$input['requestId'])->first();
+        if(empty($pr)){
+            return $this->sendError('Purchase Request Detail Not Found',404);
+        }
+
         $companySystemID = $input['companySystemID'];
         $itemCode = $input['itemCode'];
-
-        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
+        $PRRequestedDate = $pr->PRRequestedDate;
+        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID,$PRRequestedDate) {
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
                 ->whereIn('goodsRecievedYN', [0,1])
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
+                ->where('approvedDate', '>=',$PRRequestedDate)
                 ->where('poCancelledYN', 0);
         })
             ->where('itemCode', $itemCode)
-            ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID){
+            ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID,$PRRequestedDate){
                 $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
-                    ->whereHas('grv_master',function ($query) use($companySystemID){
-                        $query->where('companySystemID', $companySystemID)->where('grvTypeID', 2);
+                    ->whereHas('grv_master',function ($query) use($companySystemID, $PRRequestedDate){
+                        $query->where('companySystemID', $companySystemID)
+                            ->where('grvTypeID', 2)
+                            ->where('approvedDate', '>=',$PRRequestedDate);
                     });
             }])
             ->with(['order.currency','unit','order.location'])->get();
