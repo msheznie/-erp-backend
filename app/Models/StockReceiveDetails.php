@@ -212,4 +212,9 @@ class StockReceiveDetails extends Model
     {
         return $this->belongsTo('App\Models\StockTransfer', 'stockTransferAutoID', 'stockTransferAutoID');
     }
+
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
+    }
 }

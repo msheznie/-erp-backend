@@ -387,7 +387,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
                                             'itemCodeSystem', 'itemPrimaryCode', 'itemDescription',
                                             'qty', 'stockTransferCode', 'comments')
                                             ->where('stockReceiveAutoID', $stockTransferAutoID)
-                                            ->with(['unit_by'])
+                                            ->with(['unit_by','item_by'])
                                             ->get();
 
         return $this->sendResponse($items->toArray(), 'Stock Receive details retrieved successfully');

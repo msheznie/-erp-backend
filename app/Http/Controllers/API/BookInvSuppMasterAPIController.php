@@ -41,6 +41,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerInvoice;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DirectInvoiceDetailsRefferedBack;
 use App\Models\DocumentApproved;
@@ -343,6 +344,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
+        },'direct_customer_invoice' => function($query) {
+            $query->select('custInvoiceDirectAutoID','bookingInvCode');
         }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
@@ -402,7 +405,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -559,6 +562,33 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
+            }
+
+            /*
+        * GWL-713
+         * documentType == 0  -   invoice type - PO
+        *  check policy 11 - Allow multiple GRV in One Invoice
+        * if policy 11 is 1 allow to add multiple different PO's
+        * if policy 11 is 0 do not allow multiple different PO's
+         */
+            if($input['documentType'] == 0){
+
+                $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
+                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                    ->first();
+
+                if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
+
+                    $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)->get();
+                    if(count($details)){
+
+                        $poIdArray = $details->pluck('purchaseOrderID')->toArray();
+                        if (count(array_unique($poIdArray)) > 1) {
+                            return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                        }
+                    }
+
+                }
             }
 
             $checkItems = 0;
@@ -1926,6 +1956,24 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         $bookInvSuppMaster->save();
 
         return $this->sendResponse($bookInvSuppMaster, 'Record updated successfully');
+    }
+
+    public function getFilteredDirectCustomerInvoice(Request $request)
+    {
+        $input = $request->all();
+        $seachText = $input['seachText'];
+        $seachText = str_replace("\\", "\\\\", $seachText);
+
+        $directCustomerInvoices = CustomerInvoice::select('custInvoiceDirectAutoID','bookingInvCode')
+                                        ->where('isPerforma',0)
+                                        ->where('approved',-1)
+                                        ->where('canceledYN',0)
+                                        ->where('bookingInvCode', 'LIKE', "%{$seachText}%")
+                                        ->orderBy('custInvoiceDirectAutoID', 'desc')
+                                        ->take(30)
+                                        ->get()->toArray();
+
+        return $this->sendResponse($directCustomerInvoices, 'Data retrieved successfully');
     }
 
 }
