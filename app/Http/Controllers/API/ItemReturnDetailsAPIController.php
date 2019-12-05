@@ -552,7 +552,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         }
 
         $items = ItemReturnDetails::where('itemReturnAutoID', $rId)
-            ->with(['uom_issued', 'uom_receiving', 'issue'])
+            ->with(['uom_issued', 'uom_receiving', 'issue','item_by'])
             ->get();
 
         foreach ($items as $item) {

@@ -281,4 +281,9 @@ class ItemReturnDetails extends Model
         return $this->belongsTo('App\Models\ItemIssueMaster','issueCodeSystem','itemIssueAutoID');
     }
 
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
+    }
+
 }

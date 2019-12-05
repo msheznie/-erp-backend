@@ -263,7 +263,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'inOutQty' => 'noQty',
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'GRVcostPerUnitLocalCur',
-                            'wacRptCurrencyID' => 'reportingCurrencyID',
+                            'wacRptCurrencyID' => 'companyReportingCurrencyID',
                             'wacRpt' => 'GRVcostPerUnitComRptCur');
                         break;
                     case 7: //Stock Adjustment

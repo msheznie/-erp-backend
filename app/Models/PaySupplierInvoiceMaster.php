@@ -870,4 +870,9 @@ class PaySupplierInvoiceMaster extends Model
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
+
+    public function bankledgers()
+    {
+        return $this->hasMany('App\Models\BankLedger', 'documentSystemCode', 'PayMasterAutoId');
+    }
 }

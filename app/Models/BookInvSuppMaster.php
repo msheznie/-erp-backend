@@ -299,6 +299,7 @@ class BookInvSuppMaster extends Model
         'UnbilledGRVAccount',
         'supplierInvoiceNo',
         'supplierInvoiceDate',
+        'custInvoiceDirectAutoID',
         'supplierTransactionCurrencyID',
         'supplierTransactionCurrencyER',
         'companyReportingCurrencyID',
@@ -494,6 +495,10 @@ class BookInvSuppMaster extends Model
     public function paysuppdetail()
     {
         return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'bookingInvSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
+    public function direct_customer_invoice(){
+        return $this->belongsTo('App\Models\CustomerInvoice','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
     }
 
     public function setBookingDateAttribute($value)
