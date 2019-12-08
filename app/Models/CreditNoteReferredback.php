@@ -362,7 +362,8 @@ class CreditNoteReferredback extends Model
         'modifiedPc',
         'createdDateTime',
         'createdDateAndTime',
-        'timestamp'
+        'timestamp',
+        'debitNoteAutoID'
     ];
 
     /**
@@ -420,7 +421,8 @@ class CreditNoteReferredback extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string'
+        'createdDateTime' => 'string',
+        'debitNoteAutoID' => 'integer',
     ];
 
     /**
@@ -483,5 +485,8 @@ class CreditNoteReferredback extends Model
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
-
+    public function debitNote()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'debitNoteAutoID', 'debitNoteAutoID');
+    }
 }
