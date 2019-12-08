@@ -227,7 +227,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveDetailsAPIRequest $request)
     {
 
-        $input = array_except($request->all(), ['unit_by']);
+        $input = array_except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
