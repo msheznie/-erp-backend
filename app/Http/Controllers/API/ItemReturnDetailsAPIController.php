@@ -394,7 +394,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateItemReturnDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue']);
+        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
 

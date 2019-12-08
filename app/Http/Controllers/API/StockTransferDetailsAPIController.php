@@ -417,7 +417,7 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $input = array_except($request->all(), 'unit_by');
+        $input = array_except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
 
