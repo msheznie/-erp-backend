@@ -400,7 +400,8 @@ class BookInvSuppMaster extends Model
         'canceledByEmpName' => 'string',
         'UnbilledGRVAccount' => 'string',
         'supplierGLCodeSystemID' => 'integer',
-        'UnbilledGRVAccountSystemID' => 'integer'
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'custInvoiceDirectAutoID' => 'integer'
     ];
 
     /**

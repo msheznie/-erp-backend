@@ -336,6 +336,7 @@ class BookInvSuppMasterRefferedBack extends Model
         'UnbilledGRVAccount',
         'supplierInvoiceNo',
         'supplierInvoiceDate',
+        'custInvoiceDirectAutoID',
         'supplierTransactionCurrencyID',
         'supplierTransactionCurrencyER',
         'companyReportingCurrencyID',
@@ -435,7 +436,8 @@ class BookInvSuppMasterRefferedBack extends Model
         'cancelComment' => 'string',
         'canceledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
-        'canceledByEmpName' => 'string'
+        'canceledByEmpName' => 'string',
+        'custInvoiceDirectAutoID' => 'integer'
     ];
 
     /**
@@ -530,6 +532,10 @@ class BookInvSuppMasterRefferedBack extends Model
     public function paysuppdetail()
     {
         return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'bookingInvSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
+    public function direct_customer_invoice(){
+        return $this->belongsTo('App\Models\CustomerInvoice','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
     }
 
     
