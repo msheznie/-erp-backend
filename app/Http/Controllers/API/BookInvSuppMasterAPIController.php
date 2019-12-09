@@ -186,6 +186,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
         }
 
+        if(isset($input['custInvoiceDirectAutoID'])){
+            $alreadyUsed = BookInvSuppMaster::where('custInvoiceDirectAutoID', $input['custInvoiceDirectAutoID'])->first();
+            if ($alreadyUsed) {
+                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+            }
+        }
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
@@ -426,6 +432,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($alreadyAdded) {
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
+        }
+
+        if(isset($input['custInvoiceDirectAutoID'])){
+            $alreadyUsed = BookInvSuppMaster::where('custInvoiceDirectAutoID', $input['custInvoiceDirectAutoID'])
+                ->where('bookingSuppMasInvAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyUsed) {
+                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+            }
         }
 
         $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')

@@ -152,6 +152,15 @@ class CreditNoteAPIController extends AppBaseController
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         /**/
 
+        if(isset($input['debitNoteAutoID'])){
+            $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
+                ->first();
+
+            if ($alreadyUsed) {
+                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+            }
+        }
+
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($input['creditNoteDate'] > $curentDate) {
             return $this->sendError('Document date cannot be greater than current date', 500);
@@ -343,6 +352,16 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
         if (empty($creditNote)) {
             return $this->sendError('Credit note not found', 500);
+        }
+
+        if(isset($input['debitNoteAutoID'])){
+            $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
+                ->where('creditNoteAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyUsed) {
+                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+            }
         }
 
         $detail = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
