@@ -14,6 +14,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
@@ -377,12 +378,14 @@ class FixedAssetMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $messages = [
-                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
+                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
                 'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'documentDate' => 'required|date|before_or_equal:dateDEP',
                 'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
             ], $messages);
 
@@ -444,6 +447,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             if (isset($input['lastVerifiedDate'])) {
                 if ($input['lastVerifiedDate']) {
                     $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
+                }
+            }
+
+            if (isset($input['documentDate'])) {
+                if ($input['documentDate']) {
+                    $input['documentDate'] = new Carbon($input['documentDate']);
                 }
             }
 
@@ -604,11 +613,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+                'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
                 'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'documentDate' => 'required|date|before_or_equal:dateDEP',
                 'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
             ], $messages);
 
@@ -657,13 +668,26 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            if (isset($input['documentDate'])) {
+                if ($input['documentDate']) {
+                    $input['documentDate'] = new Carbon($input['documentDate']);
+                }
+            }
+
             if (isset($input['lastVerifiedDate'])) {
                 if ($input['lastVerifiedDate']) {
                     $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
                 }
             }
 
+            if (isset($input['documentDate'])) {
+                if ($input['documentDate']) {
+                    $input['documentDate'] = new Carbon($input['documentDate']);
+                }
+            }
+
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {

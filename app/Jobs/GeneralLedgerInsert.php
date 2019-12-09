@@ -1920,7 +1920,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentID'] = $masterData->documentID;
                                 $data['documentSystemCode'] = $masterModel["autoID"];
                                 $data['documentCode'] = $masterData->faCode;
-                                $data['documentDate'] = date('Y-m-d H:i:s');
+                                $data['documentDate'] = ($masterData->documentDate)?$masterData->documentDate:date('Y-m-d H:i:s');
                                 $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
                                 $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
                                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
