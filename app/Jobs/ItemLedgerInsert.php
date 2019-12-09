@@ -253,7 +253,8 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentSystemID' => 'documentSystemID',
                             'documentID' => 'documentID',
                             'wareHouseSystemCode' => 'purchaseReturnLocation',
-                            'documentCode' => 'purchaseReturnCode');
+                            'documentCode' => 'purchaseReturnCode',
+                            'referenceNumber' => 'purchaseReturnRefNo');
 
                         $detailColumnArray = array(
                             'itemSystemCode' => 'itemCode',
@@ -264,7 +265,8 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'GRVcostPerUnitLocalCur',
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
-                            'wacRpt' => 'GRVcostPerUnitComRptCur');
+                            'wacRpt' => 'GRVcostPerUnitComRptCur',
+                            'comments' => 'comment');
                         break;
                     case 7: //Stock Adjustment
                         $docInforArr["approvedColumnName"] = 'approved';
