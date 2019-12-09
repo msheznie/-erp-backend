@@ -454,6 +454,7 @@ class FixedAssetMaster extends Model
         'docOriginSystemCode',
         'docOrigin',
         'docOriginDetailID',
+        'documentDate',
         'companySystemID',
         'companyID',
         'documentSystemID',
