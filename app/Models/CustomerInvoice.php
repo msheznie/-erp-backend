@@ -564,4 +564,9 @@ class CustomerInvoice extends Model
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
 }
