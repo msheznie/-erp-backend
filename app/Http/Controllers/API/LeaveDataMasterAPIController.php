@@ -1492,9 +1492,11 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                             if($value->leavemasterID == 16 || $value->leavemasterID == 2 || $value->leavemasterID == 3 || $value->leavemasterID == 4 || $value->leavemasterID == 21){
 
-                                $leaveBal = $this->getLeaveAppliedYearBalance($employee->empID,$val->leaveType,date('Y'));
-                                $leaveBalanceapplied = isset($leaveBal->calculatedDays)?$leaveBal->calculatedDays:0;
-                                $calculated = $calculated - $leaveBalanceapplied;
+                                if(isset($value->CYear) &&$value->CYear == date('Y')){
+                                    $leaveBal = $this->getLeaveAppliedYearBalance($employee->empID,$val->leaveType,date('Y'));
+                                    $leaveBalanceapplied = isset($leaveBal->calculatedDays)?$leaveBal->calculatedDays:0;
+                                    $calculated = $calculated - $leaveBalanceapplied;
+                                }
                             }else{
                                 $calculated = $calculated - $value->calculatedDays;
                             }
@@ -1625,6 +1627,31 @@ class LeaveDataMasterAPIController extends AppBaseController
             }
 
         }
+
+//         check for nopay
+        if(!empty($leaveApplied)){
+            $typeName ='';
+            $masterID = 0;
+            $calculated = 0;
+
+            foreach ($leaveApplied as $value) {
+                if ($value->leavemasterID == 10 ) {
+                    $leaveBalanceapplied = isset($value->calculatedDays) ? $value->calculatedDays : 0;
+                    $calculated = $calculated - $leaveBalanceapplied;
+                    $typeName = $value->leave_master->leavetype;
+                    $masterID= $value->leavemasterID;
+                    $calculated = $calculated;
+                }
+            }
+
+            if($masterID>0){
+                $leaveBalance [$i]['leaveType'] = $typeName;
+                $leaveBalance [$i]['leavemasterID'] = $masterID;
+                $leaveBalance [$i++]['balance'] = $calculated;
+            }
+        }
+        //end of nopay
+
         return $leaveBalance;
     }
 
