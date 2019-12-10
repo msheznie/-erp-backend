@@ -1372,7 +1372,7 @@ WHERE
         $debitNote = DebitNote::select('debitNoteAutoID', 'debitNoteCode')
             ->where('approved', -1)
             ->where('refferedBackYN', 0)
-            ->where('debitNoteAutoID', 'LIKE', "%{$seachText}%")
+            ->where('debitNoteCode', 'LIKE', "%{$seachText}%")
             ->orderBy('debitNoteAutoID', 'desc')
             ->take(30)
             ->get()->toArray();
