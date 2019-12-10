@@ -1373,6 +1373,9 @@ WHERE
             ->where('approved', -1)
             ->where('refferedBackYN', 0)
             ->where('debitNoteCode', 'LIKE', "%{$seachText}%")
+            ->whereHas('company', function ($query) {
+                $query->where('masterCompanySystemIDReorting','<>',35);
+            })
             ->orderBy('debitNoteAutoID', 'desc')
             ->take(30)
             ->get()->toArray();

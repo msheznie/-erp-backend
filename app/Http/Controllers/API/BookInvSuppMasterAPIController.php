@@ -1984,6 +1984,9 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                                         ->where('isPerforma',0)
                                         ->where('approved',-1)
                                         ->where('canceledYN',0)
+                                        ->whereHas('company', function ($query) {
+                                            $query->where('masterCompanySystemIDReorting','<>',35);
+                                        })
                                         ->where('bookingInvCode', 'LIKE', "%{$seachText}%")
                                         ->orderBy('custInvoiceDirectAutoID', 'desc')
                                         ->take(30)
