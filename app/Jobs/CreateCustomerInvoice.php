@@ -133,8 +133,8 @@ class CreateCustomerInvoice implements ShouldQueue
             $customerInvoiceData['custTransactionCurrencyER'] = 1;
 
             $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
-            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT * ('.$dpMaster->revenuePercentage.'/100),netBookValueLocal + (netBookValueLocal * ('.$dpMaster->revenuePercentage.'/100)))) as localAmountDetail, 
-            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * ('.$dpMaster->revenuePercentage.'/100),netBookValueRpt + (netBookValueRpt * ('.$dpMaster->revenuePercentage.'/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
+            SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
+            SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
 
             $localAmount = 0;
             $comRptAmount = 0;
