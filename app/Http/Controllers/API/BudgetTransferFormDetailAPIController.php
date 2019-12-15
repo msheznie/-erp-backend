@@ -238,7 +238,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                        erp_budjetdetails.*
                                        ,ifnull(ca.consumed_amount,0) as consumed_amount
                                        ,ifnull(ppo.rptAmt,0) as pending_po_amount,
-                                       (SUM(budjetAmtRpt) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance
+                                       ((SUM(budjetAmtRpt)*-1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance
                                        "))
             ->where('erp_budjetdetails.companySystemID', $budgetTransferMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
