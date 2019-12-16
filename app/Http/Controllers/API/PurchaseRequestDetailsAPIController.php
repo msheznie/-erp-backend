@@ -548,7 +548,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 ->where('approved', -1)
                 ->whereIn('goodsRecievedYN', [0,1])
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
-                ->where('approvedDate', '>=',$PRRequestedDate)
+                ->where('approvedDate', '<=',$PRRequestedDate)
                 ->where('poCancelledYN', 0);
         })
             ->where('itemCode', $itemCode)
@@ -557,7 +557,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     ->whereHas('grv_master',function ($query) use($companySystemID, $PRRequestedDate){
                         $query->where('companySystemID', $companySystemID)
                             ->where('grvTypeID', 2)
-                            ->where('approvedDate', '>=',$PRRequestedDate);
+                            ->where('approvedDate', '<=',$PRRequestedDate);
                     });
             }])
             ->with(['order.currency','unit','order.location'])->get();
