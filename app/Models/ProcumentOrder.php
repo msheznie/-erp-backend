@@ -599,9 +599,8 @@ class ProcumentOrder extends Model
     public function getIsWoAmendAccessAttribute()
     {
         $value = false;
-        $empId = Helper::getEmployeeSystemID();
-        if($this->documentSystemID == 5 && $this->poType_N == 6 && $this->WO_confirmedYN == 0 &&
-            $this->WO_amendYN == -1 && $this->WO_amendRequestedByEmpSystemID == $empId){
+//        $empId = Helper::getEmployeeSystemID();// && $this->WO_amendRequestedByEmpSystemID == $empId
+        if($this->documentSystemID == 5 && $this->poType_N == 6 && $this->WO_confirmedYN == 0 && $this->WO_amendYN == -1 ){
             $value = true;
         }
         return $value;
