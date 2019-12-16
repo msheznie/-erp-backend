@@ -166,9 +166,13 @@
         .page-break {
             page-break-after: always;
         }
+        div.card-body{
+            margin-top: -50px;
+        }
     </style>
 </head>
 <body onload="window.print();window.close()">
+
 <div class="footer">
     {{--Footer Page <span class="pagenum"></span>--}}
     {{-- <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}
