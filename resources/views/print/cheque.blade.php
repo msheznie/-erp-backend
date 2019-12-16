@@ -4,7 +4,7 @@
     <style>
 
         body {
-            font-size: 13.5px;
+
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
@@ -20,7 +20,7 @@
         table.header-part,
         .header-part th,
         .header-part td {
-            font-size: 13.5px !important;
+
         }
 
 
@@ -40,7 +40,7 @@
             position: absolute;
             top: 7.5cm;
             left: 1.85cm;
-            font-size: 12px !important;
+
         }
 
         #total_amount_div {
@@ -76,28 +76,25 @@
 
         #cheque_amount_word_para {
             line-height: 1cm;
-            font-size: 15px !important;
+
         }
 
         .paper_size {
             width: 24.1cm
         }
 
-        .footer{
-            font-size: 14px !important;
-        }
         .text-right {
             text-align: right;
         }
 
-    </style>
+      </style>
 </head>
 <body onload="window.print();window.close()" >
 <div class="content">
-    <div class="header-part" id="bpv_code_div">
+    <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
             {{$entity->BPVcode}}
     </div>
-    <div class="header-part" id="top_date_div">
+    <div style="font-size: 16px !important;" class="header-part" id="top_date_div">
             {{ \App\helper\Helper::dateFormat($date)}}
     </div>
 
@@ -162,8 +159,8 @@
         <table class="header-part paper_size" >
             <tr >
                 <td style="width: 18.5cm"></td>
-                <td valign="top" class="text-right" style="width: 2.4cm" >
-                    <b>{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
+                <td  valign="top" class="text-right" style="width: 2.4cm" >
+                    <b style="font-size: 16px !important;">{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
                 </td>
                 <td style="width: 1.5cm"></td>
             </tr>
@@ -172,16 +169,16 @@
 </div>
 
 <div class="footer" >
-    <div id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
-    <div id="cheque_payee" >{{$entity->directPaymentPayee}}</div>
+    <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
+    <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->directPaymentPayee}}</div>
 
     <table id="word_amount_table" class="header-part" >
         <tr >
             <td valign="top" >
-                <p id="cheque_amount_word_para">  {{$entity->amount_word}} and {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif </p>
+                <p style="font-size: 16px !important;" id="cheque_amount_word_para">  {{$entity->amount_word}} and {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif only</p>
             </td>
         </tr>
-        <div id="cheque_amount_no" >{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</div>
+        <div style="font-size: 16px !important;" id="cheque_amount_no" >{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</div>
     </table>
 </div>
 </body>
