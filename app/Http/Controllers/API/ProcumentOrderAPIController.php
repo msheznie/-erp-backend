@@ -216,7 +216,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }

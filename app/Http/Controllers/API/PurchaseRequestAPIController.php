@@ -1202,10 +1202,11 @@ class PurchaseRequestAPIController extends AppBaseController
             ->orderBy('purchaseRequestID', 'desc')
             ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
+
 
         $input['serialNumber'] = $lastSerialNumber;
 
