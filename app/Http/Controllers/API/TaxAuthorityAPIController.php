@@ -70,7 +70,7 @@ class TaxAuthorityAPIController extends AppBaseController
 
         $lastSerial = TaxAuthority::max('serialNo');
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = $lastSerial + 1;
         }

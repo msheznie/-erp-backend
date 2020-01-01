@@ -290,6 +290,7 @@
                 <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
+                <th class="text-left">Part No</th>
                 <th class="text-left">UOM</th>
                 <th class="text-left">UOM Iss</th>
                 <th class="text-left">Comments</th>
@@ -301,6 +302,11 @@
                     <td>{{$loop->iteration}}</td>
                     <td>{{$item->itemPrimaryCode}}</td>
                     <td>{{$item->itemDescription}}</td>
+                    <td class="text-left">
+                        @if($item->item_by)
+                            {{$item->item_by->secondaryItemCode}}
+                        @endif
+                    </td>
                     <td>
                         @if($item->unit_by)
                             {{$item->unit_by->UnitShortCode}}

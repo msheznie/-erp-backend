@@ -331,6 +331,7 @@
                 <th>#</th>
                 <th>Item Code</th>
                 <th>Item Description</th>
+                <th>Part No</th>
                 <th>Qty</th>
                 <th>Unit Cost</th>
                 <th>Discount</th>
@@ -348,6 +349,7 @@
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td>{{$det->itemDescription}}</td>
+                    <td>{{$det->supplierPartNumber}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $grvData->currency_by->DecimalPlaces)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $grvData->currency_by->DecimalPlaces)}}</td>
@@ -358,7 +360,7 @@
             </tbody>
             <tfoot>
             <tr>
-                <td colspan="5" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span class="font-weight-bold">Total</span></td>
+                <td colspan="6" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span class="font-weight-bold">Total</span></td>
                 <td class="text-right"><span *ngIf="grvData.details" class="font-weight-bold">{{ number_format($discountAmount, $grvData->currency_by->DecimalPlaces) }}</span>
                 <td class="text-right"><span *ngIf="grvData.details" class="font-weight-bold">{{number_format($netAmount, $grvData->currency_by->DecimalPlaces) }}</span>
                 </td>
