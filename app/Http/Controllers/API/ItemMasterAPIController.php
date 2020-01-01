@@ -437,8 +437,25 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategory = FinanceItemCategoryMaster::all();
 
         /** all FinanceItemCategorySub Drop Down */
-        $itemCategorySub = FinanceItemCategorySub::all();
+        $itemCategorySub = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl'])->get();
+        $itemCategorySubArray = [];
+        $i=0;
+        foreach ($itemCategorySub as $value){
+            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
+            }else if($value->financeGLcodebBSSystemID && $value->finance_gl_code_bs != null){
 
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_bs->AccountCode)?$value->finance_gl_code_bs->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_bs->AccountDescription)?$value->finance_gl_code_bs->AccountDescription:'';
+
+            }else{
+                $itemCategorySubArray[$i]['AccountCode'] = '';
+                $itemCategorySubArray[$i]['AccountDescription'] = '';
+            }
+            $i++;
+        }
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -456,7 +473,7 @@ class ItemMasterAPIController extends AppBaseController
         $output = array('companiesByGroup' => $companiesByGroup,
             'allCompanies' => $allCompanies,
             'financeItemCategoryMaster' => $itemCategory,
-            'financeItemCategorySub' => $itemCategorySub,
+            'financeItemCategorySub' => $itemCategorySubArray,
             'yesNoSelection' => $yesNoSelection,
             'units' => $units,
             'wareHouseBinLocations' => $wareHouseBinLocations
