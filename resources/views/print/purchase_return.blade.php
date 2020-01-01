@@ -277,6 +277,7 @@
                 <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
+                <th class="text-left">Part No</th>
                 <th class="text-left">UOM</th>
                 <th class="text-left">QTY</th>
                 <th class="text-left">Comments</th>
@@ -288,6 +289,7 @@
                     <td>{{$loop->iteration}}</td>
                     <td>{{$item->itemPrimaryCode}}</td>
                     <td>{{$item->itemDescription}}</td>
+                    <td>{{$item->supplierPartNumber}}</td>
                     <td>
                         @if($item->unit)
                             {{$item->unit->UnitShortCode}}

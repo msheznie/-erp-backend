@@ -73,6 +73,39 @@ class InventoryReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'INVIM':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'IMI') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required|date',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'warehouse' => 'required',
+                        'segment' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }else if($reportTypeID == 'IMHV'){
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required|date',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'warehouse' => 'required',
+                        'segment' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }else if($reportTypeID == 'IMSM'){
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required|date',
+                        'warehouse' => 'required',
+                        'segment' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }

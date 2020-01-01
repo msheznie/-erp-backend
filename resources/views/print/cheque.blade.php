@@ -5,7 +5,7 @@
 
         body {
 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            /*font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";*/
         }
 
         .table thead th {
@@ -63,7 +63,7 @@
 
         #cheque_payee {
             position: absolute;
-            top: 27.8cm;
+            top: 27.3cm;
             left: 4.5cm;
         }
 
@@ -159,8 +159,8 @@
         <table class="header-part paper_size" >
             <tr >
                 <td style="width: 18.5cm"></td>
-                <td  valign="top" class="text-right" style="width: 2.4cm" >
-                    <b style="font-size: 16px !important;">{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
+                <td  valign="top" class="text-right" style="width: 2.4cm; font-size: 16px !important;" >
+                    {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}
                 </td>
                 <td style="width: 1.5cm"></td>
             </tr>
@@ -170,7 +170,7 @@
 
 <div class="footer" >
     <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
-    <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->directPaymentPayee}}</div>
+    <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->nameOnCheque}}</div>
 
     <table id="word_amount_table" class="header-part" >
         <tr >
