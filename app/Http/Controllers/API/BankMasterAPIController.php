@@ -183,8 +183,10 @@ class BankMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $bankMasters =   $bankMasters->where('bankShortCode','LIKE',"%{$search}%")
-                                         ->orWhere('bankName', 'LIKE', "%{$search}%");
+            $bankMasters =   $bankMasters->where(function ($q) use($search){
+               $q->where('bankShortCode','LIKE',"%{$search}%")
+                   ->orWhere('bankName', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($bankMasters)

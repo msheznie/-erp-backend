@@ -76,16 +76,41 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                                                     ->where('isActive',1)
                                                     ->whereIn('companySystemID',$companyID)
                                                     ->where('isAssigned',-1)
+                                                    ->with(['finance_gl_code_bs','finance_gl_code_pl'])
                                                     ->groupBy('itemCategorySubID')
                                                     ->get();
             }else{
-                $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))->get();
+                $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
+                    ->with(['finance_gl_code_bs','finance_gl_code_pl'])
+                    ->get();
             }
+
+            $itemCategorySubArray = [];
+            $i=0;
+            foreach ($subCategories as $value){
+                $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+                if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
+                    $accountCode = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
+                    $accountDescription = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
+
+                }else if($value->financeGLcodebBSSystemID && $value->finance_gl_code_bs != null){
+
+                    $accountCode = isset($value->finance_gl_code_bs->AccountCode)?$value->finance_gl_code_bs->AccountCode:'';
+                    $accountDescription = isset($value->finance_gl_code_bs->AccountDescription)?$value->finance_gl_code_bs->AccountDescription:'';
+
+                }else{
+                    $accountCode = '';
+                    $accountDescription = '';
+                }
+                $itemCategorySubArray[$i]['labelkey'] = $value->categoryDescription." - ".$accountCode."  ".$accountDescription;
+                $i++;
+            }
+
         }else{
-            $subCategories = [];
+            $itemCategorySubArray = [];
         }
 
-        return $this->sendResponse($subCategories->toArray(), 'Finance Item Category Subs retrieved successfully');
+        return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
     }
 
     /**

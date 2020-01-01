@@ -208,7 +208,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-
+            $search = str_replace("\\", "\\\\", $search);
             $segmentMasters =   $segmentMasters->where(function ($query) use($search) {
                 $query->where('ServiceLineCode','LIKE',"%{$search}%")
                     ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
