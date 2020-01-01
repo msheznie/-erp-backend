@@ -354,7 +354,11 @@ class CustomerMasterAPIController extends AppBaseController
             $input['documentID'] = $document->documentID;
 
             $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
-            $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+            $lastSerialOrder = 1;
+            if(!empty($lastCustomer)){
+                $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+            }
+
             $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
 
             $input['lastSerialOrder'] = $lastSerialOrder;
