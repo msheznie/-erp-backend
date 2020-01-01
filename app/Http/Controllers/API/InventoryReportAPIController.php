@@ -259,6 +259,21 @@ class InventoryReportAPIController extends AppBaseController
                     return $this->sendResponse($output, 'Items retrieved successfully');
                 }
                 break;
+            case 'INVIM':
+                $reportTypeID = '';
+                $output = array();
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'IMI') {
+                    $output = $this->itemMovementBasedOnIssues($request);
+                }else if($reportTypeID == 'IMHV'){
+
+                }else if($reportTypeID == 'IMSM'){
+
+                }
+                return $this->sendResponse($output, 'Items retrieved successfully');
+                break;
             default:
                 return $this->sendError('No report ID found');
 
@@ -1228,6 +1243,198 @@ FROM
         }
 
         return $items;
-        return $this->sendResponse($items, 'successfully retrieve data');
+    }
+
+    public function itemMovementBasedOnIssues(Request $request){
+        $input = $request->all();
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $warehouse = [];
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+        $segment = [];
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+        }
+
+        $sql = "SELECT
+                finalquery.companyID,
+                finalquery.companySystemID,
+                finalquery.itemSystemCode,
+                finalquery.itemPrimaryCode,
+                itemmaster.itemDescription,
+	            itemmaster.secondaryItemCode,
+	            units.UnitShortCode,
+                finalquery.category,
+                getTotalQtyandCost.totalQty,
+                getTotalQtyandCost.wacValueRpt,
+                getTotalQtyandCost.wacValueLocal,
+                if(getIssuedQtyandCost.TotalUnitsIssue is null,0,getIssuedQtyandCost.TotalUnitsIssue) AS TotalUnitsIssue,
+                if(getIssuedQtyandCost.TotalCostIssue_Rpt is null,0,getIssuedQtyandCost.TotalCostIssue_Rpt) AS TotalCostIssue_Rpt,
+                if(getIssuedQtyandCost.CostPerUnitIssue_Rpt is null,0,getIssuedQtyandCost.CostPerUnitIssue_Rpt) AS CostPerUnitIssue_Rpt,
+                if(getIssuedQtyandCost.TotalCostIssue_local is null,0,getIssuedQtyandCost.TotalCostIssue_local) AS TotalCostIssue_local,
+                if(getIssuedQtyandCost.CostPerUnitIssue_Local is null,0,getIssuedQtyandCost.CostPerUnitIssue_Local) AS CostPerUnitIssue_Local
+                FROM
+                (
+                SELECT
+                    stockMainQuery.companyID,
+                    stockMainQuery.companySystemID,
+                    stockMainQuery.itemSystemCode,
+                    stockMainQuery.itemPrimaryCode,
+                    movementIssue.MIMaxDate,
+                    movementIssue.TotalMonth,
+                    movementGRV.GRVMaxDate,
+                    movementGRV.TotalGRVMonth,
+                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 0 And 4),\"Fast Moving\",If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 5 And 8),\"Slow Moving\",If(TotalMonth Between 0 And 4,\"Fast Moving\",If(TotalMonth Between 5 And 8,\"Slow Moving\",If(TotalMonth>8,\"Non Moving\",\"Non Moving\"))))) as category
+                FROM
+                    (
+                    SELECT
+                        erp_itemledger.companySystemID,
+                        erp_itemledger.companyID,
+                    IF
+                        ( erp_stockreceive.interCompanyTransferYN =- 1, 3, erp_itemledger.documentSystemID ) AS documentSystemID,
+                    IF
+                        ( erp_stockreceive.interCompanyTransferYN =- 1, \"GRV\", erp_itemledger.documentID ) AS documentID,
+                        erp_itemledger.documentSystemCode,
+                        erp_itemledger.documentCode,
+                        erp_itemledger.transactionDate,
+                        erp_itemledger.wareHouseSystemCode,
+                        erp_itemledger.itemSystemCode,
+                        erp_itemledger.itemPrimaryCode,
+                        erp_itemledger.unitOfMeasure,
+                        erp_itemledger.inOutQty,
+                        erp_itemledger.wacRptCurrencyID,
+                        erp_itemledger.wacRpt,
+                        round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) AS wacValue,
+                        DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ) AS documentDate,
+                        erp_itemledger.fromDamagedTransactionYN 
+                    FROM
+                        erp_itemledger
+                        LEFT JOIN erp_stockreceive ON erp_itemledger.companySystemID = erp_stockreceive.companySystemID 
+                        AND erp_itemledger.documentSystemID = erp_stockreceive.documentSystemID 
+                        AND erp_itemledger.documentSystemCode = erp_stockreceive.stockReceiveAutoID 
+                    WHERE
+                        erp_itemledger.companySystemID = 29 
+                        AND erp_itemledger.fromDamagedTransactionYN = 0
+                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                    ) AS stockMainQuery
+                    LEFT JOIN ( /*FROM ISSUE*/
+                    SELECT 
+                    companySystemID,
+                    documentSystemID,
+                    itemSystemCode,
+                    MIMaxDate,
+                    Round(DATEDIFF(STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) ,  STR_TO_DATE( DATE_FORMAT( MIMaxDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ))/30,0) as TotalMonth
+                    FROM (
+                    SELECT
+                        erp_itemledger.companySystemID,
+                        erp_itemledger.documentSystemID,
+                        erp_itemledger.itemSystemCode,
+                        MAX( erp_itemledger.transactionDate ) as MIMaxDate
+                    FROM
+                        erp_itemledger 
+                    WHERE
+                        erp_itemledger.documentSystemID = 8 
+                        AND erp_itemledger.companySystemID = 29 
+                        AND erp_itemledger.fromDamagedTransactionYN = 0 
+                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                    GROUP BY
+                        erp_itemledger.companySystemID,
+                        erp_itemledger.itemSystemCode ) as movementIssue_base
+                    ) AS movementIssue ON movementIssue.itemSystemCode=stockMainQuery.itemSystemCode
+                        LEFT JOIN ( /*FROM GRV*/
+                    SELECT 
+                    companySystemID,
+                    documentSystemID,
+                    itemSystemCode,
+                    GRVMaxDate,
+                    Round(DATEDIFF(STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) ,  STR_TO_DATE( DATE_FORMAT( GRVMaxDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ))/30,0) as TotalGRVMonth
+                    FROM (
+                    SELECT
+                        erp_itemledger.companySystemID,
+                        erp_itemledger.documentSystemID,
+                        erp_itemledger.itemSystemCode,
+                        MAX( erp_itemledger.transactionDate ) as GRVMaxDate
+                    FROM
+                        erp_itemledger 
+                    WHERE
+                        (erp_itemledger.documentSystemID = 3 or erp_itemledger.documentSystemID = 7)
+                        AND erp_itemledger.companySystemID = 29 
+                        AND erp_itemledger.fromDamagedTransactionYN = 0 
+                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
+                        AND erp_itemledger.inOutQty>0
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                    GROUP BY
+                        erp_itemledger.companySystemID,
+                        erp_itemledger.itemSystemCode ) as movementGRV_base
+                    ) AS movementGRV ON movementGRV.itemSystemCode=stockMainQuery.itemSystemCode
+                GROUP BY
+                    stockMainQuery.companySystemID,
+                    stockMainQuery.itemSystemCode 
+                    ) AS finalquery
+                    LEFT JOIN (
+                    SELECT
+                    erp_itemledger.companySystemID,
+                    erp_itemledger.companyID,
+                    erp_itemledger.itemSystemCode,
+                    sum( erp_itemledger.inOutQty ) totalQty,
+                    sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) ) AS wacValueRpt,
+                    sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacLocal ), 2 ) ) AS wacValueLocal 
+                FROM
+                    erp_itemledger 
+                WHERE
+                    erp_itemledger.companySystemID = 29 
+                    AND erp_itemledger.fromDamagedTransactionYN = 0 
+                    AND erp_itemledger.wareHouseSystemCode IN ( 45, 46 ) 
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                GROUP BY
+                    erp_itemledger.companySystemID,
+                    erp_itemledger.itemSystemCode
+                    ) AS getTotalQtyandCost ON getTotalQtyandCost.companySystemID=finalquery.companySystemID AND getTotalQtyandCost.itemSystemCode=finalquery.itemSystemCode
+                    LEFT JOIN (
+                    SELECT
+                    erp_itemledger.companySystemID,
+                    erp_itemledger.companyID,
+                    erp_itemledger.itemSystemCode,
+                    sum( erp_itemledger.inOutQty ) * -1 TotalUnitsIssue,
+                    sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) ) * -1 AS TotalCostIssue_Rpt,
+                    sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacLocal ), 3 ) ) * -1 AS TotalCostIssue_local,
+                    round(sum( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) ) / sum( erp_itemledger.inOutQty ),2)  AS CostPerUnitIssue_Rpt,
+                    round(sum( ( erp_itemledger.inOutQty * erp_itemledger.wacLocal ) ) / sum( erp_itemledger.inOutQty ),3) AS CostPerUnitIssue_Local 
+                FROM
+                    erp_itemledger 
+                WHERE
+                    erp_itemledger.companySystemID = 29 
+                    AND erp_itemledger.documentSystemID = 8 
+                    AND erp_itemledger.fromDamagedTransactionYN = 0 
+                    AND erp_itemledger.wareHouseSystemCode IN ( 45, 46 ) 
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) BETWEEN STR_TO_DATE( '01/01/2019', \"%d/%m/%Y\" ) 
+                    AND STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                GROUP BY
+                    erp_itemledger.companySystemID,
+                    erp_itemledger.itemSystemCode
+                    ) AS getIssuedQtyandCost ON getIssuedQtyandCost.companySystemID=finalquery.companySystemID AND getIssuedQtyandCost.itemSystemCode=finalquery.itemSystemCode
+                    INNER JOIN
+                    itemmaster ON itemmaster.itemCodeSystem=finalquery.itemSystemCode AND itemmaster.financeCategoryMaster=1
+                    LEFT JOIN units ON units.UnitID = itemmaster.unit";
+        return DB::select($sql);
     }
 }
