@@ -177,6 +177,15 @@ class TaxAuthorityAPIController extends AppBaseController
                     }
                 }
             })
+             ->filter(function ($query) use ($request) {
+                  if ($request->has('search') && !is_null($request->get('search')['value'])) {
+                      $regex = str_replace("\\", "\\\\", $request->get('search')['value']);
+                      return $query->where(function ($query) use($regex) {
+                          $query->where('authoritySystemCode', 'LIKE', "%{$regex}%")
+                              ->orWhere('authoritySecondaryCode', 'LIKE', "%{$regex}%");
+                      });
+                  }
+              })
             ->addIndexColumn()
             ->make(true);
     }
