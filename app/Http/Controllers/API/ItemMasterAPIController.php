@@ -535,6 +535,9 @@ class ItemMasterAPIController extends AppBaseController
         $input['runningSerialOrder'] = $runningSerialOrder;
         $input['primaryCode'] = $primaryCode;
         $input['primaryItemCode'] = $code;
+        if(!(isset($input['barcode']) && $input['barcode'] != null)){
+            $input['barcode'] = $primaryCode;
+        }
         $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $input['financeCategorySub'])->first();
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
