@@ -12,6 +12,7 @@ use App\Observers\DepreciationObserver;
 use App\Observers\DisposalObserver;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,6 +33,17 @@ class AppServiceProvider extends ServiceProvider
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);
         AssetDisposalMaster::observe(DisposalObserver::class);
+
+        Validator::extend('greater_than_field', function($attribute, $value, $parameters, $validator) {
+            $min_field = $parameters[0];
+            $data = $validator->getData();
+            $min_value = $data[$min_field];
+            return $value > $min_value;
+        });
+
+        Validator::replacer('greater_than_field', function($message, $attribute, $rule, $parameters) {
+            return str_replace(':field', $parameters[0], $message);
+        });
     }
 
     /**

@@ -78,6 +78,12 @@ class InventoryReportAPIController extends AppBaseController
                 if (isset($request->reportTypeID)) {
                     $reportTypeID = $request->reportTypeID;
                 }
+
+                $messages = [
+                    'fastMovingTo.greater_than_field' => 'The Fast Moving To must be a greater than to Fast Moving From',
+                    'slowMovingTo.greater_than_field' => 'The Slow Moving To must be a greater than to Slow Moving From',
+                ];
+
                 if ($reportTypeID == 'IMI') {
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
@@ -85,7 +91,12 @@ class InventoryReportAPIController extends AppBaseController
                         'warehouse' => 'required',
                         'segment' => 'required',
                         'reportTypeID' => 'required',
-                    ]);
+                        'fastMovingFrom' => 'required|numeric',
+                        'fastMovingTo' => 'required|numeric|greater_than_field:fastMovingFrom',
+                        'nonMoving' => 'required|numeric',
+                        'slowMovingFrom' => 'required|numeric',
+                        'slowMovingTo' => 'required:numeric|greater_than_field:slowMovingFrom',
+                    ],$messages);
                 }else if($reportTypeID == 'IMHV'){
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
@@ -1273,7 +1284,7 @@ FROM
             $segment = collect($segment)->pluck('serviceLineSystemID');
         }
 
-      return  $sql = "SELECT
+        $sql = "SELECT
                 finalquery.companyID,
                 finalquery.companySystemID,
                 finalquery.itemSystemCode,
@@ -1333,7 +1344,8 @@ FROM
                         erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")  
                         AND erp_itemledger.fromDamagedTransactionYN = 0
                         AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= '".$toDate ."' 
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     ) AS stockMainQuery
                     LEFT JOIN ( /*FROM ISSUE*/
                     SELECT 
@@ -1341,7 +1353,7 @@ FROM
                     documentSystemID,
                     itemSystemCode,
                     MIMaxDate,
-                    Round(DATEDIFF('".$toDate ."' ,  STR_TO_DATE( DATE_FORMAT( MIMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalMonth
+                    Round(DATEDIFF(STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' )  ,  STR_TO_DATE( DATE_FORMAT( MIMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalMonth
                     FROM (
                     SELECT
                         erp_itemledger.companySystemID,
@@ -1355,7 +1367,8 @@ FROM
                         AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
                         AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= '".$toDate ."' 
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
                         erp_itemledger.companySystemID,
                         erp_itemledger.itemSystemCode ) as movementIssue_base
@@ -1366,7 +1379,7 @@ FROM
                     documentSystemID,
                     itemSystemCode,
                     GRVMaxDate,
-                    Round(DATEDIFF('".$toDate ."' ,  STR_TO_DATE( DATE_FORMAT( GRVMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalGRVMonth
+                    Round(DATEDIFF(STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' )  ,  STR_TO_DATE( DATE_FORMAT( GRVMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalGRVMonth
                     FROM (
                     SELECT
                         erp_itemledger.companySystemID,
@@ -1380,8 +1393,9 @@ FROM
                         AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
                         AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
                         AND erp_itemledger.inOutQty>0
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= '".$toDate ."'
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
                         erp_itemledger.companySystemID,
                         erp_itemledger.itemSystemCode ) as movementGRV_base
@@ -1404,7 +1418,8 @@ FROM
                     erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
                     AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= '".$toDate ."'
+                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
                     erp_itemledger.companySystemID,
                     erp_itemledger.itemSystemCode
@@ -1426,8 +1441,9 @@ FROM
                     AND erp_itemledger.documentSystemID = 8 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
                     AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) BETWEEN STR_TO_DATE( '01/01/2019', '%d/%m/%Y' ) 
-                    AND '".$toDate ."'
+                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) BETWEEN STR_TO_DATE( '".$fromDate ."', '%d/%m/%Y' ) 
+                    AND  STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
                     erp_itemledger.companySystemID,
                     erp_itemledger.itemSystemCode
