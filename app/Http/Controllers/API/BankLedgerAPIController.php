@@ -1543,6 +1543,12 @@ class BankLedgerAPIController extends AppBaseController
                     $entity->floatAmt = (string)$floatAmt;
                     $entity->amount_word = ucwords($f->format($intAmt));
                     $entity->chequePrintedByEmpName = $employee->empName;
+                    if($entity->supplier){
+                        $entity->nameOnCheque = isset($entity->supplier->nameOnPaymentCheque)?$entity->supplier->nameOnPaymentCheque:'';
+                    }else{
+                        $entity->nameOnCheque = $entity->directPaymentPayee;
+                    }
+
                 }else{
                     $entity = null;
                 }

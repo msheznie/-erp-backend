@@ -170,7 +170,7 @@
 
 <div class="footer" >
     <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
-    <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->directPaymentPayee}}</div>
+    <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->nameOnCheque}}</div>
 
     <table id="word_amount_table" class="header-part" >
         <tr >
