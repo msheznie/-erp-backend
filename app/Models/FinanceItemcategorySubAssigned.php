@@ -98,5 +98,19 @@ class FinanceItemcategorySubAssigned extends Model
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function finance_gl_code_bs()
+    {
+        return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodebBSSystemID','chartOfAccountSystemID');
+    }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function finance_gl_code_pl()
+    {
+        return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodePLSystemID','chartOfAccountSystemID');
+    }
 }
