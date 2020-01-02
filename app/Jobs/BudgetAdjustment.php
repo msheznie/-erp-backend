@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\BudgetTransferForm;
 use App\Models\Budjetdetails;
 use App\Models\CompanyFinanceYear;
+use App\Models\TemplatesDetails;
 use App\Repositories\AuditTrailRepository;
 use App\Repositories\BudgetAdjustmentRepository;
 use App\Repositories\BudjetdetailsRepository;
@@ -50,6 +51,21 @@ class BudgetAdjustment implements ShouldQueue
 
                 foreach ($budgetTransfer->detail as $item) {
 
+                    // template detail
+                    $conversionFrom  = 1;
+                    $conversionTo  = 1;
+                    $templateDetail = TemplatesDetails::find($item['fromTemplateDetailID']);
+
+                    if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
+                        $conversionFrom = -1;
+                    }
+
+                    $templateDetail = TemplatesDetails::find($item['toTemplateDetailID']);
+
+                    if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
+                        $conversionTo = -1;
+                    }
+
                     // Audit Trail Insert start
                     $fromValue = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
                         ->where('serviceLineSystemID', $item['fromServiceLineSystemID'])
@@ -57,7 +73,7 @@ class BudgetAdjustment implements ShouldQueue
                         ->where('Year', $item['year'])
                         ->sum('budjetAmtRpt');
 
-                    $newFromValue = $fromValue - $item['adjustmentAmountRpt'];
+                    $newFromValue = ($fromValue * $conversionFrom)  - $item['adjustmentAmountRpt'];
 
                     $toValue = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
                         ->where('serviceLineSystemID', $item['toServiceLineSystemID'])
@@ -65,7 +81,7 @@ class BudgetAdjustment implements ShouldQueue
                         ->where('Year', $item['year'])
                         ->sum('budjetAmtRpt');
 
-                    $newToValue = $toValue + $item['adjustmentAmountRpt'];
+                    $newToValue = ($toValue + ($item['adjustmentAmountRpt'] * $conversionTo)) * $conversionTo;
 
                     $fromTotalMonth = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
                         ->where('serviceLineSystemID', $item['fromServiceLineSystemID'])
@@ -86,13 +102,13 @@ class BudgetAdjustment implements ShouldQueue
                         'documentSystemID' => $budgetTransfer->documentSystemID,
                         'documentID' => $budgetTransfer->documentID,
                         'documentSystemCode' => $budgetTransfer->budgetTransferFormAutoID,
-                        'valueFrom' => $fromValue,
-                        'valueTo' => $newFromValue,
+                        'valueFrom' => $fromValue ,
+                        'valueTo' => $newFromValue * $conversionFrom,
                         'valueFromSystemID' => $item['fromChartOfAccountSystemID'],
                         'valueFromText' => $item['FromGLCode'],
                         'valueToSystemID' => $item['toChartOfAccountSystemID'],
                         'valueToText' => $item['toGLCode'],
-                        'description' => 'Adjusting from ' . $item['FromGLCode'] . ' to ' . $item['toGLCode'] . '. Current amount of ' . $item['FromGLCode'] . ' is ' . $fromValue . '. Current amount of ' . $item['toGLCode'] . ' is ' . $toValue . '. New amount of ' . $item['FromGLCode'] . ' is ' . $newFromValue . '. New amount of ' . $item['toGLCode'] . ' is ' . $newToValue . '. Total months of ' . $item['FromGLCode'] . ' is ' . $fromTotalMonth . '. Total month of ' . $item['toGLCode'] . ' is ' . $toTotalMonth,
+                        'description' => 'Adjusting from ' . $item['FromGLCode'] . ' to ' . $item['toGLCode'] . '. Current amount of ' . $item['FromGLCode'] . ' is ' . $fromValue . '. Current amount of ' . $item['toGLCode'] . ' is ' . $toValue . '. New amount of ' . $item['FromGLCode'] . ' is ' . ($newFromValue * $conversionFrom) . '. New amount of ' . $item['toGLCode'] . ' is ' . ($newToValue * $conversionTo) . '. Total months of ' . $item['FromGLCode'] . ' is ' . $fromTotalMonth . '. Total month of ' . $item['toGLCode'] . ' is ' . $toTotalMonth,
                         'modifiedUserSystemID' => $budgetTransfer->modifiedUserSystemID,
                         'modifiedUserID' => $budgetTransfer->modifiedUser
                     );
@@ -117,8 +133,8 @@ class BudgetAdjustment implements ShouldQueue
                         $fromMinusAmountLocal = round(($item['adjustmentAmountLocal']/$fromTotalCount),3);
 
                         foreach ($fromBudgetDetails as $fromBudgetDetail){
-                            $budjetdetailsRepo->update(['budjetAmtLocal' => ($fromBudgetDetail['budjetAmtLocal'] - $fromMinusAmountLocal),
-                                'budjetAmtRpt' => ($fromBudgetDetail['budjetAmtRpt'] - $fromMinusAmountRpt)],$fromBudgetDetail['budjetDetailsID']);
+                            $budjetdetailsRepo->update(['budjetAmtLocal' => ((($fromBudgetDetail['budjetAmtLocal'] * $conversionFrom) - $fromMinusAmountLocal)* $conversionFrom),
+                                'budjetAmtRpt' => ((($fromBudgetDetail['budjetAmtRpt']* $conversionFrom) - $fromMinusAmountRpt) * $conversionFrom)],$fromBudgetDetail['budjetDetailsID']);
                         }
                     }
 
@@ -139,8 +155,8 @@ class BudgetAdjustment implements ShouldQueue
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$toTotalCount),3);
 
                         foreach ($toTotalBudgetDetails as $toBudgetDetail){
-                            $budjetdetailsRepo->update(['budjetAmtLocal' => ($toBudgetDetail['budjetAmtLocal'] + $toAddAmountLocal),
-                                'budjetAmtRpt' => ($toBudgetDetail['budjetAmtRpt'] + $toAddAmountRpt)],$toBudgetDetail['budjetDetailsID']);
+                            $budjetdetailsRepo->update(['budjetAmtLocal' => ((($toBudgetDetail['budjetAmtLocal'] * $conversionTo)  + $toAddAmountLocal) * $conversionTo) ,
+                                'budjetAmtRpt' => ((($toBudgetDetail['budjetAmtRpt'] * $conversionTo) + $toAddAmountRpt) * $conversionTo)],$toBudgetDetail['budjetDetailsID']);
                         }
                     }
 
