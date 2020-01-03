@@ -242,6 +242,7 @@ class CreateSupplierInvoice implements ShouldQueue
                             $glAP['chartOfAccountSystemID'] = $supplier->liabilityAccountSysemID;
                             $glAP['glCode'] = $supplier->liabilityAccount;
                             $glAP['glAccountType'] = 'BS';
+                            $glAP['glAccountTypeID'] = 1;
                             $glAP['documentLocalAmount'] = ABS($bookingAmountLocal) * -1;
                             $glAP['documentRptAmount'] = ABS($bookingAmountRpt) * -1;
                             $glAP['documentTransAmount'] = ABS($bookingAmountRpt) * -1;
@@ -253,6 +254,7 @@ class CreateSupplierInvoice implements ShouldQueue
                             $glINC['chartOfAccountSystemID'] = 747;
                             $glINC['glCode'] = '20023';
                             $glINC['glAccountType'] = 'BS';
+                            $glINC['glAccountTypeID'] = 1;
                             $glINC['documentLocalAmount'] = ABS($bookingAmountLocal);
                             $glINC['documentRptAmount'] = ABS($bookingAmountRpt);
                             $glINC['documentTransAmount'] = ABS($bookingAmountRpt);
