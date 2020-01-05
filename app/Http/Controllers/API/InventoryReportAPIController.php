@@ -82,6 +82,8 @@ class InventoryReportAPIController extends AppBaseController
                 $messages = [
                     'fastMovingTo.greater_than_field' => 'The Fast Moving To must be a greater than to Fast Moving From',
                     'slowMovingTo.greater_than_field' => 'The Slow Moving To must be a greater than to Slow Moving From',
+                    'slowMovingFrom.greater_than_field' => 'The Slow Moving To must be a greater than to Fast Moving To',
+                    'nonMoving.greater_than_field' => 'The None Moving To must be a greater than to Slow Moving To',
                 ];
 
                 if ($reportTypeID == 'IMI') {
@@ -93,8 +95,8 @@ class InventoryReportAPIController extends AppBaseController
                         'reportTypeID' => 'required',
                         'fastMovingFrom' => 'required|numeric',
                         'fastMovingTo' => 'required|numeric|greater_than_field:fastMovingFrom',
-                        'nonMoving' => 'required|numeric',
-                        'slowMovingFrom' => 'required|numeric',
+                        'nonMoving' => 'required|numeric|greater_than_field:slowMovingTo',
+                        'slowMovingFrom' => 'required|numeric|greater_than_field:fastMovingTo',
                         'slowMovingTo' => 'required:numeric|greater_than_field:slowMovingFrom',
                     ],$messages);
                 }else if($reportTypeID == 'IMHV'){
@@ -1190,6 +1192,44 @@ FROM
                 })->download('csv');
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            Case 'INVIM':
+
+                $reportTypeID = $request->reportTypeID;
+                $data = array();
+                if ($reportTypeID == 'IMI') {
+                    $output = $this->itemMovementBasedOnIssues($request);
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('d/m/Y');
+
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->format('d/m/Y');
+                    $x = 0;
+                    foreach ($output as $item){
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Description'] = $item->itemDescription;
+                        $data[$x]['UOM'] = $item->UnitShortCode;
+                        $data[$x]['Part #'] = $item->secondaryItemCode;
+                        $data[$x]['Category'] = $item->categoryLabel;
+                        $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
+                        $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                        $data[$x]['Total Cost '.$fromDate .' - '. $toDate] = $item->TotalCostIssue_Rpt;
+                        $data[$x]['Quantity As Of '.$toDate] = $item->totalQty;
+                        $data[$x]['Total Cost As Of '.$toDate] = $item->wacValueRpt;
+                        $x ++;
+                    }
+                }
+                $csv = \Excel::create('item_movements', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download('csv');
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
 
@@ -1267,6 +1307,12 @@ FROM
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
+        $fastMovingFrom = isset($input['fastMovingFrom'])?$input['fastMovingFrom']:0;
+        $fastMovingTo= isset($input['fastMovingTo'])?$input['fastMovingTo']:0;
+        $slowMovingFrom = isset($input['slowMovingFrom'])?$input['slowMovingFrom']:0;
+        $slowMovingTo = isset($input['slowMovingTo'])?$input['slowMovingTo']:0;
+        $nonMoving = isset($input['nonMoving'])?$input['nonMoving']:0;
+
         if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
         } else {
@@ -1293,6 +1339,7 @@ FROM
 	            itemmaster.secondaryItemCode,
 	            units.UnitShortCode,
                 finalquery.category,
+                IF(finalquery.category = 1,'Fast Moving', IF(finalquery.category = 2,'Slow Moving',IF(finalquery.category = 3,'Non Moving','') )) as categoryLabel,
                 getTotalQtyandCost.totalQty,
                 getTotalQtyandCost.wacValueRpt,
                 getTotalQtyandCost.wacValueLocal,
@@ -1312,7 +1359,7 @@ FROM
                     movementIssue.TotalMonth,
                     movementGRV.GRVMaxDate,
                     movementGRV.TotalGRVMonth,
-                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 0 And 4),'Fast Moving',If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 5 And 8),'Slow Moving',If(TotalMonth Between 0 And 4,'Fast Moving',If(TotalMonth Between 5 And 8,'Slow Moving',If(TotalMonth>8,'Non Moving','Non Moving'))))) as category
+                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $slowMovingFrom And $slowMovingTo),1,If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $fastMovingFrom And $fastMovingTo),2,If(TotalMonth Between $slowMovingFrom And $slowMovingTo,1,If(TotalMonth Between $fastMovingFrom And $fastMovingTo,2,If(TotalMonth> $nonMoving,3,3))))) as category
                 FROM
                     (
                     SELECT
@@ -1450,7 +1497,7 @@ FROM
                     ) AS getIssuedQtyandCost ON getIssuedQtyandCost.companySystemID=finalquery.companySystemID AND getIssuedQtyandCost.itemSystemCode=finalquery.itemSystemCode
                     INNER JOIN
                     itemmaster ON itemmaster.itemCodeSystem=finalquery.itemSystemCode AND itemmaster.financeCategoryMaster=1
-                    LEFT JOIN units ON units.UnitID = itemmaster.unit";
+                    LEFT JOIN units ON units.UnitID = itemmaster.unit ORDER By finalquery.category";
         return DB::select($sql);
     }
 }
