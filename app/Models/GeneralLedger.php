@@ -353,7 +353,8 @@ class GeneralLedger extends Model
         'createdUserID',
         'createdUserSystemID',
         'createdUserPC',
-        'timestamp'
+        'timestamp',
+        'glAccountTypeID'
     ];
 
     /**
@@ -410,10 +411,11 @@ class GeneralLedger extends Model
         'isAddon' => 'integer',
         'isAllocationJV' => 'integer',
         'contraYN' => 'integer',
-        '`contracDocCode` ' => 'string',
+        'contracDocCode' => 'string',
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
-        'createdUserPC' => 'string'
+        'createdUserPC' => 'string',
+        'glAccountTypeID' => 'integer'
     ];
 
     /**

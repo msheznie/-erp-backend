@@ -288,6 +288,7 @@ class CreateStockReceive implements ShouldQueue
                                 $glBS['chartOfAccountSystemID'] = 747;
                                 $glBS['glCode'] = $customerInvoiceDetailBS->glCode;
                                 $glBS['glAccountType'] = $customerInvoiceDetailBS->accountType;
+                                $glBS['glAccountTypeID'] = 1;
                                 $glBS['documentLocalCurrencyID'] = $customerInvoiceDetailBS->localCurrency;
                                 $glBS['documentLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                                 $glBS['documentLocalAmount'] = ABS($customerInvoiceDetailBS->localAmount) * -1;
@@ -304,6 +305,7 @@ class CreateStockReceive implements ShouldQueue
                                 $glPL['chartOfAccountSystemID'] = 693;
                                 $glPL['glCode'] = $customerInvoiceDetailPL->glCode;
                                 $glPL['glAccountType'] = $customerInvoiceDetailPL->accountType;
+                                $glPL['glAccountTypeID'] = 2;
                                 $glPL['documentLocalCurrencyID'] = $customerInvoiceDetailPL->localCurrency;
                                 $glPL['documentLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                                 $glPL['documentLocalAmount'] = ABS($customerInvoiceDetailPL->localAmount) * -1;
@@ -320,6 +322,7 @@ class CreateStockReceive implements ShouldQueue
                                 $glAR['chartOfAccountSystemID'] = $customer->custGLAccountSystemID;
                                 $glAR['glCode'] = $customer->custGLaccount;
                                 $glAR['glAccountType'] = 'BS';
+                                $glAR['glAccountTypeID'] = 1;
                                 $glAR['documentLocalCurrencyID'] = $customerInvoice->localCurrencyID;
                                 $glAR['documentLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                                 $glAR['documentLocalAmount'] = ABS($customerInvoice->bookingAmountLocal);
