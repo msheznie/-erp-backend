@@ -281,7 +281,7 @@ class InventoryReportAPIController extends AppBaseController
                 if ($reportTypeID == 'IMI') {
                     $output = $this->itemMovementBasedOnIssues($request);
                 }else if($reportTypeID == 'IMHV'){
-
+                    $output = $this->itemMovementBasedOnIssues($request);
                 }else if($reportTypeID == 'IMSM'){
 
                 }
@@ -1196,7 +1196,7 @@ FROM
 
                 $reportTypeID = $request->reportTypeID;
                 $data = array();
-                if ($reportTypeID == 'IMI') {
+                if ($reportTypeID == 'IMI' || $reportTypeID == 'IMHV') {
                     $output = $this->itemMovementBasedOnIssues($request);
                     $fromDate = new Carbon($request->fromDate);
                     $fromDate = $fromDate->format('d/m/Y');
@@ -1210,14 +1210,24 @@ FROM
                         $data[$x]['UOM'] = $item->UnitShortCode;
                         $data[$x]['Part #'] = $item->secondaryItemCode;
                         $data[$x]['Category'] = $item->categoryLabel;
-                        $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
-                        $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                        if($reportTypeID == 'IMI'){
+                            $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
+                            $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                        }
+
                         $data[$x]['Total Cost '.$fromDate .' - '. $toDate] = $item->TotalCostIssue_Rpt;
-                        $data[$x]['Quantity As Of '.$toDate] = $item->totalQty;
+                        if($reportTypeID == 'IMI') {
+                            $data[$x]['Quantity As Of ' . $toDate] = $item->totalQty;
+                        }
+                        if($reportTypeID == 'IMHV'){
+                            $data[$x]['Cost Per Unit'] = $item->costPerUnitRpt;
+                        }
                         $data[$x]['Total Cost As Of '.$toDate] = $item->wacValueRpt;
                         $x ++;
                     }
                 }
+
+
                 $csv = \Excel::create('item_movements', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -1330,6 +1340,14 @@ FROM
             $segment = collect($segment)->pluck('serviceLineSystemID');
         }
 
+        $finalOrderBy = '';
+
+        if ($request->reportTypeID == 'IMI') {
+            $finalOrderBy = 'ORDER By finalquery.category,finalquery.itemSystemCode';
+        }else if($request->reportTypeID == 'IMHV'){
+            $finalOrderBy = 'ORDER By getTotalQtyandCost.wacValueRpt Desc';
+        }
+
         $sql = "SELECT
                 finalquery.companyID,
                 finalquery.companySystemID,
@@ -1343,6 +1361,8 @@ FROM
                 getTotalQtyandCost.totalQty,
                 getTotalQtyandCost.wacValueRpt,
                 getTotalQtyandCost.wacValueLocal,
+                getTotalQtyandCost.costPerUnitRpt,
+                getTotalQtyandCost.costPerUnitLocal,
                 if(getIssuedQtyandCost.TotalUnitsIssue is null,0,getIssuedQtyandCost.TotalUnitsIssue) AS TotalUnitsIssue,
                 if(getIssuedQtyandCost.TotalCostIssue_Rpt is null,0,getIssuedQtyandCost.TotalCostIssue_Rpt) AS TotalCostIssue_Rpt,
                 if(getIssuedQtyandCost.CostPerUnitIssue_Rpt is null,0,getIssuedQtyandCost.CostPerUnitIssue_Rpt) AS CostPerUnitIssue_Rpt,
@@ -1456,6 +1476,10 @@ FROM
                     erp_itemledger.companySystemID,
                     erp_itemledger.companyID,
                     erp_itemledger.itemSystemCode,
+                    /*erp_itemledger.wacRpt as costPerUnitRpt,
+                    erp_itemledger.wacLocal as costPerUnitLocal,*/
+                    if(round(sum(erp_itemledger.inOutQty),2)=0,0,round((sum((erp_itemledger.inOutQty*erp_itemledger.wacRpt))/round(sum(erp_itemledger.inOutQty),2)),2)) as costPerUnitRpt,
+                    if(round(sum(erp_itemledger.inOutQty),2)=0,0,round((sum((erp_itemledger.inOutQty*erp_itemledger.wacLocal))/round(sum(erp_itemledger.inOutQty),2)),2)) as costPerUnitLocal,
                     sum( erp_itemledger.inOutQty ) totalQty,
                     sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) ) AS wacValueRpt,
                     sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacLocal ), 2 ) ) AS wacValueLocal 
@@ -1497,7 +1521,7 @@ FROM
                     ) AS getIssuedQtyandCost ON getIssuedQtyandCost.companySystemID=finalquery.companySystemID AND getIssuedQtyandCost.itemSystemCode=finalquery.itemSystemCode
                     INNER JOIN
                     itemmaster ON itemmaster.itemCodeSystem=finalquery.itemSystemCode AND itemmaster.financeCategoryMaster=1
-                    LEFT JOIN units ON units.UnitID = itemmaster.unit ORDER By finalquery.category";
+                    LEFT JOIN units ON units.UnitID = itemmaster.unit $finalOrderBy";
         return DB::select($sql);
     }
 }
