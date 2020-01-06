@@ -1345,6 +1345,8 @@ WHERE
                             IF(isSMEYN = 1, "YES", "NO" ) AS isSme,supplierCodeSystem');
                 }])
             ->whereIn('companySystemID',$companyID)
+            ->where('poCancelledYN',0)
+            ->where('refferedBackYN',0)
             ->where(function ($q){
                $q->where('poType_N','!=',5);
                  //->orWhere('documentSystemID','!=',5);

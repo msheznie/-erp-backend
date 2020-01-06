@@ -83,7 +83,7 @@ class InventoryReportAPIController extends AppBaseController
                     'fastMovingTo.greater_than_field' => 'The Fast Moving To must be a greater than to Fast Moving From',
                     'slowMovingTo.greater_than_field' => 'The Slow Moving To must be a greater than to Slow Moving From',
                     'slowMovingFrom.greater_than_field' => 'The Slow Moving To must be a greater than to Fast Moving To',
-                    'nonMoving.greater_than_field' => 'The None Moving To must be a greater than to Slow Moving To',
+                    'nonMoving.greater_than_or_equal_field' => 'The None Moving To must be a greater than or equal to Slow Moving To',
                 ];
 
                 if ($reportTypeID == 'IMI') {
@@ -95,7 +95,7 @@ class InventoryReportAPIController extends AppBaseController
                         'reportTypeID' => 'required',
                         'fastMovingFrom' => 'required|numeric',
                         'fastMovingTo' => 'required|numeric|greater_than_field:fastMovingFrom',
-                        'nonMoving' => 'required|numeric|greater_than_field:slowMovingTo',
+                        'nonMoving' => 'required|numeric|greater_than_or_equal_field:slowMovingTo',
                         'slowMovingFrom' => 'required|numeric|greater_than_field:fastMovingTo',
                         'slowMovingTo' => 'required:numeric|greater_than_field:slowMovingFrom',
                     ],$messages);
