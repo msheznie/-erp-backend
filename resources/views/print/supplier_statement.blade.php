@@ -107,7 +107,7 @@
     }
 
     .white-space-pre-line {
-        white-space: pre-line;
+        word-wrap: break-word;
     }
 
     p {
@@ -165,34 +165,34 @@
 <div id="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
-            <tr>
+            <tr style="width:100%">
                 <td colspan="10"><span style="font-size: 11px; font-weight: bold">{{$key}}</span></td>
             </tr>
             @foreach ($val as $key2 => $val2)
-                <tr>
+                <tr style="width:100%">
                     <td colspan="10"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
                 </tr>
-                <tr>
-                    <th width="5%">Doc ID</th>
-                    <th width="10%">Document Code</th>
-                    <th width="7%">Doc Date</th>
-                    <th width="31%">Narration</th>
-                    <th width="9%">Invoice Number</th>
-                    <th width="7%">Invoice Date</th>
-                    <th width="5%">Currency</th>
-                    <th width="6%">Age Days</th>
-                    <th width="10%">Doc Amount</th>
-                    <th width="10%">BalanceAmount</th>
+                <tr style="width:100%">
+                    <th style="width:5%">Doc ID</th>
+                    <th style="width:10%">Document Code</th>
+                    <th style="width:7%">Doc Date</th>
+                    <th style="width:31%">Narration</th>
+                    <th style="width:9%">Invoice Number</th>
+                    <th style="width:7%">Invoice Date</th>
+                    <th style="width:5%">Currency</th>
+                    <th style="width:6%">Age Days</th>
+                    <th style="width:10%">Doc Amount</th>
+                    <th style="width:10%">BalanceAmount</th>
                 </tr>
                 <tbody>
                 {{ $lineTotal = 0 }}
                 @foreach ($val2 as $det2)
-                    <tr>
+                    <tr style="width:100%">
                         <td>{{ $det2->documentID }}</td>
                         <td>{{ $det2->documentCode }}</td>
-                        <td> {{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
-                        <td>{{ substr($det2->documentNarration, 0, 50) }}</td>
-                        <td>{{ $det2->invoiceNumber }}</td>
+                        <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
+                        <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
+                        <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
                         <td>{{ $det2->documentCurrency }}</td>
                         <td class="text-right">{{ $det2->ageDays }}</td>
@@ -201,7 +201,7 @@
                     </tr>
                     {{$lineTotal += $det2->balanceAmount}}
                 @endforeach
-                <tr>
+                <tr width="100%">
                     <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
                         class="text-right"><b>Total:</b></td>
                     <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
@@ -210,7 +210,7 @@
             @endforeach
         @endforeach
         <tfoot>
-        <tr>
+        <tr width="100%">
             <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
                 class="text-right"><b>Grand Total:</b></td>
             <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>
