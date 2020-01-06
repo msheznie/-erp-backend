@@ -185,7 +185,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         }
 
         $toChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountSystemID',$input['fromChartOfAccountSystemID'])
+            ->where('chartOfAccountSystemID',$input['toChartOfAccountSystemID'])
             ->first();
 
         if(empty($toChartOfAccount)){
