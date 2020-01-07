@@ -495,7 +495,7 @@ class StockReceiveAPIController extends AppBaseController
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
-                ->where('qty', '<', 1)
+                ->where('qty', '<=', 0)
                 ->count();
 
             if ($checkQuantity > 0) {
