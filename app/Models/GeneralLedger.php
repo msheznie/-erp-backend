@@ -453,4 +453,12 @@ class GeneralLedger extends Model
     {
         $this->attributes['documentDate'] = Helper::dateAddTime($value);
     }
+
+    public function confirm_by(){
+        return $this->belongsTo('App\Models\Employee', 'documentConfirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function final_approved_by(){
+        return $this->belongsTo('App\Models\Employee', 'documentFinalApprovedByEmpSystemID', 'employeeSystemID');
+    }
 }

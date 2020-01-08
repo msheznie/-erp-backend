@@ -339,4 +339,20 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }
+
+    public function getTemplatesDetailsById(Request $request)
+    {
+
+        $id = $request->get('id');
+
+        $templateMaster = $this->templatesMasterRepository->findWithoutFail($id);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $id]);
+
+        return $this->sendResponse($details, 'Templates Details retrieved successfully');
+    }
 }
