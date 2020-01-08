@@ -1134,6 +1134,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
     Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
     Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
+    Route::get('checkBudgetAllocation', 'BudgetTransferFormDetailAPIController@checkBudgetAllocation');
     Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
 
     Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');

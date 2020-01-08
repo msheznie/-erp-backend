@@ -181,11 +181,11 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
 
         if($fromDataBudgetCheck == 0){
-            return $this->sendError('There is no budget allocated for '.$fromChartOfAccount->AccountCode, 500);
+            return $this->sendError('Selected account code is not available in the budget. Please allocate ans try again.', 500);
         }
 
         $toChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountSystemID',$input['fromChartOfAccountSystemID'])
+            ->where('chartOfAccountSystemID',$input['toChartOfAccountSystemID'])
             ->first();
 
         if(empty($toChartOfAccount)){
@@ -274,11 +274,11 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                 })
             ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
                 'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
-            ->get();
+            ->first();
 
-        if (count($checkBalance) > 0) {
-            if ($input['adjustmentAmountRpt'] > $checkBalance[0]->balance) {
-                return $this->sendError('You cannot transfer more than the balance amount, Balance amount is ' . $checkBalance[0]->balance, 500);
+        if (!empty($checkBalance)) {
+            if ($input['adjustmentAmountRpt'] > abs($checkBalance->balance)) {
+                return $this->sendError('You cannot transfer more than the balance amount, Balance amount is ' . $checkBalance->balance, 500);
             }
         }
 
@@ -519,4 +519,34 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
     }
 
 
+    public function checkBudgetAllocation(Request $request){
+
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required|numeric',
+            'fromTemplateDetailID' => 'required|numeric|min:1',
+            'fromServiceLineSystemID' => 'required|numeric|min:1',
+            'fromChartOfAccountSystemID' => 'required|numeric|min:1',
+            'year' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $input['companySystemID'])
+            ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
+            ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
+            ->where('templateDetailID',$input['fromTemplateDetailID'])
+            ->where('Year',$input['year'])
+            ->count();
+
+
+        if($fromDataBudgetCheck == 0){
+            return $this->sendError('Selected account code is not available in the budget. Please allocate ans try again.', 500);
+        }
+
+        return $this->sendResponse($fromDataBudgetCheck, 'successfully');
+    }
 }

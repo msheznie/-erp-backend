@@ -19,6 +19,7 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
+use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\BookInvSuppDetRepository;
@@ -513,12 +514,17 @@ class BookInvSuppDetAPIController extends AppBaseController
             if (isset($temp['isChecked']) && $temp['isChecked']) {
 
                 $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
+                //erp_purchaseorderadvpayment
+                //reqAmountInPOTransCur
+                $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
+                                          ->where('supplierID',$temp['supplierID'])
+                                          ->sum('reqAmountInPOTransCur');
 
                 $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
                     ->where('supplierID', $temp['supplierID'])
                     ->sum('totTransactionAmount');
 
-                if ($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                if ($checkPreTotal > ($poMasterTotal->poTotalSupplierTransactionCurrency + $padpTotal)) {
                     $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
                     $itemExistArray[] = [$itemDrt];
                 }

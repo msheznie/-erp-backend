@@ -33,7 +33,8 @@ class AssetDisposalType extends Model
 
     public $fillable = [
         'typeDescription',
-        'activeYN'
+        'activeYN',
+        'chartOfAccountID'
     ];
 
     /**
@@ -44,6 +45,7 @@ class AssetDisposalType extends Model
     protected $casts = [
         'disposalTypesID' => 'integer',
         'activeYN' => 'integer',
+        'chartOfAccountID' => 'integer',
         'typeDescription' => 'string'
     ];
 

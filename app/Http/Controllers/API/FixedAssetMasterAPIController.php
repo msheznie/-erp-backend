@@ -914,7 +914,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $assetAllocation->where('approved', $input['approved']);
             }
         }
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetAllocation = $assetAllocation->where(function ($query) use ($search) {

@@ -78,6 +78,14 @@ class InventoryReportAPIController extends AppBaseController
                 if (isset($request->reportTypeID)) {
                     $reportTypeID = $request->reportTypeID;
                 }
+
+                $messages = [
+                    'fastMovingTo.greater_than_field' => 'The Fast Moving To must be a greater than to Fast Moving From',
+                    'slowMovingTo.greater_than_field' => 'The Slow Moving To must be a greater than to Slow Moving From',
+                    'slowMovingFrom.greater_than_field' => 'The Slow Moving To must be a greater than to Fast Moving To',
+                    'nonMoving.greater_than_or_equal_field' => 'The None Moving To must be a greater than or equal to Slow Moving To',
+                ];
+
                 if ($reportTypeID == 'IMI') {
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
@@ -85,7 +93,12 @@ class InventoryReportAPIController extends AppBaseController
                         'warehouse' => 'required',
                         'segment' => 'required',
                         'reportTypeID' => 'required',
-                    ]);
+                        'fastMovingFrom' => 'required|numeric',
+                        'fastMovingTo' => 'required|numeric|greater_than_field:fastMovingFrom',
+                        'nonMoving' => 'required|numeric|greater_than_or_equal_field:slowMovingTo',
+                        'slowMovingFrom' => 'required|numeric|greater_than_field:fastMovingTo',
+                        'slowMovingTo' => 'required:numeric|greater_than_field:slowMovingFrom',
+                    ],$messages);
                 }else if($reportTypeID == 'IMHV'){
                     $validator = \Validator::make($request->all(), [
                         'fromDate' => 'required|date',
@@ -268,7 +281,7 @@ class InventoryReportAPIController extends AppBaseController
                 if ($reportTypeID == 'IMI') {
                     $output = $this->itemMovementBasedOnIssues($request);
                 }else if($reportTypeID == 'IMHV'){
-
+                    $output = $this->itemMovementBasedOnIssues($request);
                 }else if($reportTypeID == 'IMSM'){
 
                 }
@@ -1179,6 +1192,54 @@ FROM
                 })->download('csv');
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            Case 'INVIM':
+
+                $reportTypeID = $request->reportTypeID;
+                $data = array();
+                if ($reportTypeID == 'IMI' || $reportTypeID == 'IMHV') {
+                    $output = $this->itemMovementBasedOnIssues($request);
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->format('d/m/Y');
+
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->format('d/m/Y');
+                    $x = 0;
+                    foreach ($output as $item){
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Description'] = $item->itemDescription;
+                        $data[$x]['UOM'] = $item->UnitShortCode;
+                        $data[$x]['Part #'] = $item->secondaryItemCode;
+                        $data[$x]['Category'] = $item->categoryLabel;
+                        if($reportTypeID == 'IMI'){
+                            $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;
+                            $data[$x]['Cost Per Unit '.$fromDate .' - '. $toDate] = $item->CostPerUnitIssue_Rpt;
+                        }
+
+                        $data[$x]['Total Cost '.$fromDate .' - '. $toDate] = $item->TotalCostIssue_Rpt;
+                        if($reportTypeID == 'IMI') {
+                            $data[$x]['Quantity As Of ' . $toDate] = $item->totalQty;
+                        }
+                        if($reportTypeID == 'IMHV'){
+                            $data[$x]['Cost Per Unit'] = $item->costPerUnitRpt;
+                        }
+                        $data[$x]['Total Cost As Of '.$toDate] = $item->wacValueRpt;
+                        $x ++;
+                    }
+                }
+
+
+                $csv = \Excel::create('item_movements', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download('csv');
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
 
@@ -1248,13 +1309,19 @@ FROM
     public function itemMovementBasedOnIssues(Request $request){
         $input = $request->all();
         $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
+        $fromDate = $fromDate->format('d/m/Y');
 
         $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
+        $toDate = $toDate->format('d/m/Y');
 
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        $fastMovingFrom = isset($input['fastMovingFrom'])?$input['fastMovingFrom']:0;
+        $fastMovingTo= isset($input['fastMovingTo'])?$input['fastMovingTo']:0;
+        $slowMovingFrom = isset($input['slowMovingFrom'])?$input['slowMovingFrom']:0;
+        $slowMovingTo = isset($input['slowMovingTo'])?$input['slowMovingTo']:0;
+        $nonMoving = isset($input['nonMoving'])?$input['nonMoving']:0;
 
         if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
@@ -1273,6 +1340,14 @@ FROM
             $segment = collect($segment)->pluck('serviceLineSystemID');
         }
 
+        $finalOrderBy = '';
+
+        if ($request->reportTypeID == 'IMI') {
+            $finalOrderBy = 'ORDER By finalquery.category,finalquery.itemSystemCode';
+        }else if($request->reportTypeID == 'IMHV'){
+            $finalOrderBy = 'ORDER By getTotalQtyandCost.wacValueRpt Desc';
+        }
+
         $sql = "SELECT
                 finalquery.companyID,
                 finalquery.companySystemID,
@@ -1282,9 +1357,12 @@ FROM
 	            itemmaster.secondaryItemCode,
 	            units.UnitShortCode,
                 finalquery.category,
+                IF(finalquery.category = 1,'Fast Moving', IF(finalquery.category = 2,'Slow Moving',IF(finalquery.category = 3,'Non Moving','') )) as categoryLabel,
                 getTotalQtyandCost.totalQty,
                 getTotalQtyandCost.wacValueRpt,
                 getTotalQtyandCost.wacValueLocal,
+                getTotalQtyandCost.costPerUnitRpt,
+                getTotalQtyandCost.costPerUnitLocal,
                 if(getIssuedQtyandCost.TotalUnitsIssue is null,0,getIssuedQtyandCost.TotalUnitsIssue) AS TotalUnitsIssue,
                 if(getIssuedQtyandCost.TotalCostIssue_Rpt is null,0,getIssuedQtyandCost.TotalCostIssue_Rpt) AS TotalCostIssue_Rpt,
                 if(getIssuedQtyandCost.CostPerUnitIssue_Rpt is null,0,getIssuedQtyandCost.CostPerUnitIssue_Rpt) AS CostPerUnitIssue_Rpt,
@@ -1301,7 +1379,7 @@ FROM
                     movementIssue.TotalMonth,
                     movementGRV.GRVMaxDate,
                     movementGRV.TotalGRVMonth,
-                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 0 And 4),\"Fast Moving\",If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between 5 And 8),\"Slow Moving\",If(TotalMonth Between 0 And 4,\"Fast Moving\",If(TotalMonth Between 5 And 8,\"Slow Moving\",If(TotalMonth>8,\"Non Moving\",\"Non Moving\"))))) as category
+                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $slowMovingFrom And $slowMovingTo),1,If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $fastMovingFrom And $fastMovingTo),2,If(TotalMonth Between $slowMovingFrom And $slowMovingTo,1,If(TotalMonth Between $fastMovingFrom And $fastMovingTo,2,If(TotalMonth> $nonMoving,3,3))))) as category
                 FROM
                     (
                     SELECT
@@ -1310,7 +1388,7 @@ FROM
                     IF
                         ( erp_stockreceive.interCompanyTransferYN =- 1, 3, erp_itemledger.documentSystemID ) AS documentSystemID,
                     IF
-                        ( erp_stockreceive.interCompanyTransferYN =- 1, \"GRV\", erp_itemledger.documentID ) AS documentID,
+                        ( erp_stockreceive.interCompanyTransferYN =- 1, 'GRV', erp_itemledger.documentID ) AS documentID,
                         erp_itemledger.documentSystemCode,
                         erp_itemledger.documentCode,
                         erp_itemledger.transactionDate,
@@ -1322,7 +1400,7 @@ FROM
                         erp_itemledger.wacRptCurrencyID,
                         erp_itemledger.wacRpt,
                         round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) AS wacValue,
-                        DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ) AS documentDate,
+                        DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ) AS documentDate,
                         erp_itemledger.fromDamagedTransactionYN 
                     FROM
                         erp_itemledger
@@ -1330,10 +1408,11 @@ FROM
                         AND erp_itemledger.documentSystemID = erp_stockreceive.documentSystemID 
                         AND erp_itemledger.documentSystemCode = erp_stockreceive.stockReceiveAutoID 
                     WHERE
-                        erp_itemledger.companySystemID = 29 
+                        erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")  
                         AND erp_itemledger.fromDamagedTransactionYN = 0
-                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     ) AS stockMainQuery
                     LEFT JOIN ( /*FROM ISSUE*/
                     SELECT 
@@ -1341,7 +1420,7 @@ FROM
                     documentSystemID,
                     itemSystemCode,
                     MIMaxDate,
-                    Round(DATEDIFF(STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) ,  STR_TO_DATE( DATE_FORMAT( MIMaxDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ))/30,0) as TotalMonth
+                    Round(DATEDIFF(STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' )  ,  STR_TO_DATE( DATE_FORMAT( MIMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalMonth
                     FROM (
                     SELECT
                         erp_itemledger.companySystemID,
@@ -1352,10 +1431,11 @@ FROM
                         erp_itemledger 
                     WHERE
                         erp_itemledger.documentSystemID = 8 
-                        AND erp_itemledger.companySystemID = 29 
+                        AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
-                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
                         erp_itemledger.companySystemID,
                         erp_itemledger.itemSystemCode ) as movementIssue_base
@@ -1366,7 +1446,7 @@ FROM
                     documentSystemID,
                     itemSystemCode,
                     GRVMaxDate,
-                    Round(DATEDIFF(STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) ,  STR_TO_DATE( DATE_FORMAT( GRVMaxDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ))/30,0) as TotalGRVMonth
+                    Round(DATEDIFF(STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' )  ,  STR_TO_DATE( DATE_FORMAT( GRVMaxDate, '%d/%m/%Y' ), '%d/%m/%Y' ))/30,0) as TotalGRVMonth
                     FROM (
                     SELECT
                         erp_itemledger.companySystemID,
@@ -1377,11 +1457,12 @@ FROM
                         erp_itemledger 
                     WHERE
                         (erp_itemledger.documentSystemID = 3 or erp_itemledger.documentSystemID = 7)
-                        AND erp_itemledger.companySystemID = 29 
+                        AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
-                        AND erp_itemledger.wareHouseSystemCode IN (45,46)
+                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
                         AND erp_itemledger.inOutQty>0
-                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                        AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
                         erp_itemledger.companySystemID,
                         erp_itemledger.itemSystemCode ) as movementGRV_base
@@ -1395,16 +1476,21 @@ FROM
                     erp_itemledger.companySystemID,
                     erp_itemledger.companyID,
                     erp_itemledger.itemSystemCode,
+                    /*erp_itemledger.wacRpt as costPerUnitRpt,
+                    erp_itemledger.wacLocal as costPerUnitLocal,*/
+                    if(round(sum(erp_itemledger.inOutQty),2)=0,0,round((sum((erp_itemledger.inOutQty*erp_itemledger.wacRpt))/round(sum(erp_itemledger.inOutQty),2)),2)) as costPerUnitRpt,
+                    if(round(sum(erp_itemledger.inOutQty),2)=0,0,round((sum((erp_itemledger.inOutQty*erp_itemledger.wacLocal))/round(sum(erp_itemledger.inOutQty),2)),2)) as costPerUnitLocal,
                     sum( erp_itemledger.inOutQty ) totalQty,
                     sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacRpt ), 2 ) ) AS wacValueRpt,
                     sum( round( ( erp_itemledger.inOutQty * erp_itemledger.wacLocal ), 2 ) ) AS wacValueLocal 
                 FROM
                     erp_itemledger 
                 WHERE
-                    erp_itemledger.companySystemID = 29 
+                    erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
-                    AND erp_itemledger.wareHouseSystemCode IN ( 45, 46 ) 
-                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) <= STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                    AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
                     erp_itemledger.companySystemID,
                     erp_itemledger.itemSystemCode
@@ -1422,19 +1508,20 @@ FROM
                 FROM
                     erp_itemledger 
                 WHERE
-                    erp_itemledger.companySystemID = 29 
+                    erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                     AND erp_itemledger.documentSystemID = 8 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
-                    AND erp_itemledger.wareHouseSystemCode IN ( 45, 46 ) 
-                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, \"%d/%m/%Y\" ), \"%d/%m/%Y\" ) BETWEEN STR_TO_DATE( '01/01/2019', \"%d/%m/%Y\" ) 
-                    AND STR_TO_DATE( '31/12/2019', \"%d/%m/%Y\" ) 
+                    AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) BETWEEN STR_TO_DATE( '".$fromDate ."', '%d/%m/%Y' ) 
+                    AND  STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
                     erp_itemledger.companySystemID,
                     erp_itemledger.itemSystemCode
                     ) AS getIssuedQtyandCost ON getIssuedQtyandCost.companySystemID=finalquery.companySystemID AND getIssuedQtyandCost.itemSystemCode=finalquery.itemSystemCode
                     INNER JOIN
                     itemmaster ON itemmaster.itemCodeSystem=finalquery.itemSystemCode AND itemmaster.financeCategoryMaster=1
-                    LEFT JOIN units ON units.UnitID = itemmaster.unit";
+                    LEFT JOIN units ON units.UnitID = itemmaster.unit $finalOrderBy";
         return DB::select($sql);
     }
 }
