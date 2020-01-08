@@ -1111,6 +1111,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
     Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
+    Route::get('getTemplatesDetailsById', 'TemplatesDetailsAPIController@getTemplatesDetailsById');
     Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
@@ -1579,6 +1580,13 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote');
     Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice');
+
+    Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');
+
+    Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData');
+    Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
+    Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
+
 
 });
 

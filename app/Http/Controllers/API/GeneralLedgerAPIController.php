@@ -4,10 +4,37 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
+use App\Models\AccountsPayableLedger;
+use App\Models\AccountsReceivableLedger;
+use App\Models\BankLedger;
+use App\Models\BookInvSuppMaster;
+use App\Models\Company;
+use App\Models\CreditNote;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
+use App\Models\DocumentMaster;
+use App\Models\ErpItemLedger;
+use App\Models\FixedAssetDepreciationMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
+use App\Models\GRVMaster;
+use App\Models\InventoryReclassification;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnMaster;
+use App\Models\JvMaster;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PurchaseReturn;
+use App\Models\StockAdjustment;
+use App\Models\StockReceive;
+use App\Models\StockTransfer;
+use App\Models\UnbilledGrvGroupBy;
+use App\Models\Year;
 use App\Repositories\GeneralLedgerRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -294,5 +321,429 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger = ['outputData' => $generalLedger->toArray(), 'companyCurrency' => $companyCurrency];
 
         return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
+    }
+
+    /*
+     * year
+     * document
+     * company
+     * */
+    public function getDocumentAmendFormData(Request $request){
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+        $years = Year::orderBy('year','DESC')->get();
+        $companies = Company::whereIn("companySystemID", $subCompanies)->get();
+        $documents = DocumentMaster::whereIn('documentSystemID',[3,4,7,8,10,11,12,13,15,17,19,20,21,22,23,24,41,61])->get();
+
+        $output = [
+            'years'=>$years,
+            'companies'=>$companies,
+            'documents'=>$documents,
+        ];
+
+        return $this->sendResponse($output, 'Document Amend Form Data retrieved successfully');
+    }
+
+    public function getDocumentAmendFromGL(Request $request){
+        $input = $request->all();
+        $messages = [
+            'companySystemID.required' => 'Company is required.',
+            'documentSystemID.required' => 'Document is required.',
+            'yearID.required' => 'Year is required.',
+
+        ];
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required|numeric|min:1',
+            'documentSystemID' => 'required|numeric|min:1',
+            'yearID' => 'required|numeric|min:1',
+
+        ], $messages);
+
+        if($validator->fails()) {
+          //  return $this->sendError($validator->messages(), 422);
+        }
+
+
+
+
+        $input['companySystemID'] = isset($input['companySystemID'])?$input['companySystemID']:0;
+        $input['documentSystemID'] = isset($input['documentSystemID'])?$input['documentSystemID']:0;
+        $input['yearID'] = isset($input['yearID'])?$input['yearID']:0;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $glDocuments = GeneralLedger::where('companySystemID',$input['companySystemID'])
+            ->where('documentSystemID',$input['documentSystemID'])
+            ->where('documentYear',$input['yearID'])
+            ->with(['confirm_by','final_approved_by']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $glDocuments = $glDocuments->where(function ($query) use ($search) {
+                $query->where('documentNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('glCode', 'LIKE', "%{$search}%");
+            });
+        }
+        $glDocuments = $glDocuments->groupBy('documentSystemCode', 'documentSystemID');
+
+        return \DataTables::eloquent($glDocuments)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('GeneralLedgerID', $input['order'][0]['dir']);
+
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function changePostingDate(Request $request){
+
+        $input = $request->all();
+        $messages = [
+            'GeneralLedgerID.required' => 'ID is required',
+            'documentDate.required' => 'Posting Date is required.'
+        ];
+        $validator = \Validator::make($input, [
+            'GeneralLedgerID' => 'required|numeric|min:1',
+            'documentDate' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $id = $input['GeneralLedgerID'];
+        $time = Carbon::now()->format('H:i:s');
+        $documentDate = Carbon::parse($input['documentDate'])->format('y-m-d').' '.$time;
+        $documentDate = Carbon::parse($documentDate)->format('Y-m-d H:i:s');
+
+        $gl = GeneralLedger::find($id);
+        if(count((array)$gl)==0){
+            return $this->sendError('GL Entries Not Found');
+        }
+
+        $companySystemID = $gl->companySystemID;
+        $documentSystemID = $gl->documentSystemID;
+        $documentSystemCode = $gl->documentSystemCode;
+        $documentYear = $gl->documentYear;
+
+        DB::beginTransaction();
+        try{
+
+            $isGlUpdated = GeneralLedger::where('companySystemID',$companySystemID)
+                ->where('documentSystemID',$documentSystemID)
+                ->where('documentSystemCode',$documentSystemCode)
+                ->update(['documentDate' => $documentDate]);
+
+            switch ($documentSystemID) {
+
+                case 3:
+                    /*GRV
+                     * erp_itemledger
+                     * erp_unbilledgrvgroupby
+                     * erp_generalledger
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    UnbilledGrvGroupBy::where('companySystemID',$companySystemID)
+                        ->where('grvAutoID',$documentSystemCode)
+                        ->update(['grvDate' => $documentDate]);
+
+                case 4:
+                    /*
+                     * PV
+                     * erp_bankledger
+                     * erp_generalledger
+                     * master table - erp_paysupplierinvoicemaster - postedDate
+                     * */
+
+                    BankLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    PaySupplierInvoiceMaster::where('PayMasterAutoId',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 7:
+                    /*
+                     * SA
+                     * erp_itemledger
+                     * erp_generalledger
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                case 8:
+                    /*
+                     * MI
+                     * erp_itemledger
+                     * erp_generalledger
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                case 10:
+                    /*
+                     * RS - Receive Stock
+                     * erp_itemledger
+                     * erp_generalledger
+                     * master table - erp_stockreceive - postedDate
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    StockReceive::where('stockReceiveAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 11:
+                    /*
+                     * SI
+                     * erp_accountspayableledger
+                     * erp_generalledger
+                     * master table - erp_bookinvsuppmaster - postedDate
+                     * */
+
+                    AccountsPayableLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    BookInvSuppMaster::where('bookingSuppMasInvAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 12:
+                    /*
+                     * SR (Materiral return)
+                     * erp_itemledger
+                     * erp_generalledger
+                     * master table -erp_itemreturnmaster - postedDate
+                     * */
+
+                ErpItemLedger::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->update(['transactionDate' => $documentDate]);
+
+                ItemReturnMaster::where('itemReturnAutoID',$documentSystemCode)
+                    ->where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->update(['postedDate' => $documentDate]);
+
+                case 13:
+                    /*
+                     * ST
+                     * erp_itemledger
+                     * erp_generalledger
+                     * master table - erp_stocktransfer - postedDate
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    StockTransfer::where('stockTransferAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 15:
+                    /*
+                     * DN
+                     * erp_accountspayableledger
+                     * erp_generalledger
+                     * master table - erp_debitnote - postedDate
+                     * */
+                    AccountsPayableLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    DebitNote::where('debitNoteAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 17:
+                    /*
+                     * JV
+                     * erp_generalledger
+                     * master table - erp_jvmaster - postedDate
+                     * */
+                    JvMaster::where('jvMasterAutoId',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 19:
+                    /*
+                     * CN
+                     * erp_accountsreceivableledger
+                     * erp_generalledger
+                     * master table - erp_creditnote - postedDate
+                     * */
+                    AccountsReceivableLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentCodeSystem',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    CreditNote::where('creditNoteAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemiD',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 20:
+                    /*
+                     * INV
+                     * erp_accountsreceivableledger
+                     * erp_generalledger
+                     * master table - erp_custinvoicedirect - postedDate
+                     * */
+                    AccountsReceivableLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentCodeSystem',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 21:
+                    /*
+                     * BRV
+                     * erp_bankledger
+                     * erp_generalledger
+                     * master table - erp_customerreceivepayment - postedDate
+                     * */
+                    BankLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
+                    CustomerReceivePayment::where('custReceivePaymentAutoID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 22:
+                    /*
+                     * FA - asset costing
+                     * erp_generalledger
+                     * master table - erp_fa_asset_master - postedDate
+                     * */
+
+                    FixedAssetMaster::where('faID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+                case 23:
+                    /*
+                     * FAD - Fixed Asset Depreciation
+                     * erp_generalledger
+                     * master table - erp_fa_depmaster -depDate ??????// TODO
+                     * */
+
+//                    FixedAssetDepreciationMaster::where('depMasterAutoID',$documentSystemCode)
+//                        ->where('companySystemID',$companySystemID)
+//                        ->where('documentSystemID',$documentSystemID)
+//                        ->update(['depDate' => $documentDate]);
+
+                case 24:
+                    /*
+                     * PRN
+                     * erp_itemledger
+                     * erp_generalledger
+                     * */
+
+                ErpItemLedger::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->update(['transactionDate' => $documentDate]);
+
+                AccountsPayableLedger::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->update(['documentDate' => $documentDate]);
+
+                case 41:
+                    /*
+                     * FADS - Fixed Asset Depreciation
+                     * erp_generalledger
+                     * master table - erp_fa_asset_disposalmaster -disposalDocumentDate ??????// TODO
+                     * */
+
+//                    FixedAssetDepreciationMaster::where('depMasterAutoID',$documentSystemCode)
+//                        ->where('companySystemID',$companySystemID)
+//                        ->where('documentSystemID',$documentSystemID)
+//                        ->update(['disposalDocumentDate' => $documentDate]);
+
+                case 61:
+                    /*
+                     * INRC
+                     * erp_itemledger
+                     * erp_generalledger
+                     * ???? master table - erp_inventoryreclassification - postedDate
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    InventoryReclassification::where('inventoryreclassificationID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+            }
+
+            DB::commit();
+            return $this->sendResponse([],'Posting date changed successfully');
+        }catch (\Exception $e){
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
     }
 }
