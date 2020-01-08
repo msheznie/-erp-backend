@@ -339,7 +339,7 @@ class GeneralLedgerAPIController extends AppBaseController
         } else {
             $subCompanies = [$companyId];
         }
-        $years = Year::all();
+        $years = Year::orderBy('year','DESC')->get();
         $companies = Company::whereIn("companySystemID", $subCompanies)->get();
         $documents = DocumentMaster::whereIn('documentSystemID',[3,4,7,8,10,11,12,13,15,17,19,20,21,22,23,24,41,61])->get();
 
@@ -433,7 +433,9 @@ class GeneralLedgerAPIController extends AppBaseController
         }
 
         $id = $input['GeneralLedgerID'];
-        $documentDate = Carbon::parse($input['documentDate'])->format('Y-m-d');
+        $time = Carbon::now()->format('H:i:s');
+        $documentDate = Carbon::parse($input['documentDate'])->format('y-m-d').' '.$time;
+        $documentDate = Carbon::parse($documentDate)->format('Y-m-d H:i:s');
 
         $gl = GeneralLedger::find($id);
         if(count((array)$gl)==0){
@@ -451,7 +453,6 @@ class GeneralLedgerAPIController extends AppBaseController
             $isGlUpdated = GeneralLedger::where('companySystemID',$companySystemID)
                 ->where('documentSystemID',$documentSystemID)
                 ->where('documentSystemCode',$documentSystemCode)
-                ->where('documentYear',$documentYear)
                 ->update(['documentDate' => $documentDate]);
 
             switch ($documentSystemID) {
@@ -470,7 +471,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
                     UnbilledGrvGroupBy::where('companySystemID',$companySystemID)
                         ->where('grvAutoID',$documentSystemCode)
-                        ->update(['grvDate' => $documentDate]); // TODO
+                        ->update(['grvDate' => $documentDate]);
 
                 case 4:
                     /*
@@ -700,6 +701,11 @@ class GeneralLedgerAPIController extends AppBaseController
                     ->where('documentSystemID',$documentSystemID)
                     ->where('documentSystemCode',$documentSystemCode)
                     ->update(['transactionDate' => $documentDate]);
+
+                AccountsPayableLedger::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->update(['documentDate' => $documentDate]);
 
                 case 41:
                     /*
