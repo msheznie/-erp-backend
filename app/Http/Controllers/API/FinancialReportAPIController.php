@@ -3188,13 +3188,29 @@ GROUP BY
     public function reportTemplateGLDrillDown(Request $request)
     {
         $input = $request->all();
-
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+        $output = $this->reportTemplateGLDrillDownQry($request);
 
+        $total = collect($output)->pluck($input['selectedColumn'])->toArray();
+        $total = array_sum($total);
+
+        $request->request->remove('search.value');
+
+        return \DataTables::of($output)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->with('total', $total)
+            ->make(true);
+    }
+
+
+    public function reportTemplateGLDrillDownQry($request){
+
+        $input = $request->all();
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
 
@@ -3268,20 +3284,55 @@ GROUP BY
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . ' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
 
-        $output = DB::select($sql);
-
-        $total = collect($output)->pluck($input['selectedColumn'])->toArray();
-        $total = array_sum($total);
-
-        $request->request->remove('search.value');
-
-        return \DataTables::of($output)
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->with('total', $total)
-            ->make(true);
+        return DB::select($sql);
     }
 
+    public function reportTemplateGLDrillDownExport(Request $request){
+
+        $input = $request->all();
+        $type =  $request->type;
+        $data = array();
+        $output = $this->reportTemplateGLDrillDownQry($request);
+
+        if ($output) {
+            $total = collect($output)->pluck($input['selectedColumn'])->toArray();
+            $total = array_sum($total);
+            $x = 0;
+            foreach ($output as $val) {
+                $tem = (array) $val;
+                $data[$x]['Document Number'] = $val->documentCode;
+                $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
+                $data[$x]['Document Narration'] = $val->documentNarration;
+                $data[$x]['Service Line'] = $val->ServiceLineDes;
+                $data[$x]['Contract'] = $val->clientContractID;
+                $data[$x]['Supplier/Customer'] = $val->partyName;
+                $data[$x][$input['selectedColumn']] = $tem[$input['selectedColumn']];
+                $x++;
+            }
+
+            $data[$x]['Document Number'] = '';
+            $data[$x]['Date'] = '';
+            $data[$x]['Document Narration'] = '';
+            $data[$x]['Service Line'] = '';
+            $data[$x]['Contract'] = '';
+            $data[$x]['Supplier/Customer'] = 'Total';
+            $data[$x][$input['selectedColumn']] = $total;
+        }
+
+
+
+        $csv = \Excel::create('trial_balance', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
 
     function getFinancialCustomizeRptColumnQry($request)
     {

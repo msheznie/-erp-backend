@@ -613,7 +613,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'rptAmountTotal' => $rptAmountTotal);
                 }
                 break;
-            case 'CR': //Customer Balance Summery
+            case 'CR': //Customer Revenue
                 $reportTypeID = $request->reportTypeID;
 
                 if ($reportTypeID == 'RMS') { //customer ledger template 1
@@ -752,7 +752,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $outputRevenue = $this->getCustomerSummaryRevenueQRY($request);
                 $outputCollection = $this->getCustomerSummaryCollectionQRY($request);
                 //$outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
-                $outputOutstanding = $this->getCustomerSummaryOutstandingUpdatedQRY($request);
+                $outputOutstanding = array(); //$this->getCustomerSummaryOutstandingUpdatedQRY($request);
                 $outputServiceLine = $this->getCustomerSummaryRevenueServiceLineBaseQRY($request);
 
                 $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
@@ -4894,8 +4894,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                     )
                     ) AS revenueDataSummary
                 GROUP BY
-                    revenueDataSummary.companySystemID,
-                    revenueDataSummary.mySupplierCode
+                    revenueDataSummary.companySystemID
                 ORDER BY
 	                Total DESC');
         return $output;
@@ -4924,10 +4923,10 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
         if ($currency == 2) {
-            $currencyDocAmount = "IF (erp_generalledger.documentSystemID = '21',documentLocalAmount,0) AS BRVDocumentAmount";
+            $currencyDocAmount = "IF (erp_generalledger.documentSystemID = 21,documentLocalAmount,0) AS BRVDocumentAmount";
 
         } else if ($currency == 3) {
-            $currencyDocAmount = "IF (erp_generalledger.documentSystemID = '21',documentRptAmount,0) AS BRVDocumentAmount";
+            $currencyDocAmount = "IF (erp_generalledger.documentSystemID = 21,documentRptAmount,0) AS BRVDocumentAmount";
         }
 
         $output = \DB::select('SELECT
@@ -5062,6 +5061,7 @@ AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 AND erp_generalledger.documentRptAmount > 0
+AND erp_generalledger.glaccounttypeID = 1 
 AND YEAR (
 	erp_generalledger.documentDate
 ) = ' . $fromYear . '

@@ -581,6 +581,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
     Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
+    Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
     Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');

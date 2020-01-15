@@ -203,20 +203,58 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError('There is no budget allocated for '.$toChartOfAccount->AccountCode, 500);
         }
 
-        $checkSameEntry = $this->budgetTransferFormDetailRepository->findWhere(['budgetTransferFormAutoID' => $input['budgetTransferFormAutoID'],
-                                                                                'fromTemplateDetailID' => $input['fromTemplateDetailID'],
-                                                                                'toTemplateDetailID' => $input['toTemplateDetailID'],
-                                                                                'fromChartOfAccountSystemID' => $input['fromChartOfAccountSystemID'],
-                                                                                'toChartOfAccountSystemID' => $input['toChartOfAccountSystemID'],
-                                                                                'toServiceLineSystemID' => $input['toServiceLineSystemID'],
-                                                                                'fromServiceLineSystemID' => $input['fromServiceLineSystemID']]);
+        $checkSameEntry = BudgetTransferFormDetail::where(function ($q) use($input){
+            $q->where(function ($q1) use($input){
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['fromTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['fromTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
+                });
+            })->orWhere(function ($q1)use($input) {
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                });
+            });
 
-        if (count($checkSameEntry) > 0) {
-            return $this->sendError("Selected item is already added. Please check again", 500);
+            //( (((A = C) && (B = D )) || ((A1 = C) && (B1 = C))) || ( ((A = C1) && (B = D1 )) || ((A1 = C1) && (B1 = C1)) )   ) && H = I
+            })
+            ->where('budgetTransferFormAutoID' , $input['budgetTransferFormAutoID'])
+            ->count();
+
+        if ($checkSameEntry > 0) {
+            return $this->sendError("Selected GL Code is already added. Please check again", 500);
         }
 
-        $checkPending = BudgetTransferFormDetail::where('fromTemplateDetailID', $input['fromTemplateDetailID'])
-            ->where('fromChartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
+
+
+        $checkPendingFromGL = BudgetTransferFormDetail::where(function ($q) use($input){
+
+            $q->where(function ($q1) use($input){
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['fromTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['fromTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
+                });
+            })->orWhere(function ($q1)use($input) {
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                });
+            });
+
+               //( (((A = C) && (B = D )) || ((A1 = C) && (B1 = C))) || ( ((A = C1) && (B = D1 )) || ((A1 = C1) && (B1 = C1)) )   ) && H = I
+            })
             ->whereHas('master',function ($q) use ($budgetTransferMaster) {
                 $q->where('companySystemID', $budgetTransferMaster->companySystemID)
                     ->where('year', $budgetTransferMaster->year)
@@ -225,9 +263,10 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->with(['master'])
             ->first();
 
-        if (!empty($checkPending)) {
-            return $this->sendError("There is a Budget Transfer (" . $checkPending->master->transferVoucherNo . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        if (!empty($checkPendingFromGL)) {
+            return $this->sendError("There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") pending for approval for the GL Code you are trying to add. Please check again.", 500);
         }
+
 
           $checkBalance = Budjetdetails::select(DB::raw("
                                        (SUM(budjetAmtLocal) * -1) as totalLocal,
