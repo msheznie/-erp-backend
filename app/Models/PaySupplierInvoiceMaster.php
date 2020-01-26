@@ -875,4 +875,9 @@ class PaySupplierInvoiceMaster extends Model
     {
         return $this->hasMany('App\Models\BankLedger', 'documentSystemCode', 'PayMasterAutoId');
     }
+
+    public function payee_memo()
+    {
+        return $this->hasMany('App\Models\BankMemoPayee', 'documentSystemCode', 'PayMasterAutoId');
+    }
 }

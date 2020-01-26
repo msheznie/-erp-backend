@@ -1456,6 +1456,9 @@ class BankLedgerAPIController extends AppBaseController
                         $q4->where('currencyID', $bank_currency_id)
                             ->with(['bankMemo_by']);
                     }]);
+                }, 'payee_memo' => function($q) use($subCompanies){
+                    $q->where('documentSystemID', 4)
+                    ->whereIn('companySystemID',$subCompanies);
                 }])
                 ->orderBy('PayMasterAutoId', $sort)
                 ->get();
@@ -1541,7 +1544,20 @@ class BankLedgerAPIController extends AppBaseController
                     }
 
                     $entity->floatAmt = (string)$floatAmt;
-                    $entity->amount_word = ucwords($f->format($intAmt));
+
+                    //add zeros to decimal point
+                    if($entity->floatAmt != 00){
+                        $length = strlen($entity->floatAmt);
+                        if($length<$entity->decimalPlaces){
+                            $count = $entity->decimalPlaces-$length;
+                            for ($i=0; $i<$count; $i++){
+                                $entity->floatAmt .= '0';
+                            }
+                        }
+                    }
+
+                    $entity->amount_word = ucfirst($f->format($intAmt));
+                    $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
                     $entity->chequePrintedByEmpName = $employee->empName;
                     if($entity->supplier){
                         $entity->nameOnCheque = isset($entity->supplier->nameOnPaymentCheque)?$entity->supplier->nameOnPaymentCheque:'';
