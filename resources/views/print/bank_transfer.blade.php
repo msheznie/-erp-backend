@@ -245,6 +245,28 @@
                     </table>
                 </td>
             </tr>
+
+            <tr>
+                <td>
+                    <table style="width: 100%">
+                        @if(isset($entity->payee_memo) && $entity->payee_memo != null )
+                            @foreach($entity->payee_memo as $payee_memo)
+                                @if($payee_memo->memoDetail)
+                                    <tr style="width: 100%">
+                                        <td valign="top" style="width:30%">
+                                            {{$payee_memo->memoHeader}}
+                                        </td>
+                                        <td style="width: 2%">:</td>
+                                        <td valign="top" style="width: 68%">
+                                            {{$payee_memo->memoDetail}}
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        @endif
+                    </table>
+                </td>
+            </tr>
             <tr>
                 <td>
                     Yours faithfully,<br>

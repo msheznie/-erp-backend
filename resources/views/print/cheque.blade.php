@@ -175,7 +175,7 @@
     <table id="word_amount_table" class="header-part" >
         <tr >
             <td valign="top" >
-                <p style="font-size: 16px !important;" id="cheque_amount_word_para">  {{$entity->amount_word}} and {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif only</p>
+                <p style="font-size: 16px !important;" id="cheque_amount_word_para">  {{$entity->amount_word}} & {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif only</p>
             </td>
         </tr>
         <div style="font-size: 16px !important;" id="cheque_amount_no" >{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</div>
