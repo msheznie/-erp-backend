@@ -1541,6 +1541,18 @@ class BankLedgerAPIController extends AppBaseController
                     }
 
                     $entity->floatAmt = (string)$floatAmt;
+
+                    //add zeros to decimal point
+                    if($entity->floatAmt != 00){
+                        $length = strlen($entity->floatAmt);
+                        if($length<$entity->decimalPlaces){
+                            $count = $entity->decimalPlaces-$length;
+                            for ($i=0; $i<$count; $i++){
+                                $entity->floatAmt .= '0';
+                            }
+                        }
+                    }
+
                     $entity->amount_word = ucwords($f->format($intAmt));
                     $entity->chequePrintedByEmpName = $employee->empName;
                     if($entity->supplier){
