@@ -313,4 +313,17 @@ class DocumentAttachmentsAPIController extends AppBaseController
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
 
     }
+
+    public static function getImageByPath(Request $request)
+    {
+        $input = $request->all();
+
+        $exists = Storage::disk('public')->exists($input['path']);
+        if ($exists) {
+            $image = Storage::disk('public')->get($input['path']);
+            return response($image, 200)->header('Content-Type', 'image/png');
+        } else {
+            return response([], 200);
+        }
+    }
 }

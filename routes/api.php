@@ -643,6 +643,7 @@ Route::group(['middleware' => 'auth:api'], function () {
         $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
         return $output;
     });
+    Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
 
     Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
     Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
