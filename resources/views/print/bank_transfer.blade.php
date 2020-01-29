@@ -217,11 +217,16 @@
                     <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b>
                     kindly transfer a sum
                     of
-                    <b>@if($entity->bankcurrency) {{$entity->bankcurrency->CurrencyCode}}@endif {{number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
-                    [@if($entity->bankcurrency) {{$entity->bankcurrency->CurrencyCode}}@endif {{$entity->amount_word}}
+                    <b>@if(isset($entity->supplierTransactionCurrencyDetails)) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{' '.number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
+                    [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}
                     and
                     {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
                     following account as detailed below.<br>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{$entity->instruction}}
                 </td>
             </tr>
             <tr>
@@ -298,7 +303,6 @@
             </tr>
             <tr>
                 <td colspan="2">
-                    <br><br><br>
                     Prepared By: {{$entity->chequePrintedByEmpName}}
                 </td>
             </tr>
