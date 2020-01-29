@@ -8,6 +8,7 @@
  * -- Create date : 04- May 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
+ * -- Date: 29-January 2020 By: Zakeeul Description: Added new coloumns called customerSecondLanguage, reportTitleSecondLanguage, addressOneSecondLanguage, addressTwoSecondLanguage 
  */
 namespace App\Models;
 
@@ -123,7 +124,11 @@ class CustomerMaster extends Model
         'modifiedUser',
         'timeStamp',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'customerSecondLanguage',
+        'reportTitleSecondLanguage',
+        'addressOneSecondLanguage',
+        'addressTwoSecondLanguage'
     ];
 
     /**
@@ -176,7 +181,11 @@ class CustomerMaster extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'customerSecondLanguage' => 'string',
+        'reportTitleSecondLanguage' => 'string',
+        'addressOneSecondLanguage' => 'string',
+        'addressTwoSecondLanguage' => 'string'
     ];
 
     /**

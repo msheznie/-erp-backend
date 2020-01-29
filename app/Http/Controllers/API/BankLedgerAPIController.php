@@ -1352,6 +1352,7 @@ class BankLedgerAPIController extends AppBaseController
         if(isset($input['selectedForPrint']) && is_array($input['selectedForPrint']) && count($input['selectedForPrint'])>0){
             $chequeCount = 0;
             $transferCount = 0;
+            $supplierTransCurrencyID = 0;
             $pv = PaySupplierInvoiceMaster::whereIn('PayMasterAutoId',$input['selectedForPrint'])->get();
             if(!empty($pv)){
 
@@ -1361,7 +1362,7 @@ class BankLedgerAPIController extends AppBaseController
                     }elseif($value->chequePaymentYN == 0){
                         $transferCount++;
                     }
-
+                    $supplierTransCurrencyID = $value->supplierTransCurrencyID;
                 }
 
                 /*
@@ -1439,6 +1440,7 @@ class BankLedgerAPIController extends AppBaseController
                 $bank_currency_id = $bankAccount->currency->currencyID;
             }
 
+
             $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
                 ->where("confirmedYN", 1)
                 ->where("approved", 0)
@@ -1451,9 +1453,11 @@ class BankLedgerAPIController extends AppBaseController
                 ->when($input['selectedForPrint'], function ($q) use ($input) {
                     $q->whereIn('PayMasterAutoId', $input['selectedForPrint']);
                 })
-                ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($bank_currency_id) {
-                    $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id) {
-                        $q4->where('currencyID', $bank_currency_id)
+                ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($bank_currency_id,$supplierTransCurrencyID) {
+                    $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id,$supplierTransCurrencyID) {
+//                        $q4->where('currencyID', $bank_currency_id)
+                        $q4->where('currencyID', $supplierTransCurrencyID)
+                            ->where('isAssigned', -1)
                             ->with(['bankMemo_by']);
                     }]);
                 }, 'payee_memo' => function($q) use($subCompanies){
@@ -1524,7 +1528,7 @@ class BankLedgerAPIController extends AppBaseController
                     } else {
                         $item['details'] = [];
                     }
-                    $totalAmount = $totalAmount+$item->payAmountBank;
+                    $totalAmount = $totalAmount+$item->payAmountSuppTrans;
                 }
                 $entities = $bankLedger;
                 if(count($entities) && isset($entities[0])){
@@ -1555,6 +1559,20 @@ class BankLedgerAPIController extends AppBaseController
                             }
                         }
                     }
+
+                    // get supplier transaction currency
+                    $entity->instruction = '';
+                    $entity->supplierTransactionCurrencyDetails = [];
+                    if(isset($entity->supplier->supplierCurrency[0]->currencyMaster) && $entity->supplier->supplierCurrency[0]->currencyMaster){
+                        $entity->supplierTransactionCurrencyDetails = $entity->supplier->supplierCurrency[0]->currencyMaster;
+                        if($supplierTransCurrencyID != $bank_currency_id){
+                            $entity->instruction = 'The exchange rate agreed with treasury department is '.$entity->supplierTransactionCurrencyDetails->CurrencyCode.' '.$entity->supplierTransCurrencyER.' = '.$entity->bankcurrency->CurrencyCode.' '.number_format($entity->companyRptCurrencyER,4);
+                        }
+                    }
+
+
+
+
 
                     $entity->amount_word = ucfirst($f->format($intAmt));
                     $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
