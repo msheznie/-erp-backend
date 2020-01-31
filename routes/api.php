@@ -1659,3 +1659,8 @@ Route::get('runQueueSR', function () {
 Route::post('login', 'AuthAPIController@auth');
 
 
+
+
+Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+
+Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
