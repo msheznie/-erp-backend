@@ -1932,12 +1932,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($request['reportID'] == 'CR') {
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->WhereNotNull('customerCodeSystem')->get();
         } else {
-            $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
-                ->select('customerID')
-                ->groupBy('customerID')
-                ->pluck('customerID');
+            // $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
+            //     ->select('customerID')
+            //     ->groupBy('customerID')
+            //     ->pluck('customerID');
 
-            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('customerCodeSystem', $filterCustomers)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->get();
+            // $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
+            // ->whereIN('customerCodeSystem', $filterCustomers)
+            // ->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->get();
+            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
+            ->groupBy('customerCodeSystem')
+            ->orderBy('CustomerName', 'ASC')
+            ->WhereNotNull('customerCodeSystem')
+            ->get();
         }
         $years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
             ->whereNotNull('documentDate')
@@ -4892,6 +4899,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                     (
                         revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
                     )
+                    OR revenueDetailData.mySupplierCode IS NULL 
+    OR revenueDetailData.mySupplierCode = ""
                     ) AS revenueDataSummary
                 GROUP BY
                     revenueDataSummary.companySystemID
