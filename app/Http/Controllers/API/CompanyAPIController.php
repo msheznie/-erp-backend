@@ -22,7 +22,7 @@ use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierCategoryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\SupplierImportance;
-use App\Models\SupplierNature;
+use App\Models\suppliernature;
 use App\Models\SupplierContactType;
 use App\Models\YesNoSelection;
 use App\Models\SupplierCritical;
@@ -111,7 +111,7 @@ class CompanyAPIController extends AppBaseController
                                           ->get();
 
         /** Supplier Importance */
-        $supplierNature = SupplierNature::all();
+        $supplierNature = suppliernature::all();
 
         /** Supplier Nature */
         $supplierType = SupplierType::all();
