@@ -58,6 +58,7 @@ use App\Models\TicketMaster;
 use App\Models\Unit;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ErpDocumentTemplate;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -874,6 +875,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         ])->findWithoutFail($id);
 
+
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
 
         if ($detail) {
@@ -1555,20 +1557,39 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        $accountIBAN ='';
+        if ($customerInvoice && $customerInvoice->bankAccount) {
+            $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
+        }
 
-        $company = Company::where('companySystemID', $companySystemID)->first();
+        $company = Company::with('country')->where('companySystemID', $companySystemID)->first();
         $companyLogo = '';
         $CompanyName = '';
+        $CompanyAddress = '';
+        $CompanyCountry = '';
+        $CompanyTelephone = '';
+        $vatRegistratonNumber = '';
+        $CompanyFax = '';
         if ($company) {
             $companyLogo = $company->companyLogo;
             $CompanyName = $company->CompanyName;
+            $vatRegistratonNumber = $company->vatRegistratonNumber;
+            $CompanyFax = $company->CompanyFax;
+            $CompanyTelephone = $company->CompanyTelephone;
+            $CompanyAddress = $company->CompanyAddress;
+            $CompanyCountry = $company->country->countryName;
         }
 
         if ($master->secondaryLogoCompanySystemID > 0) {
-            $company = Company::where('companySystemID', $master->secondaryLogoCompanySystemID)->first();
+            $company = Company::with('country')->where('companySystemID', $master->secondaryLogoCompanySystemID)->first();
             if ($company) {
                 $CompanyName = $company->CompanyName;
+                $CompanyFax = $company->CompanyFax;
+                $CompanyTelephone = $company->CompanyTelephone;
+                $vatRegistratonNumber = $company->vatRegistratonNumber;
+                $CompanyAddress = $company->CompanyAddress;
                 $companyLogo = $company->companyLogo;
+                $CompanyCountry = $company->country->countryName;
             }
 
         }
@@ -1747,8 +1768,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         $customerInvoice->companySystemID = $companySystemID;
         $customerInvoice->CompanyName = $CompanyName;
+        $customerInvoice->CompanyTelephone = $CompanyTelephone;
+        $customerInvoice->CompanyFax = $CompanyFax;
+        $customerInvoice->vatRegistratonNumber = $vatRegistratonNumber;
+        $customerInvoice->CompanyCountry = $CompanyCountry;
+        $customerInvoice->CompanyAddress = $CompanyAddress;
         $customerInvoice->companyLogo = $companyLogo;
-
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
@@ -1808,16 +1833,46 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->where('custInvoiceDirectID', $id)->first();
         }
 
+        $month = date("F", strtotime($customerInvoice->bookingDate));
+        $year = date('Y', strtotime($customerInvoice->bookingDate));
+        $customerInvoice->monthOfInvoice = strtoupper($month)." ".$year;
+
+        $accountIBANSecondary = '';
+        if (!empty((array)$secondaryBankAccount)) {
+            if ($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account) {
+                $accountIBANSecondary = $secondaryBankAccount->contract->secondary_bank_account['accountIBAN#'];
+            }
+        }
+
+        $customerInvoice->accountIBAN = $accountIBAN;
+        $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
-        $html = view('print.customer_invoice', $array);
+        $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20)->first();
+        
+        if (!is_null($printTemplate)) {
+            $printTemplate = $printTemplate->toArray();
+        }
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        if ($printTemplate['printTemplateID'] == 2) {
+            $html = view('print.customer_invoice_tue', $array);
+            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P','setAutoTopMargin' => 'stretch','autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
 
-        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName,'I');
+        } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
+            $html = view('print.customer_invoice', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        }
     }
 
 

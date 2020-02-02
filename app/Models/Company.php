@@ -305,4 +305,9 @@ class Company extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'reportingCurrency','currencyID');
     }
 
+    public function country()
+    {
+        return $this->hasOne('App\Models\CountryMaster', 'countryID', 'companyCountry');
+    }
+
 }

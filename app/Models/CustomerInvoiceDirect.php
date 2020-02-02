@@ -635,7 +635,7 @@ class CustomerInvoiceDirect extends Model
 
     public function tax()
     {
-        return $this->belongsTo('App\Models\TaxDetail', 'custInvoiceDirectAutoID', 'documentSystemCode');
+        return $this->belongsTo('App\Models\Taxdetail', 'custInvoiceDirectAutoID', 'documentSystemCode');
     }
 
     public function createduser()
