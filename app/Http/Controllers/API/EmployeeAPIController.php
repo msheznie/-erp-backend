@@ -13,6 +13,7 @@
  * -- Date: 18-December 2018 By: Nazir Description: Added new functions named as confirmEmployeePasswordReset(),
  * -- Date: 19-December 2018 By: Nazir Description: Added new functions named as getEmployeeMasterData(),
  * -- Date: 27-August 2019 By: Rilwan Description: Added new functions amed as getProfileDetails()
+ * -- Date: 03-February 2020 By: Zakeeul Description: Added new functions named as getUserCountData()
  */
 
 namespace App\Http\Controllers\API;
@@ -23,6 +24,10 @@ use App\Http\Requests\API\UpdateEmployeeAPIRequest;
 use App\Models\Alert;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\EmployeeNavigation;
+use App\Models\EmployeesDepartment;
+use App\Models\LptPermission;
+use App\Models\UserRights;
 use App\Models\HRMSPersonalDocuments;
 use App\Models\User;
 use App\Repositories\EmployeeRepository;
@@ -390,5 +395,61 @@ class EmployeeAPIController extends AppBaseController
     public function getEmployeePersonalDetailsByType($empID,$type) {
         // after changing personaldocuments crud using employeesystemid, use employeeSystemID, until use empID
         return HRMSPersonalDocuments::where('empID',$empID)->where('documentType',$type)->first();
+    }
+
+    public function getUserCountData() {
+
+        $empCompanySystemID = [3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,29,30,31,34,42,43,52,53,58,60,63];
+
+        $noOfTaskUsers = User::whereHas('employee' , function($q) use ($empCompanySystemID){
+                                    $q->where('discharegedYN','=',0)
+                                      ->where('isSuperAdmin','=',0)
+                                      ->whereIn('empCompanySystemID', $empCompanySystemID)->groupBy('employeeSystemID');
+                                    })
+                                ->count();
+
+        $noOfErpUsers = EmployeeNavigation::whereHas('employee', function ($query) use ($empCompanySystemID) {
+                            $query->where('discharegedYN','=',0)
+                                ->where('isSuperAdmin','=',0)
+                                ->whereIn('empCompanySystemID', $empCompanySystemID);
+                        })->groupBy('employeeSystemID')->get();
+
+        $noOfHrmsUsers = UserRights::whereHas('employee', function ($query) use ($empCompanySystemID) {
+                            $query->where('discharegedYN','=',0)
+                                ->where('isSuperAdmin','=',0)
+                                ->whereIn('empCompanySystemID', $empCompanySystemID);
+                        })->where('moduleMasterID','=',3)->groupBy('employeeSystemID')->get();
+
+        $noOfQhseTaskUsers = EmployeesDepartment::whereHas('employee', function ($query) use ($empCompanySystemID) {
+                                $query->where('discharegedYN','=',0)
+                                    ->where('isSuperAdmin','=',0)
+                                    ->whereIn('empCompanySystemID', $empCompanySystemID);
+                            })->where('departmentSystemID','=',39)->groupBy('employeeSystemID')->get();
+
+        $noOfQhseFuncUsers = LptPermission::whereHas('employee', function ($query) use ($empCompanySystemID) {
+                                $query->where('discharegedYN','=',0)
+                                    ->where('isSuperAdmin','=',0)
+                                    ->whereIn('empCompanySystemID', $empCompanySystemID);
+                            })->groupBy('employeeSystemID')->get();
+
+        $noOfCementingUsers = \DB::select("select count(linkedID) as CementingUserCount
+from (
+select gears_cement.usermastertbl.linkedID
+from gears_cement.usermastertbl
+inner join employees ON gears_cement.usermastertbl.linkedID=employees.empID AND employees.discharegedYN=0 AND isSuperAdmin=0
+WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,29,30,31,34,42,43,52,53,58,60,63) ) CementingUserCount");
+
+        $output = array(
+            'noOfTaskUsers'=> $noOfTaskUsers,
+            'noOfErpUsers'=> count($noOfErpUsers),
+            'noOfHrmsUsers'=> count($noOfHrmsUsers),
+            'noOfQhseTaskUsers'=> count($noOfQhseTaskUsers),
+            'noOfQhseFuncUsers'=> count($noOfQhseFuncUsers),
+            'noOfCementingUsers'=> $noOfCementingUsers[0]->CementingUserCount,
+        );
+        $finalArray = array();
+
+        array_push($finalArray,$output);
+        return $this->sendResponse($finalArray, 'User Count details retrieved successfully');
     }
 }
