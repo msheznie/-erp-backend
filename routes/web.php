@@ -77,3 +77,7 @@ Route::resource('employeeDepartmentDelegations', 'employeeDepartmentDelegationCo
 Route::resource('erpPrintTemplateMasters', 'ErpPrintTemplateMasterController');
 
 Route::resource('erpDocumentTemplates', 'ErpDocumentTemplateController');
+
+Route::resource('userRights', 'UserRightsController');
+
+Route::resource('lptPermissions', 'LptPermissionController');
