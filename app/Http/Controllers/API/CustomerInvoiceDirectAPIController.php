@@ -1847,6 +1847,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->accountIBAN = $accountIBAN;
         $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
+
+        $customerInvoice->logoExists = false;
+        if (file_exists('logos/'.$customerInvoice->companyLogo)) {
+            $customerInvoice->logoExists = true;
+        } 
+
+
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
