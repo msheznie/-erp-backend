@@ -439,12 +439,19 @@ from gears_cement.usermastertbl
 inner join employees ON gears_cement.usermastertbl.linkedID=employees.empID AND employees.discharegedYN=0 AND isSuperAdmin=0
 WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,29,30,31,34,42,43,52,53,58,60,63) ) CementingUserCount");
 
+        $noOfOpUsers = EmployeesDepartment::whereHas('employee', function ($query) use ($empCompanySystemID) {
+                                $query->where('discharegedYN','=',0)
+                                    ->where('isSuperAdmin','=',0)
+                                    ->whereIn('empCompanySystemID', $empCompanySystemID);
+                            })->where('departmentSystemID','=',8)->groupBy('employeeSystemID')->get();
+
         $output = array(
             'noOfTaskUsers'=> $noOfTaskUsers,
             'noOfErpUsers'=> count($noOfErpUsers),
             'noOfHrmsUsers'=> count($noOfHrmsUsers),
             'noOfQhseTaskUsers'=> count($noOfQhseTaskUsers),
             'noOfQhseFuncUsers'=> count($noOfQhseFuncUsers),
+            'noOfOpUsers'=> count($noOfOpUsers),
             'noOfCementingUsers'=> $noOfCementingUsers[0]->CementingUserCount,
         );
         $finalArray = array();
