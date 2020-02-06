@@ -4037,11 +4037,10 @@ WHERE
 
         $customers = (array)$request->customers;
         $servicelines = (array)$request->servicelines;
-
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
         $serviceLineSystemID = collect($servicelines)->pluck('serviceLineSystemID')->toArray();
 
-        array_push($serviceLineSystemID, 24);
+        // array_push($serviceLineSystemID, 24);
 
         $currency = $request->currencyID;
 
