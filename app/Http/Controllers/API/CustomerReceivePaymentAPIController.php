@@ -930,8 +930,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->sum('receiveAmountTrans');
 
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
-
-                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round($customerInvoiceMaster['bookingAmountTrans'], $documentCurrencyDecimalPlace)) {
+                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
 
                         $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                         $itemExistArray[] = [$itemDrt];
