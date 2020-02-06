@@ -21,7 +21,7 @@ use App\Models\BankAccount;
 use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Models\Company;
-use App\Models\chartOfAccount;
+use App\Models\ChartOfAccount;
 use App\Repositories\DirectReceiptDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -368,7 +368,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
 
 
-        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')->where('chartOfAccountSystemID', $glCode)->first();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')->where('chartOfAccountSystemID', $glCode)->first();
 
         if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
             return $this->sendError('Cannot add. You are trying to select the same account.', 500);
