@@ -1228,6 +1228,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',
+                'erp_purchaseordermaster.supplierPrimaryCode',
                 'erp_purchaseordermaster.expectedDeliveryDate',
                 'erp_purchaseordermaster.referenceNumber',
                 'erp_purchaseordermaster.supplierTransactionCurrencyID',
@@ -1245,6 +1246,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
                     ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
@@ -4929,7 +4931,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     function getPOtoPaymentChain($row)
     {
         $grvMasters = GRVDetails::selectRaw('sum(noQty*GRVcostPerUnitLocalCur) as localAmount,
-                                        sum(noQty*GRVcostPerUnitComRptCur) as rptAmount,
+                                        sum(noQty*landingCost_RptCur) as rptAmount,
                                         purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
             ->with(['grv_master'])
