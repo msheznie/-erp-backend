@@ -379,6 +379,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         }, 'suppliercurrency' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
+        }])->withCount(['approved_by as approvalLevels' => function($q){
+            $q->where('documentSystemID',4);
         }])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
