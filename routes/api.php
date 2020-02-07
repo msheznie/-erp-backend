@@ -1658,6 +1658,8 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 
+Route::get('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
+
 
 
 
