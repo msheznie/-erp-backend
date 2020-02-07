@@ -1590,6 +1590,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
     Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
     Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
+    Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
 
 });
 
@@ -1659,7 +1660,7 @@ Route::get('runQueueSR', function () {
 
 Route::post('login', 'AuthAPIController@auth');
 
-Route::get('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
+
 
 
 
