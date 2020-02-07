@@ -402,6 +402,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
     Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
     Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
+    Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
 
 
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
