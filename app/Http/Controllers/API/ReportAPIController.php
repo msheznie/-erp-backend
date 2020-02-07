@@ -55,6 +55,18 @@ class ReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'SAVING':
+                $validator = \Validator::make($request->all(), [
+                    'suppliers' => 'required',
+                    'categories' => 'required',
+                    'subCategories' => 'required',
+                    'year' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
