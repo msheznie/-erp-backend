@@ -402,6 +402,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
     Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
     Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
+    Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
 
 
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -1589,6 +1590,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
     Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
     Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
+    Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
 
 });
 
@@ -1657,6 +1659,8 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
 
 
 
