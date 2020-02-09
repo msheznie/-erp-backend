@@ -46,6 +46,7 @@
  *                                                   exportPoToPaymentReport()
  * -- Date: 21-September 2018 By: Nazir Description: Added new functions named as exportProcumentOrderMaster()
  * -- Date: 13-November 2018 By: Fayas Description: Added new functions named as getAdvancePaymentRequestStatusHistory(),
+ * -- Date: 07-February 2020 By: Zakeeul Description: Added new functions named as getReportSavingFliterData(),
  */
 
 namespace App\Http\Controllers\API;
@@ -99,6 +100,8 @@ use App\Models\GRVDetails;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\GRVMaster;
+use App\Models\Year;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -1228,6 +1231,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',
+                'erp_purchaseordermaster.supplierPrimaryCode',
                 'erp_purchaseordermaster.expectedDeliveryDate',
                 'erp_purchaseordermaster.referenceNumber',
                 'erp_purchaseordermaster.supplierTransactionCurrencyID',
@@ -1245,6 +1249,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%")
                     ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
@@ -4929,7 +4934,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     function getPOtoPaymentChain($row)
     {
         $grvMasters = GRVDetails::selectRaw('sum(noQty*GRVcostPerUnitLocalCur) as localAmount,
-                                        sum(noQty*GRVcostPerUnitComRptCur) as rptAmount,
+                                        sum(noQty*landingCost_RptCur) as rptAmount,
                                         purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
             ->with(['grv_master'])
@@ -5249,6 +5254,33 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
         $output = array('suppliers' => $suppliers,'categories' => $categories);
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getReportSavingFliterData(Request $request)
+    {
+        $companyId = $request->selectedCompanyId;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $filterSuppliers = ProcumentOrder::whereIN('companySystemID', $companyID)
+            ->select('supplierID')
+            ->groupBy('supplierID')
+            ->pluck('supplierID');
+        $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
+        
+        $subCategories = FinanceItemcategorySubAssigned::whereIN('companySystemID', $companyID)->groupBy('itemCategorySubID')->get();
+
+        $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
+
+        $years = Year::orderby('year', 'desc')->get();
+
+        $output = array('suppliers' => $supplierMaster,'categories' => $categories, 'years' => $years, 'subCategories' => $subCategories);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
