@@ -17,7 +17,6 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\ProcumentOrder;
-use App\Models\PurchaseOrderDetails;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1377,10 +1376,8 @@ WHERE
         return $data;
     }
 
-    public function getItemSavingReport(Request $request)
-    {
+    public function getSavingReportData($input){
 
-        $input = $request->all();
         $companyID = "";
         $checkIsGroup = Company::find($input['companySystemID']);
         if ($checkIsGroup->isGroup) {
@@ -1389,16 +1386,15 @@ WHERE
             $companyID = (array)$input['companySystemID'];
         }
 
-        $option = isset($input['option']) ? $input['option'] : -1;
         $year = isset($input['year']) ? $input['year'] : date("Y");
 
-        $suppliers = (array)$request->suppliers;
+        $suppliers = (array)$input['suppliers'];
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
-        $categories = (array)$request->categories;
+        $categories = (array)$input['categories'];
         $categorySystemID = collect($categories)->pluck('value')->toArray();
 
-        $subCategories = (array)$request->subCategories;
+        $subCategories = (array)$input['subCategories'];
         $subCategorySystemID = collect($subCategories)->pluck('itemCategorySubID')->toArray();
 
 
@@ -1491,173 +1487,190 @@ WHERE
                 itemCode";
         $output = \DB::select($finalQry);
 
-        foreach ($output as $item){
+        foreach ($output as $item) {
 
 
             //Feb Saving
-            if($item->Jan_qty != 0){
+            if ($item->Jan_qty != 0) {
                 $item->Feb_SavingAmount = ($item->Feb_UnitCost - $item->Jan_UnitCost) * $item->Feb_qty * -1;
             }
 
 
             //Mar Saving
-            if($item->Feb_qty != 0){
+            if ($item->Feb_qty != 0) {
                 $item->March_SavingAmount = ($item->March_UnitCost - $item->Feb_UnitCost) * $item->March_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->March_SavingAmount = ($item->March_UnitCost - $item->Jan_UnitCost) * $item->March_qty * -1;
             }
 
             //April Saving
-            if($item->March_qty != 0){
+            if ($item->March_qty != 0) {
                 $item->April_SavingAmount = ($item->April_UnitCost - $item->March_UnitCost) * $item->April_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->April_SavingAmount = ($item->April_UnitCost - $item->Feb_UnitCost) * $item->April_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->April_SavingAmount = ($item->April_UnitCost - $item->Jan_UnitCost) * $item->April_qty * -1;
             }
 
             //May Saving
-            if($item->April_qty != 0){
+            if ($item->April_qty != 0) {
                 $item->May_SavingAmount = ($item->May_UnitCost - $item->April_UnitCost) * $item->May_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->May_SavingAmount = ($item->May_UnitCost - $item->March_UnitCost) * $item->May_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->May_SavingAmount = ($item->May_UnitCost - $item->Feb_UnitCost) * $item->May_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->May_SavingAmount = ($item->May_UnitCost - $item->Jan_UnitCost) * $item->May_qty * -1;
             }
 
             //June Saving
-            if($item->May_qty != 0){
+            if ($item->May_qty != 0) {
                 $item->June_SavingAmount = ($item->June_UnitCost - $item->May_UnitCost) * $item->June_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->June_SavingAmount = ($item->June_UnitCost - $item->April_UnitCost) * $item->June_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->June_SavingAmount = ($item->June_UnitCost - $item->March_UnitCost) * $item->June_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->June_SavingAmount = ($item->June_UnitCost - $item->Feb_UnitCost) * $item->June_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->June_SavingAmount = ($item->June_UnitCost - $item->Jan_UnitCost) * $item->June_qty * -1;
             }
 
 
             //July Saving
-            if($item->June_qty != 0){
+            if ($item->June_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->June_UnitCost) * $item->July_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->May_UnitCost) * $item->July_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->April_UnitCost) * $item->July_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->March_UnitCost) * $item->July_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->Feb_UnitCost) * $item->July_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->July_SavingAmount = ($item->July_UnitCost - $item->Jan_UnitCost) * $item->July_qty * -1;
             }
 
             //Aug Saving
-            if($item->July_qty != 0){
+            if ($item->July_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->July_UnitCost) * $item->Aug_qty * -1;
-            }else if($item->June_qty != 0){
+            } else if ($item->June_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->June_UnitCost) * $item->Aug_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->May_UnitCost) * $item->Aug_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->April_UnitCost) * $item->Aug_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->March_UnitCost) * $item->Aug_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->Feb_UnitCost) * $item->Aug_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->Aug_SavingAmount = ($item->Aug_UnitCost - $item->Jan_UnitCost) * $item->Aug_qty * -1;
             }
 
             //Sep Saving
-            if($item->Aug_qty != 0){
+            if ($item->Aug_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Sept_UnitCost - $item->Aug_UnitCost) * $item->Sept_qty * -1;
-            }if($item->July_qty != 0){
+            }
+            if ($item->July_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->July_UnitCost) * $item->Sept_qty * -1;
-            }else if($item->June_qty != 0){
+            } else if ($item->June_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->June_UnitCost) * $item->Sept_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->May_UnitCost) * $item->Sept_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->April_UnitCost) * $item->Sept_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->March_UnitCost) * $item->Sept_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->Feb_UnitCost) * $item->Sept_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->Sept_SavingAmount = ($item->Aug_UnitCost - $item->Jan_UnitCost) * $item->Sept_qty * -1;
             }
 
             //Oct Saving
-            if($item->Sept_qty != 0){
+            if ($item->Sept_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->Sept_UnitCost) * $item->Oct_qty * -1;
-            } if($item->Aug_qty != 0){
+            }
+            if ($item->Aug_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->Aug_UnitCost) * $item->Oct_qty * -1;
-            }if($item->July_qty != 0){
+            }
+            if ($item->July_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->July_UnitCost) * $item->Oct_qty * -1;
-            }else if($item->June_qty != 0){
+            } else if ($item->June_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->June_UnitCost) * $item->Oct_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->May_UnitCost) * $item->Oct_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->April_UnitCost) * $item->Oct_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->March_UnitCost) * $item->Oct_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->Feb_UnitCost) * $item->Oct_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->Oct_SavingAmount = ($item->Oct_UnitCost - $item->Jan_UnitCost) * $item->Oct_qty * -1;
             }
 
             //Nov Saving
-            if($item->Oct_qty != 0){
+            if ($item->Oct_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->Oct_UnitCost) * $item->Nov_qty * -1;
-            }if($item->Sept_qty != 0){
+            }
+            if ($item->Sept_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->Sept_UnitCost) * $item->Nov_qty * -1;
-            } if($item->Aug_qty != 0){
+            }
+            if ($item->Aug_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->Aug_UnitCost) * $item->Nov_qty * -1;
-            }if($item->July_qty != 0){
+            }
+            if ($item->July_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->July_UnitCost) * $item->Nov_qty * -1;
-            }else if($item->June_qty != 0){
+            } else if ($item->June_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->June_UnitCost) * $item->Nov_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->May_UnitCost) * $item->Nov_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->April_UnitCost) * $item->Nov_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->March_UnitCost) * $item->Nov_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->Feb_UnitCost) * $item->Nov_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->Nov_SavingAmount = ($item->Nov_UnitCost - $item->Jan_UnitCost) * $item->Nov_qty * -1;
             }
 
             //Dec Saving
-            if($item->Nov_qty != 0){
+            if ($item->Nov_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Nov_UnitCost) * $item->Dece_qty * -1;
-            }else if($item->Oct_qty != 0){
+            } else if ($item->Oct_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Oct_UnitCost) * $item->Dece_qty * -1;
-            }if($item->Sept_qty != 0){
+            }
+            if ($item->Sept_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Sept_UnitCost) * $item->Dece_qty * -1;
-            } if($item->Aug_qty != 0){
+            }
+            if ($item->Aug_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Aug_UnitCost) * $item->Dece_qty * -1;
-            }if($item->July_qty != 0){
+            }
+            if ($item->July_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->July_UnitCost) * $item->Dece_qty * -1;
-            }else if($item->June_qty != 0){
+            } else if ($item->June_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->June_UnitCost) * $item->Dece_qty * -1;
-            }else  if($item->May_qty != 0){
+            } else if ($item->May_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->May_UnitCost) * $item->Dece_qty * -1;
-            }else if($item->April_qty != 0){
+            } else if ($item->April_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->April_UnitCost) * $item->Dece_qty * -1;
-            }if($item->March_qty != 0){
+            }
+            if ($item->March_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->March_UnitCost) * $item->Dece_qty * -1;
-            }else if($item->Feb_qty != 0){
+            } else if ($item->Feb_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Feb_UnitCost) * $item->Dece_qty * -1;
-            }else if($item->Jan_qty != 0){
+            } else if ($item->Jan_qty != 0) {
                 $item->Dece_SavingAmount = ($item->Dece_UnitCost - $item->Jan_UnitCost) * $item->Dece_qty * -1;
             }
 
@@ -1670,12 +1683,101 @@ WHERE
                 $item->July_SavingAmount +
                 $item->Aug_SavingAmount +
                 $item->Sept_SavingAmount +
-                $item-> Oct_SavingAmount +
+                $item->Oct_SavingAmount +
                 $item->Nov_SavingAmount +
                 $item->Dece_SavingAmount;
         }
 
+        return $output;
+    }
+
+    public function getItemSavingReport(Request $request)
+    {
+        $input = $request->all();
+        $output = $this->getSavingReportData($input);
+
         return $this->sendResponse($output, 'successfully generated report');
+    }
+
+    public function exportExcelSavingReport(Request $request)
+    {
+        $input = $request->all();
+        $type = $request->type;
+        $output = $this->getSavingReportData($input);
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                /*$data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Company Name'] = $val->CompanyName;*/
+                $data[$x]['Item Code'] = $val->itemPrimaryCode;
+                $data[$x]['Item Description'] = $val->itemDescription;
+                $data[$x]['UOM'] = $val->UnitShortCode;
+                $data[$x]['Jan'] = '';
+                $data[$x]['Feb'] = round($val->Feb_UnitCost, 2);
+                $data[$x]['Mar'] = round($val->March_UnitCost, 2);
+                $data[$x]['Apr'] = round($val->April_UnitCost, 2);
+                $data[$x]['May'] = round($val->May_UnitCost, 2);
+                $data[$x]['Jun'] = round($val->June_UnitCost, 2);
+                $data[$x]['Jul'] = round($val->July_UnitCost, 2);
+                $data[$x]['Aug'] = round($val->Aug_UnitCost, 2);
+                $data[$x]['Sep'] = round($val->Sept_UnitCost, 2);
+                $data[$x]['Oct'] = round($val->Oct_UnitCost, 2);
+                $data[$x]['Nov'] = round($val->Nov_UnitCost, 2);
+                $data[$x]['Dec'] = round($val->Dece_UnitCost, 2);
+                $data[$x]['Saving Total'] = '';
+                $x++;
+
+                $data[$x]['Item Code'] = '';
+                $data[$x]['Item Description'] = '';
+                $data[$x]['UOM'] = '';
+                $data[$x]['Jan'] = 'QTY';
+                $data[$x]['Feb'] = round($val->Feb_qty, 2);
+                $data[$x]['Mar'] = round($val->March_qty, 2);
+                $data[$x]['Apr'] = round($val->April_qty, 2);
+                $data[$x]['May'] = round($val->May_qty, 2);
+                $data[$x]['Jun'] = round($val->June_qty, 2);
+                $data[$x]['Jul'] = round($val->July_qty, 2);
+                $data[$x]['Aug'] = round($val->Aug_qty, 2);
+                $data[$x]['Sep'] = round($val->Sept_qty, 2);
+                $data[$x]['Oct'] = round($val->Oct_qty, 2);
+                $data[$x]['Nov'] = round($val->Nov_qty, 2);
+                $data[$x]['Dec'] = round($val->Dece_qty, 2);
+                $data[$x]['Saving Total'] = '';
+
+                $x++;
+
+                $data[$x]['Item Code'] = '';
+                $data[$x]['Item Description'] = '';
+                $data[$x]['UOM'] = '';
+                $data[$x]['Jan'] = 'Saving';
+                $data[$x]['Feb'] = round($val->Feb_SavingAmount, 2);
+                $data[$x]['Mar'] = round($val->March_SavingAmount, 2);
+                $data[$x]['Apr'] = round($val->April_SavingAmount, 2);
+                $data[$x]['May'] = round($val->May_SavingAmount, 2);
+                $data[$x]['Jun'] = round($val->June_SavingAmount, 2);
+                $data[$x]['Jul'] = round($val->July_SavingAmount, 2);
+                $data[$x]['Aug'] = round($val->Aug_SavingAmount, 2);
+                $data[$x]['Sep'] = round($val->Sept_SavingAmount, 2);
+                $data[$x]['Oct'] = round($val->Oct_SavingAmount, 2);
+                $data[$x]['Nov'] = round($val->Nov_SavingAmount, 2);
+                $data[$x]['Dec'] = round($val->Dece_SavingAmount, 2);
+                $data[$x]['Saving Total'] = round($val->total_SavingAmount, 2);
+
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('saving_report', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }
