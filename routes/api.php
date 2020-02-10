@@ -1591,6 +1591,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
     Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
     Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
+    Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
 
 });
 
