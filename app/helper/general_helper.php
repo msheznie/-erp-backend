@@ -2456,7 +2456,7 @@ class Helper
      */
     public static function companyFinanceYear($companySystemID, $isAllowBackDate = 0)
     {
-        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate"))
             ->where('companySystemID', '=', $companySystemID)
             ->where('isActive', -1);
 

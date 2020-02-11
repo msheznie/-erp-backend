@@ -81,3 +81,12 @@ Route::resource('erpDocumentTemplates', 'ErpDocumentTemplateController');
 Route::resource('userRights', 'UserRightsController');
 
 Route::resource('lptPermissions', 'LptPermissionController');
+
+Route::resource('preDefinedReportTemplates', 'PreDefinedReportTemplateController');
+
+
+Route::resource('clientPerformaAppTypes', 'ClientPerformaAppTypeController');
+
+Route::resource('customerInvoiceTrackings', 'CustomerInvoiceTrackingController');
+
+Route::resource('customerInvoiceTrackingDetails', 'CustomerInvoiceTrackingDetailController');

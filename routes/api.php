@@ -1593,6 +1593,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
     Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
 
+    Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
+
+    Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData');
+    Route::get('getContractServiceLine', 'CustomerInvoiceTrackingAPIController@getContractServiceLine');
+    Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany');
+    Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
+    Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
+    Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1664,6 +1673,11 @@ Route::post('login', 'AuthAPIController@auth');
 
 
 
+Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+
+
+
+
 
 
 Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
@@ -1673,3 +1687,11 @@ Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
 Route::resource('user_rights', 'UserRightsAPIController');
 
 Route::resource('lpt_permissions', 'LptPermissionAPIController');
+
+
+Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+
+
+
+
+Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
