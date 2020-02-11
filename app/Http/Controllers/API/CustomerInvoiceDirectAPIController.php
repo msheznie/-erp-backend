@@ -1890,7 +1890,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $numFormatter = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
-        $floatAmountInWords = ($floatAmt > 0) ? "AND HALALA ".strtoupper($numFormatter->format($floatAmt))." ONLY." : '';
+        $floatAmountInWords = ($floatAmt > 0) ? " AND HALALA ".strtoupper($numFormatter->format($floatAmt))." ONLY." : '';
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "SAUDI RIALS ".$intAmountInWords.$floatAmountInWords : "SAUDI RIALS ".$intAmountInWords." ONLY";
 
