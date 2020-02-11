@@ -23,10 +23,10 @@
                             <td><b> :
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-
+                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountName}}
                                     @endif
                                 @else
-                                    
+                                    {{($request->bankaccount) ? $request->bankaccount->AccountName : ''}}
                                 @endif
                                 </b>
                             </td>

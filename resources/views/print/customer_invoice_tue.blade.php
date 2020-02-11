@@ -202,14 +202,14 @@
             <tr>
                 <td style="width: 50%; text-align: left;">
                     {{$request->CompanyAddress}}<br>
-                    {{$request->CompanyCountry}}<br>
+                    <!-- {{$request->CompanyCountry}}<br> -->
                     Tel: {{$request->CompanyTelephone}}<br>
                     Fax: {{$request->CompanyFax}}<br>
                     <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;">
-                    ص.ب . 34443 الخبر.6166<br>
-                    المملكة العربية السعودية <br>
+                    {{$request->CompanyAddressSecondaryLanguage}}<br>
+                    <!-- سلطنة عمان<br> -->
                     هاتف : {{$request->CompanyTelephone}}<br>
                           فاكس : {{$request->CompanyFax}}<br>
                    <b>الرقم الضريبي : {{$request->vatRegistratonNumber}}</b>
@@ -232,8 +232,13 @@
                                 @endif</b><br>
                     
                         <b>QUOTE TUE : 
-                            @if($request->line_performaCode)
-                                {{$request->invoicedetail->performadetails->performaCode}}
+                            @if($request->line_poNumber)
+                                {{$request->PONumber}}
+                            @endif
+                        </b><br>
+                        <b>Contract / PO No : 
+                             @if(!empty($request->invoicedetails) )
+                                {{$request->invoicedetails[0]->clientContractID}}
                             @endif
                         </b>
                 </td>
@@ -242,10 +247,16 @@
                     <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
-                        <b>تاريخ الفاتورة : 
-                            @if($request->line_performaCode)
-                                {{$request->invoicedetail->performadetails->performaCode}}
-                            @endif
+                        <b>@if($request->line_poNumber)
+                                {{$request->PONumber}}
+                            @endif : تاريخ الفاتورة 
+                            
+                        </b><br>
+                        <b>@if(!empty($request->invoicedetails) )
+                                {{$request->invoicedetails[0]->clientContractID}}
+                            @endif : رقم العقد/أمر الشراء
+                             
+                        </b>
 
                 </td>
             </tr>
@@ -254,8 +265,14 @@
     <div class="row">
         <br>
     </div>
+    @if(!empty($request->serviceStartDate) && !empty($request->serviceEndDate))
     <div class="row" style="text-decoration: underline; text-align: center;">
-        <b>RENTAL INVOICE FOR THE MONTH OF {{$request->monthOfInvoice}}</b>
+        <b>RENTAL INVOICE FOR THE PERIOD FROM  
+                                    {{\App\helper\Helper::dateFormat($request->serviceStartDate) }}
+                                 TO 
+                                    {{\App\helper\Helper::dateFormat($request->serviceEndDate) }}
+                            </b>
+    @endif
     </div>
     <div class="row">
         <br>
@@ -288,7 +305,7 @@
                     <th style="width:6%;text-align: center">Days<br>عدد الايام</th>
                     <th style="width:10%;text-align: center">Price<br>السعر</th>
                     <th style="width:15%;text-align: center">Net Price<br>السعر الصافي</th>
-                    <th style="width:14%;text-align: center">VAT Amount<br>قيمة الضريبة المضافة</th>
+                    <!-- <th style="width:14%;text-align: center">Rental Period<br></th> -->
                     <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
@@ -309,7 +326,7 @@
                         <td></td>
                         <td></td>
                         <td></td>
-                        <td></td>
+                        <!-- <td>{{$request->monthOfInvoice}}</td> -->
                         <td class="text-right">{{number_format($item->sumofsumofStandbyAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
@@ -319,7 +336,7 @@
                 <tbody>
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
+                        <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -329,14 +346,14 @@
                         {{$directTraSubTotal+=$request->tax->amount}}
                         <tr>
                             <td></td>
-                            <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="4" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                             <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
                         </tr>
 
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
+                        <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                         <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
@@ -344,12 +361,12 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8" style="background-color: #8db3e2">(SAUDI RIALS TWO HUNDRED EIGHTEEN THOUSAND EIGHT HUNDRED NINETY EIGHT AND HALALA FORTYEIGHT ONLY)</td>
+                        <td colspan="7" style="background-color: #8db3e2">({{$request->amountInWords}})</td>
                     </tr>
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
                     </tr>
                 </tbody>
                 
@@ -366,7 +383,7 @@
                     <th style="width:6%;text-align: center">Days<br>عدد الايام</th>
                     <th style="width:10%;text-align: center">Price<br>السعر</th>
                     <th style="width:15%;text-align: center">Net Price<br>السعر الصافي</th>
-                    <th style="width:14%;text-align: center">VAT Amount<br>قيمة الضريبة المضافة</th>
+                    <!-- <th style="width:14%;text-align: center">Rental Period<br></th> -->
                     <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
@@ -385,7 +402,7 @@
                         <td></td>
                         <td style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td style="text-align: right;">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
-                        <td style="text-align: right;"></td>
+                        <!-- <td style="text-align: right;">{{$request->monthOfInvoice}}</td> -->
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
@@ -395,7 +412,7 @@
                 <tbody>
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
+                        <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -405,14 +422,14 @@
                     {{$directTraSubTotal+=$request->tax->amount}}
                         <tr>
                             <td></td>
-                            <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="4" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                             <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
                         </tr>
 
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
+                        <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                         <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
@@ -420,12 +437,12 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8" style="background-color: #8db3e2">(SAUDI RIALS TWO HUNDRED EIGHTEEN THOUSAND EIGHT HUNDRED NINETY EIGHT AND HALALA FORTYEIGHT ONLY)</td>
+                        <td colspan="7" style="background-color: #8db3e2">({{$request->amountInWords}})</td>
                     </tr>
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
                     </tr>
                 </tbody>
                 
