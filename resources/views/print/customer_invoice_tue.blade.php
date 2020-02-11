@@ -265,12 +265,14 @@
     <div class="row">
         <br>
     </div>
+    @if(!empty($request->serviceStartDate) && !empty($request->serviceEndDate))
     <div class="row" style="text-decoration: underline; text-align: center;">
-        <b>RENTAL INVOICE FOR THE PERIOD FROM  @if(!empty($request->serviceStartDate))
+        <b>RENTAL INVOICE FOR THE PERIOD FROM  
                                     {{\App\helper\Helper::dateFormat($request->serviceStartDate) }}
-                                @endif TO @if(!empty($request->serviceEndDate))
+                                 TO 
                                     {{\App\helper\Helper::dateFormat($request->serviceEndDate) }}
-                                @endif</b>
+                            </b>
+    @endif
     </div>
     <div class="row">
         <br>
