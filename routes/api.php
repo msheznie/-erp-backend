@@ -1634,6 +1634,7 @@ Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@export
 Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
 Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
 Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
+Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');

@@ -316,4 +316,8 @@ class CustomerInvoiceTrackingDetail extends Model
     public function rejected_by(){
         return $this->belongsTo('App\Models\Employee','customerRejectedByEmpSystemID','employeeSystemID');
     }
+
+    public function customer_invoice_direct(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
+    }
 }

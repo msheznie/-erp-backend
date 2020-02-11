@@ -749,4 +749,26 @@ GROUP BY
             }
         }
     }
+
+    public function getBatchSubmissionDetailsPrintPDF(Request $request){
+
+        $id = $request->get('id');
+        $batchSubmission = CustomerInvoiceTracking::where('customerInvoiceTrackingID',$id)
+            ->with(['company','detail' => function($q){
+                $q->with(['customer_invoice_direct']);
+            }])->first();
+
+        if (empty($batchSubmission)) {
+            return $this->sendError('Expense Claim not found');
+        }
+        $order = ['masterdata'=>$batchSubmission];
+        $time = strtotime("now");
+        $fileName = 'batch_subscription_' . $id . '_' . $time . '.pdf';
+        $html = view('print.batch_submission', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+
+    }
 }
