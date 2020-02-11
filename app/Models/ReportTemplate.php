@@ -119,6 +119,8 @@ class ReportTemplate extends Model
         'isAssignToGroup',
         'presentationType',
         'drillDownType',
+        'preDefinedTemplateYN',
+        'preDefinedReportTemplateID',
         'showNumbersIn',
         'showDecimalPlaceYN',
         'historicalYN',
@@ -152,6 +154,8 @@ class ReportTemplate extends Model
         'isAssignToGroup' => 'integer',
         'presentationType' => 'integer',
         'drillDownType' => 'integer',
+        'preDefinedTemplateYN' => 'integer',
+        'preDefinedReportTemplateID' => 'integer',
         'showNumbersIn' => 'integer',
         'showDecimalPlaceYN' => 'integer',
         'historicalYN' => 'integer',
@@ -188,6 +192,11 @@ class ReportTemplate extends Model
     public function template_type()
     {
         return $this->belongsTo('App\Models\AccountsType', 'reportID', 'accountsType');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\ReportTemplateDetails', 'companyReportTemplateID', 'companyReportTemplateID');
     }
 
 
