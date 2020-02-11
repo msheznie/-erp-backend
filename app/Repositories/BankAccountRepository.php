@@ -33,6 +33,7 @@ class BankAccountRepository extends BaseRepository
         'BranchFax',
         'BranchEmail',
         'AccountNo',
+        'AccountName',
         'accountCurrencyID',
         'accountSwiftCode',
         'accountIBAN#',

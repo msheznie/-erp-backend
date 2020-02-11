@@ -237,7 +237,7 @@
                             @endif
                         </b><br>
                         <b>Contract / PO No : 
-                             @if($request->line_contractNo && !empty($request->invoicedetails) )
+                             @if(!empty($request->invoicedetails) )
                                 {{$request->invoicedetails[0]->clientContractID}}
                             @endif
                         </b>
@@ -252,7 +252,7 @@
                             @endif : تاريخ الفاتورة 
                             
                         </b><br>
-                        <b>@if($request->line_contractNo && !empty($request->invoicedetails) )
+                        <b>@if(!empty($request->invoicedetails) )
                                 {{$request->invoicedetails[0]->clientContractID}}
                             @endif : رقم العقد/أمر الشراء
                              
