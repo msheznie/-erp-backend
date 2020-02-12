@@ -467,7 +467,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID != $employee->empID) {
-            return $this->sendError('You cannot amend this order, this is already amending by ' . $procumentOrder->WO_amendRequestedByEmpID, 500);
+            return $this->sendError('You cannot amend this order, this is already amended by ' . $procumentOrder->WO_amendRequestedByEmpID, 500);
         }
 
         if ($procumentOrder->poCancelledYN == -1) {
@@ -3428,10 +3428,10 @@ WHERE
 
             if ($amendEmp) {
                 $amendEmpName = $amendEmp->empName;
-                return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
+                return $this->sendError('You cannot amend this order, this is already amended by ' . $amendEmpName, 500);
             }
 
-            return $this->sendError('You cannot amend this order, this is already amending.', 500);
+            return $this->sendError('You cannot amend this order, this is already amended.', 500);
         }
 
         $procurementOrder->WO_amendYN = -1;
@@ -3509,10 +3509,10 @@ WHERE
 
             if ($amendEmp) {
                 $amendEmpName = $amendEmp->empName;
-                return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
+                return $this->sendError('You cannot amend this order, this is already amended by ' . $amendEmpName, 500);
             }
 
-            return $this->sendError('You cannot amend this order, this is already amending.', 500);
+            return $this->sendError('You cannot amend this order, this is already amended.', 500);
         }
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');

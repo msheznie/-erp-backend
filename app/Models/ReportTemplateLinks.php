@@ -187,5 +187,9 @@ class ReportTemplateLinks extends Model
     {
         return $this->belongsTo('App\Models\ChartOfAccount','glAutoID','chartOfAccountSystemID');
     }
+
+    public function general_ledger(){
+        return $this->hasMany('App\Models\GeneralLedger','chartOfAccountSystemID','glAutoID');
+    }
     
 }

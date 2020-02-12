@@ -791,12 +791,13 @@ class Helper
         $transToDocER = 0;
 
         // get company local and reporting currency conversion
-        if ($companySystemID) {
+        if ($companySystemID && $transactionCurrencyID) {
             $companyCurrency = Models\Company::find($companySystemID);
             if ($companyCurrency) {
                 $locaCurrencyID = $companyCurrency->localCurrencyID;
                 $reportingCurrencyID = $companyCurrency->reportingCurrency;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $locaCurrencyID)->first();
+
                 $trasToLocER = $conversion->conversion;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
                 $trasToRptER = $conversion->conversion;
@@ -2456,7 +2457,7 @@ class Helper
      */
     public static function companyFinanceYear($companySystemID, $isAllowBackDate = 0)
     {
-        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate"))
             ->where('companySystemID', '=', $companySystemID)
             ->where('isActive', -1);
 

@@ -1566,6 +1566,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companyLogo = '';
         $CompanyName = '';
         $CompanyAddress = '';
+        $CompanyAddressSecondaryLanguage = '';
         $CompanyCountry = '';
         $CompanyTelephone = '';
         $vatRegistratonNumber = '';
@@ -1577,6 +1578,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $CompanyFax = $company->CompanyFax;
             $CompanyTelephone = $company->CompanyTelephone;
             $CompanyAddress = $company->CompanyAddress;
+            $CompanyAddressSecondaryLanguage = $company->CompanyAddressSecondaryLanguage;
             $CompanyCountry = $company->country->countryName;
         }
 
@@ -1588,6 +1590,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $CompanyTelephone = $company->CompanyTelephone;
                 $vatRegistratonNumber = $company->vatRegistratonNumber;
                 $CompanyAddress = $company->CompanyAddress;
+                $CompanyAddressSecondaryLanguage = $company->CompanyAddressSecondaryLanguage;
                 $companyLogo = $company->companyLogo;
                 $CompanyCountry = $company->country->countryName;
             }
@@ -1620,8 +1623,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $footerDate = true;
 
 
-        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder FROM (SELECT
-                            performaMasterID ,companyID
+        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder, invoiceQty, unitCost FROM (SELECT
+                            performaMasterID ,companyID, invoiceQty, unitCost
                         FROM
                             erp_custinvoicedirectdet 
                         WHERE
@@ -1629,6 +1632,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
                             AND erp_custinvoicedirectdet.companyID = performatemp.companyID
                             WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
+
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1773,6 +1777,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->vatRegistratonNumber = $vatRegistratonNumber;
         $customerInvoice->CompanyCountry = $CompanyCountry;
         $customerInvoice->CompanyAddress = $CompanyAddress;
+        $customerInvoice->CompanyAddressSecondaryLanguage = $CompanyAddressSecondaryLanguage;
         $customerInvoice->companyLogo = $companyLogo;
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
@@ -1823,6 +1828,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $customerInvoice->vatNumber = $customerAssign->vatNumber;
                 $customerInvoice->vendorCode = $customerAssign->vendorCode;
             }
+        } else {
+            $customerAssign = CustomerAssigned::where('customerCodeSystem', $customerInvoice->customerID)
+                ->where('companySystemID', $customerInvoice->companySystemID)
+                ->first();
+
+            if (!empty($customerAssign)) {
+                $customerInvoice->vatNumber = $customerAssign->vatNumber;
+                $customerInvoice->vendorCode = $customerAssign->vendorCode;
+            }
         }
 
         $secondaryBankAccount = (object)[];
@@ -1853,6 +1867,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice->logoExists = true;
         } 
 
+        $directTraSubTotal = 0;
+        foreach ($customerInvoice->invoicedetails as $key => $item) {
+            $directTraSubTotal +=$item->invoiceAmount;
+        }
+
+        if ($customerInvoice->tax) {
+            $directTraSubTotal+=$customerInvoice->tax->amount;
+        }
+
+        $amountSplit = explode(".", $directTraSubTotal);
+        $intAmt = 0;
+        $floatAmt = 00;
+
+        if (count($amountSplit) == 1) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = 00;
+        } else if (count($amountSplit) == 2) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = $amountSplit[1];
+        }
+
+        $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
+        $floatAmountInWords = '';
+        $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
+        $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎".strtoupper($numFormatter->format($floatAmt))." فقط." : '';
+
+        $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي ".$intAmountInWords.$floatAmountInWords : "الريال السعودي ".$intAmountInWords." فقط";
 
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
