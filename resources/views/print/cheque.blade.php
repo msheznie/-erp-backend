@@ -45,7 +45,7 @@
 
         #total_amount_div {
             position: absolute;
-            top: 18.7cm;
+            top: 18.5cm;
             left: 1.85cm
         }
 
@@ -63,7 +63,7 @@
 
         #cheque_payee {
             position: absolute;
-            top: 27.5cm;
+            top: 27.7cm;
             left: 5cm;
         }
 
