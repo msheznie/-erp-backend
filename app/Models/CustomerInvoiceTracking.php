@@ -314,5 +314,10 @@ class CustomerInvoiceTracking extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function approval_type()
+    {
+        return $this->belongsTo('App\Models\ClientPerformaAppType', 'approvalType', 'performaAppTypeID');
+    }
     
 }

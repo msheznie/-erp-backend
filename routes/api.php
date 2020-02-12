@@ -1601,6 +1601,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
     Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
     Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
+    Route::post('exportBatchSubmissionDetails', 'CustomerInvoiceTrackingAPIController@exportBatchSubmissionDetails');
 
 });
 
@@ -1672,13 +1673,7 @@ Route::get('runQueueSR', function () {
 Route::post('login', 'AuthAPIController@auth');
 
 
-
-
 Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
-
-
-
-
 
 
 Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
@@ -1689,10 +1684,7 @@ Route::resource('user_rights', 'UserRightsAPIController');
 
 Route::resource('lpt_permissions', 'LptPermissionAPIController');
 
-
 Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
-
-
 
 
 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');

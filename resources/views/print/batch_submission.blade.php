@@ -155,7 +155,7 @@
             border-top: 1px solid #ffffff00 !important;
             border-left: 1px solid #ffffff00 !important;
             background-color: #ffffff !important;
-            border-right: 0;
+            /*border-right: 0;*/
         }
 
         .border-bottom-remov {
@@ -163,6 +163,7 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+
     </style>
 </head>
 <body>
@@ -216,9 +217,9 @@
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
                 <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($masterdata->company)
-                    {{$masterdata->company->CompanyName}}
-                @endif
+{{--                @if ($masterdata->company)--}}
+{{--                    {{$masterdata->company->CompanyName}}--}}
+{{--                @endif--}}
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
                 <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
@@ -230,7 +231,7 @@
 <div class="card-body content" id="print-section">
     <table style="width: 100%">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
                     <img src="logos/{{$masterdata->company->companyLogo}}" width="180px" height="60px">
                 @endif
@@ -241,27 +242,29 @@
                     </span>
                 </div>
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
-                    <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
+                    <span style="font-size: 20px;font-weight: 300"> {{$masterdata->company->CompanyName}}</span>
                 @endif
                 <br>
                 <table>
-                    <tr>
-                        <td width="100px">
-                            <span class="font-weight-bold">Batch Submission</span>
-                        </td>
 
-                    </tr>
 
                 </table>
             </td>
         </tr>
+        <tr>
+            <td colspan="2" class="text-center" style="font-size: 16px">
+                <span class="font-weight-bold">Batch Submission</span>
+            </td>
+
+        </tr>
+
     </table>
     <hr style="color: #d3d9df">
     <table style="width: 100%">
         <tr style="width:100%">
-            <td style="width: 50%">
+            <td style="width: 30%">
                 <table>
                     <tr>
                         <td width="150px">
@@ -271,13 +274,14 @@
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            Agreement No
+                            {{$masterdata->contractNumber}}
                         </td>
                     </tr>
 
                 </table>
             </td>
-            <td>
+            <td style="width: 30%"></td>
+            <td style="width: 40%">
                 <table>
                     <tr>
                         <td width="150px">
@@ -308,7 +312,7 @@
         </tr>
     </table>
 
-        <div style="margin-top: 30px">
+        <div style="margin-top: 30px; padding: 2px" >
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
@@ -352,7 +356,6 @@
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($total, 2)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
                 </tr>
                 </tbody>
             </table>

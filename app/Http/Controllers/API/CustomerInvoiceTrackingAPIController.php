@@ -753,6 +753,7 @@ GROUP BY
     public function getBatchSubmissionDetailsPrintPDF(Request $request){
 
         $id = $request->get('id');
+        //        $id = 214;
         $batchSubmission = CustomerInvoiceTracking::where('customerInvoiceTrackingID',$id)
             ->with(['company','detail' => function($q){
                 $q->with(['customer_invoice_direct']);
@@ -763,12 +764,60 @@ GROUP BY
         }
         $order = ['masterdata'=>$batchSubmission];
         $time = strtotime("now");
-        $fileName = 'batch_subscription_' . $id . '_' . $time . '.pdf';
+        $fileName = 'batch_submission_detail_' . $id . '_' . $time . '.pdf';
         $html = view('print.batch_submission', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
+    }
+
+
+    public function exportBatchSubmissionDetails(Request $request)
+    {
+        $id = $request->get('id');
+//        $id = 214;
+        $type = $request->get('type');
+
+        $data = array();
+        $output = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$id)
+            ->with(['customer_invoice_direct','master'=>function($q){
+                $q->with('approval_type');
+            }])->get();
+
+        if (empty($output)) {
+            return $this->sendError('Expense Claim not found');
+        }
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['PO Number'] = $value->PONumber;
+                $data[$x]['Sap SE'] = $value->wanNO;
+                $data[$x]['My Rig'] = $value->rigNo;
+                $data[$x]['My WellNo'] = $value->wellNo;
+                $data[$x]['Booking Inv Code'] = $value->bookingInvCode;
+                $data[$x]['Customer Invoice Date'] = \Helper::dateFormat($value->bookingDate);
+                $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
+                $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
+                $data[$x]['Month Service Formation'] = $value->servicePeriod;
+                $data[$x]['My Amount'] = number_format($value->amount, 2);
+                $data[$x]['Description'] = isset($value->master->approval_type->description)?$value->master->approval_type->description:'';
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('batch_submission_detail', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:K' . $lastrow)->getAlignment()->setWrapText(true);
+            $excel->getActiveSheet()->getStyle('A1:K1')->getFont()->setBold( true );
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 }
