@@ -1623,8 +1623,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $footerDate = true;
 
 
-        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder FROM (SELECT
-                            performaMasterID ,companyID
+        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder, invoiceQty, unitCost FROM (SELECT
+                            performaMasterID ,companyID, invoiceQty, unitCost
                         FROM
                             erp_custinvoicedirectdet 
                         WHERE
@@ -1632,6 +1632,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
                             AND erp_custinvoicedirectdet.companyID = performatemp.companyID
                             WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
+
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1887,12 +1888,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $floatAmt = $amountSplit[1];
         }
 
-        $numFormatter = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
-        $floatAmountInWords = ($floatAmt > 0) ? " AND HALALA ".strtoupper($numFormatter->format($floatAmt))." ONLY." : '';
+        $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎".strtoupper($numFormatter->format($floatAmt))." فقط." : '';
 
-        $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "SAUDI RIALS ".$intAmountInWords.$floatAmountInWords : "SAUDI RIALS ".$intAmountInWords." ONLY";
+        $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي ".$intAmountInWords.$floatAmountInWords : "الريال السعودي ".$intAmountInWords." فقط";
 
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
