@@ -359,11 +359,11 @@
                     </tr>
                     @endif
                 </tbody>
-                <tbody>
+               <!--  <tbody>
                     <tr>
-                        <td colspan="7" style="background-color: #8db3e2">({{$request->amountInWords}})</td>
+                        <td colspan="7" style="background-color: #8db3e2; text-align: right;">({{$request->amountInWords}})</td>
                     </tr>
-                </tbody>
+                </tbody> -->
                 <tbody>
                     <tr>
                         <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
@@ -435,11 +435,11 @@
                     </tr>
                     @endif
                 </tbody>
-                <tbody>
+               <!--  <tbody>
                     <tr>
-                        <td colspan="7" style="background-color: #8db3e2">({{$request->amountInWords}})</td>
+                        <td colspan="7" style="background-color: #8db3e2; text-align: right;">({{$request->amountInWords}})</td>
                     </tr>
-                </tbody>
+                </tbody> -->
                 <tbody>
                     <tr>
                         <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
