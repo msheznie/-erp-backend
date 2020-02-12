@@ -1568,6 +1568,8 @@ class BankLedgerAPIController extends AppBaseController
                         if($supplierTransCurrencyID != $bank_currency_id){
                             $entity->instruction = 'The exchange rate agreed with treasury department is '.$entity->supplierTransactionCurrencyDetails->CurrencyCode.' '.$entity->supplierTransCurrencyER.' = '.$entity->bankcurrency->CurrencyCode.' '.number_format($entity->companyRptCurrencyER,4);
                         }
+                    }else{
+                        $entity->supplierTransactionCurrencyDetails = $entity->bankcurrency;
                     }
 
 

@@ -52,7 +52,7 @@
         #cheque_cheque_date {
             position: absolute;
             top: 26.3cm;
-            left: 20cm;
+            left: 21.5cm;
         }
 
         #cheque_amount_no {
@@ -63,14 +63,14 @@
 
         #cheque_payee {
             position: absolute;
-            top: 27.3cm;
-            left: 4.5cm;
+            top: 27.5cm;
+            left: 5cm;
         }
 
         #word_amount_table {
             width: 12.1cm;
             position: absolute;
-            left: 1.5cm;
+            left: 2cm;
             top: 28.4cm;
         }
 
