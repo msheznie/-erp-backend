@@ -791,12 +791,13 @@ class Helper
         $transToDocER = 0;
 
         // get company local and reporting currency conversion
-        if ($companySystemID) {
+        if ($companySystemID && $transactionCurrencyID) {
             $companyCurrency = Models\Company::find($companySystemID);
             if ($companyCurrency) {
                 $locaCurrencyID = $companyCurrency->localCurrencyID;
                 $reportingCurrencyID = $companyCurrency->reportingCurrency;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $locaCurrencyID)->first();
+
                 $trasToLocER = $conversion->conversion;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
                 $trasToRptER = $conversion->conversion;
