@@ -1503,7 +1503,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
-        }]);
+        },'cancelled_by']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -1685,7 +1685,7 @@ WHERE
         $id = $request->get('matchDocumentMasterAutoID');
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'cancelled_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -1697,7 +1697,7 @@ WHERE
     public function PaymentVoucherMatchingCancel(Request $request)
     {
         $input = $request->all();
-
+        $employee = Helper::getEmployeeInfo();
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
@@ -1710,9 +1710,6 @@ WHERE
             return $this->sendError('You cannot cancel this matching, it is confirmed');
         }
 
-        if ($MatchDocumentMasterData->matchingDocCode != '0') {
-            return $this->sendError('You cannot cancel this matching, document code is created');
-        }
 
         $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
             ->where('matchingDocID', $matchDocumentMasterAutoID)
@@ -1722,8 +1719,27 @@ WHERE
             return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
         }
 
-        $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
-            ->delete();
+        if ($MatchDocumentMasterData->matchingDocCode != '0') {
+            $updateData = [
+                'cancelledYN' => 1,
+                'cancelledByEmpSystemID' => $employee->employeeSystemID,
+                'cancelledComment' => $input['comment'],
+                'cancelledDate' => date('Y-m-d H:i:s'),
+                'PayMasterAutoId' => null,
+                'BPVcode' => null,
+                'BPVdate' => null,
+                'BPVNarration' => null,
+                'BPVsupplierID' => null,
+                'payAmountSuppTrans' => 0,
+                'matchBalanceAmount' => 0,
+            ];
+            
+            $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+                    ->update($updateData);
+        } else {
+            $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+                ->delete();
+        }
 
         if ($deleteDocument) {
             return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully');
@@ -1748,7 +1764,7 @@ WHERE
         $invMaster->with(['created_by' => function ($query) {
         }, 'customer' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
-        }]);
+        }, 'cancelled_by']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -2122,7 +2138,7 @@ ORDER BY
     public function receiptVoucherMatchingCancel(Request $request)
     {
         $input = $request->all();
-
+        $employee = Helper::getEmployeeInfo();
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
@@ -2135,9 +2151,6 @@ ORDER BY
             return $this->sendError('You cannot cancel this matching, it is confirmed');
         }
 
-        if ($MatchDocumentMasterData->matchingDocCode != '0') {
-            return $this->sendError('You cannot cancel this matching, document code is created');
-        }
 
         $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID'))
             ->where('matchingDocID', $matchDocumentMasterAutoID)
@@ -2147,8 +2160,28 @@ ORDER BY
             return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
         }
 
-        $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
-            ->delete();
+        if ($MatchDocumentMasterData->matchingDocCode != '0') {
+
+            $updateData = [
+                'cancelledYN' => 1,
+                'cancelledByEmpSystemID' => $employee->employeeSystemID,
+                'cancelledComment' => $input['comment'],
+                'cancelledDate' => date('Y-m-d H:i:s'),
+                'PayMasterAutoId' => null,
+                'BPVcode' => null,
+                'BPVdate' => null,
+                'BPVNarration' => null,
+                'BPVsupplierID' => null,
+                'payAmountSuppTrans' => 0,
+                'matchBalanceAmount' => 0,
+            ];
+            
+            $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+                    ->update($updateData);
+        } else {
+            $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+                ->delete();
+        }
 
         if ($deleteDocument) {
             return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully ');
