@@ -29,7 +29,7 @@ use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
-use App\Models\chartOfAccount;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -1246,7 +1246,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!empty($updatedInvoiceNo)) {
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
+                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
 
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
