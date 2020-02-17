@@ -207,7 +207,7 @@
                     Fax: {{$request->CompanyFax}}<br>
                     <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
                 </td>
-                <td style="width: 50%; text-align: right;">
+                <td style="width: 50%; text-align: right;direction: rtl;">
                     {{$request->CompanyAddressSecondaryLanguage}}<br>
                     <!-- سلطنة عمان<br> -->
                     هاتف : {{$request->CompanyTelephone}}<br>
@@ -242,8 +242,8 @@
                             @endif
                         </b>
                 </td>
-                <td style="width: 50%; text-align:right;">
-                    <b> {{$request->bookingInvCode}} : رقم الفاتورة</b><br>
+                <td style="width: 50%; text-align:right; direction: rtl;">
+                    <b>رقم الفاتورة : {{$request->bookingInvCode}}</b><br>
                     <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
@@ -252,9 +252,9 @@
                             @endif 
                             
                         </b><br>
-                        <b>@if(!empty($request->invoicedetails) )
+                        <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
                                 {{$request->invoicedetails[0]->clientContractID}}
-                            @endif : رقم العقد/أمر الشراء
+                            @endif
                              
                         </b>
 
@@ -285,7 +285,7 @@
                     <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
                     <b>VAT NO : {{$request->vatNumber}}</b>
                 </td>
-                <td style="width: 50%; text-align: right;">
+                <td style="width: 50%; text-align: right;direction: rtl;">
                     <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>
                     <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b><br>
                     <b>الرقم الضريبي : {{$request->vatNumber}}</b>
