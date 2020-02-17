@@ -207,7 +207,7 @@
                     Fax: {{$request->CompanyFax}}<br>
                     <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
                 </td>
-                <td style="width: 50%; text-align: right;">
+                <td style="width: 50%; text-align: right;direction: rtl;">
                     {{$request->CompanyAddressSecondaryLanguage}}<br>
                     <!-- سلطنة عمان<br> -->
                     هاتف : {{$request->CompanyTelephone}}<br>
@@ -242,8 +242,8 @@
                             @endif
                         </b>
                 </td>
-                <td style="width: 50%; text-align:right;">
-                    <b> {{$request->bookingInvCode}} : رقم الفاتورة</b><br>
+                <td style="width: 50%; text-align:right; direction: rtl;">
+                    <b>رقم الفاتورة : {{$request->bookingInvCode}}</b><br>
                     <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
@@ -252,9 +252,9 @@
                             @endif 
                             
                         </b><br>
-                        <b>@if(!empty($request->invoicedetails) )
+                        <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
                                 {{$request->invoicedetails[0]->clientContractID}}
-                            @endif : رقم العقد/أمر الشراء
+                            @endif
                              
                         </b>
 
@@ -285,7 +285,7 @@
                     <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
                     <b>VAT NO : {{$request->vatNumber}}</b>
                 </td>
-                <td style="width: 50%; text-align: right;">
+                <td style="width: 50%; text-align: right;direction: rtl;">
                     <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>
                     <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b><br>
                     <b>الرقم الضريبي : {{$request->vatNumber}}</b>
@@ -296,17 +296,17 @@
     <br>
     <div class="row">
         @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
-            <table class="table" style="width: 100%;">
+            <table class="table">
                 <thead>
-                <tr style="background-color: #6798da">
-                    <th style="width:6%">Item<br>رقم المنتج</th>
-                    <th style="width:29%; text-align: center">Description<br>الوصف</th>
-                    <th style="width:5%;text-align: center">QTY<br>الكمية</th>
-                    <th style="width:6%;text-align: center">Days(OP)<br>الايام عمل</th>
+                <tr style="background-color: #6798da;">
+                    <th style="width:6%;">Item<br>رقم المنتج</th>
+                    <th style="width:25%; text-align: center">Description<br>الوصف</th>
+                    <th style="width:6%;text-align: center">QTY<br>الكمية</th>
+                    <th style="width:10%;text-align: center">Days(OP)<br>الايام عمل</th>
                     <th style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
-                    <th style="width:6%;text-align: center">Days(STB)<br>الايام الانتظار</th>
+                    <th style="width:10%;text-align: center">Days(STB)<br>الايام الانتظار</th>
                     <th style="width:10%;text-align: center">Price(STB)<br>سعر الانتظار</th>
-                    <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                    <th style="width:13%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
 
@@ -321,12 +321,12 @@
                     {{$directTraSubTotal +=$item->total}}
                     <tr style="border: 1px solid !important;">
                         <td>{{$x}}</td>
-                        <td>{{$item->description}}</td>
+                        <td style="word-wrap:break-word;">{{$item->description}}</td>
                         <td style="text-align: right;">{{$item->Qty}}</td>
                         <td style="text-align: right;">{{$item->Days_OP}}</td>
-                        <td style="text-align: right;">{{$item->Price_OP}}</td>
+                        <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
                         <td style="text-align: right;">{{$item->Days_STB}}</td>
-                        <td style="text-align: right;">{{$item->Price_STB}}</td>
+                        <td style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
