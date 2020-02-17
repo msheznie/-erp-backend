@@ -2207,8 +2207,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $depreciation = AssetDisposalDetail::with('accumilated_account')->selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt,ACCDEPGLCODESystemID,ACCDEPGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('ACCDEPGLCODESystemID', 'serviceLineSystemID')->get();
 
-                        $cost = AssetDisposalDetail::with('cost_account')->selectRaw('SUM(COSTUNIT) as COSTUNIT, SUM(costUnitRpt) as costUnitRpt,COSTGLCODESystemID,serviceLineSystemID,COSTGLCODE,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('COSTGLCODESystemID', 'serviceLineSystemID')->get();
-
+                        $cost = AssetDisposalDetail::with(['cost_account'])->selectRaw('SUM(COSTUNIT) as COSTUNIT, SUM(costUnitRpt) as costUnitRpt,COSTGLCODESystemID,serviceLineSystemID,COSTGLCODE,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('COSTGLCODESystemID', 'serviceLineSystemID')->get();
                         $companyCurrency = Company::find($masterModel["companySystemID"]);
 
                         if ($masterData) {
@@ -2281,8 +2280,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->COSTGLCODESystemID;
                                     $data['glCode'] = $val->COSTGLCODE;
-                                    $data['glAccountType'] = $val->accumilated_account?$val->accumilated_account->catogaryBLorPL:null;
-                                    $data['glAccountTypeID'] = $val->accumilated_account?$val->accumilated_account->catogaryBLorPLID:null;
+                                    $data['glAccountType'] = $val->cost_account?$val->cost_account->catogaryBLorPL:null;
+                                    $data['glAccountTypeID'] = $val->cost_account?$val->cost_account->catogaryBLorPLID:null;
                                     $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = 0;
                                     $data['documentLocalAmount'] = ABS($val->COSTUNIT) * -1;
