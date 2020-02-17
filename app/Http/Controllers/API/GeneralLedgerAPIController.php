@@ -484,7 +484,7 @@ class GeneralLedgerAPIController extends AppBaseController
                     BankLedger::where('companySystemID',$companySystemID)
                         ->where('documentSystemID',$documentSystemID)
                         ->where('documentSystemCode',$documentSystemCode)
-                        ->update(['documentDate' => $documentDate]);
+                        ->update(['postedDate' => $documentDate]);
 
                     PaySupplierInvoiceMaster::where('PayMasterAutoId',$documentSystemCode)
                         ->where('companySystemID',$companySystemID)
@@ -659,7 +659,7 @@ class GeneralLedgerAPIController extends AppBaseController
                     BankLedger::where('companySystemID',$companySystemID)
                         ->where('documentSystemID',$documentSystemID)
                         ->where('documentSystemCode',$documentSystemCode)
-                        ->update(['documentDate' => $documentDate]);
+                        ->update(['postedDate' => $documentDate]);
 
                     CustomerReceivePayment::where('custReceivePaymentAutoID',$documentSystemCode)
                         ->where('companySystemID',$companySystemID)
