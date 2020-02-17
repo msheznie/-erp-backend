@@ -194,7 +194,8 @@ class CreateCustomerInvoice implements ShouldQueue
                     $cusInvoiceDetails['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $cusInvoiceDetails['comRptCurrency'] = $fromCompany->reportingCurrency;;
                     $cusInvoiceDetails['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $cusInvoiceDetails['clientContractID'] = 0;
+                    $cusInvoiceDetails['clientContractID'] = ($dpMaster->documentSystemID == 41) ? 'X' : 0;
+                    $cusInvoiceDetails['contractID'] = ($dpMaster->documentSystemID == 41) ? 159 : 0;
                     $cusInvoiceDetails['performaMasterID'] = 0;
 
                     $localAmountDetail = $val->sellingPriceLocal;

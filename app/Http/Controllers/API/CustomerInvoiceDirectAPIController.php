@@ -29,7 +29,7 @@ use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
-use App\Models\chartOfAccount;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -1246,7 +1246,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!empty($updatedInvoiceNo)) {
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
+                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
 
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -1895,14 +1895,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي ".$intAmountInWords.$floatAmountInWords : "الريال السعودي ".$intAmountInWords." فقط";
 
-        $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
-        $time = strtotime("now");
-        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20)->first();
         
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
+
+        if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
+            $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
+            $customerInvoice->profomaDetailData = $proformaBreifData;
+        }
+
+        $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
+        $time = strtotime("now");
+        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        
 
         if ($printTemplate['printTemplateID'] == 2) {
             $html = view('print.customer_invoice_tue', $array);
@@ -1923,6 +1930,137 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
     }
 
+    public function getProformaInvoiceDetailDataForPrintInvoice($id) 
+    {
+        $output = DB::select("SELECT
+                        performamaster.PerformaCode,
+                        contractdetails.ItemDescrip AS description,
+                        freebilling.mitQty AS Qty,
+                        freebilling.operationTimeOnLoc AS Days_OP,
+                        freebilling.operationRate AS Price_OP,
+                        freebilling.StandardTimeOnLoc AS Days_STB,
+                        freebilling.standardRate AS Price_STB,
+                        ((
+                                freebilling.mitQty * freebilling.StandardTimeOnLoc * freebilling.standardRate 
+                                )+(
+                                freebilling.mitQty * freebilling.operationTimeOnLoc * freebilling.operationRate 
+                            )) AS total 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        INNER JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND performamaster.companySystemID = erp_custinvoicedirect.companySystemID 
+                        AND performamaster.customerSystemID = erp_custinvoicedirectdet.customerID
+                        LEFT JOIN freebilling ON freebilling.performaInvoiceNo = performamaster.PerformaInvoiceNo 
+                        AND freebilling.companyID = erp_custinvoicedirectdet.companyID
+                        LEFT JOIN contractdetails ON contractdetails.ContractDetailID = freebilling.ContractDetailID 
+                        AND contractdetails.CompanyID = freebilling.companyID 
+                    WHERE
+                        erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+                    GROUP BY
+                        contractdetails.ContractDetailID UNION
+                    SELECT
+                        performamaster.PerformaCode,
+                        mubbadrahop.otherscharges.Description,
+                        mubbadrahop.otherscharges.qty AS Qty,
+                        '1' AS Days_OP,
+                        mubbadrahop.otherscharges.Rate AS Price_OP,
+                        '0' AS Days_STB,
+                        '0' AS Price_STB,
+                        ( mubbadrahop.otherscharges.qty * mubbadrahop.otherscharges.Rate ) AS total 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        INNER JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND performamaster.companySystemID = erp_custinvoicedirect.companySystemID 
+                        AND performamaster.customerSystemID = erp_custinvoicedirectdet.customerID
+                        LEFT JOIN freebilling ON freebilling.performaInvoiceNo = performamaster.PerformaInvoiceNo 
+                        AND freebilling.companyID = erp_custinvoicedirectdet.companyID
+                        LEFT JOIN contractdetails ON contractdetails.ContractDetailID = freebilling.ContractDetailID 
+                        AND contractdetails.CompanyID = freebilling.companyID
+                        LEFT JOIN mubbadrahop.otherscharges ON mubbadrahop.otherscharges.BillProcessNO = freebilling.billProcessNo 
+                    WHERE
+                        erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+                    GROUP BY
+                        mubbadrahop.otherscharges.Description UNION
+                    SELECT
+                        performamaster.PerformaCode,
+                        Contrdesc.ItemDescrip AS Description,
+                        '1' AS Qty,
+                        mubbadrahop.fishingengineerscharges.TotalDays AS Days_OP,
+                        mubbadrahop.fishingengineerscharges.feRate AS Price_OP,
+                        '0' AS Days_STB,
+                        '0' AS Price_STB,
+                        mubbadrahop.fishingengineerscharges.TotalAmount AS total 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        INNER JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND performamaster.companySystemID = erp_custinvoicedirect.companySystemID 
+                        AND performamaster.customerSystemID = erp_custinvoicedirectdet.customerID
+                        LEFT JOIN freebilling ON freebilling.performaInvoiceNo = performamaster.PerformaInvoiceNo 
+                        AND freebilling.companyID = erp_custinvoicedirectdet.companyID
+                        LEFT JOIN contractdetails ON contractdetails.ContractDetailID = freebilling.ContractDetailID 
+                        AND contractdetails.CompanyID = freebilling.companyID
+                        LEFT JOIN mubbadrahop.fishingengineerscharges ON mubbadrahop.fishingengineerscharges.BillProcessNO = freebilling.billProcessNo
+                        LEFT JOIN contractdetails AS Contrdesc ON Contrdesc.ContractDetailID = mubbadrahop.fishingengineerscharges.feContractDetailID 
+                    WHERE
+                        erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+                    GROUP BY
+                        mubbadrahop.fishingengineerscharges.feContractDetailID UNION
+                    SELECT
+                        performamaster.PerformaCode,
+                        CONCAT( mitmaster.mitIDText, '-', mubbadrahop.mittrasportationbilling.Description ) AS Description,
+                        '1' AS Qty,
+                        '1' AS Days_OP,
+                        mubbadrahop.mittrasportationbilling.charges AS Price_OP,
+                        '0' AS Days_STB,
+                        '0' AS Price_STB,
+                        mubbadrahop.mittrasportationbilling.charges AS total 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        INNER JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND performamaster.companySystemID = erp_custinvoicedirect.companySystemID 
+                        AND performamaster.customerSystemID = erp_custinvoicedirectdet.customerID
+                        LEFT JOIN freebilling ON freebilling.performaInvoiceNo = performamaster.PerformaInvoiceNo 
+                        AND freebilling.companyID = erp_custinvoicedirectdet.companyID
+                        LEFT JOIN contractdetails ON contractdetails.ContractDetailID = freebilling.ContractDetailID 
+                        AND contractdetails.CompanyID = freebilling.companyID
+                        LEFT JOIN mubbadrahop.mittrasportationbilling ON mubbadrahop.mittrasportationbilling.BillProcessNO = freebilling.billProcessNo
+                        LEFT JOIN mitmaster ON mitmaster.mitReturnMasterID = mubbadrahop.mittrasportationbilling.mitID 
+                    WHERE
+                        erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+                    GROUP BY
+                        mubbadrahop.mittrasportationbilling.mitID UNION
+                    SELECT
+                        performamaster.PerformaCode,
+                        CONCAT( motmaster.motNoText, '-', mubbadrahop.mottrasportationbilling.Description ) AS Description,
+                        '1' AS Qty,
+                        '1' AS Days_OP,
+                        mubbadrahop.mottrasportationbilling.charges AS Price_OP,
+                        '0' AS Days_STB,
+                        '0' AS Price_STB,
+                        mubbadrahop.mottrasportationbilling.charges AS total 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        INNER JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND performamaster.companySystemID = erp_custinvoicedirect.companySystemID 
+                        AND performamaster.customerSystemID = erp_custinvoicedirectdet.customerID
+                        LEFT JOIN freebilling ON freebilling.performaInvoiceNo = performamaster.PerformaInvoiceNo 
+                        AND freebilling.companyID = erp_custinvoicedirectdet.companyID
+                        LEFT JOIN contractdetails ON contractdetails.ContractDetailID = freebilling.ContractDetailID 
+                        AND contractdetails.CompanyID = freebilling.companyID
+                        LEFT JOIN mubbadrahop.mottrasportationbilling ON mubbadrahop.mottrasportationbilling.BillProcessNO = freebilling.billProcessNo
+                        LEFT JOIN motmaster ON motmaster.motID = mubbadrahop.mottrasportationbilling.motID 
+                    WHERE
+                        erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+                    GROUP BY
+                        mubbadrahop.mottrasportationbilling.motID");
+
+        return $output;
+    }
 
     public function customerInvoiceReopen(Request $request)
     {

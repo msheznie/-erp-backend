@@ -465,6 +465,11 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'matchingConfirmedByEmpSystemID', 'employeeSystemID');
     }
 
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
+    }
+
     public function modified_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
