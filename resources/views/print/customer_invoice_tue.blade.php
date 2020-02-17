@@ -302,12 +302,10 @@
                     <th style="width:6%">Item<br>رقم المنتج</th>
                     <th style="width:29%; text-align: center">Description<br>الوصف</th>
                     <th style="width:5%;text-align: center">QTY<br>الكمية</th>
-                    <th style="width:6%;text-align: center">Days(OP)<br>عدد الايام</th>
-                    <th style="width:10%;text-align: center">Price(OP)<br>السعر</th>
-                    <th style="width:6%;text-align: center">Days(STB)<br>عدد الايام</th>
-                    <th style="width:10%;text-align: center">Price(STB)<br>السعر</th>
-                    <!-- <th style="width:15%;text-align: center">Net Price<br>السعر الصافي</th> -->
-                    <!-- <th style="width:14%;text-align: center">Rental Period<br></th> -->
+                    <th style="width:6%;text-align: center">Days(OP)<br>الايام عمل</th>
+                    <th style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
+                    <th style="width:6%;text-align: center">Days(STB)<br>الايام الانتظار</th>
+                    <th style="width:10%;text-align: center">Price(STB)<br>سعر الانتظار</th>
                     <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
@@ -324,12 +322,11 @@
                     <tr style="border: 1px solid !important;">
                         <td>{{$x}}</td>
                         <td>{{$item->description}}</td>
-                        <td>{{$item->Qty}}</td>
-                        <td>{{$item->Days_OP}}</td>
-                        <td>{{$item->Price_OP}}</td>
-                        <td>{{$item->Days_STB}}</td>
-                        <td>{{$item->Price_STB}}</td>
-                        <!-- <td>{{$request->monthOfInvoice}}</td> -->
+                        <td style="text-align: right;">{{$item->Qty}}</td>
+                        <td style="text-align: right;">{{$item->Days_OP}}</td>
+                        <td style="text-align: right;">{{$item->Price_OP}}</td>
+                        <td style="text-align: right;">{{$item->Days_STB}}</td>
+                        <td style="text-align: right;">{{$item->Price_STB}}</td>
                         <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
@@ -380,13 +377,10 @@
                 <thead>
                 <tr style="background-color: #6798da">
                     <th style="width:6%">Item<br>رقم المنتج</th>
-                    <th style="width:10%; text-align: center">GL Code</th>
+                    <th style="width:10%; text-align: center">GL Code<br>رمز جل</th>
                     <th style="width:35%; text-align: center">Description<br>الوصف</th>
                     <th style="width:5%;text-align: center">QTY<br>الكمية</th>
-                    <!-- <th style="width:6%;text-align: center">Days<br>عدد الايام</th> -->
-                    <th style="width:10%;text-align: center">Unit Price<br>السعر</th>
-                    <!-- <th style="width:15%;text-align: center">Net Price<br>السعر الصافي</th> -->
-                    <!-- <th style="width:14%;text-align: center">Rental Period<br></th> -->
+                    <th style="width:10%;text-align: center">Unit Rate<br> سعر الوحده</th>
                     <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
@@ -402,11 +396,8 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
-                        <td>{{number_format($item->invoiceQty,2)}}</td>
-                        <!-- <td></td> -->
+                        <td style="text-align: right;">{{number_format($item->invoiceQty,2)}}</td>
                         <td style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                        <!-- <td style="text-align: right;">{{number_format($item->invoiceAmount,$numberFormatting)}}</td> -->
-                        <!-- <td style="text-align: right;">{{$request->monthOfInvoice}}</td> -->
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
