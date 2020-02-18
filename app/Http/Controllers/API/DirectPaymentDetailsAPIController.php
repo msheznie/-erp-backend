@@ -20,6 +20,7 @@ use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentDetails;
 use App\Models\Employee;
@@ -708,10 +709,22 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Expense Claim not found');
         }
 
+
+
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($payMasterAutoId);
 
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Pay Supplier Invoice not found');
+        }
+        // check policy 16 is on for ec
+        if($expenseClaim->pettyCashYN == 1){
+            $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                ->where('companyPolicyCategoryID', 16)
+                ->where('isYesNO', 1)
+                ->first();
+            if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO==1 ) {
+                return $this->sendError('You can not add detail. UPECS policy is on for the company');
+            }
         }
 
         if ($paySupplierInvoiceMaster->BPVdate) {
@@ -752,7 +765,8 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 'serviceLineCode'=> $detail['serviceLineCode'],
                 'comments'=> $detail['description'],
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
-                'pettyCashYN' => 2,
+//                'pettyCashYN' => 2,
+                'pettyCashYN' => $expenseClaim->pettyCashYN,
                 'chartOfAccountSystemID'=> $detail['chartOfAccountSystemID'],
                 'glCode' => $detail['glCode'],
                 'glCodeDes' => $detail['glCodeDescription'],

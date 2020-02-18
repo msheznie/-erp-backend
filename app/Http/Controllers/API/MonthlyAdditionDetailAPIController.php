@@ -351,10 +351,12 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+        $isFromPV = isset($input['isFromPV'])?$input['isFromPV']:0;
 
         if(array_key_exists('type',$input)) {
             $companySystemID = 0;
-            if($input['type'] == 1) {
+            $claimedUserID=0;
+            if($input['type'] == 1 && $isFromPV == 0) {
                 $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
 
                 if (empty($monthlyAddition)) {
@@ -377,7 +379,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 }
 
                 $companySystemID =  $monthlyAddition->companySystemID;
-            }else if($input['type'] == 2){
+            }else if($input['type'] == 2 || ($input['type'] == 1 && $isFromPV == 1)){
                 $paySupplierInvoice = $this->paySupplierInvoiceMasterRepository->find($id);
 
                 if (empty($paySupplierInvoice)) {
@@ -389,18 +391,24 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 }
 
                 $companySystemID =  $paySupplierInvoice->companySystemID;
+                $claimedUserID =  $paySupplierInvoice->directPaymentPayeeEmpID;
             }
 
             $expenseClaims = ExpenseClaim::where('companySystemID', $companySystemID)
                 ->where('approved', -1)
+                ->where('rejectedYN', 0)
                 ->where('pettyCashYN', $input['type'])
                 ->where('glCodeAssignedYN', -1)
                 ->where('addedToSalary', 0)
-                ->where('addedForPayment', 0)
+                ->where('addedForPayment', 0);
                 /*->whereHas('details', function ($q) use ($monthlyAddition) {
                     $q->where('currencyID', $monthlyAddition->currency);
                 })*/
-                ->orderBy('expenseClaimDate', 'desc')
+                if($isFromPV && $input['type']==1){
+                    $expenseClaims = $expenseClaims->where('clamiedByNameSystemID',$claimedUserID);
+                }
+
+            $expenseClaims = $expenseClaims->orderBy('expenseClaimDate', 'desc')
                 ->get();
 
             return $this->sendResponse($expenseClaims, 'Monthly Addition retrieved successfully');
