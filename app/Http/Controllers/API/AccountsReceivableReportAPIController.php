@@ -862,7 +862,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
     public function exportReport(Request $request)
     {
-
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'CS': //Customer Statement Report
@@ -1602,6 +1601,63 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
                 $csv = \Excel::create('customer_collection', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'INVTRACK': //Customer Invoice Tracker
+                $type = 'csv';
+                $input = $request->all();
+
+                $validator = \Validator::make($input, [
+                    'customerID' => 'required',
+                    'contractID' => 'required',
+                    'yearID' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                $output = $this->getInvoiceTrackerQRY($request);
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Rig'] = $val->RigDescription." ".$val->regNo;
+                        $data[$x]['Year'] = $val->myRentYear;
+                        $data[$x]['Month'] = $val->myRentMonth;
+                        $data[$x]['Start Date'] = \Helper::dateFormat($val->rentalStartDate);
+                        $data[$x]['End Date'] = \Helper::dateFormat($val->rentalEndDate);
+                        $data[$x]['Rental'] = $val->billingCode;
+                        $data[$x]['Amount'] = $val->performaValue;
+                        $data[$x]['Proforma'] = $val->PerformaCode;
+                        $data[$x]['Pro Date'] = \Helper::dateFormat($val->performaOpConfirmedDate);
+                        $data[$x]['Client Status'] = $val->description;
+                        $data[$x]['Client App Date'] = \Helper::dateFormat($val->myClientapprovedDate);
+                        $data[$x]['Batch No'] = $val->batchNo;
+                        $data[$x]['Submitted Date'] = \Helper::dateFormat($val->mySubmittedDate);
+                        $data[$x]['Invoice No'] = $val->bookingInvCode;
+                        $data[$x]['Invoice App Date'] = \Helper::dateFormat($val->myApprovedDate);
+                        $data[$x]['Status'] = $val->status;
+                        $data[$x]['Receipt Code'] = $val->ReceiptCode;
+                        $data[$x]['Receipt Date'] = \Helper::dateFormat($val->ReceiptDate);
+                        $data[$x]['Receipt Amount'] = $val->ReceiptAmount;
+                        $x++;
+                    }
+                } else {
+                    $data = [];
+                }
+
+                $csv = \Excel::create('invoice_tracker_', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -6039,7 +6095,8 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public function generateInvoiceTrackingReport(Request $request){
+    public function generateInvoiceTrackingReport(Request $request)
+    {
 
         $input = $request->all();
 
@@ -6047,12 +6104,26 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             'customerID' => 'required',
             'contractID' => 'required',
             'yearID' => 'required',
-//            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        $result = $this->getInvoiceTrackerQRY($request);
+
+        $finalResult = [];
+
+        foreach ($result as $key => $value) {
+            $finalResult[$value->clientID.'-'.$value->CustomerName][] = $value;
+        }
+
+        return $this->sendResponse($finalResult, 'Record retrieved successfully');
+    }
+
+    public function getInvoiceTrackerQRY($request)
+    {
+        $input = $request->all();
         $where = '';
         if(isset($input['customerID']) && count($input['customerID'])>0){
             $cusList = implode(', ', $input['customerID']);
@@ -6069,253 +6140,283 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             $where.=' AND YEAR(freebillingmasterperforma.rentalStartDate) IN ('.$yearList.')';
         }
 
-//        if(isset($input['status']) && $input['status']!= -1){
-//            $where.='AND YEAR(rentalStartDate) IN ('.$yearList.')';
-//        }
-        
+        $whereStatus = '';
+        if (isset($input['status'])) {
+            switch ($input['status']) {
+                case 'Collected':
+                    $whereStatus.=' WHERE final.ReceiptDate IS NOT NULL';
+                    break;
+                case 'Rig Approval Pending':
+                    $whereStatus.=' WHERE (final.myClientapprovedDate IS NULL OR final.myClientapprovedDate = "") 
+                            AND (final.mySubmittedDate IS NULL OR final.mySubmittedDate = "") 
+                            AND (final.myApprovedDate IS NULL OR final.myApprovedDate = "")';
+                    break;
+                case 'Submission Pending':
+                    $whereStatus.=' WHERE (final.myClientapprovedDate IS NOT NULL) 
+                                    AND (final.mySubmittedDate IS NULL OR final.mySubmittedDate = "") 
+                                    AND (final.myApprovedDate IS NULL OR final.myApprovedDate = "")';
+                    break;
+                case 'CH Approval Pending':
+                    $whereStatus.=' WHERE final.myClientapprovedDate IS NOT NULL 
+                                        AND final.mySubmittedDate IS NOT NULL 
+                                        AND (final.myApprovedDate IS NULL OR final.myApprovedDate = "")';
+                    break;
+                case 'CH Approved':
+                    $whereStatus.=' WHERE final.myClientapprovedDate IS NOT NULL AND final.mySubmittedDate IS NOT NULL AND final.myApprovedDate IS NOT NULL AND final.ReceiptDate IS NULL';
+                    break;
+                
+                default:
+                    $whereStatus = '';
+                    break;
+            }
+        }
+
         $sql = "SELECT
-	companyID,
-	clientID,
-	contractUID,
-	contractID,
-	PerformaMasterID,
-	RigDescription,
-	regNo,
-	myRentalStartDate,
-	myRentMonth,
-	myRentYear,
-	myRentYear AS checkStatusYear,
-	rentalStartDate,
-	rentalEndDate,
-	billingCode,
-	performaValue,
-	PerformaCode,
-	performaOpConfirmedDate,
-	description,
-	clientapprovedDate,
-	myClientapprovedDate,
-	batchNo,
-	manualTrackingNo,
-	mySubmittedDate,
-	performaSerialNO,
-	bookingInvCode,
-	myApprovedDate,
-	myDescription,
-	ReceiptCode,
-	ReceiptDate,
-	ReceiptAmount,
-IF
-	(
-	ReceiptDate IS NOT NULL,
-	\"Collected\",
-IF
-	(
-	( myClientapprovedDate IS NULL OR myClientapprovedDate = \"\" ) 
-	AND ( mySubmittedDate IS NULL OR mySubmittedDate = \"\" ) 
-	AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
-	\"Rig Approval Pending\",
-IF
-	(
-	myClientapprovedDate IS NOT NULL 
-	AND ( mySubmittedDate IS NULL OR mySubmittedDate = \"\" ) 
-	AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
-	\"Submission Pending\",
-IF
-	(
-	myClientapprovedDate IS NOT NULL 
-	AND mySubmittedDate IS NOT NULL 
-	AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
-	\"CH Approval Pending\",
-IF
-	( myClientapprovedDate IS NOT NULL AND mySubmittedDate IS NOT NULL AND myApprovedDate IS NOT NULL, \"CH Approved\" ,\"\") 
-	) 
-	) 
-	) 
-	) AS status
-FROM
-	(
-SELECT
-	performamaster.companyID,
-	performamaster.clientID,
-	qry_performaClientApproval_Billing.contractUID,
-	performamaster.contractID,
-	performamaster.PerformaMasterID,
-	qry_performaClientApproval_Billing.RigDescription,
-	qry_performaClientApproval_Billing.regNo,
-	qry_performaClientApproval_Billing.myRentalStartDate,
-	MONTH ( qry_performaClientApproval_Billing.myRentalStartDate ) AS myRentMonth,
-	YEAR ( qry_performaClientApproval_Billing.myRentalStartDate ) AS myRentYear,
-	DATE_FORMAT( qry_performaClientApproval_Billing.myRentalStartDate, \"%d/%m/%Y\" ) AS rentalStartDate,
-	DATE_FORMAT( qry_performaClientApproval_Billing.myRentalEndDate, \"%d/%m/%Y\" ) AS rentalEndDate,
-	qry_performaClientApproval_Billing.billingCode,
-	performamaster.performaValue,
-	performamaster.PerformaCode,
-	performamaster.performaOpConfirmedDate,
-	clientperformaapptype.description,
-	performamaster.clientapprovedDate,
-IF
-	( description = \"Not Approved\" AND myApprovedDate IS NOT NULL, myApprovedDate, clientapprovedDate ) AS myClientapprovedDate,
-	qry_ProformaClientApproval_CustomerInvoices.customerInvoiceTrackingCode AS batchNo,
-	qry_ProformaClientApproval_CustomerInvoices.manualTrackingNo,
-	qry_ProformaClientApproval_CustomerInvoices.submittedDate,
-IF
-	( myApprovedDate IS NOT NULL AND submittedDate IS NULL, myApprovedDate, submittedDate ) AS mySubmittedDate,
-	performamaster.performaSerialNO,
-	qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID,
-	qry_ProformaClientApproval_CustomerInvoices.bookingInvCode,
-	qry_ProformaClientApproval_CustomerInvoices.myApprovedDate,
-IF
-	(
-	( description = \"Not Approved\" AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) ) 
-	AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
-	\"Not Approved\",
-IF
-	(
-	description = \"Not Approved\" 
-	AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) 
-	AND ( myApprovedDate IS NOT NULL OR myApprovedDate <> \"\" ),
-	\"Approved\",
-	description 
-	) 
-	) AS myDescription,
-	AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.custPaymentReceiveCode AS ReceiptCode,
-	AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.postedDate AS ReceiptDate,
-	AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.ReceiptAmountRpt AS ReceiptAmount 
-FROM
-	performamaster
-	INNER JOIN clientperformaapptype ON performamaster.clientAppPerformaType = clientperformaapptype.performaAppTypeID
-	INNER JOIN (
-SELECT
-	freebillingmasterperforma.idbillingMasterPerforma,
-	freebillingmasterperforma.companyID,
-	freebillingmasterperforma.clientID,
-	freebillingmasterperforma.contractID,
-	ticketmaster.contractUID,
-	freebillingmasterperforma.Ticketno,
-	ticketmaster.ticketNo AS myTicketCode,
-	ticketmaster.regName,
-	rigmaster.RigDescription,
-	ticketmaster.regNo,
-	freebillingmasterperforma.BillProcessNO,
-	freebillingmasterperforma.billingCode,
-	ticketmaster.Timedatejobstra,
-	ticketmaster.Timedatejobend,
-IF
-	( billingCode = \"0\", Timedatejobstra, rentalStartDate ) AS myRentalStartDate,
-IF
-	( billingCode = \"0\", Timedatejobend, rentalEndDate ) AS myRentalEndDate,
-	freebillingmasterperforma.performaMasterID,
-	freebillingmasterperforma.PerformaInvoiceNo 
-FROM
-	freebillingmasterperforma
-	INNER JOIN ticketmaster ON freebillingmasterperforma.Ticketno = ticketmaster.ticketidAtuto
-	INNER JOIN rigmaster ON ticketmaster.regName = rigmaster.idrigmaster 
-WHERE
-	freebillingmasterperforma.performaMasterID > 0 ".$where."
-	) AS qry_performaClientApproval_Billing ON qry_performaClientApproval_Billing.performaMasterID = performamaster.PerformaMasterID
-	LEFT JOIN (
-SELECT
-	erp_performadetails.companyID,
-	erp_performadetails.serviceLine,
-	erp_performadetails.customerID,
-	erp_performadetails.contractID,
-	erp_performadetails.performaMasterID,
-	erp_performadetails.invoiceSsytemCode,
-	qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID,
-	qry_CustomerInvoiced_byProforma.bookingInvCode,
-	qry_CustomerInvoiced_byProforma.myApprovedDate,
-	qry_PerformaClientApproval_batchDetails.customerInvoiceTrackingCode,
-	qry_PerformaClientApproval_batchDetails.manualTrackingNo,
-	qry_PerformaClientApproval_batchDetails.submittedDate 
-FROM
-	erp_performadetails
-	INNER JOIN (
-SELECT
-	erp_custinvoicedirect.custInvoiceDirectAutoID,
-	erp_custinvoicedirect.companyID,
-	erp_custinvoicedirect.documentID,
-	erp_custinvoicedirect.bookingInvCode,
-	DATE_FORMAT( approvedDate, \"%d/%m/%Y\" ) AS myApprovedDate,
-	erp_custinvoicedirect.isPerforma 
-FROM
-	erp_custinvoicedirect 
-WHERE
-	erp_custinvoicedirect.isPerforma = 1 
-	) AS qry_CustomerInvoiced_byProforma ON qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID = erp_performadetails.invoiceSsytemCode
-	LEFT JOIN (
-SELECT
-	erp_customerinvoicetracking.customerInvoiceTrackingID,
-	erp_customerinvoicetracking.customerInvoiceTrackingCode,
-	erp_customerinvoicetracking.manualTrackingNo,
-	erp_customerinvoicetracking.submittedDate,
-	erp_customerinvoicetrackingdetail.companyID,
-	erp_customerinvoicetrackingdetail.custInvoiceDirectAutoID 
-FROM
-	erp_customerinvoicetracking
-	INNER JOIN erp_customerinvoicetrackingdetail ON erp_customerinvoicetracking.customerInvoiceTrackingID = erp_customerinvoicetrackingdetail.customerInvoiceTrackingID 
-	) AS qry_PerformaClientApproval_batchDetails ON qry_PerformaClientApproval_batchDetails.custInvoiceDirectAutoID = qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID 
-WHERE
-	erp_performadetails.invoiceSsytemCode > 0 
-GROUP BY
-	erp_performadetails.companyID,
-	erp_performadetails.customerID,
-	erp_performadetails.performaMasterID,
-	erp_performadetails.invoiceSsytemCode 
-	) AS qry_ProformaClientApproval_CustomerInvoices ON qry_ProformaClientApproval_CustomerInvoices.companyID = performamaster.companyID 
-	AND qry_ProformaClientApproval_CustomerInvoices.performaMasterID = performamaster.performaSerialNO 
-	AND qry_ProformaClientApproval_CustomerInvoices.contractID = performamaster.contractID
-	LEFT JOIN (
-SELECT
-	max( custReceivePaymentAutoID ) AS custReceivePaymentAutoID,
-	max( custPaymentReceiveCode ) AS custPaymentReceiveCode,
-	max( postedDate ) AS postedDate,
-	bookingInvCodeSystem,
-	bookingInvCode,
-	sum( receiveAmountTrans ),
-	sum( receiveAmountLocal ),
-	sum( receiveAmountRpt ) AS ReceiptAmountRpt 
-FROM
-	(
-SELECT
-	erp_customerreceivepayment.custReceivePaymentAutoID,
-	erp_customerreceivepayment.custPaymentReceiveCode,
-	erp_customerreceivepayment.postedDate,
-	erp_custreceivepaymentdet.bookingInvCodeSystem,
-	erp_custreceivepaymentdet.bookingInvCode,
-	erp_custreceivepaymentdet.receiveAmountTrans,
-	erp_custreceivepaymentdet.receiveAmountLocal,
-	erp_custreceivepaymentdet.receiveAmountRpt 
-FROM
-	erp_customerreceivepayment
-	INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
-WHERE
-	erp_custreceivepaymentdet.bookingInvCode <> \"0\" 
-	AND erp_customerreceivepayment.approved =- 1 
-	AND erp_custreceivepaymentdet.matchingDocID = 0 UNION
-SELECT
-	erp_matchdocumentmaster.matchDocumentMasterAutoID,
-	erp_matchdocumentmaster.matchingDocCode,
-	erp_matchdocumentmaster.matchingDocdate,
-	erp_custreceivepaymentdet.bookingInvCodeSystem,
-	erp_custreceivepaymentdet.bookingInvCode,
-	erp_custreceivepaymentdet.receiveAmountTrans,
-	erp_custreceivepaymentdet.receiveAmountLocal,
-	erp_custreceivepaymentdet.receiveAmountRpt 
-FROM
-	erp_matchdocumentmaster
-	INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
-	AND erp_custreceivepaymentdet.matchingDocID > 0 
-WHERE
-	erp_matchdocumentmaster.matchingConfirmedYN = 1 
-	) AS final 
-GROUP BY
-	bookingInvCodeSystem 
-	) AS AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker ON AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.bookingInvCodeSystem = qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID 
-	) AS final";
+                companyID,
+                clientID,
+                contractUID,
+                contractID,
+                PerformaMasterID,
+                RigDescription,
+                regNo,
+                myRentalStartDate,
+                myRentMonth,
+                myRentYear,
+                myRentYear AS checkStatusYear,
+                rentalStartDate,
+                rentalEndDate,
+                billingCode,
+                performaValue,
+                PerformaCode,
+                performaOpConfirmedDate,
+                description,
+                clientapprovedDate,
+                myClientapprovedDate,
+                batchNo,
+                manualTrackingNo,
+                mySubmittedDate,
+                performaSerialNO,
+                bookingInvCode,
+                myApprovedDate,
+                myDescription,
+                ReceiptCode,
+                ReceiptDate,
+                ReceiptAmount,
+                CustomerName,
+            IF
+                (
+                ReceiptDate IS NOT NULL,
+                \"Collected\",
+            IF
+                (
+                ( myClientapprovedDate IS NULL OR myClientapprovedDate = \"\" ) 
+                AND ( mySubmittedDate IS NULL OR mySubmittedDate = \"\" ) 
+                AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
+                \"Rig Approval Pending\",
+            IF
+                (
+                myClientapprovedDate IS NOT NULL 
+                AND ( mySubmittedDate IS NULL OR mySubmittedDate = \"\" ) 
+                AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
+                \"Submission Pending\",
+            IF
+                (
+                myClientapprovedDate IS NOT NULL 
+                AND mySubmittedDate IS NOT NULL 
+                AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
+                \"CH Approval Pending\",
+            IF
+                ( myClientapprovedDate IS NOT NULL AND mySubmittedDate IS NOT NULL AND myApprovedDate IS NOT NULL, \"CH Approved\" ,\"\") 
+                ) 
+                ) 
+                ) 
+                ) AS status
+            FROM
+                (
+            SELECT
+                performamaster.companyID,
+                performamaster.clientID,
+                qry_performaClientApproval_Billing.contractUID,
+                performamaster.contractID,
+                performamaster.PerformaMasterID,
+                qry_performaClientApproval_Billing.RigDescription,
+                qry_performaClientApproval_Billing.regNo,
+                qry_performaClientApproval_Billing.myRentalStartDate,
+                MONTH ( qry_performaClientApproval_Billing.myRentalStartDate ) AS myRentMonth,
+                YEAR ( qry_performaClientApproval_Billing.myRentalStartDate ) AS myRentYear,
+                DATE_FORMAT( qry_performaClientApproval_Billing.myRentalStartDate, \"%d/%m/%Y\" ) AS rentalStartDate,
+                DATE_FORMAT( qry_performaClientApproval_Billing.myRentalEndDate, \"%d/%m/%Y\" ) AS rentalEndDate,
+                qry_performaClientApproval_Billing.billingCode,
+                qry_performaClientApproval_Billing.CustomerName,
+                performamaster.performaValue,
+                performamaster.PerformaCode,
+                performamaster.performaOpConfirmedDate,
+                clientperformaapptype.description,
+                performamaster.clientapprovedDate,
+            IF
+                ( description = \"Not Approved\" AND myApprovedDate IS NOT NULL, myApprovedDate, clientapprovedDate ) AS myClientapprovedDate,
+                qry_ProformaClientApproval_CustomerInvoices.customerInvoiceTrackingCode AS batchNo,
+                qry_ProformaClientApproval_CustomerInvoices.manualTrackingNo,
+                qry_ProformaClientApproval_CustomerInvoices.submittedDate,
+            IF
+                ( myApprovedDate IS NOT NULL AND submittedDate IS NULL, myApprovedDate, submittedDate ) AS mySubmittedDate,
+                performamaster.performaSerialNO,
+                qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID,
+                qry_ProformaClientApproval_CustomerInvoices.bookingInvCode,
+                qry_ProformaClientApproval_CustomerInvoices.myApprovedDate,
+            IF
+                (
+                ( description = \"Not Approved\" AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) ) 
+                AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
+                \"Not Approved\",
+            IF
+                (
+                description = \"Not Approved\" 
+                AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) 
+                AND ( myApprovedDate IS NOT NULL OR myApprovedDate <> \"\" ),
+                \"Approved\",
+                description 
+                ) 
+                ) AS myDescription,
+                AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.custPaymentReceiveCode AS ReceiptCode,
+                AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.postedDate AS ReceiptDate,
+                AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.ReceiptAmountRpt AS ReceiptAmount 
+            FROM
+                performamaster
+                INNER JOIN clientperformaapptype ON performamaster.clientAppPerformaType = clientperformaapptype.performaAppTypeID
+                INNER JOIN (
+            SELECT
+                freebillingmasterperforma.idbillingMasterPerforma,
+                freebillingmasterperforma.companyID,
+                freebillingmasterperforma.clientID,
+                freebillingmasterperforma.contractID,
+                ticketmaster.contractUID,
+                freebillingmasterperforma.Ticketno,
+                ticketmaster.ticketNo AS myTicketCode,
+                ticketmaster.regName,
+                rigmaster.RigDescription,
+                ticketmaster.regNo,
+                freebillingmasterperforma.BillProcessNO,
+                freebillingmasterperforma.billingCode,
+                ticketmaster.Timedatejobstra,
+                ticketmaster.Timedatejobend,
+                customermaster.CustomerName,
+            IF
+                ( billingCode = \"0\", Timedatejobstra, rentalStartDate ) AS myRentalStartDate,
+            IF
+                ( billingCode = \"0\", Timedatejobend, rentalEndDate ) AS myRentalEndDate,
+                freebillingmasterperforma.performaMasterID,
+                freebillingmasterperforma.PerformaInvoiceNo 
+            FROM
+                freebillingmasterperforma
+                INNER JOIN ticketmaster ON freebillingmasterperforma.Ticketno = ticketmaster.ticketidAtuto
+                INNER JOIN rigmaster ON ticketmaster.regName = rigmaster.idrigmaster 
+                INNER JOIN customermaster ON freebillingmasterperforma.clientSystemID = customermaster.customerCodeSystem 
+            WHERE
+                freebillingmasterperforma.performaMasterID > 0 ".$where."
+                ) AS qry_performaClientApproval_Billing ON qry_performaClientApproval_Billing.performaMasterID = performamaster.PerformaMasterID
+                LEFT JOIN (
+            SELECT
+                erp_performadetails.companyID,
+                erp_performadetails.serviceLine,
+                erp_performadetails.customerID,
+                erp_performadetails.contractID,
+                erp_performadetails.performaMasterID,
+                erp_performadetails.invoiceSsytemCode,
+                qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID,
+                qry_CustomerInvoiced_byProforma.bookingInvCode,
+                qry_CustomerInvoiced_byProforma.myApprovedDate,
+                qry_PerformaClientApproval_batchDetails.customerInvoiceTrackingCode,
+                qry_PerformaClientApproval_batchDetails.manualTrackingNo,
+                qry_PerformaClientApproval_batchDetails.submittedDate 
+            FROM
+                erp_performadetails
+                INNER JOIN (
+            SELECT
+                erp_custinvoicedirect.custInvoiceDirectAutoID,
+                erp_custinvoicedirect.companyID,
+                erp_custinvoicedirect.documentID,
+                erp_custinvoicedirect.bookingInvCode,
+                DATE_FORMAT( approvedDate, \"%d/%m/%Y\" ) AS myApprovedDate,
+                erp_custinvoicedirect.isPerforma 
+            FROM
+                erp_custinvoicedirect 
+            WHERE
+                erp_custinvoicedirect.isPerforma = 1 
+                ) AS qry_CustomerInvoiced_byProforma ON qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID = erp_performadetails.invoiceSsytemCode
+                LEFT JOIN (
+            SELECT
+                erp_customerinvoicetracking.customerInvoiceTrackingID,
+                erp_customerinvoicetracking.customerInvoiceTrackingCode,
+                erp_customerinvoicetracking.manualTrackingNo,
+                erp_customerinvoicetracking.submittedDate,
+                erp_customerinvoicetrackingdetail.companyID,
+                erp_customerinvoicetrackingdetail.custInvoiceDirectAutoID 
+            FROM
+                erp_customerinvoicetracking
+                INNER JOIN erp_customerinvoicetrackingdetail ON erp_customerinvoicetracking.customerInvoiceTrackingID = erp_customerinvoicetrackingdetail.customerInvoiceTrackingID 
+                ) AS qry_PerformaClientApproval_batchDetails ON qry_PerformaClientApproval_batchDetails.custInvoiceDirectAutoID = qry_CustomerInvoiced_byProforma.custInvoiceDirectAutoID 
+            WHERE
+                erp_performadetails.invoiceSsytemCode > 0 
+            GROUP BY
+                erp_performadetails.companyID,
+                erp_performadetails.customerID,
+                erp_performadetails.performaMasterID,
+                erp_performadetails.invoiceSsytemCode 
+                ) AS qry_ProformaClientApproval_CustomerInvoices ON qry_ProformaClientApproval_CustomerInvoices.companyID = performamaster.companyID 
+                AND qry_ProformaClientApproval_CustomerInvoices.performaMasterID = performamaster.performaSerialNO 
+                AND qry_ProformaClientApproval_CustomerInvoices.contractID = performamaster.contractID
+                LEFT JOIN (
+            SELECT
+                max( custReceivePaymentAutoID ) AS custReceivePaymentAutoID,
+                max( custPaymentReceiveCode ) AS custPaymentReceiveCode,
+                max( postedDate ) AS postedDate,
+                bookingInvCodeSystem,
+                bookingInvCode,
+                sum( receiveAmountTrans ),
+                sum( receiveAmountLocal ),
+                sum( receiveAmountRpt ) AS ReceiptAmountRpt 
+            FROM
+                (
+            SELECT
+                erp_customerreceivepayment.custReceivePaymentAutoID,
+                erp_customerreceivepayment.custPaymentReceiveCode,
+                erp_customerreceivepayment.postedDate,
+                erp_custreceivepaymentdet.bookingInvCodeSystem,
+                erp_custreceivepaymentdet.bookingInvCode,
+                erp_custreceivepaymentdet.receiveAmountTrans,
+                erp_custreceivepaymentdet.receiveAmountLocal,
+                erp_custreceivepaymentdet.receiveAmountRpt 
+            FROM
+                erp_customerreceivepayment
+                INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+            WHERE
+                erp_custreceivepaymentdet.bookingInvCode <> \"0\" 
+                AND erp_customerreceivepayment.approved =- 1 
+                AND erp_custreceivepaymentdet.matchingDocID = 0 UNION
+            SELECT
+                erp_matchdocumentmaster.matchDocumentMasterAutoID,
+                erp_matchdocumentmaster.matchingDocCode,
+                erp_matchdocumentmaster.matchingDocdate,
+                erp_custreceivepaymentdet.bookingInvCodeSystem,
+                erp_custreceivepaymentdet.bookingInvCode,
+                erp_custreceivepaymentdet.receiveAmountTrans,
+                erp_custreceivepaymentdet.receiveAmountLocal,
+                erp_custreceivepaymentdet.receiveAmountRpt 
+            FROM
+                erp_matchdocumentmaster
+                INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+                AND erp_custreceivepaymentdet.matchingDocID > 0 
+            WHERE
+                erp_matchdocumentmaster.matchingConfirmedYN = 1 
+                ) AS final 
+            GROUP BY
+                bookingInvCodeSystem 
+                ) AS AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker ON AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.bookingInvCodeSystem = qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID 
+                ) AS final".$whereStatus;
 
         $result = DB::select($sql);
 
-        return $this->sendResponse($result, 'Record retrieved successfully');
+        return $result;
     }
-
 }
