@@ -586,6 +586,12 @@ class PurchaseRequestAPIController extends AppBaseController
                                 $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur, 2);
 
                                 if ($poDetail->order) {
+                                    $data[$x]['PO Confirmed Date'] = \Helper::dateFormat($poDetail->order->poConfirmedDate);
+                                } else {
+                                    $data[$x]['PO Confirmed Date'] = '';
+                                }
+
+                                if ($poDetail->order) {
                                     if ($poDetail->order->approved == -1) {
                                         $data[$x]['PO Approved Status'] = 'Yes';
                                     } else {
@@ -635,6 +641,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['PO Qty'] = '';
                                             $data[$x]['Currency'] = '';
                                             $data[$x]['PO Cost'] = '';
+                                            $data[$x]['PO Confirmed Date'] = '';
                                             $data[$x]['PO Approved Status'] = '';
                                             $data[$x]['Approved Date'] = '';
                                             $data[$x]['PO Status'] = '';
@@ -686,6 +693,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             $data[$x]['PO Qty'] = '';
                             $data[$x]['Currency'] = '';
                             $data[$x]['PO Cost'] = '';
+                            $data[$x]['PO Confirmed Date'] = '';
                             $data[$x]['PO Approved Status'] = '';
                             $data[$x]['Approved Date'] = '';
                             $data[$x]['PO Status'] = '';
@@ -710,6 +718,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     $data[$x]['PO Qty'] = '';
                     $data[$x]['Currency'] = '';
                     $data[$x]['PO Cost'] = '';
+                    $data[$x]['PO Confirmed Date'] = '';
                     $data[$x]['PO Approved Status'] = '';
                     $data[$x]['Approved Date'] = '';
                     $data[$x]['PO Status'] = '';
