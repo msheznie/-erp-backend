@@ -247,7 +247,7 @@
                     <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
-                        <b>تاريخ الفاتورة : @if($request->line_poNumber)
+                        <b>رقم التسعيرة : @if($request->line_poNumber)
                                 {{$request->PONumber}}
                             @endif 
                             

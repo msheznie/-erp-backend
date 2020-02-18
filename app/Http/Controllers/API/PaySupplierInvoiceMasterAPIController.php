@@ -1287,6 +1287,16 @@ function getPaymentVoucherFormData(Request $request)
 
     $companyCurrency = \Helper::companyCurrency($companyId);
 
+    // check policy
+    $policyOn = 0;
+    $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+        ->where('companyPolicyCategoryID', 16)
+        ->where('isYesNO', 1)
+        ->first();
+    if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO==1) {
+        $policyOn = 1;
+    }
+
     $output = array(
         'financialYears' => $financialYears,
         'companyFinanceYear' => $companyFinanceYear,
@@ -1302,6 +1312,7 @@ function getPaymentVoucherFormData(Request $request)
         'expenseClaimType' => $expenseClaimType,
         'interCompany' => $interCompanyTo,
         'companyCurrency' => $companyCurrency,
+        'isPolicyOn' => $policyOn,
     );
 
     return $this->sendResponse($output, 'Record retrieved successfully');
