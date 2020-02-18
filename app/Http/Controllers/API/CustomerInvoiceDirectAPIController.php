@@ -1099,7 +1099,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $output['bankAccount'] = BankAccount::where('erp_bankaccount.companySystemID', $output['company']['companySystemID'])
                     ->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')
                     ->where('bankmasterAutoID', $bankID)
-                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
+                    //->where('accountCurrencyID', $master->custTransactionCurrencyID)
                     ->where('isAccountActive', 1)
                     ->where('approvedYN', 1)
                     ->get();
