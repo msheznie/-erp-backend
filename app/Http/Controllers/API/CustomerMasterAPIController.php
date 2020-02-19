@@ -227,7 +227,7 @@ class CustomerMasterAPIController extends AppBaseController
             //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
             $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
-            $allCompanies = Company::whereIn("companySystemID", $subCompanies)->get();
+            $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         } else {
             $allCompanies = Company::where("companySystemID", $selectedCompanyId)->get();
         }
@@ -308,6 +308,11 @@ class CustomerMasterAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
+
+        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 

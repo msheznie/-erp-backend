@@ -91,6 +91,10 @@ class CustomerAssignedAPIController extends AppBaseController
 
             $customerAssigneds = $this->customerAssignedRepository->update($data, $input['customerAssignedID']);
         }else{
+            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['customerCodeSystem'], 'customer');
+            if (!$validatorResult['success']) {
+                return $this->sendError($validatorResult['message']);
+            }
 
             $input = $this->convertArrayToValue($input);
             $input['isAssigned'] = -1;
@@ -131,7 +135,7 @@ class CustomerAssignedAPIController extends AppBaseController
         $companies = Company::whereIn('companySystemID', $subCompanies)
             ->whereDoesntHave('customerAssigned',function ($query) use ($customerId) {
                 $query->where('customerCodeSystem', '=', $customerId);
-            })
+            })->where('isGroup',0)
             ->get(['companySystemID','CompanyID','CompanyName']);
 
         return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');

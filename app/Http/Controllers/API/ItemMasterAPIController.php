@@ -428,7 +428,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         /**  Companies by group  Drop Down */
-        $companiesByGroup = Company::whereIn("companySystemID", $subCompanies)->get();
+        $companiesByGroup = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
 
         /** all Company  Drop Down */
         $allCompanies = Company::whereIn("companySystemID", $subCompanies)->get();
@@ -498,6 +498,11 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
+
+        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
 
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
         $ruleArray = array('secondaryItemCode' => 'required|unique:itemmaster',
