@@ -102,6 +102,11 @@ class ItemAssignedAPIController extends AppBaseController
             $itemAssigneds->itemMovementCategory = $input['itemMovementCategory'];
             $itemAssigneds->save();
         } else {
+            
+            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $itemId, 'item');
+            if (!$validatorResult['success']) {
+                return $this->sendError($validatorResult['message']);
+            }
 
             if ($itemMaster->isActive == 0 || $itemMaster->itemApprovedYN == 0) {
                 return $this->sendError('Master data is deactivated. Cannot activate or assign.',500);

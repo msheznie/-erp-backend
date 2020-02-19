@@ -428,6 +428,11 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
 
+        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
+
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -441,7 +446,6 @@ class SupplierMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         $input['primaryCompanyID'] = $company->CompanyID;
-
 
         $document = DocumentMaster::where('documentID', 'SUPM')->first();
 
