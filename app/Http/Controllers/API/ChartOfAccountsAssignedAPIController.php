@@ -75,7 +75,6 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $empName = $user->employee['empName'];
         $input = array_except($input, ['final_approved_by','company']);
         $input = $this->convertArrayToValue($input);
-
         if (array_key_exists('chartOfAccountsAssignedID', $input)) {
             $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
 
@@ -95,6 +94,11 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
             $chartOfAccountsAssigned->save();
         } else {
+            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['chartOfAccountSystemID'], 'chartofaccounts');
+            if (!$validatorResult['success']) {
+                return $this->sendError($validatorResult['message']);
+            }
+
             $input = $this->convertArrayToValue($input);
             $company = Company::find($input['companySystemID']);
             $input['companyID'] = $company->CompanyID;
