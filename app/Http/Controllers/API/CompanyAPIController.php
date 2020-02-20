@@ -93,6 +93,7 @@ class CompanyAPIController extends AppBaseController
 
         /**Chart of Account Drop Down */
         $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID', 4)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
