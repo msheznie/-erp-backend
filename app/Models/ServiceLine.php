@@ -130,9 +130,11 @@ class ServiceLine extends Model
 
     public $table = 'serviceline';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
+
+   /* protected $dates = ['deleted_at'];*/
 
 
     public $fillable = [
@@ -147,8 +149,6 @@ class ServiceLine extends Model
         'isServiceLine',
         'isDepartment',
         'isMaster',
-        'consoleCode',
-        'consoleDescription',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
@@ -176,15 +176,11 @@ class ServiceLine extends Model
         'isServiceLine' => 'integer',
         'isDepartment' => 'integer',
         'isMaster' => 'integer',
-        'consoleCode' => 'string',
-        'consoleDescription' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string',
-        'createdDateTime' => 'datetime',
-        'timeStamp' => 'datetime'
+        'modifiedUser' => 'string'
     ];
 
     /**
@@ -193,9 +189,6 @@ class ServiceLine extends Model
      * @var array
      */
     public static $rules = [
-        'serviceLineSystemID' => 'required',
-        'ServiceLineCode' => 'required'
+        
     ];
-
-    
 }

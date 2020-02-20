@@ -85,13 +85,14 @@ class SegmentRights extends Model
 
     public $table = 'segmentrights';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'modifiedDateTime';
+
+    protected $primaryKey  = 'segmentRightsID';
 
 
 
     public $fillable = [
-        'companyrightsID',
         'employeeSystemID',
         'companySystemID',
         'serviceLineSystemID',
@@ -110,18 +111,14 @@ class SegmentRights extends Model
      * @var array
      */
     protected $casts = [
-        'companyrightsID' => 'integer',
+        'segmentRightsID' => 'integer',
         'employeeSystemID' => 'integer',
         'companySystemID' => 'integer',
         'serviceLineSystemID' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdPcID' => 'string',
-        'createdDateTime' => 'datetime',
         'modifiedUserSystemID' => 'integer',
-        'modifiedPcID' => 'string',
-        'modifiedDateTime' => 'datetime',
-        'timestamp' => 'datetime',
-        'segmentRightsID' => 'integer'
+        'modifiedPcID' => 'string'
     ];
 
     /**
@@ -130,8 +127,18 @@ class SegmentRights extends Model
      * @var array
      */
     public static $rules = [
-        'segmentRightsID' => 'required'
+        
     ];
 
-    
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function segment(){
+        return $this->belongsTo('App\Models\ServiceLine','serviceLineSystemID','serviceLineSystemID');
+    }
+
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
 }
