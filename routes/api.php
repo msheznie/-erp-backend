@@ -34,6 +34,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
+    Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
 
     Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
