@@ -1699,3 +1699,6 @@ Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRi
 
 Route::resource('service_lines', 'ServiceLineAPIController');
 Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
