@@ -35,6 +35,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
+    Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
 
     Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
@@ -1699,3 +1700,6 @@ Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRi
 
 Route::resource('service_lines', 'ServiceLineAPIController');
 Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
