@@ -22,6 +22,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
 
 /**
  * Class EmployeeNavigationController
@@ -32,9 +34,10 @@ class EmployeeNavigationAPIController extends AppBaseController
     /** @var  EmployeeNavigationRepository */
     private $employeeNavigationRepository;
 
-    public function __construct(EmployeeNavigationRepository $employeeNavigationRepo)
+    public function __construct(EmployeeNavigationRepository $employeeNavigationRepo, UserRepository $userRepo)
     {
         $this->employeeNavigationRepository = $employeeNavigationRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -189,6 +192,17 @@ class EmployeeNavigationAPIController extends AppBaseController
     {
         $assignEmployee = EmployeeNavigation::create($request);
 
+    }
+
+    public function getuserGroupAssignedCompanies(Request $request){
+        $id = Auth::id();
+        $user = $this->userRepository->findWithoutFail($id);
+
+        $employee= EmployeeNavigation::select('companyID')->where('employeeSystemID',$user->employee_id)->get();
+        $companiesByGroup = array_pluck($employee, 'companyID');
+
+        $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0)->get();
+        return $this->sendResponse($groupCompany, 'Employee Navigation deleted successfully');
     }
 
 }
