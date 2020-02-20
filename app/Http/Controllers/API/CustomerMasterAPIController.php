@@ -237,6 +237,7 @@ class CustomerMasterAPIController extends AppBaseController
 
         /**Chart of Account Drop Down */
         $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID',3)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();
