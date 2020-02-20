@@ -90,3 +90,9 @@ Route::resource('clientPerformaAppTypes', 'ClientPerformaAppTypeController');
 Route::resource('customerInvoiceTrackings', 'CustomerInvoiceTrackingController');
 
 Route::resource('customerInvoiceTrackingDetails', 'CustomerInvoiceTrackingDetailController');
+
+Route::resource('segmentRights', 'SegmentRightsController');
+
+Route::resource('serviceLines', 'ServiceLineController');
+
+Route::resource('warehouseRights', 'WarehouseRightsController');

@@ -115,6 +115,11 @@ class ChartOfAccountAPIController extends AppBaseController
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
+        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
+
         $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
 
         if($company){
@@ -222,7 +227,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $companies = Company::whereIn("companySystemID",$subCompanies)
             ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
                 $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
-            })
+            })->where('isGroup',0)
             ->get(['companySystemID',
                 'CompanyID',
                 'CompanyName']);
@@ -475,7 +480,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         /**  Companies by group  Drop Down */
-        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->where("isGroup",0)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,

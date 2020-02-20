@@ -19,6 +19,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
+    Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
 
     Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -1692,3 +1693,13 @@ Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController
 
 
 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
+Route::resource('segment_rights', 'SegmentRightsAPIController');
+Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+
+Route::resource('service_lines', 'ServiceLineAPIController');
+Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
