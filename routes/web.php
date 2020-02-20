@@ -94,3 +94,5 @@ Route::resource('customerInvoiceTrackingDetails', 'CustomerInvoiceTrackingDetail
 Route::resource('segmentRights', 'SegmentRightsController');
 
 Route::resource('serviceLines', 'ServiceLineController');
+
+Route::resource('warehouseRights', 'WarehouseRightsController');
