@@ -78,12 +78,6 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['idyesNoselection']);
         unset( $input['YesNo']);
 
-
-        $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['supplierCodeSytem'], 'supplier');
-        if (!$validatorResult['success']) {
-            return $this->sendError($validatorResult['message']);
-        }
-
         $input = array_except($input, ['final_approved_by']);
         $input = $this->convertArrayToValue($input);
         /*if (is_array($input['supplierCountryID']))
@@ -141,6 +135,10 @@ class SupplierAssignedAPIController extends AppBaseController
             }
             $supplierAssigneds->save();
         }else{
+            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['supplierCodeSytem'], 'supplier');
+            if (!$validatorResult['success']) {
+                return $this->sendError($validatorResult['message']);
+            }
             $supplierAssigneds = $this->supplierAssignedRepository->create($input);
         }
 

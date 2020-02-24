@@ -30,6 +30,8 @@ use App\Models\LptPermission;
 use App\Models\UserRights;
 use App\Models\HRMSPersonalDocuments;
 use App\Models\User;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\EmployeeRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -120,7 +122,6 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['desi_master','manager','emp_company']);
         $input = $this->convertArrayToValue($input);
-
         /** @var Employee $employee */
         $employee = $this->employeeRepository->findWithoutFail($id);
 
@@ -150,6 +151,30 @@ class EmployeeAPIController extends AppBaseController
         }
         if (isset($input['isSupportAdmin']) && $input['isSupportAdmin']) {
             $input['isSupportAdmin'] = -1;
+        }
+        if (isset($input['empUserName']) && $input['empUserName']) {
+            $employeeCheck = Employee::where('empUserName',$input['empUserName'])->where('employeeSystemID','!=',$id)->first();
+            if (!is_null($employeeCheck)) {
+                return $this->sendError('Employee user name already exists.');
+            } else {
+                $validator = \Validator::make($input, [
+                                    'empUserName' => 'required|email|max:255',
+                                ]);;
+                if ($validator->fails()) {
+                    return $this->sendError('User name is not valid.');
+                }
+
+                $input['empEmail'] = $input['empUserName'];
+                //updating users table
+                $usersMasterData = User::where('employee_id', $id)->first();
+                if (!empty($usersMasterData)) {
+                    $usersMasterUpdate = User::where('employee_id', $id)
+                        ->update([
+                            'email' => $input['empUserName'],
+                            'username' => $input['empUserName']
+                        ]);
+                };
+            }
         }
 
         $employee = $this->employeeRepository->update($input, $id);
@@ -221,6 +246,27 @@ class EmployeeAPIController extends AppBaseController
         }
 
         $empMaster = Employee::whereIn('empCompanySystemID', $childCompanies);
+
+        if (isset($request['discharegedYN'])) {
+            $empMaster = $empMaster->where('discharegedYN',$request['discharegedYN']);
+        }
+
+        if (isset($request['ActivationFlag'])) {
+            $empMaster = $empMaster->where('ActivationFlag',$request['ActivationFlag']);
+        }
+
+        if (isset($request['isLock'])) {
+            $empMaster = $empMaster->where('isLock',$request['isLock']);
+        }
+
+        if (isset($request['empActive'])) {
+            $empMaster = $empMaster->where('empActive',$request['empActive']);
+        }
+
+        if (isset($request['empLoginActive'])) {
+            $empMaster = $empMaster->where('empLoginActive',$request['empLoginActive']);
+        }
+
         $empMaster->with(['emp_company', 'manager', 'desi_master' => function ($query) {
             $query->with('designation');
         }]);
@@ -338,7 +384,11 @@ class EmployeeAPIController extends AppBaseController
         /**  Companies by group  Drop Down */
         $companies = Company::whereIn("companySystemID", $subCompanies)->get();
 
-        $output = array('companies' => $companies);
+         /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $output = array('companies' => $companies, 'yesNoSelection' => $yesNoSelection, 'yesNoSelectionForMinus' => $yesNoSelectionForMinus);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
