@@ -1606,6 +1606,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
     Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
 
+    Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1691,3 +1693,6 @@ Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController
 
 
 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
+Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');

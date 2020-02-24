@@ -90,3 +90,5 @@ Route::resource('clientPerformaAppTypes', 'ClientPerformaAppTypeController');
 Route::resource('customerInvoiceTrackings', 'CustomerInvoiceTrackingController');
 
 Route::resource('customerInvoiceTrackingDetails', 'CustomerInvoiceTrackingDetailController');
+
+Route::resource('customerInvoiceItemDetails', 'CustomerInvoiceItemDetailsController');
