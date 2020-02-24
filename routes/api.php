@@ -1040,6 +1040,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
     Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
+    Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
     Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
     Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
