@@ -191,6 +191,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
     Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
     Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
+    Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
     Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
     Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
@@ -330,6 +331,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
+    Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
     Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');

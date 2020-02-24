@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 11-May 2018 By: Mubashir Description: Added new function getApprovalAccessRights(),
  * -- Date: 18-May 2018 By: Mubashir Description: Added new function getApprovalAccessRightsFormData() and getDepartmentDocument(),
+ * -- Date: 24-Feb 2020 By: Zakeeul Description: Added new function mirrorAccessRights(),
  */
 
 namespace App\Http\Controllers\API;
@@ -71,8 +72,13 @@ class EmployeesDepartmentAPIController extends AppBaseController
     public function store(CreateEmployeesDepartmentAPIRequest $request)
     {
         $input = $request->all();
-
         foreach ($input as $key => $val) {
+            $val = $this->convertArrayToValue($val);
+            $input[$key]['companySystemID'] = $val['companySystemID'];
+            $input[$key]['documentSystemID'] = $val['documentSystemID'];
+            $input[$key]['departmentSystemID'] = $val['departmentSystemID'];
+            $input[$key]['ServiceLineSystemID'] = $val['ServiceLineSystemID'];
+            $input[$key]['employeeSystemID'] = $val['employeeSystemID'];
             if ($val['companySystemID']) {
                 $companyID = Company::find($val['companySystemID']);
                 $input[$key]['companyId'] = $companyID->CompanyID;
@@ -325,4 +331,122 @@ class EmployeesDepartmentAPIController extends AppBaseController
     }
 
 
+    public function mirrorAccessRights(Request $request)
+    {
+        $input = $request->all();
+
+        $mirrorEmployeeIDs = $input['mirrorEmployeeID']['employeeSystemID'];
+
+        $existingData = $this->getExistingApprovalAccessRights($input);
+
+        $finalData = $this->copyApprovalAccessRights($existingData, $mirrorEmployeeIDs);
+        $employeesDepartments = [];
+        foreach ($finalData as $key => $value) {
+            $checkIsExisits = EmployeesDepartment::where('companySystemID', $value['companySystemID'])
+                                                ->where('employeeSystemID', $value['employeeSystemID'])
+                                                ->where('documentSystemID', $value['documentSystemID'])
+                                                ->where('departmentSystemID', $value['departmentSystemID'])
+                                                ->where('ServiceLineSystemID', $value['ServiceLineSystemID'])
+                                                ->where('employeeGroupID', $value['employeeGroupID'])->first();
+            if (is_null($checkIsExisits)) {
+                 $employeesDepartments[] = EmployeesDepartment::insert($value);
+            }
+        }
+        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+    }
+
+    public function getExistingApprovalAccessRights($input)
+    {
+        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup'])->where('employeeSystemID', $input['existingEmployeeID'])->selectRaw('*,false as selected');
+
+        if (array_key_exists('companySystemID', $input)) {
+            if(is_array($input['companySystemID'])){
+                $input['companySystemID'] = $input['companySystemID'][0];
+            }
+            if ($input['companySystemID'] > 0) {
+                $employeesDepartment->whereHas('company', function ($q) use ($input) {
+                    $q->where('companySystemID', $input['companySystemID']);
+                });
+            }else {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $employeesDepartment->where('companySystemID',$input['globalCompanyId']);
+                }else{
+                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $employeesDepartment->whereIN('companySystemID',$companiesByGroup);
+                }
+            }
+        }else{
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $employeesDepartment->where('companySystemID',$input['globalCompanyId']);
+            }else{
+                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $employeesDepartment->whereIN('companySystemID',$companiesByGroup);
+            }
+        }
+        if (array_key_exists('documentSystemID', $input)) {
+            if ($input['documentSystemID'] > 0) {
+                $employeesDepartment->whereHas('document', function ($q) use ($input) {
+                    $q->where('documentSystemID', $input['documentSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('departmentSystemID', $input)) {
+            if ($input['departmentSystemID'] > 0) {
+                $employeesDepartment->whereHas('department', function ($q) use ($input) {
+                    $q->where('departmentSystemID', $input['departmentSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('servicelineSystemID', $input)) {
+            if ($input['servicelineSystemID'] > 0) {
+                $employeesDepartment->whereHas('serviceline', function ($q) use ($input) {
+                    $q->where('servicelineSystemID', $input['servicelineSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->whereHas('approvalgroup', function ($q) use ($input) {
+                    $q->where('employeeGroupID', $input['approvalGroupID']);
+                });
+            }
+        }
+
+        $existingData = $employeesDepartment->get()->toArray();
+
+        return $existingData;
+    }
+
+    public function copyApprovalAccessRights($existingData, $mirrorEmployeeIDs)
+    {
+        $finalData = [];
+        foreach ($existingData as $key => $value) {
+            foreach ($mirrorEmployeeIDs as $ke => $val) {
+                $temp['employeeSystemID'] = $val['employeeSystemID'];
+                $temp['employeeID'] = $val['empID'];
+                $temp['employeeGroupID'] = $value['employeeGroupID'];
+                $temp['companySystemID'] = $value['companySystemID'];
+                $temp['companyId'] = $value['companyId'];
+                $temp['documentSystemID'] = $value['documentSystemID'];
+                $temp['documentID'] = $value['documentID'];
+                $temp['departmentSystemID'] = $value['departmentSystemID'];
+                $temp['departmentID'] = $value['departmentID'];
+                $temp['ServiceLineSystemID'] = $value['ServiceLineSystemID'];
+                $temp['ServiceLineID'] = $value['ServiceLineID'];
+                $temp['warehouseSystemCode'] = $value['warehouseSystemCode'];
+                $temp['reportingManagerID'] = $value['reportingManagerID'];
+                $temp['isDefault'] = $value['isDefault'];
+                $temp['dischargedYN'] = $value['dischargedYN'];
+                $temp['approvalDeligated'] = $value['approvalDeligated'];
+                $temp['approvalDeligatedFromEmpID'] = $value['approvalDeligatedFromEmpID'];
+                $temp['approvalDeligatedFrom'] = $value['approvalDeligatedFrom'];
+                $temp['approvalDeligatedTo'] = $value['approvalDeligatedTo'];
+                $temp['dmsIsUploadEnable'] = $value['dmsIsUploadEnable'];
+
+                $finalData[] = $temp;
+            }
+        }
+
+        return $finalData;
+    }
 }
