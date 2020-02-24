@@ -143,16 +143,16 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['InvoiceDate'] = $masterData->customerInvoiceDate;
                             $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                             $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                            $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+
                             $data['custDefaultCurrencyID'] = 0;
                             $data['custDefaultCurrencyER'] = 0;
                             $data['custDefaultAmount'] = 0;
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+
                             $data['isInvoiceLockedYN'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['selectedToPaymentInv'] = 0;
@@ -162,6 +162,16 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
                             $data['createdPcID'] = gethostname();
                             $data['timeStamp'] = \Helper::currentDateTime();
+
+                            if($masterData->isPerforma == 2){// item sales invoice
+                                $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans);
+                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal));
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt));
+                            }else{
+                                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                            }
                             array_push($finalData, $data);
                         }
                         break;

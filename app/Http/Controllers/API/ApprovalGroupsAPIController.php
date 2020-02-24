@@ -9,7 +9,7 @@
  * -- Create date : 23 - April 2018
  * -- Description : This file contains the all CRUD for Approval Group.
  * -- REVISION HISTORY
- * --
+ * -- Date: 24-Feb 2020 By: Zakeeul Description: Added new function getDocumentAccessGroup(),
  */
 
 namespace App\Http\Controllers\API;
@@ -200,5 +200,14 @@ class ApprovalGroupsAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+    }
+
+    public function getDocumentAccessGroup(Request $request)
+    {
+        $approvalGroups = ApprovalGroups::where('documentSystemID', $request['documentSystemID'])->get();
+        if (empty($approvalGroups)) {
+            return $this->sendError('Document not found');
+        }
+        return $this->sendResponse($approvalGroups, 'Document retrieved successfully');
     }
 }

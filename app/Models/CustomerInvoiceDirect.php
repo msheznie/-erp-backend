@@ -701,4 +701,19 @@ class CustomerInvoiceDirect extends Model
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
+
+    public function report_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function issue_item_details()
+    {
+        return $this->hasMany('App\Models\CustomerInvoiceItemDetails', 'custInvoiceDirectAutoID', 'custInvoiceDirectAutoID');
+    }
 }

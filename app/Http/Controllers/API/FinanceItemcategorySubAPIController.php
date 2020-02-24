@@ -88,7 +88,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $itemCategorySubArray = [];
             $i=0;
             foreach ($subCategories as $value){
-                $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+                $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
                 if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                     $accountCode = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                     $accountDescription = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -97,6 +97,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
                     $accountCode = isset($value->finance_gl_code_bs->AccountCode)?$value->finance_gl_code_bs->AccountCode:'';
                     $accountDescription = isset($value->finance_gl_code_bs->AccountDescription)?$value->finance_gl_code_bs->AccountDescription:'';
+
+                }else if($value->financeGLcodeRevenueSystemID && $value->finance_gl_code_revenue != null){
+
+                    $accountCode = isset($value->finance_gl_code_revenue->AccountCode)?$value->finance_gl_code_revenue->AccountCode:'';
+                    $accountDescription = isset($value->finance_gl_code_revenue->AccountDescription)?$value->finance_gl_code_revenue->AccountDescription:'';
 
                 }else{
                     $accountCode = '';
@@ -173,6 +178,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financePL = ChartOfAccount::where('chartOfAccountSystemID',$input['financeGLcodePLSystemID'])->first();
             if($financePL){
                 $input['financeGLcodePL'] = $financePL->AccountCode ;
+            }
+
+        }
+
+        if(array_key_exists ('financeGLcodeRevenueSystemID' , $input )){
+            $financePL = ChartOfAccount::where('chartOfAccountSystemID',$input['financeGLcodeRevenueSystemID'])->first();
+            if($financePL){
+                $input['financeGLcodeRevenue'] = $financePL->AccountCode ;
             }
 
         }

@@ -599,7 +599,11 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         }
 
         $batchSubmission = CustomerInvoiceTracking::find($input['customerInvoiceTrackingID']);
-
+        $approvalType = $batchSubmission->approvalType;
+        $where = '';
+        if($approvalType){
+            $where = ' AND performamaster.clientAppPerformaType = '.$approvalType;
+        }
         if(empty($batchSubmission)){
             return $this->sendError('Customer Invoice Tracking Not Found');
         }
@@ -660,10 +664,12 @@ FROM
 			AND rigmaster.companyID = ticketmaster.companyID 
 		WHERE
 			erp_custinvoicedirect.companySystemID = $companySystemID 
+			AND erp_custinvoicedirect.isPerforma != '2'
             AND erp_custinvoicedirectdet.contractID=$contractUID
 			AND erp_custinvoicedirectdet.customerID=$customerID
 			AND erp_custinvoicedirectdet.performaMasterID > 0 
 			AND erp_custinvoicedirect.selectedForTracking = 0 
+            $where
 		GROUP BY
 			performa_service_entry_wellgroup.performaMasID,
 			performa_service_entry_wellgroup.SEno,
@@ -690,12 +696,15 @@ FROM
 		FROM
 			erp_custinvoicedirectdet
 			INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
+			LEFT JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
 		WHERE
 			erp_custinvoicedirect.companySystemID = $companySystemID 
+            AND erp_custinvoicedirect.isPerforma != '2'
             AND erp_custinvoicedirectdet.contractID=$contractUID
 			AND erp_custinvoicedirectdet.customerID=$customerID
 			AND erp_custinvoicedirect.selectedForTracking = 0 
 			AND erp_custinvoicedirectdet.performaMasterID = 0 
+		    $where
 		GROUP BY
 			erp_custinvoicedirectdet.companyID,
 			erp_custinvoicedirectdet.custInvoiceDirectID,
