@@ -25,8 +25,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateJvMasterAPIRequest;
 use App\Http\Requests\API\UpdateJvMasterAPIRequest;
+use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -48,17 +50,16 @@ use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
-use App\Models\chartOfAccount;
+use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
+use App\Repositories\UserRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use App\Repositories\UserRepository;
-use Illuminate\Support\Facades\Storage;
 use Response;
 
 /**
@@ -70,11 +71,14 @@ class JvMasterAPIController extends AppBaseController
     /** @var  JvMasterRepository */
     private $jvMasterRepository;
     private $userRepository;
+    private $budgetConsumedDataRepository;
 
-    public function __construct(JvMasterRepository $jvMasterRepo, UserRepository $userRepo)
+    public function __construct(JvMasterRepository $jvMasterRepo, UserRepository $userRepo,
+                                BudgetConsumedDataRepository $budgetConsumedDataRepo)
     {
         $this->jvMasterRepository = $jvMasterRepo;
         $this->userRepository = $userRepo;
+        $this->budgetConsumedDataRepository = $budgetConsumedDataRepo;
     }
 
     /**
@@ -469,7 +473,7 @@ class JvMasterAPIController extends AppBaseController
                 $updateItem = JvDetail::find($item['jvDetailAutoID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
-                    if($jvMaster->jvType != 5) {
+                    if ($jvMaster->jvType != 5) {
                         $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
                             ->where('isActive', 1)
                             ->first();
@@ -1080,7 +1084,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         if (($jvMasterData->jvType == 1 || $jvMasterData->jvType == 5) && $jvMasterData->isReverseAccYN == 0) {
 
-            $formattedJvDateR =  Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
+            $formattedJvDateR = Carbon::parse($jvMasterData->JVdate)->format('Y-m-01');
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
@@ -1541,7 +1545,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                         $glAccountDescription = $chartOfAccountData->AccountDescription;
                     }
 
-                    $contract = Contract::where('ContractNumber',$val['client_contract'])->where('companySystemID', $jvMasterData->companySystemID)->first();
+                    $contract = Contract::where('ContractNumber', $val['client_contract'])->where('companySystemID', $jvMasterData->companySystemID)->first();
                     if ($contract) {
                         $contractUID = $contract->contractUID;
                     }
@@ -1659,7 +1663,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     }
 
-    public function exportJournalVoucherForPOAccrualJVDetail(Request $request){
+    public function exportJournalVoucherForPOAccrualJVDetail(Request $request)
+    {
 
         $companySystemID = $request['companyId'];
         $jvMasterAutoId = $request['jvMasterAutoId'];
@@ -1771,9 +1776,9 @@ HAVING
                 $data[$x]['Item Description'] = $val->itemDescription;
                 $data[$x]['GL Code'] = $val->glCode;
                 $data[$x]['Supplier Name'] = $val->supplierName;
-                $data[$x]['PO Total Cost'] = round($val->poCost,$request->fractionTot);
-                $data[$x]['GRV Total Cost'] = round($val->grvCost,$request->fractionTot);
-                $data[$x]['Balance'] = round($val->balanceCost,$request->fractionTot);
+                $data[$x]['PO Total Cost'] = round($val->poCost, $request->fractionTot);
+                $data[$x]['GRV Total Cost'] = round($val->grvCost, $request->fractionTot);
+                $data[$x]['Balance'] = round($val->balanceCost, $request->fractionTot);
                 $x++;
             }
         }
@@ -1877,6 +1882,76 @@ HAVING
 
             DB::commit();
             return $this->sendResponse($jvMaster->toArray(), 'Journal voucher amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function journalVoucherBudgetUpload(Request $request)
+    {
+        $input = $request->all();
+
+        $id = isset($input['jvMasterAutoId']) ? $input['jvMasterAutoId'] : 0;
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $jvMaster = JvMaster::find($id);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal voucher not found');
+        }
+
+        if ($jvMaster->approved != -1) {
+            return $this->sendError('You cannot upload to budget this journal voucher, It is not approved', 500);
+        }
+
+        $checkAlreadyAdded = BudgetConsumedData::where('documentSystemCode', $id)
+            ->where('companySystemID', $jvMaster->companySystemID)
+            ->where('documentSystemID', $jvMaster->documentSystemID)
+            ->count();
+        if ($checkAlreadyAdded > 0) {
+            return $this->sendError('Cannot update. Already data is updated to budget consumedt', 500);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            //get data from general ledger table
+            $glData = GeneralLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $jvMaster->companySystemID)
+                ->where('documentSystemID', $jvMaster->documentSystemID)
+                ->where('glAccountTypeID', 2)
+                ->get();
+
+            if (count($glData) == 0) {
+                return $this->sendError('There is no data to update', 500);
+            }
+
+            foreach ($glData as $val) {
+                $tem = array();
+                $tem['companySystemID'] = $val['companySystemID'];
+                $tem['companyID'] = $val['companyID'];
+                $tem['serviceLineSystemID'] = $val['serviceLineSystemID'];
+                $tem['serviceLineCode'] = $val['serviceLineCode'];
+                $tem['documentSystemID'] = $val['documentSystemID'];
+                $tem['documentID'] = $val['documentID'];
+                $tem['documentSystemCode'] = $val['documentSystemCode'];
+                $tem['documentCode'] = $val['documentCode'];
+                $tem['chartOfAccountID'] = $val['chartOfAccountSystemID'];
+                $tem['GLCode'] = $val['glCode'];
+                $tem['year'] = $val['documentYear'];
+                $tem['month'] = $val['documentMonth'];
+                $tem['consumedLocalCurrencyID'] = $val['documentLocalCurrencyID'];
+                $tem['consumedLocalAmount'] = 12; //$val['documentLocalAmount'];
+                $tem['consumedRptCurrencyID'] = $val['documentRptCurrencyID'];
+                $tem['consumedRptAmount'] = 10; //$val['documentRptAmount'];
+                $tem['timestamp'] = date('d/m/Y H:i:s A');
+                BudgetConsumedData::insert($tem);
+                //$this->budgetConsumedDataRepository->create($tem);
+            }
+            DB::commit();
+            return $this->sendResponse($glData->toArray(), 'Journal voucher uploaded to budget successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

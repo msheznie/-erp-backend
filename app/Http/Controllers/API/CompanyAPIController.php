@@ -81,12 +81,11 @@ class CompanyAPIController extends AppBaseController
         $allCompanies = Company::where("isGroup",0)->get();
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
         if($isGroup){
             $subCompanies  = \Helper::getGroupCompany($selectedCompanyId);
             //$subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
-            $companies = Company::whereIn("companySystemID",$subCompanies)->get();
+            $companies = Company::whereIn("companySystemID",$subCompanies)->where("isGroup",0)->get();
         }else{
             $companies = Company::where("companySystemID",$selectedCompanyId)->get();
         }
@@ -94,6 +93,7 @@ class CompanyAPIController extends AppBaseController
 
         /**Chart of Account Drop Down */
         $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
+            ->where('controlAccountsSystemID', 4)
             ->where('catogaryBLorPL', '=', 'BS')
             ->orderBy('AccountDescription', 'asc')
             ->get();

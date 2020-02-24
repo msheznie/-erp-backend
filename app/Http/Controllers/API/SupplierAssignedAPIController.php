@@ -135,6 +135,10 @@ class SupplierAssignedAPIController extends AppBaseController
             }
             $supplierAssigneds->save();
         }else{
+            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['supplierCodeSytem'], 'supplier');
+            if (!$validatorResult['success']) {
+                return $this->sendError($validatorResult['message']);
+            }
             $supplierAssigneds = $this->supplierAssignedRepository->create($input);
         }
 

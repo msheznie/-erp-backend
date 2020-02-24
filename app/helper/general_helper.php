@@ -4237,4 +4237,50 @@ class Helper
         }
         return $permission;
     }
+
+    public static function checkCompanyForMasters($companyID, $documentSystemID = null, $documentType = null)
+    {
+        $isGroup = self::checkIsCompanyGroup($companyID);
+
+        if ($isGroup) {
+            if (is_null($documentType)) {
+                return ['success' => false, 'message' => 'Primary company cannot be a group of company.'];
+            } else {
+                return ['success' => false, 'message' => 'Assigned company cannot be a group of company.'];
+            }
+        } 
+
+        switch ($documentType) {
+            case 'supplier':
+                $supplierAssigned = Models\SupplierAssigned::where('supplierCodeSytem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!is_null($supplierAssigned)) {
+                    return ['success' => false, 'message' => 'This is supplier is already assign to this company.'];
+                }
+                break;
+            case 'item':
+                $itemAssigned = Models\ItemAssigned::where('itemCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!is_null($itemAssigned)) {
+                    return ['success' => false, 'message' => 'This is item is already assign to this company.'];
+                }
+                break;
+            case 'customer':
+                $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!is_null($customerAssigned)) {
+                    return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                }
+                break;
+            case 'chartofaccounts':
+                $chartOfAccountAssigned = Models\ChartOfAccountsAssigned::where('chartOfAccountSystemID', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!is_null($chartOfAccountAssigned)) {
+                    return ['success' => false, 'message' => 'This is chart of account is already assign to this company.'];
+                }
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+
+        return ['success' => true, 'message' => "success"];
+    }
 }

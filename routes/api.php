@@ -19,6 +19,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
+    Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
 
     Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -34,6 +35,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
+    Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
 
     Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
@@ -189,6 +191,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
     Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
     Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
+    Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
     Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
     Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
@@ -328,6 +331,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
+    Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
     Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
@@ -1038,6 +1042,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
     Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
+    Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
     Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
     Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
@@ -1693,6 +1698,16 @@ Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController
 
 
 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
+Route::resource('segment_rights', 'SegmentRightsAPIController');
+Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+
+Route::resource('service_lines', 'ServiceLineAPIController');
+Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
 
 
 Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');

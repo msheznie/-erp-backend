@@ -93,6 +93,46 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         }
     }
 
+    public function getUserMenu(Request $request){
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['employeeSystemID'];
+
+        $userGroup = DB::table('srp_erp_employeenavigation')
+            ->where('employeeSystemID',$empId)
+            ->where('companyID',$request['companyId'])
+            ->first();
+
+        if($userGroup){
+            $companyId = $request['companyId'];
+            $userGroupId = $userGroup->userGroupID;
+            $menus = NavigationUserGroupSetup::whereNotNull('masterID')
+                                                ->whereNotNull('url')
+                                                ->whereIn('isPortalYN',array(0))
+                                                ->where('userGroupID',$userGroupId)
+                                                ->where('companyID',$companyId)
+                                                ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                                                    $query->where('userGroupID',$userGroupId)
+                                                        ->where('companyID',$companyId)
+                                                        ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                                                            $query->where('userGroupID',$userGroupId)
+                                                                ->where('companyID',$companyId)
+                                                                ->orderBy("sortOrder","asc");
+                                                        }])
+                                                        ->orderBy("sortOrder","asc");
+                                                }])
+                                                ->orderBy("sortOrder","asc")
+                                                ->select('navigationMenuID','pageTitle','url')
+                                                ->get();
+
+            return $this->sendResponse($menus,'successfully retrieved menus');
+
+        }else{
+            return $this->sendResponse([],'not found any menu');
+        }
+    }
+
 
     /**
      * Store a newly created NavigationUserGroupSetup in storage.
