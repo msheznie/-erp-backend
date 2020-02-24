@@ -216,6 +216,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         /**/
 
+        if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+            $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
+            if (!$serviceLine) {
+                return $this->sendError('Please select a Service Line', 500);
+            }
+            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            $input['serviceLineCode'] = isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
+        }
+
         $lastSerial = CustomerInvoiceDirect::where('companySystemID', $input['companyID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('serialNo', 'desc')
@@ -390,13 +399,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID','wareHouseSystemCode'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID','wareHouseSystemCode','serviceLineSystemID'));
             if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
                 $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
+
                 if (!$wareHouse) {
                     return $this->sendError('Please select a warehouse', 500);
                 }
                 $_post['wareHouseSystemCode'] = $input['wareHouseSystemCode'];
+
+
+                $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
+                if (!$serviceLine) {
+                    return $this->sendError('Please select a Service Line', 500);
+                }
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $_post['serviceLineCode'] =  isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
             }
 
 
@@ -1232,6 +1251,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
+        $output['segment'] = [];
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)
             ->where('isYesNO', 1)
@@ -1240,6 +1260,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['isPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }
 
         return $this->sendResponse($output, 'Record retrieved successfully');

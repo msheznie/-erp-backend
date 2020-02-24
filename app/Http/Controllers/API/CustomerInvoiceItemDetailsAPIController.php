@@ -321,8 +321,6 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-
-
         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->create($input);
 
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), 'Customer Invoice Item Details saved successfully');
