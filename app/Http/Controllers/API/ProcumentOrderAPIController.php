@@ -1908,7 +1908,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO');
+            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO',404, ['advancePaymentError' =>true]);
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');

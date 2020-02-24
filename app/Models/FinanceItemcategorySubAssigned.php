@@ -56,6 +56,8 @@ class FinanceItemcategorySubAssigned extends Model
         'financeGLcodebBS',
         'financeGLcodePLSystemID',
         'financeGLcodePL',
+        'financeGLcodeRevenueSystemID',
+        'financeGLcodeRevenue',
         'includePLForGRVYN',
         'companySystemID',
         'companyID',
@@ -78,6 +80,8 @@ class FinanceItemcategorySubAssigned extends Model
         'financeGLcodebBS' => 'string',
         'financeGLcodePLSystemID' => 'integer',
         'financeGLcodePL' => 'string',
+        'financeGLcodeRevenueSystemID' => 'integer',
+        'financeGLcodeRevenue' => 'string',
         'includePLForGRVYN' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -112,5 +116,10 @@ class FinanceItemcategorySubAssigned extends Model
     public function finance_gl_code_pl()
     {
         return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodePLSystemID','chartOfAccountSystemID');
+    }
+
+    public function finance_gl_code_revenue()
+    {
+        return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodeRevenueSystemID','chartOfAccountSystemID');
     }
 }

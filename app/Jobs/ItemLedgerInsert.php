@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\Helper;
 use App\Models\Employee;
 use Exception;
 use App\Models\ErpItemLedger;
@@ -239,6 +240,36 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt');
                         break;
+                    case 20: // Material Issue
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                        $docInforArr["childRelation"] = 'issue_item_details';
+                        $docInforArr["autoID"] = 'custInvoiceDirectAutoID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'documentCode' => 'itemIssueCode',
+                            'wareHouseSystemCode' => 'wareHouseSystemCode',
+                            'referenceNumber' => 'customerInvoiceNo');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCodeSystem',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'itemUnitOfMeasure',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
+                            'wacLocalCurrencyID' => 'localCurrencyID',
+                            'wacLocal' => 'sellingCostAfterMarginLocal',
+                            'wacRptCurrencyID' => 'reportingCurrencyID',
+                            'wacRpt' => 'sellingCostAfterMarginRpt',
+                            'comments' => 'comments');
+
+                        break;
                     case 24: //Inventory Reclassification
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'PurchaseReturn';
@@ -317,7 +348,7 @@ class ItemLedgerInsert implements ShouldQueue
                                 if($column == 'inOutQty') {
                                     if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 ) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
-                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24){
+                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                     }else if($masterModel["documentSystemID"] == 7){    // stock adjustment
                                         if($masterRec['stockAdjustmentType']==2){       // cost adjustment
@@ -333,6 +364,8 @@ class ItemLedgerInsert implements ShouldQueue
                                     if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){ // stock adjustment, cost adjustment
                                         $data[$i][$column] = (($detail['wacAdjLocal'])-($detail['currentWaclocal']))*$detail['currenctStockQty'];
 
+                                    }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
+                                        $data[$i][$column] = $detail['sellingCostAfterMarginLocal']*$detail['qtyIssuedDefaultMeasure'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];
                                     }
@@ -340,6 +373,8 @@ class ItemLedgerInsert implements ShouldQueue
                                     if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2) { // stock adjustment, cost adjustment
                                         $data[$i][$column] = (($detail['wacAdjRpt'])-($detail['currentWacRpt']))*$detail['currenctStockQty'];
 
+                                    }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
+                                        $data[$i][$column] = $data[$i][$column] = $detail['sellingCostAfterMarginRpt']*$detail['qtyIssuedDefaultMeasure'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];
                                     }

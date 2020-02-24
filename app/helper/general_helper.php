@@ -1790,7 +1790,7 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20])) {
 
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }

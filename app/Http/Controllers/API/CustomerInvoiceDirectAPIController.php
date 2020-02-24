@@ -23,6 +23,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
@@ -34,6 +35,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
 use App\Models\customercurrency;
@@ -41,6 +43,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
 use App\Models\CustomerInvoiceDirectRefferedback;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
@@ -56,6 +59,7 @@ use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
 use App\Models\TicketMaster;
 use App\Models\Unit;
+use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
@@ -164,6 +168,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+            $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
+            if (!$wareHouse) {
+                return $this->sendError('Please select a warehouse', 500);
+            }
+        }
+
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
         $companyFinanceYearID = $input['companyFinanceYearID'];
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
@@ -204,6 +215,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         /**/
+
+        if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+            $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
+            if (!$serviceLine) {
+                return $this->sendError('Please select a Service Line', 500);
+            }
+            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            $input['serviceLineCode'] = isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
+        }
 
         $lastSerial = CustomerInvoiceDirect::where('companySystemID', $input['companyID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -300,7 +320,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company' => function ($query) {
             $query->select('CompanyName', 'companySystemID', 'isTaxYN');
-        }, 'bankaccount', 'currency', 'finance_year_by' => function ($query) {
+        }, 'bankaccount', 'currency', 'report_currency', 'local_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
@@ -367,12 +387,38 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
-        $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         $isPerforma = $customerInvoiceDirect->isPerforma;
+
+        if ($isPerforma == 2) {
+            $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+        } else {
+            $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+        }
+
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID','wareHouseSystemCode','serviceLineSystemID'));
+            if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+                $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
+
+                if (!$wareHouse) {
+                    return $this->sendError('Please select a warehouse', 500);
+                }
+                $_post['wareHouseSystemCode'] = $input['wareHouseSystemCode'];
+
+
+                $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
+                if (!$serviceLine) {
+                    return $this->sendError('Please select a Service Line', 500);
+                }
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $_post['serviceLineCode'] =  isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
+            }
+
+
             $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
             $_post['bankID'] = $input['bankID'];
             $_post['bankAccountID'] = $input['bankAccountID'];
@@ -569,8 +615,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
+        if($isPerforma==2){
+            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"),DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+        }else{
+            $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
+        }
 
-        $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
 
         $_post['bookingAmountTrans'] = \Helper::roundValue($detailAmount->bookingAmountTrans);
         $_post['bookingAmountLocal'] = \Helper::roundValue($detailAmount->bookingAmountLocal);
@@ -673,93 +723,181 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if (count($detail) == 0) {
                     return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
                 } else {
-                    $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+
+                    if ($isPerforma == 2) {   // item sales invoice
+
+                        $checkQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                            ->where(function ($q) {
+                                $q->where('qtyIssued', '<=', 0)
+                                    ->orWhereNull('qtyIssued');
+                            })
+                            ->count();
+                        if ($checkQuantity > 0) {
+                            return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                        }
+
+                        $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+
+                        foreach ($details as $item) {
+                            $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
+                            $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
+                                'itemCodeSystem' => $updateItem->itemCodeSystem,
+                                'wareHouseId' => $customerInvoiceDirect->wareHouseSystemCode);
+                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                            $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                            $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                            $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                            $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                            $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                            $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
+                            $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
+
+                            $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$updateItem->issueCostRpt);
+                            $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
+
+                            /*margin calculation*/
+                            if($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null){
+                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost*$updateItem->marginPercentage/100);
+                            }else{
+                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
+                            }
+
+                            $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+
+                            $updateItem->save();
+
+                            if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                                return $this->sendError('Every Item should not have zero cost', 500);
+                            }
+                            if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                                return $this->sendError('Every Item should not have negative cost', 500);
+                            }
+                            if ($updateItem->currentWareHouseStockQty <= 0) {
+                                return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                            }
+                            if ($updateItem->currentStockQty <= 0) {
+                                return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                            }
+                            if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                                return $this->sendError('Not enough Qty for '.$updateItem->itemDescription, 500);
+                            }
+
+                            if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                                return $this->sendError('Not enough Qty for '.$updateItem->itemDescription, 500);
+                            }
+
+                        }
+
+                        $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                            ->sum('issueCostRptTotal');
+
+                        $params = array('autoID' => $id,
+                            'company' => $customerInvoiceDirect->companySystemID,
+                            'document' => $customerInvoiceDirect->documentSystemiD,
+                            'segment' => '',
+                            'category' => '',
+                            'amount' => $amount
+                        );
+
+                        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+                        $confirm = Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
+                            return $this->sendError($confirm["message"], 500);
+                        } else {
+                            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                        }
+
+
+                    } else {
+                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
                     IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
-                    where('custInvoiceDirectID', $id)
-                        ->where(function ($query) {
+                        where('custInvoiceDirectID', $id)
+                            ->where(function ($query) {
 
-                            $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
-                                ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
-                                ->orwhereRaw('unitOfMeasure IS NULL OR unitOfMeasure =""')
-                                ->orwhereRaw('invoiceQty IS NULL OR invoiceQty =""')
-                                ->orwhereRaw('contractID IS NULL OR contractID =""')
-                                ->orwhereRaw('invoiceAmount IS NULL OR invoiceAmount =""')
-                                ->orwhereRaw('unitCost IS NULL OR unitCost =""');
-                        });
-
-
-                    if (!empty($detailValidation->get()->toArray())) {
+                                $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
+                                    ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
+                                    ->orwhereRaw('unitOfMeasure IS NULL OR unitOfMeasure =""')
+                                    ->orwhereRaw('invoiceQty IS NULL OR invoiceQty =""')
+                                    ->orwhereRaw('contractID IS NULL OR contractID =""')
+                                    ->orwhereRaw('invoiceAmount IS NULL OR invoiceAmount =""')
+                                    ->orwhereRaw('unitCost IS NULL OR unitCost =""');
+                            });
 
 
-                        foreach ($detailValidation->get()->toArray() as $item) {
+                        if (!empty($detailValidation->get()->toArray())) {
 
-                            $validators = \Validator::make($item, [
-                                'serviceLineSystemID' => 'required|numeric|min:1',
-                                'serviceLineCode' => 'required|min:1',
-                                'unitOfMeasure' => 'required|numeric|min:1',
-                                'invoiceQty' => 'required|numeric|min:1',
-                                'contractID' => 'required|numeric|min:1',
-                                'invoiceAmount' => 'required|numeric|min:1',
-                                'unitCost' => 'required|numeric|min:1',
-                            ], [
 
-                                'serviceLineSystemID.required' => 'Department is required.',
-                                'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
-                                'unitOfMeasure.required' => 'UOM is required.',
-                                'invoiceQty.required' => 'Qty is required.',
-                                'contractID.required' => 'Contract no. is required.',
-                                'invoiceAmount.required' => 'Amount is required.',
-                                'unitCost.required' => 'Unit cost is required.'
+                            foreach ($detailValidation->get()->toArray() as $item) {
 
-                            ]);
+                                $validators = \Validator::make($item, [
+                                    'serviceLineSystemID' => 'required|numeric|min:1',
+                                    'serviceLineCode' => 'required|min:1',
+                                    'unitOfMeasure' => 'required|numeric|min:1',
+                                    'invoiceQty' => 'required|numeric|min:1',
+                                    'contractID' => 'required|numeric|min:1',
+                                    'invoiceAmount' => 'required|numeric|min:1',
+                                    'unitCost' => 'required|numeric|min:1',
+                                ], [
 
-                            if ($validators->fails()) {
-                                return $this->sendError($validators->messages(), 422);
+                                    'serviceLineSystemID.required' => 'Department is required.',
+                                    'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
+                                    'unitOfMeasure.required' => 'UOM is required.',
+                                    'invoiceQty.required' => 'Qty is required.',
+                                    'contractID.required' => 'Contract no. is required.',
+                                    'invoiceAmount.required' => 'Amount is required.',
+                                    'unitCost.required' => 'Unit cost is required.'
+
+                                ]);
+
+                                if ($validators->fails()) {
+                                    return $this->sendError($validators->messages(), 422);
+                                }
+
+
                             }
-
 
                         }
 
-                    }
-
-                    /*  $employee=\Helper::getEmployeeInfo();
-                      $input['createdPcID'] = getenv('COMPUTERNAME');
-                      $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
-                      $input['confirmedByName'] = $employee->empName;
-                      $input['confirmedDate'] = Carbon::now();
-                      $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
+                        /*  $employee=\Helper::getEmployeeInfo();
+                          $input['createdPcID'] = getenv('COMPUTERNAME');
+                          $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
+                          $input['confirmedByName'] = $employee->empName;
+                          $input['confirmedDate'] = Carbon::now();
+                          $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
 
 
-                    $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
-                    $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
+                        $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+                        $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
-                    if (count($groupby) != 0 || count($groupby) != 0) {
+                        if (count($groupby) != 0 || count($groupby) != 0) {
 
-                        if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                            return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
-                        } else {
-                            $params = array('autoID' => $id,
-                                'company' => $customerInvoiceDirect->companySystemID,
-                                'document' => $customerInvoiceDirect->documentSystemiD,
-                                'segment' => '',
-                                'category' => '',
-                                'amount' => ''
-                            );
-                            $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-                            $confirm = \Helper::confirmDocument($params);
-                            if (!$confirm["success"]) {
-
-                                return $this->sendError($confirm["message"], 500);
+                            if (count($groupby) > 1 || count($groupbycontract) > 1) {
+                                return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
                             } else {
-                                return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
-                            }
-                        }
-                    } else {
-                        return $this->sendError('No invoice details found.', 500);
-                    }
+                                $params = array('autoID' => $id,
+                                    'company' => $customerInvoiceDirect->companySystemID,
+                                    'document' => $customerInvoiceDirect->documentSystemiD,
+                                    'segment' => '',
+                                    'category' => '',
+                                    'amount' => ''
+                                );
+                                $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+                                $confirm = \Helper::confirmDocument($params);
+                                if (!$confirm["success"]) {
 
+                                    return $this->sendError($confirm["message"], 500);
+                                } else {
+                                    return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                                }
+                            }
+                        } else {
+                            return $this->sendError('No invoice details found.', 500);
+                        }
+
+                    }
                 }
+
             }
         } else {
             $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
@@ -1110,6 +1248,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
+        // check policy 24 is on for CI
+        $output['isPolicyOn'] = 0;
+        $output['wareHouses'] = [];
+        $output['segment'] = [];
+        $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 24)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($AICINV->isYesNO) && $AICINV->isYesNO == 1) {
+            $output['isPolicyOn'] = 1;
+            $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
+            $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+        }
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -1557,7 +1709,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
-        $accountIBAN ='';
+        $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
         }
@@ -1843,13 +1995,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($customerInvoice->secondaryLogoCompanySystemID) {
             $secondaryBankAccount = CustomerInvoiceDirectDetail::with(['contract' => function ($q) {
                 $q->with(['secondary_bank_account']);
-            }])->where('contractID','>',0)
+            }])->where('contractID', '>', 0)
                 ->where('custInvoiceDirectID', $id)->first();
         }
 
         $month = date("F", strtotime($customerInvoice->bookingDate));
         $year = date('Y', strtotime($customerInvoice->bookingDate));
-        $customerInvoice->monthOfInvoice = strtoupper($month)." ".$year;
+        $customerInvoice->monthOfInvoice = strtoupper($month) . " " . $year;
 
         $accountIBANSecondary = '';
         if (!empty((array)$secondaryBankAccount)) {
@@ -1863,17 +2015,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         $customerInvoice->logoExists = false;
-        if (file_exists('logos/'.$customerInvoice->companyLogo)) {
+        if (file_exists('logos/' . $customerInvoice->companyLogo)) {
             $customerInvoice->logoExists = true;
-        } 
+        }
 
         $directTraSubTotal = 0;
         foreach ($customerInvoice->invoicedetails as $key => $item) {
-            $directTraSubTotal +=$item->invoiceAmount;
+            $directTraSubTotal += $item->invoiceAmount;
         }
 
         if ($customerInvoice->tax) {
-            $directTraSubTotal+=$customerInvoice->tax->amount;
+            $directTraSubTotal += $customerInvoice->tax->amount;
         }
 
         $amountSplit = explode(".", $directTraSubTotal);
@@ -1891,12 +2043,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
-        $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎".strtoupper($numFormatter->format($floatAmt))." فقط." : '';
+        $floatAmountInWords = ($floatAmt > 0) ? " و هللة‎" . strtoupper($numFormatter->format($floatAmt)) . " فقط." : '';
 
-        $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي ".$intAmountInWords.$floatAmountInWords : "الريال السعودي ".$intAmountInWords." فقط";
+        $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20)->first();
-        
+
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
@@ -1909,18 +2061,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
-        
+
 
         if ($printTemplate['printTemplateID'] == 2) {
             $html = view('print.customer_invoice_tue', $array);
             $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P','setAutoTopMargin' => 'stretch','autoMarginPadding' => -10]);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
             $mpdf->AddPage('P');
             $mpdf->setAutoBottomMargin = 'stretch';
             $mpdf->SetHTMLFooter($htmlFooter);
 
             $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName,'I');
+            return $mpdf->Output($fileName, 'I');
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
             $html = view('print.customer_invoice', $array);
             $pdf = \App::make('dompdf.wrapper');
@@ -1930,7 +2082,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
     }
 
-    public function getProformaInvoiceDetailDataForPrintInvoice($id) 
+    public function getProformaInvoiceDetailDataForPrintInvoice($id)
     {
         $output = DB::select("SELECT
                                 performamaster.PerformaCode,
