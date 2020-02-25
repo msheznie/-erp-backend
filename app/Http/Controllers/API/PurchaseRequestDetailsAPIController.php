@@ -13,6 +13,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreatePurchaseRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestDetailsAPIRequest;
 use App\Models\CompanyPolicyMaster;
@@ -541,10 +542,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         $companySystemID = $input['companySystemID'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+
+        if ($isGroup) {
+            $childCompanies = Helper::getGroupCompany($companySystemID);
+        } else {
+            $childCompanies = [$companySystemID];
+        }
+
+
         $itemCode = $input['itemCode'];
         $PRRequestedDate = $pr->PRRequestedDate;
-        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID,$PRRequestedDate) {
-            $query->where('companySystemID', $companySystemID)
+        $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($childCompanies,$PRRequestedDate) {
+            $query->whereIn('companySystemID', $childCompanies)
                 ->where('approved', -1)
                 ->whereIn('goodsRecievedYN', [0,1])
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
@@ -552,17 +563,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 ->where('poCancelledYN', 0);
         })
             ->where('itemCode', $itemCode)
-            ->withCount(['grv_details AS grv_qty'=> function($query) use($companySystemID,$PRRequestedDate){
+            ->withCount(['grv_details AS grv_qty'=> function($query) use($childCompanies,$PRRequestedDate){
                 $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
-                    ->whereHas('grv_master',function ($query) use($companySystemID, $PRRequestedDate){
-                        $query->where('companySystemID', $companySystemID)
+                    ->whereHas('grv_master',function ($query) use($childCompanies, $PRRequestedDate){
+                        $query->whereIn('companySystemID', $childCompanies)
                             ->where('grvTypeID', 2)
                             ->where('approvedDate', '<=',$PRRequestedDate);
                     });
             }])
             ->with(['order.currency','unit','order.location'])->get();
 
-        $result['item'] = ItemAssigned::where('companySystemID',$companySystemID)->where('itemCodeSystem',$itemCode)->first();
+        $result['item'] = ItemAssigned::whereIn('companySystemID',$childCompanies)->where('itemCodeSystem',$itemCode)->first();
 
         return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
     }
