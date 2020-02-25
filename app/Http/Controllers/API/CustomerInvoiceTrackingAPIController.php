@@ -12,7 +12,9 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceTracking;
 use App\Models\CustomerInvoiceTrackingDetail;
 use App\Models\DocumentMaster;
+use App\Models\Months;
 use App\Models\SegmentMaster;
+use App\Models\Year;
 use App\Repositories\CustomerInvoiceTrackingRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -480,7 +482,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
     {
 
         $input = $request->all();
-//        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'contractUID', 'year', 'month', 'customerID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -500,9 +502,33 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $customerInvoiceTracking = CustomerInvoiceTracking::whereIn('companySystemID', $subCompanies)
             ->with(['detail','customer']);
 
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $customerInvoiceTracking->where('customerID', $input['customerID']);
+            }
+        }
+
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $customerInvoiceTracking->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('contractUID', $input)) {
+            if ($input['contractUID'] && !is_null($input['contractUID'])) {
+                $customerInvoiceTracking->where('contractUID', $input['contractUID']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $customerInvoiceTracking->whereYear('submittedDate', $input['year']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $customerInvoiceTracking->whereMonth('submittedDate', $input['month']);
             }
         }
 
@@ -829,4 +855,141 @@ GROUP BY
 
         return $this->sendResponse(array(), 'successfully export');
     }
+
+    public function getINVTrackingFormData(Request $request){
+        $companyId = $request['companyId'];
+
+//        $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+
+        $output['years'] = Year::orderBy('year', 'desc')->get();
+
+        $output['months'] = Months::all();
+
+        $output['customers'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function updateAllInvoiceTrackingDetail(Request $request){
+        $input = $request->all();
+        $type = isset($input['type']) ? $input['type'] : 0;
+        $employee = Helper::getEmployeeInfo();
+        switch ($type){
+            case 1:
+                $validator = \Validator::make($input, [
+                    'customerInvoiceTrackingID' => 'required|numeric|min:1',
+                    'customerApprovedByDate' => 'required',
+                ]);
+                if(isset($input['customerApprovedByDate'])){
+                    $input['customerApprovedByDate'] = Carbon::parse($input['customerApprovedByDate'])->format('Y-m-d H:i:s');
+                }
+                $update = [
+                    'approvedAmount' =>DB::raw( 'amount' ),
+                    'rejectedAmount'=>0,
+                    'customerRejectedYN'=>0,
+                    'customerApprovedYN'=>-1,
+                    'customerApprovedByDate'=>$input['customerApprovedByDate'],
+                    'customerApprovedDate'=>$input['customerApprovedByDate'],
+                    'customerApprovedByEmpID'=>$employee->empID,
+                    'customerApprovedByEmpSystemID'=>$employee->employeeSystemID,
+                    'customerApprovedByEmpName'=>$employee->empName
+                ];
+                break;
+
+            case 2:
+                $validator = \Validator::make($input, [
+                    'customerInvoiceTrackingID' => 'required|numeric|min:1',
+                    'customerRejectedByDate' => 'required',
+                ]);
+                $update = [
+                    'approvedAmount' =>0,
+                    'rejectedAmount'=>DB::raw( 'amount' ),
+                    'customerRejectedYN'=>-1,
+                    'customerApprovedYN'=>0,
+                    'customerRejectedByDate'=>$input['customerRejectedByDate'],
+                    'customerRejectedDate'=>$input['customerRejectedByDate'],
+                    'customerApprovedByEmpID'=>$employee->empID,
+                    'customerApprovedByEmpSystemID'=>$employee->employeeSystemID,
+                    'customerApprovedByEmpName'=>$employee->empName
+                ];
+                break;
+
+            case 3:
+                $validator = \Validator::make($input, [
+                    'customerInvoiceTrackingID' => 'required|numeric|min:1',
+                ]);
+                $update = ['customerApprovedYN' => 0,'approvedAmount' => 0,'customerRejectedYN' => 0,'rejectedAmount' => 0];
+                break;
+
+            case 5:
+                $validator = \Validator::make($input, [
+                    'customerInvoiceTrackingID' => 'required|numeric|min:1',
+                    'remarks' => 'required',
+                ]);
+                $update = ['remarks' => $input['remarks']];
+                break;
+
+            default:
+                return $this->sendError('Type not found', 422);
+                break;
+
+        }
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $master = CustomerInvoiceTracking::find($input['customerInvoiceTrackingID']);
+
+        if(empty($master)){
+            return $this->sendError('Customer Invoice Tracking Data Found',500);
+        }
+
+        $details = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$input['customerInvoiceTrackingID'])->get();
+        if(empty($details)){
+            return $this->sendError('Customer Invoice Tracking Detail Found',500);
+        }
+
+        $isUpdate = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$input['customerInvoiceTrackingID'])->update($update);
+
+        if($isUpdate){
+            $this->updateMasterPayment($input['customerInvoiceTrackingID']);
+            return $this->sendResponse($isUpdate,'Successfully updated');
+        }
+        return $this->sendError('Error occured', 500);
+    }
+
+    public function deleteAllInvoiceTrackingDetail(Request $request){
+        $input = $request->all();
+        $masterID = isset($input['customerInvoiceTrackingID']) ? $input['customerInvoiceTrackingID'] : 0;
+        if (!$masterID){
+            return $this->sendError('Customer Invoice Tracking ID Not Found',500);
+        }
+
+        $master = CustomerInvoiceTracking::find($masterID);
+
+        if(empty($master)){
+            return $this->sendError('Customer Invoice Tracking Data Found',500);
+        }
+
+        $master = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->get();
+        if(empty($master)){
+            return $this->sendError('Customer Invoice Tracking Data Found',500);
+        }
+
+        $isDelete = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->delete();
+
+        if($isDelete){
+            $this->updateMasterPayment($masterID);
+            return $this->sendResponse([],'All Customer Invoice Tracking Details deleted successfully');
+        }
+        return $this->sendError('Error in delete process',500);
+
+    }
+
+
 }
