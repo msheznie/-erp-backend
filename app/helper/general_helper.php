@@ -4167,7 +4167,7 @@ class Helper
             $cost['faID'] = $masterData->faID;
             $cost['assetID'] = $masterData->faCode;
             $cost['assetDescription'] = $masterData->assetDescription;
-            $cost['costDate'] = $masterData->dateAQ;
+            $cost['costDate'] = $masterData->documentDate;
             $cost['localCurrencyID'] = $companyCurrency->localCurrencyID;
             $cost['localAmount'] = $masterData->COSTUNIT;
             $cost['rptCurrencyID'] = $companyCurrency->reportingCurrency;
