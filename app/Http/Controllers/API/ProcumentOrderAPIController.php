@@ -1731,7 +1731,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('poCancelledYN', 0)
-            ->where('poType_N','!=',5)
+//            ->where('poType_N','!=',5)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -1902,6 +1902,17 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
             }
 
+        }
+
+        // check main work order has subwork order
+        if($purchaseOrder->poType_N == 6){
+            return $this->sendError('Sub work order Cannot revert it back to amend');
+        }elseif ($purchaseOrder->poType_N == 5){
+            $hasSubWorkOrder = ProcumentOrder::where('poType_N', 6)->where('WO_purchaseOrderID',$purchaseOrder->purchaseOrderID)
+                ->count();
+            if($hasSubWorkOrder > 0){
+                return $this->sendError('Cannot revert it back to amend. Sub Work Order is created for this WO');
+            }
         }
 
         $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
