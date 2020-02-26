@@ -708,14 +708,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if ($checktotalExceed) {
                     foreach ($checktotalExceed as $exc) {
 
-                        $unbilledGRTotal = UnbilledGrvGroupBy::find($exc->unbilledgrvAutoID);
+                        $unbilledGRTotal = UnbilledGrvGroupBy::where('grvAutoID', $exc->grvAutoID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
 
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($unbilledGRTotal->totTransactionAmount, $documentCurrencyDecimalPlace)) {
-                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($unbilledGRTotal, $documentCurrencyDecimalPlace)) {
+                            return $this->sendError('Supplier Invoice amount is greater than Unbilled GRV amount. Total Invoice amount is '. round($checkPreTotal, $documentCurrencyDecimalPlace) .'and Total Unbilled GRV amount is '. round($unbilledGRTotal, $documentCurrencyDecimalPlace) , 500);
                         }
                     }
                 }
@@ -737,7 +739,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->sum('totTransactionAmount');
 
                         if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailSum['total'], $documentCurrencyDecimalPlace)) {
-                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailSum['total'], $documentCurrencyDecimalPlace), 500);
                         }
                     }
                 }
