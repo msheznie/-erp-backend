@@ -402,6 +402,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
 
         //check PO segment is correct with PR pull segment
+
         foreach ($input['detailTable'] as $itemExist) {
 
             if ($itemExist['isChecked'] && $itemExist['poQty'] > 0) {
@@ -411,6 +412,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 if($purchaseOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID){
                     return $this->sendError("Request department is different from order");
                 }
+            }
+        }
+
+        // check different budget year
+        $prDetailsBY = isset($input['detailTable'][0]['budgetYear'])?$input['detailTable'][0]['budgetYear']:0;
+        $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->orderBy('purchaseOrderDetailsID','DESC')->first();
+        if(!empty($poDetails)){
+            if(isset($poDetails->budgetYear) && $poDetails->budgetYear && ($prDetailsBY != $poDetails->budgetYear)){
+                return $this->sendError("Different Budget Year Found. You can not pull different budget year PR for same PO");
             }
         }
 
@@ -583,7 +593,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'),'budgetYear')
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->first();
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
@@ -600,9 +610,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 ]);
         }
 
-
+        ProcumentOrder::find($purchaseOrderID)->update(['budgetYear' => $poMasterSum['budgetYear']]);
         return $this->sendResponse('', 'Purchase Order Details saved successfully');
-
     }
 
     /**
