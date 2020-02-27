@@ -256,7 +256,12 @@ class EmployeeAPIController extends AppBaseController
         }
 
         if (isset($request['isLock'])) {
-            $empMaster = $empMaster->where('isLock',$request['isLock']);
+            if($request['isLock'] === 0){
+                $empMaster = $empMaster->where('isLock',$request['isLock']);
+            }else{
+                $empMaster = $empMaster->where('isLock','!=',0);
+            }
+
         }
 
         if (isset($request['empActive'])) {
