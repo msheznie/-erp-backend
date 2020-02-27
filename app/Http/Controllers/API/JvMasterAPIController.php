@@ -1911,7 +1911,7 @@ HAVING
             ->where('documentSystemID', $jvMaster->documentSystemID)
             ->count();
         if ($checkAlreadyAdded > 0) {
-            return $this->sendError('Cannot update. Already data is updated to budget consumedt', 500);
+            return $this->sendError('Cannot update. Already data is updated to budget consumed', 500);
         }
 
         DB::beginTransaction();
@@ -1943,9 +1943,9 @@ HAVING
                 $tem['year'] = $val['documentYear'];
                 $tem['month'] = $val['documentMonth'];
                 $tem['consumedLocalCurrencyID'] = $val['documentLocalCurrencyID'];
-                $tem['consumedLocalAmount'] = 12; //$val['documentLocalAmount'];
+                $tem['consumedLocalAmount'] = $val['documentLocalAmount'];
                 $tem['consumedRptCurrencyID'] = $val['documentRptCurrencyID'];
-                $tem['consumedRptAmount'] = 10; //$val['documentRptAmount'];
+                $tem['consumedRptAmount'] = $val['documentRptAmount'];
                 $tem['timestamp'] = date('d/m/Y H:i:s A');
                 BudgetConsumedData::insert($tem);
                 //$this->budgetConsumedDataRepository->create($tem);

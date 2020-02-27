@@ -586,6 +586,26 @@ class GRVMasterAPIController extends AppBaseController
             unset($input['grvConfirmedByName']);
             unset($input['grvConfirmedDate']);
 
+
+            // check the logistic charges from GRv table
+            $grvLogisticAmount = GRVDetails::select(DB::raw('COALESCE(SUM(noQty*logisticsCharges_LocalCur),0) as grvLocal, COALESCE(SUM(noQty*logisticsChargest_RptCur),0) as grvReport'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->groupBy('grvAutoID')
+                ->first();
+            $grvReportAmount = isset($grvLogisticAmount->grvReport)?$grvLogisticAmount->grvReport:0;
+
+            // get the logistic charges from PO table which is linked to the grv
+            $poLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOLocalCur),0) as poLocal, COALESCE(SUM(reqAmountInPORptCur),0) as poReport'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->groupBy('grvAutoID')
+                ->first();
+            $grvPoAmount = isset($poLogisticAmount->poReport)?$poLogisticAmount->poReport:0;
+
+            // logistic charges from PO table should not be greater than data from grv table
+            if($grvPoAmount > $grvReportAmount){
+                return $this->sendError('PO logistic amount can not be greater than GRV logistic amount',500);
+            }
+
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -593,7 +613,6 @@ class GRVMasterAPIController extends AppBaseController
             }
 
         }
-
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
