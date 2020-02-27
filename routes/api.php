@@ -1021,6 +1021,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
     Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
+    Route::post('generateAllocation', 'JvDetailAPIController@generateAllocation');
     Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
     Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
@@ -1715,3 +1716,8 @@ Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWareh
 
 
 Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+
+
+Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+
+Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');

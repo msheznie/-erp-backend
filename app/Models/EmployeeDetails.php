@@ -623,4 +623,12 @@ class EmployeeDetails extends Model
     public function departmentMaster(){
         return $this->belongsTo('App\Models\DepartmentMaster','functionalDepartmentID','DepartmentID');
     }
+
+    public function hrmsDepartmentMaster(){
+        return $this->belongsTo('App\Models\HrmsDepartmentMaster','departmentID','DepartmentID');
+    }
+
+    public function employeeMaster(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
 }

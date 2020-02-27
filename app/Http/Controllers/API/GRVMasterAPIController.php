@@ -23,6 +23,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\DocumentApproved;
@@ -587,23 +588,28 @@ class GRVMasterAPIController extends AppBaseController
             unset($input['grvConfirmedDate']);
 
 
+            $rptCurrencyId = isset($gRVMaster->companyReportingCurrencyID) ? $gRVMaster->companyReportingCurrencyID : 2;
+            $rptCurrencyDecimalPlaces =  Helper::getCurrencyDecimalPlace($rptCurrencyId);
+
             // check the logistic charges from GRv table
             $grvLogisticAmount = GRVDetails::select(DB::raw('COALESCE(SUM(noQty*logisticsCharges_LocalCur),0) as grvLocal, COALESCE(SUM(noQty*logisticsChargest_RptCur),0) as grvReport'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->groupBy('grvAutoID')
                 ->first();
-            $grvReportAmount = isset($grvLogisticAmount->grvReport)?$grvLogisticAmount->grvReport:0;
+
+            $grvReportAmount = round(isset($grvLogisticAmount->grvReport)?$grvLogisticAmount->grvReport:0,$rptCurrencyDecimalPlaces);
+
 
             // get the logistic charges from PO table which is linked to the grv
             $poLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOLocalCur),0) as poLocal, COALESCE(SUM(reqAmountInPORptCur),0) as poReport'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->groupBy('grvAutoID')
                 ->first();
-            $grvPoAmount = isset($poLogisticAmount->poReport)?$poLogisticAmount->poReport:0;
+            $grvPoAmount = round((isset($poLogisticAmount->poReport)?$poLogisticAmount->poReport:0),$rptCurrencyDecimalPlaces);
 
             // logistic charges from PO table should not be greater than data from grv table
             if($grvPoAmount > $grvReportAmount){
-                return $this->sendError('PO logistic amount can not be greater than GRV logistic amount',500);
+                return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.'.'GRV Logistic Amount is'. $grvReportAmount.' And PO Logistic Amount is '.$grvPoAmount,500);
             }
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
