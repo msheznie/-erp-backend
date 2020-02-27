@@ -13,20 +13,36 @@
  * -- Date: 05-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllAJ()
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllPOAJ()
  * -- Date: 20-December 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllDetails()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as generateAllocation()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as generateSpaceUsageAndFixedRateAllocation()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as generateRevenueBasicAllocation()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as getGeneralLedgerDataForAllocation()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as getChartOfAccountAllocationDetails()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as getJvSaveDetailsArray()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as generateBasicOfStaffProductLineAllocation()
+ * -- Date: 27-February 2020 By: Zakeeul Description: Added new functions named as addAllocationDetailToJvAllocation()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateJvDetailAPIRequest;
 use App\Http\Requests\API\UpdateJvDetailAPIRequest;
 use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Contract;
 use App\Models\HRMSJvDetails;
 use App\Models\HRMSJvMaster;
 use App\Models\JvDetail;
 use App\Models\JvMaster;
 use App\Models\SegmentMaster;
+use App\Models\ChartOfAccountAllocationMaster;
+use App\Models\ChartOfAccountAllocationDetailHistory;
+use App\Models\GeneralLedger;
+use App\Models\Employee;
+use App\Models\ChartOfAccountAllocationDetail;
 use App\Repositories\JvDetailRepository;
+use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -46,11 +62,13 @@ class JvDetailAPIController extends AppBaseController
     /** @var  JvDetailRepository */
     private $jvDetailRepository;
     private $userRepository;
+    private $allocationHistoryRepository;
 
-    public function __construct(JvDetailRepository $jvDetailRepo, UserRepository $userRepo)
+    public function __construct(JvDetailRepository $jvDetailRepo, UserRepository $userRepo, ChartOfAccountAllocationDetailHistoryRepository $allocationHistoryRepo)
     {
         $this->jvDetailRepository = $jvDetailRepo;
         $this->userRepository = $userRepo;
+        $this->allocationHistoryRepository = $allocationHistoryRepo;
     }
 
     /**
@@ -533,6 +551,12 @@ class JvDetailAPIController extends AppBaseController
             $deleteDetails = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->delete();
         }
 
+        $allocationHistoryData = ChartOfAccountAllocationDetailHistory::where('jvMasterAutoId', $jvMasterAutoId)
+            ->get();
+
+        if (!empty($allocationHistoryData)) {
+            $deleteHistoryDetails = ChartOfAccountAllocationDetailHistory::where('jvMasterAutoId', $jvMasterAutoId)->delete();
+        }
 
         return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
     }
@@ -988,5 +1012,336 @@ GROUP BY
         return $this->sendResponse(array(), 'successfully export');
     }
 
+    public function generateAllocation(Request $request)
+    {
+        $input = $request->all();
 
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+        $messages = [
+            'currencyID' => 'Currency is required',
+        ];
+        $validator = \Validator::make($jvMaster->toArray(), [
+            'jvType' => 'required|numeric',
+            'currencyID' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($messages, 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $jvDetails['fixed_rate'] = $this->generateSpaceUsageAndFixedRateAllocation($input, $jvMaster->toArray(), $user);
+            $jvDetails['basic_staff'] = $this->generateBasicOfStaffProductLineAllocation($input, $jvMaster->toArray(), $user);
+            $jvDetails['revenue'] = $this->generateRevenueBasicAllocation($input, $jvMaster->toArray(), $user);
+            DB::commit();
+            return $this->sendResponse($jvDetails, 'Allocation made successfully');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error occurred in generating allocation',500);
+        }
+
+    }
+
+    public function generateSpaceUsageAndFixedRateAllocation($input, $jvMaster, $user)
+    {
+        $chartofaccounts = $this->getChartOfAccountAllocationDetails(1, [5,6], $input['companySystemID']);
+
+        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
+
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+
+        $jvDetails = [];
+        foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
+            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
+            foreach ($chartofaccounts as $key => $allocationValue) {
+                if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
+                    foreach ($allocationValue['detail'] as $key => $allocationDetailvalue) {
+                            $jvAmount = $generalLedgerAmount * ($allocationDetailvalue['percentage'] / 100);
+                            $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue,  $allocationDetailvalue['productLineID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, false);
+                            $this->addAllocationDetailToJvAllocation($allocationDetailvalue, $jvMaster['jvMasterAutoId']);
+                    }
+                    $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $allocationValue['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, true);
+                }
+            }
+        }
+        
+        foreach ($jvDetails as $key => $value) {
+            $jvDetail = $this->jvDetailRepository->create($value);
+        }
+
+        return ['status' => true, 'data' => $jvDetails];
+    }
+
+    public function generateRevenueBasicAllocation($input, $jvMaster, $user)
+    {
+        $chartofaccounts = $this->getChartOfAccountAllocationDetails(2, [4], $input['companySystemID']);
+
+        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+
+        $pliChartOfAccount = ChartOfAccountsAssigned::select('chartOfAccountSystemID')->where('isActive',1)
+                                                                             ->where('controlAccountsSystemID',1)
+                                                                             ->where('companySystemID',$jvMaster['companySystemID'])
+                                                                             ->get()
+                                                                             ->toArray();
+        $pliChartOfAccountIds =  collect($pliChartOfAccount)->pluck('chartOfAccountSystemID')->toArray();
+
+        $pliGeneralLedgerTotal = $this->getGeneralLedgerDataForAllocation($jvMaster, $pliChartOfAccountIds, "glID");
+        $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerAmount']) : 0;
+        $pliGeneralLedgerTotalByServiceLine = $this->getGeneralLedgerDataForAllocation($jvMaster, $pliChartOfAccountIds, "serviceline");
+        $jvDetails = [];
+        foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
+            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
+            foreach ($chartofaccounts as $key => $allocationValue) {
+                if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
+                    $deleteAllocationDetailData = ChartOfAccountAllocationDetail::where('chartOfAccountAllocationMasterID', $allocationValue['chartOfAccountAllocationMasterID'])->delete();
+                    foreach ($pliGeneralLedgerTotalByServiceLine as $key => $segmentValue) {
+                        $percentage = (abs($segmentValue['generalLedgerAmount']) / $pliGeneralLedgerTotal) * 100;
+                        $jvAmount = $generalLedgerAmount * (abs($segmentValue['generalLedgerAmount']) / $pliGeneralLedgerTotal);
+
+                        $allocationDetailNewData['percentage'] = $percentage;
+                        $allocationDetailNewData['productLineID'] = $segmentValue['serviceLineSystemID'];
+                        $allocationDetailNewData['productLineCode'] = $segmentValue['serviceLineCode'];
+                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['companySystemID'] = $input['companySystemID'];
+                        $allocationDetailNewData['companyid'] = $segmentValue['companyID'];
+                        $allocationDetailNewData['chartOfAccountAllocationMasterID'] = $allocationValue['chartOfAccountAllocationMasterID'];
+
+                        $res = ChartOfAccountAllocationDetail::create($allocationDetailNewData);
+                        $this->addAllocationDetailToJvAllocation($allocationDetailNewData, $jvMaster['jvMasterAutoId']);
+
+                        $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue,  $segmentValue['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, false);
+                    }
+                    $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $allocationValue['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, true);
+                }
+            }
+        }
+
+        foreach ($jvDetails as $key => $value) {
+            $jvDetail = $this->jvDetailRepository->create($value);
+        }
+
+        return ['status' => true, 'data' => $jvDetails];
+    }
+
+    public function getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds, $groupBY = "chartOfAccountSystemID")
+    {
+        $monthOfJV = Carbon::parse($jvMaster['JVdate'])->format('m');
+        $yearOfJV = Carbon::parse($jvMaster['JVdate'])->format('Y');
+        $glData = GeneralLedger::with(['charofaccount'])->whereIn('chartOfAccountSystemID',$chartOfAccountIds)
+                                            ->selectRaw('SUM(documentTransAmount) AS generalLedgerAmount, chartOfAccountSystemID, serviceLineSystemID, serviceLineCode, companyID, GeneralLedgerID')
+                                            ->where('companySystemID',$jvMaster['companySystemID'])
+                                            ->where('documentTransCurrencyID',$jvMaster['currencyID'])
+                                            ->whereMonth('documentDate', $monthOfJV)
+                                            ->whereYear('documentDate', $yearOfJV);
+        if ($groupBY == "chartOfAccountSystemID") {
+            $generalLedgerGroupData = $glData->where('isAllocationJV',0)
+                                             ->groupBy('chartOfAccountSystemID')
+                                             ->get()
+                                             ->toArray();
+
+            $generalLedgerData = $glData->get()->toArray();
+
+            return ['generalLedgerGroupData' => $generalLedgerGroupData, 'generalLedgerData' => $generalLedgerData];
+        } else if ($groupBY == "glID") {
+            return $glData->get()
+                            ->toArray();
+        } else {
+            return $glData->groupBy('serviceLineSystemID')
+                            ->get()
+                            ->toArray();
+        }
+
+                                            
+    }
+
+    public function getChartOfAccountAllocationDetails($type, $allocationmaids, $companySystemID)
+    {
+        $chartofaccounts = ChartOfAccountAllocationMaster::with(['detail','segment'])
+                                                            ->whereIn('allocationmaid',$allocationmaids)
+                                                            ->where('companySystemID',$companySystemID);
+        if ($type == 1) {
+            $chartofaccounts = $chartofaccounts->whereHas('detail', function($q){
+                                                    $q->havingRaw('SUM(percentage) = ?', array(100));
+                                                })
+                                                ->get()
+                                                ->toArray();
+        } else {
+            $chartofaccounts = $chartofaccounts->get()
+                                               ->toArray();
+        }
+
+        return $chartofaccounts;
+    }
+
+    public function getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $productLineID, $jvAmount, $AccountDescription, $user, $generalLedgerAmount, $creditFlag = false)
+    {
+        $temp['jvMasterAutoId'] = $jvMaster['jvMasterAutoId'];
+        $temp['chartOfAccountSystemID'] = $gLvalue['chartOfAccountSystemID'];
+        $temp['companySystemID'] = $allocationValue['companySystemID'];
+        $temp['serviceLineSystemID'] = $productLineID;
+        $temp['clientContractID'] = null;
+        $temp['comments'] = null;
+        $temp['debitAmount'] = (!$creditFlag) ? $jvAmount : 0;
+        $temp['creditAmount'] = (!$creditFlag) ? 0 : $generalLedgerAmount;
+        $temp['cuurencyname'] = null;
+        $temp['documentSystemID'] = 17;
+        $temp['documentID'] = "JV";
+        $temp['companyID'] = $allocationValue['companyID'];
+        $temp['glAccount'] = $allocationValue['chartOfAccountCode'];
+        $temp['glAccountDescription'] = $AccountDescription;
+        $temp['currencyID'] = $jvMaster['currencyID'];
+        $temp['currencyER'] = $jvMaster['currencyER'];
+        $temp['createdPcID'] = gethostname();;
+        $temp['createdUserID'] = $user->employee['empID'];
+        $temp['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        return $temp;
+    }
+
+    public function generateBasicOfStaffProductLineAllocation($input, $jvMaster, $user)
+    {
+        $chartofaccounts = $this->getChartOfAccountAllocationDetails(2, [1], $input['companySystemID']);
+
+        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
+
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+
+        $startDateOfMonth = Carbon::parse($jvMaster['JVdate'])->startOfMonth()->format('Y-m-d');
+        $totalEmployees = Employee::with(['details'])
+                                   ->whereHas('details', function($q) use ($input) {
+                                        $q->whereHas('hrmsDepartmentMaster', function($query) {
+                                            $query->whereHas('serviceline');
+                                        });
+                                    })
+                                    ->where('empCompanySystemID', $input['companySystemID'])
+                                    ->whereDate('empDateRegistered','<=',$jvMaster['JVdate'])
+                                    ->where(function($q) use ($startDateOfMonth){
+                                        $q->where('discharegedYN',0)
+                                          ->orWhere(function($q1) use ($startDateOfMonth) {
+                                                $q1->where('discharegedYN', -1)
+                                                ->whereDate('empDateTerminated','>=',$startDateOfMonth);
+                                          });
+                                    })
+                                    ->get()->count();
+
+        $segmentWiseEmployees = SegmentMaster::with(['department' => function($q1) use ($input, $jvMaster, $startDateOfMonth) {
+                                                    $q1->with(['employeeDetail' => function($query) use ($input, $jvMaster, $startDateOfMonth) {
+                                                        $query->with(['employeeMaster' => function($query1) use ($input, $jvMaster, $startDateOfMonth){
+                                                            $query1->where('empCompanySystemID', $input['companySystemID'])
+                                                                   ->whereDate('empDateRegistered','<=',$jvMaster['JVdate'])
+                                                                   ->where(function($query7) use ($startDateOfMonth){
+                                                                                $query7->where('discharegedYN',0)
+                                                                                  ->orWhere(function($query8) use ($startDateOfMonth) {
+                                                                                        $query8->where('discharegedYN', -1)
+                                                                                        ->whereDate('empDateTerminated','>=',$startDateOfMonth);
+                                                                                  });
+                                                                            });
+                                                                    
+                                                        }])->whereHas('employeeMaster', function($query6) use ($input, $jvMaster, $startDateOfMonth){
+                                                                $query6->where('empCompanySystemID', $input['companySystemID'])
+                                                                        ->whereDate('empDateRegistered','<=',$jvMaster['JVdate'])
+                                                                        ->where(function($query7) use ($startDateOfMonth){
+                                                                            $query7->where('discharegedYN',0)
+                                                                              ->orWhere(function($query8) use ($startDateOfMonth) {
+                                                                                    $query8->where('discharegedYN', -1)
+                                                                                    ->whereDate('empDateTerminated','>=',$startDateOfMonth);
+                                                                              });
+                                                                        });
+                                                            });
+                                                    }])->whereHas('employeeDetail', function($query5) use ($input, $jvMaster, $startDateOfMonth) {
+                                                              $query5->whereHas('employeeMaster', function($query6) use ($input, $jvMaster, $startDateOfMonth){
+                                                                $query6->where('empCompanySystemID', $input['companySystemID'])
+                                                                        ->whereDate('empDateRegistered','<=',$jvMaster['JVdate'])
+                                                                        ->where(function($query7) use ($startDateOfMonth){
+                                                                            $query7->where('discharegedYN',0)
+                                                                              ->orWhere(function($query8) use ($startDateOfMonth) {
+                                                                                    $query8->where('discharegedYN', -1)
+                                                                                    ->whereDate('empDateTerminated','>=',$startDateOfMonth);
+                                                                              });
+                                                                        });
+                                                            });
+                                                        });
+                                                }])
+                                                ->whereHas('department', function($query4) use ($input, $jvMaster, $startDateOfMonth) {
+                                                    $query4->whereHas('employeeDetail', function($query5) use ($input, $jvMaster, $startDateOfMonth) {
+                                                        $query5->whereHas('employeeMaster', function($query6) use ($input, $jvMaster, $startDateOfMonth){
+                                                            $query6->where('empCompanySystemID', $input['companySystemID'])
+                                                                    ->whereDate('empDateRegistered','<=',$jvMaster['JVdate'])
+                                                                    ->where(function($query7) use ($startDateOfMonth){
+                                                                        $query7->where('discharegedYN',0)
+                                                                          ->orWhere(function($query8) use ($startDateOfMonth) {
+                                                                                $query8->where('discharegedYN', -1)
+                                                                                ->whereDate('empDateTerminated','>=',$startDateOfMonth);
+                                                                          });
+                                                                    });
+                                                        });
+                                                    });
+                                                })
+                                                ->get()->toArray();
+        $segemntData = [];
+        foreach ($segmentWiseEmployees as $key => $value) {
+            $segmentEmployees = 0;
+            foreach ($value['department'] as $key => $department) {
+                  $segmentEmployees += count($department['employee_detail']);              
+            }
+            $temp['segmentEmployees'] = $segmentEmployees;
+            $temp['segmentData'] = $value;
+
+            $segemntData[] = $temp;
+        }
+        $jvDetails = [];
+        foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
+            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
+            foreach ($chartofaccounts as $key => $allocationValue) {
+                if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
+                    $deleteAllocationDetailData = ChartOfAccountAllocationDetail::where('chartOfAccountAllocationMasterID', $allocationValue['chartOfAccountAllocationMasterID'])->delete();
+                    foreach ($segemntData as $key => $segmentValue) {
+                        $percentage = ($segmentValue['segmentEmployees'] / $totalEmployees) * 100;
+                        $jvAmount = $generalLedgerAmount * ($segmentValue['segmentEmployees'] / $totalEmployees);
+
+                        $allocationDetailNewData['percentage'] = $percentage;
+                        $allocationDetailNewData['productLineID'] = $segmentValue['segmentData']['serviceLineSystemID'];
+                        $allocationDetailNewData['productLineCode'] = $segmentValue['segmentData']['ServiceLineCode'];
+                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['companySystemID'] = $input['companySystemID'];
+                        $allocationDetailNewData['companyid'] = $segmentValue['segmentData']['companyID'];
+                        $allocationDetailNewData['chartOfAccountAllocationMasterID'] = $allocationValue['chartOfAccountAllocationMasterID'];
+
+                        $res = ChartOfAccountAllocationDetail::create($allocationDetailNewData);
+                        $this->addAllocationDetailToJvAllocation($allocationDetailNewData, $jvMaster['jvMasterAutoId']);
+
+                        $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue,  $segmentValue['segmentData']['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, false);
+                    }
+                    $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $allocationValue['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, true);
+                }
+            }
+        }
+
+        foreach ($jvDetails as $key => $value) {
+            $jvDetail = $this->jvDetailRepository->create($value);
+        }
+
+        return ['status' => true, 'data' => $jvDetails];
+    }
+
+    public function addAllocationDetailToJvAllocation($allocationData, $jvAutoID)
+    {
+        unset($allocationData['chartOfAccountAllocationDetailID']);
+        $allocationData['jvMasterAutoId'] = $jvAutoID;
+        return $this->allocationHistoryRepository->create($allocationData);
+    }
 }
