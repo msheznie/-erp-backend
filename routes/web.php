@@ -98,3 +98,8 @@ Route::resource('serviceLines', 'ServiceLineController');
 Route::resource('warehouseRights', 'WarehouseRightsController');
 
 Route::resource('customerInvoiceItemDetails', 'CustomerInvoiceItemDetailsController');
+
+
+Route::resource('chartOfAccountAllocationDetailHistories', 'ChartOfAccountAllocationDetailHistoryController');
+
+Route::resource('hrmsDepartmentMasters', 'HrmsDepartmentMasterController');

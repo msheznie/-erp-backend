@@ -156,5 +156,10 @@ class SegmentMaster extends Model
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
+    public function department()
+    {
+        return $this->hasMany('App\Models\HrmsDepartmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+
     
 }
