@@ -1216,7 +1216,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
         $output['collectionType'] = \DB::select("SELECT * FROM erp_customerinvoicestatustype");
-
+        $output['segment'] = [];
         if ($id) {
             if ($master->customerID != '') {
                 $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')->get();
@@ -1251,7 +1251,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
-        $output['segment'] = [];
+
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)
             ->where('isYesNO', 1)
@@ -1551,7 +1551,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $taxMaster = $taxMaster[0];
         }
 
-        $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
+        $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('documentSystemID', 20)
+            ->first();
         if (!empty($Taxdetail)) {
             return $this->sendResponse('e', 'Tax Detail Already exist');
         }
