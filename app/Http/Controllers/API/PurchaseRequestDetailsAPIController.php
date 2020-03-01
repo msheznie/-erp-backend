@@ -360,9 +360,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
-                ->where('poCancelledYN', 0);
+                ->where('poCancelledYN', 0)
+                ->where('manuallyClosed', 0);
              })
             ->where('itemCode', $input['itemCode'])
+            ->where('manuallyClosed',0)
             ->groupBy('erp_purchaseorderdetails.companySystemID',
                 'erp_purchaseorderdetails.itemCode'
             )
@@ -384,6 +386,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $query->where('companySystemID', $companySystemID)
                 ->where('grvTypeID', 2)
                 ->groupBy('erp_grvmaster.companySystemID');
+        })->whereHas('po_detail', function ($query){
+            $query->where('manuallyClosed',0)
+            ->whereHas('order', function ($query){
+                $query->where('manuallyClosed',0);
+            });
         })
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_grvdetails.itemCode')
@@ -560,8 +567,15 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 ->whereIn('goodsRecievedYN', [0,1])
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                 ->where('approvedDate', '<=',$PRRequestedDate)
-                ->where('poCancelledYN', 0);
+                ->where('poCancelledYN', 0)
+                ->where(function ($query) use($PRRequestedDate) {
+                    $query->where(function ($q) use($PRRequestedDate) {
+                        $q->where('manuallyClosed',1)
+                            ->where('manuallyClosedDate','<=',$PRRequestedDate);
+                    })->orWhere('manuallyClosed',0);
+                });
         })
+            ->where('manuallyClosed',0)
             ->where('itemCode', $itemCode)
             ->withCount(['grv_details AS grv_qty'=> function($query) use($childCompanies,$PRRequestedDate){
                 $query->select(DB::raw("COALESCE(SUM(noQty),0) as grvNoQty"))
@@ -569,6 +583,18 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         $query->whereIn('companySystemID', $childCompanies)
                             ->where('grvTypeID', 2)
                             ->where('approvedDate', '<=',$PRRequestedDate);
+                    })
+                    ->whereHas('po_detail', function($query) use($PRRequestedDate) {
+                        $query->whereHas('order', function ($q) use($PRRequestedDate){
+                            $q->where(function ($q1) use($PRRequestedDate){
+                                $q1->where('manuallyClosed',1)
+                                    ->where('manuallyClosedDate','<=',$PRRequestedDate);
+                            })->orWhere('manuallyClosed',0);
+                        })
+                            ->where(function ($q) use($PRRequestedDate) {
+                            $q->where('manuallyClosed',1)
+                                ->where('manuallyClosedDate','<=',$PRRequestedDate);
+                        })->orWhere('manuallyClosed',0);
                     });
             }])
             ->with(['order.currency','unit','order.location'])->get();
