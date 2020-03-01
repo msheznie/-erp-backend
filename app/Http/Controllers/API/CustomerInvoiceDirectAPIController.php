@@ -1655,7 +1655,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-        $Taxdetail = Taxdetail::where('documentSystemCode', $id)->first();
+        $Taxdetail = Taxdetail::where('documentSystemCode', $id)
+            ->where('documentSystemID', 20)->first();
         if (!empty($Taxdetail)) {
             return $this->sendResponse('e', 'Please delete tax details to continue');
         }
