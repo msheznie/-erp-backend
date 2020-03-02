@@ -3677,6 +3677,17 @@ WHERE
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
+
+        // check local supplier and update logistic
+
+
+        $isLocalSupplier = Helper::isLocalSupplier($purchaseOrder->supplierID,$purchaseOrder->companySystemID);
+        if($isLocalSupplier){
+            $purchaseOrder->logisticsAvailable = 0;
+        }else{
+            $purchaseOrder->logisticsAvailable = -1;
+        }
+
         $purchaseOrder->save();
 
         foreach ($purchaseOrder->detail as $item) {
