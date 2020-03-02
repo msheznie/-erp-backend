@@ -803,7 +803,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
         if ($existTotal > $matchDocumentMasterData->matchBalanceAmount) {
-            return $this->sendError('Matching amount total cannot be greater than balance amount to match' . $matchDocumentMasterData->matchBalanceAmount, 500, ['type' => 'amountmismatch']);
+            return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
         }
 
         if ($input['supplierPaymentAmount'] == "") {
