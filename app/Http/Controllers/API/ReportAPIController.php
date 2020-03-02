@@ -184,7 +184,7 @@ class ReportAPIController extends AppBaseController
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
-                    IF( erp_purchaseorderdetails.manuallyClosed = 0, "Not Closed Manually", "Manually Closed" ) AS detManuallyClosed,
+                    IF( erp_purchaseorderdetails.manuallyClosed = 0, " ", "Manually Closed" ) AS detManuallyClosed,
                     IF( erp_purchaseorderdetails.madeLocallyYN = -1, "YES", "NO" ) AS isLocalMade,
                     /*erp_purchaseorderdetails.noQty,*/
                     ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
