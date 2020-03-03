@@ -23,6 +23,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Constants\ContractMasterType;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
@@ -1775,6 +1776,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $line_performaCode = false;
         $line_paymentTerms = false;
         $line_rentalPeriod = false;
+        $line_po_detail = false;
         $footerDate = true;
 
 
@@ -1881,7 +1883,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_performaCode = true;
                         $line_paymentTerms = true;
                         $line_rentalPeriod = true;
-                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
+                        if(isset($customerInvoice->invoicedetail->contract->contractType) && $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED){
+                            $line_rentalPeriod = false;
+                            $line_po_detail = true;
+                            $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master,'C000071');
+                        }else{
+                            $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
+                        }
+
 
                         $template = 1;
                     } else {
@@ -2050,7 +2059,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
-        $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20)->first();
+        $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
+        $contractID = 0;
+        if($master->isPerforma == 1) {
+            $contractID = isset($detail->contractID) ? $detail->contractID : 0;
+        }
+
+        if($contractID>0){
+            $printTemplate = $printTemplate->where('contractUID', $contractID);
+        }else{
+            $printTemplate = $printTemplate->whereNull('contractUID');
+        }
+
+        $printTemplate = $printTemplate->first();
 
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
@@ -2078,6 +2099,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
             $html = view('print.customer_invoice', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 3 ) {
+            $html = view('print.customer_invoice_with_po_detail', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
@@ -2835,5 +2862,63 @@ WHERE
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function getPerformaPDOInvoiceDetail($master,$customerCode){
+
+        $output = DB::select("
+                            SELECT
+	client_referance,
+	po_detail_id,
+	item_description,
+	qty,
+	unit_price,
+	amount 
+FROM
+	(
+			SELECT
+				poLineNo as po_detail_id,
+				ClientRef as client_referance,
+				ItemDescrip as item_description,
+				prod_serv.TicketNo as TicketNo,
+				qty,
+				unit_price,
+				amount
+			FROM
+			erp_custinvoicedirect 
+			JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID=erp_custinvoicedirectdet.custInvoiceDirectID  AND custInvoiceDirectAutoID=".$master->custInvoiceDirectAutoID."  AND erp_custinvoicedirectdet.customerID=".$master->customerID." 
+				JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
+
+				JOIN (
+								SELECT
+									mubbadrahop.productdetails.contractDetailID as contractDetailID,
+									mubbadrahop.productdetails.TicketNo as TicketNo,
+									mubbadrahop.productdetails.Qty AS qty,
+									mubbadrahop.productdetails.UnitRate AS unit_price,
+									mubbadrahop.productdetails.TotalCharges AS amount 
+								FROM
+									mubbadrahop.productdetails 
+									WHERE mubbadrahop.productdetails.companyID = '".$master->companyID."' AND mubbadrahop.productdetails.CustomerID='".$customerCode."'
+									
+									UNION
+									
+								SELECT
+									mubbadrahop.servicedetails.contractDetailID as contractDetailID,
+									mubbadrahop.servicedetails.TicketNo as TicketNo,
+									mubbadrahop.servicedetails.Qty AS qty,
+									mubbadrahop.servicedetails.UnitRate AS unit_price,
+									mubbadrahop.servicedetails.TotalCharges AS amount 
+								FROM 
+									mubbadrahop.servicedetails 
+									WHERE mubbadrahop.servicedetails .companyID = '".$master->companyID."' AND mubbadrahop.servicedetails.CustomerID='".$customerCode."'
+									
+				) as prod_serv ON performatemp.TicketNo=prod_serv.TicketNo 
+				JOIN contractdetails ON prod_serv.contractDetailID=contractdetails.ContractDetailID
+				WHERE contractdetails.CompanyID='".$master->companyID."' AND contractdetails.CustomerID='".$customerCode."'
+				GROUP BY contractdetails.ContractDetailID
+	) AS temp
+                            ");
+
+        return $output;
     }
 }
