@@ -821,6 +821,7 @@ WHERE
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
+                    IF( erp_purchaseorderdetails.manuallyClosed = 0, " ", "Manually Closed" ) AS detManuallyClosed,
                     IF( erp_purchaseorderdetails.madeLocallyYN = -1, "YES", "NO" ) AS isLocalMade,
                     /*erp_purchaseorderdetails.noQty,*/
                     ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
@@ -892,6 +893,7 @@ WHERE
                             'Total' => number_format($val->total, 2),
                             'Qty Received' => $val->qtyReceived,
                             'Qty To Receive' => $val->qtyToReceive,
+                            'PO Status' => $val->detManuallyClosed,
                             'Received Status' => $val->receivedStatus,
                             'Receipt Date' => $val->lastOfgrvDate,
                         );
