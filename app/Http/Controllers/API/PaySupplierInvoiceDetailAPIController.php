@@ -791,7 +791,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
-        if (round($input['supplierPaymentAmount'], $documentCurrencyDecimalPlace) > round($input['paymentBalancedAmount'], $documentCurrencyDecimalPlace)) {
+        if ($input['supplierPaymentAmount'] > $input['paymentBalancedAmount']) {
             return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
         }
 
