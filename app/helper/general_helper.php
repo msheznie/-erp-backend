@@ -4283,4 +4283,26 @@ class Helper
 
         return ['success' => true, 'message' => "success"];
     }
+
+
+    /**
+     * Get all companies related to a group
+     * @param $selectedCompanyId - current company id
+     * @return array
+     */
+    public static function getSimilarGroupCompanies($selectedCompanyId)
+    {
+
+        $masterCompany = Models\Company::find($selectedCompanyId);
+        $companies = Models\Company::where('masterCompanySystemIDReorting',$masterCompany->masterCompanySystemIDReorting)->get();
+
+        $groupCompany = [];
+        if ($companies) {
+            foreach ($companies as $val) {
+                $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
+            }
+        }
+        $groupCompany = array_column($groupCompany, 'companySystemID');
+        return $groupCompany;
+    }
 }
