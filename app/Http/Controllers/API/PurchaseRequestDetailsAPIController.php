@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreatePurchaseRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestDetailsAPIRequest;
+use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -355,9 +356,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         }
 
-
-        $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
+        $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
+        $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
+            $query->whereIn('companySystemID', $group_companies)
                 ->where('approved', -1)
                 ->where('poType_N', '!=',5)// poType_N = 5 =>work order
                 ->where('poCancelledYN', 0)
@@ -365,9 +366,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
              })
             ->where('itemCode', $input['itemCode'])
             ->where('manuallyClosed',0)
-            ->groupBy('erp_purchaseorderdetails.companySystemID',
-                'erp_purchaseorderdetails.itemCode'
-            )
+            ->groupBy('erp_purchaseorderdetails.itemCode')
             ->select(
                 [
                     'erp_purchaseorderdetails.companySystemID',
@@ -382,9 +381,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->groupBy('itemSystemCode')
             ->sum('inOutQty');
 
-        $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
+        $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
+            $query->whereIn('companySystemID', $group_companies)
                 ->where('grvTypeID', 2)
+                ->where('approved', -1)
                 ->groupBy('erp_grvmaster.companySystemID');
         })->whereHas('po_detail', function ($query){
             $query->where('manuallyClosed',0)
@@ -550,13 +550,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+//        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+//
+//        if ($isGroup) {
+//            $childCompanies = Helper::getGroupCompany($companySystemID);
+//
+//        } else {
+//            $childCompanies = [$companySystemID];
+//        }
 
-        if ($isGroup) {
-            $childCompanies = Helper::getGroupCompany($companySystemID);
-        } else {
-            $childCompanies = [$companySystemID];
-        }
+        $childCompanies = Helper::getSimilarGroupCompanies($companySystemID);
 
 
         $itemCode = $input['itemCode'];
