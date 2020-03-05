@@ -751,7 +751,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('supplierPaymentAmount');
 
-            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+            if (($detailAmountTotTran - $input['matchBalanceAmount']) > 0.00001) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
 
