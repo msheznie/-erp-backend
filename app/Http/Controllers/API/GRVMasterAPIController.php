@@ -30,6 +30,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
 use App\Models\GrvDetailsRefferedback;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
@@ -1442,5 +1443,64 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         return $this->sendResponse($grvMasterData->toArray(), 'Good receipt voucher amend successfully');
     }
+
+    public function cancelGRVPreCheck(Request $request) {
+        $input = $request->all();
+        $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
+        if($isEligible['status'] == 1){
+            return $this->sendResponse([], 'GRV Eligible for cancellation');
+        }
+        $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '')?$isEligible['msg']:'GRV Not Eligible for cancellation';
+        return $this->sendError( $errorMsg,500);
+    }
+
+    public function cancelGRV(Request $request) {
+        $input = $request->all();
+        $employee = Helper::getEmployeeInfo();
+        // precheck
+        $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
+        if($isEligible['status'] == 0){
+            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '')?$isEligible['msg']:'GRV Not Eligible for cancellation';
+            return $this->sendError( $errorMsg, 500);
+        }
+        DB::beginTransaction();
+        try{
+            // update grv master
+            $grv = GRVMaster::find($input['grvAutoID']);
+            $grv->grvCancelledYN = -1;
+            $grv->grvCancelledBySystemID = $employee->employeeSystemID;
+            $grv->grvCancelledBy = $employee->empID;
+            $grv->grvCancelledByName = $employee->empName;
+            $grv->grvCancelledDate = now();
+            $grv->grvCancelledComment = $input['grvCancelledComment'];
+            $grv->save();
+
+            // update erp_unbilledgrvgroupby
+            UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->update(['selectedForBooking'=>-1,'fullyBooked'=>2]);
+
+            $generalLedger = GeneralLedger::where(['companySystemID' => $grv->companySystemID,'documentSystemID' => 3,'documentSystemCode' => $input['grvAutoID']])->get();
+            if(!empty($generalLedger)){
+                foreach ($generalLedger as $gl) {
+                    unset($gl['GeneralLedgerID']);
+                    $temp = $gl;
+                    $temp['documentDate'] = now();
+                    $temp['documentYear'] = date("Y");
+                    $temp['documentMonth'] = date("n");
+                    $temp['documentNarration'] = 'Reversal Entry';
+                    $temp['documentTransAmount'] = ($gl['documentTransAmount'])*-1;
+                    $temp['documentLocalAmount'] = ($gl['documentLocalAmount'])*-1;
+                    $temp['documentRptAmount'] = ($gl['documentRptAmount'])*-1;
+                    GeneralLedger::create($temp->toArray());
+                }
+            }
+
+            DB::commit();
+        }catch (\Exception $e){
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+
+    }
+
 
 }

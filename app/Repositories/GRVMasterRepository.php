@@ -2,7 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\UnbilledGrvGroupBy;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -97,5 +99,82 @@ class GRVMasterRepository extends BaseRepository
     public function model()
     {
         return GRVMaster::class;
+    }
+
+    public function isGrvEligibleForCancellation($input){
+
+        $grv = GRVMaster::find($input['grvAutoID']);
+
+        if (empty($grv)) {
+            return $array = [
+                'status' => 0,
+                'msg' => 'GRV not found',
+            ];
+        }
+
+        if ($grv->approved != -1) {
+            return $array = [
+                'status' => 0,
+                'msg' => 'You cannot cancel, This document not approved.',
+            ];
+        }
+
+        if ($grv->grvCancelledYN == -1) {
+            return $array = [
+                'status' => 0,
+                'msg' => 'GRV already cancelled',
+            ];
+        }
+
+        $oneDetail = GRVDetails::where('grvAutoID',$input['grvAutoID'])->first();
+
+        if (empty($oneDetail)) {
+            return $array = [
+                'status' => 0,
+                'msg' => 'GRV Details not found',
+            ];
+        }
+
+        switch ($oneDetail->itemFinanceCategoryID){
+            case 1: //Inventory - Don't allow to cancel and ask user to create a purchase return for Inventory GRVs
+                return $array = [
+                    'status' => 0,
+                    'msg' => 'You cannot cancel inventory type GRV. Please do a purchase return for this GRV',
+                ];
+                break;
+            case 2: // Service - Don't allow to cancel the GRV, If the GRV is added to BSI
+            case 3: // Don’t allow to cancel, If the GRV is added in the asset allocation or  If the GRV is added to BSI
+            case 4: // Don't allow to cancel the GRV, If the GRV is added to BSI
+                $isExistBSI = UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->where('selectedForBooking',-1)->exists();
+                if($isExistBSI){
+                    return $array = [
+                        'status' => 0,
+                        'msg' => 'You cannot cancel the GRV. The GRV is already added to Supplier Invoice ',
+                    ];
+                }
+
+                if($oneDetail->itemFinanceCategoryID == 3){
+                    $isAssetAllocationExist = GRVDetails::where('grvAutoID',$input['grvAutoID'])->where('assetAllocationDoneYN', -1)->exists();
+                    if($isAssetAllocationExist){
+                        return $array = [
+                            'status' => 0,
+                            'msg' => 'You cannot cancel the GRV. The GRV is already added to Asset Allocation',
+                        ];
+                    }
+                    break;
+                }
+
+                break;
+            default:
+                return $array = [
+                    'status' => 0,
+                    'msg' => 'Item Finance Category ID Not found on Detail',
+                ];
+        }
+
+        return $array = [
+            'status' => 1,
+            'msg' => 'success',
+        ];
     }
 }

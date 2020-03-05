@@ -1618,6 +1618,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');
     Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
 
+    Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
+    Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
