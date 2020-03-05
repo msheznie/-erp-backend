@@ -25,8 +25,11 @@ use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\RollBackApproval;
+use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
+use App\Models\Alert;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
 use App\Models\Employee;
@@ -4304,5 +4307,20 @@ class Helper
         }
         $groupCompany = array_column($groupCompany, 'companySystemID');
         return $groupCompany;
+    }
+
+    public static function sendMail($id, $companySystemID){
+
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $companySystemID)->where('companyPolicyCategoryID', 37)->where('isYesNO',1)->exists();
+        if($hasPolicy){
+            $details = Alert::find($id);
+            if($details && $details->isEmailSend == 0){
+                $is_sent = SendEmail::dispatch($details->empEmail,$details->alertMessage,$details->emailAlertMessage,$details->alertID);
+                if($is_sent) {
+                    Alert::where('alertID',$details->alertID)->update(['isEmailSend' => 1]);
+                }
+            }
+        }
+
     }
 }
