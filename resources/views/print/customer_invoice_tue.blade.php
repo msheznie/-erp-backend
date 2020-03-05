@@ -317,19 +317,20 @@
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
 
                 @foreach ($request->profomaDetailData as $item)
-
-                    {{$directTraSubTotal +=$item->total}}
-                    <tr style="border: 1px solid !important;">
-                        <td>{{$x}}</td>
-                        <td style="word-wrap:break-word;">{{$item->description}}</td>
-                        <td style="text-align: right;">{{$item->Qty}}</td>
-                        <td style="text-align: right;">{{$item->Days_OP}}</td>
-                        <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
-                        <td style="text-align: right;">{{$item->Days_STB}}</td>
-                        <td style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
-                    </tr>
-                    {{ $x++ }}
+                    @if ($item->total != 0)
+                        {{$directTraSubTotal +=$item->total}}
+                        <tr style="border: 1px solid !important;">
+                            <td>{{$x}}</td>
+                            <td style="word-wrap:break-word;">{{$item->description}}</td>
+                            <td style="text-align: right;">{{$item->Qty}}</td>
+                            <td style="text-align: right;">{{$item->Days_OP}}</td>
+                            <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
+                            <td style="text-align: right;">{{$item->Days_STB}}</td>
+                            <td style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
+                            <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
+                        </tr>
+                        {{ $x++ }}
+                    @endif
                 @endforeach
                 </tbody>
 
@@ -337,7 +338,7 @@
                     <tr>
                         <td></td>
                         <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
                     @endif</td>
@@ -348,13 +349,13 @@
                     <tr>
                         <td></td>
                         <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                     </tr>
                     <tr>
                         <td></td>
                         <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
                 </tbody>
@@ -408,7 +409,7 @@
                     <tr>
                         <td></td>
                         <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
                     @endif</td>
@@ -418,14 +419,14 @@
                         <tr>
                             <td></td>
                             <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
-                            <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                             <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
                         </tr>
 
                     <tr>
                         <td></td>
                         <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>SAR</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
                     @endif
