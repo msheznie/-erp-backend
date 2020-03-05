@@ -88,6 +88,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->Join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('erp_location', 'erp_purchaseordermaster.poLocation', '=', 'erp_location.locationID')
             ->where('erp_purchaseordermaster.approved', -1)
+            ->where('erp_purchaseorderdetails.manuallyClosed', 0)
             ->where('erp_purchaseorderdetails.itemCode', $request['itemCodeSystem'])
             ->orderBy('erp_purchaseordermaster.approvedDate', 'DESC')
             ->select('erp_purchaseorderdetails.purchaseOrderMasterID',
