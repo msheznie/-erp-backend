@@ -12,6 +12,7 @@
 
 namespace App\helper;
 
+use App\Jobs\SendEmail;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalMaster;
@@ -22,6 +23,7 @@ use App\Models\BudgetMaster;
 use App\Models\BudgetTransferForm;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
@@ -362,7 +364,18 @@ class email
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
-            Alert::create($data);
+            $data = Alert::create($data);
+
+            // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
+            if($data && $data->isEmailSend == 0){
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])->where('companyPolicyCategoryID', 37)->where('isYesNO',1)->exists();
+                if($hasPolicy){
+                    $is_sent = SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
+                    if($is_sent) {
+                        Alert::where('alertID',$data->alertID)->update(['isEmailSend' => 1]);
+                    }
+                }
+            }
         }
 
         //$emails = Alert::insert($emailsArray);
