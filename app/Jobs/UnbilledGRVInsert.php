@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
 use App\Models\UnbilledGrvGroupBy;
+use App\Models\Company;
+use App\Models\SupplierAssigned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -43,11 +45,29 @@ class UnbilledGRVInsert implements ShouldQueue
             }
             DB::beginTransaction();
             try {
-                $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp")
-                    ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
-                    ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
-                    ->groupBy('purchaseOrderMastertID')
-                    ->get();
+                $company = Company::where('companySystemID', $masterModel['companySystemID'])->first();
+                $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $masterModel['supplierID'])
+                                                            ->where('companySystemID', $masterModel['companySystemID'])
+                                                            ->first();
+                $valEligible = false;
+                if ($company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+                    $valEligible = true;
+                }
+
+                if ($valEligible) {
+                    $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM((GRVcostPerUnitSupTransCur*noQty) + VATAmount),7) as totTransactionAmount,ROUND(SUM((GRVcostPerUnitLocalCur*noQty) + VATAmountLocal),7) as totLocalAmount, ROUND(SUM((GRVcostPerUnitComRptCur*noQty) + VATAmountRpt),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp")
+                        ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                        ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                        ->groupBy('purchaseOrderMastertID')
+                        ->get();
+                } else {
+                    $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp")
+                        ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                        ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                        ->groupBy('purchaseOrderMastertID')
+                        ->get();
+                }
+
                 Log::info($output);
                 if ($output) {
                     UnbilledGrvGroupBy::insert($output->toArray());
