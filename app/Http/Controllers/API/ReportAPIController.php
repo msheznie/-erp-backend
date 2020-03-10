@@ -1286,6 +1286,7 @@ WHERE
                     $data[] = array(
                         'Company' => $val->companyID,
                         'PO Code' => $val->purchaseOrderCode,
+                        'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
                         'Created Date' => Helper::dateFormat($val->createdDateTime),
                         'Created By' => $val->created_by ? $val->created_by->empFullName : '',
                         'Supplier Code' => $val->supplierPrimaryCode,
@@ -1296,7 +1297,6 @@ WHERE
                         'ICV Sub Category' => $val->icv_sub_category ? $val->icv_sub_category->categoryDescription : '',
                         'Expected Delivery Date' => Helper::dateFormat($val->expectedDeliveryDate),
                         'Narration' => $val->narration,
-                        'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
                         'Currency' => $val->currency ? $val->currency->CurrencyCode : '',
                         'Amount' => number_format($val->poTotalSupplierTransactionCurrency, ($val->currency ? $val->currency->DecimalPlaces : 2)),
                         'Approved Date' => Helper::dateFormat($val->approvedDate),
