@@ -46,6 +46,7 @@ class ReportAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'suppliers' => 'required',
+                    'segment' => 'required',
                     'option' => 'required'
                 ]);
 
@@ -1345,6 +1346,8 @@ WHERE
         $suppliers = (array)$input['suppliers'];
         $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
+        $segment = (array)$input['segment'];
+        $segment = collect($segment)->pluck('serviceLineSystemID');
         //poType_N: 5  -- main work order
         //poType_N: 6  -- sub work order
 
@@ -1362,6 +1365,7 @@ WHERE
             })
             ->whereBetween('createdDateTime', [$startDate, $endDate])
             ->whereIn('supplierID', $suppliers)
+            ->whereIn('serviceLineSystemID', $segment)
             ->when($option >= 0, function ($q) use ($option) {
                 if ($option == 0 || $option == 1 || $option == 2) {
                     $q->where('grvRecieved', $option)
