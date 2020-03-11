@@ -5036,7 +5036,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
             ->where('approved', -1)
-            ->where('documentSystemID', '!=', 5)
+            ->where('poType_N', '!=', 5)
             ->when($from && $to == "", function ($q) use ($from, $to) {
                 return $q->where('approvedDate', '>=', $from);
             })
