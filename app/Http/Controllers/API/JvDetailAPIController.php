@@ -1120,7 +1120,7 @@ GROUP BY
                         $allocationDetailNewData['percentage'] = $percentage;
                         $allocationDetailNewData['productLineID'] = $segmentValue['serviceLineSystemID'];
                         $allocationDetailNewData['productLineCode'] = $segmentValue['serviceLineCode'];
-                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['allocationmaid'] = 4;
                         $allocationDetailNewData['companySystemID'] = $input['companySystemID'];
                         $allocationDetailNewData['companyid'] = $segmentValue['companyID'];
                         $allocationDetailNewData['chartOfAccountAllocationMasterID'] = $allocationValue['chartOfAccountAllocationMasterID'];
