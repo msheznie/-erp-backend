@@ -23,6 +23,7 @@ use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderStatus;
+use App\Models\SegmentMaster;
 use App\Models\SupplierMaster;
 use App\Providers\AuthServiceProvider;
 use App\Repositories\PurchaseOrderStatusRepository;
@@ -511,7 +512,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             ->where('approved', -1)
             ->where('poCancelledYN', 0)
             ->whereIn('grvRecieved',$grvStatus)
-            ->with(['currency','status_one' => function ($q) {
+            ->with(['segment','currency','status_one' => function ($q) {
                   $q->with(['category']);
             }, 'supplier' => function ($q) {
                 $q->with(['country']);
@@ -527,6 +528,12 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $suppliers = (array)$input['suppliers'];
             $suppliers = collect($suppliers)->pluck('supplierCodeSystem');
             $purchaseOrders = $purchaseOrders->whereIn('supplierID', $suppliers);
+        }
+
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+            $purchaseOrders = $purchaseOrders->whereIn('serviceLineSystemID', $segment);
         }
 
 
@@ -591,6 +598,16 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         }
 
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+
+            if (count($segment) == 0) {
+                return $this->sendError('Please select segments', 500);
+            }
+
+        }
+
         return $this->sendResponse([], 'valid');
     }
 
@@ -626,9 +643,12 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $suppliers = SupplierMaster::whereIn('supplierCodeSystem', $filterSuppliers)
                                     ->select(['supplierCodeSystem', 'primarySupplierCode', 'supplierName'])
                                     ->get();
+
+        $segment = SegmentMaster::ofCompany($subCompanies)->get();
         $output = array(
             'companies' => $companies,
-            'suppliers' => $suppliers
+            'suppliers' => $suppliers,
+            'segment' => $segment
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -667,7 +687,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             ->where('approved', -1)
             ->where('poCancelledYN', 0)
             ->whereIn('grvRecieved',$grvStatus)
-            ->with(['supplier', 'currency', 'status_one' => function ($q) {
+            ->with(['supplier','segment', 'currency', 'status_one' => function ($q) {
                 $q->with(['category']);
             }, 'supplier' => function ($q) {
                 $q->with(['country']);
@@ -685,6 +705,11 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $purchaseOrders = $purchaseOrders->whereIn('supplierID', $suppliers);
         }
 
+        if (array_key_exists('segment', $input)) {
+            $segment = (array)$input['segment'];
+            $segment = collect($segment)->pluck('serviceLineSystemID');
+            $purchaseOrders = $purchaseOrders->whereIn('serviceLineSystemID', $segment);
+        }
 
         $search = $request->input('search.value');
         if ($search) {
@@ -739,6 +764,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $data[] = array(
                 'Company ID' => $val->companyID,
                 'PO Code' => $val->purchaseOrderCode,
+                'Segment' => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
                 'Created Date' => \Helper::dateFormat($val->createdDateTime),
                 'Approved Date' => \Helper::dateFormat($val->approvedDate),
                 'ETA' => \Helper::dateFormat($val->expectedDeliveryDate),
