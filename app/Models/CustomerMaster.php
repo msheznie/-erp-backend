@@ -206,5 +206,17 @@ class CustomerMaster extends Model
         return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
 
+    public function customerCurrency(){
+        return $this->hasMany('App\Models\CustomerCurrency','customerCodeSystem','customerCodeSystem');
+    }
+
+    public function customer_default_currency(){
+        return $this->hasOne('App\Models\CustomerCurrency','customerCodeSystem','customerCodeSystem');
+    }
+
+    public function customer_default_contacts(){
+        return $this->hasOne('App\Models\CustomerContactDetails','customerID','customerCodeSystem');
+    }
+
 
 }

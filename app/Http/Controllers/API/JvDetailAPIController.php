@@ -40,6 +40,7 @@ use App\Models\ChartOfAccountAllocationMaster;
 use App\Models\ChartOfAccountAllocationDetailHistory;
 use App\Models\GeneralLedger;
 use App\Models\Employee;
+use App\Models\ServiceLine;
 use App\Models\ChartOfAccountAllocationDetail;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
@@ -1041,6 +1042,13 @@ GROUP BY
             $jvDetails['fixed_rate'] = $this->generateSpaceUsageAndFixedRateAllocation($input, $jvMaster->toArray(), $user);
             $jvDetails['basic_staff'] = $this->generateBasicOfStaffProductLineAllocation($input, $jvMaster->toArray(), $user);
             $jvDetails['revenue'] = $this->generateRevenueBasicAllocation($input, $jvMaster->toArray(), $user);
+            
+            $monthOfJV = Carbon::parse($jvMaster->toArray()['JVdate'])->format('m');
+            $yearOfJV = Carbon::parse($jvMaster->toArray()['JVdate'])->format('Y');
+            $jvMaster->recurringMonth = $monthOfJV;
+            $jvMaster->recurringYear = $yearOfJV;
+            $jvMaster->save();
+            
             DB::commit();
             return $this->sendResponse($jvDetails, 'Allocation made successfully');
         } catch (\Exception $exception) {
@@ -1112,8 +1120,7 @@ GROUP BY
                         $allocationDetailNewData['percentage'] = $percentage;
                         $allocationDetailNewData['productLineID'] = $segmentValue['serviceLineSystemID'];
                         $allocationDetailNewData['productLineCode'] = $segmentValue['serviceLineCode'];
-                        $allocationDetailNewData['allocationmaid'] = 1;
-                        $allocationDetailNewData['allocationmaid'] = 1;
+                        $allocationDetailNewData['allocationmaid'] = 4;
                         $allocationDetailNewData['companySystemID'] = $input['companySystemID'];
                         $allocationDetailNewData['companyid'] = $segmentValue['companyID'];
                         $allocationDetailNewData['chartOfAccountAllocationMasterID'] = $allocationValue['chartOfAccountAllocationMasterID'];
@@ -1187,12 +1194,16 @@ GROUP BY
 
     public function getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $productLineID, $jvAmount, $AccountDescription, $user, $generalLedgerAmount, $creditFlag = false)
     {
+
+        $serviceline = ServiceLine::where('serviceLineSystemID', $productLineID)->first();
+
         $temp['jvMasterAutoId'] = $jvMaster['jvMasterAutoId'];
         $temp['chartOfAccountSystemID'] = $gLvalue['chartOfAccountSystemID'];
         $temp['companySystemID'] = $allocationValue['companySystemID'];
         $temp['serviceLineSystemID'] = $productLineID;
+        $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
-        $temp['comments'] = null;
+        $temp['comments'] = $jvMaster['JVNarration'];
         $temp['debitAmount'] = (!$creditFlag) ? $jvAmount : 0;
         $temp['creditAmount'] = (!$creditFlag) ? 0 : $generalLedgerAmount;
         $temp['cuurencyname'] = null;

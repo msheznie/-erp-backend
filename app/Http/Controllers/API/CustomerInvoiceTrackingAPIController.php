@@ -695,6 +695,9 @@ FROM
 			AND erp_custinvoicedirectdet.customerID=$customerID
 			AND erp_custinvoicedirectdet.performaMasterID > 0 
 			AND erp_custinvoicedirect.selectedForTracking = 0 
+			AND erp_custinvoicedirect.confirmedYN = 1 
+			AND erp_custinvoicedirect.approved = 0 
+			AND erp_custinvoicedirect.canceledYN = 0 
             $where
 		GROUP BY
 			performa_service_entry_wellgroup.performaMasID,
@@ -730,6 +733,9 @@ FROM
 			AND erp_custinvoicedirectdet.customerID=$customerID
 			AND erp_custinvoicedirect.selectedForTracking = 0 
 			AND erp_custinvoicedirectdet.performaMasterID = 0 
+			AND erp_custinvoicedirect.confirmedYN = 1 
+			AND erp_custinvoicedirect.approved = 0 
+			AND erp_custinvoicedirect.canceledYN = 0 
 		    $where
 		GROUP BY
 			erp_custinvoicedirectdet.companyID,

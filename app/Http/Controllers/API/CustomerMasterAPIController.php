@@ -635,8 +635,12 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $type = $input['type'];
 
-        $customerMasters = CustomerMaster::with(['country'])
-            ->get();
+        $customerMasters = CustomerMaster::with(['country', 'customer_default_currency' => function($query){
+            $query->where('isDefault',-1)
+                ->with(['currencyMaster']);
+        }, 'customer_default_contacts' => function($query){
+            $query->where('isDefault',-1);
+        }])->get();
 
         if ($customerMasters) {
             $x = 0;
@@ -645,15 +649,16 @@ class CustomerMasterAPIController extends AppBaseController
                 $data[$x]['Primary Code'] = $val->CutomerCode;
                 $data[$x]['Secondary Code'] = $val->customerShortCode;
                 $data[$x]['Customer Name'] = $val->CustomerName;
-                $data[$x]['City'] = $val->customerCity;
-                $data[$x]['Country'] = $val->CustomerName;
-                if ($val->country) {
-                    $data[$x]['Country'] = $val->country->countryName;
-                } else {
-                    $data[$x]['Country'] = '';
-                }
+                $data[$x]['Report Title'] = $val->ReportTitle;
+                $data[$x]['Currency'] = isset($val->customer_default_currency->currencyMaster->CurrencyCode)?$val->customer_default_currency->currencyMaster->CurrencyCode:'-';
                 $data[$x]['Credit Period'] = $val->creditDays;
                 $data[$x]['Credit Limit'] = $val->creditLimit;
+                $data[$x]['Address'] = $val->customerAddress1.", ".$val->customerAddress2;
+                $data[$x]['City'] = $val->customerCity;
+                $data[$x]['Country'] = isset($val->country->countryName)?$val->country->countryName:"-";
+                $data[$x]['Telephone'] = isset($val->customer_default_contacts->contactPersonTelephone)?$val->customer_default_contacts->contactPersonTelephone:0;
+                $data[$x]['Email'] = isset($val->customer_default_contacts->contactPersonEmail)?$val->customer_default_contacts->contactPersonEmail:'-';
+
                 $x++;
             }
         } else {

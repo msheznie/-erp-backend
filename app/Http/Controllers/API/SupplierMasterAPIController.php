@@ -26,6 +26,7 @@ use App\Models\Company;
 use App\Models\CountryMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\DocumentApproved;
@@ -746,9 +747,11 @@ class SupplierMasterAPIController extends AppBaseController
         $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
         $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
+        $segment = SegmentMaster::ofCompany($companyID)->get();
         $output = array(
             'controlAccount' => $controlAccount,
             'suppliers' => $supplierMaster,
+            'segment' => $segment
         );
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
