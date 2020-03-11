@@ -1064,6 +1064,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
                             $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
                             $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
+                            $data[$x]['Collection Tracker Status'] = $val->commentAndStatus;
                             $x++;
                         }
                     }
@@ -2603,8 +2604,9 @@ WHERE
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
-        DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
+        DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
+    final.comments AS commentAndStatus,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
 	final.clientContractID AS Contract,
@@ -2642,6 +2644,7 @@ SELECT
 	mainQuery.documentID,
 	mainQuery.documentSystemCode,
 	mainQuery.documentCode,
+    mainQuery.comments,
 	mainQuery.documentDate,
 	mainQuery.documentDateFilter,
 	mainQuery.invoiceNumber,
@@ -2713,6 +2716,7 @@ SELECT
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
 	erp_generalledger.documentCode,
+    collectionTrackerDetail.comments,
 	erp_generalledger.documentDate,
 	DATE_FORMAT( documentDate, "%d/%m/%Y" ) AS documentDateFilter,
 	erp_generalledger.documentYear,
@@ -2753,6 +2757,14 @@ FROM
 	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN serviceline ON erp_generalledger.serviceLineSystemID = serviceline.serviceLineSystemID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+    LEFT JOIN  (            
+            SELECT customerinvoicecollectiondetail.customerInvoiceID, customerinvoicecollectiondetail.comments FROM erp_customerinvoicecollectiondetail  customerinvoicecollectiondetail
+            JOIN (
+                SELECT max(collectionDetailID) AS maxcollectionDetailID, customerInvoiceID  FROM `erp_customerinvoicecollectiondetail` #where customerInvoiceID = 63415 
+                GROUP BY customerInvoiceID
+            ) AS lastCollectionTrackerData on customerinvoicecollectiondetail.collectionDetailID = lastCollectionTrackerData.maxcollectionDetailID AND customerinvoicecollectiondetail.comments IS NOT NULL
+    ) AS collectionTrackerDetail
+    ON erp_custinvoicedirect.custInvoiceDirectAutoID = collectionTrackerDetail.customerInvoiceID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" )
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
