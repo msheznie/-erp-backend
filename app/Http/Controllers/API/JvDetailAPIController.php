@@ -41,6 +41,7 @@ use App\Models\ChartOfAccountAllocationDetailHistory;
 use App\Models\GeneralLedger;
 use App\Models\Employee;
 use App\Models\ServiceLine;
+use App\Models\Company;
 use App\Models\ChartOfAccountAllocationDetail;
 use App\Repositories\JvDetailRepository;
 use App\Repositories\ChartOfAccountAllocationDetailHistoryRepository;
@@ -1053,7 +1054,7 @@ GROUP BY
             return $this->sendResponse($jvDetails, 'Allocation made successfully');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error occurred in generating allocation',500);
+            return $this->sendError($exception->getMessage() . ' Line Number ' . $exception->getLine(),500);
         }
 
     }
@@ -1062,13 +1063,26 @@ GROUP BY
     {
         $chartofaccounts = $this->getChartOfAccountAllocationDetails(1, [5,6], $input['companySystemID']);
 
-        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
+        $accountFilterArray = [];
+        foreach ($chartofaccounts as $key => $value) {
+            $temp['chartOfAccountSystemID'] = $value['chartOfAccountSystemID'];
+            $temp['serviceLineSystemID'] = $value['serviceLineSystemID'];
 
-        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+            $accountFilterArray[] = $temp;
+        }
+
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $accountFilterArray);
 
         $jvDetails = [];
+        $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
-            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            if($company->reportingCurrency == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+            } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+            } else {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+            }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
                 if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
@@ -1093,8 +1107,14 @@ GROUP BY
     {
         $chartofaccounts = $this->getChartOfAccountAllocationDetails(2, [4], $input['companySystemID']);
 
-        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
-        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+        $accountFilterArray = [];
+        foreach ($chartofaccounts as $key => $value) {
+            $temp['chartOfAccountSystemID'] = $value['chartOfAccountSystemID'];
+            $temp['serviceLineSystemID'] = $value['serviceLineSystemID'];
+
+            $accountFilterArray[] = $temp;
+        }
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $accountFilterArray);
 
         $pliChartOfAccount = ChartOfAccountsAssigned::select('chartOfAccountSystemID')->where('isActive',1)
                                                                              ->where('controlAccountsSystemID',1)
@@ -1103,19 +1123,40 @@ GROUP BY
                                                                              ->toArray();
         $pliChartOfAccountIds =  collect($pliChartOfAccount)->pluck('chartOfAccountSystemID')->toArray();
 
-        $pliGeneralLedgerTotal = $this->getGeneralLedgerDataForAllocation($jvMaster, $pliChartOfAccountIds, "glID");
-        $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerAmount']) : 0;
-        $pliGeneralLedgerTotalByServiceLine = $this->getGeneralLedgerDataForAllocation($jvMaster, $pliChartOfAccountIds, "serviceline");
+        $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
+        $pliGeneralLedgerTotal = $this->getGeneralLedgerDataForAllocationForRevenueBasis($jvMaster, $pliChartOfAccountIds, "glID");
+        if($company->reportingCurrency == $jvMaster['currencyID']) {
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerRptAmount']) : 0;
+        } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerLocalAmount']) : 0;
+        } else {
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerTransAmount']) : 0;
+        }
+        $pliGeneralLedgerTotalByServiceLine = $this->getGeneralLedgerDataForAllocationForRevenueBasis($jvMaster, $pliChartOfAccountIds, "serviceline");
         $jvDetails = [];
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
-            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            if($company->reportingCurrency == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+            } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+            } else {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+            }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
                 if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
                     $deleteAllocationDetailData = ChartOfAccountAllocationDetail::where('chartOfAccountAllocationMasterID', $allocationValue['chartOfAccountAllocationMasterID'])->delete();
+                    $jvAmount = 0;
                     foreach ($pliGeneralLedgerTotalByServiceLine as $key => $segmentValue) {
-                        $percentage = (abs($segmentValue['generalLedgerAmount']) / $pliGeneralLedgerTotal) * 100;
-                        $jvAmount = $generalLedgerAmount * (abs($segmentValue['generalLedgerAmount']) / $pliGeneralLedgerTotal);
+                        if($company->reportingCurrency == $jvMaster['currencyID']) {
+                            $segmentValueGeneralLedgerAmount = $segmentValue['generalLedgerRptAmount'];
+                        } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
+                            $segmentValueGeneralLedgerAmount = $segmentValue['generalLedgerLocalAmount'];
+                        } else {
+                            $segmentValueGeneralLedgerAmount = $segmentValue['generalLedgerTransAmount'];
+                        }
+                        $percentage = (abs($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal) * 100;
+                        $jvAmount = $generalLedgerAmount * (abs($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal);
 
                         $allocationDetailNewData['percentage'] = $percentage;
                         $allocationDetailNewData['productLineID'] = $segmentValue['serviceLineSystemID'];
@@ -1146,12 +1187,33 @@ GROUP BY
     {
         $monthOfJV = Carbon::parse($jvMaster['JVdate'])->format('m');
         $yearOfJV = Carbon::parse($jvMaster['JVdate'])->format('Y');
-        $glData = GeneralLedger::with(['charofaccount'])->whereIn('chartOfAccountSystemID',$chartOfAccountIds)
-                                            ->selectRaw('SUM(documentTransAmount) AS generalLedgerAmount, chartOfAccountSystemID, serviceLineSystemID, serviceLineCode, companyID, GeneralLedgerID')
+        $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
+        $glData = GeneralLedger::with(['charofaccount'])
+                                            ->selectRaw('SUM(documentTransAmount) AS generalLedgerTransAmount,SUM(documentLocalAmount) AS generalLedgerLocalAmount,SUM(documentRptAmount) AS generalLedgerRptAmount, chartOfAccountSystemID, serviceLineSystemID, serviceLineCode, companyID, GeneralLedgerID')
                                             ->where('companySystemID',$jvMaster['companySystemID'])
-                                            ->where('documentTransCurrencyID',$jvMaster['currencyID'])
                                             ->whereMonth('documentDate', $monthOfJV)
-                                            ->whereYear('documentDate', $yearOfJV);
+                                            ->whereYear('documentDate', $yearOfJV)
+                                            ->where(function ($query) use ($chartOfAccountIds) {
+                                                foreach ($chartOfAccountIds as $key => $value) {
+                                                    if($key == 0){
+                                                       $query->where(function($q1) use($value){
+                                                              $q1->where('chartOfAccountSystemID',$value['chartOfAccountSystemID'])
+                                                                ->where('serviceLineSystemID', $value['serviceLineSystemID']);
+                                                            });
+                                                    }else{
+                                                       $query->orWhere(function($q1) use($value){
+                                                              $q1->where('chartOfAccountSystemID',$value['chartOfAccountSystemID'])
+                                                                ->where('serviceLineSystemID', $value['serviceLineSystemID']);
+                                                        });
+                                                    }
+                                                 
+                                                }
+                                            });
+      
+        if($company->reportingCurrency != $jvMaster['currencyID'] && $company->localCurrencyID != $jvMaster['currencyID']) {
+            $glData = $glData->where('documentTransCurrencyID',$jvMaster['currencyID']);
+        }                         
+
         if ($groupBY == "chartOfAccountSystemID") {
             $generalLedgerGroupData = $glData->where('isAllocationJV',0)
                                              ->groupBy('chartOfAccountSystemID')
@@ -1169,8 +1231,42 @@ GROUP BY
                             ->get()
                             ->toArray();
         }
+    }
 
-                                            
+
+    public function getGeneralLedgerDataForAllocationForRevenueBasis($jvMaster, $chartOfAccountIds, $groupBY = "chartOfAccountSystemID")
+    {
+        $monthOfJV = Carbon::parse($jvMaster['JVdate'])->format('m');
+        $yearOfJV = Carbon::parse($jvMaster['JVdate'])->format('Y');
+        $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
+        $glData = GeneralLedger::with(['charofaccount'])
+                                            ->selectRaw('SUM(documentTransAmount) AS generalLedgerTransAmount,SUM(documentLocalAmount) AS generalLedgerLocalAmount,SUM(documentRptAmount) AS generalLedgerRptAmount, chartOfAccountSystemID, serviceLineSystemID, serviceLineCode, companyID, GeneralLedgerID')
+                                            ->where('companySystemID',$jvMaster['companySystemID'])
+                                            ->whereMonth('documentDate', $monthOfJV)
+                                            ->whereYear('documentDate', $yearOfJV)
+                                            ->whereIn('chartOfAccountSystemID', $chartOfAccountIds);
+        
+        if($company->reportingCurrency != $jvMaster['currencyID'] && $company->localCurrencyID != $jvMaster['currencyID']) {
+            $glData = $glData->where('documentTransCurrencyID',$jvMaster['currencyID']);
+        }     
+
+        if ($groupBY == "chartOfAccountSystemID") {
+            $generalLedgerGroupData = $glData->where('isAllocationJV',0)
+                                             ->groupBy('chartOfAccountSystemID')
+                                             ->get()
+                                             ->toArray();
+
+            $generalLedgerData = $glData->get()->toArray();
+
+            return ['generalLedgerGroupData' => $generalLedgerGroupData, 'generalLedgerData' => $generalLedgerData];
+        } else if ($groupBY == "glID") {
+            return $glData->get()
+                            ->toArray();
+        } else {
+            return $glData->groupBy('serviceLineSystemID')
+                            ->get()
+                            ->toArray();
+        }
     }
 
     public function getChartOfAccountAllocationDetails($type, $allocationmaids, $companySystemID)
@@ -1225,9 +1321,15 @@ GROUP BY
     {
         $chartofaccounts = $this->getChartOfAccountAllocationDetails(2, [1], $input['companySystemID']);
 
-        $chartOfAccountIds =  collect($chartofaccounts)->pluck('chartOfAccountSystemID')->toArray();
+        $accountFilterArray = [];
+        foreach ($chartofaccounts as $key => $value) {
+            $temp['chartOfAccountSystemID'] = $value['chartOfAccountSystemID'];
+            $temp['serviceLineSystemID'] = $value['serviceLineSystemID'];
 
-        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $chartOfAccountIds);
+            $accountFilterArray[] = $temp;
+        }
+
+        $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $accountFilterArray);
 
         $startDateOfMonth = Carbon::parse($jvMaster['JVdate'])->startOfMonth()->format('Y-m-d');
         $totalEmployees = Employee::with(['details'])
@@ -1313,8 +1415,15 @@ GROUP BY
             $segemntData[] = $temp;
         }
         $jvDetails = [];
+        $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
-            $generalLedgerAmount = abs($gLvalue['generalLedgerAmount']);
+            if($company->reportingCurrency == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+            } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+            } else {
+                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+            }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
                 if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
