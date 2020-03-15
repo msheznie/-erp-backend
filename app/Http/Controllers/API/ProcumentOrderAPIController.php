@@ -163,7 +163,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-
         if(Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])){
 
             $validator = \Validator::make($input, [
@@ -269,8 +268,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $month1 = date('n', $ts1);
                 $month2 = date('n', $ts2);
 
-                $input['WO_NoOfAutoGenerationTimes'] = abs((($year2 - $year1) * 12) + ($month2 - $month1));
-
+                $input['WO_NoOfAutoGenerationTimes'] = abs((($year2 - $year1) * 12) + ($month2 - $month1) + 1);
             }
         }
 
