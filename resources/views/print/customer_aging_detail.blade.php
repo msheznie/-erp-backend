@@ -166,6 +166,10 @@
                 <td colspan="12"><b>{{$key}}</b></td>
             </tr>
             <tr>
+                <td><b>Credit Days</b></td>
+                <td colspan="11"><b>{{$customerCreditDays[$key]}}</b></td>
+            </tr>
+            <tr>
                 <th width="10%">Document Code</th>
                 <th width="10%">Posted Date</th>
                 <th width="5%">Invoice Number</th>
