@@ -347,6 +347,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $output = $this->getCustomerAgingDetailQRY($request);
 
                     $outputArr = array();
+                    $customerCreditDays = array();
                     $grandTotalArr = array();
                     if ($output['aging']) {
                         foreach ($output['aging'] as $val) {
@@ -358,6 +359,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output['data']) {
                         foreach ($output['data'] as $val) {
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                            $customerCreditDays[$val->customerName] = $val->creditDays;
                         }
                     }
 
@@ -374,7 +376,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'invoiceAmountTotal' => $invoiceAmountTotal);
+                    return array('reportData' => $outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'invoiceAmountTotal' => $invoiceAmountTotal);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -1044,6 +1046,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->customerName2;
+                            $data[$x]['Credit Days'] = $val->creditDays;
                             $data[$x]['Department'] = $val->serviceLineName;
                             $data[$x]['Contract ID'] = $val->Contract;
                             $data[$x]['PO Number'] = $val->PONumber;
@@ -1078,6 +1081,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $lineTotal = 0;
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Credit Days'] = $val->creditDays;
                             $data[$x]['Cust. Code'] = $val->CustomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
@@ -1883,6 +1887,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $companyLogo = $checkIsGroup->companyLogo;
 
                     $outputArr = array();
+                    $customerCreditDays = array();
                     $grandTotalArr = array();
                     if ($output['aging']) {
                         foreach ($output['aging'] as $val) {
@@ -1894,6 +1899,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output['data']) {
                         foreach ($output['data'] as $val) {
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                            $customerCreditDays[$val->customerName] = $val->creditDays;
                         }
                     }
 
@@ -1910,7 +1916,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
 
                     $html = view('print.customer_aging_detail', $dataArr);
 
@@ -2604,7 +2610,7 @@ WHERE
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
-        DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
+        DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
     final.comments AS commentAndStatus,
 	final.documentDate AS PostedDate,
@@ -2619,6 +2625,7 @@ WHERE
 	' . $decimalPlaceQry . ',
 	' . $invoiceQry . ',
 	final.customerName AS customerName,
+    final.creditDays AS creditDays,
 	final.customerName2 AS customerName2,
 	final.CutomerCode AS CutomerCode,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
@@ -2697,6 +2704,7 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 
 	mainQuery.customerName,
 	mainQuery.customerName2,
+    mainQuery.creditDays,
 	mainQuery.CutomerCode,
 	mainQuery.PONumber,
 	mainQuery.invoiceDueDate,
@@ -2745,6 +2753,7 @@ SELECT
 	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
 	customermaster.CustomerName as customerName2,
 	customermaster.CutomerCode,
+    customermaster.creditDays,
 	erp_custinvoicedirect.PONumber,
 	erp_custinvoicedirect.invoiceDueDate,
 	serviceline.ServiceLineDes AS serviceLineName
@@ -3009,7 +3018,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName,concatCompanyName FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName, creditDays,CustomerCode,customerCodeSystem,companyID,CompanyName,concatCompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -3020,6 +3029,7 @@ WHERE
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
 	final.CustomerName,
+    final.creditDays,
 	final.CutomerCode as CustomerCode,
 	final.supplierCodeSystem AS customerCodeSystem,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
@@ -3078,6 +3088,7 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
 	mainQuery.CustomerName,
+    mainQuery.creditDays,
 	mainQuery.CutomerCode
 FROM
 	(
@@ -3117,6 +3128,7 @@ SELECT
 	SUM(erp_generalledger.documentRptAmount) as documentRptAmount,
 	erp_generalledger.documentType,
 	customermaster.CustomerName,
+    customermaster.creditDays,
 	customermaster.CutomerCode
 FROM
 	erp_generalledger 

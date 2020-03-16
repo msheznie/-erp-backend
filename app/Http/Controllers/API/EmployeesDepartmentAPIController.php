@@ -74,29 +74,36 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $input = $request->all();
         foreach ($input as $key => $val) {
             $val = $this->convertArrayToValue($val);
-            $input[$key]['companySystemID'] = $val['companySystemID'];
-            $input[$key]['documentSystemID'] = $val['documentSystemID'];
-            $input[$key]['departmentSystemID'] = $val['departmentSystemID'];
-            $input[$key]['ServiceLineSystemID'] = $val['ServiceLineSystemID'];
-            $input[$key]['employeeSystemID'] = $val['employeeSystemID'];
-            if ($val['companySystemID']) {
-                $companyID = Company::find($val['companySystemID']);
+            $companySystemID = (is_array($val['companySystemID'])) ? $val['companySystemID'][0] : $val['companySystemID'];
+            $documentSystemID = (is_array($val['documentSystemID'])) ? $val['documentSystemID'][0] : $val['documentSystemID'];
+            $departmentSystemID = (is_array($val['departmentSystemID'])) ? $val['departmentSystemID'][0] : $val['departmentSystemID'];
+            $ServiceLineSystemID = (is_array($val['ServiceLineSystemID'])) ? $val['ServiceLineSystemID'][0] : $val['ServiceLineSystemID'];
+            $employeeSystemID = (is_array($val['employeeSystemID'])) ? $val['employeeSystemID'][0] : $val['employeeSystemID'];
+            $employeeGroupID = (is_array($val['employeeGroupID'])) ? $val['employeeGroupID'][0] : $val['employeeGroupID'];
+            $input[$key]['companySystemID'] = $companySystemID;
+            $input[$key]['documentSystemID'] = $documentSystemID;
+            $input[$key]['departmentSystemID'] = $departmentSystemID;
+            $input[$key]['ServiceLineSystemID'] = $ServiceLineSystemID;
+            $input[$key]['employeeSystemID'] = $employeeSystemID;
+            $input[$key]['employeeGroupID'] = $employeeGroupID;
+            if ($companySystemID) {
+                $companyID = Company::find($companySystemID);
                 $input[$key]['companyId'] = $companyID->CompanyID;
             }
-            if ($val['documentSystemID']) {
-                $documentID = DocumentMaster::find($val['documentSystemID']);
+            if ($documentSystemID) {
+                $documentID = DocumentMaster::find($documentSystemID);
                 $input[$key]['documentID'] = $documentID->documentID;
             }
-            if ($val['departmentSystemID']) {
-                $departmentID = DepartmentMaster::find($val['departmentSystemID']);
+            if ($departmentSystemID) {
+                $departmentID = DepartmentMaster::find($departmentSystemID);
                 $input[$key]['departmentID'] = $departmentID->DepartmentID;
             }
-            if ($val['ServiceLineSystemID']) {
-                $ServiceLineID = SegmentMaster::find($val['ServiceLineSystemID']);
+            if ($ServiceLineSystemID) {
+                $ServiceLineID = SegmentMaster::find($ServiceLineSystemID);
                 $input[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
             }
-            if ($val['employeeSystemID']) {
-                $employeeID = Employee::find($val['employeeSystemID']);
+            if ($employeeSystemID) {
+                $employeeID = Employee::find($employeeSystemID);
                 $input[$key]['employeeID'] = $employeeID->empID;
             }
             $input[$key]['timeStamp'] = date("Y-m-d H:m:s");

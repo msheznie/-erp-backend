@@ -173,6 +173,7 @@
             <tr>
                 <th width="10%">Customer Code</th>
                 <th width="20%">Customer Name</th>
+                <th width="7%">Credit Days</th>
                 <th width="10%">Currency</th>
                 <th width="10%">Amount</th>
                 @foreach ($agingRange as $age)
@@ -194,6 +195,7 @@
                     <tr>
                         <td>{{ $det2->CustomerCode }}</td>
                         <td>{{ $det2->CustomerName }}</td>
+                        <td>{{ $det2->creditDays }}</td>
                         <td>{{ $det2->documentCurrency }}</td>
                         <td style="text-align: right">{{ number_format($ageTotal) }}</td>
                         @foreach ($agingRange as $age)
