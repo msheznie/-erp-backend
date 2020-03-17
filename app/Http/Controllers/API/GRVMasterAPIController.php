@@ -613,6 +613,10 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.'.'GRV Logistic Amount is'. $grvReportAmount.' And PO Logistic Amount is '.$grvPoAmount,500);
             }
 
+            if ($input['grvTotalSupplierTransactionCurrency'] != $grvMasterSum['masterTotalSum']) {
+                return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.',500);
+            }
+
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {

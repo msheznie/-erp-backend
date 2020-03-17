@@ -847,6 +847,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
             unset($input['confirmedByName']);
             unset($input['confirmedDate']);
 
+            if ($input['documentType'] == 0) {
+                $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('totTransactionAmount');
+                $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
+            } else {
+                $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
+            }
+
+            if ($input['bookingAmountTrans'] != \Helper::roundValue($bookingAmountTrans)) {
+                return $this->sendError('Cannot confirm. Supplier Invoice Master and Detail shows a difference in total.',500);
+            }
+
             $params = array(
                 'autoID' => $id,
                 'company' => $input["companySystemID"],
