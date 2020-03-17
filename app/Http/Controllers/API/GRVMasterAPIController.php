@@ -564,11 +564,11 @@ class GRVMasterAPIController extends AppBaseController
                 foreach ($fetchAllGrvDetails as $row) {
                     $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
 
-                    $logisticsCharges_TransCur = ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
+                    $logisticsCharges_TransCur = ($input['grvTotalSupplierTransactionCurrency'] == null || $input['grvTotalSupplierTransactionCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
 
-                    $logisticsCharges_LocalCur = ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
+                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0: ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
 
-                    $logisticsChargest_RptCur = ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
+                    $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
                     $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
                     $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
