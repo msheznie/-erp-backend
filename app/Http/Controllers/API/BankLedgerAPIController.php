@@ -1534,7 +1534,7 @@ class BankLedgerAPIController extends AppBaseController
                 if(count($entities) && isset($entities[0])){
                     $entity = $entities[0];
                     $entity->totalAmount = $totalAmount;
-
+                    $totalAmount = round($totalAmount, $entity->decimalPlaces);
                     $amountSplit = explode(".", $totalAmount);
                     $intAmt = 0;
                     $floatAmt = 00;

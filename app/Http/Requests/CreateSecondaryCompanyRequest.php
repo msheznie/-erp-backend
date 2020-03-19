@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Requests\API;
+namespace App\Http\Requests;
 
-use App\Models\HrmsDepartmentMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
+use App\Models\SecondaryCompany;
 
-class CreateHrmsDepartmentMasterAPIRequest extends APIRequest
+class CreateSecondaryCompanyRequest extends FormRequest
 {
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -24,6 +25,6 @@ class CreateHrmsDepartmentMasterAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return HrmsDepartmentMaster::$rules;
+        return SecondaryCompany::$rules;
     }
 }

@@ -564,11 +564,11 @@ class GRVMasterAPIController extends AppBaseController
                 foreach ($fetchAllGrvDetails as $row) {
                     $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
 
-                    $logisticsCharges_TransCur = ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
+                    $logisticsCharges_TransCur = ($input['grvTotalSupplierTransactionCurrency'] == null || $input['grvTotalSupplierTransactionCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
 
-                    $logisticsCharges_LocalCur = ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
+                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0: ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
 
-                    $logisticsChargest_RptCur = ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
+                    $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
                     $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
                     $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
@@ -611,6 +611,10 @@ class GRVMasterAPIController extends AppBaseController
             // logistic charges from PO table should not be greater than data from grv table
             if($grvPoAmount > $grvReportAmount){
                 return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.'.'GRV Logistic Amount is'. $grvReportAmount.' And PO Logistic Amount is '.$grvPoAmount,500);
+            }
+
+            if ($input['grvTotalSupplierTransactionCurrency'] != $grvMasterSum['masterTotalSum']) {
+                return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.',500);
             }
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);

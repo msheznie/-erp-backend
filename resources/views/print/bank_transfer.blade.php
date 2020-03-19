@@ -224,11 +224,15 @@
                     following account as detailed below.<br>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    {{$entity->instruction}}
-                </td>
-            </tr>
+            @if(isset($entity->supplierTransactionCurrencyDetails) && isset($entity->bankcurrency))
+                @if($entity->supplierTransactionCurrencyDetails->currencyID != $entity->bankcurrency->currencyID)
+                <tr>
+                    <td>
+                        {{$entity->instruction}}
+                    </td>
+                </tr>
+                @endif
+            @endif
             <tr>
                 <td>
                     <table style="width: 100%">

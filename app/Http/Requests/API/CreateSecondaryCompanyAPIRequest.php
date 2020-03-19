@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\HrmsDepartmentMaster;
+use App\Models\SecondaryCompany;
 use InfyOm\Generator\Request\APIRequest;
 
-class CreateHrmsDepartmentMasterAPIRequest extends APIRequest
+class CreateSecondaryCompanyAPIRequest extends APIRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,6 +24,6 @@ class CreateHrmsDepartmentMasterAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return HrmsDepartmentMaster::$rules;
+        return SecondaryCompany::$rules;
     }
 }

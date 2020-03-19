@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateHrmsDepartmentMasterAPIRequest;
-use App\Http\Requests\API\UpdateHrmsDepartmentMasterAPIRequest;
-use App\Models\HrmsDepartmentMaster;
-use App\Repositories\HrmsDepartmentMasterRepository;
+use App\Http\Requests\API\CreateSecondaryCompanyAPIRequest;
+use App\Http\Requests\API\UpdateSecondaryCompanyAPIRequest;
+use App\Models\SecondaryCompany;
+use App\Repositories\SecondaryCompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class HrmsDepartmentMasterController
+ * Class SecondaryCompanyController
  * @package App\Http\Controllers\API
  */
 
-class HrmsDepartmentMasterAPIController extends AppBaseController
+class SecondaryCompanyAPIController extends AppBaseController
 {
-    /** @var  HrmsDepartmentMasterRepository */
-    private $hrmsDepartmentMasterRepository;
+    /** @var  SecondaryCompanyRepository */
+    private $secondaryCompanyRepository;
 
-    public function __construct(HrmsDepartmentMasterRepository $hrmsDepartmentMasterRepo)
+    public function __construct(SecondaryCompanyRepository $secondaryCompanyRepo)
     {
-        $this->hrmsDepartmentMasterRepository = $hrmsDepartmentMasterRepo;
+        $this->secondaryCompanyRepository = $secondaryCompanyRepo;
     }
 
     /**
@@ -32,10 +32,10 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/hrmsDepartmentMasters",
-     *      summary="Get a listing of the HrmsDepartmentMasters.",
-     *      tags={"HrmsDepartmentMaster"},
-     *      description="Get all HrmsDepartmentMasters",
+     *      path="/secondaryCompanies",
+     *      summary="Get a listing of the SecondaryCompanies.",
+     *      tags={"SecondaryCompany"},
+     *      description="Get all SecondaryCompanies",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +49,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/HrmsDepartmentMaster")
+     *                  @SWG\Items(ref="#/definitions/SecondaryCompany")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +61,29 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->hrmsDepartmentMasterRepository->pushCriteria(new RequestCriteria($request));
-        $this->hrmsDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $hrmsDepartmentMasters = $this->hrmsDepartmentMasterRepository->all();
+        $this->secondaryCompanyRepository->pushCriteria(new RequestCriteria($request));
+        $this->secondaryCompanyRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $secondaryCompanies = $this->secondaryCompanyRepository->all();
 
-        return $this->sendResponse($hrmsDepartmentMasters->toArray(), 'Hrms Department Masters retrieved successfully');
+        return $this->sendResponse($secondaryCompanies->toArray(), 'Secondary Companies retrieved successfully');
     }
 
     /**
-     * @param CreateHrmsDepartmentMasterAPIRequest $request
+     * @param CreateSecondaryCompanyAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/hrmsDepartmentMasters",
-     *      summary="Store a newly created HrmsDepartmentMaster in storage",
-     *      tags={"HrmsDepartmentMaster"},
-     *      description="Store HrmsDepartmentMaster",
+     *      path="/secondaryCompanies",
+     *      summary="Store a newly created SecondaryCompany in storage",
+     *      tags={"SecondaryCompany"},
+     *      description="Store SecondaryCompany",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="HrmsDepartmentMaster that should be stored",
+     *          description="SecondaryCompany that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/HrmsDepartmentMaster")
+     *          @SWG\Schema(ref="#/definitions/SecondaryCompany")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +96,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HrmsDepartmentMaster"
+     *                  ref="#/definitions/SecondaryCompany"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +106,13 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateHrmsDepartmentMasterAPIRequest $request)
+    public function store(CreateSecondaryCompanyAPIRequest $request)
     {
         $input = $request->all();
 
-        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->create($input);
+        $secondaryCompany = $this->secondaryCompanyRepository->create($input);
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master saved successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), 'Secondary Company saved successfully');
     }
 
     /**
@@ -120,14 +120,14 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/hrmsDepartmentMasters/{id}",
-     *      summary="Display the specified HrmsDepartmentMaster",
-     *      tags={"HrmsDepartmentMaster"},
-     *      description="Get HrmsDepartmentMaster",
+     *      path="/secondaryCompanies/{id}",
+     *      summary="Display the specified SecondaryCompany",
+     *      tags={"SecondaryCompany"},
+     *      description="Get SecondaryCompany",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HrmsDepartmentMaster",
+     *          description="id of SecondaryCompany",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +143,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HrmsDepartmentMaster"
+     *                  ref="#/definitions/SecondaryCompany"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +155,30 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
-        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
+        /** @var SecondaryCompany $secondaryCompany */
+        $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
-        if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+        if (empty($secondaryCompany)) {
+            return $this->sendError('Secondary Company not found');
         }
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master retrieved successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), 'Secondary Company retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateHrmsDepartmentMasterAPIRequest $request
+     * @param UpdateSecondaryCompanyAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/hrmsDepartmentMasters/{id}",
-     *      summary="Update the specified HrmsDepartmentMaster in storage",
-     *      tags={"HrmsDepartmentMaster"},
-     *      description="Update HrmsDepartmentMaster",
+     *      path="/secondaryCompanies/{id}",
+     *      summary="Update the specified SecondaryCompany in storage",
+     *      tags={"SecondaryCompany"},
+     *      description="Update SecondaryCompany",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HrmsDepartmentMaster",
+     *          description="id of SecondaryCompany",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +186,9 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="HrmsDepartmentMaster that should be updated",
+     *          description="SecondaryCompany that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/HrmsDepartmentMaster")
+     *          @SWG\Schema(ref="#/definitions/SecondaryCompany")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +201,7 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HrmsDepartmentMaster"
+     *                  ref="#/definitions/SecondaryCompany"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +211,20 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateHrmsDepartmentMasterAPIRequest $request)
+    public function update($id, UpdateSecondaryCompanyAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
-        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
+        /** @var SecondaryCompany $secondaryCompany */
+        $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
-        if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+        if (empty($secondaryCompany)) {
+            return $this->sendError('Secondary Company not found');
         }
 
-        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->update($input, $id);
+        $secondaryCompany = $this->secondaryCompanyRepository->update($input, $id);
 
-        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'HrmsDepartmentMaster updated successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), 'SecondaryCompany updated successfully');
     }
 
     /**
@@ -232,14 +232,14 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/hrmsDepartmentMasters/{id}",
-     *      summary="Remove the specified HrmsDepartmentMaster from storage",
-     *      tags={"HrmsDepartmentMaster"},
-     *      description="Delete HrmsDepartmentMaster",
+     *      path="/secondaryCompanies/{id}",
+     *      summary="Remove the specified SecondaryCompany from storage",
+     *      tags={"SecondaryCompany"},
+     *      description="Delete SecondaryCompany",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HrmsDepartmentMaster",
+     *          description="id of SecondaryCompany",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,15 +267,15 @@ class HrmsDepartmentMasterAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
-        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
+        /** @var SecondaryCompany $secondaryCompany */
+        $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
-        if (empty($hrmsDepartmentMaster)) {
-            return $this->sendError('Hrms Department Master not found');
+        if (empty($secondaryCompany)) {
+            return $this->sendError('Secondary Company not found');
         }
 
-        $hrmsDepartmentMaster->delete();
+        $secondaryCompany->delete();
 
-        return $this->sendResponse($id, 'Hrms Department Master deleted successfully');
+        return $this->sendResponse($id, 'Secondary Company deleted successfully');
     }
 }

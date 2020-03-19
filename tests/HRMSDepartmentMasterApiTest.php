@@ -1,58 +1,61 @@
-<?php
+<?php namespace Tests\APIs;
 
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\TestCase;
+use Tests\Traits\MakeHrmsDepartmentMasterTrait;
+use Tests\ApiTestTrait;
 
-class HRMSDepartmentMasterApiTest extends TestCase
+class HrmsDepartmentMasterApiTest extends TestCase
 {
-    use MakeHRMSDepartmentMasterTrait, ApiTestTrait, WithoutMiddleware, DatabaseTransactions;
+    use MakeHrmsDepartmentMasterTrait, ApiTestTrait, WithoutMiddleware, DatabaseTransactions;
 
     /**
      * @test
      */
-    public function testCreateHRMSDepartmentMaster()
+    public function test_create_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->fakeHRMSDepartmentMasterData();
-        $this->json('POST', '/api/v1/hRMSDepartmentMasters', $hRMSDepartmentMaster);
+        $hrmsDepartmentMaster = $this->fakeHrmsDepartmentMasterData();
+        $this->response = $this->json('POST', '/api/hrmsDepartmentMasters', $hrmsDepartmentMaster);
 
-        $this->assertApiResponse($hRMSDepartmentMaster);
+        $this->assertApiResponse($hrmsDepartmentMaster);
     }
 
     /**
      * @test
      */
-    public function testReadHRMSDepartmentMaster()
+    public function test_read_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $this->json('GET', '/api/v1/hRMSDepartmentMasters/'.$hRMSDepartmentMaster->id);
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $this->response = $this->json('GET', '/api/hrmsDepartmentMasters/'.$hrmsDepartmentMaster->id);
 
-        $this->assertApiResponse($hRMSDepartmentMaster->toArray());
+        $this->assertApiResponse($hrmsDepartmentMaster->toArray());
     }
 
     /**
      * @test
      */
-    public function testUpdateHRMSDepartmentMaster()
+    public function test_update_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $editedHRMSDepartmentMaster = $this->fakeHRMSDepartmentMasterData();
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $editedHrmsDepartmentMaster = $this->fakeHrmsDepartmentMasterData();
 
-        $this->json('PUT', '/api/v1/hRMSDepartmentMasters/'.$hRMSDepartmentMaster->id, $editedHRMSDepartmentMaster);
+        $this->response = $this->json('PUT', '/api/hrmsDepartmentMasters/'.$hrmsDepartmentMaster->id, $editedHrmsDepartmentMaster);
 
-        $this->assertApiResponse($editedHRMSDepartmentMaster);
+        $this->assertApiResponse($editedHrmsDepartmentMaster);
     }
 
     /**
      * @test
      */
-    public function testDeleteHRMSDepartmentMaster()
+    public function test_delete_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $this->json('DELETE', '/api/v1/hRMSDepartmentMasters/'.$hRMSDepartmentMaster->id);
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $this->response = $this->json('DELETE', '/api/hrmsDepartmentMasters/'.$hrmsDepartmentMaster->id);
 
         $this->assertApiSuccess();
-        $this->json('GET', '/api/v1/hRMSDepartmentMasters/'.$hRMSDepartmentMaster->id);
+        $this->response = $this->json('GET', '/api/hrmsDepartmentMasters/'.$hrmsDepartmentMaster->id);
 
-        $this->assertResponseStatus(404);
+        $this->response->assertStatus(404);
     }
 }

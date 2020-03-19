@@ -1,22 +1,19 @@
 <?php
-/**
- * =============================================
- * -- File Name : HRMSDepartmentMaster.php
- * -- Project Name : ERP
- * -- Module Name :  HRMS Department Master
- * -- Author : Mohamed Fayas
- * -- Create date : 12 - November 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="HRMSDepartmentMaster",
+ *      definition="HrmsDepartmentMaster",
  *      required={""},
+ *      @SWG\Property(
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="DepartmentID",
  *          description="DepartmentID",
@@ -49,20 +46,25 @@ use Eloquent as Model;
  *          description="showInCombo",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
  *      )
  * )
  */
-class HRMSDepartmentMaster extends Model
+class HrmsDepartmentMaster extends Model
 {
-
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
     public $table = 'hrms_departmentmaster';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
     protected $primaryKey = 'DepartmentID';
 
 
     public $fillable = [
+        'serviceLineSystemID',
         'DepartmentDescription',
         'isActive',
         'ServiceLineCode',
@@ -77,12 +79,14 @@ class HRMSDepartmentMaster extends Model
      * @var array
      */
     protected $casts = [
+        'serviceLineSystemID' => 'integer',
         'DepartmentID' => 'integer',
         'DepartmentDescription' => 'string',
         'isActive' => 'integer',
         'ServiceLineCode' => 'string',
         'CompanyID' => 'string',
-        'showInCombo' => 'integer'
+        'showInCombo' => 'integer',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -94,5 +98,11 @@ class HRMSDepartmentMaster extends Model
         
     ];
 
-    
+    public function serviceline(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+
+    public function employeeDetail(){
+        return $this->hasMany('App\Models\EmployeeDetails','departmentID','DepartmentID');
+    }
 }

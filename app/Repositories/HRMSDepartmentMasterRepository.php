@@ -2,24 +2,25 @@
 
 namespace App\Repositories;
 
-use App\Models\HRMSDepartmentMaster;
+use App\Models\HrmsDepartmentMaster;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
- * Class HRMSDepartmentMasterRepository
+ * Class HrmsDepartmentMasterRepository
  * @package App\Repositories
- * @version November 12, 2018, 5:34 am UTC
+ * @version February 26, 2020, 10:00 am +04
  *
- * @method HRMSDepartmentMaster findWithoutFail($id, $columns = ['*'])
- * @method HRMSDepartmentMaster find($id, $columns = ['*'])
- * @method HRMSDepartmentMaster first($columns = ['*'])
+ * @method HrmsDepartmentMaster findWithoutFail($id, $columns = ['*'])
+ * @method HrmsDepartmentMaster find($id, $columns = ['*'])
+ * @method HrmsDepartmentMaster first($columns = ['*'])
 */
-class HRMSDepartmentMasterRepository extends BaseRepository
+class HrmsDepartmentMasterRepository extends BaseRepository
 {
     /**
      * @var array
      */
     protected $fieldSearchable = [
+        'serviceLineSystemID',
         'DepartmentDescription',
         'isActive',
         'ServiceLineCode',
@@ -33,6 +34,6 @@ class HRMSDepartmentMasterRepository extends BaseRepository
      **/
     public function model()
     {
-        return HRMSDepartmentMaster::class;
+        return HrmsDepartmentMaster::class;
     }
 }
