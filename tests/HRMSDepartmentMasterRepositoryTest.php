@@ -1,70 +1,73 @@
-<?php
+<?php namespace Tests\Repositories;
 
-use App\Models\HRMSDepartmentMaster;
-use App\Repositories\HRMSDepartmentMasterRepository;
+use App\Models\HrmsDepartmentMaster;
+use App\Repositories\HrmsDepartmentMasterRepository;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\TestCase;
+use Tests\Traits\MakeHrmsDepartmentMasterTrait;
+use Tests\ApiTestTrait;
 
-class HRMSDepartmentMasterRepositoryTest extends TestCase
+class HrmsDepartmentMasterRepositoryTest extends TestCase
 {
-    use MakeHRMSDepartmentMasterTrait, ApiTestTrait, DatabaseTransactions;
+    use MakeHrmsDepartmentMasterTrait, ApiTestTrait, DatabaseTransactions;
 
     /**
-     * @var HRMSDepartmentMasterRepository
+     * @var HrmsDepartmentMasterRepository
      */
-    protected $hRMSDepartmentMasterRepo;
+    protected $hrmsDepartmentMasterRepo;
 
-    public function setUp()
+    public function setUp() : void
     {
         parent::setUp();
-        $this->hRMSDepartmentMasterRepo = App::make(HRMSDepartmentMasterRepository::class);
+        $this->hrmsDepartmentMasterRepo = \App::make(HrmsDepartmentMasterRepository::class);
     }
 
     /**
      * @test create
      */
-    public function testCreateHRMSDepartmentMaster()
+    public function test_create_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->fakeHRMSDepartmentMasterData();
-        $createdHRMSDepartmentMaster = $this->hRMSDepartmentMasterRepo->create($hRMSDepartmentMaster);
-        $createdHRMSDepartmentMaster = $createdHRMSDepartmentMaster->toArray();
-        $this->assertArrayHasKey('id', $createdHRMSDepartmentMaster);
-        $this->assertNotNull($createdHRMSDepartmentMaster['id'], 'Created HRMSDepartmentMaster must have id specified');
-        $this->assertNotNull(HRMSDepartmentMaster::find($createdHRMSDepartmentMaster['id']), 'HRMSDepartmentMaster with given id must be in DB');
-        $this->assertModelData($hRMSDepartmentMaster, $createdHRMSDepartmentMaster);
+        $hrmsDepartmentMaster = $this->fakeHrmsDepartmentMasterData();
+        $createdHrmsDepartmentMaster = $this->hrmsDepartmentMasterRepo->create($hrmsDepartmentMaster);
+        $createdHrmsDepartmentMaster = $createdHrmsDepartmentMaster->toArray();
+        $this->assertArrayHasKey('id', $createdHrmsDepartmentMaster);
+        $this->assertNotNull($createdHrmsDepartmentMaster['id'], 'Created HrmsDepartmentMaster must have id specified');
+        $this->assertNotNull(HrmsDepartmentMaster::find($createdHrmsDepartmentMaster['id']), 'HrmsDepartmentMaster with given id must be in DB');
+        $this->assertModelData($hrmsDepartmentMaster, $createdHrmsDepartmentMaster);
     }
 
     /**
      * @test read
      */
-    public function testReadHRMSDepartmentMaster()
+    public function test_read_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $dbHRMSDepartmentMaster = $this->hRMSDepartmentMasterRepo->find($hRMSDepartmentMaster->id);
-        $dbHRMSDepartmentMaster = $dbHRMSDepartmentMaster->toArray();
-        $this->assertModelData($hRMSDepartmentMaster->toArray(), $dbHRMSDepartmentMaster);
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $dbHrmsDepartmentMaster = $this->hrmsDepartmentMasterRepo->find($hrmsDepartmentMaster->id);
+        $dbHrmsDepartmentMaster = $dbHrmsDepartmentMaster->toArray();
+        $this->assertModelData($hrmsDepartmentMaster->toArray(), $dbHrmsDepartmentMaster);
     }
 
     /**
      * @test update
      */
-    public function testUpdateHRMSDepartmentMaster()
+    public function test_update_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $fakeHRMSDepartmentMaster = $this->fakeHRMSDepartmentMasterData();
-        $updatedHRMSDepartmentMaster = $this->hRMSDepartmentMasterRepo->update($fakeHRMSDepartmentMaster, $hRMSDepartmentMaster->id);
-        $this->assertModelData($fakeHRMSDepartmentMaster, $updatedHRMSDepartmentMaster->toArray());
-        $dbHRMSDepartmentMaster = $this->hRMSDepartmentMasterRepo->find($hRMSDepartmentMaster->id);
-        $this->assertModelData($fakeHRMSDepartmentMaster, $dbHRMSDepartmentMaster->toArray());
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $fakeHrmsDepartmentMaster = $this->fakeHrmsDepartmentMasterData();
+        $updatedHrmsDepartmentMaster = $this->hrmsDepartmentMasterRepo->update($fakeHrmsDepartmentMaster, $hrmsDepartmentMaster->id);
+        $this->assertModelData($fakeHrmsDepartmentMaster, $updatedHrmsDepartmentMaster->toArray());
+        $dbHrmsDepartmentMaster = $this->hrmsDepartmentMasterRepo->find($hrmsDepartmentMaster->id);
+        $this->assertModelData($fakeHrmsDepartmentMaster, $dbHrmsDepartmentMaster->toArray());
     }
 
     /**
      * @test delete
      */
-    public function testDeleteHRMSDepartmentMaster()
+    public function test_delete_hrms_department_master()
     {
-        $hRMSDepartmentMaster = $this->makeHRMSDepartmentMaster();
-        $resp = $this->hRMSDepartmentMasterRepo->delete($hRMSDepartmentMaster->id);
+        $hrmsDepartmentMaster = $this->makeHrmsDepartmentMaster();
+        $resp = $this->hrmsDepartmentMasterRepo->delete($hrmsDepartmentMaster->id);
         $this->assertTrue($resp);
-        $this->assertNull(HRMSDepartmentMaster::find($hRMSDepartmentMaster->id), 'HRMSDepartmentMaster should not exist in DB');
+        $this->assertNull(HrmsDepartmentMaster::find($hrmsDepartmentMaster->id), 'HrmsDepartmentMaster should not exist in DB');
     }
 }
