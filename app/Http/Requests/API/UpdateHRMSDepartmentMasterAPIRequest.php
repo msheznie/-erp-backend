@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\HRMSDepartmentMaster;
+use App\Models\HrmsDepartmentMaster;
 use InfyOm\Generator\Request\APIRequest;
 
-class UpdateHRMSDepartmentMasterAPIRequest extends APIRequest
+class UpdateHrmsDepartmentMasterAPIRequest extends APIRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,6 +24,6 @@ class UpdateHRMSDepartmentMasterAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return HRMSDepartmentMaster::$rules;
+        return HrmsDepartmentMaster::$rules;
     }
 }

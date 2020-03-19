@@ -529,11 +529,15 @@ class SupplierMasterAPIController extends AppBaseController
             if($policy){
 
                 if($company->companyCountry == $input['supplierCountryID']){
+                    $validorMessages = [
+                        'isLCCYN.required' => 'LCC field is required.',
+                        'isSMEYN.required' => 'SME field is required.'
+                    ];
 
                     $validator = \Validator::make($input, [
                         'isLCCYN' => 'required|numeric',
                         'isSMEYN' => 'required|numeric',
-                    ]);
+                    ],$validorMessages);
 
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
@@ -567,11 +571,15 @@ class SupplierMasterAPIController extends AppBaseController
             //check is supplier is local
 
             if($company->companyCountry == $input['supplierCountryID']){
+                $validorMessages = [
+                    'isLCCYN.required' => 'LCC field is required.',
+                    'isSMEYN.required' => 'SME field is required.'
+                ];
 
                 $validator = \Validator::make($input, [
                     'isLCCYN' => 'required|numeric',
                     'isSMEYN' => 'required|numeric',
-                ]);
+                ], $validorMessages);
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -583,7 +591,7 @@ class SupplierMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkDefaultCurrency == 0) {
-                return $this->sendError("Default currency not found. Setup currency in currency tab", 500);
+                return $this->sendError("Default currency is not assigned. Currency can be set up in currency", 500);
             }
 
 

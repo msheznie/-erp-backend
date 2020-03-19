@@ -287,7 +287,8 @@ class PaySupplierInvoiceDetail extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
-        'timeStamp'
+        'timeStamp',
+        'purchaseOrderID'
     ];
 
     /**
@@ -334,6 +335,7 @@ class PaySupplierInvoiceDetail extends Model
         'modifiedUserID' => 'string',
         'modifiedPCID' => 'string',
         'createdUserSystemID' => 'integer',
+        'purchaseOrderID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string'
     ];
@@ -355,5 +357,10 @@ class PaySupplierInvoiceDetail extends Model
     public function matching_master()
     {
         return $this->hasOne('App\Models\MatchDocumentMaster', 'matchDocumentMasterAutoID', 'matchingDocID');
+    }
+
+    public function pomaster()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateHRMSDepartmentMasterAPIRequest;
-use App\Http\Requests\API\UpdateHRMSDepartmentMasterAPIRequest;
-use App\Models\HRMSDepartmentMaster;
-use App\Repositories\HRMSDepartmentMasterRepository;
+use App\Http\Requests\API\CreateHrmsDepartmentMasterAPIRequest;
+use App\Http\Requests\API\UpdateHrmsDepartmentMasterAPIRequest;
+use App\Models\HrmsDepartmentMaster;
+use App\Repositories\HrmsDepartmentMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class HRMSDepartmentMasterController
+ * Class HrmsDepartmentMasterController
  * @package App\Http\Controllers\API
  */
 
-class HRMSDepartmentMasterAPIController extends AppBaseController
+class HrmsDepartmentMasterAPIController extends AppBaseController
 {
-    /** @var  HRMSDepartmentMasterRepository */
-    private $hRMSDepartmentMasterRepository;
+    /** @var  HrmsDepartmentMasterRepository */
+    private $hrmsDepartmentMasterRepository;
 
-    public function __construct(HRMSDepartmentMasterRepository $hRMSDepartmentMasterRepo)
+    public function __construct(HrmsDepartmentMasterRepository $hrmsDepartmentMasterRepo)
     {
-        $this->hRMSDepartmentMasterRepository = $hRMSDepartmentMasterRepo;
+        $this->hrmsDepartmentMasterRepository = $hrmsDepartmentMasterRepo;
     }
 
     /**
@@ -32,10 +32,10 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/hRMSDepartmentMasters",
-     *      summary="Get a listing of the HRMSDepartmentMasters.",
-     *      tags={"HRMSDepartmentMaster"},
-     *      description="Get all HRMSDepartmentMasters",
+     *      path="/hrmsDepartmentMasters",
+     *      summary="Get a listing of the HrmsDepartmentMasters.",
+     *      tags={"HrmsDepartmentMaster"},
+     *      description="Get all HrmsDepartmentMasters",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +49,7 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/HRMSDepartmentMaster")
+     *                  @SWG\Items(ref="#/definitions/HrmsDepartmentMaster")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +61,29 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->hRMSDepartmentMasterRepository->pushCriteria(new RequestCriteria($request));
-        $this->hRMSDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $hRMSDepartmentMasters = $this->hRMSDepartmentMasterRepository->all();
+        $this->hrmsDepartmentMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->hrmsDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $hrmsDepartmentMasters = $this->hrmsDepartmentMasterRepository->all();
 
-        return $this->sendResponse($hRMSDepartmentMasters->toArray(), 'H R M S Department Masters retrieved successfully');
+        return $this->sendResponse($hrmsDepartmentMasters->toArray(), 'Hrms Department Masters retrieved successfully');
     }
 
     /**
-     * @param CreateHRMSDepartmentMasterAPIRequest $request
+     * @param CreateHrmsDepartmentMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/hRMSDepartmentMasters",
-     *      summary="Store a newly created HRMSDepartmentMaster in storage",
-     *      tags={"HRMSDepartmentMaster"},
-     *      description="Store HRMSDepartmentMaster",
+     *      path="/hrmsDepartmentMasters",
+     *      summary="Store a newly created HrmsDepartmentMaster in storage",
+     *      tags={"HrmsDepartmentMaster"},
+     *      description="Store HrmsDepartmentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="HRMSDepartmentMaster that should be stored",
+     *          description="HrmsDepartmentMaster that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/HRMSDepartmentMaster")
+     *          @SWG\Schema(ref="#/definitions/HrmsDepartmentMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +96,7 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HRMSDepartmentMaster"
+     *                  ref="#/definitions/HrmsDepartmentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +106,13 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateHRMSDepartmentMasterAPIRequest $request)
+    public function store(CreateHrmsDepartmentMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        $hRMSDepartmentMasters = $this->hRMSDepartmentMasterRepository->create($input);
+        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->create($input);
 
-        return $this->sendResponse($hRMSDepartmentMasters->toArray(), 'H R M S Department Master saved successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master saved successfully');
     }
 
     /**
@@ -120,14 +120,14 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/hRMSDepartmentMasters/{id}",
-     *      summary="Display the specified HRMSDepartmentMaster",
-     *      tags={"HRMSDepartmentMaster"},
-     *      description="Get HRMSDepartmentMaster",
+     *      path="/hrmsDepartmentMasters/{id}",
+     *      summary="Display the specified HrmsDepartmentMaster",
+     *      tags={"HrmsDepartmentMaster"},
+     *      description="Get HrmsDepartmentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HRMSDepartmentMaster",
+     *          description="id of HrmsDepartmentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +143,7 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HRMSDepartmentMaster"
+     *                  ref="#/definitions/HrmsDepartmentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +155,30 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var HRMSDepartmentMaster $hRMSDepartmentMaster */
-        $hRMSDepartmentMaster = $this->hRMSDepartmentMasterRepository->findWithoutFail($id);
+        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
+        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
-        if (empty($hRMSDepartmentMaster)) {
-            return $this->sendError('H R M S Department Master not found');
+        if (empty($hrmsDepartmentMaster)) {
+            return $this->sendError('Hrms Department Master not found');
         }
 
-        return $this->sendResponse($hRMSDepartmentMaster->toArray(), 'H R M S Department Master retrieved successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'Hrms Department Master retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateHRMSDepartmentMasterAPIRequest $request
+     * @param UpdateHrmsDepartmentMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/hRMSDepartmentMasters/{id}",
-     *      summary="Update the specified HRMSDepartmentMaster in storage",
-     *      tags={"HRMSDepartmentMaster"},
-     *      description="Update HRMSDepartmentMaster",
+     *      path="/hrmsDepartmentMasters/{id}",
+     *      summary="Update the specified HrmsDepartmentMaster in storage",
+     *      tags={"HrmsDepartmentMaster"},
+     *      description="Update HrmsDepartmentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HRMSDepartmentMaster",
+     *          description="id of HrmsDepartmentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +186,9 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="HRMSDepartmentMaster that should be updated",
+     *          description="HrmsDepartmentMaster that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/HRMSDepartmentMaster")
+     *          @SWG\Schema(ref="#/definitions/HrmsDepartmentMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +201,7 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/HRMSDepartmentMaster"
+     *                  ref="#/definitions/HrmsDepartmentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +211,20 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateHRMSDepartmentMasterAPIRequest $request)
+    public function update($id, UpdateHrmsDepartmentMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var HRMSDepartmentMaster $hRMSDepartmentMaster */
-        $hRMSDepartmentMaster = $this->hRMSDepartmentMasterRepository->findWithoutFail($id);
+        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
+        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
-        if (empty($hRMSDepartmentMaster)) {
-            return $this->sendError('H R M S Department Master not found');
+        if (empty($hrmsDepartmentMaster)) {
+            return $this->sendError('Hrms Department Master not found');
         }
 
-        $hRMSDepartmentMaster = $this->hRMSDepartmentMasterRepository->update($input, $id);
+        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($hRMSDepartmentMaster->toArray(), 'HRMSDepartmentMaster updated successfully');
+        return $this->sendResponse($hrmsDepartmentMaster->toArray(), 'HrmsDepartmentMaster updated successfully');
     }
 
     /**
@@ -232,14 +232,14 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/hRMSDepartmentMasters/{id}",
-     *      summary="Remove the specified HRMSDepartmentMaster from storage",
-     *      tags={"HRMSDepartmentMaster"},
-     *      description="Delete HRMSDepartmentMaster",
+     *      path="/hrmsDepartmentMasters/{id}",
+     *      summary="Remove the specified HrmsDepartmentMaster from storage",
+     *      tags={"HrmsDepartmentMaster"},
+     *      description="Delete HrmsDepartmentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of HRMSDepartmentMaster",
+     *          description="id of HrmsDepartmentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,15 +267,15 @@ class HRMSDepartmentMasterAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var HRMSDepartmentMaster $hRMSDepartmentMaster */
-        $hRMSDepartmentMaster = $this->hRMSDepartmentMasterRepository->findWithoutFail($id);
+        /** @var HrmsDepartmentMaster $hrmsDepartmentMaster */
+        $hrmsDepartmentMaster = $this->hrmsDepartmentMasterRepository->findWithoutFail($id);
 
-        if (empty($hRMSDepartmentMaster)) {
-            return $this->sendError('H R M S Department Master not found');
+        if (empty($hrmsDepartmentMaster)) {
+            return $this->sendError('Hrms Department Master not found');
         }
 
-        $hRMSDepartmentMaster->delete();
+        $hrmsDepartmentMaster->delete();
 
-        return $this->sendResponse($id, 'H R M S Department Master deleted successfully');
+        return $this->sendResponse($id, 'Hrms Department Master deleted successfully');
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\HRMSDepartmentMaster;
+use App\Models\HrmsDepartmentMaster;
 
-class CreateHRMSDepartmentMasterRequest extends FormRequest
+class CreateHrmsDepartmentMasterRequest extends FormRequest
 {
 
     /**
@@ -25,6 +25,6 @@ class CreateHRMSDepartmentMasterRequest extends FormRequest
      */
     public function rules()
     {
-        return HRMSDepartmentMaster::$rules;
+        return HrmsDepartmentMaster::$rules;
     }
 }
