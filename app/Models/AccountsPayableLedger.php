@@ -233,7 +233,8 @@ class AccountsPayableLedger extends Model
         'createdDateTime',
         'createdUserID',
         'createdPcID',
-        'timeStamp'
+        'timeStamp',
+        'purchaseOrderID'
     ];
 
     /**
@@ -271,6 +272,7 @@ class AccountsPayableLedger extends Model
         'selectedToPaymentInv' => 'integer',
         'fullyInvoice' => 'integer',
         'advancePaymentTypeID' => 'integer',
+        'purchaseOrderID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string'
     ];

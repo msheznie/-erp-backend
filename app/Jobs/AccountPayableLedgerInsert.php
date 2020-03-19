@@ -9,6 +9,8 @@ use App\Models\Employee;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
 use App\Models\Taxdetail;
+use App\Models\CompanyPolicyMaster;
+use App\Models\BookInvSuppDet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -94,6 +96,13 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 11: // SI - Supplier Invoice
+                        $policyConfirmedToLinkPO = CompanyPolicyMaster::where('companyPolicyCategoryID', 36)
+                                                                    ->where('companySystemID', $masterModel["companySystemID"])
+                                                                    ->first();
+
+                        $supplierInvoiceDetailLength = BookInvSuppDet::where('bookingSuppMasInvAutoID',$masterModel["autoID"])->groupBy('purchaseOrderID')->get();
+
+                        
                         $masterData = BookInvSuppMaster::with(['detail' => function ($query) {
                             $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,bookingSuppMasInvAutoID");
                         }, 'directdetail' => function ($query) {
@@ -152,6 +161,11 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                                 $data['comRptER'] = round(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt), 8);
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt));
+                                
+                                if ($policyConfirmedToLinkPO['isYesNO'] == 1 && sizeof($supplierInvoiceDetailLength) == 1) {
+                                    $data['purchaseOrderID'] = $supplierInvoiceDetailLength[0]['purchaseOrderID'];
+                                }
+
                             } else {
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                                 $data['supplierTransER'] = $masterData->supplierTransactionCurrencyER;
@@ -177,7 +191,6 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['timeStamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
-
                         break;
                     case 4: // Payment Voucher
                         $masterData = PaySupplierInvoiceMaster::with(['bank', 'supplierdetail' => function ($query) {

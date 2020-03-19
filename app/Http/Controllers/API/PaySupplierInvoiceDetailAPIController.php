@@ -636,13 +636,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
     function getPOPaymentDetails(Request $request)
     {
-        $data = PaySupplierInvoiceDetail::where('PayMasterAutoId', $request->payMasterAutoId)->where('matchingDocID', 0)->get();
+        $data = PaySupplierInvoiceDetail::with(['pomaster'])->where('PayMasterAutoId', $request->payMasterAutoId)->where('matchingDocID', 0)->get();
         return $this->sendResponse($data, 'Payment details saved successfully');
     }
 
     function getMatchingPaymentDetails(Request $request)
     {
-        $data = PaySupplierInvoiceDetail::where('matchingDocID', $request->matchDocumentMasterAutoID)
+        $data = PaySupplierInvoiceDetail::with(['pomaster'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
         return $this->sendResponse($data, 'Payment details saved successfully');
     }
