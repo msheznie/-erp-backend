@@ -569,6 +569,22 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->WO_PeriodTo = null;
         }
 
+         //calculate total months in WO type
+        if ($input['documentSystemID'] == 5) {
+            if (isset($input['WO_PeriodFrom'])) {
+                $ts1 = strtotime($input['WO_PeriodFrom'] );
+                $ts2 = strtotime($input['WO_PeriodTo']);
+
+                $year1 = date('Y', $ts1);
+                $year2 = date('Y', $ts2);
+
+                $month1 = date('n', $ts1);
+                $month2 = date('n', $ts2);
+
+                $procumentOrderUpdate->WO_NoOfAutoGenerationTimes = abs((($year2 - $year1) * 12) + ($month2 - $month1) + 1);
+            }
+        }
+
         // calculating total Supplier Default currency
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
