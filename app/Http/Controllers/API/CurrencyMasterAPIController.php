@@ -213,6 +213,8 @@ class CurrencyMasterAPIController extends AppBaseController
                     $tem_sc->isDefault = 0;
                     $tem_sc->save();
                 }
+            } else {
+                return $this->sendError('Cannot updated,At least one currency should be default.',500);
             }
 
             if ($request['isDefault'] == true || $request['isDefault'] == 1) {

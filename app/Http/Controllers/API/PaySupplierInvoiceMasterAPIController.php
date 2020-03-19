@@ -1386,6 +1386,8 @@ function getPOPaymentForPV(Request $request)
 	erp_accountspayableledger.supplierDefaultCurrencyID,
 	erp_accountspayableledger.supplierDefaultCurrencyER,
 	erp_accountspayableledger.supplierDefaultAmount,
+    erp_accountspayableledger.purchaseOrderID,
+    poid.purchaseOrderCode,
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
@@ -1394,6 +1396,13 @@ function getPOPaymentForPV(Request $request)
 	false as isChecked 
 FROM
 	erp_accountspayableledger
+    LEFT JOIN (
+      SELECT
+            erp_purchaseordermaster.purchaseOrderCode,
+            erp_purchaseordermaster.purchaseOrderID
+        FROM
+            erp_purchaseordermaster
+        ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
 	LEFT JOIN (
 SELECT
 	erp_paysupplierinvoicedetail.apAutoID,

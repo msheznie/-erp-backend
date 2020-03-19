@@ -103,3 +103,5 @@ Route::resource('customerInvoiceItemDetails', 'CustomerInvoiceItemDetailsControl
 Route::resource('chartOfAccountAllocationDetailHistories', 'ChartOfAccountAllocationDetailHistoryController');
 
 Route::resource('hrmsDepartmentMasters', 'HrmsDepartmentMasterController');
+
+Route::resource('secondaryCompanies', 'SecondaryCompanyController');

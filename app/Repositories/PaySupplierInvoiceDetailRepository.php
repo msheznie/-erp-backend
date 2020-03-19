@@ -59,7 +59,8 @@ class PaySupplierInvoiceDetailRepository extends BaseRepository
         'createdDateTime',
         'createdUserID',
         'createdPcID',
-        'timeStamp'
+        'timeStamp',
+        'purchaseOrderID'
     ];
 
     /**

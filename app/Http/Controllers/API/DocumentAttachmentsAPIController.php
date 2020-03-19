@@ -202,7 +202,12 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
+        if(  $documentAttachments->documentID == 'PRN'){
+            $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
+        }
+
         $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+
 
         Storage::disk('public')->put($path, $decodeFile);
 
