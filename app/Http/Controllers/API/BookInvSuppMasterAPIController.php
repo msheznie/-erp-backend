@@ -729,17 +729,27 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     ->with(['grvmaster'])
                     ->get();
                 if ($checktotalExceed) {
+                    $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                    $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                        ->where('companySystemID', $input['companySystemID'])
+                        ->first();
+                    $valEligible = false;
+                    if ($company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+                        $valEligible = true;
+                    }
                     foreach ($checktotalExceed as $exc) {
-
-                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total'))
+                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total, SUM(VATAmount*noQty) as transVATAmount'))
                             ->where('grvAutoID', $exc->grvAutoID)
                             ->first();
-
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totTransactionAmount');
-
-                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailSum['total'], $documentCurrencyDecimalPlace)) {
-                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailSum['total'], $documentCurrencyDecimalPlace), 500);
+                        if (!$valEligible) {
+                            $grvDetailTotal = $grvDetailSum['total'];
+                        } else {
+                            $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'];
+                        }
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
                         }
                     }
                 }
