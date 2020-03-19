@@ -1724,3 +1724,6 @@ Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIC
 Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
 Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+
+
+Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
