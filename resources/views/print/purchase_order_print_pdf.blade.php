@@ -200,8 +200,12 @@
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
                 <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($podata->company)
-                    {{$podata->company->CompanyName}}
+                @if($isMergedCompany)
+                    {{$secondaryCompany['name']}}
+                @else
+                    @if ($podata->company)
+                        {{$podata->company->CompanyName}}
+                    @endif
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
@@ -229,7 +233,11 @@
                 <td width="60%">
                     <table>
                         <tr>
-                            <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                            @if($isMergedCompany)
+                                <td><img src="logos/{{$secondaryCompany['logo']}}" width="180px" height="60px"></td>
+                            @else
+                                <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                            @endif
                         </tr>
                         <tr>
                             <td>
@@ -245,9 +253,14 @@
                         <tr>
                             <td>
                                 <h3 class="font-weight-bold">
-                                    @if ($podata->company)
-                                        {{$podata->company->CompanyName}}
+                                    @if($isMergedCompany)
+                                        {{$secondaryCompany['name']}}
+                                    @else
+                                        @if ($podata->company)
+                                            {{$podata->company->CompanyName}}
+                                        @endif
                                     @endif
+                                    
                                 </h3>
                             </td>
                         </tr>
@@ -292,8 +305,12 @@
                         </tr>
                         <tr>
                             <td style="width: 100%" colspan="3"><p>
-                                    @if ($podata->company)
-                                        {{$podata->company->CompanyName}}
+                                    @if($isMergedCompany)
+                                        {{$secondaryCompany['name']}}
+                                    @else
+                                        @if ($podata->company)
+                                            {{$podata->company->CompanyName}}
+                                        @endif
                                     @endif
                                 </p>
                             </td>
@@ -401,8 +418,12 @@
                         </tr>
                         <tr>
                             <td colspan="3"><p>
-                                    @if ($podata->company)
-                                        {{$podata->company->CompanyName}}
+                                    @if($isMergedCompany)
+                                        {{$secondaryCompany['name']}}
+                                    @else
+                                        @if ($podata->company)
+                                            {{$podata->company->CompanyName}}
+                                        @endif
                                     @endif
                                 </p>
                             </td>
@@ -444,8 +465,12 @@
                         </tr>
                         <tr>
                             <td colspan="3"><p>
-                                    @if ($podata->company)
-                                        {{$podata->company->CompanyName}}
+                                    @if($isMergedCompany)
+                                        {{$secondaryCompany['name']}}
+                                    @else
+                                        @if ($podata->company)
+                                            {{$podata->company->CompanyName}}
+                                        @endif
                                     @endif
                                 </p>
                             </td>
