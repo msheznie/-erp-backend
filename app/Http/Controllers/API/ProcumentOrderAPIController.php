@@ -101,6 +101,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\GRVMaster;
 use App\Models\Year;
+use App\Models\SecondaryCompany;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
@@ -1537,7 +1538,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('type');
         }, 'advance_detail' => function ($query) {
             $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
+        }, 'company', 'secondarycompany', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
 
 
         if(!empty($output)){
@@ -2845,10 +2846,20 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->orderBy('idpoAddons', 'DESC')
             ->get();
 
+        $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrder->companySystemID)
+            ->first();
+
+        $isMergedCompany = false;
+        if ($checkCompanyIsMerged) {
+            $isMergedCompany = true;
+        }
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
+            'isMergedCompany' => $isMergedCompany,
+            'secondaryCompany' => $checkCompanyIsMerged,
             'title' => $documentTitle,
             'termsCond' => $typeID,
             'paymentTermsView' => $paymentTermsView,
@@ -2859,7 +2870,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $html = view('print.purchase_order_print_pdf', $order);
 
         // echo $html;
-        //exit();
+        // exit();
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

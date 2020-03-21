@@ -530,6 +530,11 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
+    public function secondarycompany()
+    {
+        return $this->belongsTo('App\Models\SecondaryCompany', 'companySystemID', 'companySystemID');
+    }
+
     public function transactioncurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');

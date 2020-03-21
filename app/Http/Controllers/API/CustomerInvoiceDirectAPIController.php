@@ -64,6 +64,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
+use App\Models\SecondaryCompany;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -997,7 +998,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $id = $input['id'];
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'
@@ -1736,6 +1737,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $CompanyAddress = $company->CompanyAddress;
             $CompanyAddressSecondaryLanguage = $company->CompanyAddressSecondaryLanguage;
             $CompanyCountry = $company->country->countryName;
+        }
+
+        $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $companySystemID)
+            ->first();
+
+        if ($checkCompanyIsMerged) {
+            $companyLogo = $checkCompanyIsMerged['logo'];
+            $CompanyName = $checkCompanyIsMerged['name'];
         }
 
         if ($master->secondaryLogoCompanySystemID > 0) {
