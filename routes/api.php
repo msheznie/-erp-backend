@@ -1621,6 +1621,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
     Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
 
+    Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

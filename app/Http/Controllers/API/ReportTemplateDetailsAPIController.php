@@ -441,4 +441,60 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
     }
 
+    public function getUnassignedGLForReportTemplate(Request $request)
+    {
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $id = $input['companyReportTemplateID'];
+
+
+
+        $reportTemplateMaster = ReportTemplate::find($id);
+
+        if($reportTemplateMaster->reportID == 1) {
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->whereHas('chartofaccount', function ($q) {
+                $q->where('catogaryBLorPL','<>', 'PL');
+            })->get();
+        }else{
+            $linkedGL = ReportTemplateLinks::OfTemplate($id)->whereNotNull('glAutoID')->get();
+        }
+
+        $unAssignedGL = ChartOfAccount::where('isActive', 1)
+            ->where('isApproved', 1);
+
+        if($reportTemplateMaster->reportID != 3){
+            $unAssignedGL = $unAssignedGL->where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL);
+        }
+        if($linkedGL){
+            $linkedGLArray = $linkedGL->pluck('glAutoID');
+        }
+        $unAssignedGL = $unAssignedGL->whereNotIn('chartOfAccountSystemID',$linkedGLArray);
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $unAssignedGL = $unAssignedGL->where(function ($query) use ($search) {
+                $query->where('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($unAssignedGL)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
 }
