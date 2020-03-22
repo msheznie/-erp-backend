@@ -297,6 +297,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
         $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
         $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
+        unset($input['pomaster']);
 
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $id);
 
@@ -845,6 +846,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
         $input["paymentLocalAmount"] =  \Helper::roundValue($conversionAmount["localAmount"]);
         $input["paymentComRptAmount"] =  \Helper::roundValue($conversionAmount["reportingAmount"]);
+
+        unset($input['pomaster']);
 
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $input['payDetailAutoID']);
 
