@@ -370,10 +370,7 @@ class email
             if($data && $data->isEmailSend == 0){
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])->where('companyPolicyCategoryID', 37)->where('isYesNO',1)->exists();
                 if($hasPolicy){
-                    $is_sent = SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
-                    if($is_sent) {
-                        Alert::where('alertID',$data->alertID)->update(['isEmailSend' => 1]);
-                    }
+                    SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
                 }
             }
         }

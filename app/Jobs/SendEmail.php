@@ -5,10 +5,11 @@ namespace App\Jobs;
 use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendEmail implements ShouldQueue
@@ -32,12 +33,13 @@ class SendEmail implements ShouldQueue
      * @var int
      */
     public $timeout = 20;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($to, $subject, $content, $alertID=0, $attachmentArr = '')
+    public function __construct($to, $subject, $content, $alertID = 0, $attachmentArr = '')
     {
         $this->to = $to;
         $this->subject = $subject;
@@ -53,8 +55,17 @@ class SendEmail implements ShouldQueue
      */
     public function handle()
     {
-        if($this->alertID != 0) {
+
+        Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
+        Log::info('BEmail send start');
+        if ($this->alertID != 0) {
             Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content, $this->attachments));
+            Log::info('alertID : ' . $this->alertID);
+            Log::info('email sent success fully to :' . $this->to);
+            Alert::where('alertID', $this->alertID)->update(['isEmailSend' => -1]);
+            Log::info('alert updated');
         }
+
+        Log::info('BEmail send end');
     }
 }
