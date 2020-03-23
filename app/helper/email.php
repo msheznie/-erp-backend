@@ -86,7 +86,7 @@ class email
                 $data['empName'] = $employee->empName;
                 $data['empEmail'] = $employee->empEmail;
             } else {
-                return ['success' => false, 'message' => 'Employee Not Found dd'];
+                return ['success' => false, 'message' => 'Employee Not Found'];
             }
 
             $company = Company::where('companySystemID', $data['companySystemID'])->first();
