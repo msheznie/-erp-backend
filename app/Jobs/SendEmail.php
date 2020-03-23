@@ -65,7 +65,6 @@ class SendEmail implements ShouldQueue
             Alert::where('alertID', $this->alertID)->update(['isEmailSend' => -1]);
             Log::info('alert updated');
         }
-
         Log::info('BEmail send end');
     }
 }

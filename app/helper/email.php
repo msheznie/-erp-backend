@@ -12,7 +12,7 @@
 
 namespace App\helper;
 
-use App\Jobs\SendEmail;
+use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalMaster;
@@ -25,6 +25,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
@@ -52,7 +53,8 @@ use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
-use App\Models\CustomerInvoiceDirect;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Response;
 
 class email
@@ -74,7 +76,7 @@ class email
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            "monitoring this inbox.</font>";
 
 
         foreach ($array as $data) {
@@ -367,10 +369,20 @@ class email
             $data = Alert::create($data);
 
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
-            if($data && $data->isEmailSend == 0){
-                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])->where('companyPolicyCategoryID', 37)->where('isYesNO',1)->exists();
-                if($hasPolicy){
-                    SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
+            if ($data && $data->isEmailSend == 0) {
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])->where('companyPolicyCategoryID', 37)->where('isYesNO', 1)->exists();
+                if ($hasPolicy) {
+                    //  SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
+                    Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
+                    Log::info('Email send start');
+                    if ($data->alertID != 0) {
+                        Mail::to($data->empEmail)->send(new EmailForQueuing($data->alertMessage, $data->emailAlertMessage));
+                        Log::info('alertID : ' . $data->alertID);
+                        Log::info('email sent success fully to :' . $data->empEmail);
+                        Alert::where('alertID', $data->alertID)->update(['isEmailSend' => -1]);
+                        Log::info('alert updated');
+                    }
+                    Log::info('Email send end');
                 }
             }
         }
