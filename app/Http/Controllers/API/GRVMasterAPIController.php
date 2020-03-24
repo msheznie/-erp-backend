@@ -613,7 +613,11 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.'.'GRV Logistic Amount is'. $grvReportAmount.' And PO Logistic Amount is '.$grvPoAmount,500);
             }
 
-            if ($input['grvTotalSupplierTransactionCurrency'] != $grvMasterSum['masterTotalSum']) {
+            $different = abs($input['grvTotalSupplierTransactionCurrency'] - $grvMasterSum['masterTotalSum']);
+
+            if ($different < 0.01) {
+                // same
+            }else{
                 return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.',500);
             }
 
