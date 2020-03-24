@@ -86,6 +86,10 @@ class ApprovalLevelAPIController extends AppBaseController
             $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
         }
 
+        if(isset($input['isCategoryWiseApproval']) && $input['isCategoryWiseApproval']){
+            $input['isCategoryWiseApproval'] = -1;
+        }
+
         if (isset($request->approvalLevelID)) {
             $id = $request->approvalLevelID;
             $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
