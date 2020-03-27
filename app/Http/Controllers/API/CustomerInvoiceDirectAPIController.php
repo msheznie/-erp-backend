@@ -1213,7 +1213,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
-        $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
+        $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')
+                                          ->where('companySystemID','!=',$companyId)
+                                          ->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");

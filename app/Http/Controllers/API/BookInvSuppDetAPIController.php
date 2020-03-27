@@ -341,13 +341,17 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Book Inv Supp Det not found');
+            return $this->sendError('Book Inv Supp Det not found',500);
+        }
+
+        if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
+            return $this->sendError('You cannot delete book Inv Supp Det , this document confirmed',500);
         }
 
         $unbilledSum = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID);
 
         if (empty($unbilledSum)) {
-            return $this->sendError('Un billed Grv id not found');
+            return $this->sendError('Un billed Grv id not found',500);
         }
 
         $unbilledgrvAutoID = $bookInvSuppDet->unbilledgrvAutoID;
