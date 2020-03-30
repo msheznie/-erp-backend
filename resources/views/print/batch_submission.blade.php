@@ -326,7 +326,7 @@
                     <th class="text-center">Start Date</th>
                     <th class="text-center">End Date</th>
                     <th class="text-center">Month of Service</th>
-                    <th class="text-center">Amount</th>
+                    <th class="text-center">Amount ({{$currencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
