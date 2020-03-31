@@ -307,7 +307,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Tracking Detail not found');
         }
         $master_id = $customerInvoiceTrackingDetail->customerInvoiceTrackingID;
-        CustomerInvoiceDirect::find($customerInvoiceTrackingDetail->custInvoiceDirectAutoID)->update(['selectedForTracking' => 0]);
+        CustomerInvoiceDirect::find($customerInvoiceTrackingDetail->custInvoiceDirectAutoID)->update(['selectedForTracking' => 0,'customerInvoiceTrackingID' => null]);
         $customerInvoiceTrackingDetail->delete();
         $this->updateMasterPayment($master_id);
 
@@ -372,9 +372,10 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
                     $total_amount += $tempArray["wellAmount"];
 
                     if ($tempArray) {
+
                         $dtails = $this->customerInvoiceTrackingDetailRepository->create($tempArray);
                         $updatePayment = CustomerInvoiceDirect::find($new['custInvoiceDirectID'])
-                            ->update(['selectedForTracking' => -1]);
+                            ->update(['selectedForTracking' => -1, 'customerInvoiceTrackingID' => $masterData->customerInvoiceTrackingID]);
                     }
                 }
             }
@@ -398,20 +399,6 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
         $items = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID', $customerInvoiceTrackingID)
             ->with(['approved_by', 'rejected_by'])
             ->get();
-//
-//
-//        foreach ($items as $item) {
-//
-//            $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
-//
-//            $issueUnits = array();
-//            foreach ($issueUnit->unitConversion as $unit) {
-//                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
-//                array_push($issueUnits, $temArray);
-//            }
-//
-//            $item->issueUnits = $issueUnits;
-//        }
 
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }

@@ -482,7 +482,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['companyFinancePeriodID'] = $input['companyFinancePeriodID'];
         $_post['companyFinanceYearID'] = $input['companyFinanceYearID'];
         $_post['wanNO'] = $input['wanNO'];
-        $_post['secondaryLogoCompanySystemID'] = $input['secondaryLogoCompanySystemID'];
+        $_post['secondaryLogoCompanySystemID'] = isset($input['secondaryLogoCompanySystemID']) ? $input['secondaryLogoCompanySystemID'] : null;
         $_post['servicePeriod'] = $input['servicePeriod'];
         $_post['comments'] = $input['comments'];
         $_post['customerID'] = $input['customerID'];
@@ -503,7 +503,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-        if ($input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
+        if (isset($input['secondaryLogoCompanySystemID']) && $input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompID'] != '') {
                 $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $_post['secondaryLogoCompID'] = $company->CompanyID;
@@ -513,6 +513,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['secondaryLogo'] = NULL;
             }
 
+        }else {
+            $_post['secondaryLogoCompID'] = NULL;
+            $_post['secondaryLogo'] = NULL;
         }
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {

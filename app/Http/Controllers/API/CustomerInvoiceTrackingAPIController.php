@@ -9,6 +9,7 @@ use App\Models\ClientPerformaAppType;
 use App\Models\Company;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceTracking;
 use App\Models\CustomerInvoiceTrackingDetail;
 use App\Models\DocumentMaster;
@@ -568,7 +569,14 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
         $output['companyFinanceYear'] = Helper::companyFinanceYear($companyId, 1);
-        $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
+         $company = Company::select('CompanyName', 'CompanyID', 'companySystemID','reportingCurrency')->where('companySystemID', $companyId)->first();
+
+        if(!empty($company)){
+            $output['companyRptCurrency'] = $company->reportingcurrency;
+        }else{
+            $output['companyRptCurrency'] = null;
+        }
+        $output['company'] = $company;
         $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         $output['approvalType'] = ClientPerformaAppType::all();
 
@@ -641,115 +649,115 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
 
 
         $sql = "SELECT
-	companyID,
-	custInvoiceDirectID,
-	bookingInvCode,
-	bookingDate,
-	customerInvoiceNo,
-	customerInvoiceDate,
-	invoiceDueDate,
-	clientContractID,
-	performaMasterID,
-	wanNo,
-	wellNo,
-	netWorkNo,
-	PONumber,
-	regNo,
-	sum( wellAmount ) as wellAmount
-FROM
-	(
-		(
-		SELECT
-			erp_custinvoicedirectdet.companyID,
-			erp_custinvoicedirectdet.custInvoiceDirectID,
-			erp_custinvoicedirect.bookingInvCode,
-			erp_custinvoicedirect.bookingDate,
-			erp_custinvoicedirect.customerInvoiceNo,
-			erp_custinvoicedirect.customerInvoiceDate,
-			erp_custinvoicedirect.invoiceDueDate,
-			erp_custinvoicedirectdet.clientContractID,
-			erp_custinvoicedirectdet.performaMasterID,
-			performa_service_entry_wellgroup.SEno AS wanNo,
-			performa_service_entry_wellgroup.wellNo,
-			performa_service_entry_wellgroup.netWorkNo,
-			erp_custinvoicedirect.PONumber,
-			CONCAT( rigmaster.RigDescription, ':', ticketmaster.regNo ) AS regNo,
-			performa_service_entry_wellgroup.wellAmount 
-		FROM
-			erp_custinvoicedirectdet
-			INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
-			LEFT JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
-			AND erp_custinvoicedirect.companyID = performamaster.companyID 
-			AND erp_custinvoicedirectdet.customerID = performamaster.customerSystemID 
-			AND performamaster.contractID = erp_custinvoicedirectdet.clientContractID
-			LEFT JOIN performa_service_entry_wellgroup ON performa_service_entry_wellgroup.performaMasID = performamaster.PerformaMasterID
-			LEFT JOIN ticketmaster ON ticketmaster.companyID = erp_custinvoicedirectdet.companyID 
-			AND ticketmaster.clientSystemID = erp_custinvoicedirectdet.customerID 
-			AND ticketmaster.ticketidAtuto = performa_service_entry_wellgroup.ticketNo
-			LEFT JOIN rigmaster ON rigmaster.idrigmaster = ticketmaster.regName 
-			AND rigmaster.companyID = ticketmaster.companyID 
-		WHERE
-			erp_custinvoicedirect.companySystemID = $companySystemID 
-			AND erp_custinvoicedirect.isPerforma != '2'
-            AND erp_custinvoicedirectdet.contractID=$contractUID
-			AND erp_custinvoicedirectdet.customerID=$customerID
-			AND erp_custinvoicedirectdet.performaMasterID > 0 
-			AND erp_custinvoicedirect.selectedForTracking = 0 
-			AND erp_custinvoicedirect.confirmedYN = 1 
-			AND erp_custinvoicedirect.approved = 0 
-			AND erp_custinvoicedirect.canceledYN = 0 
-            $where
-		GROUP BY
-			performa_service_entry_wellgroup.performaMasID,
-			performa_service_entry_wellgroup.SEno,
-			performa_service_entry_wellgroup.netWorkNo,
-			performa_service_entry_wellgroup.wellAmount 
-		) UNION
-		(
-		SELECT
-			erp_custinvoicedirectdet.companyID,
-			erp_custinvoicedirectdet.custInvoiceDirectID,
-			erp_custinvoicedirect.bookingInvCode,
-			erp_custinvoicedirect.bookingDate,
-			erp_custinvoicedirect.customerInvoiceNo,
-			erp_custinvoicedirect.customerInvoiceDate,
-			erp_custinvoicedirect.invoiceDueDate,
-			erp_custinvoicedirectdet.clientContractID,
-			erp_custinvoicedirectdet.performaMasterID,
-			\"\" AS wanNo,
-			\"\" AS wellNo,
-			\"\" AS netWorkNo,
-			erp_custinvoicedirect.PONumber,
-			\"\" AS regNo,
-			sum( erp_custinvoicedirectdet.invoiceAmount ) AS wellAmount 
-		FROM
-			erp_custinvoicedirectdet
-			INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
-			LEFT JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
-		WHERE
-			erp_custinvoicedirect.companySystemID = $companySystemID 
-            AND erp_custinvoicedirect.isPerforma != '2'
-            AND erp_custinvoicedirectdet.contractID=$contractUID
-			AND erp_custinvoicedirectdet.customerID=$customerID
-			AND erp_custinvoicedirect.selectedForTracking = 0 
-			AND erp_custinvoicedirectdet.performaMasterID = 0 
-			AND erp_custinvoicedirect.confirmedYN = 1 
-			AND erp_custinvoicedirect.approved = 0 
-			AND erp_custinvoicedirect.canceledYN = 0 
-		    $where
-		GROUP BY
-			erp_custinvoicedirectdet.companyID,
-			erp_custinvoicedirectdet.custInvoiceDirectID,
-			erp_custinvoicedirect.bookingInvCode 
-		) 
-	) AS final 
-GROUP BY
-	clientContractID,
-	performaMasterID,
-	wanNo,
-	wellNo,
-	netWorkNo,
-	PONumber";
+                companyID,
+                custInvoiceDirectID,
+                bookingInvCode,
+                bookingDate,
+                customerInvoiceNo,
+                customerInvoiceDate,
+                invoiceDueDate,
+                clientContractID,
+                performaMasterID,
+                wanNo,
+                wellNo,
+                netWorkNo,
+                PONumber,
+                regNo,
+                sum( wellAmount ) as wellAmount
+            FROM
+                (
+                    (
+                    SELECT
+                        erp_custinvoicedirectdet.companyID,
+                        erp_custinvoicedirectdet.custInvoiceDirectID,
+                        erp_custinvoicedirect.bookingInvCode,
+                        erp_custinvoicedirect.bookingDate,
+                        erp_custinvoicedirect.customerInvoiceNo,
+                        erp_custinvoicedirect.customerInvoiceDate,
+                        erp_custinvoicedirect.invoiceDueDate,
+                        erp_custinvoicedirectdet.clientContractID,
+                        erp_custinvoicedirectdet.performaMasterID,
+                        performa_service_entry_wellgroup.SEno AS wanNo,
+                        performa_service_entry_wellgroup.wellNo,
+                        performa_service_entry_wellgroup.netWorkNo,
+                        erp_custinvoicedirect.PONumber,
+                        CONCAT( rigmaster.RigDescription, ':', ticketmaster.regNo ) AS regNo,
+                        performa_service_entry_wellgroup.wellAmount 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                        LEFT JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                        AND erp_custinvoicedirect.companyID = performamaster.companyID 
+                        AND erp_custinvoicedirectdet.customerID = performamaster.customerSystemID 
+                        AND performamaster.contractID = erp_custinvoicedirectdet.clientContractID
+                        LEFT JOIN performa_service_entry_wellgroup ON performa_service_entry_wellgroup.performaMasID = performamaster.PerformaMasterID
+                        LEFT JOIN ticketmaster ON ticketmaster.companyID = erp_custinvoicedirectdet.companyID 
+                        AND ticketmaster.clientSystemID = erp_custinvoicedirectdet.customerID 
+                        AND ticketmaster.ticketidAtuto = performa_service_entry_wellgroup.ticketNo
+                        LEFT JOIN rigmaster ON rigmaster.idrigmaster = ticketmaster.regName 
+                        AND rigmaster.companyID = ticketmaster.companyID 
+                    WHERE
+                        erp_custinvoicedirect.companySystemID = $companySystemID 
+                        AND erp_custinvoicedirect.isPerforma != '2'
+                        AND erp_custinvoicedirectdet.contractID=$contractUID
+                        AND erp_custinvoicedirectdet.customerID=$customerID
+                        AND erp_custinvoicedirectdet.performaMasterID > 0 
+                        AND erp_custinvoicedirect.selectedForTracking = 0 
+                        AND erp_custinvoicedirect.confirmedYN = 1 
+                        AND erp_custinvoicedirect.approved = 0 
+                        AND erp_custinvoicedirect.canceledYN = 0 
+                        $where
+                    GROUP BY
+                        performa_service_entry_wellgroup.performaMasID,
+                        performa_service_entry_wellgroup.SEno,
+                        performa_service_entry_wellgroup.netWorkNo,
+                        performa_service_entry_wellgroup.wellAmount 
+                    ) UNION
+                    (
+                    SELECT
+                        erp_custinvoicedirectdet.companyID,
+                        erp_custinvoicedirectdet.custInvoiceDirectID,
+                        erp_custinvoicedirect.bookingInvCode,
+                        erp_custinvoicedirect.bookingDate,
+                        erp_custinvoicedirect.customerInvoiceNo,
+                        erp_custinvoicedirect.customerInvoiceDate,
+                        erp_custinvoicedirect.invoiceDueDate,
+                        erp_custinvoicedirectdet.clientContractID,
+                        erp_custinvoicedirectdet.performaMasterID,
+                        \"\" AS wanNo,
+                        \"\" AS wellNo,
+                        \"\" AS netWorkNo,
+                        erp_custinvoicedirect.PONumber,
+                        \"\" AS regNo,
+                        sum( erp_custinvoicedirectdet.invoiceAmount ) AS wellAmount 
+                    FROM
+                        erp_custinvoicedirectdet
+                        INNER JOIN erp_custinvoicedirect ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
+                        LEFT JOIN performamaster ON performamaster.PerformaInvoiceNo = erp_custinvoicedirectdet.performaMasterID 
+                    WHERE
+                        erp_custinvoicedirect.companySystemID = $companySystemID 
+                        AND erp_custinvoicedirect.isPerforma != '2'
+                        AND erp_custinvoicedirectdet.contractID=$contractUID
+                        AND erp_custinvoicedirectdet.customerID=$customerID
+                        AND erp_custinvoicedirect.selectedForTracking = 0 
+                        AND erp_custinvoicedirectdet.performaMasterID = 0 
+                        AND erp_custinvoicedirect.confirmedYN = 1 
+                        AND erp_custinvoicedirect.approved = 0 
+                        AND erp_custinvoicedirect.canceledYN = 0 
+                        $where
+                    GROUP BY
+                        erp_custinvoicedirectdet.companyID,
+                        erp_custinvoicedirectdet.custInvoiceDirectID,
+                        erp_custinvoicedirect.bookingInvCode 
+                    ) 
+                ) AS final 
+            GROUP BY
+                clientContractID,
+                performaMasterID,
+                wanNo,
+                wellNo,
+                netWorkNo,
+                PONumber";
 
         $output = DB::select($sql);
         $request->request->remove('search.value');
@@ -794,16 +802,31 @@ GROUP BY
     public function getBatchSubmissionDetailsPrintPDF(Request $request){
 
         $id = $request->get('id');
-        //        $id = 214;
+        $batchSubmission =  CustomerInvoiceTracking::find($id);
+
+        if (empty($batchSubmission)) {
+            return $this->sendError('Batch submission not found');
+        }
+
         $batchSubmission = CustomerInvoiceTracking::where('customerInvoiceTrackingID',$id)
             ->with(['company','detail' => function($q){
                 $q->with(['customer_invoice_direct']);
             }])->first();
 
         if (empty($batchSubmission)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError('Batch submission details not found');
         }
-        $order = ['masterdata'=>$batchSubmission];
+
+        $company = Company::select('CompanyName', 'CompanyID', 'companySystemID','reportingCurrency')
+            ->where('companySystemID', $batchSubmission->companySystemID)
+            ->first();
+
+        $companyRptCurrency = 'USD';
+        if(!empty($company) && $company->reportingcurrency){
+            $companyRptCurrency= $company->reportingcurrency->CurrencyCode;
+        }
+
+        $order = ['masterdata'=>$batchSubmission,'currencyCode' => $companyRptCurrency];
         $time = strtotime("now");
         $fileName = 'batch_submission_detail_' . $id . '_' . $time . '.pdf';
         $html = view('print.batch_submission', $order);
@@ -818,8 +841,14 @@ GROUP BY
     public function exportBatchSubmissionDetails(Request $request)
     {
         $id = $request->get('id');
-//        $id = 214;
         $type = $request->get('type');
+
+        $batchSubmission =  CustomerInvoiceTracking::find($id);
+
+        if (empty($batchSubmission)) {
+            return $this->sendError('Batch submission not found');
+        }
+
 
         $data = array();
         $output = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$id)
@@ -828,21 +857,32 @@ GROUP BY
             }])->get();
 
         if (empty($output)) {
-            return $this->sendError('Expense Claim not found');
+            return $this->sendError('Batch submission details not found');
         }
+
+
+        $company = Company::select('CompanyName', 'CompanyID', 'companySystemID','reportingCurrency')
+                            ->where('companySystemID', $batchSubmission->companySystemID)
+                            ->first();
+
+        $companyRptCurrency = 'USD';
+        if(!empty($company) && $company->reportingcurrency){
+            $companyRptCurrency= $company->reportingcurrency->CurrencyCode;
+        }
+
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
                 $data[$x]['PO Number'] = $value->PONumber;
                 $data[$x]['Sap SE'] = $value->wanNO;
-                $data[$x]['My Rig'] = $value->rigNo;
-                $data[$x]['My WellNo'] = $value->wellNo;
+                $data[$x]['Rig'] = $value->rigNo;
+                $data[$x]['WellNo'] = $value->wellNo;
                 $data[$x]['Booking Inv Code'] = $value->bookingInvCode;
                 $data[$x]['Customer Invoice Date'] = \Helper::dateFormat($value->bookingDate);
                 $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
                 $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
                 $data[$x]['Month Service Formation'] = $value->servicePeriod;
-                $data[$x]['My Amount'] = number_format($value->amount, 2);
+                $data[$x]['Amount ('.$companyRptCurrency.')'] = number_format($value->amount, 2);
                 $data[$x]['Description'] = isset($value->master->approval_type->description)?$value->master->approval_type->description:'';
                 $x++;
             }
@@ -982,9 +1022,13 @@ GROUP BY
             return $this->sendError('Customer Invoice Tracking Data Found',500);
         }
 
-        $master = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->get();
-        if(empty($master)){
+        $details = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->get();
+        if(empty($details)){
             return $this->sendError('Customer Invoice Tracking Data Found',500);
+        }
+
+        foreach ($details as $detail){
+            CustomerInvoiceDirect::find($detail['custInvoiceDirectAutoID'])->update(['selectedForTracking' => 0,'customerInvoiceTrackingID' => null]);
         }
 
         $isDelete = CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$masterID)->delete();
