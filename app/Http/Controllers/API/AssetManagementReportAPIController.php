@@ -3084,7 +3084,7 @@ WHERE
                     AND erp_fa_asset_master.DIPOSED = 0 
                     AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
                      GROUP BY	erp_fa_asset_master.faID
-                    ) a';
+                    ) a GROUP BY faID';
 
         $output = \DB::select($query);
         return ['data' => $output, 'period' => $periodArr];
