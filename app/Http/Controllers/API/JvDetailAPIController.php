@@ -1077,11 +1077,11 @@ GROUP BY
         $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
             if($company->reportingCurrency == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerRptAmount']);
             } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerLocalAmount']);
             } else {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerTransAmount']);
             }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
@@ -1127,21 +1127,21 @@ GROUP BY
         $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
         $pliGeneralLedgerTotal = $this->getGeneralLedgerDataForAllocationForRevenueBasis($jvMaster, $pliChartOfAccountIds, "glID");
         if($company->reportingCurrency == $jvMaster['currencyID']) {
-            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerRptAmount']) : 0;
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? ($pliGeneralLedgerTotal[0]['generalLedgerRptAmount']) : 0;
         } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
-            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerLocalAmount']) : 0;
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? ($pliGeneralLedgerTotal[0]['generalLedgerLocalAmount']) : 0;
         } else {
-            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? abs($pliGeneralLedgerTotal[0]['generalLedgerTransAmount']) : 0;
+            $pliGeneralLedgerTotal = (sizeof($pliGeneralLedgerTotal) > 0 ) ? ($pliGeneralLedgerTotal[0]['generalLedgerTransAmount']) : 0;
         }
         $pliGeneralLedgerTotalByServiceLine = $this->getGeneralLedgerDataForAllocationForRevenueBasis($jvMaster, $pliChartOfAccountIds, "serviceline");
         $jvDetails = [];
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
             if($company->reportingCurrency == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerRptAmount']);
             } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerLocalAmount']);
             } else {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerTransAmount']);
             }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
@@ -1156,8 +1156,8 @@ GROUP BY
                         } else {
                             $segmentValueGeneralLedgerAmount = $segmentValue['generalLedgerTransAmount'];
                         }
-                        $percentage = (abs($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal) * 100;
-                        $jvAmount = $generalLedgerAmount * (abs($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal);
+                        $percentage = (($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal) * 100;
+                        $jvAmount = $generalLedgerAmount * (($segmentValueGeneralLedgerAmount) / $pliGeneralLedgerTotal);
 
                         $allocationDetailNewData['percentage'] = $percentage;
                         $allocationDetailNewData['productLineID'] = $segmentValue['serviceLineSystemID'];
@@ -1419,11 +1419,11 @@ GROUP BY
         $company = Company::where('companySystemID', $jvMaster['companySystemID'])->first();
         foreach ($generalLedgerData['generalLedgerGroupData'] as $key => $gLvalue) {
             if($company->reportingCurrency == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerRptAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerRptAmount']);
             } else if ($company->localCurrencyID == $jvMaster['currencyID']) {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerLocalAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerLocalAmount']);
             } else {
-                $generalLedgerAmount = abs($gLvalue['generalLedgerTransAmount']);
+                $generalLedgerAmount = ($gLvalue['generalLedgerTransAmount']);
             }
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
