@@ -17,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateWarehouseItemsAPIRequest;
 use App\Http\Requests\API\UpdateWarehouseItemsAPIRequest;
 use App\Models\WarehouseItems;
+use App\Models\WarehouseMaster;
 use App\Repositories\WarehouseItemsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -424,9 +425,17 @@ class WarehouseItemsAPIController extends AppBaseController
     {
 
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
-
         $companyId = $input['companyId'];
+        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+
+        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+
+        if(!empty($warehouse)){
+            $companyId = $warehouse->companySystemID;
+        }
+
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
 
         if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);

@@ -1116,7 +1116,8 @@ GROUP BY
         }
         $generalLedgerData = $this->getGeneralLedgerDataForAllocation($jvMaster, $accountFilterArray);
 
-        $pliChartOfAccount = ChartOfAccountsAssigned::select('chartOfAccountSystemID')->where('isActive',1)
+        $pliChartOfAccount = ChartOfAccountsAssigned::select('chartOfAccountSystemID')
+                                                                             ->where('isActive',1)
                                                                              ->where('controlAccountsSystemID',1)
                                                                              ->where('companySystemID',$jvMaster['companySystemID'])
                                                                              ->get()

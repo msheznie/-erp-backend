@@ -36,6 +36,7 @@ use App\Models\ItemAssigned;
 use App\Models\ItemMasterRefferedBack;
 use App\Models\Unit;
 use App\Models\WarehouseBinLocation;
+use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\ItemMasterRepository;
 use Illuminate\Validation\Rule;
@@ -414,7 +415,16 @@ class ItemMasterAPIController extends AppBaseController
     public function getItemMasterFormData(Request $request)
     {
 
+        $input = $request->all();
         $selectedCompanyId = $request['selectedCompanyId'];
+
+        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+
+        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+
+        if(!empty($warehouse)){
+            $selectedCompanyId = $warehouse->companySystemID;
+        }
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
