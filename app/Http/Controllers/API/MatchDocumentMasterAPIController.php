@@ -1694,7 +1694,9 @@ WHERE
         $id = $request->get('matchDocumentMasterAutoID');
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'cancelled_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'cancelled_by', 'company', 'transactioncurrency', 'supplier', 'detail' => function($query) {
+            $query->with(['pomaster']);
+        }])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -2210,7 +2212,9 @@ ORDER BY
             return $this->sendError('Match document master not found');
         }
 
-        $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail'])->first();
+        $matchDocumentRecord = MatchDocumentMaster::where('matchDocumentMasterAutoID', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'transactioncurrency', 'supplier', 'detail' => function($query){
+            $query->with(['pomaster']);
+        }])->first();
 
         if (empty($matchDocumentRecord)) {
             return $this->sendError('Match document master not found');
