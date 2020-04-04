@@ -1101,7 +1101,10 @@ function getPaymentVoucherMaster(Request $request)
     $input = $request->all();
 
     $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-        ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail',
+        ->with(['supplier', 'bankaccount', 'transactioncurrency', 
+            'supplierdetail' => function($query) {
+                $query->with(['pomaster']);
+            },
             'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
             'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query)  {
                 $query->with('segment');
@@ -1875,7 +1878,10 @@ function printPaymentVoucher(Request $request)
     }
 
     $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-        ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail', 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
+        ->with(['supplier', 'bankaccount', 'transactioncurrency',
+         'supplierdetail' => function ($query) {
+            $query->with(['pomaster']);
+        }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
             $query->with('segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
@@ -1912,7 +1918,6 @@ function printPaymentVoucher(Request $request)
 
     $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
         ->sum('paymentAmount');
-
 
     $order = array(
         'masterdata' => $output,
