@@ -76,7 +76,8 @@ class WarehouseBinLocation extends Model
         'createdBy',
         'dateCreated',
         'isActive',
-        'timeStamp'
+        'timeStamp',
+        'warehouseSubLevelId'
     ];
 
     /**
@@ -91,7 +92,8 @@ class WarehouseBinLocation extends Model
         'companyID' => 'string',
         'wareHouseSystemCode' => 'integer',
         'createdBy' => 'string',
-        'isActive' => 'integer'
+        'isActive' => 'integer',
+        'warehouseSubLevelId' => 'integer'
     ];
 
     /**
