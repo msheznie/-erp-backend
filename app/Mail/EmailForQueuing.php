@@ -7,10 +7,12 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\File;
+use Sichikawa\LaravelSendgridDriver\SendGrid;
 
 class EmailForQueuing extends Mailable
 {
     use Queueable, SerializesModels;
+    use SendGrid;
 
     public $content;
     public $subject;
@@ -35,7 +37,16 @@ class EmailForQueuing extends Mailable
      */
     public function build()
     {
-        return $this->subject($this->subject)->view('email.default_email');
-
+        return $this->view('email.default_email')
+                    ->subject($this->subject)
+                    ->sendgrid([
+                        'personalizations' => [
+                            [
+                                'substitutions' => [
+                                    ':myname' => 's-ichikawa',
+                                ],
+                            ],
+                        ],
+                    ]);
     }
 }

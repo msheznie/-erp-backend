@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateWarehouseBinLocationAPIRequest;
 use App\Models\Company;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseItems;
+use App\Models\WarehouseMaster;
 use App\Repositories\WarehouseBinLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -133,11 +134,17 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-        }
+        $warehouse           =  WarehouseMaster::find($input['wareHouseSystemCode']);
 
+        if(empty($warehouse)){
+            return $this->sendError('Warehouse not found');
+        }
+        $input['companySystemID'] = $warehouse->companySystemID;
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+        $input['companyID'] = $company->CompanyID;
         $warehouseBinLocations = $this->warehouseBinLocationRepository->create($input);
 
         return $this->sendResponse($warehouseBinLocations->toArray(), 'Warehouse Bin Location saved successfully');
@@ -343,6 +350,15 @@ class WarehouseBinLocationAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
+
+        $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+
+        $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
+
+        if(!empty($warehouse)){
+            $selectedCompanyId = $warehouse->companySystemID;
+        }
+
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {

@@ -332,6 +332,7 @@
             <tr class="theme-tr-head">
                 <th></th>
                 <th class="text-center">Booking Inv Code</th>
+                <th class="text-center">PO Number</th>
                 <th class="text-center">Invoice No</th>
                 <th class="text-center">Invoice Date</th>
                 <th class="text-center">Invoice Amount</th>
@@ -344,6 +345,11 @@
                 <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                     <td>{{$loop->iteration}}</td>
                     <td>{{$item->bookingInvDocCode}}</td>
+                    @if($item->pomaster == null)
+                        <td>-</td>
+                    @else
+                        <td>{{$item->pomaster->purchaseOrderCode}}</td>
+                    @endif
                     <td>{{$item->supplierInvoiceNo}}</td>
                     <td>{{ \App\helper\Helper::dateFormat($item->supplierInvoiceDate)}}</td>
                     <td class="text-right">{{number_format($item->supplierInvoiceAmount, $transDecimal)}}</td>
@@ -352,7 +358,7 @@
                 {{ $tot += $item->supplierPaymentAmount  }}
             @endforeach
             <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                <td colspan="5" class="text-right border-bottom-remov"></td>
+                <td colspan="6" class="text-right border-bottom-remov"></td>
                 <td style="font-weight: 600" class="text-right">{{number_format($tot, $transDecimal)}}</td>
             </tr>
             </tbody>

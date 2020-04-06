@@ -286,6 +286,10 @@ class WarehouseMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input['isActive'] = isset($input['isActive']) ? $input['isActive'] : -1;
+
+        $input = $this->convertArrayToSelectedValue($input,['isActive']);
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -306,13 +310,20 @@ class WarehouseMasterAPIController extends AppBaseController
             ->whereIn('companySystemID',$childCompanies)
             ->when(request('isPosLocation') == -1, function ($q) {
                 $q->where('isPosLocation',-1);
+            })
+            ->when(($input['isActive'] == 1 || $input['isActive'] == 0) && !is_null($input['isActive']), function ($q) use($input){
+                $q->where('isActive',$input['isActive']);
             });
 
         $search = $request->input('search.value');
         if($search){
             $warehouseMasters =   $warehouseMasters->where(function ($query) use($search) {
                 $query->where('wareHouseCode','LIKE',"%{$search}%")
-                    ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+                      ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%")
+                      ->orWhereHas('company',function ($q) use($search){
+                          $q->where('CompanyName','LIKE',"%{$search}%")
+                            ->orWhere('CompanyID','LIKE',"%{$search}%");
+                      });
             });
         }
 

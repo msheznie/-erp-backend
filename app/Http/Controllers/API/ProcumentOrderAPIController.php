@@ -4262,7 +4262,7 @@ ORDER BY
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $typeID = $request->get('typeID');
+        $typeID = 1 ;//$request->get('typeID');
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -4322,9 +4322,19 @@ ORDER BY
             ->orderBy('idpoAddons', 'DESC')
             ->get();
 
+        $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrderUpdate->companySystemID)
+            ->first();
+
+        $isMergedCompany = false;
+        if ($checkCompanyIsMerged) {
+            $isMergedCompany = true;
+        }
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
+            'isMergedCompany' => $isMergedCompany,
+            'secondaryCompany' => $checkCompanyIsMerged,
             'termsCond' => $typeID,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,

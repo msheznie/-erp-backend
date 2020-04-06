@@ -482,7 +482,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['companyFinancePeriodID'] = $input['companyFinancePeriodID'];
         $_post['companyFinanceYearID'] = $input['companyFinanceYearID'];
         $_post['wanNO'] = $input['wanNO'];
-        $_post['secondaryLogoCompanySystemID'] = $input['secondaryLogoCompanySystemID'];
+        $_post['secondaryLogoCompanySystemID'] = isset($input['secondaryLogoCompanySystemID']) ? $input['secondaryLogoCompanySystemID'] : null;
         $_post['servicePeriod'] = $input['servicePeriod'];
         $_post['comments'] = $input['comments'];
         $_post['customerID'] = $input['customerID'];
@@ -503,7 +503,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-        if ($input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
+        if (isset($input['secondaryLogoCompanySystemID']) && $input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompID'] != '') {
                 $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $_post['secondaryLogoCompID'] = $company->CompanyID;
@@ -513,6 +513,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['secondaryLogo'] = NULL;
             }
 
+        }else {
+            $_post['secondaryLogoCompID'] = NULL;
+            $_post['secondaryLogo'] = NULL;
         }
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
@@ -1213,7 +1216,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
-        $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
+        $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')
+                                          ->where('companySystemID','!=',$companyId)
+                                          ->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
