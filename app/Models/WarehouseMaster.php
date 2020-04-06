@@ -113,4 +113,13 @@ class WarehouseMaster extends Model
         return $this->belongsTo('App\Models\ErpLocation', 'wareHouseLocation', 'locationID');
     }
 
+    public function bin_locations()
+    {
+        return $this->hasMany(WarehouseBinLocation::class, 'wareHouseSystemCode');
+    }
+
+    public function sub_levels(){
+        return $this->hasMany(WarehouseSubLevels::class, 'warehouse_id');
+    }
+
 }

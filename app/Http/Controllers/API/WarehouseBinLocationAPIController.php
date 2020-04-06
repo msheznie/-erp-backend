@@ -367,20 +367,26 @@ class WarehouseBinLocationAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $expenseClaims = WarehouseBinLocation::whereIn('companySystemID', $subCompanies)
+        $warehouseSubLevelId = isset($input['warehouseSubLevelId']) ? $input['warehouseSubLevelId'] : 0;
+
+        $warehouseBinLocation = WarehouseBinLocation::whereIn('companySystemID', $subCompanies)
                                             ->where('wareHouseSystemCode', $input['wareHouseSystemCode'])
                                             ->with('warehouse_by');
+
+        if($warehouseSubLevelId){
+            $warehouseBinLocation = $warehouseBinLocation->where('warehouseSubLevelId',$warehouseSubLevelId);
+        }
 
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $expenseClaims = $expenseClaims->where(function ($query) use ($search) {
+            $warehouseBinLocation = $warehouseBinLocation->where(function ($query) use ($search) {
                 $query->where('binLocationDes', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($expenseClaims)
+        return \DataTables::of($warehouseBinLocation)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
