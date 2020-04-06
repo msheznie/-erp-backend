@@ -1623,6 +1623,13 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
 
+    Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
+
+    Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
+
+    Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
+    Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1723,9 +1730,11 @@ Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWareh
 Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
 
 
-Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+//Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
 Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 
 
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
+

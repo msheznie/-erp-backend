@@ -105,3 +105,7 @@ Route::resource('chartOfAccountAllocationDetailHistories', 'ChartOfAccountAlloca
 Route::resource('hrmsDepartmentMasters', 'HrmsDepartmentMasterController');
 
 Route::resource('secondaryCompanies', 'SecondaryCompanyController');
+
+Route::resource('supplierCatalogMasters', 'SupplierCatalogMasterController');
+
+Route::resource('supplierCatalogDetails', 'SupplierCatalogDetailController');
