@@ -1623,6 +1623,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
 
+
     Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
     Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
     Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
@@ -1643,6 +1644,14 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
     Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
+
+    Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
+
+    Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
+
+    Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
+    Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
+
 
 });
 
@@ -1701,5 +1710,45 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
+
+
+Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+
+
+Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+
+Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
+
+Route::resource('user_rights', 'UserRightsAPIController');
+
+Route::resource('lpt_permissions', 'LptPermissionAPIController');
+
+Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+
+
+Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
+Route::resource('segment_rights', 'SegmentRightsAPIController');
+Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+
+Route::resource('service_lines', 'ServiceLineAPIController');
+Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
+
+
+Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+
+
+//Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+
+Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+
+
+Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
 
 
