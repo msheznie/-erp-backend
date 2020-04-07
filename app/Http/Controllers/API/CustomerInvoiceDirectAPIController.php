@@ -744,6 +744,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
                         foreach ($details as $item) {
+
+//                            If the revenue account or cost account or BS account is null do not allow to confirm
+
+                            if(!($item->financeGLcodebBSSystemID > 0)){
+                                return $this->sendError('BS account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }elseif (!($item->financeGLcodePLSystemID > 0)){
+                                return $this->sendError('Cost account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
+                                return $this->sendError('Revenue account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }
+
                             $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
                             $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
                                 'itemCodeSystem' => $updateItem->itemCodeSystem,
