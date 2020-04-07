@@ -251,9 +251,9 @@ class ItemLedgerInsert implements ShouldQueue
                             'companyID' => 'companyID',
                             'serviceLineSystemID' => 'serviceLineSystemID',
                             'serviceLineCode' => 'serviceLineCode',
-                            'documentSystemID' => 'documentSystemID',
+                            'documentSystemID' => 'documentSystemiD',
                             'documentID' => 'documentID',
-                            'documentCode' => 'itemIssueCode',
+                            'documentCode' => 'bookingInvCode',
                             'wareHouseSystemCode' => 'wareHouseSystemCode',
                             'referenceNumber' => 'customerInvoiceNo');
 

@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -408,6 +409,33 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if (!empty($checkWhetherStockTransfer)) {
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /*check item sales invoice*/
+        $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                'erp_custinvoicedirect.bookingInvCode',
+                'erp_custinvoicedirect.wareHouseSystemCode',
+                'erp_custinvoicedirect.approved'
+            ])
+            ->groupBy(
+                'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                'erp_custinvoicedirect.companySystemID',
+                'erp_custinvoicedirect.bookingInvCode',
+                'erp_custinvoicedirect.wareHouseSystemCode',
+                'erp_custinvoicedirect.approved'
+            )
+            ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->where('canceledYN', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherInvoice)) {
+            return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
 
