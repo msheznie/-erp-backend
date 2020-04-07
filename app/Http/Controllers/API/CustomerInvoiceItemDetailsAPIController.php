@@ -186,9 +186,19 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['sellingCostAfterMargin'] = $input['sellingCost'];
         $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
-
         $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
         $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+
+        /*round to 7 decimals*/
+        $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
+        $input['issueCostLocalTotal'] = Helper::roundValue($input['issueCostLocalTotal']);
+        $input['issueCostRpt'] = Helper::roundValue($input['issueCostRpt']);
+        $input['issueCostRptTotal'] = Helper::roundValue($input['issueCostRptTotal']);
+        $input['sellingCost'] = Helper::roundValue($input['sellingCost']);
+        $input['sellingCostAfterMargin'] = Helper::roundValue($input['sellingCostAfterMargin']);
+        $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
+        $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
+        $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
 
         if ($input['currentStockQty'] <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
@@ -223,7 +233,9 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError("Account code not updated.", 500);
         }
 
-        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']
+            || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']
+            || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
         }
 
@@ -259,6 +271,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 $query->where('itemCodeSystem', $input['itemCodeSystem']);
             })
             ->where('approved', 0)
+            ->where('canceledYN', 0)
             ->first();
         /* approved=0*/
 
@@ -268,7 +281,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
 
         $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
-            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
+//            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
             ->select([
                 'erp_itemissuemaster.itemIssueAutoID',
                 'erp_itemissuemaster.companySystemID',
@@ -295,7 +308,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
-            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
+//            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
             ->select([
                 'erp_stocktransfer.stockTransferAutoID',
                 'erp_stocktransfer.companySystemID',
@@ -514,6 +527,16 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
+
+        $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
+        $input['issueCostLocalTotal'] = Helper::roundValue($input['issueCostLocalTotal']);
+        $input['issueCostRpt'] = Helper::roundValue($input['issueCostRpt']);
+        $input['issueCostRptTotal'] = Helper::roundValue($input['issueCostRptTotal']);
+        $input['sellingCost'] = Helper::roundValue($input['sellingCost']);
+        $input['sellingCostAfterMargin'] = Helper::roundValue($input['sellingCostAfterMargin']);
+        $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
+        $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
+        $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
 
        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
 
