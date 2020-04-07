@@ -6,10 +6,12 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierCatalogMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCatalogMasterAPIRequest;
 use App\Models\ItemAssigned;
+use App\Models\ProcumentOrder;
 use App\Models\SupplierCatalogDetail;
 use App\Models\SupplierCatalogMaster;
 use App\Repositories\SupplierCatalogMasterRepository;
 use Carbon\Carbon;
+use function foo\func;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -411,5 +413,30 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         }
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    function getSupplierCatalogDetailBySupplierItem(Request $request){
+
+        $input  = $request->all();
+
+        $company_id = $input['companyId'];
+        $po_id = $input['id'];
+        $item_id = $input['item_id'];
+
+        $po = ProcumentOrder::find($po_id);
+        $supplierID = $po->supplierID;
+        $catalog = SupplierCatalogDetail::whereHas('master', function($query) use($company_id,$supplierID){
+            $query->where('companySystemID',$company_id)->where('supplierID',$supplierID)->where('isActive',1);
+        })
+            ->where('itemCodeSystem',$item_id)
+            ->where(function ($q){
+                $q->whereNull('isDeleted')
+                    ->orWhere('isDeleted',0);
+            })
+            ->with(['uom_default','item_by','local_currency','master'])
+            ->first();
+
+        return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
+
     }
 }

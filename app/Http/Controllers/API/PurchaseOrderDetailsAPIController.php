@@ -519,6 +519,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $prDetail_arr['budjetAmtLocal'] = $new['budjetAmtLocal'];
                         $prDetail_arr['budjetAmtRpt'] = $new['budjetAmtRpt'];
 
+                        $prDetail_arr['supplierCatalogDetailID'] = isset($new['supplierCatalogDetailID'])?$new['supplierCatalogDetailID']:0;
+                        $prDetail_arr['supplierCatalogMasterID'] = isset($new['supplierCatalogMasterID'])?$new['supplierCatalogMasterID']:0;
+
                         if ($new['poUnitAmount'] > 0) {
                             $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
 

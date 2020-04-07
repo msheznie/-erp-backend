@@ -187,6 +187,8 @@ class PurchaseOrderDetails extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'supplierCatalogMasterID',
+        'supplierCatalogDetailID',
         'timeStamp',
         'madeLocallyYN'
     ];
@@ -274,7 +276,9 @@ class PurchaseOrderDetails extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'madeLocallyYN' => 'integer'
+        'madeLocallyYN' => 'integer',
+        'supplierCatalogMasterID' => 'integer',
+        'supplierCatalogDetailID' => 'integer'
     ];
 
     /**
