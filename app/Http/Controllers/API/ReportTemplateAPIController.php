@@ -426,6 +426,17 @@ class ReportTemplateAPIController extends AppBaseController
         return $this->sendResponse($output, 'Report Template retrieved successfully');
     }
 
+    public function getAllReportTemplateForCopy(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $companyReportTemplateID = $input['companyReportTemplateID'];
+        $reportTemplate = ReportTemplate::with(['template_type'])->OfCompany($companyID)
+                                        ->where('companyReportTemplateID','!=', $companyReportTemplateID)
+                                        ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
     function getEmployees(Request $request)
     {
         $companySystemID = $request['companySystemID'];

@@ -1420,6 +1420,11 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 38)
+            ->where('isYesNO',1)
+            ->exists();
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1439,7 +1444,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'grvRecieved' => $grvRecieved,
             'invoiceBooked' => $invoiceBooked,
             'poAddonCategoryDrop' => $poAddonCategoryDrop,
-            'icvCategories' => $icvCategories
+            'icvCategories' => $icvCategories,
+            'isSupplierCatalogPolicy' => $hasPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

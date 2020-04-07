@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CountryMaster;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierCategoryMaster;
@@ -131,6 +132,11 @@ class CompanyAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $selectedCompanyId)
+            ->where('companyPolicyCategoryID', 38)
+            ->where('isYesNO',1)
+            ->exists();
+
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
             'country' => $country,
@@ -143,7 +149,8 @@ class CompanyAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection,
             'allCompanies' => $allCompanies,
             'contactTypes' => $contactTypes,
-            'icvCategories' => $icvCategories
+            'icvCategories' => $icvCategories,
+            'isSupplierCatalogPolicy' => $hasPolicy
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 
