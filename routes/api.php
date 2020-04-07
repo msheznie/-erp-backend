@@ -1349,11 +1349,13 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('report_templates', 'ReportTemplateAPIController');
     Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+    Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
     Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
     Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
     Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
     Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
     Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
+    Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
     Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
     Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
     Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
@@ -1623,6 +1625,28 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
 
+
+    Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+    Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+    Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
+    Route::resource('user_rights', 'UserRightsAPIController');
+    Route::resource('lpt_permissions', 'LptPermissionAPIController');
+    Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+    Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+    Route::resource('segment_rights', 'SegmentRightsAPIController');
+    Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+    Route::resource('service_lines', 'ServiceLineAPIController');
+    Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+    Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
+    Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+    Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+    Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+    Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
+    Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
+    Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
+
     Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
 
     Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
@@ -1630,6 +1654,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
     Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
     Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
+
 
 });
 
@@ -1678,17 +1703,6 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 Route::get('runQueue', function () {
     $master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
-    //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
-    //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(261);
-    //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
-    //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
-    //$job = \App\Jobs\CreateDepreciation::dispatch(100000656);
-    //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
-    //$job = \App\Jobs\AccountPayableLedgerInsert::dispatch($master);
-    //$job = \App\Helper\Helper::generateAssetDisposal($master);
-    //return $job = \App\Helper\Helper::postedDatePromptInFinalApproval($master);
 });
 
 Route::get('runQueueSR', function () {
@@ -1699,6 +1713,7 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
+
 
 
 Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
@@ -1737,5 +1752,6 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 
 
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
 
 

@@ -26,6 +26,7 @@ use App\Models\ControlAccount;
 use App\Models\AccountsType;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
+use App\Models\ReportTemplateLinks;
 use App\Models\YesNoSelection;
 use App\Repositories\ChartOfAccountRepository;
 use Illuminate\Http\Request;
@@ -587,6 +588,11 @@ class ChartOfAccountAPIController extends AppBaseController
             if($input['catogaryBLorPL']) {
                 $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
             }
+        }
+
+        if (isset($input['templateMasterID'])) {
+            $tempDetail = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+            $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
         }
 
         $items = $items->get();

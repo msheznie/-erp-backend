@@ -513,7 +513,7 @@ class BudgetMasterAPIController extends AppBaseController
                 })
             ->leftJoin(DB::raw('(SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, 
                                erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
-                               Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseorderdetails.budgetYear FROM 
+                               Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
                                erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
                                AND ((erp_purchaseordermaster.poCancelledYN)=0))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
                                (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
@@ -750,9 +750,9 @@ class BudgetMasterAPIController extends AppBaseController
                 $q->where('companySystemID', $data['companySystemID'])
                     ->where('serviceLineSystemID', $data['serviceLineSystemID'])
                     ->where('approved', 0)
-                    ->where('poCancelledYN', 0);
+                    ->where('poCancelledYN', 0)
+                    ->where('budgetYear', $data['Year']);
                  })
-                ->where('budgetYear', $data['Year'])
                 ->whereIn('financeGLcodePLSystemID', $glIds)
                 ->whereNotNull('financeGLcodePLSystemID')
                 ->with(['order'])
