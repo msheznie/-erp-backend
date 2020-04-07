@@ -497,4 +497,89 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
     }
 
+    public function mirrorReportTemplateRowConfiguration(Request $request)
+    {
+        $input = $request->all();
+
+        $templateID = $input['templateID'];
+        $mirrorTemplateID = $input['mirrorTemplateID'];
+
+        $reportTemplateDetails = ReportTemplateDetails::with(['subcategory' => function ($q) {
+            $q->with(['gllink' => function ($q) {
+                $q->with('subcategory_detail');
+            }]);
+        }, 'subcategorytot' => function ($q) {
+            $q->with('subcategory_detail');
+        }])->OfMaster($mirrorTemplateID)->whereNull('masterID')->get()->toArray();
+
+        $oldReportIds = [];
+        DB::beginTransaction();
+        try {
+            foreach ($reportTemplateDetails as $key => $value) {
+                $detID = $value['detID'];
+                $value['detID'] = null;
+                $value['companyReportTemplateID'] = $templateID;
+                $subcategory = $value['subcategory'];
+                $subcategorytot = $value['subcategorytot'];
+                unset($value['subcategory']);
+                unset($value['subcategorytot']);
+
+                $saveTemplateDetails = ReportTemplateDetails::create($value);
+                $oldReportIds[$detID] = $saveTemplateDetails['detID'];
+
+                foreach ($subcategory as $subKey => $subCateogryValue) {
+                    $subCategoryDetID = $subCateogryValue['detID'];
+                    $subCateogryValue['detID'] = null;
+                    $subCateogryValue['companyReportTemplateID'] = $templateID;
+                    $subCateogryValue['masterID'] = $saveTemplateDetails['detID'];
+                    $gllink = $subCateogryValue['gllink'];
+                    unset($subCateogryValue['gllink']);
+                    $saveSubCategory = ReportTemplateDetails::create($subCateogryValue);
+                    $oldReportIds[$subCategoryDetID] = $saveSubCategory['detID'];
+
+                    foreach ($gllink as $glKey => $glValue) {
+                        $glValue['linkID'] = null;
+                        $glValue['templateMasterID'] = $templateID;
+                        $glValue['templateDetailID'] = $saveSubCategory['detID'];
+
+                        $glSubCategory = $glValue['subCategory'];
+                        $glSubCategoryDetail = $glValue['subcategory_detail'];
+                        unset($glValue['subcategory_detail']);
+
+                        if ($glValue['subCategory'] != null && $oldReportIds[$glValue['subCategory']] != null) {
+                            $glValue['subCategory'] = $oldReportIds[$glValue['subCategory']];
+                        } else {
+                            $glValue['subCategory'] = null;
+                        }
+                        $saveTemplateDetailLinks = ReportTemplateLinks::create($glValue);
+                    }
+                }
+
+                foreach ($subcategorytot as $subTotKey => $subCateogryTotValue) {
+                    $subCateogryTotValue['linkID'] = null;
+                    $subCateogryTotValue['templateMasterID'] = $templateID;
+                    $subCateogryTotValue['templateDetailID'] = $saveTemplateDetails['detID'];
+
+                    $glSubCategory = $subCateogryTotValue['subCategory'];
+                    $glSubCategoryDetail = $subCateogryTotValue['subcategory_detail'];
+                    unset($subCateogryTotValue['subcategory_detail']);
+
+                    if ($subCateogryTotValue['subCategory'] != null && $oldReportIds[$subCateogryTotValue['subCategory']] != null) {
+                        $subCateogryTotValue['subCategory'] = $oldReportIds[$subCateogryTotValue['subCategory']];
+                    } else {
+                        $subCateogryTotValue['subCategory'] = null;
+                    }
+
+                    $saveTemplateDetailLinks = ReportTemplateLinks::create($subCateogryTotValue);
+                }
+
+            }
+            
+            DB::commit();
+            return $this->sendResponse([], 'Report Template Details mirrored successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);
+        }
+    }
 }
