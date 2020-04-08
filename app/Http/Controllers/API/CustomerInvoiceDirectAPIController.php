@@ -1269,7 +1269,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
-        $output['isPerforma'] = $master->isPerforma;
+        if($id){
+            $output['isPerforma'] = $master->isPerforma;
+        }
 
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)
