@@ -1301,7 +1301,7 @@ GROUP BY
         $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
         $temp['comments'] = $jvMaster['JVNarration'];
-        $temp['debitAmount'] = (!$creditFlag) ? $jvAmount : 0;
+        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
         $temp['creditAmount'] = (!$creditFlag) ? 0 : $generalLedgerAmount;
         $temp['cuurencyname'] = null;
         $temp['documentSystemID'] = 17;
