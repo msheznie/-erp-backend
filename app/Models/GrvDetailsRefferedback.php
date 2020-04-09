@@ -469,7 +469,8 @@ class GrvDetailsRefferedback extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'binNumber'
     ];
 
     /**
@@ -539,6 +540,7 @@ class GrvDetailsRefferedback extends Model
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
         'logisticsAvailable' => 'integer',
+        'binNumber' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',

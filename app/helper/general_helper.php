@@ -27,6 +27,7 @@ use App\Jobs\ItemLedgerInsert;
 use App\Jobs\RollBackApproval;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
+use App\Jobs\WarehouseItemUpdate;
 use App\Models;
 use App\Models\Alert;
 use App\Models\CompanyPolicyMaster;
@@ -1807,6 +1808,7 @@ class Helper
                                     $masterData['supplierID'] = $sourceData->supplierID;
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
+                                    WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
                                 }
                             }
 

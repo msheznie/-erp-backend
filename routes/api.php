@@ -517,6 +517,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
+    Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse');
     Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
@@ -1700,8 +1701,11 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    //$master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+
+    \App\Jobs\WarehouseItemUpdate::dispatch(57910);
+
 });
 
 Route::get('runQueueSR', function () {
