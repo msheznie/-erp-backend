@@ -240,7 +240,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt');
                         break;
-                    case 20: // Material Issue
+                    case 20: // Customer Invoice
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                         $docInforArr["childRelation"] = 'issue_item_details';
@@ -251,9 +251,9 @@ class ItemLedgerInsert implements ShouldQueue
                             'companyID' => 'companyID',
                             'serviceLineSystemID' => 'serviceLineSystemID',
                             'serviceLineCode' => 'serviceLineCode',
-                            'documentSystemID' => 'documentSystemID',
+                            'documentSystemID' => 'documentSystemiD',
                             'documentID' => 'documentID',
-                            'documentCode' => 'itemIssueCode',
+                            'documentCode' => 'bookingInvCode',
                             'wareHouseSystemCode' => 'wareHouseSystemCode',
                             'referenceNumber' => 'customerInvoiceNo');
 
@@ -365,7 +365,7 @@ class ItemLedgerInsert implements ShouldQueue
                                         $data[$i][$column] = (($detail['wacAdjLocal'])-($detail['currentWaclocal']))*$detail['currenctStockQty'];
 
                                     }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
-                                        $data[$i][$column] = $detail['sellingCostAfterMarginLocal']*$detail['qtyIssuedDefaultMeasure'];
+                                        $data[$i][$column] = $detail['sellingCostAfterMarginLocal'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];
                                     }
@@ -374,7 +374,7 @@ class ItemLedgerInsert implements ShouldQueue
                                         $data[$i][$column] = (($detail['wacAdjRpt'])-($detail['currentWacRpt']))*$detail['currenctStockQty'];
 
                                     }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
-                                        $data[$i][$column] = $data[$i][$column] = $detail['sellingCostAfterMarginRpt']*$detail['qtyIssuedDefaultMeasure'];
+                                        $data[$i][$column] = $data[$i][$column] = $detail['sellingCostAfterMarginRpt'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];
                                     }

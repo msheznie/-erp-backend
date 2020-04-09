@@ -6,12 +6,15 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierCatalogMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCatalogMasterAPIRequest;
 use App\Models\ItemAssigned;
+use App\Models\ProcumentOrder;
 use App\Models\SupplierCatalogDetail;
 use App\Models\SupplierCatalogMaster;
 use App\Repositories\SupplierCatalogMasterRepository;
 use Carbon\Carbon;
+use function foo\func;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -127,6 +130,17 @@ class SupplierCatalogMasterAPIController extends AppBaseController
 
         if ($validator->fails()) {//echo 'in';exit;
             return $this->sendError($validator->messages(), 422);
+        }
+
+        $hasCatalogID = SupplierCatalogMaster::where('catalogID',$input['catalogID'])
+            ->where(function ($q){
+                $q->whereNull('isDeleted')
+                    ->orWhere('isDeleted',0);
+            })
+            ->exists();
+
+        if($hasCatalogID){
+            return $this->sendError('Duplicate Catalog Code Found',500);
         }
 
         if(isset($input['fromDate'])){
@@ -263,6 +277,18 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+        $hasCatalogID = SupplierCatalogMaster::where('catalogID',$input['catalogID'])
+            ->where('supplierCatalogMasterID','!=',$id)
+            ->where(function ($q){
+                $q->whereNull('isDeleted')
+                    ->orWhere('isDeleted',0);
+            })
+            ->exists();
+
+        if($hasCatalogID){
+            return $this->sendError('Duplicate Catalog Code Found', 500);
+        }
+
         /** @var SupplierCatalogMaster $supplierCatalogMaster */
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->findWithoutFail($id);
 
@@ -411,5 +437,35 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         }
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    function getSupplierCatalogDetailBySupplierItem(Request $request){
+
+        $input  = $request->all();
+
+        $company_id = $input['companyId'];
+        $po_id = $input['id'];
+        $item_id = $input['item_id'];
+
+        $po = ProcumentOrder::find($po_id);
+        $poDate = Carbon::parse($po->createdDateTime)->format('y-m-d');
+        $supplierID = $po->supplierID;
+        $catalog = SupplierCatalogDetail::whereHas('master', function($query) use($company_id,$supplierID,$poDate){
+            $query->where('companySystemID',$company_id)
+                ->where('fromDate','<=',$poDate)
+                ->where('toDate','>=',$poDate)
+                ->where('supplierID',$supplierID)
+                ->where('isActive',1);
+        })
+            ->where('itemCodeSystem',$item_id)
+            ->where(function ($q){
+                $q->whereNull('isDeleted')
+                    ->orWhere('isDeleted',0);
+            })
+            ->with(['uom_default','item_by','local_currency','master'])
+            ->first();
+
+        return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
+
     }
 }

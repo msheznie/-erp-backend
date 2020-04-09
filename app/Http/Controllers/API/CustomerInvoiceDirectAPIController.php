@@ -744,6 +744,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
                         foreach ($details as $item) {
+
+//                            If the revenue account or cost account or BS account is null do not allow to confirm
+
+                            if(!($item->financeGLcodebBSSystemID > 0)){
+                                return $this->sendError('BS account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }elseif (!($item->financeGLcodePLSystemID > 0)){
+                                return $this->sendError('Cost account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
+                                return $this->sendError('Revenue account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            }
+
                             $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
                             $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
                                 'itemCodeSystem' => $updateItem->itemCodeSystem,
@@ -1198,7 +1209,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -1258,6 +1269,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
+        if($id){
+            $output['isPerforma'] = $master->isPerforma;
+        }
 
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)
