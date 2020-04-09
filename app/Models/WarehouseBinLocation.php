@@ -109,4 +109,9 @@ class WarehouseBinLocation extends Model
     {
         return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
     }
+
+    public function sub_level()
+    {
+        return $this->belongsTo(WarehouseSubLevels::class,'warehouseSubLevelId');
+    }
 }

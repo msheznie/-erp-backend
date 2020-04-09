@@ -334,22 +334,22 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $id = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse = WarehouseMaster::withcount(['sub_levels' => function ($q) {
-                                        $q->where('parent_id', 0)
-                                            ->where('level', 1);
-                                    }, 'bin_locations'])
-                                        ->with(['sub_levels' => function ($q) {
-                                            $q->where('parent_id', 0)
-                                                ->where('level', 1)
-                                                ->withcount(['children', 'bin_locations'])
-                                                ->with(['children' => function ($q1) { // 1st level
-                                                    $q1->withcount(['children', 'bin_locations'])
-                                                        ->with(['children' => function ($q3) { // 2nd level
-                                                            $q3->withcount(['children', 'bin_locations'])
-                                                                ->with(['children']); // 3rd level
-                                                        }]);
-                                                }]);
-                                        }])
-                                        ->find($id);
+            $q->where('parent_id', 0)
+                ->where('level', 1);
+        }, 'bin_locations'])
+            ->with(['sub_levels' => function ($q) {
+                $q->where('parent_id', 0)
+                    ->where('level', 1)
+                    ->withcount(['children', 'bin_locations'])
+                    ->with(['children' => function ($q1) { // 1st level
+                        $q1->withcount(['children', 'bin_locations'])
+                            ->with(['children' => function ($q3) { // 2nd level
+                                $q3->withcount(['children', 'bin_locations'])
+                                    ->with(['children']); // 3rd level
+                            }]);
+                    }]);
+            }])
+            ->find($id);
 
         if (empty($warehouse)) {
             return $this->sendError('Warehouse not found');
@@ -357,5 +357,24 @@ class WarehouseSubLevelsAPIController extends AppBaseController
 
 
         return $this->sendResponse($warehouse, 'Warehouse Sub Levels retrieved successfully');
+    }
+
+    public function getSubLevelsByWarehouse(Request $request)
+    {
+
+        $input = $request->all();
+
+        $id = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+
+        $warehouse = WarehouseMaster::find($id);
+
+        if (empty($warehouse)) {
+            return $this->sendError('Warehouse not found');
+        }
+
+        $subLevels = WarehouseSubLevels::where('warehouse_id',$id)->where('isFinalLevel',1)->get(['id','name']);
+
+
+        return $this->sendResponse($subLevels, 'Warehouse Sub Levels retrieved successfully');
     }
 }

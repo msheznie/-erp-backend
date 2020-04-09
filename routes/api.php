@@ -1647,6 +1647,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
     Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
+    Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse');
 
     Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
 
