@@ -1209,7 +1209,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -1269,6 +1269,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
+        if($id){
+            $output['isPerforma'] = $master->isPerforma;
+        }
 
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)

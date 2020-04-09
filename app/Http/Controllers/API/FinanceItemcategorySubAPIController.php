@@ -160,6 +160,16 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             }
         }
 
+        if(isset($input['financeGLcodebBSSystemID']) && !$input['financeGLcodebBSSystemID']){
+            $input['financeGLcodebBSSystemID'] = null;
+        }
+        if(isset($input['financeGLcodePLSystemID']) && !$input['financeGLcodePLSystemID']){
+            $input['financeGLcodebBSSystemID'] = null;
+        }
+        if(isset($input['financeGLcodeRevenueSystemID']) && !$input['financeGLcodeRevenueSystemID']){
+            $input['financeGLcodeRevenueSystemID'] = null;
+        }
+
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];

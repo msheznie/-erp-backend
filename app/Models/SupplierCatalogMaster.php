@@ -4,7 +4,7 @@
  * -- File Name : SupplierCatalogMaster.php
  * -- Project Name : ERP
  * -- Module Name :  Supplier Catalog
- * -- Author : Mohamed Nazir
+ * -- Author : Mohamed Rilwan
  * -- Create date : 01 - April 2020
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
