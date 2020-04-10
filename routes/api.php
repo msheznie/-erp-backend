@@ -1655,6 +1655,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
     Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
 
+    Route::resource('customer_catalog_masters', 'CustomerCatalogMasterAPIController');
+
+    Route::resource('customer_catalog_details', 'CustomerCatalogDetailAPIController');
+
+    Route::post('getAllCustomerCatalogsByCompany', 'CustomerCatalogMasterAPIController@getAllCustomerCatalogsByCompany');
+    Route::get('getItemsOptionsCustomerCatalog', 'CustomerCatalogMasterAPIController@getItemsOptionsCustomerCatalog');
+    Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
+    Route::get('getAssignedCurrenciesByCustomer', 'CustomerCatalogMasterAPIController@getAssignedCurrenciesByCustomer');
+
 
 });
 
@@ -1752,6 +1761,8 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 
 
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
+
 
 
 

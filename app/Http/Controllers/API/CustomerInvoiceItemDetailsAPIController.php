@@ -7,6 +7,7 @@ use App\helper\inventory;
 use App\Http\Requests\API\CreateCustomerInvoiceItemDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceItemDetailsAPIRequest;
 use App\Models\CompanyPolicyMaster;
+use App\Models\CustomerCatalogDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -167,22 +168,28 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
         $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
+
         $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+        $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+
         $input['issueCostLocalTotal'] =  $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
 
         $input['reportingCurrencyID'] = $customerInvoiceDirect->companyReportingCurrencyID;
         $input['reportingCurrencyER'] = $customerInvoiceDirect->companyReportingER;
 
-        $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-
         $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
         $input['marginPercentage'] = 0;
-
 
         $companyCurrencyConversion = Helper::currencyConversion($companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$input['issueCostRpt']);
         $input['sellingCurrencyID'] = $customerInvoiceDirect->custTransactionCurrencyID;
         $input['sellingCurrencyER'] = $customerInvoiceDirect->custTransactionCurrencyER;
-        $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
+        if((isset($input['customerCatalogDetailID']) && $input['customerCatalogDetailID']>0)){
+            $catalogDetail = CustomerCatalogDetail::find($input['customerCatalogDetailID']);
+            $input['sellingCost'] = $catalogDetail->localPrice;
+        }else{
+            $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
+        }
+
         $input['sellingCostAfterMargin'] = $input['sellingCost'];
         $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
