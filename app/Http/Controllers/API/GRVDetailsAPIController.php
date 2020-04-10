@@ -26,6 +26,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
+use App\Models\WarehouseItems;
 use App\Models\WarehouseMaster;
 use App\Repositories\GRVDetailsRepository;
 use App\Repositories\GRVMasterRepository;
@@ -145,6 +146,10 @@ class GRVDetailsAPIController extends AppBaseController
 
             if (is_null($input['noQty'])) {
                 $input['noQty'] = 0;
+            }
+
+            if(!isset($input['binNumber'])) {
+                $input['binNumber'] = 0;
             }
 
             $gRVDetails = $this->gRVDetailsRepository->update($input, $id);
@@ -328,6 +333,10 @@ class GRVDetailsAPIController extends AppBaseController
         $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
             ->first();
 
+        if(empty($GRVMaster)){
+            $this->sendError('GRV not found',500);
+        }
+
         $allowMultiplePO = CompanyPolicyMaster::where('companyPolicyCategoryID', 10)
             ->where('companySystemID', $GRVMaster->companySystemID)
             ->first();
@@ -352,6 +361,12 @@ class GRVDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
+                                                                ->where('companySystemID', $GRVMaster->companySystemID)
+                                                                ->where('isYesNO', 1)
+                                                                ->exists();
+
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
 
@@ -435,6 +450,17 @@ class GRVDetailsAPIController extends AppBaseController
                         $goodsRecievedYN = 1;
                         $GRVSelectedYN = 0;
                     }
+                    $warehouseItem = array();
+                    if($warehouseBinLocationPolicy && $new['itemFinanceCategoryID']){
+                        $warehouseItemTemp = WarehouseItems::where('warehouseSystemCode',$GRVMaster->grvLocation)
+                                                             ->where('companySystemID' , $GRVMaster->companySystemID)
+                                                             ->where('itemSystemCode',$new['itemCode'])
+                                                             ->first();
+                        if(!empty($warehouseItemTemp)){
+                            $warehouseItem = $warehouseItemTemp;
+                        }
+                    }
+
 
                     // checking the qty request is matching with sum total
                     if ($new['poQty'] >= $new['noQty']) {
@@ -490,6 +516,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
                         $GRVDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
                         $GRVDetail_arr['logisticsAvailable'] = $POMaster->logisticsAvailable;
+                        $GRVDetail_arr['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
 
                         $GRVDetail_arr['createdPcID'] = gethostname();
                         $GRVDetail_arr['createdUserID'] = $user->employee['empID'];
@@ -520,7 +547,7 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendResponse('', 'GRV details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
     }

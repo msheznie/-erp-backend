@@ -77,7 +77,9 @@ class WarehouseBinLocation extends Model
         'dateCreated',
         'isActive',
         'timeStamp',
-        'warehouseSubLevelId'
+        'warehouseSubLevelId',
+        'isDeleted',
+        'deleted_at'
     ];
 
     /**
@@ -93,6 +95,7 @@ class WarehouseBinLocation extends Model
         'wareHouseSystemCode' => 'integer',
         'createdBy' => 'string',
         'isActive' => 'integer',
+        'isDeleted' => 'integer',
         'warehouseSubLevelId' => 'integer'
     ];
 
@@ -108,5 +111,10 @@ class WarehouseBinLocation extends Model
     public function warehouse_by()
     {
         return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
+
+    public function sub_level()
+    {
+        return $this->belongsTo(WarehouseSubLevels::class,'warehouseSubLevelId');
     }
 }

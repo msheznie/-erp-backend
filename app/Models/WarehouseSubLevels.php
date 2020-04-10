@@ -112,7 +112,11 @@ class WarehouseSubLevels extends Model
         'created_by',
         'created_pc',
         'updated_by',
-        'updated_pc'
+        'updated_pc',
+        'isActive',
+        'is_deleted',
+        'deleted_by',
+        'deleted_at'
     ];
 
     /**
@@ -132,7 +136,9 @@ class WarehouseSubLevels extends Model
         'created_by' => 'integer',
         'created_pc' => 'string',
         'updated_by' => 'integer',
-        'updated_pc' => 'string'
+        'updated_pc' => 'string',
+        'isActive' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**

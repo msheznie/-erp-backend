@@ -24,48 +24,48 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
+use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
+use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\GeneralLedger;
+use App\Models\GRVDetails;
 use App\Models\GrvDetailsRefferedback;
 use App\Models\GRVMaster;
-use App\Models\CompanyPolicyMaster;
 use App\Models\GrvMasterRefferedback;
+use App\Models\GRVTypes;
 use App\Models\ItemAssigned;
+use App\Models\Location;
+use App\Models\Months;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
+use App\Models\SupplierCurrency;
+use App\Models\SupplierMaster;
 use App\Models\UnbilledGRV;
 use App\Models\UnbilledGrvGroupBy;
+use App\Models\WarehouseBinLocation;
+use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
-use App\Models\Months;
-use App\Models\SupplierAssigned;
-use App\Models\CurrencyMaster;
-use App\Models\Location;
-use App\Models\GRVTypes;
-use App\Models\SupplierMaster;
-use App\Models\Company;
-use App\Models\DocumentMaster;
-use App\Models\CompanyDocumentAttachment;
-use App\Models\CompanyFinancePeriod;
-use App\Models\SupplierCurrency;
-use App\Models\WarehouseMaster;
-use App\Models\GRVDetails;
-use App\Models\CompanyFinanceYear;
 use App\Repositories\GRVMasterRepository;
-use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
-use Prettus\Repository\Criteria\RequestCriteria;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
@@ -135,12 +135,12 @@ class GRVMasterAPIController extends AppBaseController
 
         unset($inputParam);
 
-        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        $currentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
-                if($input['grvDate'] > $currentDate){
-                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                if ($input['grvDate'] > $currentDate) {
+                    return $this->sendError('GRV date can not be greater than current date', 500);
                 }
             }
         }
@@ -150,8 +150,8 @@ class GRVMasterAPIController extends AppBaseController
                 $input['stampDate'] = new Carbon($input['stampDate']);
             }
 
-            if($input['stampDate'] > $currentDate){
-                return $this->sendError( 'Stamp date can not be greater than current date',500);
+            if ($input['stampDate'] > $currentDate) {
+                return $this->sendError('Stamp date can not be greater than current date', 500);
             }
         }
 
@@ -169,7 +169,6 @@ class GRVMasterAPIController extends AppBaseController
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         $input['documentSystemID'] = '3';
         $input['documentID'] = 'GRV';
-
 
 
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
@@ -272,7 +271,7 @@ class GRVMasterAPIController extends AppBaseController
      * Display the specified GRVMaster.
      * GET|HEAD /gRVMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -283,9 +282,9 @@ class GRVMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }, 'grvtype_by','supplier_by' => function($query){
+        }, 'grvtype_by', 'supplier_by' => function ($query) {
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
-        },'currency_by'=> function($query){
+        }, 'currency_by' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         }])->findWithoutFail($id);
 
@@ -300,7 +299,7 @@ class GRVMasterAPIController extends AppBaseController
      * Update the specified GRVMaster in storage.
      * PUT/PATCH /gRVMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      * @param UpdateGRVMasterAPIRequest $request
      *
      * @return Response
@@ -312,7 +311,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by','supplier_by','currency_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by', 'supplier_by', 'currency_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -331,8 +330,8 @@ class GRVMasterAPIController extends AppBaseController
                 $input['grvDate'] = new Carbon($input['grvDate']);
                 $input['grvDate'] = $input['grvDate']->format('Y-m-d');
 
-                if($input['grvDate'] > $currentDate){
-                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                if ($input['grvDate'] > $currentDate) {
+                    return $this->sendError('GRV date can not be greater than current date', 500);
                 }
             }
         }
@@ -342,8 +341,8 @@ class GRVMasterAPIController extends AppBaseController
                 $input['stampDate'] = new Carbon($input['stampDate']);
                 $input['stampDate'] = $input['stampDate']->format('Y-m-d');
 
-                if($input['stampDate'] > $currentDate){
-                    return $this->sendError( 'Stamp date can not be greater than current date',500);
+                if ($input['stampDate'] > $currentDate) {
+                    return $this->sendError('Stamp date can not be greater than current date', 500);
                 }
             }
         }
@@ -501,7 +500,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->selectRaw('ROUND(netAmount,3)')
                 ->count();
             if ($checkNetAmount > 0) {
-                 return $this->sendError('Every item net amount should be greater than or equal to zero', 500);
+                return $this->sendError('Every item net amount should be greater than or equal to zero', 500);
             }
 
             if ($grvMasterSum->masterTotalSum < 0) {
@@ -566,7 +565,7 @@ class GRVMasterAPIController extends AppBaseController
 
                     $logisticsCharges_TransCur = ($input['grvTotalSupplierTransactionCurrency'] == null || $input['grvTotalSupplierTransactionCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
 
-                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0: ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
+                    $logisticsCharges_LocalCur = ($input['grvTotalLocalCurrency'] == null || $input['grvTotalLocalCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
 
                     $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
@@ -590,7 +589,7 @@ class GRVMasterAPIController extends AppBaseController
 
 
             $rptCurrencyId = isset($gRVMaster->companyReportingCurrencyID) ? $gRVMaster->companyReportingCurrencyID : 2;
-            $rptCurrencyDecimalPlaces =  Helper::getCurrencyDecimalPlace($rptCurrencyId);
+            $rptCurrencyDecimalPlaces = Helper::getCurrencyDecimalPlace($rptCurrencyId);
 
             // check the logistic charges from GRv table
             $grvLogisticAmount = GRVDetails::select(DB::raw('COALESCE(SUM(noQty*logisticsCharges_LocalCur),0) as grvLocal, COALESCE(SUM(noQty*logisticsChargest_RptCur),0) as grvReport'))
@@ -598,7 +597,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->groupBy('grvAutoID')
                 ->first();
 
-            $grvReportAmount = round(isset($grvLogisticAmount->grvReport)?$grvLogisticAmount->grvReport:0,$rptCurrencyDecimalPlaces);
+            $grvReportAmount = round(isset($grvLogisticAmount->grvReport) ? $grvLogisticAmount->grvReport : 0, $rptCurrencyDecimalPlaces);
 
 
             // get the logistic charges from PO table which is linked to the grv
@@ -606,19 +605,19 @@ class GRVMasterAPIController extends AppBaseController
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->groupBy('grvAutoID')
                 ->first();
-            $grvPoAmount = round((isset($poLogisticAmount->poReport)?$poLogisticAmount->poReport:0),$rptCurrencyDecimalPlaces);
+            $grvPoAmount = round((isset($poLogisticAmount->poReport) ? $poLogisticAmount->poReport : 0), $rptCurrencyDecimalPlaces);
 
             // logistic charges from PO table should not be greater than data from grv table
-            if($grvPoAmount > $grvReportAmount){
-                return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.'.'GRV Logistic Amount is'. $grvReportAmount.' And PO Logistic Amount is '.$grvPoAmount,500);
+            if ($grvPoAmount > $grvReportAmount) {
+                return $this->sendError('PO logistic amount cannot be greater than GRV logistic amount.' . 'GRV Logistic Amount is' . $grvReportAmount . ' And PO Logistic Amount is ' . $grvPoAmount, 500);
             }
 
             $different = abs($input['grvTotalSupplierTransactionCurrency'] - $grvMasterSum['masterTotalSum']);
 
             if ($different < 0.01) {
                 // same
-            }else{
-                return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.',500);
+            } else {
+                return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.', 500);
             }
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
@@ -641,7 +640,7 @@ class GRVMasterAPIController extends AppBaseController
      * Remove the specified GRVMaster from storage.
      * DELETE /gRVMasters/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -790,8 +789,8 @@ class GRVMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $grvAutoID = $request['grvAutoID'];
-
+        $grvAutoID = isset($request['grvAutoID']) ? $request['grvAutoID'] : 0;
+        $wareHouseBinLocations = array();
         $segments = SegmentMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
@@ -861,6 +860,27 @@ class GRVMasterAPIController extends AppBaseController
             ->first();
 
 
+        $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        if ($warehouseBinLocationPolicy) {
+            $request['warehouseSystemCode'] = 0;
+            if ($grvAutoID) {
+                $grvMaster = GRVMaster::find($grvAutoID);
+                if (!empty($grvMaster)) {
+                    $request['warehouseSystemCode'] = $grvMaster->grvLocation;
+                }
+            }
+
+            $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $companyId)
+                ->where('wareHouseSystemCode', $request['warehouseSystemCode'])
+                ->where('isDeleted', 0)
+                ->where('isActive', -1)
+                ->get();
+        }
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -873,10 +893,25 @@ class GRVMasterAPIController extends AppBaseController
             'suppliers' => $supplier,
             'grvTypes' => $grvTypes,
             'companyFinanceYear' => $companyFinanceYear,
-            'companyPolicy' => $allowPartialGRVPolicy
+            'companyPolicy' => $allowPartialGRVPolicy,
+            'warehouseBinLocationPolicy' => $warehouseBinLocationPolicy,
+            'wareHouseBinLocations' => $wareHouseBinLocations
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getBinLocationsByWarehouse(Request $request)
+    {
+
+        $id = isset($request['id']) ? $request['id'] : 0;
+        $wareHouseBinLocations = array();
+        if ($id) {
+            $wareHouseBinLocations = WarehouseBinLocation::where('wareHouseSystemCode', $id)
+                ->get();
+        }
+
+        return $this->sendResponse($wareHouseBinLocations, 'Record retrieved successfully');
     }
 
     public function GRVSegmentChkActive(Request $request)
@@ -1346,7 +1381,8 @@ class GRVMasterAPIController extends AppBaseController
         return $this->sendResponse($grv, 'Data retrieved successfully');
     }
 
-    public function getSupplierInvoiceStatusHistoryForGRV(Request $request){
+    public function getSupplierInvoiceStatusHistoryForGRV(Request $request)
+    {
 
         $input = $request->all();
 
@@ -1452,27 +1488,29 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         return $this->sendResponse($grvMasterData->toArray(), 'Good receipt voucher amend successfully');
     }
 
-    public function cancelGRVPreCheck(Request $request) {
+    public function cancelGRVPreCheck(Request $request)
+    {
         $input = $request->all();
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
-        if($isEligible['status'] == 1){
+        if ($isEligible['status'] == 1) {
             return $this->sendResponse([], 'GRV Eligible for cancellation');
         }
-        $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '')?$isEligible['msg']:'GRV Not Eligible for cancellation';
-        return $this->sendError( $errorMsg,500);
+        $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for cancellation';
+        return $this->sendError($errorMsg, 500);
     }
 
-    public function cancelGRV(Request $request) {
+    public function cancelGRV(Request $request)
+    {
         $input = $request->all();
         $employee = Helper::getEmployeeInfo();
         // precheck
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
-        if($isEligible['status'] == 0){
-            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '')?$isEligible['msg']:'GRV Not Eligible for cancellation';
-            return $this->sendError( $errorMsg, 500);
+        if ($isEligible['status'] == 0) {
+            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for cancellation';
+            return $this->sendError($errorMsg, 500);
         }
         DB::beginTransaction();
-        try{
+        try {
             // update grv master
             $grv = GRVMaster::find($input['grvAutoID']);
             $grv->grvCancelledYN = -1;
@@ -1484,10 +1522,10 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $grv->save();
 
             // update erp_unbilledgrvgroupby
-            UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->update(['selectedForBooking'=>-1,'fullyBooked'=>2]);
+            UnbilledGrvGroupBy::where('grvAutoID', $input['grvAutoID'])->update(['selectedForBooking' => -1, 'fullyBooked' => 2]);
 
-            $generalLedger = GeneralLedger::where(['companySystemID' => $grv->companySystemID,'documentSystemID' => 3,'documentSystemCode' => $input['grvAutoID']])->get();
-            if(!empty($generalLedger)){
+            $generalLedger = GeneralLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->get();
+            if (!empty($generalLedger)) {
                 foreach ($generalLedger as $gl) {
                     unset($gl['GeneralLedgerID']);
                     $temp = $gl;
@@ -1495,15 +1533,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                     $temp['documentYear'] = date("Y");
                     $temp['documentMonth'] = date("n");
                     $temp['documentNarration'] = 'Reversal Entry';
-                    $temp['documentTransAmount'] = ($gl['documentTransAmount'])*-1;
-                    $temp['documentLocalAmount'] = ($gl['documentLocalAmount'])*-1;
-                    $temp['documentRptAmount'] = ($gl['documentRptAmount'])*-1;
+                    $temp['documentTransAmount'] = ($gl['documentTransAmount']) * -1;
+                    $temp['documentLocalAmount'] = ($gl['documentLocalAmount']) * -1;
+                    $temp['documentRptAmount'] = ($gl['documentRptAmount']) * -1;
                     GeneralLedger::create($temp->toArray());
                 }
             }
 
             DB::commit();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
         }
