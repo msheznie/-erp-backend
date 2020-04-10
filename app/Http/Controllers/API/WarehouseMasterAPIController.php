@@ -25,7 +25,9 @@ use App\Models\WarehouseMaster;
 use App\Models\Company;
 use App\Models\ErpLocation;
 use App\Models\YesNoSelection;
+use App\Repositories\WarehouseBinLocationRepository;
 use App\Repositories\WarehouseMasterRepository;
+use App\Repositories\WarehouseSubLevelsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -44,10 +46,16 @@ class WarehouseMasterAPIController extends AppBaseController
 {
     /** @var  WarehouseMasterRepository */
     private $warehouseMasterRepository;
+    private $warehouseSubLevelsRepository;
+    private $warehouseBinLocationRepository;
 
-    public function __construct(WarehouseMasterRepository $warehouseMasterRepo)
+    public function __construct(WarehouseMasterRepository $warehouseMasterRepo,
+                                WarehouseSubLevelsRepository $warehouseSubLevelsRepo,
+                                WarehouseBinLocationRepository $warehouseBinLocationRepo)
     {
         $this->warehouseMasterRepository = $warehouseMasterRepo;
+        $this->warehouseSubLevelsRepository = $warehouseSubLevelsRepo;
+        $this->warehouseBinLocationRepository = $warehouseBinLocationRepo;
     }
 
     /**
@@ -123,7 +131,11 @@ class WarehouseMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var WarehouseMaster $warehouseMaster */
-        $warehouseMaster = $this->warehouseMasterRepository->findWithoutFail($id);
+        $warehouseMaster = $this->warehouseMasterRepository->withcount(['sub_levels' => function ($q) {
+            $q->where('is_deleted', 0);
+        }, 'bin_locations' => function($q1){
+            $q1->where('isDeleted', 0);
+        }])->findWithoutFail($id);
 
         if (empty($warehouseMaster)) {
             return $this->sendError('Warehouse Master not found');
@@ -204,6 +216,19 @@ class WarehouseMasterAPIController extends AppBaseController
         }
 
         $warehouseMaster = $this->warehouseMasterRepository->update($input, $id);
+
+        if(isset($input['isActive']) && $input['isActive'] == 0){
+                  $warehouseSubLevels = $this->warehouseSubLevelsRepository->findWhere(['warehouse_id' => $id]);
+
+                  foreach ($warehouseSubLevels as $item){
+                      $this->warehouseSubLevelsRepository->update(['isActive' => 0],$item['id']);
+                  }
+                  $warehouseBinLocation = $this->warehouseBinLocationRepository->findWhere(['wareHouseSystemCode' => $id]);
+
+                    foreach ($warehouseBinLocation as $item){
+                        $this->warehouseBinLocationRepository->update(['isActive' => 0],$item['binLocationID']);
+                    }
+        }
 
         return $this->sendResponse($warehouseMaster->toArray(), $entityName.' updated successfully');
     }

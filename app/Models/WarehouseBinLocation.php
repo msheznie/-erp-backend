@@ -77,7 +77,9 @@ class WarehouseBinLocation extends Model
         'dateCreated',
         'isActive',
         'timeStamp',
-        'warehouseSubLevelId'
+        'warehouseSubLevelId',
+        'isDeleted',
+        'deleted_at'
     ];
 
     /**
@@ -93,6 +95,7 @@ class WarehouseBinLocation extends Model
         'wareHouseSystemCode' => 'integer',
         'createdBy' => 'string',
         'isActive' => 'integer',
+        'isDeleted' => 'integer',
         'warehouseSubLevelId' => 'integer'
     ];
 

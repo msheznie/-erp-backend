@@ -123,7 +123,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
         $input['createdBy'] = $employee->empID;
-        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId']);
+        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId','isActive']);
         $validator = \Validator::make($input, [
             'wareHouseSystemCode' => 'required',
             'binLocationDes' => 'required',
@@ -273,7 +273,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Bin location you are trying to change is already assigned to an inventory.',500);
         }
 
-        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId']), $id);
+        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
 
         return $this->sendResponse($warehouseBinLocation->toArray(), 'WarehouseBinLocation updated successfully');
     }
@@ -331,7 +331,10 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Bin location you are trying to delete is already assigned to an inventory.',500);
         }
 
-        $warehouseBinLocation->delete();
+        $data['isDeleted'] = 1;
+        $data['deleted_at'] = now();
+        $this->warehouseBinLocationRepository->update($data,$id);
+        //$warehouseBinLocation->delete();
 
         return $this->sendResponse($id, 'Warehouse Bin Location deleted successfully');
     }
@@ -371,6 +374,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
 
         $warehouseBinLocation = WarehouseBinLocation::with(['sub_level'])->whereIn('companySystemID', $subCompanies)
                                             ->where('wareHouseSystemCode', $input['wareHouseSystemCode'])
+                                            ->where('isDeleted', 0)
                                             ->with('warehouse_by');
 
         if($warehouseSubLevelId){
