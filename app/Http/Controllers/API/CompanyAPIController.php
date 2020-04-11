@@ -23,6 +23,7 @@ use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierCategoryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\SupplierImportance;
+use App\Models\SupplierMaster;
 use App\Models\suppliernature;
 use App\Models\SupplierContactType;
 use App\Models\YesNoSelection;
@@ -77,6 +78,7 @@ class CompanyAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['selectedCompanyId'];
+        $supplierID = isset($request['supplierID'])?$request['supplierID']:0;
 
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup",0)->get();
@@ -132,10 +134,17 @@ class CompanyAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
-        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $selectedCompanyId)
-            ->where('companyPolicyCategoryID', 38)
-            ->where('isYesNO',1)
-            ->exists();
+        $hasPolicy = false;
+        if($supplierID !=0){
+            $supplier = SupplierMaster::find($supplierID);
+            if(isset($supplier->primaryCompanySystemID) && $supplier->primaryCompanySystemID){
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 38)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
+        }
+
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,

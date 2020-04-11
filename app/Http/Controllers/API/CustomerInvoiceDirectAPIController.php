@@ -1209,7 +1209,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -1269,17 +1269,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
+        if($id){
+            $output['isPerforma'] = $master->isPerforma;
+        }
 
         $AICINV = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 24)
             ->where('isYesNO', 1)
             ->first();
+
         if (isset($AICINV->isYesNO) && $AICINV->isYesNO == 1) {
             $output['isPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }
+
+        if($id){
+            $customer = CustomerMaster::find($master->customerID);
+            if(!empty($customer)){
+                $output['isCustomerCatalogPolicyOn'] = CompanyPolicyMaster::where('companySystemID', $customer->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 39)
+                    ->where('isYesNO', 1)
+                    ->exists();
+            }
+
+        }
+
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }

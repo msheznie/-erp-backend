@@ -160,6 +160,16 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             }
         }
 
+        if(isset($input['financeGLcodebBSSystemID']) && !$input['financeGLcodebBSSystemID']){
+            $input['financeGLcodebBSSystemID'] = null;
+        }
+        if(isset($input['financeGLcodePLSystemID']) && !$input['financeGLcodePLSystemID']){
+            $input['financeGLcodebBSSystemID'] = null;
+        }
+        if(isset($input['financeGLcodeRevenueSystemID']) && !$input['financeGLcodeRevenueSystemID']){
+            $input['financeGLcodeRevenueSystemID'] = null;
+        }
+
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
@@ -190,6 +200,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         }
 
+        if(isset($input['includePLForGRVYN']) && $input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN'] == true){
+            $input['includePLForGRVYN'] = -1;
+        }
+
         if( array_key_exists ('itemCategorySubID' , $input )){
 
             $financeItemCategorySubs = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
@@ -198,10 +212,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             if (empty($financeItemCategorySubs)) {
                 return $this->sendError('Sub category not found');
-            }
-
-            if($input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN'] == true){
-                $input['includePLForGRVYN'] = -1;
             }
 
             foreach ($input as $key => $value) {

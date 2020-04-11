@@ -452,12 +452,14 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendError('Journal Voucher should have at least one item', 500);
             }
 
-            $checkQuantity = JvDetail::where('jvMasterAutoId', $id)
-                ->where('debitAmount', '<=', 0)
-                ->where('creditAmount', '<=', 0)
-                ->count();
-            if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+            if ($jvMaster->jvType != 4) {
+                $checkQuantity = JvDetail::where('jvMasterAutoId', $id)
+                    ->where('debitAmount', '<=', 0)
+                    ->where('creditAmount', '<=', 0)
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
+                }
             }
 
             $jvDetails = JvDetail::where('jvMasterAutoId', $id)->get();
