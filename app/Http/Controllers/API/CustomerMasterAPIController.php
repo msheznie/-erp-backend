@@ -21,6 +21,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
 use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\Company;
@@ -218,6 +219,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['selectedCompanyId'];
+        $customerID = isset($request['customerID'])?$request['customerID']:0;
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
@@ -247,12 +249,24 @@ class CustomerMasterAPIController extends AppBaseController
 
         $contactTypes = SupplierContactType::all();
 
+        $hasPolicy = false;
+        if($customerID !=0){
+            $customer = CustomerMaster::find($customerID);
+            if(isset($customer->primaryCompanySystemID) && $customer->primaryCompanySystemID){
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $customer->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 39)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
+        }
+
         $output = array(
             'allCompanies' => $allCompanies,
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccounts' => $chartOfAccounts,
             'country' => $country,
-            'contactTypes' => $contactTypes
+            'contactTypes' => $contactTypes,
+            'isCustomerCatalogPolicyOn'=>$hasPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

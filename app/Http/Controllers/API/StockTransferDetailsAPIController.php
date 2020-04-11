@@ -276,7 +276,7 @@ class StockTransferDetailsAPIController extends AppBaseController
                 'erp_custinvoicedirect.approved'
             )
             ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                $query->where('itemCodeSystem', $input['itemCode']);
             })
             ->where('approved', 0)
             ->where('canceledYN', 0)
