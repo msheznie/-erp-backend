@@ -876,6 +876,8 @@ class GRVMasterAPIController extends AppBaseController
 
             $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $companyId)
                 ->where('wareHouseSystemCode', $request['warehouseSystemCode'])
+                ->where('isDeleted', 0)
+                ->where('isActive', -1)
                 ->get();
         }
 

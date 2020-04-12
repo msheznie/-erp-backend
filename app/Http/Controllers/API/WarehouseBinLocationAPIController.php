@@ -123,7 +123,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
         $input['createdBy'] = $employee->empID;
-
+        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId','isActive']);
         $validator = \Validator::make($input, [
             'wareHouseSystemCode' => 'required',
             'binLocationDes' => 'required',
@@ -134,7 +134,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $warehouse           =  WarehouseMaster::find($input['wareHouseSystemCode']);
+        $warehouse   =  WarehouseMaster::find($input['wareHouseSystemCode']);
 
         if(empty($warehouse)){
             return $this->sendError('Warehouse not found');
@@ -259,7 +259,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
+        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId']);
         /** @var WarehouseBinLocation $warehouseBinLocation */
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 
@@ -273,7 +273,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Bin location you are trying to change is already assigned to an inventory.',500);
         }
 
-        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes']), $id);
+        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
 
         return $this->sendResponse($warehouseBinLocation->toArray(), 'WarehouseBinLocation updated successfully');
     }
@@ -331,7 +331,10 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Bin location you are trying to delete is already assigned to an inventory.',500);
         }
 
-        $warehouseBinLocation->delete();
+        $data['isDeleted'] = 1;
+        $data['deleted_at'] = now();
+        $this->warehouseBinLocationRepository->update($data,$id);
+        //$warehouseBinLocation->delete();
 
         return $this->sendResponse($id, 'Warehouse Bin Location deleted successfully');
     }
@@ -369,8 +372,9 @@ class WarehouseBinLocationAPIController extends AppBaseController
 
         $warehouseSubLevelId = isset($input['warehouseSubLevelId']) ? $input['warehouseSubLevelId'] : 0;
 
-        $warehouseBinLocation = WarehouseBinLocation::whereIn('companySystemID', $subCompanies)
+        $warehouseBinLocation = WarehouseBinLocation::with(['sub_level'])->whereIn('companySystemID', $subCompanies)
                                             ->where('wareHouseSystemCode', $input['wareHouseSystemCode'])
+                                            ->where('isDeleted', 0)
                                             ->with('warehouse_by');
 
         if($warehouseSubLevelId){

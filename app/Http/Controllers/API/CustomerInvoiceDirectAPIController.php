@@ -1277,12 +1277,25 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->where('companyPolicyCategoryID', 24)
             ->where('isYesNO', 1)
             ->first();
+
         if (isset($AICINV->isYesNO) && $AICINV->isYesNO == 1) {
             $output['isPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }
+
+        if($id){
+            $customer = CustomerMaster::find($master->customerID);
+            if(!empty($customer)){
+                $output['isCustomerCatalogPolicyOn'] = CompanyPolicyMaster::where('companySystemID', $customer->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 39)
+                    ->where('isYesNO', 1)
+                    ->exists();
+            }
+
+        }
+
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }

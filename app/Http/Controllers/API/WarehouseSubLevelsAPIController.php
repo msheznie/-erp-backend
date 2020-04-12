@@ -261,7 +261,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->update(array_only($input,
-            ['name', 'updated_pc', 'updated_by', 'description', 'isFinalLevel']), $id);
+            ['name', 'updated_pc', 'updated_by', 'description', 'isFinalLevel','isActive']), $id);
 
         return $this->sendResponse($warehouseSubLevels->toArray(), 'WarehouseSubLevels updated successfully');
     }
@@ -314,14 +314,19 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         }
 
         if ($warehouseSubLevels->children_count > 0) {
-            return $this->sendError('Cannot delete, This Level has Sub Levels.');
+            return $this->sendError('Cannot delete, Selected Level Level has sub levels.');
         }
 
         if ($warehouseSubLevels->bin_locations_count > 0) {
-            return $this->sendError('Cannot delete, This Level has some bin locations.');
+            return $this->sendError('Cannot delete, Selected Level has bin locations created.');
         }
 
-        $warehouseSubLevels->delete();
+        $data['is_deleted'] = 1;
+        $data['deleted_by'] = Helper::getEmployeeSystemID();;
+        $data['deleted_at'] = now();
+
+        $this->warehouseSubLevelsRepository->update($data,$id);
+        //$warehouseSubLevels->delete();
 
         return $this->sendResponse($id, 'Warehouse Sub Levels deleted successfully');
     }
@@ -334,22 +339,42 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $id = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse = WarehouseMaster::withcount(['sub_levels' => function ($q) {
-                                        $q->where('parent_id', 0)
-                                            ->where('level', 1);
-                                    }, 'bin_locations'])
-                                        ->with(['sub_levels' => function ($q) {
-                                            $q->where('parent_id', 0)
-                                                ->where('level', 1)
-                                                ->withcount(['children', 'bin_locations'])
-                                                ->with(['children' => function ($q1) { // 1st level
-                                                    $q1->withcount(['children', 'bin_locations'])
-                                                        ->with(['children' => function ($q3) { // 2nd level
-                                                            $q3->withcount(['children', 'bin_locations'])
-                                                                ->with(['children']); // 3rd level
-                                                        }]);
-                                                }]);
-                                        }])
-                                        ->find($id);
+            $q->where('parent_id', 0)
+                ->where('level', 1)
+                ->where('is_deleted', 0);
+        }, 'bin_locations' => function($q1){
+            $q1->where('isDeleted', 0);
+        }])
+            ->with(['sub_levels' => function ($q) {
+                $q->where('parent_id', 0)
+                    ->where('level', 1)
+                    ->where('is_deleted', 0)
+                    ->withcount(['children' => function($q1){
+                            $q1->where('is_deleted', 0);
+                        }, 'bin_locations' => function($q1){
+                        $q1->where('isDeleted', 0);
+                    }])
+                    ->with(['children' => function ($q1) { // 1st level
+                        $q1->where('is_deleted', 0)
+                            ->withcount(['children' => function($q3){
+                            $q3->where('is_deleted', 0);
+                        }, 'bin_locations' => function($q1){
+                                $q1->where('isDeleted', 0);
+                            }])
+                            ->with(['children' => function ($q3) { // 2nd level
+                                $q3->where('is_deleted', 0)
+                                    ->withcount(['children' => function($q4){
+                                        $q4->where('is_deleted', 0);
+                                    }, 'bin_locations' => function($q1){
+                                        $q1->where('isDeleted', 0);
+                                    }])
+                                    ->with(['children' => function($q4){ // 3rd level
+                                        $q4->where('is_deleted', 0);
+                                    }]);
+                            }]);
+                    }]);
+            }])
+            ->find($id);
 
         if (empty($warehouse)) {
             return $this->sendError('Warehouse not found');
@@ -357,5 +382,24 @@ class WarehouseSubLevelsAPIController extends AppBaseController
 
 
         return $this->sendResponse($warehouse, 'Warehouse Sub Levels retrieved successfully');
+    }
+
+    public function getSubLevelsByWarehouse(Request $request)
+    {
+
+        $input = $request->all();
+
+        $id = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
+
+        $warehouse = WarehouseMaster::find($id);
+
+        if (empty($warehouse)) {
+            return $this->sendError('Warehouse not found');
+        }
+
+        $subLevels = WarehouseSubLevels::where('warehouse_id',$id)->where('isFinalLevel',1)->get(['id','name']);
+
+
+        return $this->sendResponse($subLevels, 'Warehouse Sub Levels retrieved successfully');
     }
 }
