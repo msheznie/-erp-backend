@@ -109,13 +109,13 @@ class WarehouseSubLevelsAPIController extends AppBaseController
      */
     public function store(CreateWarehouseSubLevelsAPIRequest $request)
     {
-        $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($request->all(),['isActive']);
         $validator = \Validator::make($request->all(), [
             'name' => 'required',
             'description' => 'required',
             'warehouse_id' => 'required:numeric'
         ]);
+
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -249,7 +249,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
      */
     public function update($id, UpdateWarehouseSubLevelsAPIRequest $request)
     {
-        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(),['isActive']);
 
         /** @var WarehouseSubLevels $warehouseSubLevels */
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->findWithoutFail($id);
@@ -257,7 +257,16 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         if (empty($warehouseSubLevels)) {
             return $this->sendError('Warehouse Sub Levels not found');
         }
+        $validator = \Validator::make($request->all(), [
+            'name' => 'required',
+            'description' => 'required',
+            'warehouse_id' => 'required:numeric'
+        ]);
 
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->update(array_only($input,
@@ -397,7 +406,11 @@ class WarehouseSubLevelsAPIController extends AppBaseController
             return $this->sendError('Warehouse not found');
         }
 
-        $subLevels = WarehouseSubLevels::where('warehouse_id',$id)->where('isFinalLevel',1)->get(['id','name']);
+        $subLevels = WarehouseSubLevels::where('warehouse_id',$id)
+                                        ->where('isFinalLevel',1)
+                                        ->where('is_deleted',0)
+                                        ->where('isActive',1)
+                                        ->get(['id','name']);
 
 
         return $this->sendResponse($subLevels, 'Warehouse Sub Levels retrieved successfully');

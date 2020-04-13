@@ -183,18 +183,25 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $companyCurrencyConversion = Helper::currencyConversion($companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$input['issueCostRpt']);
         $input['sellingCurrencyID'] = $customerInvoiceDirect->custTransactionCurrencyID;
         $input['sellingCurrencyER'] = $customerInvoiceDirect->custTransactionCurrencyER;
+        $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
         if((isset($input['customerCatalogDetailID']) && $input['customerCatalogDetailID']>0)){
             $catalogDetail = CustomerCatalogDetail::find($input['customerCatalogDetailID']);
-            $input['sellingCost'] = $catalogDetail->localPrice;
+            $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
+            $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
         }else{
-            $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
+            $input['sellingCostAfterMargin'] = $input['sellingCost'];
         }
 
-        $input['sellingCostAfterMargin'] = $input['sellingCost'];
-        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+        if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
+            $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
+            $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
+        }else{
+            $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
+            $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+        }
 
-        $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
-        $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
         /*round to 7 decimals*/
         $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
