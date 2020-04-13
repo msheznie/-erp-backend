@@ -376,7 +376,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
         $remainingGLCount = $assignedGL - $linkedGL;
 
-        $output = ['template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount];
+        $output = ['template' => $reportTemplateDetails->toArray(), 'columns' => $reportTemplateColLink->toArray(), 'remainingGLCount' => $remainingGLCount, 'columnTemplateID' => $reportTemplateMaster->columnTemplateID];
 
         return $this->sendResponse($output, 'Report Template Details retrieved successfully');
     }

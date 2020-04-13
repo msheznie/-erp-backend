@@ -3,3 +3,6 @@
 Route::resource('customerCatalogMasters', 'CustomerCatalogMasterController');
 
 Route::resource('customerCatalogDetails', 'CustomerCatalogDetailController');
+Route::resource('reportColumnTemplates', 'ReportColumnTemplateController');
+
+Route::resource('reportColumnTemplateDetails', 'ReportColumnTemplateDetailController');
