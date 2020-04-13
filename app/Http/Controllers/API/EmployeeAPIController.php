@@ -209,12 +209,17 @@ class EmployeeAPIController extends AppBaseController
     {
         $input = $request->all();
         $employees = "";
+        $discharged = isset($input['discharged']) ? $input['discharged'] : 0;
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $employees = Employee::where(function ($query) use ($search) {
                 $query->where('empID', 'LIKE', "%{$search}%")
                     ->orWhere('empName', 'LIKE', "%{$search}%");
-            })->where('discharegedYN', 0);
+            });
+
+            if(!$discharged){
+                $employees =   $employees->where('discharegedYN', 0);
+            }
         }
 
         $employees = $employees
