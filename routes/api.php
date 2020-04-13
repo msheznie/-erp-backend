@@ -1668,6 +1668,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAssignedCurrenciesByCustomer', 'CustomerCatalogMasterAPIController@getAssignedCurrenciesByCustomer');
 
     Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
+    Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
 
 });
 

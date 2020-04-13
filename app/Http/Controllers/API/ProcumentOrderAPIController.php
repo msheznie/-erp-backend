@@ -1046,7 +1046,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($procumentOrder->purchaseOrderID);
 
                 if ($poMaster->financeCategory == 3) {
-                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.budgetYear');
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.budgetYear');
                     if (!empty($poDetail)) {
                         foreach ($poDetail as $value) {
                             $budgetConsumeData[] = array(
@@ -1072,7 +1072,7 @@ class ProcumentOrderAPIController extends AppBaseController
                         $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
                     }
                 } else {
-                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear');
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear');
                     if (!empty($poDetail)) {
                         foreach ($poDetail as $value) {
                             if ($value->financeGLcodePLSystemID != "") {
@@ -1420,10 +1420,16 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
-        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
-            ->where('companyPolicyCategoryID', 38)
-            ->where('isYesNO',1)
-            ->exists();
+        $hasPolicy = false;
+        if($purchaseOrderID){
+            $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+            $sup= SupplierMaster::find($purchaseOrder->supplierID);
+            $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                ->where('companyPolicyCategoryID', 38)
+                ->where('isYesNO',1)
+                ->exists();
+        }
+
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,

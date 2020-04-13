@@ -225,10 +225,24 @@ class WarehouseMasterAPIController extends AppBaseController
                   }
                   $warehouseBinLocation = $this->warehouseBinLocationRepository->findWhere(['wareHouseSystemCode' => $id]);
 
-                    foreach ($warehouseBinLocation as $item){
-                        $this->warehouseBinLocationRepository->update(['isActive' => 0],$item['binLocationID']);
-                    }
+                  foreach ($warehouseBinLocation as $item){
+                    $this->warehouseBinLocationRepository->update(['isActive' => 0],$item['binLocationID']);
+                 }
         }
+
+        if(isset($input['isActive']) && $input['isActive'] == 1 && isset($input['activeAllSubLevels']) && $input['activeAllSubLevels']){
+            $warehouseSubLevels = $this->warehouseSubLevelsRepository->findWhere(['warehouse_id' => $id]);
+
+            foreach ($warehouseSubLevels as $item){
+                $this->warehouseSubLevelsRepository->update(['isActive' => 1],$item['id']);
+            }
+            $warehouseBinLocation = $this->warehouseBinLocationRepository->findWhere(['wareHouseSystemCode' => $id]);
+
+            foreach ($warehouseBinLocation as $item){
+                $this->warehouseBinLocationRepository->update(['isActive' => -1],$item['binLocationID']);
+            }
+        }
+
 
         return $this->sendResponse($warehouseMaster->toArray(), $entityName.' updated successfully');
     }
