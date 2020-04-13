@@ -87,6 +87,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->Join('companymaster', 'erp_purchaseorderdetails.companyID', '=', 'companymaster.CompanyID')
             ->Join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('erp_location', 'erp_purchaseordermaster.poLocation', '=', 'erp_location.locationID')
+            ->leftJoin('financeitemcategorymaster', 'erp_purchaseorderdetails.itemFinanceCategoryID', '=', 'financeitemcategorymaster.itemCategoryID')
+            ->leftJoin('financeitemcategorysub', 'erp_purchaseorderdetails.itemFinanceCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseorderdetails.manuallyClosed', 0)
             ->where('erp_purchaseorderdetails.itemCode', $request['itemCodeSystem'])
@@ -106,10 +108,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseorderdetails.supplierPartNumber',
                 'erp_purchaseorderdetails.unitOfMeasure',
                 'erp_purchaseorderdetails.noQty',
+                'erp_purchaseorderdetails.financeGLcodebBS',
+                'erp_purchaseorderdetails.financeGLcodePL',
                 'units.UnitShortCode',
                 'erp_purchaseorderdetails.unitCost',
                 'currencymaster.CurrencyCode',
                 'currencymaster.DecimalPlaces',
+                'financeitemcategorymaster.categoryDescription',
+                'financeitemcategorysub.categoryDescription as subCategoryDescription' ,
                 'erp_purchaseorderdetails.GRVcostPerUnitSupTransCur',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.approved')
