@@ -104,6 +104,8 @@ class WarehouseItemUpdate implements ShouldQueue
                         }
                     }
                     DB::commit();
+                } else {
+                    DB::commit();
                 }
             }
         } catch (\Exception $e) {
