@@ -1420,10 +1420,16 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
-        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
-            ->where('companyPolicyCategoryID', 38)
-            ->where('isYesNO',1)
-            ->exists();
+        $hasPolicy = false;
+        if($purchaseOrderID){
+            $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+            $sup= SupplierMaster::find($purchaseOrder->supplierID);
+            $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                ->where('companyPolicyCategoryID', 38)
+                ->where('isYesNO',1)
+                ->exists();
+        }
+
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
