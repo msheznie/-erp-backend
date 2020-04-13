@@ -17,12 +17,15 @@ use App\Http\Requests\API\UpdateReportTemplateColumnLinkAPIRequest;
 use App\Models\Company;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateDetails;
+use App\Models\ReportColumnTemplateDetail;
+use App\Models\ReportTemplate;
 use App\Repositories\ReportTemplateColumnLinkRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ReportTemplateColumnLinkController
@@ -359,7 +362,14 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             return $this->sendError('Report Template Column Link not found');
         }
 
+
         $reportTemplateColumnLink->delete();
+
+        $existingTemplates = ReportTemplateColumnLink::where('templateID',$reportTemplateColumnLink->templateID)->get();
+
+        if (sizeof($existingTemplates) == 0) {
+            ReportTemplate::where('companyReportTemplateID', $reportTemplateColumnLink->templateID)->update(['columnTemplateID' => null]);
+        }
 
         return $this->sendResponse($id, 'Report Template Column Link deleted successfully');
     }
@@ -385,5 +395,58 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
         $response = array('columns' => $reportTemplateColumnLink, 'rows' => $reportTemplateRows);
 
         return $this->sendResponse($response, 'Tax Formula Detail retrieved successfully');
+    }
+
+    public function loadColumnTemplate(Request $request)
+    {
+        $input = $request->all();
+
+        $existing = ReportTemplateColumnLink::where('templateID',$input['templateID'])->get();
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $columns = ReportColumnTemplateDetail::with(['column_data'])
+                                             ->where('reportColumnTemplateID', $input['columns']['reportColumnTemplateID'])
+                                             ->get();
+
+
+        DB::beginTransaction();
+        try {
+
+            if ($existing) {
+                foreach ($existing as $key => $value) {
+                    ReportTemplateColumnLink::where('columnLinkID',$value['columnLinkID'])->delete();
+                }
+            }
+
+            $maxSortOrder = ReportTemplateColumnLink::where('templateID',$input['templateID'])->max('sortOrder');
+            if ($columns) {
+                foreach ($columns as $key => $val) {
+                    $data['columnID'] = $val['column_data']['columnID'];
+                    $data['templateID'] = $input['templateID'];
+                    $data['sortOrder'] = $maxSortOrder + ($key + 1);
+                    $data['description'] = $val['column_data']['description'];
+                    $data['shortCode'] = $val['column_data']['shortCode'];
+                    $data['type'] = $val['column_data']['type'];
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $input['companyID'];
+                    $data['createdPCID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateColumnLinks = $this->reportTemplateColumnLinkRepository->create($data);
+                }
+            }
+
+            ReportTemplate::where('companyReportTemplateID', $input['templateID'])->update(['columnTemplateID' => $input['columns']['reportColumnTemplateID']]);
+
+            DB::commit();
+            return $this->sendResponse([], 'Report Template Column Link saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);
+        }
     }
 }
