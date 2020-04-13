@@ -1375,6 +1375,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
     Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks');
     Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn');
+    Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate');
     Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
     Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
@@ -1666,6 +1667,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
     Route::get('getAssignedCurrenciesByCustomer', 'CustomerCatalogMasterAPIController@getAssignedCurrenciesByCustomer');
 
+    Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
+    Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
 
 });
 
@@ -1767,7 +1770,4 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
-
-
-
-
+Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');

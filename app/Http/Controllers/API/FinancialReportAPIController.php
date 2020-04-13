@@ -467,17 +467,18 @@ class FinancialReportAPIController extends AppBaseController
                 $linkedcolumnQry2 = $generatedColumn['linkedcolumnQry2']; // generated select statement
                 $budgetQuery = $generatedColumn['budgetQuery']; // generated select statement for budget query
                 $budgetWhereQuery = $generatedColumn['budgetWhereQuery']; // generated select statement for budget query
+                $columnTemplateID = $generatedColumn['columnTemplateID']; // customized coloumn from template
 
-                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery)); // main query
-                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery)); // detail query
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)); // main query
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)); // detail query
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
                 $grandTotalUncatArr = [];
                 $uncategorizeArr = [];
                 $uncategorizeDetailArr = [];
                 $grandTotal = [];
                 if ($request->accountType == 1 || $request->accountType == 2) { // get uncategorized value
-                    $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery));
-                    $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery));
+                    $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID));
+                    $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID));
                     //$lastColumn = collect($headers)->last(); // considering net total
                     if ($uncategorizeData['output']) {
                         foreach ($columnKeys as $key => $val) {
@@ -489,46 +490,67 @@ class FinancialReportAPIController extends AppBaseController
                 } else {
                     $grandTotal[0] = [];
                 }
-
+                    
                 $outputOpeningBalance = '';
                 $outputOpeningBalanceArr = [];
                 $outputClosingBalanceArr = [];
                 if ($request->accountType == 3) { // if report is cash flow type get opening and closing balance
-                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn);
-                    $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance) ? $outputOpeningBalance->openingBalance : 0;
+                    $outputOpeningBalance = $this->getCashflowOpeningBalanceQry($request, $currencyColumn, $columnTemplateID);
+                    if ($columnTemplateID == null) {
+                        $outputOpeningBalance = !empty($outputOpeningBalance->openingBalance) ? $outputOpeningBalance->openingBalance : 0;
 
-                    $lastColumn = collect($headers)->last(); // considering net total
-
-                    foreach ($columnKeys as $key => $val) {
-                        if ($key == 0) {
-                            $outputOpeningBalanceArr[] = $outputOpeningBalance;
-                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputOpeningBalance;
-                        } else {
-                            $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key - 1];
-                            $outputClosingBalanceArr[] = $lastColumn->$val + $outputClosingBalanceArr[$key - 1];
-                        }
-                    }
-                }
-
-                $removedFromArray = [];
-                if (count($headers) > 0) {
-                    foreach ($headers as $key => $val) {
-                        $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
-                        $val->detail = $details;
-                        foreach ($details as $key2 => $val2) {
-                            $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
-                        }
-                        if ($val->itemType != 3) {
-                            if (count($details) == 0) {
-                                $removedFromArray[] = $key;
+                        $lastColumn = collect($headers)->last(); // considering net total
+                        foreach ($columnKeys as $key => $val) {
+                            if ($key == 0) {
+                                $outputOpeningBalanceArr[] = $outputOpeningBalance;
+                                $outputClosingBalanceArr[] = $lastColumn->$val + $outputOpeningBalance;
+                            } else {
+                                $outputOpeningBalanceArr[] = $outputClosingBalanceArr[$key - 1];
+                                $outputClosingBalanceArr[] = $lastColumn->$val + $outputClosingBalanceArr[$key - 1];
                             }
                         }
                     }
                 }
 
-                //remove records which has no detail except total
-                $headers = collect($headers)->forget($removedFromArray)->values();
+                
+                $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
+                $removedFromArray = [];
+                $companyHeaderColumns = [];
+                if ($columnTemplateID == 1) {
+                    if ($request->accountType == 1 || $request->accountType == 2) { 
+                        $companyWiseGrandTotal = $grandTotal->groupBy('compID');
+                    } else {
+                        $companyWiseGrandTotal = [];
+                        $uncategorizeData = [];
+                    }
+                    $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request);
+                    $headers = $res['headers'];
+                    $companyHeaderColumns = $res['companyHeaderColumns'];
+                    $uncategorizeDetailArr = $res['uncategorizeDetailArr'];
+                    $uncategorizeArr = $res['uncategorizeArr'];
+                    $companyWiseGrandTotalArray = $res['companyWiseGrandTotalArray'];
+                    $outputOpeningBalanceArr = $res['outputOpeningBalanceArr'];
+                    $outputClosingBalanceArr = $res['outputClosingBalanceArr'];
 
+                } else {
+                    if (count($headers) > 0) {
+                        foreach ($headers as $key => $val) {
+                            $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
+                            $val->detail = $details;
+                            foreach ($details as $key2 => $val2) {
+                                $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                            }
+                            if ($val->itemType != 3) {
+                                if (count($details) == 0) {
+                                    $removedFromArray[] = $key;
+                                }
+                            }
+                        }
+                    }
+                    $headers = collect($headers)->forget($removedFromArray)->values();
+                }
+
+                //remove records which has no detail except total
                 // get devision value
                 $divisionValue = 1;
                 if ($template) {
@@ -537,6 +559,9 @@ class FinancialReportAPIController extends AppBaseController
                         $divisionValue = (float)$numbers->value;
                     }
                 }
+                
+
+                $grandTotal = ($columnTemplateID == 1) ? collect($companyWiseGrandTotalArray)->toArray() : $grandTotal[0];
 
                 return array('reportData' => $headers,
                     'template' => $template,
@@ -549,8 +574,10 @@ class FinancialReportAPIController extends AppBaseController
                     'closingBalance' => $outputClosingBalanceArr,
                     'uncategorize' => $uncategorizeArr,
                     'uncategorizeDrillDown' => $uncategorizeDetailArr,
-                    'grandTotalUncatArr' => $grandTotal[0],
+                    'grandTotalUncatArr' => $grandTotal,
                     'numbers' => $divisionValue,
+                    'columnTemplateID' => $columnTemplateID,
+                    'companyHeaderData' => $companyHeaderColumns,
                     'month' => $month,
                 );
                 break;
@@ -559,6 +586,180 @@ class FinancialReportAPIController extends AppBaseController
         }
     }
 
+    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request)
+    {
+
+        $companyData = Company::all();
+        $companyCodes =[];
+        $uncategorizeDetailArr =[];
+        $uncategorizeArr =[];
+
+        foreach ($companyData as $key => $value) {
+            $companyCodes[$value->companySystemID] = $value->CompanyID;
+        }
+
+        $uncategorizeArr['columnData'] = [];
+        if (isset($uncategorizeData['output'])) {
+            foreach ($uncategorizeData['output'] as $key1 => $value1) {
+                if (!is_null($value1->compID)) {
+                    foreach ($columnKeys as $key => $val) {
+                        $companyID = (isset($companyCodes[$value1->compID])) ? $companyCodes[$value1->compID] : $value1->compID;
+                        $uncategorizeArr['columnData'][$companyID][$val] = $value1->$val;
+                    }
+                }
+            }
+        }
+
+        if (isset($uncategorizeData['outputDetail'])) {
+            $temp = [];
+            foreach ($uncategorizeData['outputDetail'] as $key1 => $value1) {
+                foreach ($columnKeys as $key => $val) {
+                    
+                    $temp[$value1->chartOfAccountSystemID]['chartOfAccountSystemID'] = $value1->chartOfAccountSystemID;
+                    $temp[$value1->chartOfAccountSystemID]['glCode'] = $value1->glCode;
+                    $temp[$value1->chartOfAccountSystemID]['glDescription'] = $value1->glDescription;
+                    $temp[$value1->chartOfAccountSystemID]['glAutoID'] = $value1->glAutoID;
+                    $temp[$value1->chartOfAccountSystemID]['glAutoID'] = $value1->glAutoID;
+
+                    foreach ($columnKeys as $key2 => $value) {
+                        $companyID = (isset($companyCodes[$value1->compID])) ? $companyCodes[$value1->compID] : $value1->compID;
+                        $temp[$value1->chartOfAccountSystemID]['columnData'][$companyID][$value] = $value1->$value;
+                        if (isset($companyCodes[$value1->compID])) {
+                            $companyHeaderData[$value1->compID]['companyCode'] = $companyCodes[$value1->compID];
+                        }
+                    }
+                }
+            }
+
+            foreach ($temp as $key => $value) {
+                $uncategorizeDetailArr[] = $value;
+            }
+        }
+
+        $companyWiseGrandTotalArray = [];
+        foreach ($companyWiseGrandTotal as $key => $value) {
+            if ($key != "") {
+                $companyID = (isset($companyCodes[$key])) ? $companyCodes[$key] : $key;
+                $companyWiseGrandTotalArray[$companyID] = $value[0];
+            }
+        }
+
+        $companyHeaderData = [];
+        $newHeaders = [];
+        $removedFromArray = [];
+        foreach ($headers as $key => $value) {
+            $newHeaders[$value->detID]['detDescription'] = $value->detDescription; 
+            $newHeaders[$value->detID]['detID'] = $value->detID; 
+            $newHeaders[$value->detID]['sortOrder'] = $value->sortOrder; 
+            $newHeaders[$value->detID]['masterID'] = $value->masterID; 
+            $newHeaders[$value->detID]['bgColor'] = $value->bgColor; 
+            $newHeaders[$value->detID]['fontColor'] = $value->fontColor; 
+            $newHeaders[$value->detID]['itemType'] = $value->itemType; 
+            $newHeaders[$value->detID]['hideHeader'] = $value->hideHeader; 
+            $newHeaders[$value->detID]['expanded'] = $value->expanded; 
+
+            foreach ($columnKeys as $key1 => $value1) {
+                $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
+                $newHeaders[$value->detID]['columnData'][$companyID][$value1] = $value->$value1;
+                if (isset($companyCodes[$value->CompanyID])) {
+                    $companyHeaderData[$value->CompanyID]['companyCode'] = $companyCodes[$value->CompanyID];
+                }
+            }
+        }
+
+        $newHeaders = collect($newHeaders)->sortBy('sortOrder');
+
+        $newOutputCollect = [];
+        foreach ($outputCollect as $key => $value) {
+            $newOutputCollect[$value->detID]['detDescription'] = $value->detDescription; 
+            $newOutputCollect[$value->detID]['detID'] = $value->detID; 
+            $newOutputCollect[$value->detID]['sortOrder'] = $value->sortOrder; 
+            $newOutputCollect[$value->detID]['masterID'] = $value->masterID; 
+            $newOutputCollect[$value->detID]['bgColor'] = $value->bgColor; 
+            $newOutputCollect[$value->detID]['fontColor'] = $value->fontColor; 
+            $newOutputCollect[$value->detID]['itemType'] = $value->itemType; 
+            $newOutputCollect[$value->detID]['hideHeader'] = $value->hideHeader; 
+            $newOutputCollect[$value->detID]['expanded'] = $value->expanded; 
+
+            foreach ($columnKeys as $key1 => $value1) {
+                $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
+                $newOutputCollect[$value->detID]['columnData'][$companyID][$value1] = $value->$value1;
+                if (isset($companyCodes[$value->CompanyID])) {
+                    $companyHeaderData[$value->CompanyID]['companyCode'] = $companyCodes[$value->CompanyID];
+                }
+            }
+        }
+
+
+        $newOutputDetail = [];
+        foreach ($outputDetail as $key => $value) {
+            $newOutputDetail[$value->glAutoID]['glCode'] = $value->glCode; 
+            $newOutputDetail[$value->glAutoID]['glDescription'] = $value->glDescription; 
+            $newOutputDetail[$value->glAutoID]['glAutoID'] = $value->glAutoID; 
+            $newOutputDetail[$value->glAutoID]['templateDetailID'] = $value->templateDetailID; 
+            $newOutputDetail[$value->glAutoID]['linkCatType'] = $value->linkCatType; 
+            $newOutputDetail[$value->glAutoID]['templateCatType'] = $value->templateCatType; 
+
+            foreach ($columnKeys as $key1 => $value1) {
+                $companyID = (isset($companyCodes[$value->compID])) ? $companyCodes[$value->compID] : $value->compID;
+                $newOutputDetail[$value->glAutoID]['columnData'][$companyID][$value1] = $value->$value1;
+                if (isset($companyCodes[$value->compID])) {
+                    $companyHeaderData[$value->compID]['companyCode'] = $companyCodes[$value->compID];
+                }
+            }
+        }
+
+        $finalHeaders = [];
+        foreach ($newHeaders as $key => $val) {
+            $temp = [];
+            foreach ($val as $key3 => $value3) {
+                $temp[$key3] = $value3;
+            }
+            $details = collect($newOutputCollect)->where('masterID', $val['detID'])->sortBy('sortOrder')->values();
+            $temp2 = [];
+            foreach ($details as $key2 => $val2) {
+                foreach ($val2 as $key4 => $value4) {
+                    $temp2[$key4] = $value4;
+                }
+                $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
+                $temp['detail'][] = $temp2;
+            }
+            if ($val['itemType'] != 3) {
+                if (count($details) == 0) {
+                    $removedFromArray[] = $key;
+                }
+            }
+            $finalHeaders[] = $temp;
+        }
+
+        $headers = collect($finalHeaders)->forget($removedFromArray)->values();
+
+        $companyHeaderColumns = [];
+        foreach ($companyHeaderData as $key => $value) {
+            $companyHeaderColumns[] = $value;
+        }
+
+        $outputOpeningBalanceArr = [];
+        $outputClosingBalanceArr = [];
+        if ($request->accountType == 3) { 
+
+            $lastColumn = collect($headers)->last();
+            foreach ($outputOpeningBalance as $ke => $value) {
+                $companyID = (isset($companyCodes[$value->companySystemID])) ? $companyCodes[$value->companySystemID] : $value->companySystemID;
+                foreach ($columnKeys as $key => $val) {
+                    if ($key == 0) {
+                        $outputOpeningBalanceArr[$companyID][] = $value->openingBalance;
+                        $outputClosingBalanceArr[$companyID][] = ((isset($lastColumn['columnData'][$companyID])) ? $lastColumn['columnData'][$companyID]->$val : 0) + $value->openingBalance;
+                    } else {
+                        $outputOpeningBalanceArr[$companyID][] = $outputClosingBalanceArr[$companyID][$key - 1];
+                        $outputClosingBalanceArr[$companyID][] = ((isset($lastColumn['columnData'][$companyID])) ? $lastColumn['columnData'][$companyID]->$val : 0) + $outputClosingBalanceArr[$companyID][$key - 1];
+                    }
+                }
+            }
+        }
+
+        return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr];
+    }
 
     public function exportReport(Request $request)
     {
@@ -2397,7 +2598,7 @@ AND MASTER .canceledYN = 0';
         }
     }
 
-    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery)
+    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2478,6 +2679,19 @@ AND MASTER .canceledYN = 0';
             $whereQry[] .= 'IF(masterID is not null , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
         }
 
+        $budgetJoin = '';
+        $generalLedgerGroup = '';
+        $templateGroup = '';
+        if ($columnTemplateID == 1) {
+            $secondLinkedcolumnQry .= ' ((IFNULL(IFNULL(c.compID, e.compID),0))) AS CompanyID,';
+            $fourthLinkedcolumnQry .= ' compID,';
+            $fifthLinkedcolumnQry .= ' compID,';
+            $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
+            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+            $templateGroup = ', compID';
+        }
+
         $sql = 'SELECT * FROM (SELECT
 	c.detDescription,
 	c.detID,
@@ -2533,7 +2747,7 @@ FROM
                         ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -2541,7 +2755,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID
+						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
 				) g
 				INNER JOIN (
 					SELECT
@@ -2561,7 +2775,7 @@ FROM
 			)
 	) f
 GROUP BY
-	templateDetailID
+	templateDetailID '.$templateGroup.'
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
 WHERE
 	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
@@ -2602,7 +2816,7 @@ FROM
                         ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -2610,7 +2824,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID
+						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
 				) g
 				INNER JOIN (
 					SELECT
@@ -2630,20 +2844,20 @@ FROM
 			)
 	) g
 GROUP BY
-	templateDetailID
+	templateDetailID '.$templateGroup.'
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
 	AND subCategory IS NOT NULL 
 GROUP BY
-	erp_companyreporttemplatelinks.templateDetailID 
+	erp_companyreporttemplatelinks.templateDetailID '.$templateGroup.'
 	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
 
         $output = \DB::select($sql);
         return $output;
     }
 
-    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery)
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2712,6 +2926,15 @@ GROUP BY
             $whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
+        $budgetJoin = '';
+        $generalLedgerGroup = '';
+        if ($columnTemplateID == 1) {
+            $secondLinkedcolumnQry .= ' gl.compID,';
+            $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
+            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+        }
+
         $sql = 'SELECT * FROM (SELECT
 	' . $secondLinkedcolumnQry . '
 	erp_companyreporttemplatelinks.glCode,
@@ -2740,12 +2963,12 @@ FROM
             ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
             ) AS budget
         ON
-            budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+            budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
         INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
         ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY erp_generalledger.chartOfAccountSystemID) AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+        GROUP BY erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
@@ -2754,7 +2977,7 @@ ORDER BY
         return $output;
     }
 
-    function getCashflowOpeningBalanceQry($request, $currency)
+    function getCashflowOpeningBalanceQry($request, $currency, $columnTemplateID)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2765,7 +2988,12 @@ ORDER BY
 
         $glCodes = ReportTemplateLinks::where('templateMasterID', $request->templateType)->whereNotNull('glAutoID')->pluck('glAutoID')->toArray();
 
-        $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+        if ($columnTemplateID == 1) {
+            $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance, companySystemID')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->groupBy('companySystemID')->get();
+        } else {
+            $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
+        }
+
 
         return $output;
     }
@@ -2896,7 +3124,7 @@ GROUP BY
     }
 
 
-    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery)
+    function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -2966,6 +3194,18 @@ GROUP BY
 
         $thirdLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
 
+        $budgetJoin = '';
+        $groupByCompID = '';
+        $generalLedgerGroup = '';
+        if ($columnTemplateID == 1) {
+            $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
+            $thirdLinkedcolumnQry .= ' compID,';
+            $secondLinkedcolumnQry .= ' compID,';
+            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+            $groupByCompID = ' GROUP BY compID';
+        }
+
         $output = [];
         $outputDetail = [];
         if (count($uncategorizeGL) > 0) {
@@ -2988,14 +3228,15 @@ GROUP BY
                 ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ', $whereQry);
+            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a WHERE ' . join(' OR ', $whereQry) . $groupByCompID;
+
             $output = \DB::select($sql);
 
             $sql = 'SELECT  ' . $secondLinkedcolumnQry . ' chartOfAccountSystemID,glCode,glDescription,glAutoID FROM (SELECT
@@ -3017,14 +3258,15 @@ GROUP BY
                 ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a WHERE ' . join(' OR ', $whereQry);
+            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a WHERE ' . join(' OR ', $whereQry);
+
             $outputDetail = \DB::select($sql);
         }
 
@@ -3032,7 +3274,7 @@ GROUP BY
         return ['output' => $output, 'outputDetail' => $outputDetail];
     }
 
-    function getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery)
+    function getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
     {
 
         if ($request->dateType == 1) {
@@ -3102,6 +3344,19 @@ GROUP BY
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $budgetJoin = '';
+        $generalLedgerGroup = '';
+        $unionGroupBy = '';
+        if ($columnTemplateID == 1) {
+            $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
+            $secondLinkedcolumnQry .= ' ,compID';
+            $thirdLinkedcolumnQry .= ' compID,';
+            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+            $unionGroupBy = ' GROUP BY compID';
+        }
+
         $unionQry = '';
         if (count($uncategorizeGL) > 0) {
             $unionQry = ' UNION SELECT  ' . $secondLinkedcolumnQry . ' FROM (SELECT
@@ -3120,14 +3375,14 @@ GROUP BY
                 ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID) a';
+            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a';
         }
 
         $sql = 'SELECT ' . $secondLinkedcolumnQry . ' FROM (SELECT * FROM (SELECT
@@ -3157,7 +3412,7 @@ FROM
                         ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -3165,7 +3420,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID
+						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
 				) g
 				INNER JOIN (
 					SELECT
@@ -3185,7 +3440,8 @@ FROM
 			)
 	) f
 GROUP BY
-	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b';
+	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b'.$unionGroupBy;
+
         $output = \DB::select($sql);
         return $output;
     }
@@ -3374,6 +3630,12 @@ GROUP BY
             }
         }
 
+        if ($request->columnTemplateID == 1) {
+            $selectedCompanyData = Company::where('CompanyID', $request->selectedCompany)->first();
+
+            $companyID = collect($selectedCompanyData->companySystemID)->toArray();
+        }
+
         $sql = 'SELECT `' . $input['selectedColumn'] . '`,glCode,AccountDescription,documentCode,documentDate,ServiceLineDes,partyName,documentNarration,clientContractID,documentSystemCode,documentSystemID FROM (SELECT
 						' . $firstLinkedcolumnQry . ' 
 						glCode,AccountDescription,documentCode,documentDate,serviceline.ServiceLineDes,
@@ -3498,6 +3760,10 @@ GROUP BY
             $currencyColumn = 'documentRptAmount';
             $budgetColumn = 'budjetAmtRpt';
         }
+
+        $reportTemplateMasterData = ReportTemplate::find($request->templateType);
+
+        $columnTemplateID =$reportTemplateMasterData->columnTemplateID;
 
         $columns = ReportTemplateColumns::all();
         $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
@@ -3693,6 +3959,7 @@ GROUP BY
         $linkedcolumnQry2 = implode(',', $linkedcolumnArrayFinal2);
 
         $budgetQuery = "chartOfAccountID,
+                        erp_budjetdetails.companySystemID,
                         IFNULL(
                             SUM(
                                 IF(
@@ -3714,7 +3981,11 @@ GROUP BY
                             0
                         ) AS `bAmountMonth`";
 
-        $budgetWhereQuery = " AND Year = " . $currentYear;
+        $budgetWhereQuery = " AND Year = " . $currentYear. " GROUP BY erp_budjetdetails.`chartOfAccountID`";
+
+        if ($columnTemplateID == 1) {
+            $budgetWhereQuery .= ', erp_budjetdetails.companySystemID';
+        }
 
         //get linked row sum amount to the formula
         $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2, $budgetQuery, $budgetWhereQuery));
@@ -3794,6 +4065,7 @@ GROUP BY
             'columnHeaderMapping' => $columnHeaderMapping,
             'budgetQuery' => $budgetQuery,
             'budgetWhereQuery' => $budgetWhereQuery,
+            'columnTemplateID' => $columnTemplateID,
             'currencyColumn' => $currencyColumn];
     }
 

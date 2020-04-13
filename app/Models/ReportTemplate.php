@@ -132,6 +132,7 @@ class ReportTemplate extends Model
         'modifiedUserSystemID',
         'modifiedUserID',
         'modifiedDateTime',
+        'columnTemplateID',
         'timestamp'
     ];
 
@@ -164,6 +165,7 @@ class ReportTemplate extends Model
         'createdUserID' => 'string',
         'modifiedPCID' => 'string',
         'modifiedUserSystemID' => 'integer',
+        'columnTemplateID' => 'integer',
         'modifiedUserID' => 'string'
     ];
 
