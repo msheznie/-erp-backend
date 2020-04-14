@@ -8,6 +8,7 @@ use App\Http\Requests\API\CreateWarehouseSubLevelsAPIRequest;
 use App\Http\Requests\API\UpdateWarehouseSubLevelsAPIRequest;
 use App\Models\WarehouseMaster;
 use App\Models\WarehouseSubLevels;
+use App\Repositories\WarehouseBinLocationRepository;
 use App\Repositories\WarehouseSubLevelsRepository;
 use Illuminate\Http\Request;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -22,10 +23,13 @@ class WarehouseSubLevelsAPIController extends AppBaseController
 {
     /** @var  WarehouseSubLevelsRepository */
     private $warehouseSubLevelsRepository;
+    private $warehouseBinLocationRepository;
 
-    public function __construct(WarehouseSubLevelsRepository $warehouseSubLevelsRepo)
+    public function __construct(WarehouseSubLevelsRepository $warehouseSubLevelsRepo,
+                                WarehouseBinLocationRepository $warehouseBinLocationRepo)
     {
         $this->warehouseSubLevelsRepository = $warehouseSubLevelsRepo;
+        $this->warehouseBinLocationRepository = $warehouseBinLocationRepo;
     }
 
     /**
@@ -192,7 +196,11 @@ class WarehouseSubLevelsAPIController extends AppBaseController
     public function show($id)
     {
         /** @var WarehouseSubLevels $warehouseSubLevels */
-        $warehouseSubLevels = $this->warehouseSubLevelsRepository->withcount(['children', 'bin_locations'])->findWithoutFail($id);
+        $warehouseSubLevels = $this->warehouseSubLevelsRepository->withcount(['children' => function($q1){
+            $q1->where('is_deleted', 0);
+        }, 'bin_locations' => function($q1){
+            $q1->where('isDeleted', 0);
+        }])->findWithoutFail($id);
 
         if (empty($warehouseSubLevels)) {
             return $this->sendError('Warehouse Sub Levels not found');
@@ -272,7 +280,64 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         $warehouseSubLevels = $this->warehouseSubLevelsRepository->update(array_only($input,
             ['name', 'updated_pc', 'updated_by', 'description', 'isFinalLevel','isActive']), $id);
 
+        if(isset($input['isActive']) && $input['isActive'] == 0){
+            $warehouseSubLevels1 = $this->warehouseSubLevelsRepository->findWhere(['parent_id' => $id]); // 2nd level
+            $this->activateWarehouseSubLevel($warehouseSubLevels1,0);
+
+            foreach ($warehouseSubLevels1 as $item){
+
+                $warehouseSubLevels2 = $this->warehouseSubLevelsRepository->findWhere(['parent_id' => $item['id']]); // 3rd level
+                $this->activateWarehouseSubLevel($warehouseSubLevels2,0);
+
+                foreach ($warehouseSubLevels2 as $item1) {
+                    $warehouseBinLocation3 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $item1['id']]);
+                    $this->activateBinLocation($warehouseBinLocation3,0);
+                }
+
+                $warehouseBinLocation2 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $item['id']]);
+                $this->activateBinLocation($warehouseBinLocation2,0);
+            }
+
+            $warehouseBinLocation1 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $id]);
+            $this->activateBinLocation($warehouseBinLocation1,0);
+        }
+
+        if(isset($input['isActive']) && $input['isActive'] == 1 && isset($input['activeAllSubLevels']) && $input['activeAllSubLevels']){
+            $warehouseSubLevels1 = $this->warehouseSubLevelsRepository->findWhere(['parent_id' => $id]); // 2nd level
+            $this->activateWarehouseSubLevel($warehouseSubLevels1,1);
+
+            foreach ($warehouseSubLevels1 as $item){
+
+                $warehouseSubLevels2 = $this->warehouseSubLevelsRepository->findWhere(['parent_id' => $item['id']]); // 3rd level
+                $this->activateWarehouseSubLevel($warehouseSubLevels2,1);
+
+                foreach ($warehouseSubLevels2 as $item1) {
+                    $warehouseBinLocation3 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $item1['id']]);
+                    $this->activateBinLocation($warehouseBinLocation3,-1);
+                }
+
+                $warehouseBinLocation2 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $item['id']]);
+                $this->activateBinLocation($warehouseBinLocation2,-1);
+            }
+
+            $warehouseBinLocation1 = $this->warehouseBinLocationRepository->findWhere(['warehouseSubLevelId' => $id]);
+            $this->activateBinLocation($warehouseBinLocation1,-1);
+        }
+
+
         return $this->sendResponse($warehouseSubLevels->toArray(), 'WarehouseSubLevels updated successfully');
+    }
+
+    public function activateBinLocation($array,$value){
+        foreach ($array as $item){
+            $this->warehouseBinLocationRepository->update(['isActive' => $value],$item['binLocationID']);
+        }
+    }
+
+    public function activateWarehouseSubLevel($array,$value){
+        foreach ($array as $item){
+            $this->warehouseSubLevelsRepository->update(['isActive' => $value],$item['id']);
+        }
     }
 
     /**
@@ -316,7 +381,11 @@ class WarehouseSubLevelsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var WarehouseSubLevels $warehouseSubLevels */
-        $warehouseSubLevels = $this->warehouseSubLevelsRepository->withcount(['children', 'bin_locations'])->findWithoutFail($id);
+        $warehouseSubLevels = $this->warehouseSubLevelsRepository->withcount(['children' => function($q1){
+                $q1->where('is_deleted', 0);
+            }, 'bin_locations' => function($q1){
+                $q1->where('isDeleted', 0);
+            }])->findWithoutFail($id);
 
         if (empty($warehouseSubLevels)) {
             return $this->sendError('Warehouse Sub Levels not found');
