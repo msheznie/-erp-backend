@@ -971,6 +971,13 @@ class Helper
                         if ($isActive == -1) {
                             $masterDocumentDate = $masterRec->$documentDate;
                         }
+
+                        // today date for item sales invoice
+                        if($input["documentSystemID"] == 20){
+                            if(isset($masterRec->isPerforma) && $masterRec->isPerforma == 2){
+                                $masterDocumentDate = date('Y-m-d H:i:s');
+                            }
+                        }
                         $masterDocumentDate = Carbon::parse($masterDocumentDate);
                         $masterDocumentDate = $masterDocumentDate->format('d/m/Y');
                         return ['success' => true, 'message' => 'Document will be posted on ' . $masterDocumentDate . '. Are you sure you want to continue?', 'type' => 1];

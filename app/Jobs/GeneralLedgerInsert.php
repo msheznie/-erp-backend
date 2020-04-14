@@ -709,9 +709,9 @@ class GeneralLedgerInsert implements ShouldQueue
                         if($masterData->isPerforma == 2){   // item sales invoice
                             $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
                             $masterDocumentDate = Carbon::now();
-                            if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
-                                $masterDocumentDate = $masterData->bookingDate;
-                            }
+//                            if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
+//                                $masterDocumentDate = $masterData->bookingDate;
+//                            }
                             $time = Carbon::now();
 
                             $data['companySystemID'] = $masterData->companySystemID;

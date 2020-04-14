@@ -748,11 +748,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
 
                             if(!($item->financeGLcodebBSSystemID > 0)){
-                                return $this->sendError('BS account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                                return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                             }elseif (!($item->financeGLcodePLSystemID > 0)){
-                                return $this->sendError('Cost account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                                return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                             }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
-                                return $this->sendError('Revenue account can not be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                                return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                             }
 
                             $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
@@ -780,13 +780,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
 
+                            /*round to 7 decimal*/
+
+                            $updateItem->issueCostLocal = Helper::roundValue($updateItem->issueCostLocal);
+                            $updateItem->issueCostRpt = Helper::roundValue($updateItem->issueCostRpt);
+                            $updateItem->issueCostLocalTotal = Helper::roundValue($updateItem->issueCostLocalTotal);
+                            $updateItem->issueCostRptTotal = Helper::roundValue($updateItem->issueCostRptTotal);
+                            $updateItem->sellingCost = Helper::roundValue($updateItem->sellingCost);
+                            $updateItem->sellingCostAfterMargin = Helper::roundValue($updateItem->sellingCostAfterMargin);
+                            $updateItem->sellingTotal = Helper::roundValue($updateItem->sellingTotal);
+
                             $updateItem->save();
 
                             if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                                return $this->sendError('Every Item should not have zero cost', 500);
+                                return $this->sendError('Item must not have zero cost', 500);
                             }
                             if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                                return $this->sendError('Every Item should not have negative cost', 500);
+                                return $this->sendError('Item must not have negative cost', 500);
                             }
                             if ($updateItem->currentWareHouseStockQty <= 0) {
                                 return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
@@ -795,11 +805,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
                             }
                             if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                return $this->sendError('Not enough Qty for '.$updateItem->itemDescription, 500);
+                                return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
                             }
 
                             if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                return $this->sendError('Not enough Qty for '.$updateItem->itemDescription, 500);
+                                return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
                             }
 
                         }
