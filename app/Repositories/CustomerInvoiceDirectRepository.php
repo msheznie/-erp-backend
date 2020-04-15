@@ -182,4 +182,17 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $customerInvoiceDirect;
     }
 
+    function getAuditItemInvoice($id)
+    {
+        $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
+            $query->with('employee.details.designation')
+                ->where('documentSystemID', 20);
+        },
+            'issue_item_details' => function ($query) {
+                $query->with(['uom_issuing']);
+            }
+        ])->findWithoutFail($id);
+        return $customerInvoiceDirect;
+    }
+
 }

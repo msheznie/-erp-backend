@@ -750,15 +750,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                            $data['documentTransAmount'] = $masterData->bookingAmountTrans;
+                            $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
 
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = $masterData->bookingAmountLocal;
+                            $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
 
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = $masterData->bookingAmountRpt;
+                            $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
 
                             $data['documentType'] = 11;
 
@@ -844,6 +844,37 @@ class GeneralLedgerInsert implements ShouldQueue
                                     array_push($finalData, $data);
                                 }
 
+                            }
+
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
+                            if (!empty($erp_taxdetail)) {
+                                foreach ($erp_taxdetail as $tax) {
+
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+
+                                    // from customer invoice master table
+                                    $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                                    $data['glCode'] = $taxGL->AccountCode;
+                                    $data['glAccountType'] = $taxGL->catogaryBLorPL;
+                                    $data['glAccountTypeID'] = $taxGL->catogaryBLorPLID;
+
+                                    $data['documentNarration'] = $tax->taxDescription;
+                                    $data['clientContractID'] = 'X';
+                                    $data['supplierCodeSystem'] = $masterData->customerID;
+
+                                    $data['documentTransCurrencyID'] = $tax->currency;
+                                    $data['documentTransCurrencyER'] = $tax->currencyER;
+                                    $data['documentTransAmount'] = $tax->amount * -1;
+                                    $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                    $data['documentLocalAmount'] = $tax->localAmount * -1;
+                                    $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                                    $data['documentRptAmount'] = $tax->rptAmount * -1;
+                                    array_push($finalData, $data);
+                                }
                             }
 
                         }else{
