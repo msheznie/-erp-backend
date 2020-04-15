@@ -78,7 +78,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $accountType = AccountsType::all();
 
-        $templateType = ReportTemplate::all();
+        $templateType = ReportTemplate::where('isActive',1)->get();
 
 
         $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
