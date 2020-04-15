@@ -238,7 +238,7 @@
                         </b><br>
                         <b>Contract / PO No : 
                              @if(!empty($request->invoicedetails) )
-                                {{$request->invoicedetails[0]->clientContractID}}
+                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
                             @endif
                         </b>
                 </td>
@@ -253,7 +253,7 @@
                             
                         </b><br>
                         <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                                {{$request->invoicedetails[0]->clientContractID}}
+                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
                             @endif
                              
                         </b>
@@ -373,7 +373,7 @@
             </table>
         @endif
 
-         @if ($request->template <> 1 && !$request->line_invoiceDetails)
+         @if ($request->template <> 1 && !$request->line_invoiceDetails && !$request->item_invoice)
             <table class="table" style="width: 100%;">
                 <thead>
                 <tr style="background-color: #6798da">
@@ -443,6 +443,86 @@
                 </tbody>
                 
             </table>
+        @endif
+
+        @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
+
+                <table class="table">
+                    <thead>
+                    <tr style="background-color: #6798da;">
+                        <th style="width:5%;"></th>
+                        <th style="width:40%;">Item<br>رقم المنتج</th>
+                        <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
+                        <th style="width:15%;text-align: center">QTY<br>الكمية</th>
+                        <th style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
+                        <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {{$decimal = 2}}
+                    {{$x=1}}
+                    {{$directTraSubTotal=0}}
+                    {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+
+                    @if(!empty($request->issue_item_details))
+                        @foreach ($request->issue_item_details as $item)
+
+                            @if ($item->sellingTotal != 0)
+                                {{$directTraSubTotal +=$item->sellingTotal}}
+
+                                <tr style="border: 1px solid !important;">
+                                    <td>{{$x}}</td>
+                                    <td style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                    <td style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                    <td style="text-align: right;">{{$item->qtyIssued}}</td>
+                                    <td style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                    <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
+                                </tr>
+                                {{ $x++ }}
+                            @endif
+                        @endforeach
+                    @endif
+
+                    </tbody>
+                    <tbody>
+                    <tr>
+                        <td></td>
+                        <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
+                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                        <td class="text-right">@if ($request->invoicedetails)
+                                {{number_format($directTraSubTotal, $numberFormatting)}}
+                            @endif</td>
+                    </tr>
+                    @if ($request->tax)
+                        {{$directTraSubTotal+=$request->tax->amount}}
+                        <tr>
+                            <td></td>
+                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                            <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
+                        </tr>
+
+                        <tr>
+                            <td></td>
+                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
+                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                            <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                        </tr>
+                    @endif
+                    </tbody>
+                <!--  <tbody>
+                    <tr>
+                        <td colspan="7" style="background-color: #8db3e2; text-align: right;">({{$request->amountInWords}})</td>
+                    </tr>
+                </tbody> -->
+                    <tbody>
+                    <tr>
+                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                    </tr>
+                    </tbody>
+                </table>
+
         @endif
     </div>
 </div>

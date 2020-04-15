@@ -1036,7 +1036,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }]);
                     }]);
                 }]);
+            },
+            'issue_item_details' => function($query){
+            $query->with(['uom_default','uom_issuing']);
             }
+
         ])->findWithoutFail($id);
 
 
@@ -1053,7 +1057,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                $data['data']['master'] = $customerInvoiceDirect;
                $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
 
-            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct deleted successfully');
+            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
         }
     }
 
@@ -1081,6 +1085,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
+        // check policy 24 is on for CI
+        $isAICINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 24)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -1088,7 +1097,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'customer' => $customer,
-
+            'isAICINVPolicyOn' => $isAICINVPolicyOn
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1571,20 +1580,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        if($master->isPerforma == 2){
+            $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+        }else{
+            $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        }
+
         if (empty($invoiceDetail)) {
             return $this->sendResponse('e', 'Invoice Details not found.');
         }
 
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
-        $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
-        if (!empty($totalDetail)) {
-            $totalAmount = $totalDetail->amount;
+
+        if($master->isPerforma == 2){
+            $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+            if (!empty($totalDetail)) {
+                $totalAmount = $totalDetail->amount;
+            }
+            $totalAmount = ($percentage / 100) * $totalAmount;
+        }else{
+            $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+            if (!empty($totalDetail)) {
+                $totalAmount = $totalDetail->amount;
+            }
+            $totalAmount = ($percentage / 100) * $totalAmount;
         }
 
-
-        $totalAmount = ($percentage / 100) * $totalAmount;
 
 
         $taxMaster = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$master->companyID}'");
@@ -1742,15 +1764,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
+        if($master->isPerforma == 2){
+            $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
+        }else{
+            $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
+        }
 
-        $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
         $customerInvoice = (object)[];
 
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-
-
+            } else if($master->isPerforma == 2) {
+                $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
             }
@@ -2083,13 +2109,26 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $directTraSubTotal = 0;
-        foreach ($customerInvoice->invoicedetails as $key => $item) {
-            $directTraSubTotal += $item->invoiceAmount;
+        if($master->isPerforma == 2){
+            $customerInvoice->item_invoice = true;
+            foreach ($customerInvoice->issue_item_details as $key => $item) {
+                $directTraSubTotal += $item->sellingTotal;
+            }
+
+            if ($customerInvoice->tax) {
+                $directTraSubTotal += $customerInvoice->tax->amount;
+            }
+        }else{
+            $customerInvoice->item_invoice = false;
+            foreach ($customerInvoice->invoicedetails as $key => $item) {
+                $directTraSubTotal += $item->invoiceAmount;
+            }
+
+            if ($customerInvoice->tax) {
+                $directTraSubTotal += $customerInvoice->tax->amount;
+            }
         }
 
-        if ($customerInvoice->tax) {
-            $directTraSubTotal += $customerInvoice->tax->amount;
-        }
 
         $amountSplit = explode(".", $directTraSubTotal);
         $intAmt = 0;
@@ -2137,8 +2176,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
 
-
         if ($printTemplate['printTemplateID'] == 2) {
+
             $html = view('print.customer_invoice_tue', $array);
             $htmlFooter = view('print.customer_invoice_tue_footer', $array);
             $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
