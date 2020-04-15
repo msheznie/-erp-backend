@@ -383,8 +383,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             $companies = [$companyId];
         }
 
-        $customerCatalog = CustomerCatalogMaster::whereIn('companySystemID',$companies)
-            ->where(function ($query){
+        $customerCatalog = CustomerCatalogMaster::where(function ($query){
                 $query->whereNull('isDeleted')
                     ->orWhere('isDeleted',0);
             })
@@ -455,8 +454,8 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $invoiceDate = Carbon::parse($invoice->createdDateTime)->format('y-m-d');
         $customerID = $invoice->customerID;
         $catalog = CustomerCatalogDetail::whereHas('master', function($query) use($customerID,$invoiceDate){
-            $query->where('fromDate','<=',$invoiceDate)
-                ->where('toDate','>=',$invoiceDate)
+            $query->whereDate('fromDate','<=',$invoiceDate)
+                ->whereDate('toDate','>=',$invoiceDate)
                 ->where('customerID',$customerID)
                 ->where('isDeleted',0)
                 ->where('isActive',1);
