@@ -259,7 +259,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId']);
+        $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId','isActive']);
         /** @var WarehouseBinLocation $warehouseBinLocation */
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 

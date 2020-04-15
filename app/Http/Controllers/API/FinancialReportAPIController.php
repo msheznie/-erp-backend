@@ -78,7 +78,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $accountType = AccountsType::all();
 
-        $templateType = ReportTemplate::all();
+        $templateType = ReportTemplate::where('isActive',1)->get();
 
 
         $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
@@ -2642,13 +2642,13 @@ AND MASTER .canceledYN = 0';
         $servicelineQry = '';
         $servicelineQryForBudget = '';
         if ($request->dateType == 1) {
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                // $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
         }
 
@@ -2671,11 +2671,19 @@ AND MASTER .canceledYN = 0';
         $fourthLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 . ',' : '';
         $fifthLinkedcolumnQry = '';
         $whereQry = [];
-        foreach ($columnKeys as $val) {
+        foreach ($columnKeys as $key => $val) {
+            $coloumnShortCode = explode('-', $val)[0];
+            if ($coloumnShortCode == "BCM") {
+                $fifthLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTD") {
+                $fifthLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else {
+                $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
+            }
+
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             //$thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             //$fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
-            $fifthLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
             $whereQry[] .= 'IF(masterID is not null , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
         }
 
@@ -2687,7 +2695,7 @@ AND MASTER .canceledYN = 0';
             $fourthLinkedcolumnQry .= ' compID,';
             $fifthLinkedcolumnQry .= ' compID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
-            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $budgetJoin = ' AND g.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $templateGroup = ', compID';
         }
@@ -2736,18 +2744,6 @@ FROM
 						erp_generalledger.chartOfAccountSystemID
 					FROM
 						erp_generalledger
-                    LEFT JOIN(
-                            SELECT
-                                ' . $budgetQuery . ' 
-                            FROM
-                                erp_budjetdetails
-                            WHERE
-                                erp_budjetdetails.companySystemID IN(' . join(',
-                            ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
-                        ) AS budget
-                    ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -2773,6 +2769,18 @@ FROM
 						erp_companyreporttemplatedetails.sortOrder
 				) AS a ON a.glAutoID = g.chartOfAccountSystemID
 			)
+            LEFT JOIN(
+                    SELECT
+                        ' . $budgetQuery . ' 
+                    FROM
+                        erp_budjetdetails
+                    WHERE
+                        erp_budjetdetails.companySystemID IN(' . join(',
+                    ', $companyID) . '
+                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) AS budget
+            ON
+                budget.chartOfAccountID = a.glAutoID '.$budgetJoin.'
 	) f
 GROUP BY
 	templateDetailID '.$templateGroup.'
@@ -2805,18 +2813,7 @@ FROM
 						erp_generalledger.chartOfAccountSystemID
 					FROM
 						erp_generalledger
-                    LEFT JOIN(
-                            SELECT
-                                ' . $budgetQuery . ' 
-                            FROM
-                                erp_budjetdetails
-                            WHERE
-                                erp_budjetdetails.companySystemID IN(' . join(',
-                            ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
-                        ) AS budget
-                    ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
+                    
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -2842,6 +2839,18 @@ FROM
 						erp_companyreporttemplatedetails.sortOrder
 				) AS a ON a.glAutoID = g.chartOfAccountSystemID
 			)
+            LEFT JOIN(
+                    SELECT
+                        ' . $budgetQuery . ' 
+                    FROM
+                        erp_budjetdetails
+                    WHERE
+                        erp_budjetdetails.companySystemID IN(' . join(',
+                    ', $companyID) . '
+                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) AS budget
+            ON
+                budget.chartOfAccountID = a.glAutoID '.$budgetJoin.'
 	) g
 GROUP BY
 	templateDetailID '.$templateGroup.'
@@ -2885,14 +2894,14 @@ GROUP BY
         $servicelineQryForBudget = '';
         if ($request->dateType == 1) {
             //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
                 //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                // $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
         }
 
@@ -2922,7 +2931,14 @@ GROUP BY
         $secondLinkedcolumnQry = '';
         $whereQry = [];
         foreach ($columnKeys as $val) {
-            $secondLinkedcolumnQry .= '((IFNULL(IF(erp_companyreporttemplatelinks.categoryType != erp_companyreporttemplatedetails.categoryType,gl.`' . $val . '`*-1,gl.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
+            $coloumnShortCode = explode('-', $val)[0];
+            if ($coloumnShortCode == "BCM") {
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTD") {
+                $secondLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else {
+                $secondLinkedcolumnQry .= '((IFNULL(IF(erp_companyreporttemplatelinks.categoryType != erp_companyreporttemplatedetails.categoryType,gl.`' . $val . '`*-1,gl.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
+            }
             $whereQry[] .= 'a.`' . $val . '` != 0';
         }
 
@@ -2931,7 +2947,7 @@ GROUP BY
         if ($columnTemplateID == 1) {
             $secondLinkedcolumnQry .= ' gl.compID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
-            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $budgetJoin = ' AND gl.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
         }
 
@@ -2945,14 +2961,19 @@ GROUP BY
 	erp_companyreporttemplatedetails.categoryType AS templateCatType
 FROM
 	erp_companyreporttemplatelinks
-	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID 
+	INNER JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatelinks.templateDetailID = erp_companyreporttemplatedetails.detID
 	LEFT JOIN (
         SELECT
         ' . $firstLinkedcolumnQry . '
         erp_generalledger.chartOfAccountSystemID
     FROM
-        erp_generalledger 
-        LEFT JOIN(
+        erp_generalledger
+        INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+        WHERE
+        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+        ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
+        GROUP BY erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+    LEFT JOIN(
                 SELECT
                     ' . $budgetQuery . ' 
                 FROM
@@ -2963,16 +2984,12 @@ FROM
             ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
             ) AS budget
         ON
-            budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
-        INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-        WHERE
-        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
-        ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+            budget.chartOfAccountID = erp_companyreporttemplatelinks.glAutoID '.$budgetJoin.'
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
 	erp_companyreporttemplatelinks.sortOrder) a WHERE (' . join(' OR ', $whereQry) . ')';
+
         $output = \DB::select($sql);
         return $output;
     }
@@ -2998,7 +3015,7 @@ ORDER BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery)
+    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $changeSelect)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -3026,14 +3043,14 @@ ORDER BY
         $servicelineQryForBudget = '';
         if ($request->dateType == 1) {
             //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
                 //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                // $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
         }
 
@@ -3053,12 +3070,52 @@ ORDER BY
         $thirdLinkedcolumnQry = '';
         $whereQry = [];
         foreach ($columnKeys as $key => $val) {
+            $coloumnShortCode = explode('-', $key)[0];
             $secondLinkedcolumnQry .= 'IFNULL(SUM(`' . $key . '`),0) AS `' . $key . '`,';
-            $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $key . '` * -1,`' . $key . '`),0) AS `' . $key . '`,';
+            if ($coloumnShortCode == "BCM" && !$changeSelect) {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $key . '`,';
+            } else if ($coloumnShortCode == "BYTD" && !$changeSelect) {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $key . '`,';
+            } else {
+                $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $key . '` * -1,`' . $key . '`),0) AS `' . $key . '`,';
+            }
             $whereQry[] .= 'b.`' . $key . '` != 0';
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
+
+        $budgetJoinQuery1 ='';
+        $budgetJoinQuery2 ='';
+        if ($changeSelect) {
+            $budgetJoinQuery2 = ' LEFT JOIN(
+                            SELECT
+                                ' . $budgetQuery . ' 
+                            FROM
+                                erp_budjetdetails
+                            WHERE
+                                erp_budjetdetails.companySystemID IN(' . join(',
+                            ', $companyID) . '
+                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                        ) AS budget
+                    ON
+                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+            ';
+        } else {
+            $budgetJoinQuery1 = ' LEFT JOIN(
+                            SELECT
+                                ' . $budgetQuery . ' 
+                            FROM
+                                erp_budjetdetails
+                            WHERE
+                                erp_budjetdetails.companySystemID IN(' . join(',
+                            ', $companyID) . '
+                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                        ) AS budget
+                    ON
+                        budget.chartOfAccountID = a.glAutoID
+            ';
+        }
+
 
         $sql = 'SELECT * FROM (SELECT
 	' . $secondLinkedcolumnQry . ' 
@@ -3078,18 +3135,7 @@ FROM
 						erp_generalledger.chartOfAccountSystemID
 					FROM
 						erp_generalledger
-                    LEFT JOIN(
-                            SELECT
-                                ' . $budgetQuery . ' 
-                            FROM
-                                erp_budjetdetails
-                            WHERE
-                                erp_budjetdetails.companySystemID IN(' . join(',
-                            ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
-                        ) AS budget
-                    ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
+                    '.$budgetJoinQuery2.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -3114,7 +3160,8 @@ FROM
 					ORDER BY
 						erp_companyreporttemplatedetails.sortOrder
 				) AS a ON a.glAutoID = g.chartOfAccountSystemID
-			)
+                '.$budgetJoinQuery1.'
+        )
 	) f
 GROUP BY
 	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ')';
@@ -3126,6 +3173,24 @@ GROUP BY
 
     function getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
     {
+
+        $reportTemplateMaster = ReportTemplate::find($request->templateType);
+        $uncategorizeGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->whereNotExists(function ($query) use ($request) {
+            $query->selectRaw('*')
+                ->from('erp_companyreporttemplatelinks')
+                ->where('templateMasterID', $request->templateType)
+                ->whereRaw('chartofaccounts.chartOfAccountSystemID = erp_companyreporttemplatelinks.glAutoID');
+        })->pluck('chartOfAccountSystemID')->toArray();
+
+        if (count($uncategorizeGL) > 0) {
+            $newColumData = $this->getFinancialCustomizeRptColumnQry($request, true);
+            $linkedcolumnQry = $newColumData['linkedcolumnQry'];
+            $linkedcolumnQry2 = $newColumData['linkedcolumnQry2'];
+            $columnKeys = $newColumData['columnKeys'];
+            $budgetQuery = $newColumData['budgetQuery'];
+            $budgetWhereQuery = $newColumData['budgetWhereQuery'];
+        }
+
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
             $toDate = $toDate->format('Y-m-d');
@@ -3175,14 +3240,6 @@ GROUP BY
             }
         }
 
-        $reportTemplateMaster = ReportTemplate::find($request->templateType);
-        $uncategorizeGL = ChartOfAccount::where('catogaryBLorPL', $reportTemplateMaster->categoryBLorPL)->where('isActive', 1)->where('isApproved', 1)->whereNotExists(function ($query) use ($request) {
-            $query->selectRaw('*')
-                ->from('erp_companyreporttemplatelinks')
-                ->where('templateMasterID', $request->templateType)
-                ->whereRaw('chartofaccounts.chartOfAccountSystemID = erp_companyreporttemplatelinks.glAutoID');
-        })->pluck('chartOfAccountSystemID')->toArray();
-
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
         $secondLinkedcolumnQry = '';
@@ -3205,6 +3262,7 @@ GROUP BY
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $groupByCompID = ' GROUP BY compID';
         }
+
 
         $output = [];
         $outputDetail = [];
@@ -3303,14 +3361,14 @@ GROUP BY
         $servicelineQryForBudget = '';
         if ($request->dateType == 1) {
             //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-            $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+            // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
             if ($request->accountType == 2) {
                 //$dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '") OR (DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $lastYearEndDate . '"))';
-                $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
+                // $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
             } else {
                 $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
-                $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
+                // $dateFilter = 'AND (DATE(erp_generalledger.documentDate) <= "' . $toDate . '")';
             }
         }
 
@@ -3339,20 +3397,31 @@ GROUP BY
         $whereQry = [];
         $secondLinkedcolumnQry = !empty($linkedcolumnQry2) ? $linkedcolumnQry2 : '';
         foreach ($columnKeys as $key => $val) {
-            $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
+            $coloumnShortCode = explode('-', $val)[0];
+            if ($coloumnShortCode == "BCM") {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountMonth,  0 ) AS `' . $val . '`,';
+            } else if ($coloumnShortCode == "BYTD") {
+                $thirdLinkedcolumnQry .= 'IFNULL( bAmountYear,  0 ) AS `' . $val . '`,';
+            } else {
+                $thirdLinkedcolumnQry .= 'IFNULL(IF(linkCatType != templateCatType,`' . $val . '` * -1,`' . $val . '`),0) AS `' . $val . '`,';
+            }
             $whereQry[] .= 'b.`' . $val . '` != 0';
         }
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
-        $budgetJoin = '';
+        $budgetJoin1 = '';
+        $budgetJoin2 = '';
         $generalLedgerGroup = '';
         $unionGroupBy = '';
+        $templateGroupBY = '';
         if ($columnTemplateID == 1) {
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
             $secondLinkedcolumnQry .= ' ,compID';
+            $templateGroupBY .= ' ,compID';
             $thirdLinkedcolumnQry .= ' compID,';
-            $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $budgetJoin1 = ' AND erp_generalledger.companySystemID = budget.companySystemID';
+            $budgetJoin2 = ' AND g.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $unionGroupBy = ' GROUP BY compID';
         }
@@ -3375,7 +3444,7 @@ GROUP BY
                 ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin1.'
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
@@ -3401,18 +3470,6 @@ FROM
 						erp_generalledger.chartOfAccountSystemID
 					FROM
 						erp_generalledger
-                    LEFT JOIN(
-                            SELECT
-                                ' . $budgetQuery . ' 
-                            FROM
-                                erp_budjetdetails
-                            WHERE
-                                erp_budjetdetails.companySystemID IN(' . join(',
-                            ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
-                        ) AS budget
-                    ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -3438,9 +3495,21 @@ FROM
 						erp_companyreporttemplatedetails.sortOrder
 				) AS a ON a.glAutoID = g.chartOfAccountSystemID
 			)
+            LEFT JOIN(
+                    SELECT
+                        ' . $budgetQuery . ' 
+                    FROM
+                        erp_budjetdetails
+                    WHERE
+                        erp_budjetdetails.companySystemID IN(' . join(',
+                    ', $companyID) . '
+                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) AS budget
+            ON
+                budget.chartOfAccountID = a.glAutoID '.$budgetJoin2.'
 	) f
 GROUP BY
-	templateDetailID) b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b'.$unionGroupBy;
+	templateDetailID'.$templateGroupBY.') b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b'.$unionGroupBy;
 
         $output = \DB::select($sql);
         return $output;
@@ -3607,6 +3676,7 @@ GROUP BY
         $dateFilter = '';
         $documentQry = '';
         $servicelineQry = '';
+        $servicelineQryForBudget = '';
         if ($request->dateType == 1) {
             $dateFilter = 'AND ((DATE(erp_generalledger.documentDate) BETWEEN "' . $lastYearStartDate . '" AND "' . $toDate . '"))';
         } else {
@@ -3627,6 +3697,7 @@ GROUP BY
         if ($request->accountType == 2) {
             if (count($serviceline) > 0) {
                 $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
+                $servicelineQryForBudget = 'AND erp_budjetdetails.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
             }
         }
 
@@ -3655,9 +3726,7 @@ GROUP BY
                             WHERE
                                 erp_budjetdetails.companySystemID IN(' . join(',
                             ', $companyID) . '
-                        ) AND erp_budjetdetails.serviceLineSystemID IN(' . join(',
-                            ', $serviceline) . '
-                        ) ' . $budgetWhereQuery . '
+                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
                         budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
@@ -3671,7 +3740,6 @@ GROUP BY
 							' . join(',
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . ' GROUP BY GeneralLedgerID) a WHERE `' . $input['selectedColumn'] . '` != 0';
-
         return DB::select($sql);
     }
 
@@ -3722,7 +3790,7 @@ GROUP BY
         return $this->sendResponse(array(), 'successfully export');
     }
 
-    function getFinancialCustomizeRptColumnQry($request)
+    function getFinancialCustomizeRptColumnQry($request, $changeSelect = false)
     {
 
         $toDate = '';
@@ -3889,35 +3957,22 @@ GROUP BY
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
                 }
                 if ($val->shortCode == 'BCM') {
-                    $columnArray[$val->shortCode] = "IFNULL(
-                                                        IF(
-                                                            chartofaccounts.catogaryBLorPL = 'PL',
-                                                            bAmountMonth * - 1,
-                                                            IF(
-                                                                chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',
-                                                                bAmountMonth * - 1,
-                                                                bAmountMonth
-                                                            )
-                                                        ),
-                                                        0
-                                                    )";
+
+                    if ($changeSelect) {
+                        $columnArray[$val->shortCode] = "IFNULL(bAmountMonth, 0)";
+                    } else {
+                        $columnArray[$val->shortCode] = "0";
+                    }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
 
                 }
 
                 if ($val->shortCode == 'BYTD') {
-                    $columnArray[$val->shortCode] = "IFNULL(
-                                                        IF(
-                                                            chartofaccounts.catogaryBLorPL = 'PL',
-                                                            bAmountYear * - 1,
-                                                            IF(
-                                                                chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',
-                                                                bAmountYear * - 1,
-                                                                bAmountYear
-                                                            )
-                                                        ),
-                                                        0
-                                                    )";
+                    if ($changeSelect) {
+                        $columnArray[$val->shortCode] = "IFNULL(bAmountYear, 0)";
+                    } else {
+                        $columnArray[$val->shortCode] = "0";
+                    }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
                 }
             }
@@ -3988,7 +4043,7 @@ GROUP BY
         }
 
         //get linked row sum amount to the formula
-        $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2, $budgetQuery, $budgetWhereQuery));
+        $detTotCollect = collect($this->getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry2, $financeYear, $period, $linkedcolumnArray2, $budgetQuery, $budgetWhereQuery, $changeSelect));
 
         // formatting queries
         if (count($linkedColumn) > 0) {

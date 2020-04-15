@@ -383,8 +383,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             $companies = [$companyId];
         }
 
-        $supplierCatalog = SupplierCatalogMaster::whereIn('companySystemID',$companies)
-            ->where(function ($query){
+        $supplierCatalog = SupplierCatalogMaster::where(function ($query){
                 $query->whereNull('isDeleted')
                     ->orWhere('isDeleted',0);
             })
@@ -452,8 +451,8 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $poDate = Carbon::parse($po->createdDateTime)->format('y-m-d');
         $supplierID = $po->supplierID;
         $catalog = SupplierCatalogDetail::whereHas('master', function($query) use($company_id,$supplierID,$poDate){
-            $query->where('fromDate','<=',$poDate)
-                ->where('toDate','>=',$poDate)
+            $query->whereDate('fromDate','<=',$poDate)
+                ->whereDate('toDate','>=',$poDate)
                 ->where('supplierID',$supplierID)
                 ->where('isActive',1);
         })
@@ -487,8 +486,8 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $poDate = Carbon::parse($po->createdDateTime)->format('y-m-d');
         $supplierID = $po->supplierID;
 
-        $catalog = SupplierCatalogMaster::where('fromDate','<=',$poDate)
-            ->where('toDate','>=',$poDate)
+        $catalog = SupplierCatalogMaster::whereDate('fromDate','<=',$poDate)
+            ->whereDate('toDate','>=',$poDate)
             ->where('supplierID',$supplierID)
             ->where('isActive',1)
             ->where(function ($q){
@@ -510,24 +509,6 @@ class SupplierCatalogMasterAPIController extends AppBaseController
                     })
                     ->with(['uom_default','item_by','local_currency','master']);
             }])->first();
-
-
-
-
-//        $catalog = SupplierCatalogDetail::whereHas('master', function($query) use($company_id,$supplierID,$poDate){
-//            $query->where('companySystemID',$company_id)
-//                ->where('fromDate','<=',$poDate)
-//                ->where('toDate','>=',$poDate)
-//                ->where('supplierID',$supplierID)
-//                ->where('isActive',1);
-//        })
-//            ->where('itemCodeSystem',$item_id)
-//            ->where(function ($q){
-//                $q->whereNull('isDeleted')
-//                    ->orWhere('isDeleted',0);
-//            })
-//            ->with(['uom_default','item_by','local_currency','master'])
-//            ->first();
 
         return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
 
