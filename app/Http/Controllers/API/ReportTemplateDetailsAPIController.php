@@ -546,7 +546,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                         $glSubCategoryDetail = $glValue['subcategory_detail'];
                         unset($glValue['subcategory_detail']);
 
-                        if ($glValue['subCategory'] != null && $oldReportIds[$glValue['subCategory']] != null) {
+                        if ($glValue['subCategory'] != null && isset($oldReportIds[$glValue['subCategory']]) && $oldReportIds[$glValue['subCategory']] != null) {
                             $glValue['subCategory'] = $oldReportIds[$glValue['subCategory']];
                         } else {
                             $glValue['subCategory'] = null;
@@ -564,7 +564,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     $glSubCategoryDetail = $subCateogryTotValue['subcategory_detail'];
                     unset($subCateogryTotValue['subcategory_detail']);
 
-                    if ($subCateogryTotValue['subCategory'] != null && $oldReportIds[$subCateogryTotValue['subCategory']] != null) {
+                    if ($subCateogryTotValue['subCategory'] != null && isset($oldReportIds[$subCateogryTotValue['subCategory']]) && $oldReportIds[$subCateogryTotValue['subCategory']] != null) {
                         $subCateogryTotValue['subCategory'] = $oldReportIds[$subCateogryTotValue['subCategory']];
                     } else {
                         $subCateogryTotValue['subCategory'] = null;
