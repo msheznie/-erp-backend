@@ -164,9 +164,9 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['timeStamp'] = \Helper::currentDateTime();
 
                             if($masterData->isPerforma == 2){// item sales invoice
-                                $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans);
-                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal));
-                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt));
+                                $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
+                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
                             }else{
                                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
