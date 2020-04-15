@@ -156,7 +156,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $lastDate  = $lastDate->format('Y-m-d');
 
             if($lastDate >= $input['bigginingDate']){
-                return $this->sendError('You cannot create financial year, Please select the begging date after ' . (new Carbon($lastDate))->format('d/m/Y'));
+                return $this->sendError('You cannot create financial year, Please select the beginning date after ' . (new Carbon($lastDate))->format('d/m/Y'));
             }
         }
 
