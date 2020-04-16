@@ -172,7 +172,9 @@ class CustomerMasterAPIController extends AppBaseController
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
                 ->where('employeesdepartments.documentSystemID', 58)
                 ->whereIn('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('customermaster', function ($query) use ($companyID, $empID, $search) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -191,6 +193,12 @@ class CustomerMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 58)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $customerMasters = [];
+        }
 
         return \DataTables::of($customerMasters)
             ->order(function ($query) use ($input) {

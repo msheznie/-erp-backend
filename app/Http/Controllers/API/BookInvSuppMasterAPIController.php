@@ -1312,7 +1312,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
             $query->where('employeesdepartments.documentSystemID', 11)
                 ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -1336,6 +1338,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     ->orWhere('comments', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $grvMasters = [];
         }
 
         return \DataTables::of($grvMasters)

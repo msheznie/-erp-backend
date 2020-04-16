@@ -4018,7 +4018,7 @@ GROUP BY
                         IFNULL(
                             SUM(
                                 IF(
-                                    Year = '" . $currentYear . "', 
+                                    Year = '" . $currentYear . "' && month <= '" . $currentYearCurrentMonthOnly . "',
                                     $budgetColumn, 
                                     0
                                 )

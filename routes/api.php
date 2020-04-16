@@ -331,6 +331,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
+    Route::post('updateEmployeeDepartmentActive', 'EmployeesDepartmentAPIController@updateEmployeeDepartmentActive');
     Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');

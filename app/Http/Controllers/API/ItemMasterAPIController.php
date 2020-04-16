@@ -368,7 +368,9 @@ class ItemMasterAPIController extends AppBaseController
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
                 ->where('employeesdepartments.documentSystemID', 57)
                 ->whereIn('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })
             ->join('itemmaster', function ($query) use ($companyID, $empID, $search) {
                 $query->on('itemCodeSystem', '=', 'documentSystemCode')
@@ -390,6 +392,12 @@ class ItemMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 57)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $itemMasters = [];
+        }
 
         return \DataTables::of($itemMasters)
             ->order(function ($query) use ($input) {

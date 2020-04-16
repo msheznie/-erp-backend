@@ -838,7 +838,9 @@ class AssetCapitalizationAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [63])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_fa_assetcapitalization', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'capitalizationID')
@@ -861,6 +863,12 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $query->where('capitalizationCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $capitalization = [];
         }
 
         return \DataTables::of($capitalization)

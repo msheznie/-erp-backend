@@ -780,7 +780,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
                     ->where('companySystemID', $companySystemID)
-                    ->where('documentSystemID', $documentSystemID);
+                    ->where('documentSystemID', $documentSystemID)
+                    ->where('isActive', 1)
+                    ->where('removedYN', 0);
                 //->get();
 
                 if ($companyDocument['isServiceLineApproval'] == -1) {
@@ -788,6 +790,9 @@ class PurchaseRequestAPIController extends AppBaseController
                 }
 
                 $approvalList = $approvalList->with(['employee'])
+                    ->whereHas('employee', function($q) {
+                        $q->where('discharegedYN',0);
+                    })
                     ->groupBy('employeeSystemID')
                     ->get();
                 $value['approval_list'] = $approvalList;
@@ -1013,7 +1018,9 @@ class PurchaseRequestAPIController extends AppBaseController
                 $query->whereIn('employeesdepartments.documentSystemID', [1, 50, 51])
                     ->where('employeesdepartments.departmentSystemID', 3)
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_purchaserequest', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
@@ -1041,6 +1048,12 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->orWhere('comments', 'LIKE', "%{$search}%");
         }
 
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+        
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
