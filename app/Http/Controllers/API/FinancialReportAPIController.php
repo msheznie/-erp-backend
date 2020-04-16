@@ -17,6 +17,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
@@ -28,7 +29,6 @@ use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\GeneralLedger;
 use App\Models\ReportTemplate;
-use App\Models\ReportTemplateCashBank;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateColumns;
 use App\Models\ReportTemplateDetails;
@@ -78,7 +78,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $accountType = AccountsType::all();
 
-        $templateType = ReportTemplate::where('isActive',1)->get();
+        $templateType = ReportTemplate::where('isActive', 1)->get();
 
 
         $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
@@ -236,6 +236,18 @@ class FinancialReportAPIController extends AppBaseController
                 ]);
 
                 if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            case 'JVD':
+                $validator = \Validator::make($request->all(), [
+                    'companySystemID' => 'required',
+                    'jvType' => 'required|array',
+                    'fromDate' => 'required_if:dateType,1|nullable|date',
+                    'toDate' => 'required_if:dateType,1|nullable|date|after_or_equal:fromDate',
+                ]);
+
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -490,7 +502,7 @@ class FinancialReportAPIController extends AppBaseController
                 } else {
                     $grandTotal[0] = [];
                 }
-                    
+
                 $outputOpeningBalance = '';
                 $outputOpeningBalanceArr = [];
                 $outputClosingBalanceArr = [];
@@ -512,12 +524,12 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                
+
                 $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
                 $removedFromArray = [];
                 $companyHeaderColumns = [];
                 if ($columnTemplateID == 1) {
-                    if ($request->accountType == 1 || $request->accountType == 2) { 
+                    if ($request->accountType == 1 || $request->accountType == 2) {
                         $companyWiseGrandTotal = $grandTotal->groupBy('compID');
                     } else {
                         $companyWiseGrandTotal = [];
@@ -559,7 +571,7 @@ class FinancialReportAPIController extends AppBaseController
                         $divisionValue = (float)$numbers->value;
                     }
                 }
-                
+
 
                 $grandTotal = ($columnTemplateID == 1) ? collect($companyWiseGrandTotalArray)->toArray() : $grandTotal[0];
 
@@ -581,18 +593,190 @@ class FinancialReportAPIController extends AppBaseController
                     'month' => $month,
                 );
                 break;
+            case 'JVD':
+                $type = $request->reportTypeID;
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->jvDetailQry($request);
+
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $total = array();
+                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('debitAmountLocal')->toArray());
+                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('creditAmountLocal')->toArray());
+                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('debitAmountRpt')->toArray());
+                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('creditAmountRpt')->toArray());
+
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
+                    'total' => $total,
+                    'decimalPlaceLocal' => $decimalPlaceLocal,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
+                    'currencyRpt' => $requestCurrencyRpt->CurrencyCode,
+                );
+
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function jvDetailQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $jvType = collect($request->jvType)->pluck('id')->toArray();
+        $jvType = array_unique($jvType);
+        if ($request->reportTypeID == 'JVDD') {
+
+            $query = 'SELECT
+                      erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.documentID,
+                        erp_generalledger.documentSystemID,
+                        erp_generalledger.documentLocalCurrencyID,
+                        erp_generalledger.documentRptCurrencyID,
+                        erp_generalledger.documentSystemCode,
+                        erp_generalledger.documentCode,
+                        erp_generalledger.documentDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_jvmaster.confirmedDate,
+                        YEAR ( erp_generalledger.documentDate ) AS YEAR,
+                        erp_generalledger.documentNarration,
+                        erp_generalledger.glCode,
+                        erp_generalledger.glAccountType,
+                        chartofaccounts.AccountDescription,
+                        IF
+                            ( documentLocalAmount < 0, documentLocalAmount *- 1, 0 ) AS creditAmountLocal,
+                        IF
+                            ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS debitAmountLocal,
+                            IF
+                            ( documentRptAmount < 0, documentRptAmount *- 1, 0 ) AS creditAmountRpt,
+                        IF
+                            ( documentRptAmount > 0, documentRptAmount, 0 ) AS debitAmountRpt,
+                        employees.empName AS FinalApprovedBy,
+                        erp_jvmaster.createdUserID,
+                        erp_jvmaster.confirmedByName FROM erp_generalledger 
+                        LEFT JOIN chartofaccounts ON erp_generalledger.glCode = chartofaccounts.AccountCode
+                        LEFT JOIN employees ON erp_generalledger.documentFinalApprovedBy = employees.empID
+                        INNER JOIN erp_jvmaster ON erp_jvmaster.companySystemID = erp_generalledger.companySystemID 
+                        AND erp_jvmaster.documentSystemID = erp_generalledger.documentSystemID 
+                        AND erp_jvmaster.jvMasterAutoId = erp_generalledger.documentSystemCode
+                        WHERE erp_generalledger.documentSystemID = 17 
+                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_jvmaster.jvType IN (' . join(',', $jvType) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+
+        }
+        if ($request->reportTypeID == 'JVDS') {
+            $query = 'SELECT
+                        companySystemID,
+                        companyID,
+                        documentSystemID,
+                        documentRptCurrencyID,
+                        documentLocalCurrencyID,
+                        documentSystemCode,
+                        documentCode,
+                        documentDate,
+                        YEAR,
+                        documentNarration,
+                        SUM( creditAmountLocal ) AS creditAmountLocal,
+                        SUM( debitAmountLocal ) AS debitAmountLocal,
+                        SUM( creditAmountRpt ) AS creditAmountRpt,
+                        SUM( debitAmountRpt ) AS debitAmountRpt,
+                        confirmedDate,
+                        confirmedByName,
+                        documentFinalApprovedDate,
+                        FinalApprovedBy 
+                    FROM
+                        (
+                     SELECT
+                      erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.documentID,
+                        erp_generalledger.documentSystemID,
+                        erp_generalledger.documentLocalCurrencyID,
+                        erp_generalledger.documentRptCurrencyID,
+                        erp_generalledger.documentSystemCode,
+                        erp_generalledger.documentCode,
+                        erp_generalledger.documentDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_jvmaster.confirmedDate,
+                        YEAR ( erp_generalledger.documentDate ) AS YEAR,
+                        erp_generalledger.documentNarration,
+                        erp_generalledger.glCode,
+                        erp_generalledger.glAccountType,
+                        chartofaccounts.AccountDescription,
+                        IF
+                            ( documentLocalAmount < 0, documentLocalAmount *- 1, 0 ) AS creditAmountLocal,
+                        IF
+                            ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS debitAmountLocal,
+                            IF
+                            ( documentRptAmount < 0, documentRptAmount *- 1, 0 ) AS creditAmountRpt,
+                        IF
+                            ( documentRptAmount > 0, documentRptAmount, 0 ) AS debitAmountRpt,
+                        employees.empName AS FinalApprovedBy,
+                        erp_jvmaster.createdUserID,
+                        erp_jvmaster.confirmedByName FROM erp_generalledger 
+                        LEFT JOIN chartofaccounts ON erp_generalledger.glCode = chartofaccounts.AccountCode
+                        LEFT JOIN employees ON erp_generalledger.documentFinalApprovedBy = employees.empID
+                        INNER JOIN erp_jvmaster ON erp_jvmaster.companySystemID = erp_generalledger.companySystemID 
+                        AND erp_jvmaster.documentSystemID = erp_generalledger.documentSystemID 
+                        AND erp_jvmaster.jvMasterAutoId = erp_generalledger.documentSystemCode
+                        WHERE erp_generalledger.documentSystemID = 17 
+                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_jvmaster.jvType IN (' . join(',', $jvType) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '")
+                        as a GROUP BY a.documentSystemCode';
+        }
+
+        $output = \DB::select($query);
+        //dd(DB::getQueryLog());
+        return $output;
     }
 
     public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request)
     {
 
         $companyData = Company::all();
-        $companyCodes =[];
-        $uncategorizeDetailArr =[];
-        $uncategorizeArr =[];
+        $companyCodes = [];
+        $uncategorizeDetailArr = [];
+        $uncategorizeArr = [];
 
         foreach ($companyData as $key => $value) {
             $companyCodes[$value->companySystemID] = $value->CompanyID;
@@ -614,7 +798,7 @@ class FinancialReportAPIController extends AppBaseController
             $temp = [];
             foreach ($uncategorizeData['outputDetail'] as $key1 => $value1) {
                 foreach ($columnKeys as $key => $val) {
-                    
+
                     $temp[$value1->chartOfAccountSystemID]['chartOfAccountSystemID'] = $value1->chartOfAccountSystemID;
                     $temp[$value1->chartOfAccountSystemID]['glCode'] = $value1->glCode;
                     $temp[$value1->chartOfAccountSystemID]['glDescription'] = $value1->glDescription;
@@ -648,15 +832,15 @@ class FinancialReportAPIController extends AppBaseController
         $newHeaders = [];
         $removedFromArray = [];
         foreach ($headers as $key => $value) {
-            $newHeaders[$value->detID]['detDescription'] = $value->detDescription; 
-            $newHeaders[$value->detID]['detID'] = $value->detID; 
-            $newHeaders[$value->detID]['sortOrder'] = $value->sortOrder; 
-            $newHeaders[$value->detID]['masterID'] = $value->masterID; 
-            $newHeaders[$value->detID]['bgColor'] = $value->bgColor; 
-            $newHeaders[$value->detID]['fontColor'] = $value->fontColor; 
-            $newHeaders[$value->detID]['itemType'] = $value->itemType; 
-            $newHeaders[$value->detID]['hideHeader'] = $value->hideHeader; 
-            $newHeaders[$value->detID]['expanded'] = $value->expanded; 
+            $newHeaders[$value->detID]['detDescription'] = $value->detDescription;
+            $newHeaders[$value->detID]['detID'] = $value->detID;
+            $newHeaders[$value->detID]['sortOrder'] = $value->sortOrder;
+            $newHeaders[$value->detID]['masterID'] = $value->masterID;
+            $newHeaders[$value->detID]['bgColor'] = $value->bgColor;
+            $newHeaders[$value->detID]['fontColor'] = $value->fontColor;
+            $newHeaders[$value->detID]['itemType'] = $value->itemType;
+            $newHeaders[$value->detID]['hideHeader'] = $value->hideHeader;
+            $newHeaders[$value->detID]['expanded'] = $value->expanded;
 
             foreach ($columnKeys as $key1 => $value1) {
                 $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
@@ -671,15 +855,15 @@ class FinancialReportAPIController extends AppBaseController
 
         $newOutputCollect = [];
         foreach ($outputCollect as $key => $value) {
-            $newOutputCollect[$value->detID]['detDescription'] = $value->detDescription; 
-            $newOutputCollect[$value->detID]['detID'] = $value->detID; 
-            $newOutputCollect[$value->detID]['sortOrder'] = $value->sortOrder; 
-            $newOutputCollect[$value->detID]['masterID'] = $value->masterID; 
-            $newOutputCollect[$value->detID]['bgColor'] = $value->bgColor; 
-            $newOutputCollect[$value->detID]['fontColor'] = $value->fontColor; 
-            $newOutputCollect[$value->detID]['itemType'] = $value->itemType; 
-            $newOutputCollect[$value->detID]['hideHeader'] = $value->hideHeader; 
-            $newOutputCollect[$value->detID]['expanded'] = $value->expanded; 
+            $newOutputCollect[$value->detID]['detDescription'] = $value->detDescription;
+            $newOutputCollect[$value->detID]['detID'] = $value->detID;
+            $newOutputCollect[$value->detID]['sortOrder'] = $value->sortOrder;
+            $newOutputCollect[$value->detID]['masterID'] = $value->masterID;
+            $newOutputCollect[$value->detID]['bgColor'] = $value->bgColor;
+            $newOutputCollect[$value->detID]['fontColor'] = $value->fontColor;
+            $newOutputCollect[$value->detID]['itemType'] = $value->itemType;
+            $newOutputCollect[$value->detID]['hideHeader'] = $value->hideHeader;
+            $newOutputCollect[$value->detID]['expanded'] = $value->expanded;
 
             foreach ($columnKeys as $key1 => $value1) {
                 $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
@@ -693,12 +877,12 @@ class FinancialReportAPIController extends AppBaseController
 
         $newOutputDetail = [];
         foreach ($outputDetail as $key => $value) {
-            $newOutputDetail[$value->glAutoID]['glCode'] = $value->glCode; 
-            $newOutputDetail[$value->glAutoID]['glDescription'] = $value->glDescription; 
-            $newOutputDetail[$value->glAutoID]['glAutoID'] = $value->glAutoID; 
-            $newOutputDetail[$value->glAutoID]['templateDetailID'] = $value->templateDetailID; 
-            $newOutputDetail[$value->glAutoID]['linkCatType'] = $value->linkCatType; 
-            $newOutputDetail[$value->glAutoID]['templateCatType'] = $value->templateCatType; 
+            $newOutputDetail[$value->glAutoID]['glCode'] = $value->glCode;
+            $newOutputDetail[$value->glAutoID]['glDescription'] = $value->glDescription;
+            $newOutputDetail[$value->glAutoID]['glAutoID'] = $value->glAutoID;
+            $newOutputDetail[$value->glAutoID]['templateDetailID'] = $value->templateDetailID;
+            $newOutputDetail[$value->glAutoID]['linkCatType'] = $value->linkCatType;
+            $newOutputDetail[$value->glAutoID]['templateCatType'] = $value->templateCatType;
 
             foreach ($columnKeys as $key1 => $value1) {
                 $companyID = (isset($companyCodes[$value->compID])) ? $companyCodes[$value->compID] : $value->compID;
@@ -741,7 +925,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $outputOpeningBalanceArr = [];
         $outputClosingBalanceArr = [];
-        if ($request->accountType == 3) { 
+        if ($request->accountType == 3) {
 
             $lastColumn = collect($headers)->last();
             foreach ($outputOpeningBalance as $ke => $value) {
@@ -889,7 +1073,7 @@ class FinancialReportAPIController extends AppBaseController
                     $decimalPlace = 2;
                     if ($request->currencyID == 1) {
                         $decimalPlace = $decimalPlaceLocal;
-                    }else if($request->currencyID == 2){
+                    } else if ($request->currencyID == 2) {
                         $decimalPlace = $decimalPlaceRpt;
                     }
 
@@ -904,10 +1088,10 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Account Description'] = $val->AccountDescription;
                             $data[$x]['Type'] = $val->glAccountType;
                             $data[$x]['Opening Balance'] = round($val->Opening, $decimalPlace);
-                            foreach ($headers as $header){
-                                $closing = $header.'Closing';
+                            foreach ($headers as $header) {
+                                $closing = $header . 'Closing';
                                 $data[$x][$header] = round($val->$header, $decimalPlace);
-                                $data[$x][$header. ' Closing'] = round($val->$closing, $decimalPlace);
+                                $data[$x][$header . ' Closing'] = round($val->$closing, $decimalPlace);
                             }
 
                             $x++;
@@ -1264,6 +1448,84 @@ class FinancialReportAPIController extends AppBaseController
                 })->download($type);
 
                 return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'JVD' :
+
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $checkIsGroup = Company::find($request->companySystemID);
+
+                $output = $this->jvDetailQry($request);
+                $data = array();
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+
+                        $data[$x]['Company ID'] = $val->companyID;
+                        //$data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Year'] = $val->YEAR;
+                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        if ($reportTypeID == 'JVDD') {
+                            $data[$x]['Account Code'] = $val->glCode;
+                            $data[$x]['Account Description'] = $val->AccountDescription;
+                            $data[$x]['Type'] = $val->glAccountType;
+                        }
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->debitAmountLocal, $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->creditAmountLocal, $decimalPlaceLocal);
+                        }
+
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
+                        $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x]['Confirmed By'] = $val->confirmedByName;
+                        $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x]['Approved By'] = $val->FinalApprovedBy;
+                        $x++;
+                    }
+                }
+
+                $csv = \Excel::create('jv_detail', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -2751,7 +3013,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
+						erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
 				) g
 				INNER JOIN (
 					SELECT
@@ -2777,13 +3039,13 @@ FROM
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = a.glAutoID '.$budgetJoin.'
+                budget.chartOfAccountID = a.glAutoID ' . $budgetJoin . '
 	) f
 GROUP BY
-	templateDetailID '.$templateGroup.'
+	templateDetailID ' . $templateGroup . '
 	) AS b ON b.templateDetailID = erp_companyreporttemplatedetails.detID 
 WHERE
 	erp_companyreporttemplatedetails.companyReportTemplateID = ' . $request->templateType . ' 
@@ -2821,7 +3083,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
+						erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
 				) g
 				INNER JOIN (
 					SELECT
@@ -2847,19 +3109,19 @@ FROM
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = a.glAutoID '.$budgetJoin.'
+                budget.chartOfAccountID = a.glAutoID ' . $budgetJoin . '
 	) g
 GROUP BY
-	templateDetailID '.$templateGroup.'
+	templateDetailID ' . $templateGroup . '
 	) d ON d.templateDetailID = erp_companyreporttemplatelinks.subCategory 
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' 
 	AND subCategory IS NOT NULL 
 GROUP BY
-	erp_companyreporttemplatelinks.templateDetailID '.$templateGroup.'
+	erp_companyreporttemplatelinks.templateDetailID ' . $templateGroup . '
 	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
 
         $output = \DB::select($sql);
@@ -2972,7 +3234,7 @@ FROM
         WHERE
         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
         ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
-        GROUP BY erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
+        GROUP BY erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') AS gl ON erp_companyreporttemplatelinks.glAutoID = gl.chartOfAccountSystemID
     LEFT JOIN(
                 SELECT
                     ' . $budgetQuery . ' 
@@ -2981,10 +3243,10 @@ FROM
                 WHERE
                     erp_budjetdetails.companySystemID IN(' . join(',
                 ', $companyID) . '
-            ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+            ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
             ) AS budget
         ON
-            budget.chartOfAccountID = erp_companyreporttemplatelinks.glAutoID '.$budgetJoin.'
+            budget.chartOfAccountID = erp_companyreporttemplatelinks.glAutoID ' . $budgetJoin . '
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
@@ -3084,8 +3346,8 @@ ORDER BY
 
         $firstLinkedcolumnQry = !empty($linkedcolumnQry) ? $linkedcolumnQry . ',' : '';
 
-        $budgetJoinQuery1 ='';
-        $budgetJoinQuery2 ='';
+        $budgetJoinQuery1 = '';
+        $budgetJoinQuery2 = '';
         if ($changeSelect) {
             $budgetJoinQuery2 = ' LEFT JOIN(
                             SELECT
@@ -3095,7 +3357,7 @@ ORDER BY
                             WHERE
                                 erp_budjetdetails.companySystemID IN(' . join(',
                             ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                        ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
                         budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
@@ -3109,7 +3371,7 @@ ORDER BY
                             WHERE
                                 erp_budjetdetails.companySystemID IN(' . join(',
                             ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                        ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
                         budget.chartOfAccountID = a.glAutoID
@@ -3135,7 +3397,7 @@ FROM
 						erp_generalledger.chartOfAccountSystemID
 					FROM
 						erp_generalledger
-                    '.$budgetJoinQuery2.'
+                    ' . $budgetJoinQuery2 . '
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					WHERE
 						erp_generalledger.companySystemID IN (
@@ -3160,7 +3422,7 @@ FROM
 					ORDER BY
 						erp_companyreporttemplatedetails.sortOrder
 				) AS a ON a.glAutoID = g.chartOfAccountSystemID
-                '.$budgetJoinQuery1.'
+                ' . $budgetJoinQuery1 . '
         )
 	) f
 GROUP BY
@@ -3283,17 +3545,17 @@ GROUP BY
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID ' . $budgetJoin . '
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a WHERE ' . join(' OR ', $whereQry) . $groupByCompID;
+            erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') a WHERE ' . join(' OR ', $whereQry) . $groupByCompID;
 
             $output = \DB::select($sql);
 
@@ -3313,17 +3575,17 @@ GROUP BY
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin.'
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID ' . $budgetJoin . '
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a WHERE ' . join(' OR ', $whereQry);
+            erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') a WHERE ' . join(' OR ', $whereQry);
 
             $outputDetail = \DB::select($sql);
         }
@@ -3441,17 +3703,17 @@ GROUP BY
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID '.$budgetJoin1.'
+                budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID ' . $budgetJoin1 . '
             INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
         WHERE
             erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') AND
             erp_generalledger.chartOfAccountSystemID IN (' . join(',', $uncategorizeGL) . ')
             ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
         GROUP BY
-            erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.') a';
+            erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . ') a';
         }
 
         $sql = 'SELECT ' . $secondLinkedcolumnQry . ' FROM (SELECT * FROM (SELECT
@@ -3477,7 +3739,7 @@ FROM
 							', $companyID) . '
 						) ' . $servicelineQry . ' ' . $dateFilter . ' ' . $documentQry . '
 					GROUP BY
-						erp_generalledger.chartOfAccountSystemID '.$generalLedgerGroup.'
+						erp_generalledger.chartOfAccountSystemID ' . $generalLedgerGroup . '
 				) g
 				INNER JOIN (
 					SELECT
@@ -3503,13 +3765,13 @@ FROM
                     WHERE
                         erp_budjetdetails.companySystemID IN(' . join(',
                     ', $companyID) . '
-                ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                 ) AS budget
             ON
-                budget.chartOfAccountID = a.glAutoID '.$budgetJoin2.'
+                budget.chartOfAccountID = a.glAutoID ' . $budgetJoin2 . '
 	) f
 GROUP BY
-	templateDetailID'.$templateGroupBY.') b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b'.$unionGroupBy;
+	templateDetailID' . $templateGroupBY . ') b WHERE (' . join(' OR ', $whereQry) . ') ' . $unionQry . ') b' . $unionGroupBy;
 
         $output = \DB::select($sql);
         return $output;
@@ -3643,7 +3905,8 @@ GROUP BY
     }
 
 
-    public function reportTemplateGLDrillDownQry($request){
+    public function reportTemplateGLDrillDownQry($request)
+    {
 
         $input = $request->all();
         $fromDate = new Carbon($request->fromDate);
@@ -3726,7 +3989,7 @@ GROUP BY
                             WHERE
                                 erp_budjetdetails.companySystemID IN(' . join(',
                             ', $companyID) . '
-                        ) '.$servicelineQryForBudget.' ' . $budgetWhereQuery . '
+                        ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
                         ) AS budget
                     ON
                         budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
@@ -3743,10 +4006,11 @@ GROUP BY
         return DB::select($sql);
     }
 
-    public function reportTemplateGLDrillDownExport(Request $request){
+    public function reportTemplateGLDrillDownExport(Request $request)
+    {
 
         $input = $request->all();
-        $type =  $request->type;
+        $type = $request->type;
         $data = array();
         $output = $this->reportTemplateGLDrillDownQry($request);
 
@@ -3755,7 +4019,7 @@ GROUP BY
             $total = array_sum($total);
             $x = 0;
             foreach ($output as $val) {
-                $tem = (array) $val;
+                $tem = (array)$val;
                 $data[$x]['Document Number'] = $val->documentCode;
                 $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                 $data[$x]['Document Narration'] = $val->documentNarration;
@@ -3774,7 +4038,6 @@ GROUP BY
             $data[$x]['Supplier/Customer'] = 'Total';
             $data[$x][$input['selectedColumn']] = $total;
         }
-
 
 
         $csv = \Excel::create('trial_balance', function ($excel) use ($data) {
@@ -3831,7 +4094,7 @@ GROUP BY
 
         $reportTemplateMasterData = ReportTemplate::find($request->templateType);
 
-        $columnTemplateID =$reportTemplateMasterData->columnTemplateID;
+        $columnTemplateID = $reportTemplateMasterData->columnTemplateID;
 
         $columns = ReportTemplateColumns::all();
         $linkedColumn = ReportTemplateColumnLink::ofTemplate($request->templateType)->where('hideColumn', 0)->orderBy('sortOrder')->get();
@@ -3849,7 +4112,7 @@ GROUP BY
             $linkedcolumnArrayFinal3 = [];
             $currentMonth = Carbon::parse($toDate)->format('Y-m');
             $currentYear = Carbon::parse($toDate)->format('Y');
-            $currentYearCurrentMonthOnly = (int) Carbon::parse($toDate)->format('m');
+            $currentYearCurrentMonthOnly = (int)Carbon::parse($toDate)->format('m');
             $prevMonth = Carbon::parse($currentMonth)->subMonth()->format('Y-m');
             $prevMonth2 = Carbon::parse($currentMonth)->subMonth(2)->format('Y-m');
             $LCurrentMonth = Carbon::parse($toDate)->subYear()->format('Y-m');
@@ -4036,7 +4299,7 @@ GROUP BY
                             0
                         ) AS `bAmountMonth`";
 
-        $budgetWhereQuery = " AND Year = " . $currentYear. " GROUP BY erp_budjetdetails.`chartOfAccountID`";
+        $budgetWhereQuery = " AND Year = " . $currentYear . " GROUP BY erp_budjetdetails.`chartOfAccountID`";
 
         if ($columnTemplateID == 1) {
             $budgetWhereQuery .= ', erp_budjetdetails.companySystemID';
@@ -4065,7 +4328,7 @@ GROUP BY
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
                     $linkedcolumnArray3[$val->shortCode . '-' . $val->columnLinkID] = 'IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
-                }  else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM') {
+                } else if ($val->shortCode == 'BYTD' || $val->shortCode == 'BCM') {
                     $linkedcolumnArray[$val->shortCode . '-' . $val->columnLinkID] = $columnArray[$val->shortCode];
                     $columnHeader[] = ['description' => $columnHeaderArray[$val->shortCode], 'bgColor' => $val->bgColor, $val->shortCode . '-' . $val->columnLinkID => $columnHeaderArray[$val->shortCode], 'width' => $val->width];
                     $columnHeaderMapping[$val->shortCode . '-' . $val->columnLinkID] = $columnHeaderArray[$val->shortCode];
