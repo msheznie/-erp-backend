@@ -917,7 +917,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         $headers = collect($finalHeaders)->forget($removedFromArray)->values();
-
+        $companyHeaderData = collect($companyHeaderData)->sortBy('companyCode')->toArray();
         $companyHeaderColumns = [];
         foreach ($companyHeaderData as $key => $value) {
             $companyHeaderColumns[] = $value;
