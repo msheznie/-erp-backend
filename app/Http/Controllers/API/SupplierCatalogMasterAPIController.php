@@ -425,14 +425,14 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
 
-        $items = ItemAssigned::where('companySystemID', $companyId)
-            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
+        $items = ItemMaster::select(['primaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
         $items = $items->take(20)->get();
@@ -462,7 +462,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
                     ->orWhere('isDeleted',0);
             })
             ->with(['uom_default','item_by','local_currency','master'])
-            ->first();
+            ->get();
 
         return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
 
@@ -509,8 +509,9 @@ class SupplierCatalogMasterAPIController extends AppBaseController
                     })
                     ->with(['uom_default','item_by','local_currency','master']);
             }])->first();
+        
 
-        return $this->sendResponse($catalog->toArray(),'Catalog retrieved successfully');
+        return $this->sendResponse($catalog,'Catalog retrieved successfully');
 
     }
 }
