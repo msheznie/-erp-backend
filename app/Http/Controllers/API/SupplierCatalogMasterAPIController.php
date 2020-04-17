@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierCatalogMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCatalogMasterAPIRequest;
 use App\Models\ItemAssigned;
+use App\Models\ItemMaster;
 use App\Models\ProcumentOrder;
 use App\Models\SupplierCatalogDetail;
 use App\Models\SupplierCatalogMaster;
@@ -509,7 +510,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
                     })
                     ->with(['uom_default','item_by','local_currency','master']);
             }])->first();
-        
+
 
         return $this->sendResponse($catalog,'Catalog retrieved successfully');
 
