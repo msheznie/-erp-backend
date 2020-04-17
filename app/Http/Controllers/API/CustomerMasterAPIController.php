@@ -19,6 +19,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
 use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
 use App\Models\CompanyPolicyMaster;
@@ -30,12 +31,14 @@ use App\Models\CustomerMasterRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierContactType;
 use App\Models\TicketMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
 use App\Models\ChartOfAccount;
 use App\Repositories\CustomerMasterRepository;
+use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -359,6 +362,45 @@ class CustomerMasterAPIController extends AppBaseController
             if (empty($customerMasters)) {
                 return $this->sendError('customer not found');
             }
+            $customerMasterOld = $customerMasters->toArray();
+            if($customerMasters->approvedYN){
+                $employee = Helper::getEmployeeInfo();
+                //check policy 5
+                $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],5);
+                $customerId = $customerMasters->customerCodeSystem;
+                if($policy){
+                    $validorMessages = [
+                        'creditDays.required' => 'Credit Period field is required.',
+                        'creditDays.numeric' => 'Credit Period field is required.'
+                    ];
+                    $validator = \Validator::make($input, [
+                        'creditDays' => 'required|numeric',
+                    ],$validorMessages);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage']), $customerId);
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage']));
+                    // user activity log table
+                    if($customerMasters){
+                        $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage']);
+                        $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage']);
+
+                        // update in to user log table
+                        foreach ($old_array as $key => $old){
+                            if($old != $modified_array[$key]){
+                                $description = $employee->empName." Updated customer (".$customerMasters->CutomerCode.") from ".$old." To ".$modified_array[$key]."";
+                               // UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$customerMasters->documentSystemID,$customerMasters->supplierCodeSystem,$description,$modified_array[$key],$old);
+                            }
+                        }
+                    }
+
+                    return $this->sendResponse($customerMasters, 'Customer Master updated successfully');
+                }
+                return $this->sendError('Customer Master is already approved , You cannot update.',500);
+            }
+
 
             if ($customerMasters->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
