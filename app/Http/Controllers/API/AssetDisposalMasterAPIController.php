@@ -863,7 +863,9 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID');
                 $query->whereIn('employeesdepartments.documentSystemID', [41])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_fa_asset_disposalmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'assetdisposalMasterAutoID')
@@ -887,6 +889,12 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 $query->where('disposalDocumentCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $capitalization = [];
         }
 
         return \DataTables::of($capitalization)

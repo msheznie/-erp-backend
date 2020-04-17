@@ -916,7 +916,9 @@ class DebitNoteAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [15])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_debitnote', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'debitNoteAutoID')
@@ -967,6 +969,12 @@ class DebitNoteAPIController extends AppBaseController
                 $query->where('debitNoteCode', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'like', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $debitNotes = [];
         }
 
         return \DataTables::of($debitNotes)

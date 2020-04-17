@@ -971,7 +971,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
             $query->where('employeesdepartments.documentSystemID', 17)
                 ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('erp_jvmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'jvMasterAutoId')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -994,6 +996,12 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 $query->where('JVcode', 'LIKE', "%{$search}%")
                     ->orWhere('JVNarration', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $grvMasters = [];
         }
 
         return \DataTables::of($grvMasters)
