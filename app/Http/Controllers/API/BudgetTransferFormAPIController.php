@@ -772,7 +772,9 @@ class BudgetTransferFormAPIController extends AppBaseController
                 
                 $query->whereIn('employeesdepartments.documentSystemID', [46])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_budgettransferform', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'budgetTransferFormAutoID')
@@ -821,6 +823,12 @@ class BudgetTransferFormAPIController extends AppBaseController
                 $query->where('transferVoucherNo', 'LIKE', "%{$search}%")
                     ->orWhere('comments', 'like', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $debitNotes = [];
         }
 
         return \DataTables::of($debitNotes)

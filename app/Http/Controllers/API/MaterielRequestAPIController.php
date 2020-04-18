@@ -233,7 +233,9 @@ class MaterielRequestAPIController extends AppBaseController
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
                     ->whereIn('employeesdepartments.documentSystemID', [9])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_request', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'RequestID')
@@ -259,6 +261,12 @@ class MaterielRequestAPIController extends AppBaseController
                 $query->where('RequestCode', 'LIKE', "%{$search}%")
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $materielRequests = [];
         }
 
         return \DataTables::of($materielRequests)

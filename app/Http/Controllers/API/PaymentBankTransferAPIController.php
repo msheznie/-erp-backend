@@ -559,7 +559,9 @@ class PaymentBankTransferAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [64])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_paymentbanktransfer', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'paymentBankTransferID')
@@ -583,6 +585,12 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $bankTransfer = [];
         }
 
         return \DataTables::of($bankTransfer)

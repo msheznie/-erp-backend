@@ -1630,7 +1630,10 @@ class ProcumentOrderAPIController extends AppBaseController
             }
             $query->whereIn('employeesdepartments.documentSystemID', [2, 5, 52])
                 ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+
         })->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseOrderID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -1655,6 +1658,12 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->orWhere('narration', 'LIKE', "%{$search}%")
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
         }
 
         return \DataTables::of($poMasters)

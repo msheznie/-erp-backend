@@ -226,7 +226,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingRequestApprovals UNION ALL
 SELECT
 	* 
@@ -279,7 +279,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 2, 5, 52 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingOrderApprovals UNION ALL
 SELECT
 	* 
@@ -330,7 +330,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 4 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingPaymentApprovals UNION ALL
 SELECT
 	* 
@@ -381,7 +381,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingSupplierInvoiceApprovals UNION ALL
 SELECT
 	* 
@@ -431,7 +431,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 15 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingDebiteNoteApprovals UNION ALL
 SELECT
 	* 
@@ -482,7 +482,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 20 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingCustomerInvoiceApprovals UNION ALL
 SELECT
 	* 
@@ -532,7 +532,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 19 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingCreditNoteApprovals
 	UNION All
 	SELECT
@@ -583,7 +583,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 21 )
-	AND employeesdepartments.employeeSystemID = $employeeSystemID
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingReceiptVoucherApprovals
 	)t 
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
@@ -601,6 +601,13 @@ WHERE
           $data['order'][0]['dir'] = '';*/
         $data['search']['value'] = '';
         $request->merge($data);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $output = [];
+        }
+        
         return \DataTables::of($output)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()

@@ -11,6 +11,7 @@
  * -- Date: 11-May 2018 By: Mubashir Description: Added new function getApprovalAccessRights(),
  * -- Date: 18-May 2018 By: Mubashir Description: Added new function getApprovalAccessRightsFormData() and getDepartmentDocument(),
  * -- Date: 24-Feb 2020 By: Zakeeul Description: Added new function mirrorAccessRights(),
+ * -- Date: 16-Apr 2020 By: Zakeeul Description: Added new function updateEmployeeDepartmentActive(),
  */
 
 namespace App\Http\Controllers\API;
@@ -86,6 +87,8 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $input[$key]['ServiceLineSystemID'] = $ServiceLineSystemID;
             $input[$key]['employeeSystemID'] = $employeeSystemID;
             $input[$key]['employeeGroupID'] = $employeeGroupID;
+            $input[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input[$key]['createdDate'] = date("Y-m-d H:m:s");
             if ($companySystemID) {
                 $companyID = Company::find($companySystemID);
                 $input[$key]['companyId'] = $companyID->CompanyID;
@@ -172,12 +175,18 @@ class EmployeesDepartmentAPIController extends AppBaseController
     {
         /** @var EmployeesDepartment $employeesDepartment */
         $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($id);
-
         if (empty($employeesDepartment)) {
             return $this->sendError('Employees Department not found');
         }
 
-        $employeesDepartment->delete();
+        $employeeData = \Helper::getEmployeeInfo();
+
+        $employeesDepartment->removedYN = 1;
+        $employeesDepartment->removedByEmpID = $employeeData->empID;
+        $employeesDepartment->removedByEmpSystemID = $employeeData->employeeSystemID;
+        $employeesDepartment->removedDate = date("Y-m-d H:m:s");
+
+        $employeesDepartment->save();
 
         return $this->sendResponse($id, 'Employees Department deleted successfully');
     }
@@ -246,6 +255,14 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     $q->where('employeeGroupID', $input['approvalGroupID']);
                 });
             }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            $employeesDepartment->where('isActive', $input['isActive']);
+        }
+
+        if (array_key_exists('removedYN', $input)) {
+            $employeesDepartment->where('removedYN', $input['removedYN']);
         }
         if ($search) {
             $employeesDepartment = $employeesDepartment->where(function ($q) use ($search) {
@@ -449,11 +466,33 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $temp['approvalDeligatedFrom'] = $value['approvalDeligatedFrom'];
                 $temp['approvalDeligatedTo'] = $value['approvalDeligatedTo'];
                 $temp['dmsIsUploadEnable'] = $value['dmsIsUploadEnable'];
-
+                $temp['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                $temp['createdDate'] = date("Y-m-d H:m:s");
                 $finalData[] = $temp;
             }
         }
 
         return $finalData;
+    }
+
+    public function updateEmployeeDepartmentActive(Request $request)
+    {
+        $input = $request->all();
+
+        $employeesDepartment = $this->employeesDepartmentRepository->findWithoutFail($input['employeesDepartmentsID']);
+        if (empty($employeesDepartment)) {
+            return $this->sendError('Employees Department not found');
+        }
+
+        $employeeData = \Helper::getEmployeeInfo();
+
+        $employeesDepartment->isActive = ($employeesDepartment->isActive == 1) ? 0 :1;
+        $employeesDepartment->activatedByEmpID = $employeeData->empID;
+        $employeesDepartment->activatedByEmpSystemID = $employeeData->employeeSystemID;
+        $employeesDepartment->activatedDate = date("Y-m-d H:m:s");
+
+        $employeesDepartment->save();
+
+        return $this->sendResponse($input['employeesDepartmentsID'], 'Employees updated successfully');
     }
 }

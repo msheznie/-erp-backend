@@ -11,6 +11,7 @@ use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\ItemAssigned;
+use App\Models\ItemMaster;
 use App\Repositories\CustomerCatalogMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -425,14 +426,14 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
 
-        $items = ItemAssigned::where('companySystemID', $companyId)
-            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
+        $items = ItemMaster::select(['primaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
         $items = $items->take(20)->get();

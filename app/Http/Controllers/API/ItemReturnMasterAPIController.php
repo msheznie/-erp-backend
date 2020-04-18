@@ -858,7 +858,9 @@ class ItemReturnMasterAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [12])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_itemreturnmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'itemReturnAutoID')
@@ -908,6 +910,12 @@ class ItemReturnMasterAPIController extends AppBaseController
                 $query->where('itemReturnCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $itemReturnMaster = [];
         }
 
         return \DataTables::of($itemReturnMaster)
