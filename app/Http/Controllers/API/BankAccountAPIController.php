@@ -626,7 +626,9 @@ class BankAccountAPIController extends AppBaseController
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
                 $query->whereIn('employeesdepartments.documentSystemID', [66])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_bankaccount', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'bankAccountAutoID')
@@ -652,6 +654,12 @@ class BankAccountAPIController extends AppBaseController
                     ->orWhere('glCodeLinked', 'LIKE', "%{$search}%")
                     ->orWhere('accountSwiftCode', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $bankAccount = [];
         }
 
         return \DataTables::of($bankAccount)

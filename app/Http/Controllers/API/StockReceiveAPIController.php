@@ -994,7 +994,9 @@ class StockReceiveAPIController extends AppBaseController
             }
             $query->where('employeesdepartments.documentSystemID', 10)
                 ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('erp_stockreceive', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'stockReceiveAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -1016,6 +1018,12 @@ class StockReceiveAPIController extends AppBaseController
                 $query->where('stockReceiveCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $stockTransferMasters = [];
         }
 
         return \DataTables::of($stockTransferMasters)

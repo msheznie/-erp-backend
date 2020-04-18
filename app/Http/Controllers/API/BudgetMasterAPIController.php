@@ -1089,7 +1089,9 @@ class BudgetMasterAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [65])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_budgetmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'budgetmasterID')
@@ -1138,6 +1140,12 @@ class BudgetMasterAPIController extends AppBaseController
                 $query->where('ServiceLineDes', 'like', "%{$search}%")
                       ->orWhere('templateDescription', 'like', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $budgets = [];
         }
 
         return \DataTables::of($budgets)

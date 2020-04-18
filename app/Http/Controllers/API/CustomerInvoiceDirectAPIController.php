@@ -2576,7 +2576,9 @@ WHERE
             }
             $query->where('employeesdepartments.documentSystemID', 20)
                 ->where('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -2600,6 +2602,12 @@ WHERE
                     ->orWhere('comments', 'LIKE', "%{$search}%")
                     ->orWhere('CustomerName', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $grvMasters = [];
         }
 
         return \DataTables::of($grvMasters)

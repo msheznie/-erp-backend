@@ -699,8 +699,13 @@ class Helper
                                         }
 
                                         $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                            ->whereHas('employee', function($q) {
+                                                $q->where('discharegedYN',0);
+                                            })
                                             ->where('companySystemID', $documentApproved->companySystemID)
-                                            ->where('documentSystemID', $documentApproved->documentSystemID);
+                                            ->where('documentSystemID', $documentApproved->documentSystemID)
+                                            ->where('isActive', 1)
+                                            ->where('removedYN', 0);
 
                                         if ($companyDocument['isServiceLineApproval'] == -1) {
                                             $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
@@ -2020,8 +2025,13 @@ class Helper
                                         ->first();
 
                                     $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
+                                        ->whereHas('employee', function($q) {
+                                            $q->where('discharegedYN',0);
+                                        })
                                         ->where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID);
+                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('isActive', 1)
+                                        ->where('removedYN', 0);
 
 
                                     if ($companyDocument['isServiceLineApproval'] == -1) {
@@ -4332,6 +4342,19 @@ class Helper
                 }
             }
         }
+    }
 
+    public static function checkEmployeeDischarchedYN()
+    {
+        $user = Models\User::find(Auth::id());
+        if(!empty($user)){
+            $employee = Models\Employee::find($user->employee_id);
+            if ($employee->discharegedYN == -1) {
+                return 'true';
+            } else {
+                return 'false';
+            }
+        }
+        return 'false';
     }
 }

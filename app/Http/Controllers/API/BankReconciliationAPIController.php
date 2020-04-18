@@ -624,7 +624,9 @@ class BankReconciliationAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [62])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_bankrecmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'bankRecAutoID')
@@ -649,6 +651,12 @@ class BankReconciliationAPIController extends AppBaseController
                 $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('description', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $bankReconciliation = [];
         }
 
         return \DataTables::of($bankReconciliation)

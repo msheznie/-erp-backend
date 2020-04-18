@@ -352,7 +352,9 @@ class SupplierMasterAPIController extends AppBaseController
                 on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
                     ->where('employeesdepartments.documentSystemID', 56)
                     ->whereIn('employeesdepartments.companySystemID', $companyID)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('suppliermaster', function ($query) use ($companyID, $empID, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'supplierCodeSystem')
@@ -373,6 +375,12 @@ class SupplierMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 56)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $supplierMasters = [];
+        }
 
         return \DataTables::of($supplierMasters)
             ->order(function ($query) use ($input) {

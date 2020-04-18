@@ -1985,7 +1985,9 @@ function getPaymentApprovalByUser(Request $request)
             }
             $query->whereIn('employeesdepartments.documentSystemID', [4])
                 ->where('employeesdepartments.companySystemID', $companyId)
-                ->where('employeesdepartments.employeeSystemID', $empID);
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })
         ->join('erp_paysupplierinvoicemaster', function ($query) use ($companyId) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'PayMasterAutoId')
@@ -2023,6 +2025,12 @@ function getPaymentApprovalByUser(Request $request)
             $query->where('BPVcode', 'LIKE', "%{$search}%")
                 ->orWhere('BPVNarration', 'LIKE', "%{$search}%");
         });
+    }
+
+    $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+    if ($isEmployeeDischarched == 'true') {
+        $paymentVoucher = [];
     }
 
     return \DataTables::of($paymentVoucher)
