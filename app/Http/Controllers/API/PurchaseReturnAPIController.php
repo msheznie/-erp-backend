@@ -967,7 +967,9 @@ class PurchaseReturnAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [24])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_purchasereturnmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purhaseReturnAutoID')
@@ -1017,6 +1019,12 @@ class PurchaseReturnAPIController extends AppBaseController
                 $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseReturnMaster = [];
         }
 
         return \DataTables::of($purchaseReturnMaster)

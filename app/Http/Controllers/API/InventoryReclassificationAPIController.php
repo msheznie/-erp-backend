@@ -688,7 +688,9 @@ class InventoryReclassificationAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [61])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_inventoryreclassification', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'inventoryreclassificationID')
@@ -732,6 +734,12 @@ class InventoryReclassificationAPIController extends AppBaseController
                 $query->where('documentCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
+        }
+
+         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $reclassifyMaster = [];
         }
 
         return \DataTables::of($reclassifyMaster)

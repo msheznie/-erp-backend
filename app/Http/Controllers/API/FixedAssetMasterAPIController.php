@@ -1171,7 +1171,9 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [22])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
@@ -1196,6 +1198,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->where('faCode', 'LIKE', "%{$search}%")
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $assetCost = [];
         }
 
         return \DataTables::of($assetCost)

@@ -942,7 +942,9 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [8])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
@@ -992,6 +994,12 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $query->where('itemIssueCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $itemIssueMaster = [];
         }
 
         return \DataTables::of($itemIssueMaster)

@@ -678,7 +678,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [23])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_fa_depmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'depMasterAutoID')
@@ -700,6 +702,12 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $assetCost = $assetCost->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $assetCost = [];
         }
 
         return \DataTables::of($assetCost)

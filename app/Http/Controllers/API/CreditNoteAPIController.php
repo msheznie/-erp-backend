@@ -1049,7 +1049,9 @@ class CreditNoteAPIController extends AppBaseController
 
                 $query->whereIn('employeesdepartments.documentSystemID', [19])
                     ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->join('erp_creditnote', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'creditNoteAutoID')
@@ -1101,6 +1103,12 @@ class CreditNoteAPIController extends AppBaseController
                 $query->orwhere('comments', 'LIKE', "%{$search}%");
                 $query->orwhere('CustomerName', 'LIKE', "%{$search}%");
             });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $creditNote = [];
         }
 
         return \DataTables::of($creditNote)

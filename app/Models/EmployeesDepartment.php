@@ -48,7 +48,7 @@ class EmployeesDepartment extends Model
 
     public $table = 'employeesdepartments';
     
-    const CREATED_AT = 'timeStamp';
+    const CREATED_AT = 'createdDate';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'employeesDepartmentsID';
 
@@ -75,7 +75,17 @@ class EmployeesDepartment extends Model
         'approvalDeligatedFrom',
         'approvalDeligatedTo',
         'dmsIsUploadEnable',
-        'timeStamp'
+        'timeStamp',
+        'createdDate',
+        'createdByEmpSystemID',
+        'isActive',
+        'activatedDate',
+        'activatedByEmpID',
+        'activatedByEmpSystemID',
+        'removedYN',
+        'removedByEmpID',
+        'removedByEmpSystemID',
+        'removedDate'
     ];
 
     /**
@@ -103,7 +113,17 @@ class EmployeesDepartment extends Model
         'approvalDeligatedFromEmpID' => 'string',
         'approvalDeligatedFrom' => 'string',
         'approvalDeligatedTo' => 'string',
-        'dmsIsUploadEnable' => 'integer'
+        'dmsIsUploadEnable' => 'integer',
+        'createdByEmpSystemID' => 'integer',
+        'isActive' => 'integer',
+        'activatedDate' => 'string',
+        'activatedByEmpID' => 'string',
+        'activatedByEmpSystemID' => 'integer',
+        'removedYN' => 'integer',
+        'removedByEmpID' => 'string',
+        'createdDate' => 'string',
+        'removedByEmpSystemID' => 'integer',
+        'removedDate' => 'string'
     ];
 
     /**

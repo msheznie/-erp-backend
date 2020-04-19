@@ -408,7 +408,9 @@ class ChartOfAccountAPIController extends AppBaseController
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
                 ->where('employeesdepartments.documentSystemID',59)
                 ->whereIn('employeesdepartments.companySystemID',$companyID)
-                ->where('employeesdepartments.employeeSystemID',$empID);
+                ->where('employeesdepartments.employeeSystemID',$empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
         })->join('chartofaccounts',function ($query) use ($companyID,$empID,$search) {
             $query->on('chartOfAccountSystemID','=','erp_documentapproved.documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
@@ -428,6 +430,12 @@ class ChartOfAccountAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN',0)
             ->where('erp_documentapproved.documentSystemID',59)
             ->whereIn('erp_documentapproved.companySystemID',$companyID);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $chartOfAccount = [];
+        }
 
         return \DataTables::of($chartOfAccount)
             ->order(function ($query) use ($input) {
