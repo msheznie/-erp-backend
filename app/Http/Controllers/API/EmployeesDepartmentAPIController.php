@@ -350,7 +350,66 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $employeesDepartment->where('approvalGroupID', $request->approvalGroupID);
             }
         }
-        $employeesDepartment->delete();
+
+        if (array_key_exists('isActive', $input)) {
+            $employeesDepartment->where('isActive', $input['isActive']);
+        }
+
+        if (array_key_exists('removedYN', $input)) {
+            $employeesDepartment->where('removedYN', $input['removedYN']);
+        }
+
+        $employeeData = \Helper::getEmployeeInfo();
+        $employeesDepartment->update(['removedYN' => 1, 'removedByEmpID' => $employeeData->empID, 'removedByEmpSystemID' => $employeeData->employeeSystemID, 'removedDate' => date("Y-m-d H:m:s")]);
+
+
+        return $this->sendResponse(array(), 'Employees Department deleted successfully');
+    }
+
+
+    function approvalAccessActiveInactiveAll(Request $request)
+    {
+        $input = $request->all();
+
+        $employeesDepartment = EmployeesDepartment::where('employeeSystemID', $request->employeeSystemID);
+        if (array_key_exists('companySystemID', $input)) {
+            if ($input['companySystemID'] > 0) {
+                $employeesDepartment->where('companySystemID', $request->companySystemID);
+            }
+        }
+        if (array_key_exists('documentSystemID', $input)) {
+            if ($input['documentSystemID'] > 0) {
+                $employeesDepartment->where('documentSystemID', $request->documentSystemID);
+            }
+        }
+        if (array_key_exists('departmentSystemID', $input)) {
+            if ($input['departmentSystemID'] > 0) {
+                $employeesDepartment->where('departmentSystemID', $request->departmentSystemID);
+            }
+        }
+        if (array_key_exists('servicelineSystemID', $input)) {
+            if ($input['servicelineSystemID'] > 0) {
+                $employeesDepartment->where('servicelineSystemID', $request->servicelineSystemID);
+            }
+        }
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->where('approvalGroupID', $request->approvalGroupID);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            $employeesDepartment->where('isActive', $input['isActive']);
+        }
+
+        if (array_key_exists('removedYN', $input)) {
+            $employeesDepartment->where('removedYN', $input['removedYN']);
+        }
+
+        $employeeData = \Helper::getEmployeeInfo();
+        $employeesDepartment->update(['isActive' => $input['type'], 'activatedByEmpID' => $employeeData->empID, 'activatedByEmpSystemID' => $employeeData->employeeSystemID, 'activatedDate' => date("Y-m-d H:m:s")]);
+
+
         return $this->sendResponse(array(), 'Employees Department deleted successfully');
     }
 
@@ -434,6 +493,14 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     $q->where('employeeGroupID', $input['approvalGroupID']);
                 });
             }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            $employeesDepartment->where('isActive', $input['isActive']);
+        }
+
+        if (array_key_exists('removedYN', $input)) {
+            $employeesDepartment->where('removedYN', $input['removedYN']);
         }
 
         $existingData = $employeesDepartment->get()->toArray();
