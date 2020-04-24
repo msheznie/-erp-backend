@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateCustomerCatalogMasterAPIRequest;
 use App\Http\Requests\API\UpdateCustomerCatalogMasterAPIRequest;
+use App\Models\CurrencyMaster;
 use App\Models\CustomerCatalogDetail;
 use App\Models\CustomerCatalogMaster;
 use App\Models\CustomerCurrency;
@@ -452,7 +453,12 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $item_id = isset($itemAssigned->itemCodeSystem)?$itemAssigned->itemCodeSystem:0;
 
         $invoice = CustomerInvoiceDirect::find($invoice_id);
-        $invoiceDate = Carbon::parse($invoice->createdDateTime)->format('y-m-d');
+
+        if (empty($invoice)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        $invoiceDate = Carbon::parse($invoice->bookingDate)->format('y-m-d');
         $customerID = $invoice->customerID;
         $catalog = CustomerCatalogDetail::whereHas('master', function($query) use($customerID,$invoiceDate){
             $query->whereDate('fromDate','<=',$invoiceDate)
@@ -460,7 +466,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
                 ->where('customerID',$customerID)
                 ->where('isDeleted',0)
                 ->where('isActive',1);
-        })
+            })
             ->where('itemCodeSystem',$item_id)
             ->where(function ($q){
                 $q->whereNull('isDeleted')
@@ -471,6 +477,27 @@ class CustomerCatalogMasterAPIController extends AppBaseController
 
         $output = [];
         if(!empty($catalog)){
+
+
+            if($invoice->custTransactionCurrencyID != $catalog->localCurrencyID){
+
+                $currency = CurrencyMaster::find($invoice->custTransactionCurrencyID);
+
+                if(!empty($currency)){
+                    $catalog['currency'] = $currency;
+                    $currencyConversion = Helper::currencyConversion($invoice->companySystemID,$catalog->localCurrencyID, $invoice->custTransactionCurrencyID,$catalog->localPrice);
+                    if(!empty($currencyConversion)){
+                        $catalog->localPrice = round($currencyConversion['documentAmount'],$currency->DecimalPlaces);
+                    }
+                }else{
+                    $catalog['currency'] = $catalog->local_currency;
+                }
+
+            }else{
+                $catalog['currency'] = $catalog->local_currency;
+            }
+
+
             $output = $catalog->toArray();
         }
 

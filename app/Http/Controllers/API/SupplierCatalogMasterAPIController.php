@@ -478,7 +478,8 @@ class SupplierCatalogMasterAPIController extends AppBaseController
         $details = $input['details'];
         $item_array = [];
         foreach ($details as $row){
-            if(isset($row['isChecked']) && $row['isChecked']){
+            $isCatalogShowed = isset($row['isCatalogShowed'])? $row['isCatalogShowed'] : false;
+            if(isset($row['isChecked']) && $row['isChecked'] && !$isCatalogShowed){
                 $item_array[] = $row['itemCode'];
             }
         }
