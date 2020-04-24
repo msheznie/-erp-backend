@@ -380,8 +380,8 @@ class CustomerMasterAPIController extends AppBaseController
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage']), $customerId);
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage']));
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage']), $customerId);
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage']));
                     // user activity log table
                     if($customerMasters){
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage']);
