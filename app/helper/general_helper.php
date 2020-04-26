@@ -1421,6 +1421,20 @@ class Helper
 
                 $policyConfirmedUserToApprove = '';
 
+                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
+                                                                ->where('isActive', 1)
+                                                                ->where('removedYN', 0)
+                                                                ->first();
+                if (empty($checkUserHasApprovalAccess)) {
+                    return ['success' => false, 'message' => 'You don not have access to approve this document.'];
+                }
+
+                $isEmployeeDischarched = self::checkEmployeeDischarchedYN();
+
+                if ($isEmployeeDischarched == 'true') {
+                    return ['success' => false, 'message' => 'You don not have access to approve this document.'];
+                }
+
                 if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
                     $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                         ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
@@ -1429,6 +1443,7 @@ class Helper
                     $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                         ->where('companySystemID', $isConfirmed['companySystemID'])
                         ->first();
+
                 }
 
                 if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
