@@ -186,6 +186,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
         if((isset($input['customerCatalogDetailID']) && $input['customerCatalogDetailID']>0)){
             $catalogDetail = CustomerCatalogDetail::find($input['customerCatalogDetailID']);
+
+            if(empty($catalogDetail)){
+                return $this->sendError('Customer catalog Not Found');
+            }
+
+            if($customerInvoiceDirect->custTransactionCurrencyID != $catalogDetail->localCurrencyID){
+                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$catalogDetail->localCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID,$catalogDetail->localPrice);
+                if(!empty($currencyConversion)){
+                    $catalogDetail->localPrice = $currencyConversion['documentAmount'];
+                }
+            }
+
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
         }else{
@@ -229,6 +241,8 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
             return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
+
+
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
