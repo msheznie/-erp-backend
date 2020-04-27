@@ -146,6 +146,11 @@ class DocumentApprovedAPIController extends AppBaseController
 
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
+        $limit = '';
+        if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
+            $limit = 'LIMIT 6 ';
+        }
+
         $where = "";
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -181,7 +186,7 @@ class DocumentApprovedAPIController extends AppBaseController
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -233,7 +238,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -286,7 +291,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -337,7 +342,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -388,7 +393,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -438,7 +443,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -489,7 +494,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -540,7 +545,7 @@ WHERE
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -588,10 +593,16 @@ WHERE
 	)t 
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 
-	$where ORDER BY docConfirmedDate $sort";
+	$where ORDER BY docConfirmedDate $sort $limit";
 
 
         $output = DB::select($qry);
+
+        if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
+           return $this->sendResponse($output,'data retrived successfully');
+        }
+
+
         $request->request->remove('search.value');
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];

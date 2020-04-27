@@ -125,5 +125,7 @@ class DepartmentMaster extends Model
         
     ];
 
-    
+    public function widget(){
+        return $this->hasMany('App\Models\DashboardWidgetMaster','departmentID','departmentSystemID');
+    }
 }
