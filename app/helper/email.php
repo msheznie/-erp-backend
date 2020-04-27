@@ -376,7 +376,6 @@ class email
                                                 ->exists();
                 if ($hasPolicy) {
                     Log::info('Email send start');
-                    $data['empEmail'] =  'fayas@gears-int.com';
                     Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
                     Log::info('email sent success fully to :' . $data['empEmail']);
                     Log::info('Email send end');
