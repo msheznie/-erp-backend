@@ -186,7 +186,7 @@ class DocumentApprovedAPIController extends AppBaseController
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -238,7 +238,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -291,7 +291,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -342,7 +342,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -393,7 +393,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -443,7 +443,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -494,7 +494,7 @@ SELECT
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -545,7 +545,7 @@ WHERE
 FROM
 	(
 SELECT
-DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
