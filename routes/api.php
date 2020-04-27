@@ -1671,6 +1671,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
     Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
+    Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
+    Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
+    Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
+    Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
+    Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
 
 });
 
@@ -1773,3 +1778,5 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
 Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+
+

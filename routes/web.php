@@ -6,3 +6,6 @@ Route::resource('customerCatalogDetails', 'CustomerCatalogDetailController');
 Route::resource('reportColumnTemplates', 'ReportColumnTemplateController');
 
 Route::resource('reportColumnTemplateDetails', 'ReportColumnTemplateDetailController');
+
+
+Route::resource('dashboardWidgetMasters', 'DashboardWidgetMasterController');

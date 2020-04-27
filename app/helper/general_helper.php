@@ -1431,6 +1431,36 @@ class Helper
                         ->first();
                 }
 
+
+                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
+                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->first();
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found.'];
+                }
+
+                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
+                                                                ->where('companySystemID', $docApproved->companySystemID)
+                                                                ->where('employeeSystemID', $empInfo->employeeSystemID)
+                                                                ->where('documentSystemID', $input["documentSystemID"])
+                                                                ->where('isActive', 1)
+                                                                ->where('removedYN', 0);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApproved->serviceLineSystemID);
+                }
+
+
+                $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function($q) {
+                                                                            $q->where('discharegedYN',0);
+                                                                        })
+                                                                        ->groupBy('employeeSystemID')
+                                                                        ->exists();
+
+                if (!$checkUserHasApprovalAccess) {
+                    return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                } 
+
                 if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
                         return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
