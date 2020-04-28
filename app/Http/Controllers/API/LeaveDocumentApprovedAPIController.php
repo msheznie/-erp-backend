@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Jobs\PushNotification;
 
 /**
  * Class LeaveDocumentApprovedController
@@ -497,6 +498,8 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $empData = Employee::where('empID',$leaveDetails->confirmedby)->first();
 
             $documentName = ($leaveDetails->EntryType == 1)? "Leave Application":"Leave Claim";
+            $pushNotificationUserIds = [];
+            $pushNotificationArray = [];
             $emails[] = array(
                 'empSystemID' => $empData->employeeSystemID,
                 'companySystemID' => $empData->empCompanySystemID,
@@ -505,7 +508,19 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 'emailAlertMessage' => $documentName ." <b>".$leaveDetails->leaveDataMasterCode."</b> has been approved.",
                 'docSystemCode' => $documentSystemCode);
 
+            $pushNotificationMessage = $documentName ." ".$leaveDetails->leaveDataMasterCode." has been approved.";
+            $pushNotificationUserIds[] = $empData->employeeSystemID;
+            $pushNotificationArray['companySystemID'] = $empData->empCompanySystemID;
+            $pushNotificationArray['documentSystemID'] = 37;
+            $pushNotificationArray['id'] = $documentSystemCode;
+            $pushNotificationArray['type'] = 2;
+            $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
+            $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
             if($leaveDetails->hrapprovedby){
+                $pushNotificationUserIds = [];
+                $pushNotificationArray = [];
                 $hr = Employee::where('empID',$leaveDetails->hrapprovedby)->first();
 
                 if(!empty($hr)) {
@@ -516,6 +531,17 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         'alertMessage' => "Approved " .$leaveDetails->leaveDataMasterCode,
                         'emailAlertMessage' => $documentName ." <b>".$leaveDetails->leaveDataMasterCode."</b> has been approved.",
                         'docSystemCode' => $documentSystemCode);
+
+                    $pushNotificationMessage = $documentName ." ".$leaveDetails->leaveDataMasterCode." has been approved.";
+                    $pushNotificationUserIds[] = $hr->employeeSystemID;
+                    $pushNotificationArray['companySystemID'] = $hr->empCompanySystemID;
+                    $pushNotificationArray['documentSystemID'] = 37;
+                    $pushNotificationArray['id'] = $documentSystemCode;
+                    $pushNotificationArray['type'] = 2;
+                    $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
+                    $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+                    $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
                 }
             }
 

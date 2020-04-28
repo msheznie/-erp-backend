@@ -1676,6 +1676,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
     Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
     Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
+    Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
 
 });
 
@@ -1729,6 +1730,11 @@ Route::get('runQueue', function () {
 
 });
 
+
+Route::get('runQueuePushNotification', function () {
+    \App\Jobs\PushNotification::dispatch();
+});
+
 Route::get('runQueueSR', function () {
     //$bt = \App\Models\CompanyFinanceYear::find(300);
     //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
@@ -1737,11 +1743,9 @@ Route::get('runQueueSR', function () {
 });
 
 Route::post('login', 'AuthAPIController@auth');
-
-
+Route::resource('fcm_tokens', 'FcmTokenAPIController');
 
 Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
-
 
 Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
 
@@ -1778,5 +1782,7 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
 Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+
+
 
 
