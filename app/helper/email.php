@@ -366,23 +366,21 @@ class email
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
-            $data = Alert::create($data);
 
+            Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
-            if ($data && $data->isEmailSend == 0) {
-                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])->where('companyPolicyCategoryID', 37)->where('isYesNO', 1)->exists();
+            if ($data) {
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
+                                                ->where('companyPolicyCategoryID', 37)
+                                                ->where('isYesNO', 1)
+                                                ->exists();
                 if ($hasPolicy) {
-                    //  SendEmail::dispatch($data->empEmail,$data->alertMessage,$data->emailAlertMessage, $data->alertID);
-                    Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
                     Log::info('Email send start');
-                    if ($data->alertID != 0) {
-                        Mail::to($data->empEmail)->send(new EmailForQueuing($data->alertMessage, $data->emailAlertMessage));
-                        Log::info('alertID : ' . $data->alertID);
-                        Log::info('email sent success fully to :' . $data->empEmail);
-                        Alert::where('alertID', $data->alertID)->update(['isEmailSend' => -1]);
-                        Log::info('alert updated');
-                    }
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
+                    Log::info('email sent success fully to :' . $data['empEmail']);
                     Log::info('Email send end');
+                }else{
+                     Alert::create($data);
                 }
             }
         }
