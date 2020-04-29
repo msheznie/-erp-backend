@@ -55,16 +55,11 @@ class SendEmail implements ShouldQueue
      */
     public function handle()
     {
-
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
-        Log::info('BEmail send start');
-        if ($this->alertID != 0) {
-            Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content, $this->attachments));
-            Log::info('alertID : ' . $this->alertID);
-            Log::info('email sent success fully to :' . $this->to);
-            Alert::where('alertID', $this->alertID)->update(['isEmailSend' => -1]);
-            Log::info('alert updated');
-        }
-        Log::info('BEmail send end');
+        Log::info('Email send start');
+        Mail::to($this->to)->send(new EmailForQueuing($this->subject, $this->content));
+        Log::info('email sent success fully to :' . $this->to );
+        Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
+        Log::info('Email send end');
     }
 }
