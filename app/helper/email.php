@@ -375,6 +375,7 @@ class email
                                                 ->where('companyPolicyCategoryID', 37)
                                                 ->where('isYesNO', 1)
                                                 ->exists();
+
                 if ($hasPolicy) {
                     Log::info('Email send start');
                     Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));

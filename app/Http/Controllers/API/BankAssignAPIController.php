@@ -187,7 +187,7 @@ class BankAssignAPIController extends AppBaseController
     {
         if($request['isDefault'] == true)
         {
-            $bankAssign = BankAssign::where('bankmasterAutoID', $request['bankmasterAutoID'])->update(array('isDefault' => 0));
+            $bankAssign = BankAssign::where('companySystemID', $request['companySystemID'])->update(array('isDefault' => 0));
         }
 
         $data = [
