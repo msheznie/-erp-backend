@@ -8,7 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
 
-class EmailForQueuing extends Mailable implements ShouldQueue
+class EmailForQueuing extends Mailable
 {
     use Queueable, SerializesModels;
     use SendGrid;
@@ -27,7 +27,7 @@ class EmailForQueuing extends Mailable implements ShouldQueue
         $this->subject = $subject;
         $this->content = $content;
         $this->mailAttachments = $attachments;
-        self::onConnection('database');
+        //self::onConnection('database');
     }
 
     /**
