@@ -128,4 +128,8 @@ class DepartmentMaster extends Model
     public function widget(){
         return $this->hasMany('App\Models\DashboardWidgetMaster','departmentID','departmentSystemID');
     }
+
+    public function employees(){
+        return $this->hasMany('App\Models\EmployeesDepartment','departmentSystemID','departmentSystemID');
+    }
 }
