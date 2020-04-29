@@ -168,6 +168,7 @@ return [
         \InfyOm\Generator\InfyOmGeneratorServiceProvider::class,
         \InfyOm\AdminLTETemplates\AdminLTETemplatesServiceProvider::class,
         App\Providers\HelperServiceProvider::class,
+        LaravelFCM\FCMServiceProvider::class,
 
     ],
 
@@ -228,6 +229,8 @@ return [
         'Formula' => App\Helper\Formula::class,
         //'PDF' => Barryvdh\DomPDF\Facade::class,
         'PDF' => Seguce92\DomPDF\Facade::class,
+        'FCM'      => LaravelFCM\Facades\FCM::class,
+        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
     ],
 
 ];

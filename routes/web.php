@@ -9,3 +9,5 @@ Route::resource('reportColumnTemplateDetails', 'ReportColumnTemplateDetailContro
 
 
 Route::resource('dashboardWidgetMasters', 'DashboardWidgetMasterController');
+
+Route::resource('fcmTokens', 'FcmTokenController');
