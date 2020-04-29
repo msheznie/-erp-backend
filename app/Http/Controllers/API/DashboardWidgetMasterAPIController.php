@@ -340,7 +340,7 @@ END AS sortDashboard')
                 $query->where('isActive',1);
             })->whereHas('employees', function($query) use($empSystemID,$companyID){
                 $query->where('employeeSystemID',$empSystemID)
-                    ->where('companySystemID',$companyID)
+//                    ->where('companySystemID',$companyID)
                     ->whereHas('employee', function($q){
                         $q->where('dischargedYN', 0);
                     });
@@ -416,12 +416,13 @@ END AS sortDashboard')
                 $data = [];
                 $temSeries['id'] = $dashBoardWidget->widgetMasterID;
                 $result = PurchaseOrderDetails::whereHas('order', function($query) use($childCompanies){
-                    $query->whereIn('companySystemID', $childCompanies);
-//                    ->whereYear('approvedDate', $year)
-//                    ->whereRaw('MONTH (approvedDate ) <= ' . $month )
+                    $query->whereIn('companySystemID', $childCompanies)
+                    ->where('approved', -1)
+                    ->where('poCancelledYN', 0)
+                    ->whereIn('poType_N', [1,2,3,4,6]);
                 })
                     ->whereHas('financecategorysub')
-                    ->select(DB::raw('itemFinanceCategorySubID,SUM(netAmount) AS total'))
+                    ->select(DB::raw('itemFinanceCategorySubID,SUM(GRVcostPerUnitComRptCur) AS total'))
                     ->with(['financecategorysub'])
                     ->groupBy('itemFinanceCategorySubID')
                     ->orderBy('total','DESC')
@@ -451,13 +452,25 @@ END AS sortDashboard')
               );
                 $pieData = [];
 
-                $result = ProcumentOrder::select(DB::raw('supplierID,SUM(poTotalSupplierTransactionCurrency) AS total'))
-                    ->whereIn('companySystemID', $childCompanies)
-//                    ->whereYear('approvedDate', $year)
-//                    ->whereRaw('MONTH (approvedDate ) <= ' . $month )
+//                $result = ProcumentOrder::select(DB::raw('supplierID,SUM(GRVcostPerUnitComRptCur) AS total'))
+//                    ->whereIn('companySystemID', $childCompanies)
+//                    ->with(['supplier'])
+//                    ->whereHas('supplier')
+//                    ->where('approved', -1)
+//                    ->where('poCancelledYN', 0)
+//                    ->whereIn('poType_N', [1,2,3,4,6])
+//                    ->groupBy('supplierID')
+//                    ->orderBy('total','DESC')
+//                    ->limit(10)
+//                    ->get();
+                $result = ProcumentOrder::select(DB::raw('supplierID,SUM(GRVcostPerUnitComRptCur) AS total'))
+                    ->join('erp_purchaseorderdetails','erp_purchaseordermaster.purchaseOrderID','=','erp_purchaseorderdetails.purchaseOrderMasterID')
+                    ->whereIn('erp_purchaseordermaster.companySystemID', $childCompanies)
                     ->with(['supplier'])
                     ->whereHas('supplier')
-                    ->where('approved',-1)
+                    ->where('approved', -1)
+                    ->where('poCancelledYN', 0)
+                    ->whereIn('poType_N', [1,2,3,4,6])
                     ->groupBy('supplierID')
                     ->orderBy('total','DESC')
                     ->limit(10)
@@ -471,7 +484,7 @@ END AS sortDashboard')
 
                     foreach ($result as $raw){
                         $temSeries['name'] = isset($raw->supplier->supplierName)?$raw->supplier->supplierName:'';
-                        $temSeries['id'] = $raw->supplierID;
+//                        $temSeries['id'] = $raw->supplierID;
                         $temSeries['y'] = $raw->total*100/$finalTotal;
                         array_push($pieData, $temSeries);
                     }
@@ -544,6 +557,9 @@ FROM
 	JOIN erp_grvdetails ON erp_purchaseorderdetails.purchaseOrderDetailsID = erp_grvdetails.purchaseOrderDetailsID
 	JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID AND
 	erp_purchaseordermaster.companySystemID IN (' . join(',', $childCompanies) . ')     
+	WHERE erp_purchaseordermaster.approved = -1 
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.poType_N IN (1,2,3,4,6)
 GROUP BY
 	erp_purchaseordermaster.purchaseOrderID ,
 	erp_purchaseordermaster.supplierID 
