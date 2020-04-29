@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateDashboardWidgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateDashboardWidgetMasterAPIRequest;
 use App\Models\BookInvSuppDet;
@@ -323,13 +324,28 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         return $this->sendResponse($array, 'Data retrieved successfully');
     }
 
-    public function getDashboardDepartment(){
+    public function getDashboardDepartment(Request $request){
 
-        $departmentMasters = DepartmentMaster::selectRaw('DepartmentDescription,departmentSystemID')
+        $input = $request->all();
+        $companyID = isset($input['companyId'])?$input['companyId']:0;
+        $empSystemID = Helper::getEmployeeSystemID();
+        $departmentMasters = DepartmentMaster::selectRaw('DepartmentDescription,departmentSystemID,
+        CASE
+    WHEN departmentSystemID = 1 THEN 2
+    WHEN departmentSystemID = 3 THEN 3
+    WHEN departmentSystemID = 4 THEN 1
+    ELSE 0
+END AS sortDashboard')
             ->whereHas('widget', function($query){
                 $query->where('isActive',1);
+            })->whereHas('employees', function($query) use($empSystemID,$companyID){
+                $query->where('employeeSystemID',$empSystemID)
+                    ->where('companySystemID',$companyID)
+                    ->whereHas('employee', function($q){
+                        $q->where('dischargedYN', 0);
+                    });
             })
-            ->orderBy('departmentSystemID', 'asc')
+            ->orderBy('sortDashboard', 'DESC')
             ->get();
 
         if(!empty($departmentMasters)){
@@ -377,12 +393,24 @@ class DashboardWidgetMasterAPIController extends AppBaseController
         switch ($id){
             case 1:// top 10 subcategory by spent
                 $temSeries = array(
-                    'color' => '#283593',
+//                    'color' => array(
+//                        'linearGradient'=> array(
+//                            'x1'=> 0,
+//                            'x2'=> 0,
+//                            'y1'=> 0,
+//                            'y2'=> 1
+//                        ),
+//                        'stops'=> [
+//                            [0, '#003399'],
+//                            [1, '#ff66AA']
+//                        ]
+//                    ),
                     'labelFontColor' => "#ffffff",
                     'name' => 'Item Sub Category',
                     'marker' => array(
                         'enabled' => false
                     ),
+                    'colorByPoint'=> true,
                     'data' => array()
                 );
                 $data = [];
@@ -401,7 +429,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
                     ->get();
 
                 $dataArray = [];
-                if(!empty($result)){
+                if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->financecategorysub->categoryDescription)){
                             $dataArray[0][$raw->financecategorysub->categoryDescription]=$raw->total/1000;
@@ -434,7 +462,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
                     ->orderBy('total','DESC')
                     ->limit(10)
                     ->get();
-                if(!empty($result)){
+                if(!empty($result) && $result->count()){
 
                     $finalTotal = 0;
                     foreach ($result as $raw){
@@ -442,12 +470,13 @@ class DashboardWidgetMasterAPIController extends AppBaseController
                     }
 
                     foreach ($result as $raw){
-                        $temSeries['name'] = isset($raw->supplier->primarySupplierCode)?$raw->supplier->primarySupplierCode:'';
+                        $temSeries['name'] = isset($raw->supplier->supplierName)?$raw->supplier->supplierName:'';
                         $temSeries['id'] = $raw->supplierID;
                         $temSeries['y'] = $raw->total*100/$finalTotal;
                         array_push($pieData, $temSeries);
                     }
                     $data[0]['data'] = $pieData;
+//                    $data[0]['showInLegend'] = true;
 //                    array_push($data,$pieData);
                 }
                 return $this->sendResponse($data, 'Data retrieved successfully');
@@ -478,14 +507,14 @@ class DashboardWidgetMasterAPIController extends AppBaseController
             $data = [];
 
                 //Delivery Time
-            $sql = 'SELECT code,
+            $sql = 'SELECT code,name,
 	early / totalCount * 100 AS early,
 	ontime / totalCount * 100 AS ontime,
 	late / totalCount * 100 AS late
 FROM
 	(
 SELECT 
-    supplierID,code,
+    supplierID,code,name,
 	count( purchaseOrderID ) AS totalCount,
 	sum( early ) AS early,
 	sum( ontime ) AS ontime,
@@ -496,6 +525,7 @@ SELECT
 	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierID as supplierID,
 	suppliermaster.primarySupplierCode as code,
+	suppliermaster.supplierName as name,
 IF
 	( DATEDIFF( erp_purchaseordermaster.expectedDeliveryDate, erp_grvmaster.grvDate ) > 7, 1, 0 ) AS early,
 IF
@@ -517,8 +547,10 @@ FROM
 GROUP BY
 	erp_purchaseordermaster.purchaseOrderID ,
 	erp_purchaseordermaster.supplierID 
+	ORDER BY
+	erp_purchaseordermaster.poTotalSupplierTransactionCurrency DESC
 	) temp GROUP BY
-supplierID LIMIT 10
+supplierID LIMIT 5
 	) temp2';
 //WHERE ((YEAR (erp_purchaseordermaster.approvedDate ) = "' . $year . '" AND MONTH (erp_purchaseordermaster.approvedDate ) <= ' . $month . '))
             $output = DB::select($sql);
@@ -540,14 +572,16 @@ supplierID LIMIT 10
                 }
                 $temSeries['name']='Late';
                 $temSeries['data']=$late;
+                $temSeries['color']='#EF5350';
                 array_push($data,$temSeries);
                 $temSeries['name']='On Time';
                 $temSeries['data']=$ontime;
+                $temSeries['color']='#FFE082';
                 array_push($data,$temSeries);
                 $temSeries['name']='Early';
                 $temSeries['data']=$early;
+                $temSeries['color']='#81C784';
                 array_push($data,$temSeries);
-
             }
             return $this->sendResponse($data, 'Data retrieved successfully');
 
@@ -588,7 +622,7 @@ GROUP BY
                     ->limit(10)
                     ->get();
 
-                if(!empty($result)){
+                if(!empty($result) && $result->count()){
 
                     $finalTotal = 0;
                     foreach ($result as $raw){
@@ -596,8 +630,8 @@ GROUP BY
                     }
 
                     foreach ($result as $raw){
-                        $temSeries['name'] = isset($raw->supplier->primarySupplierCode)?$raw->supplier->primarySupplierCode:'';
-                        $temSeries['id'] = $raw->BPVsupplierID;
+                        $temSeries['name'] = isset($raw->supplier->supplierName)?$raw->supplier->supplierName:'';
+                        $temSeries['id'] = $raw->supplierCodeSystem;
                         $temSeries['y'] = $raw->total*100/$finalTotal;
                         array_push($pieData, $temSeries);
                     }
@@ -608,7 +642,19 @@ GROUP BY
             case 6:
                 // Top 10 outstanding payables
                 $temSeries = array(
-                    'color' => '#283593',
+//                    'color' => array(
+//                        'linearGradient'=> array(
+//                            'x1'=> 0,
+//                            'x2'=> 0,
+//                            'y1'=> 0,
+//                            'y2'=> 1
+//                        ),
+//                        'stops'=> [
+//                            [0, '#622774'],
+//                            [1, '#C53364']
+//                        ]
+//                    ),
+                    'colorByPoint'=> true,
                     'labelFontColor' => "#ffffff",
                     'name' => 'Outstanding',
                     'marker' => array(
@@ -646,10 +692,10 @@ GROUP BY
                     ->get();
 
                 $dataArray = [];
-                if(!empty($result)){
+                if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
-                        if(isset($raw->supplier->primarySupplierCode)){
-                            $dataArray[0][$raw->supplier->primarySupplierCode]=$raw->total/1000;
+                        if(isset($raw->supplier->supplierName)){
+                            $dataArray[0][$raw->supplier->supplierName]=$raw->total/1000;
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -660,12 +706,24 @@ GROUP BY
 
             case 7:
                 // payment by status
-
-
+                $data = [];
+                return $this->sendResponse($data, 'Data retrieved successfully');
             case 8:
             // Top 10 GL Code by expense
             $temSeries = array(
-                'color' => '#283593',
+//                'color' => array(
+//                    'linearGradient'=> array(
+//                        'x1'=> 0,
+//                        'x2'=> 0,
+//                        'y1'=> 0,
+//                        'y2'=> 1
+//                    ),
+//                    'stops'=> [
+//                        [0, '#184E68'],
+//                        [1, '#57CA85']
+//                    ]
+//                ),
+                'colorByPoint'=> true,
                 'labelFontColor' => "#ffffff",
                 'name' => 'GL Code',
                 'marker' => array(
@@ -705,16 +763,17 @@ erp_generalledger.chartOfAccountSystemID
                 ->where(function ($q){
                     $q->whereNull('supplierCodeSystem')->orWhere('supplierCodeSystem',0);
                 })
-                ->where('documentTransAmount','>',0)
                 ->select(DB::raw('erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,glCode,SUM(documentRptAmount) AS total'))
+//                ->where('documentRptAmount','>',0)
                 ->with(['charofaccount'])
                 ->groupBy('chartOfAccountSystemID')
                 ->orderBy('total','DESC')
+                ->havingRaw('total > 0')
                 ->limit(10)
                 ->get();
 
             $dataArray = [];
-            if(!empty($result)){
+            if(!empty($result) && $result->count()){
                 foreach ($result as $raw){
                     if(isset($raw->glCode)){
                         $dataArray[0][$raw->glCode]=$raw->total/1000;
@@ -728,12 +787,222 @@ erp_generalledger.chartOfAccountSystemID
 
             case 9:
                 //Top 10 Customer based on revenue
+                /*
+SELECT
+	erp_generalledger.supplierCodeSystem,
+	customermaster.CustomerName,
+	round(sum( erp_generalledger.documentRptAmount ) ,2)
+FROM
+	erp_generalledger
+	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+	AND customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID
+WHERE
+	erp_generalledger.documentSystemID = 20
+GROUP BY
+	erp_generalledger.supplierCodeSystem
+                 * */
+
+                $data = [];
+                $temSeries = array(
+                    'name' => '',
+                    'positive' => true,
+//                  'color' => '#C7EEB4',
+                    'y' => 0
+                );
+                $pieData = [];
+
+                $result = GeneralLedger::where('documentSystemID',20)
+                    ->whereHas('customer', function ($query){
+                        $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+                    })
+                    ->whereIn('companySystemID', $childCompanies)
+                    ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
+                    ->with(['customer'])
+                    ->groupBy('supplierCodeSystem')
+                    ->orderBy('total','DESC')
+                    ->limit(10)
+                    ->get();
+
+                if(!empty($result) && $result->count()){
+
+                    $finalTotal = 0;
+                    foreach ($result as $raw){
+                        $finalTotal = $finalTotal+$raw->total;
+                    }
+
+                    foreach ($result as $raw){
+                        $temSeries['name'] = isset($raw->customer->customerShortCode)?$raw->customer->customerShortCode:'';
+                        $temSeries['id'] = $raw->supplierCodeSystem;
+                        $temSeries['y'] = $raw->total*100/$finalTotal;
+                        array_push($pieData, $temSeries);
+                    }
+                    $data[0]['data'] = $pieData;
+                }
+                return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 10:
-                // To 10 customers based on receivable
+                // Top 10 outstanding receivable
+                /*
+	SELECT
+	erp_generalledger.supplierCodeSystem,
+	customermaster.CustomerName,
+	round(sum( erp_generalledger.documentRptAmount ) ,2)
+FROM
+	erp_generalledger
+	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+	AND customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID
+WHERE
+	erp_generalledger.documentSystemID IN( 20,19,21)
+
+GROUP BY
+	erp_generalledger.supplierCodeSystem
+                 *
+                 * */
+                $temSeries = array(
+//                    'color' => '#E57373 ',
+                    'colorByPoint'=> true,
+                    'labelFontColor' => "#ffffff",
+                    'name' => 'Outstanding',
+                    'marker' => array(
+                        'enabled' => false
+                    ),
+                    'data' => array()
+                );
+                $data = [];
+
+                $result = GeneralLedger::whereIn('documentSystemID',[20,19,21])
+                    ->whereHas('customer', function ($query){
+                        $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+                    })
+                    ->whereIn('companySystemID', $childCompanies)
+                    ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
+                    ->with(['customer'])
+                    ->groupBy('supplierCodeSystem')
+                    ->orderBy('total','DESC')
+                    ->limit(10)
+                    ->get();
+
+                $dataArray = [];
+                if(!empty($result) && $result->count()){
+                    foreach ($result as $raw){
+                        if(isset($raw->customer->customerShortCode)){
+                            $dataArray[0][$raw->customer->customerShortCode]=$raw->total/1000;
+                        }
+                    }
+                    $temSeries['data'] = array_values((array)$dataArray[0]);
+                    $temSeries['categories'] = array_keys((array)$dataArray[0]);
+                    array_push($data,$temSeries);
+                }
+                return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 11:
-                //Receivable Status
+                /*
+                 *
+                 * #Top 10 customers collection
+	SELECT
+	erp_generalledger.supplierCodeSystem,
+	customermaster.CustomerName,
+	round(sum( erp_generalledger.documentRptAmount*-1 ) ,2)
+FROM
+	erp_generalledger
+	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+	AND customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID
+WHERE
+	erp_generalledger.documentSystemID IN( 21)
+
+GROUP BY
+	erp_generalledger.supplierCodeSystem
+                 * */
+
+                $temSeries = array(
+//                    'color' => '#5C6BC0',
+                    'colorByPoint'=> true,
+                    'labelFontColor' => "#ffffff",
+                    'name' => 'GL Code',
+                    'marker' => array(
+                        'enabled' => false
+                    ),
+                    'data' => array()
+                );
+                $data = [];
+                $result = GeneralLedger::where('documentSystemID',21)
+                    ->whereHas('customer', function ($query){
+                        $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+                    })
+                    ->whereIn('companySystemID', $childCompanies)
+                    ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount *- 1) AS total'))
+                    ->with(['customer'])
+                    ->groupBy('supplierCodeSystem')
+                    ->orderBy('total','DESC')
+                    ->limit(10)
+                    ->get();
+                $dataArray = [];
+                if(!empty($result) && $result->count()){
+                    foreach ($result as $raw){
+                        if(isset($raw->customer->customerShortCode)){
+                            $dataArray[0][$raw->customer->customerShortCode]=$raw->total/1000;
+                        }
+                    }
+                    $temSeries['data'] = array_values((array)$dataArray[0]);
+                    $temSeries['categories'] = array_keys((array)$dataArray[0]);
+                    array_push($data,$temSeries);
+                }
+                return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 12:
                 //
+                /*
+                 * #Top 10 revenue based on GL Code(From Invoice)
+SELECT
+	erp_generalledger.chartOfAccountSystemID,
+	chartofaccounts.AccountDescription,
+	round(sum( erp_generalledger.documentRptAmount*-1 ) ,2)
+FROM
+	erp_generalledger
+	INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+	AND chartofaccounts.controlAccountsSystemID=1
+WHERE
+	erp_generalledger.documentSystemID = 20
+GROUP BY
+	erp_generalledger.chartOfAccountSystemID*/
+
+            $temSeries = array(
+//                'color' => '#4DB6AC',
+                'colorByPoint'=> true,
+                'labelFontColor' => "#ffffff",
+                'name' => 'GL Code',
+                'marker' => array(
+                    'enabled' => false
+                ),
+                'data' => array()
+            );
+            $data = [];
+            $result = GeneralLedger::where('documentSystemID',20)
+                ->whereHas('charofaccount', function($query){
+                    $query->where('controlAccountsSystemID',1);
+                })
+                ->whereIn('companySystemID', $childCompanies)
+                ->select(DB::raw('erp_generalledger.chartOfAccountSystemID as chartOfAccountSystemID,glCode,SUM(documentRptAmount*-1) AS total'))
+//                ->where('documentRptAmount','>',0)
+                ->with(['charofaccount'])
+                ->groupBy('chartOfAccountSystemID')
+                ->orderBy('total','DESC')
+//                ->havingRaw('total > 0')
+                ->limit(10)
+                ->get();
+            $dataArray = [];
+            if(!empty($result) && $result->count()){
+                foreach ($result as $raw){
+                    if(isset($raw->glCode)){
+                        $dataArray[0][$raw->glCode]=$raw->total/1000;
+                    }
+                }
+                $temSeries['data'] = array_values((array)$dataArray[0]);
+                $temSeries['categories'] = array_keys((array)$dataArray[0]);
+                array_push($data,$temSeries);
+            }
+            return $this->sendResponse($data, 'Data retrieved successfully');
+
             default:
                 return $this->sendError('Data retrieved successfully');
         }
