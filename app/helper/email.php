@@ -78,7 +78,8 @@ class email
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox.</font>";
 
-
+        $count = 0;
+        Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
         foreach ($array as $data) {
 
             $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
@@ -367,7 +368,7 @@ class email
 
             $data['emailAlertMessage'] = $temp;
 
-            Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
+
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
             if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
@@ -378,7 +379,9 @@ class email
                     Log::info('Email send start');
                     Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
                     Log::info('email sent success fully to :' . $data['empEmail']);
-                    Log::info('Email send end');
+                    $count = $count + 1;
+                    Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
+                    Log::info('Email send end count : ' . $count);
                 }else{
                      Alert::create($data);
                 }

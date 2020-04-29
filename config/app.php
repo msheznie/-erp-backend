@@ -1,5 +1,7 @@
 <?php
 
+
+
 return [
 
     /*
@@ -135,7 +137,7 @@ return [
         Illuminate\Filesystem\FilesystemServiceProvider::class,
         Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Mail\MailServiceProvider::class,
+        // Illuminate\Mail\MailServiceProvider::class,
         Illuminate\Notifications\NotificationServiceProvider::class,
         Illuminate\Pagination\PaginationServiceProvider::class,
         Illuminate\Pipeline\PipelineServiceProvider::class,
@@ -168,7 +170,8 @@ return [
         \InfyOm\Generator\InfyOmGeneratorServiceProvider::class,
         \InfyOm\AdminLTETemplates\AdminLTETemplatesServiceProvider::class,
         App\Providers\HelperServiceProvider::class,
-
+        //Sichikawa\LaravelSendgridDriver\SendgridTransportServiceProvider::class,
+        Sichikawa\LaravelSendgridDriver\MailServiceProvider::class,
     ],
 
     /*
