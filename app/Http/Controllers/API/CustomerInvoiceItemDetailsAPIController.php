@@ -505,14 +505,23 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         /*margin calculation*/
-        if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
+
+        if(isset($input['by']) && $input['by']== 'cost'){
+            $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+        }elseif (isset($input['by']) && $input['by']== 'margin'){
             $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
             $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
             $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
         }else{
-            $input['sellingCostAfterMargin'] = $input['sellingCost'];
-            $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
-            $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+            if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
+                $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+                $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
+                $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
+            }else{
+                $input['sellingCostAfterMargin'] = $input['sellingCost'];
+                $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
+                $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+            }
         }
 
 
