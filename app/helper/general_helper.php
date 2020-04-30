@@ -24,6 +24,7 @@ use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
+use App\Jobs\PushNotification;
 use App\Jobs\RollBackApproval;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
@@ -36,6 +37,7 @@ use App\Models\DocumentRestrictionAssign;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\User;
+use App\Models\FcmToken;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -717,13 +719,15 @@ class Helper
                                             ->get();
 
                                         $emails = array();
+                                        $pushNotificationUserIds = [];
+                                        $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
-
+                                        $pushNotificationMessage = $document->documentDescription . " ". $documentApproved->documentCode." is pending for your approval.";
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
                                                 $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
@@ -732,16 +736,26 @@ class Helper
                                                     'alertMessage' => $subject,
                                                     'emailAlertMessage' => $body,
                                                     'docSystemCode' => $documentApproved->documentSystemCode);
+
+                                                $pushNotificationUserIds[] = $da->employee->employeeSystemID;
                                             }
                                         }
+
+                                        $pushNotificationArray['companySystemID'] = $documentApproved->companySystemID;
+                                        $pushNotificationArray['documentSystemID'] = $documentApproved->documentSystemID;
+                                        $pushNotificationArray['id'] = $documentApproved->documentSystemCode;
+                                        $pushNotificationArray['type'] = 1;
+                                        $pushNotificationArray['documentCode'] = $documentApproved->documentCode;
+                                        $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
                                         $sendEmail = \Email::sendEmail($emails);
                                         if (!$sendEmail["success"]) {
                                             return ['success' => false, 'message' => $sendEmail["message"]];
                                         }
 
-                                    }
+                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
 
+                                    }
                                 }
                                 DB::commit();
                                 return ['success' => true, 'message' => 'Successfully document confirmed'];
@@ -2026,6 +2040,8 @@ class Helper
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                         $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
                         $emails = array();
+                        $pushNotificationUserIds = [];
+                        $pushNotificationArray = [];
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
@@ -2036,6 +2052,8 @@ class Helper
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
                                     $subject = $subjectName . " is fully approved";
                                     $body = $bodyName . " is fully approved . ";
+                                    $pushNotificationMessage = $subject;
+                                    $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
 
                                     $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
@@ -2073,7 +2091,7 @@ class Helper
                                         ->groupBy('employeeSystemID')
                                         ->get();
 
-
+                                    $pushNotificationMessage = $subjectName." is pending for your approval.";
                                     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
@@ -2088,6 +2106,8 @@ class Helper
                                                 'alertMessage' => $nextApprovalSubject,
                                                 'emailAlertMessage' => $nextApprovalBody,
                                                 'docSystemCode' => $nextApproval->documentSystemCode);
+
+                                            $pushNotificationUserIds[] = $da->employee->employeeSystemID;
                                         }
                                     }
 
@@ -2101,6 +2121,13 @@ class Helper
                                     'alertMessage' => $subject,
                                     'emailAlertMessage' => $body,
                                     'docSystemCode' => $input["documentSystemCode"]);
+
+                                $pushNotificationArray['companySystemID'] = $currentApproved->companySystemID;
+                                $pushNotificationArray['documentSystemID'] = $currentApproved->documentSystemID;
+                                $pushNotificationArray['id'] = $currentApproved->documentSystemCode;
+                                $pushNotificationArray['type'] = 1;
+                                $pushNotificationArray['documentCode'] = $currentApproved->documentCode;
+                                $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
 
@@ -2108,6 +2135,8 @@ class Helper
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
+
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
 
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
