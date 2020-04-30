@@ -433,7 +433,10 @@ END AS sortDashboard')
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->financecategorysub->categoryDescription)){
-                            $dataArray[0][$raw->financecategorysub->categoryDescription]=$raw->total/1000;
+                            $dataArray[0][$raw->financecategorysub->categoryDescription]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->financecategorysub->categoryDescription
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -724,7 +727,10 @@ GROUP BY
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->supplier->supplierName)){
-                            $dataArray[0][$raw->supplier->supplierName]=$raw->total/1000;
+                            $dataArray[0][$raw->supplier->supplierName]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->supplier->supplierName
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -919,7 +925,10 @@ GROUP BY
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->customer->customerShortCode)){
-                            $dataArray[0][$raw->customer->customerShortCode]=$raw->total/1000;
+                            $dataArray[0][$raw->customer->customerShortCode]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->customer->CustomerName
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
