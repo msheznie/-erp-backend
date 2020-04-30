@@ -1379,7 +1379,7 @@ FROM
                     movementIssue.TotalMonth,
                     movementGRV.GRVMaxDate,
                     movementGRV.TotalGRVMonth,
-                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $slowMovingFrom And $slowMovingTo),1,If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $fastMovingFrom And $fastMovingTo),2,If(TotalMonth Between $slowMovingFrom And $slowMovingTo,1,If(TotalMonth Between $fastMovingFrom And $fastMovingTo,2,If(TotalMonth> $nonMoving,3,3))))) as category
+                    If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $fastMovingFrom  And $fastMovingTo),1,If(movementIssue.itemSystemCode Is Null And (TotalGRVMonth Between $slowMovingFrom And $slowMovingTo),2,If(TotalMonth Between $fastMovingFrom And  $fastMovingTo,1,If(TotalMonth Between $slowMovingFrom And $slowMovingTo,2,If(TotalMonth> $nonMoving,3,3))))) as category
                 FROM
                     (
                     SELECT

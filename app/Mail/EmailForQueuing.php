@@ -6,7 +6,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\File;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
 
 class EmailForQueuing extends Mailable
@@ -28,6 +27,7 @@ class EmailForQueuing extends Mailable
         $this->subject = $subject;
         $this->content = $content;
         $this->mailAttachments = $attachments;
+        //self::onConnection('database');
     }
 
     /**
