@@ -172,6 +172,22 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
         $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
 
+        if ($input['currentStockQty'] <= 0) {
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['currentWareHouseStockQty'] <= 0) {
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot issue.", 500);
+        }
+
+        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot issue.", 500);
+        }
+
         $input['issueCostLocalTotal'] =  $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
 
         $input['reportingCurrencyID'] = $customerInvoiceDirect->companyReportingCurrencyID;
@@ -225,24 +241,6 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
         $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
         $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
-
-        if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-        }
-
-        if ($input['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
-
-        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue.", 500);
-        }
-
-        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue.", 500);
-        }
-
-
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])

@@ -433,7 +433,10 @@ END AS sortDashboard')
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->financecategorysub->categoryDescription)){
-                            $dataArray[0][$raw->financecategorysub->categoryDescription]=$raw->total/1000;
+                            $dataArray[0][$raw->financecategorysub->categoryDescription]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->financecategorysub->categoryDescription
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -441,6 +444,7 @@ END AS sortDashboard')
                     array_push($data,$temSeries);
                 }
                 return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 2:
             // Top 10 Suppliers
               $data = [];
@@ -476,16 +480,17 @@ END AS sortDashboard')
                     ->limit(10)
                     ->get();
                 if(!empty($result) && $result->count()){
-
-                    $finalTotal = 0;
-                    foreach ($result as $raw){
-                        $finalTotal = $finalTotal+$raw->total;
-                    }
+//
+//                    $finalTotal = 0;
+//                    foreach ($result as $raw){
+//                        $finalTotal = $finalTotal+$raw->total;
+//                    }
 
                     foreach ($result as $raw){
                         $temSeries['name'] = isset($raw->supplier->supplierName)?$raw->supplier->supplierName:'';
 //                        $temSeries['id'] = $raw->supplierID;
-                        $temSeries['y'] = $raw->total*100/$finalTotal;
+//                        $temSeries['y'] = $raw->total*100/$finalTotal;
+                        $temSeries['y'] = $raw->total;
                         array_push($pieData, $temSeries);
                     }
                     $data[0]['data'] = $pieData;
@@ -493,6 +498,7 @@ END AS sortDashboard')
 //                    array_push($data,$pieData);
                 }
                 return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 3:
                 //Savings Per month
                 $temSeries = array(
@@ -508,6 +514,7 @@ END AS sortDashboard')
                 return $this->sendResponse($data, 'Data retrieved successfully');
 
             case 4:
+                //Delivery Time
             $temSeries = array(
 //                'color' => '#283593',
                 'labelFontColor' => "#ffffff",
@@ -519,7 +526,6 @@ END AS sortDashboard')
             );
             $data = [];
 
-                //Delivery Time
             $sql = 'SELECT code,name,
 	early / totalCount * 100 AS early,
 	ontime / totalCount * 100 AS ontime,
@@ -580,9 +586,18 @@ supplierID LIMIT 5
 
                 foreach ($output as $raw){
 
-                    $early[] = round($raw->early,2);
-                    $ontime[]=round($raw->ontime,2);
-                    $late[]=round($raw->late,2);
+                    $early[] = array(
+                        'y'=> round($raw->early,2),
+                        'description'=> $raw->name
+                    );
+                    $ontime[]=array(
+                        'y'=> round($raw->ontime,2),
+                        'description'=> $raw->name
+                    );;
+                    $late[]=array(
+                        'y'=> round($raw->late,2),
+                        'description'=> $raw->name
+                    );;
 
                     $temSeries['categories'][]= $raw->code;
                 }
@@ -639,16 +654,17 @@ GROUP BY
                     ->get();
 
                 if(!empty($result) && $result->count()){
-
-                    $finalTotal = 0;
-                    foreach ($result as $raw){
-                        $finalTotal = $finalTotal+$raw->total;
-                    }
+//
+//                    $finalTotal = 0;
+//                    foreach ($result as $raw){
+//                        $finalTotal = $finalTotal+$raw->total;
+//                    }
 
                     foreach ($result as $raw){
                         $temSeries['name'] = isset($raw->supplier->supplierName)?$raw->supplier->supplierName:'';
                         $temSeries['id'] = $raw->supplierCodeSystem;
-                        $temSeries['y'] = $raw->total*100/$finalTotal;
+                        $temSeries['y'] = $raw->total;
+//                        $temSeries['y'] = $raw->total*100/$finalTotal;
                         array_push($pieData, $temSeries);
                     }
                     $data[0]['data'] = $pieData;
@@ -711,7 +727,10 @@ GROUP BY
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->supplier->supplierName)){
-                            $dataArray[0][$raw->supplier->supplierName]=$raw->total/1000;
+                            $dataArray[0][$raw->supplier->supplierName]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->supplier->supplierName
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -724,6 +743,7 @@ GROUP BY
                 // payment by status
                 $data = [];
                 return $this->sendResponse($data, 'Data retrieved successfully');
+
             case 8:
             // Top 10 GL Code by expense
             $temSeries = array(
@@ -791,9 +811,11 @@ erp_generalledger.chartOfAccountSystemID
             $dataArray = [];
             if(!empty($result) && $result->count()){
                 foreach ($result as $raw){
-                    if(isset($raw->glCode)){
-                        $dataArray[0][$raw->glCode]=$raw->total/1000;
-                    }
+                    $description = (isset($raw->charofaccount->AccountDescription))?$raw->charofaccount->AccountDescription:'';
+                    $dataArray[0][$raw->glCode]=array(
+                        'y'=>$raw->total/1000,
+                        'description'=>$raw->glCode.' - '.$description
+                    );
                 }
                 $temSeries['data'] = array_values((array)$dataArray[0]);
                 $temSeries['categories'] = array_keys((array)$dataArray[0]);
@@ -841,15 +863,16 @@ GROUP BY
 
                 if(!empty($result) && $result->count()){
 
-                    $finalTotal = 0;
-                    foreach ($result as $raw){
-                        $finalTotal = $finalTotal+$raw->total;
-                    }
+//                    $finalTotal = 0;
+//                    foreach ($result as $raw){
+//                        $finalTotal = $finalTotal+$raw->total;
+//                    }
 
                     foreach ($result as $raw){
                         $temSeries['name'] = isset($raw->customer->customerShortCode)?$raw->customer->customerShortCode:'';
                         $temSeries['id'] = $raw->supplierCodeSystem;
-                        $temSeries['y'] = $raw->total*100/$finalTotal;
+//                        $temSeries['y'] = $raw->total*100/$finalTotal;
+                        $temSeries['y'] = $raw->total;
                         array_push($pieData, $temSeries);
                     }
                     $data[0]['data'] = $pieData;
@@ -902,7 +925,10 @@ GROUP BY
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->customer->customerShortCode)){
-                            $dataArray[0][$raw->customer->customerShortCode]=$raw->total/1000;
+                            $dataArray[0][$raw->customer->customerShortCode]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->customer->CustomerName
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -956,7 +982,10 @@ GROUP BY
                 if(!empty($result) && $result->count()){
                     foreach ($result as $raw){
                         if(isset($raw->customer->customerShortCode)){
-                            $dataArray[0][$raw->customer->customerShortCode]=$raw->total/1000;
+                            $dataArray[0][$raw->customer->customerShortCode]=array(
+                                'y'=>$raw->total/1000,
+                                'description'=>$raw->customer->CustomerName
+                            );
                         }
                     }
                     $temSeries['data'] = array_values((array)$dataArray[0]);
@@ -1010,7 +1039,11 @@ GROUP BY
             if(!empty($result) && $result->count()){
                 foreach ($result as $raw){
                     if(isset($raw->glCode)){
-                        $dataArray[0][$raw->glCode]=$raw->total/1000;
+                        $description = (isset($raw->charofaccount->AccountDescription))?$raw->charofaccount->AccountDescription:'';
+                        $dataArray[0][$raw->glCode]=array(
+                            'y'=>$raw->total/1000,
+                            'description'=>$raw->glCode.' - '.$description
+                        );
                     }
                 }
                 $temSeries['data'] = array_values((array)$dataArray[0]);
