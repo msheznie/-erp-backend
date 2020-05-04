@@ -517,7 +517,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
             $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
-            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
             if($leaveDetails->hrapprovedby){
                 $pushNotificationUserIds = [];
                 $pushNotificationArray = [];
@@ -541,7 +541,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
                     $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
-                    $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+                    $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
                 }
             }
 

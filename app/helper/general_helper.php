@@ -753,7 +753,7 @@ class Helper
                                             return ['success' => false, 'message' => $sendEmail["message"]];
                                         }
 
-                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                     }
                                 }
@@ -2136,7 +2136,7 @@ class Helper
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
