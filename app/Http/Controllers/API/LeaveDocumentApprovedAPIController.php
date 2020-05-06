@@ -412,7 +412,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDetails->leaveDataMasterCode." is referred back by ". $user->empName." from ".$companyName;
                 $pushNotificationUserIds[] = $input['empSystemID'];
-                $pushNotificationArray['companySystemID'] = $input['companySystemID';
+                $pushNotificationArray['companySystemID'] = $input['companySystemID'];
                 $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
                 $pushNotificationArray['id'] = $documentSystemCode;
                 $pushNotificationArray['type'] = 2;
@@ -1022,7 +1022,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
                 $pushNotificationMessage = "The ".$documentName." " .$leaveDocumentApproved->documentCode." is referred back by ". $user->empName." from ".$companyName;
                 $pushNotificationUserIds[] = $originator->employeeSystemID;
-                $pushNotificationArray['companySystemID'] = $input['companySystemID';
+                $pushNotificationArray['companySystemID'] = $input['companySystemID'];
                 $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
                 $pushNotificationArray['id'] = $documentSystemCode;
                 $pushNotificationArray['type'] = 2;
