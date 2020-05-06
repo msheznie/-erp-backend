@@ -221,13 +221,17 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
-            $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
-            $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
+//            $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
+//            $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
-            $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
-            $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
+//            $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
+//            $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
         }
+
+        $costs = $this->updateCostBySellingCost($input,$customerInvoiceDirect);
+        $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
+        $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
         $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
 
@@ -508,20 +512,16 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
         }elseif (isset($input['by']) && $input['by']== 'margin'){
             $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
-            $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
-            $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
         }else{
             if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
                 $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
-                $input['sellingCostAfterMarginLocal'] = ($input['issueCostLocal']) + ($input['issueCostLocal']*$input['marginPercentage']/100);
-                $input['sellingCostAfterMarginRpt'] = ($input['issueCostRpt']) + ($input['issueCostRpt']*$input['marginPercentage']/100);
             }else{
                 $input['sellingCostAfterMargin'] = $input['sellingCost'];
-                $input['sellingCostAfterMarginLocal'] = $input['issueCostLocal'];
-                $input['sellingCostAfterMarginRpt'] = $input['issueCostRpt'];
             }
         }
-
+        $costs = $this->updateCostBySellingCost($input,$customerDirectInvoice);
+        $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
+        $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
         if ($customerInvoiceItemDetails->issueCostLocal == 0 || $customerInvoiceItemDetails->issueCostLocal == 0) {
             $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
@@ -669,5 +669,28 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($items->toArray(), 'Item Details retrieved successfully');
+    }
+
+    private function updateCostBySellingCost($input,$customerDirectInvoice){
+        $output = array();
+        if($customerDirectInvoice->custTransactionCurrencyID != $customerDirectInvoice->localCurrencyID){
+            $currencyConversion = Helper::currencyConversion($customerDirectInvoice->companySystemID,$customerDirectInvoice->custTransactionCurrencyID,$customerDirectInvoice->localCurrencyID,$input['sellingCostAfterMargin']);
+            if(!empty($currencyConversion)){
+                $output['sellingCostAfterMarginLocal'] = $currencyConversion['documentAmount'];
+            }
+        }else{
+            $output['sellingCostAfterMarginLocal'] = $input['sellingCostAfterMargin'];
+        }
+
+        if($customerDirectInvoice->custTransactionCurrencyID != $customerDirectInvoice->companyReportingCurrencyID){
+            $currencyConversion = Helper::currencyConversion($customerDirectInvoice->companySystemID,$customerDirectInvoice->custTransactionCurrencyID,$customerDirectInvoice->companyReportingCurrencyID,$input['sellingCostAfterMargin']);
+            if(!empty($currencyConversion)){
+                $output['sellingCostAfterMarginRpt'] = $currencyConversion['documentAmount'];
+            }
+        }else{
+            $output['sellingCostAfterMarginRpt'] = $input['sellingCostAfterMargin'];
+        }
+
+        return $output;
     }
 }

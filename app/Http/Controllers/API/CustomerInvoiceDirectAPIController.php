@@ -778,6 +778,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
                             }
 
+                            if($updateItem->sellingCurrencyID != $updateItem->localCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->localCurrencyID,$updateItem->sellingCostAfterMargin);
+                                if(!empty($currencyConversion)){
+                                    $updateItem->sellingCostAfterMarginLocal = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $updateItem->sellingCostAfterMarginLocal = $updateItem->sellingCostAfterMargin;
+                            }
+
+                            if($updateItem->sellingCurrencyID != $updateItem->reportingCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->reportingCurrencyID,$updateItem->sellingCostAfterMargin);
+                                if(!empty($currencyConversion)){
+                                    $updateItem->sellingCostAfterMarginRpt = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
+                            }
+
                             $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
 
                             /*round to 7 decimal*/
