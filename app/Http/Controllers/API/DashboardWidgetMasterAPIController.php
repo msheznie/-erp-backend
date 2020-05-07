@@ -572,7 +572,7 @@ GROUP BY
 	ORDER BY
 	erp_purchaseordermaster.poTotalSupplierTransactionCurrency DESC
 	) temp GROUP BY
-supplierID LIMIT 5
+supplierID LIMIT 10
 	) temp2';
 //WHERE ((YEAR (erp_purchaseordermaster.approvedDate ) = "' . $year . '" AND MONTH (erp_purchaseordermaster.approvedDate ) <= ' . $month . '))
             $output = DB::select($sql);

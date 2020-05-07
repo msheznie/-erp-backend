@@ -778,6 +778,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
                             }
 
+                            if($updateItem->sellingCurrencyID != $updateItem->localCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->localCurrencyID,$updateItem->sellingCostAfterMargin);
+                                if(!empty($currencyConversion)){
+                                    $updateItem->sellingCostAfterMarginLocal = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $updateItem->sellingCostAfterMarginLocal = $updateItem->sellingCostAfterMargin;
+                            }
+
+                            if($updateItem->sellingCurrencyID != $updateItem->reportingCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->reportingCurrencyID,$updateItem->sellingCostAfterMargin);
+                                if(!empty($currencyConversion)){
+                                    $updateItem->sellingCostAfterMarginRpt = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
+                            }
+
                             $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
 
                             /*round to 7 decimal*/
@@ -1866,7 +1884,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
                             AND erp_custinvoicedirectdet.companyID = performatemp.companyID
                             WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
-
+        $customerInvoice->is_po_in_line = false;
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1929,7 +1947,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if (in_array($companySystemID, [42, 31, 24])) {
                         $invoiceDetails = DB::select("SELECT ClientRef, qty, rate,  qty * rate  AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID  ORDER BY  t.mitID ASC");
                     } else {
-                        $invoiceDetails = DB::select("SELECT ClientRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
+                        $invoiceDetails = DB::select("SELECT ClientRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription, pl3 FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.pl3, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
+                    }
+
+                    if ($customerInvoice->customerID == 79 && $companySystemID == 63) {
+                        $customerInvoice->is_po_in_line = true;
                     }
                 } else {
                     $linePageNo = true;

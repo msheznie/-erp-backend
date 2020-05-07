@@ -410,6 +410,17 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDetails->leaveDataMasterCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
                     'docSystemCode' => $documentSystemCode);
 
+                $pushNotificationMessage = "The ".$documentName." " .$leaveDetails->leaveDataMasterCode." is referred back by ". $user->empName." from ".$companyName;
+                $pushNotificationUserIds[] = $input['empSystemID'];
+                $pushNotificationArray['companySystemID'] = $input['companySystemID'];
+                $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
+                $pushNotificationArray['id'] = $documentSystemCode;
+                $pushNotificationArray['type'] = 2;
+                $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
+                $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+                $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
+
                 $isSendMail = email::sendEmail($emails);
                 if(isset($isSendMail['success']) && $isSendMail['success']){
                     DB::commit();
@@ -517,7 +528,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
             $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
-            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
             if($leaveDetails->hrapprovedby){
                 $pushNotificationUserIds = [];
                 $pushNotificationArray = [];
@@ -541,7 +552,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     $pushNotificationArray['documentCode'] = $leaveDetails->leaveDataMasterCode;
                     $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
-                    $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds);
+                    $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
                 }
             }
 
@@ -734,6 +745,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
         $documentSystemCode = $leaveDocumentApproved->documentSystemCode;
         $email_message = $docInforArr['documentName'] ." <b>".$leaveDocumentApproved->documentCode."</b> has been approved.";
+        $pushNotificationMessage = $docInforArr['documentName'] ." ".$leaveDocumentApproved->documentCode." has been approved.";
         $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
         $namespacedModelChild = $docInforArr["child"]; // Model name
         $modelDetails = $namespacedModel::with([$namespacedModelChild])
@@ -749,6 +761,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
         $emailEmployeeList = [];
         $empData = [];
+        $notificationType = "";
         if($documentSystemID==37){
 
             $empData = Employee::where('empID',$modelDetails->confirmedby)->first();
@@ -760,8 +773,9 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
             if(empty($isManagerMatch)){
                 return $this->sendError('Not Allowed, Only Reporting Manager can approve');
             }
+            $notificationType = 2;
         }elseif ($documentSystemID==6){
-
+            $notificationType = 3;
             $empData = Employee::where('employeeSystemID',$modelDetails->confirmedByEmpSystemID)->first();
 
             if($modelDetails->departmentSystemID){
@@ -776,7 +790,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         $del_emp_name[] = $value->employee->empName;
                     }
                     $email_message .= " It is being processed by ".join($del_emp_name,',');
-
+                    $pushNotificationMessage .= " It is being processed by ".join($del_emp_name,',');
                 }
             }
         }
@@ -820,6 +834,19 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                 'emailAlertMessage' => $email_message,
                 'docSystemCode' => $documentSystemCode);
 
+            $pushNotificationUserIds[] = $empData->employeeSystemID;
+            $pushNotificationArray['companySystemID'] = $empData->empCompanySystemID;
+            $pushNotificationArray['documentSystemID'] = $documentSystemID;
+            $pushNotificationArray['id'] = $documentSystemCode;
+            $pushNotificationArray['type'] = 2;
+            $pushNotificationArray['documentCode'] = $leaveDocumentApproved->documentCode;
+            $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, $notificationType);
+
+
+            $pushNotificationUserIds = [];
+            $pushNotificationArray = [];
             if($documentSystemID==6 ){
                 if($modelDetails->departmentSystemID){
 
@@ -839,15 +866,25 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                                     'alertMessage' => $docInforArr['documentName']." Approved Mail to Account Payable Department",
                                     'emailAlertMessage' => "Dear " .$value->employee->empName. ",<p>Expense Claim <strong>". $leaveDocumentApproved->documentCode ."</strong> is approved in <strong>". $empCompany ."<strong/> Please process the payment.<br><br>Regards,<br>Team Gears<br>",
                                     'docSystemCode' => $documentSystemCode);
+
+                                $pushNotificationMessage = "Expense Claim ". $leaveDocumentApproved->documentCode ." is approved in ". $empCompany ." Please process the payment";
+                                $pushNotificationUserIds[] = $value->employee->employeeSystemID;
+                                $pushNotificationArray['companySystemID'] = $value->employee->empCompanySystemID;
+                                $pushNotificationArray['documentSystemID'] = $documentSystemID;
+                                $pushNotificationArray['id'] = $documentSystemCode;
+                                $pushNotificationArray['type'] = 2;
+                                $pushNotificationArray['documentCode'] = $leaveDocumentApproved->documentCode;
+                                $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
 
                         }
-
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, $notificationType);
                     }
                 }
 
             }elseif ($documentSystemID==37) {
-
+                $pushNotificationUserIds = [];
+                $pushNotificationArray = [];
                 if($modelDetails->hrapprovedby){
                     $hr = Employee::where('empID',$modelDetails->hrapprovedby)->first();
 
@@ -859,6 +896,17 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                             'alertMessage' => "Approved " .$modelDetails->leaveDataMasterCode,
                             'emailAlertMessage' => $docInforArr['documentName'] ." <b>".$modelDetails->leaveDataMasterCode."</b> has been approved.",
                             'docSystemCode' => $documentSystemCode);
+
+                        $pushNotificationMessage = $docInforArr['documentName'] ." ".$modelDetails->leaveDataMasterCode." has been approved.";
+                        $pushNotificationUserIds[] = $hr->employeeSystemID;
+                        $pushNotificationArray['companySystemID'] = $hr->empCompanySystemID;
+                        $pushNotificationArray['documentSystemID'] = $documentSystemID;
+                        $pushNotificationArray['id'] = $documentSystemCode;
+                        $pushNotificationArray['type'] = 2;
+                        $pushNotificationArray['documentCode'] = $modelDetails->leaveDataMasterCode;
+                        $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, $notificationType);
                     }
                 }
 
@@ -919,9 +967,11 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
             $isDelete = LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->delete();
             if($isDelete){
-
+                $$notificationType = "";
+                $pushNotificationUserIds = [];
+                $pushNotificationArray = [];
                 if($input['documentSystemID'] == 6){
-
+                    $notificationType = 3;
                     $documentName = "Expense Claim";
 
                     $entityDetail = ExpenseClaim::with(['details'])
@@ -943,7 +993,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     ExpenseClaim::where('expenseClaimMasterAutoID',$documentSystemCode)->update($updateArray);
 
                 }else if($input['documentSystemID'] == 37){
-
+                    $notificationType = 2;
                     $documentName = "Leave Application";
 
                     $entityDetail = LeaveDataMaster::with(['detail'])
@@ -969,6 +1019,17 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                     'alertMessage' => "Referred Back ".$documentName." ".$leaveDocumentApproved->documentCode,
                     'emailAlertMessage' => "Hi ".$originator->empName.",<p> The ".$documentName."<b> " .$leaveDocumentApproved->documentCode."</b> is referred back by ". $user->empName." from ".$companyName.". Please Check it.<p>Comment: ".$input["rejectedComments"],
                     'docSystemCode' => $documentSystemCode);
+
+                $pushNotificationMessage = "The ".$documentName." " .$leaveDocumentApproved->documentCode." is referred back by ". $user->empName." from ".$companyName;
+                $pushNotificationUserIds[] = $originator->employeeSystemID;
+                $pushNotificationArray['companySystemID'] = $input['companySystemID'];
+                $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
+                $pushNotificationArray['id'] = $documentSystemCode;
+                $pushNotificationArray['type'] = 2;
+                $pushNotificationArray['documentCode'] = $leaveDocumentApproved->documentCode;
+                $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
+
+                $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, $notificationType);
 
                 $isSendMail = email::sendEmail($emails);
                 if(isset($isSendMail['success']) && $isSendMail['success']){

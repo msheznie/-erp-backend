@@ -264,6 +264,18 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'APITP':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'suppliers' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -680,6 +692,31 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'currencyDecimalPlace' => $decimalPlaces,
                     'count' => count($output));
 
+                break;
+            case 'APITP':
+                $outputArr = array();
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getInvoiceToPaymentQry($request);
+                if($output){
+                    foreach ($output as $data){
+                        array_push($outputArr,$data);
+                    }
+                }
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
+                if ($companyCurrency) {
+//                    if ($request->currencyID == 2) {
+//                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+//                    } else if ($request->currencyID == 3) {
+//                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+//                    }
+                    $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                }
+                return array('reportData' => $outputArr,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'company' => $checkIsGroup,
+                    'currencyDecimalPlace' => $decimalPlaces,
+                    'count' => count($output));
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -1357,6 +1394,52 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
                 return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'APITP':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getInvoiceToPaymentQry($request);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
+                $decimalPlaces = 2;
+                if ($companyCurrency) {
+                    $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                }
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Document No'] = $val->documentCode;
+                        $data[$x]['Supplier Name'] = $val->supplierName;
+                        $data[$x]['Supplier Invoice No'] = $val->supplierInvoiceNo;
+                        $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvoiceDate);
+                        $data[$x]['Currency'] = $val->CurrencyCode;
+                        $data[$x]['Total Amount'] = number_format($val->rptAmount,$decimalPlaces);
+                        $data[$x]['Confirmed Date'] =  Helper::dateFormat($val->confirmedDate);
+                        $data[$x]['Final Approved Date'] = Helper::dateFormat($val->approvedDate);
+                        $data[$x]['Posted Date'] = Helper::dateFormat($val->postedDate);
+
+                        $data[$x]['Payment Voucher No'] = $val->BPVcode;
+                        $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount,$decimalPlaces);;
+                        $data[$x]['Cheque No'] = $val->BPVchequeNo;
+                        $data[$x]['Cheque Date'] = Helper::dateFormat($val->BPVchequeDate);
+                        $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
+                        $data[$x]['Cheque Printed Date'] = Helper::dateFormat($val->chequePrintedDateTime);
+                        $data[$x]['Payment Cleared Date'] = Helper::dateFormat($val->trsClearedDate);
+                        $x++;
+                    }
+                } else {
+                    $data = array();
+                }
+                $csv = \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -5021,5 +5104,113 @@ ORDER BY
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    private function getInvoiceToPaymentQry($request)
+    {
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+//        $currency = $request->currencyID;
+
+        if (isset($request->suppliers)) {
+            $suppliers = $request->suppliers;
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        } else {
+            $supplierSystemID = [];
+        }
+
+//        if (isset($request->year)) {
+//            $year = $request->year;
+//        } else {
+//            $year = 0;
+//        }
+
+
+        $output = \DB::select('SELECT
+	erp_generalledger.documentCode,
+	suppliermaster.supplierName,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.supplierInvoiceDate,
+	currencymaster.CurrencyCode,
+	round( erp_generalledger.documentLocalAmount *- 1, 3 ) AS localAmount,
+	round( erp_generalledger.documentRptAmount *- 1, 2 ) AS rptAmount,
+	erp_bookinvsuppmaster.confirmedDate,
+	erp_bookinvsuppmaster.approvedDate,
+	erp_generalledger.documentDate AS postedDate,
+	paymentinfor.BPVcode,
+	paymentinfor.paidRPTAmount,
+	erp_paysupplierinvoicemaster.BPVchequeNo,
+	erp_paysupplierinvoicemaster.BPVchequeDate,
+	erp_paysupplierinvoicemaster.chequePrintedByEmpName,
+	erp_paysupplierinvoicemaster.chequePrintedDateTime,
+	erp_bankledger.trsClearedDate 
+FROM
+	erp_generalledger
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem 
+	INNER JOIN currencymaster ON erp_generalledger.documentRptCurrencyID = currencymaster.currencyID 
+	AND suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID
+	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.documentSystemID = erp_generalledger.documentSystemID 
+	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_generalledger.documentSystemCode
+	LEFT JOIN (
+SELECT
+	erp_paysupplierinvoicemaster.PayMasterAutoId,
+	erp_paysupplierinvoicemaster.BPVcode,
+	erp_paysupplierinvoicedetail.addedDocumentSystemID,
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS paidLocalAmount,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS paidRPTAmount 
+FROM
+	erp_paysupplierinvoicedetail
+	INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId 
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID = 0 
+	AND erp_paysupplierinvoicemaster.approved =- 1 
+	AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_paysupplierinvoicemaster.cancelYN = 0 
+	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+	AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+GROUP BY
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicemaster.PayMasterAutoId 
+	UNION ALL
+SELECT
+	erp_matchdocumentmaster.matchDocumentMasterAutoID,
+	erp_matchdocumentmaster.matchingDocCode,
+	erp_paysupplierinvoicedetail.addedDocumentSystemID,
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS paidLocalAmount,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS paidRPTAmount 
+FROM
+	erp_paysupplierinvoicedetail
+	INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID 
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID > 0 
+	AND erp_matchdocumentmaster.matchingConfirmedYN = 1 
+	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+	AND erp_matchdocumentmaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+GROUP BY
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_matchdocumentmaster.matchDocumentMasterAutoID 
+	) AS paymentinfor ON paymentinfor.addedDocumentSystemID = erp_generalledger.documentSystemID 
+	AND paymentinfor.bookingInvSystemCode = erp_generalledger.documentSystemCode
+	LEFT JOIN erp_paysupplierinvoicemaster ON paymentinfor.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+	LEFT JOIN erp_bankledger ON erp_bankledger.documentSystemID = erp_paysupplierinvoicemaster.documentSystemID 
+	AND erp_bankledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId 
+WHERE
+	erp_generalledger.documentSystemID = 11 
+	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+ORDER BY
+	erp_generalledger.documentDate ASC');
+        return $output;
+
     }
 }
