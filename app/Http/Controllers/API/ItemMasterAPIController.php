@@ -22,6 +22,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DocumentApproved;
@@ -96,7 +97,7 @@ class ItemMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
-
+        $employee = Helper::getEmployeeInfo();
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if (empty($company)) {
@@ -147,8 +148,9 @@ class ItemMasterAPIController extends AppBaseController
                 }
 
                 $item['isActive'] = 1;
-                $item['createdPcID'] = gethostname();
-                $item['createdUserID'] = $empId;
+                $input['createdPcID'] = gethostname();
+                $input['createdUserID'] = $employee->empID;
+                $input['createdUserSystemID'] = $employee->employeeSystemID;
                 $item['itemShortDescription'] = $item['itemDescription'];
                 $item['primaryCompanyID'] = $company->CompanyID;
                 $item['primaryCompanySystemID'] = $input['primaryCompanySystemID'];
@@ -541,9 +543,10 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
 
@@ -646,12 +649,10 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-        $empId = $user->employee['empID'];
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $empId;
-        $empName = $user->employee['empName'];
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $id = $input['itemCodeSystem'];
 
@@ -725,7 +726,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID');
 
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {

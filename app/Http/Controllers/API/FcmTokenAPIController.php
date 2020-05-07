@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class FcmTokenController
@@ -114,7 +115,7 @@ class FcmTokenAPIController extends AppBaseController
 
         $user_id = \Helper::getEmployeeSystemID();
         
-        $validator = Validator::make(
+        $validator = \Validator::make(
             $input,
             [
                 'fcm_token' => 'required'
@@ -142,9 +143,9 @@ class FcmTokenAPIController extends AppBaseController
         if (empty($token)) {
             FcmToken::where(['fcm_token' => $input['fcm_token']])->delete();
             $input['userID'] = $user_id;
+            $fcmTokens = FcmToken::insert($input);
 
-            $fcmTokens = $this->fcmTokenRepository->create($input);
-            return $this->sendResponse($fcmTokens->toArray(), 'Fcm Token saved successfully');
+            return $this->sendResponse($fcmTokens, 'Fcm Token saved successfully');
         } else {
             $fcmTokens = $this->fcmTokenRepository->update([
                 'fcm_token' => $input['fcm_token']

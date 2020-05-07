@@ -20,16 +20,18 @@ class PushNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $pushNotificationArray;
     protected $pushNotificationUserIds;
-    protected $sendPushNotification = false;
+    protected $notificationType;
+    protected $sendPushNotification = true;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($pushNotificationArray, $pushNotificationUserIds)
+    public function __construct($pushNotificationArray, $pushNotificationUserIds, $notificationType)
     {
         $this->pushNotificationArray = $pushNotificationArray;
         $this->pushNotificationUserIds = $pushNotificationUserIds;
+        $this->notificationType = $notificationType;
     }
 
     /**
@@ -59,7 +61,7 @@ class PushNotification implements ShouldQueue
            
             $notification_title = 'GEARS ERP Notification';
             $added_data = [
-                'notification_type' => '',
+                'notification_type' => $this->notificationType,
                 'title' => $notification_title,
                 'body' => $description,
                 'data' => $data

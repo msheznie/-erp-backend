@@ -49,6 +49,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Jobs\PushNotification;
 
 /**
  * Class LeaveDataMasterController
@@ -946,6 +947,9 @@ class LeaveDataMasterAPIController extends AppBaseController
         } else {
             $myDocumentName = "Leave Claim";
         }
+
+        $pushNotificationUserIds = [];
+        $pushNotificationArray = [];
         $apply_emp = Employee::where('empID',$input['empID'])->first();
         for ($i = 1; $i <= $hrApprovalLevels; $i++) {
             $doc["companyID"] = $employee->empCompanyID;
@@ -992,8 +996,23 @@ class LeaveDataMasterAPIController extends AppBaseController
             $alert["isEmailSend"] = 0;
             $alert["timeStamp"] = date('Y-m-d');
             Alert::create($alert);
+
+            $pushNotificationMessage = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
+            $pushNotificationUserIds[] = $input['empSystemID'];
+            $pushNotificationArray['companySystemID'] = $input['companySystemID'];
+            $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
+            $pushNotificationArray['id'] = $input['leavedatamasterID'];
+            $pushNotificationArray['type'] = 2;
+            $pushNotificationArray['documentCode'] = $leaveDataMasters->leaveDataMasterCode;
+            $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
         }
 
+        if (!empty($pushNotificationUserIds)) {
+            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+        }
+
+        $pushNotificationUserIds = [];
+        $pushNotificationArray = [];
         $alert["companyID"] = $employee->empCompanyID;
         $alert["documentSystemID"] = $input['documentSystemID'];
         $alert["companySystemID"] = $input['companySystemID'];
@@ -1014,7 +1033,16 @@ class LeaveDataMasterAPIController extends AppBaseController
         $alert["timeStamp"] = date('Y-m-d');
         Alert::create($alert);
 
+        $pushNotificationMessage = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";
+        $pushNotificationUserIds[] = $input['empSystemID'];
+        $pushNotificationArray['companySystemID'] = $input['companySystemID'];
+        $pushNotificationArray['documentSystemID'] = $input['documentSystemID'];
+        $pushNotificationArray['id'] = $input['leavedatamasterID'];
+        $pushNotificationArray['type'] = 2;
+        $pushNotificationArray['documentCode'] = $leaveDataMasters->leaveDataMasterCode;
+        $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
+        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 2);
     }
 
     private function getCalculatedDays($leaveMasterID, $data)
