@@ -4387,4 +4387,22 @@ GROUP BY
             'currencyColumn' => $currencyColumn];
     }
 
+    public function getTBUnmatchedData(Request $request)
+    {
+        $input = $request->all();
+
+
+        $unmatchedData = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
+                                      ->where('companySystemID', $input['companySystemID'])
+                                      ->groupBy('companySystemID', 'documentSystemCode')
+                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0')
+                                      ->get();
+
+        $respondData = [
+            'unMatchedData' => $unmatchedData
+        ];
+
+        return $this->sendResponse($respondData, "Unmatched data retrived successfully.");
+    }
+
 }
