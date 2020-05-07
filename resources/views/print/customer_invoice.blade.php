@@ -652,6 +652,9 @@
                 <tr class="">
                     <th style="width:1%"></th>
                     <th style="text-align: center">Client Ref</th>
+                    @if($request->is_po_in_line)
+                        <th style="text-align: center">PO Line Item</th>
+                    @endif
                     <th style="text-align: center">Details</th>
                     <th style="text-align: center">Qty</th>
                     <th style="text-align: center">Unit Rate</th>
@@ -668,6 +671,9 @@
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td>{{$x}}</td>
                         <td style="width: 12%">{{$item->ClientRef}}</td>
+                        @if($request->is_po_in_line)
+                            <td style="width: 12%">{{$item->pl3}}</td>
+                        @endif
                         <td>{{$item->assetDescription}}</td>
                         <td style="width: 8%;text-align: center">{{number_format($item->qty,2)}}</td>
                         <td style="width: 10%;text-align: right">{{number_format($item->rate,$numberFormatting)}}</td>
