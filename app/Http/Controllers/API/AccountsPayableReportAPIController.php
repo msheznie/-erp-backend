@@ -5173,11 +5173,13 @@ FROM
 WHERE
 	erp_paysupplierinvoicedetail.matchingDocID = 0 
 	AND erp_paysupplierinvoicemaster.approved =- 1 
+	AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
 	AND erp_paysupplierinvoicemaster.cancelYN = 0 
 	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
 	AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
 GROUP BY
-	erp_paysupplierinvoicedetail.bookingInvSystemCode UNION ALL
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicemaster.PayMasterAutoId 
+	UNION ALL
 SELECT
 	erp_matchdocumentmaster.matchDocumentMasterAutoID,
 	erp_matchdocumentmaster.matchingDocCode,
@@ -5192,9 +5194,10 @@ WHERE
 	erp_paysupplierinvoicedetail.matchingDocID > 0 
 	AND erp_matchdocumentmaster.matchingConfirmedYN = 1 
 	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+	AND erp_matchdocumentmaster.companySystemID IN (' . join(',', $companyID) . ')
 	AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
 GROUP BY
-	erp_paysupplierinvoicedetail.bookingInvSystemCode 
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_matchdocumentmaster.matchDocumentMasterAutoID 
 	) AS paymentinfor ON paymentinfor.addedDocumentSystemID = erp_generalledger.documentSystemID 
 	AND paymentinfor.bookingInvSystemCode = erp_generalledger.documentSystemCode
 	LEFT JOIN erp_paysupplierinvoicemaster ON paymentinfor.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
