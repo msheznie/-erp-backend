@@ -44,6 +44,7 @@ use App\Models\QuotationMasterRefferedback;
 use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
+use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
@@ -413,6 +414,10 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError('Sales ' . $tempName . ' not found');
         }
 
+        if($input['serviceLineSystemID']  == null || $input['serviceLineSystemID'] == 0){
+            return $this->sendError('Please select a segment');
+        }
+
         if (isset($input['documentDate'])) {
             if ($input['documentDate']) {
                 $input['documentDate'] = new Carbon($input['documentDate']);
@@ -659,6 +664,8 @@ class QuotationMasterAPIController extends AppBaseController
 
         $month = Months::all();
 
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -666,7 +673,8 @@ class QuotationMasterAPIController extends AppBaseController
             'years' => $years,
             'currencies' => $currencies,
             'customer' => $customer,
-            'salespersons' => $salespersons
+            'salespersons' => $salespersons,
+            'segments' => $segments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
