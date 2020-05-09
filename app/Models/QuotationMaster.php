@@ -429,6 +429,7 @@ class QuotationMaster extends Model
         'customerCurrencyExchangeRate',
         'customerCurrencyAmount',
         'customerCurrencyDecimalPlaces',
+        'serviceLineSystemID',
         'isDeleted',
         'deletedEmpID',
         'deletedDate',
@@ -516,6 +517,7 @@ class QuotationMaster extends Model
         'customerCurrencyExchangeRate' => 'float',
         'customerCurrencyAmount' => 'float',
         'customerCurrencyDecimalPlaces' => 'integer',
+        'serviceLineSystemID' => 'integer',
         'isDeleted' => 'integer',
         'deletedEmpID' => 'integer',
         'confirmedYN' => 'integer',
@@ -586,6 +588,11 @@ class QuotationMaster extends Model
     public function sales_person()
     {
         return $this->belongsTo('App\Models\SalesPersonMaster', 'salesPersonID', 'salesPersonID');
+    }
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
     

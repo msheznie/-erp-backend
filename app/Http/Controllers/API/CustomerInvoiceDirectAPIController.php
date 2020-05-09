@@ -806,6 +806,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->issueCostRptTotal = Helper::roundValue($updateItem->issueCostRptTotal);
                             $updateItem->sellingCost = Helper::roundValue($updateItem->sellingCost);
                             $updateItem->sellingCostAfterMargin = Helper::roundValue($updateItem->sellingCostAfterMargin);
+                            $updateItem->sellingCostAfterMarginLocal = Helper::roundValue($updateItem->sellingCostAfterMarginLocal);
+                            $updateItem->sellingCostAfterMarginRpt = Helper::roundValue($updateItem->sellingCostAfterMarginRpt);
                             $updateItem->sellingTotal = Helper::roundValue($updateItem->sellingTotal);
 
                             $updateItem->save();
