@@ -726,6 +726,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 break;
             case 'CSR': //Customer Sales Register
+                $input = $request->all();
+                if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                    $sort = 'asc';
+                } else {
+                    $sort = 'desc';
+                }
+                
+                $search = $request->input('search.value');
+
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getCustomerSalesRegisterQRY($request);
@@ -743,12 +752,23 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                 $decimalPlace = array_unique($decimalPlace);
 
-                if ($output) {
-                    foreach ($output as $val) {
-                        $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
-                    }
-                }
-                return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
+
+                return \DataTables::of($output)
+                        ->order(function ($query) use ($input) {
+                            if (request()->has('order')) {
+                                if ($input['order'][0]['column'] == 0) {
+                                    // $query->orderBy('quiz_usermaster.id', $input['order'][0]['dir']);
+                                }
+                            }
+                        })
+                        ->addIndexColumn()
+                        ->with('orderCondition', $sort)
+                        ->with('companyName', $checkIsGroup->CompanyName)
+                        ->with('balanceAmount', $balanceAmount)
+                        ->with('paidAmount', $paidAmount)
+                        ->with('invoiceAmount', $invoiceAmount)
+                        ->with('currencyDecimalPlace', !empty($decimalPlace) ? $decimalPlace[0] : 2)
+                        ->make(true);
                 break;
             case 'CRCR': //Customer Summary Report
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
