@@ -15,6 +15,7 @@ use App\Models\ItemAssigned;
 use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueMaster;
 use App\Models\StockTransfer;
+use App\Models\Taxdetail;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Repositories\CustomerInvoiceItemDetailsRepository;
@@ -638,7 +639,19 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Item Details not found');
         }
 
-        /*TODO confirm approve check*/
+        $customerInvoice = CustomerInvoiceDirect::find($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+        if(!empty($customerInvoice)){
+            if($customerInvoice->confirmedYN == 1){
+                return $this->sendError('Invoice was already confirmed. you cannot delete',500);
+            }
+            $taxExist = Taxdetail::where('documentSystemCode', $customerInvoice->custInvoiceDirectAutoID)
+                ->where('documentSystemID', $customerInvoice->documentSystemiD)
+                ->exists();
+            if($taxExist){
+                return $this->sendError('Tax was added for the invoice. You cannot delete',500);
+            }
+
+        }
 
         $customerInvoiceItemDetails->delete();
 
