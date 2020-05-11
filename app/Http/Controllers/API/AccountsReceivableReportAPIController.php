@@ -735,9 +735,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 
                 $search = $request->input('search.value');
 
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getCustomerSalesRegisterQRY($request);
+                $convertedRequest = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($convertedRequest->companySystemID);
+                $output = $this->getCustomerSalesRegisterQRY($convertedRequest, $search);
 
                 $outputArr = array();
                 $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
@@ -752,7 +752,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                 $decimalPlace = array_unique($decimalPlace);
 
-
+                $request->request->remove('order');
+                $data['order'] = [];
+                $data['search']['value'] = '';
+                $request->merge($data);
+                $request->request->remove('search.value');
+                
                 return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -4626,7 +4631,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
         return $output;
     }
 
-    function getCustomerSalesRegisterQRY($request)
+    function getCustomerSalesRegisterQRY($request, $search = "")
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $fromDate->addDays(1);
@@ -4674,6 +4679,13 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentRptCurrency AS documentCurrency";
         }
+
+        $filter='';
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = " AND (( erp_generalledger.documentCode LIKE '%{$search}%' OR customermaster.CustomerName LIKE '%{$search}%' OR erp_generalledger.invoiceNumber LIKE '%{$search}%' )) ";
+        }
+
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
                 MainQuery.companyID,
@@ -4762,6 +4774,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '"
                 AND "' . $toDate . '"
                 AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+                ' . $filter . '
                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                 ) AS MainQuery
                 LEFT JOIN (

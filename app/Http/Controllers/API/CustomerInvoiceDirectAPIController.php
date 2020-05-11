@@ -677,7 +677,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 } else {
 
                     $messages = [
-
+                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                        'bankID.required' => 'Bank is required.',
+                        'bankAccountID.required' => 'Bank account is required.',
+                        
                         'customerInvoiceNo.required' => 'Customer invoice no is required.',
                         'customerInvoiceDate.required' => 'Customer invoice date is required.',
                         'PONumber.required' => 'Po number is required.',
