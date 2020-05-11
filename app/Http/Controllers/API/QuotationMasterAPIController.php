@@ -701,7 +701,8 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies)
-            ->where('documentSystemID', $input['documentSystemID']);
+            ->where('documentSystemID', $input['documentSystemID'])
+        ->with(['segment']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
