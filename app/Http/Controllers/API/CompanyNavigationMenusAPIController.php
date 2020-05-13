@@ -184,8 +184,11 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $navigationMenu = DB::table('srp_erp_navigationmenus')->select(DB::raw('srp_erp_navigationmenus.*,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationmenus.navigationMenuID,1,0) as isChecked'))
             ->leftJoin('srp_erp_companynavigationmenus', function ($join) use ($companyID) {
                 $join->on('srp_erp_navigationmenus.navigationMenuID', '=', 'srp_erp_companynavigationmenus.navigationMenuID')
-                    ->where('srp_erp_companynavigationmenus.companyID', '=', $companyID);
-            })->get();
+                    ->where('srp_erp_companynavigationmenus.companyID', '=', $companyID)
+                    ->orderBy('srp_erp_navigationmenus.sortOrder');
+            })
+            ->orderBy('srp_erp_navigationmenus.sortOrder')
+            ->get();
         //dd(DB::getQueryLog());
         $tree = buildTree($navigationMenu);
         //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();

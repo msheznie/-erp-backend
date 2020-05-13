@@ -561,7 +561,10 @@ class BankLedgerAPIController extends AppBaseController
                             $dataEmail['alertMessage'] = "Payment Released";
                             $dataEmail['emailAlertMessage'] = $temp;
 
-                            Alert::create($dataEmail);
+                            $sendEmail = \Email::sendEmailErp($dataEmail);
+                            if (!$sendEmail["success"]) {
+                                return $this->sendError($sendEmail["message"], 500);
+                            }
                         }
                     }
 

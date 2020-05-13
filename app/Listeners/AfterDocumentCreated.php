@@ -246,7 +246,7 @@ class AfterDocumentCreated
                     $dataEmail['alertMessage'] = $systemDocument->documentDescription . " - " . $document['companyID'] . " (Document code Jumped/Duplicated)";
                     $dataEmail['emailAlertMessage'] = $temp;
 
-                    Alert::create($dataEmail);
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
                     Log::info('Email array:');
                     Log::info($dataEmail);
 

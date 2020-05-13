@@ -57,7 +57,7 @@ class POUpdated
                 $dataEmail['attachmentFileName'] = null;
                 $dataEmail['alertMessage'] = "Service line changed for " . $order['purchaseOrderCode'];
                 $dataEmail['emailAlertMessage'] = $temp;
-                Alert::create($dataEmail);
+                $sendEmail = \Email::sendEmailErp($dataEmail);
                 Log::info('Email array:');
                 Log::info($dataEmail);
             }
