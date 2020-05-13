@@ -374,7 +374,10 @@ class EmployeeAPIController extends AppBaseController
         $dataEmail['alertMessage'] = $subject;
         $dataEmail['emailAlertMessage'] = $body;
 
-        $sendEmail = Alert::create($dataEmail);
+        $sendEmail = \Email::sendEmailErp($dataEmail);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
 
         return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');
     }
