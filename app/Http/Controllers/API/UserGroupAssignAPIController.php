@@ -207,8 +207,10 @@ class UserGroupAssignAPIController extends AppBaseController
             ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll'))
             ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
                 $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
-                    ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID);
+                    ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID)
+                    ->orderBy('srp_erp_companynavigationmenus.sortOrder');
             })
+            ->orderBy('srp_erp_companynavigationmenus.sortOrder')
             ->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
         //dd(DB::getQueryLog());
         $tree = buildTree($navigationMenu);

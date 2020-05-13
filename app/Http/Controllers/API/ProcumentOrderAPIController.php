@@ -4376,7 +4376,6 @@ ORDER BY
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
-
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
@@ -4404,7 +4403,10 @@ ORDER BY
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
                     $dataEmail['emailAlertMessage'] = $temp;
-                    Alert::create($dataEmail);
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if (!$sendEmail["success"]) {
+                        return $this->sendError($sendEmail["message"], 500);
+                    }
                 }
             }
         }
@@ -4436,7 +4438,10 @@ ORDER BY
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
                     $dataEmail['emailAlertMessage'] = $temp;
-                    Alert::create($dataEmail);
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if (!$sendEmail["success"]) {
+                        return $this->sendError($sendEmail["message"], 500);
+                    }
                 }
             }
 

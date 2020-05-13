@@ -648,7 +648,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 ->where('documentSystemID', $customerInvoice->documentSystemiD)
                 ->exists();
             if($taxExist){
-                return $this->sendError('Tax was added for the invoice. You cannot delete',500);
+                return $this->sendError('Tax is added. Please delete the tax and try again.',500);
             }
 
         }

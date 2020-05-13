@@ -392,4 +392,23 @@ class email
         //$emails = Alert::insert($emailsArray);
         return ['success' => true, 'message' => 'Successfully Inserted'];
     }
+
+    public static function sendEmailErp($data)
+    {
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
+                                        ->where('companyPolicyCategoryID', 37)
+                                        ->where('isYesNO', 1)
+                                        ->exists();
+
+        if ($hasPolicy) {
+            Log::info('Email send start');
+            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
+            Log::info('email sent success fully to :' . $data['empEmail']);
+            Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
+        }else{
+             Alert::create($data);
+        }
+
+        return ['success' => true, 'message' => 'Successfully Inserted'];
+    }
 }
