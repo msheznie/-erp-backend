@@ -603,7 +603,8 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
                         ->whereHas('leave', function ($q) use ($user){
                             $q->whereHas('employee', function ($q) use ($user){
                                 $q->whereHas('employee_managers' , function ($query) use ($user){
-                                    $query->where('managerID', $user->empID);
+                                    $query->where('managerID', $user->empID)
+                                        ->where('isFunctionalManager', -1);
                                 });
                             });
                         });
