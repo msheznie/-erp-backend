@@ -40,7 +40,8 @@ class FcmToken extends Model
 
     public $fillable = [
         'userID',
-        'fcm_token'
+        'fcm_token',
+        'deviceType',
     ];
 
     /**
@@ -51,7 +52,8 @@ class FcmToken extends Model
     protected $casts = [
         'id' => 'integer',
         'userID' => 'integer',
-        'fcm_token' => 'string'
+        'fcm_token' => 'string',
+        'deviceType' => 'string'
     ];
 
     /**
