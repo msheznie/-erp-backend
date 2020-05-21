@@ -21,6 +21,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemAssigned;
+use App\Models\ItemMaster;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
@@ -730,9 +731,9 @@ class GRVDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $itemAssign = ItemAssigned::find($input['itemCode']);
+            $itemAssign = ItemMaster::find($input['itemCode']);
             if (empty($itemAssign)) {
-                return $this->sendError('Item not assigned');
+                return $this->sendError('Item not found');
             }
 
             $user = \Helper::getEmployeeInfo();
