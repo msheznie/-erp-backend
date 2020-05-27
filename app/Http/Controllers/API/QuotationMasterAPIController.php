@@ -817,11 +817,12 @@ class QuotationMasterAPIController extends AppBaseController
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $documentSystemID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            $query->where('employeesdepartments.documentSystemID', 67)
+            $query
+                ->where('employeesdepartments.documentSystemID', $documentSystemID)
                 ->where('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID);
         })->join('erp_quotationmaster', function ($query) use ($companyID, $empID) {

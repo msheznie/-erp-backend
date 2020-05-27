@@ -462,6 +462,7 @@ class QuotationMaster extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
+        'selectedForDeliveryOrder',
         'timestamp'
     ];
 
@@ -543,7 +544,8 @@ class QuotationMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'selectedForDeliveryOrder' => 'integer'
     ];
 
     /**

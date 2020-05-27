@@ -29,6 +29,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
+use App\Models\DeliveryOrder;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\ExpenseClaim;
@@ -357,6 +358,13 @@ class email
                     if (!empty($leaveMaster)) {
                         $data['docApprovedYN'] = $leaveMaster->approvedYN;
                         $data['docCode'] = $leaveMaster->leaveDataMasterCode;
+                    }
+                    break;
+                case 71:
+                    $deliveryOrder = DeliveryOrder::find($data['docSystemCode']);
+                    if (!empty($deliveryOrder)) {
+                        $data['docApprovedYN'] = $deliveryOrder->approvedYN;
+                        $data['docCode'] = $deliveryOrder->deliveryOrderCode;
                     }
                     break;
                 default:

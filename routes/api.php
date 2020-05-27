@@ -1678,7 +1678,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
     Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
     Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
+    Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+    Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
+    Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
+    Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
 
+    Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO');
+    Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO');
+
+    Route::post('getDeliveryOrderApprovals', 'DeliveryOrderAPIController@getDeliveryOrderApprovals');
+    Route::post('getApprovedDeliveryOrderForUser', 'DeliveryOrderAPIController@getApprovedDeliveryOrderForUser');
+    Route::post('approveDeliveryOrder', 'DeliveryOrderAPIController@approveDeliveryOrder');
+    Route::post('rejectDeliveryOrder', 'DeliveryOrderAPIController@rejectDeliveryOrder');
+
+    Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
+    Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1783,6 +1797,10 @@ Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
 Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+
+
+
+
 
 
 

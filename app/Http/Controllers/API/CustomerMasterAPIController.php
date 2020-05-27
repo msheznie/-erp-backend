@@ -354,6 +354,13 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('custUnbilledAccountSystemID', $input)) {
+            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
+            if ($unbilled) {
+                $input['custUnbilledAccount'] = $unbilled->AccountCode;
+            }
+        }
+
 
         if (array_key_exists('customerCodeSystem', $input)) {
 
@@ -483,6 +490,13 @@ class CustomerMasterAPIController extends AppBaseController
 
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');
+        }
+
+        if (array_key_exists('custUnbilledAccountSystemID', $input)) {
+            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
+            if ($unbilled) {
+                $input['custUnbilledAccount'] = $unbilled->AccountCode;
+            }
         }
 
         $customerMaster = $this->customerMasterRepository->update($input, $id);
