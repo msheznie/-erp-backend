@@ -1,0 +1,983 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\helper\Helper;
+use App\helper\inventory;
+use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
+use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\CurrencyMaster;
+use App\Models\CustomerAssigned;
+use App\Models\CustomerMaster;
+use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderDetail;
+use App\Models\Months;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
+use App\Models\SalesPersonMaster;
+use App\Models\SegmentMaster;
+use App\Models\WarehouseMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Repositories\DeliveryOrderRepository;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class DeliveryOrderController
+ * @package App\Http\Controllers\API
+ */
+
+class DeliveryOrderAPIController extends AppBaseController
+{
+    /** @var  DeliveryOrderRepository */
+    private $deliveryOrderRepository;
+
+    public function __construct(DeliveryOrderRepository $deliveryOrderRepo)
+    {
+        $this->deliveryOrderRepository = $deliveryOrderRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/deliveryOrders",
+     *      summary="Get a listing of the DeliveryOrders.",
+     *      tags={"DeliveryOrder"},
+     *      description="Get all DeliveryOrders",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/DeliveryOrder")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->deliveryOrderRepository->pushCriteria(new RequestCriteria($request));
+        $this->deliveryOrderRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $deliveryOrders = $this->deliveryOrderRepository->all();
+
+        return $this->sendResponse($deliveryOrders->toArray(), 'Delivery Orders retrieved successfully');
+    }
+
+    /**
+     * @param CreateDeliveryOrderAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/deliveryOrders",
+     *      summary="Store a newly created DeliveryOrder in storage",
+     *      tags={"DeliveryOrder"},
+     *      description="Store DeliveryOrder",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="DeliveryOrder that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/DeliveryOrder")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DeliveryOrder"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateDeliveryOrderAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $messages = [
+            'transactionCurrencyID.required' => 'Currency field is required',
+            'customerID.required' => 'Customer field is required',
+            'companyFinanceYearID.required' => 'Finance Year field is required',
+            'companyFinancePeriodID.required' => 'Finance Period field is required',
+            'serviceLineSystemID.required' => 'Segment field is required',
+            'wareHouseSystemCode.required' => 'Warehouse field is required',
+            'deliveryOrderDate.required' => 'Document Date field is required',
+        ];
+
+        $validator = \Validator::make($input, [
+            'orderType' => 'required|numeric|min:1',
+            'companySystemID' => 'required|numeric|min:1',
+            'documentSystemID' => 'required|numeric|min:1',
+            'customerID' => 'required',
+            'transactionCurrencyID' => 'required',
+            'companyFinanceYearID' => 'required',
+            'companyFinancePeriodID' => 'required',
+            'serviceLineSystemID' => 'required',
+            'wareHouseSystemCode' => 'required',
+            'deliveryOrderDate' => 'required|date'
+        ], $messages);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['deliveryOrderDate'] = new Carbon($input['deliveryOrderDate']);
+
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'transactionCurrencyID'));
+
+        $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
+        $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
+        $input['FYEnd'] = $CompanyFinanceYear->endingDate;
+
+        //deliveryOrderCode
+        $lastSerial = DeliveryOrder::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('serialNo', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+        $company = Company::where('companySystemID', $input['companySystemID'])->first()->toArray();
+        $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
+        $input['deliveryOrderCode'] = ($company['CompanyID'] . '\\' . $y . '\\DEO' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['serialNo'] = $lastSerialNumber;
+        $input['companyID'] = $company['CompanyID'];
+        $input['documentID'] = 'DEO';
+
+        if(isset($input['serviceLineSystemID']) && $input['serviceLineSystemID']){
+            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+        $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+
+        $companyCurrency = Helper::companyCurrency($input['companySystemID']);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
+
+        $input['transactionCurrencyER'] = 1;
+        $input['companyLocalCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+        $input['companyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+        $input['companyReportingCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+        $employee = Helper::getEmployeeInfo();
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserName'] = $employee->empName;
+
+        $deliveryOrder = $this->deliveryOrderRepository->create($input);
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/deliveryOrders/{id}",
+     *      summary="Display the specified DeliveryOrder",
+     *      tags={"DeliveryOrder"},
+     *      description="Get DeliveryOrder",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of DeliveryOrder",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DeliveryOrder"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var DeliveryOrder $deliveryOrder */
+        $deliveryOrder = $this->deliveryOrderRepository->with(['customer','transaction_currency', 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }, 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'detail' => function($query){
+            $query->with(['quotation','uom_default']);
+        }])->findWithoutFail($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateDeliveryOrderAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/deliveryOrders/{id}",
+     *      summary="Update the specified DeliveryOrder in storage",
+     *      tags={"DeliveryOrder"},
+     *      description="Update DeliveryOrder",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of DeliveryOrder",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="DeliveryOrder that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/DeliveryOrder")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/DeliveryOrder"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateDeliveryOrderAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var DeliveryOrder $deliveryOrder */
+        $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode'));
+        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail']);
+
+        if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
+            $companyCurrency = Helper::companyCurrency($input['companySystemID']);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
+
+            $input['transactionCurrencyER'] = 1;
+            $input['companyLocalCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+            $input['companyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $input['companyReportingCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        }
+
+        $input['documentID'] = 'DEO';
+
+        if($deliveryOrder->serviceLineSystemID != $input['serviceLineSystemID']){
+            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+        $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+        $input['deliveryOrderDate'] = Carbon::parse($input['deliveryOrderDate'])->format('Y-m-d') . ' 00:00:00';
+
+        $detailAmount = DeliveryOrderDetail::
+        select(DB::raw("
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (unitTransactionAmount-(unitTransactionAmount*discountPercentage/100))),0) as transAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-(companyLocalAmount*discountPercentage/100))),0) as localAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))),0) as reportAmount"))
+            ->where('deliveryOrderID', $id)
+            ->first();
+
+        $input['transactionAmount'] = $detailAmount->transAmount;
+        $input['companyLocalAmount'] = $detailAmount->localAmount;
+        $input['companyReportingAmount'] = $detailAmount->reportAmount;
+
+        $input['transactionAmount'] = Helper::roundValue($input['transactionAmount']);
+        $input['companyLocalAmount'] = Helper::roundValue($input['companyLocalAmount']);
+        $input['companyReportingAmount'] = Helper::roundValue($input['companyReportingAmount']);
+
+        $employee = Helper::getEmployeeInfo();
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $input['modifiedPCID'] = gethostname();
+        $input['modifiedUserID'] = $employee->empID;
+        $input['modifiedUserName'] = $employee->empName;
+        $input['modifiedDateTime'] = Carbon::now();
+
+        if ($input['confirmedYN'] == 1 && $deliveryOrder->confirmedYN == 0) {
+
+            // check document date between financial period
+            if (($input['deliveryOrderDate'] >= $input['FYPeriodDateFrom']) && ($input['deliveryOrderDate'] <= $input['FYPeriodDateTo'])) {
+            } else {
+                return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+            }
+
+            $messages = [
+                'transactionCurrencyID.required' => 'Currency field is required',
+                'customerID.required' => 'Customer field is required',
+                'companyFinanceYearID.required' => 'Finance Year field is required',
+                'companyFinancePeriodID.required' => 'Finance Period field is required',
+                'serviceLineSystemID.required' => 'Segment field is required',
+                'wareHouseSystemCode.required' => 'Warehouse field is required',
+                'deliveryOrderDate.required' => 'Document Date field is required',
+            ];
+
+            $validator = \Validator::make($input, [
+                'orderType' => 'required|numeric|min:1',
+                'companySystemID' => 'required|numeric|min:1',
+                'documentSystemID' => 'required|numeric|min:1',
+                'customerID' => 'required',
+                'transactionCurrencyID' => 'required',
+                'companyFinanceYearID' => 'required',
+                'companyFinancePeriodID' => 'required',
+                'serviceLineSystemID' => 'required',
+                'wareHouseSystemCode' => 'required',
+                'deliveryOrderDate' => 'required|date'
+            ], $messages);
+
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            // check customer master unbilled gl account configured
+            $customer = CustomerMaster::find($input['customerID']);
+            if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
+                return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
+            }
+
+            $detail = DeliveryOrderDetail::where('deliveryOrderID', $id)->get();
+            if(count((array)$detail) == 0){
+                return  $this->sendError('Order detail not found', 500);
+            }
+
+            $checkQuantity = DeliveryOrderDetail::where('deliveryOrderID', $id)
+                ->where(function ($q) {
+                    $q->where('qtyIssued', '<=', 0)
+                        ->orWhereNull('qtyIssued');
+                })
+                ->exists();
+            if ($checkQuantity) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+            foreach ($detail as $item) {
+
+                //If the revenue account or cost account or BS account is null do not allow to confirm
+                if(!($item->financeGLcodebBSSystemID > 0)){
+                    return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                }elseif (!($item->financeGLcodePLSystemID > 0)){
+                    return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
+                    return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                }
+
+                $updateItem = DeliveryOrderDetail::find($item['deliveryOrderDetailID']);
+
+                $data = array(
+                    'companySystemID' => $deliveryOrder->companySystemID,
+                    'itemCodeSystem' => $updateItem->itemCodeSystem,
+                    'wareHouseId' => $deliveryOrder->wareHouseSystemCode
+                );
+
+                $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+
+                $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+
+                $updateItem->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
+
+                //discount calculation
+                $discountedUnit = $updateItem->unitTransactionAmount;
+
+                if($updateItem->discountAmount > 0) {
+                    $discountedUnit = $updateItem->unitTransactionAmount - $updateItem->discountAmount;
+                }
+
+                $updateItem->transactionAmount = $discountedUnit*$updateItem->qtyIssuedDefaultMeasure;
+
+                if($updateItem->transactionCurrencyID != $updateItem->companyLocalCurrencyID){
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyLocalCurrencyID,$updateItem->unitTransactionAmount);
+                    if(!empty($currencyConversion)){
+                        $updateItem->companyLocalAmount = $currencyConversion['documentAmount'];
+                    }
+                }else{
+                    $updateItem->companyLocalAmount = $updateItem->unitTransactionAmount;
+                }
+
+                if($updateItem->transactionCurrencyID != $updateItem->companyReportingCurrencyID){
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyReportingCurrencyID,$updateItem->unitTransactionAmount);
+                    if(!empty($currencyConversion)){
+                        $updateItem->companyReportingAmount = $currencyConversion['documentAmount'];
+                    }
+                }else{
+                    $updateItem->companyReportingAmount = $updateItem->unitTransactionAmount;
+                }
+
+                $updateItem->unitTransactionAmount = Helper::roundValue($updateItem->unitTransactionAmount);
+                $updateItem->discountPercentage = Helper::roundValue($updateItem->discountPercentage);
+                $updateItem->discountAmount = Helper::roundValue($updateItem->discountAmount);
+                $updateItem->transactionAmount = Helper::roundValue($updateItem->transactionAmount);
+                $updateItem->companyLocalAmount = Helper::roundValue($updateItem->companyLocalAmount);
+                $updateItem->companyReportingAmount = Helper::roundValue($updateItem->companyReportingAmount);
+
+                $updateItem->save();
+
+                if ($updateItem->unitTransactionAmount == 0) {
+                    return $this->sendError('Item must not have zero cost', 500);
+                }
+                if ($updateItem->unitTransactionAmount < 0) {
+                    return $this->sendError('Item must not have negative cost', 500);
+                }
+                if ($updateItem->currentWareHouseStockQty <= 0) {
+                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                }
+                if ($updateItem->currentStockQty <= 0) {
+                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                }
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
+                }
+
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
+                }
+
+            }
+
+            if($updateItem->discountPercentage != 0){
+                $amount = DeliveryOrderDetail::where('deliveryOrderID', $id)
+                    ->sum(DB::raw('qtyIssuedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))'));
+            }else{
+                $amount = DeliveryOrderDetail::where('deliveryOrderID', $id)
+                    ->sum(DB::raw('qtyIssuedDefaultMeasure * companyReportingAmount'));
+            }
+
+            $params = array('autoID' => $id,
+                'company' => $deliveryOrder->companySystemID,
+                'document' => $deliveryOrder->documentSystemID,
+                'segment' => '',
+                'category' => '',
+                'amount' => $amount
+            );
+            $update = array_except($input,['confirmedYN']);
+            $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
+            $confirm = Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            } else {
+                return $this->sendResponse($deliveryOrder->toArray(), 'Delivery order confirmed successfully');
+            }
+
+        }else{
+            $deliveryOrder = $this->deliveryOrderRepository->update($input, $id);
+            return $this->sendResponse($deliveryOrder->toArray(), 'DeliveryOrder updated successfully');
+        }
+
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/deliveryOrders/{id}",
+     *      summary="Remove the specified DeliveryOrder from storage",
+     *      tags={"DeliveryOrder"},
+     *      description="Delete DeliveryOrder",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of DeliveryOrder",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var DeliveryOrder $deliveryOrder */
+        $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        $deliveryOrder->delete();
+
+        return $this->sendSuccess('Delivery Order deleted successfully');
+    }
+
+    public function getDeliveryOrderFormData(Request $request){
+        $companyId = $request['companyId'];
+
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+
+        $customer = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->where('companySystemID', $subCompanies)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        $salespersons = SalesPersonMaster::select(DB::raw("salesPersonID,CONCAT(SalesPersonCode, ' | ' ,SalesPersonName) as SalesPersonName"))
+            ->where('companySystemID', $subCompanies)
+            ->get();
+
+        $years = QuotationMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+        $month = Months::all();
+
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
+
+        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+        $companyFinanceYear = Helper::companyFinanceYear($companyId, 1);
+        $orderType = array(array('value' => 1, 'label' => 'Direct Order'), array('value' => 2, 'label' => 'Quotation Based'),array('value' => 3, 'label' => 'Sales Order Based'));
+        $wareHouses = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'currencies' => $currencies,
+            'customer' => $customer,
+            'salespersons' => $salespersons,
+            'segments' => $segments,
+            'financialYears' => $financialYears,
+            'orderType' => $orderType,
+            'companyFinanceYear'=>$companyFinanceYear,
+            'wareHouses'=>$wareHouses
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAllDeliveryOrder(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $deliveryOrder = DeliveryOrder::whereIn('companySystemID', $childCompanies)
+        ->with(['customer','transaction_currency','created_by','segment']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $deliveryOrder->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $deliveryOrder->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $deliveryOrder->whereMonth('deliveryOrderDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $deliveryOrder->whereYear('deliveryOrderDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $deliveryOrder->where('customerID', $input['customerID']);
+            }
+        }
+
+        if (array_key_exists('salesPersonID', $input)) {
+            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
+                $deliveryOrder->where('salesPersonID', $input['salesPersonID']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $deliveryOrder = $deliveryOrder->where(function ($query) use ($search) {
+                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($deliveryOrder)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('deliveryOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function salesQuotationForDO(Request $request){
+        $input = $request->all();
+        $documentSystemID = 0;
+        if($input['type'] == 2){ //Quotation
+            $documentSystemID = 67;
+        } elseif ($input['type']==3){ ////sales order
+            $documentSystemID = 68;
+        }
+        $deliveryOrder = DeliveryOrder::find($input['deliveryOrderID']);
+
+        $master = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->where('approvedYN', -1)
+            ->where('selectedForDeliveryOrder', 0)
+            ->where('closedYN',0)
+            ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
+            ->where('customerSystemCode', $deliveryOrder->customerID)
+            ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+    }
+
+    public function getSalesQuoatationDetailForDO(Request $request){
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+
+        $detail = DB::select('SELECT
+	quotationdetails.*,
+	erp_quotationmaster.serviceLineSystemID,
+	"" AS isChecked,
+	"" AS noQty,
+	IFNULL(dodetails.doTakenQty,0) as doTakenQty 
+FROM
+	erp_quotationdetails quotationdetails
+	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY deliveryOrderDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+WHERE
+	quotationdetails.quotationMasterID = ' . $id . ' 
+	AND fullyOrdered != 2 ');
+
+        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+    }
+
+
+
+    public function getDeliveryOrderApprovals(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companySystemID = $request->companySystemID;
+        $documentSystemID = $request->documentSystemID;
+        $empID = Helper::getEmployeeSystemID();
+
+        $doMasters = DB::table('erp_documentapproved')->select(
+            'erp_delivery_order.deliveryOrderID',
+            'erp_delivery_order.orderType',
+            'erp_delivery_order.deliveryOrderCode',
+            'erp_delivery_order.documentSystemID',
+            'erp_delivery_order.referenceNo',
+            'erp_delivery_order.deliveryOrderDate',
+            'erp_delivery_order.narration',
+            'erp_delivery_order.createdDateTime',
+            'erp_delivery_order.confirmedDate',
+            'erp_delivery_order.transactionAmount',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'serviceline.ServiceLineDes As ServiceLineDes',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companySystemID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            $query->where('employeesdepartments.documentSystemID', 71)
+                ->where('employeesdepartments.companySystemID', $companySystemID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_delivery_order', function ($query) use ($companySystemID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'deliveryOrderID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_delivery_order.companySystemID', $companySystemID)
+                ->where('erp_delivery_order.approvedYN', 0)
+                ->where('erp_delivery_order.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->leftJoin('serviceline', 'erp_delivery_order.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+            ->where('erp_documentapproved.companySystemID', $companySystemID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $doMasters = $doMasters->where(function ($query) use ($search) {
+                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($doMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedDeliveryOrderForUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companySystemID = $request->companySystemID;
+        $documentSystemID = $request->documentSystemID;
+        $empID = Helper::getEmployeeSystemID();
+
+        $doMasters = DB::table('erp_documentapproved')->select(
+            'erp_delivery_order.deliveryOrderID',
+            'erp_delivery_order.orderType',
+            'erp_delivery_order.deliveryOrderCode',
+            'erp_delivery_order.documentSystemID',
+            'erp_delivery_order.referenceNo',
+            'erp_delivery_order.deliveryOrderDate',
+            'erp_delivery_order.narration',
+            'erp_delivery_order.createdDateTime',
+            'erp_delivery_order.confirmedDate',
+            'erp_delivery_order.transactionAmount',
+            'erp_delivery_order.approvedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'serviceline.ServiceLineDes As ServiceLineDes',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_delivery_order', function ($query) use ($companySystemID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'deliveryOrderID')
+                ->where('erp_delivery_order.companySystemID', $companySystemID)
+                ->where('erp_delivery_order.approvedYN', -1)
+                ->where('erp_delivery_order.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->leftJoin('serviceline', 'erp_delivery_order.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.documentSystemID', 71)
+            ->where('erp_documentapproved.companySystemID', $companySystemID)
+            ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $doMasters = $doMasters->where(function ($query) use ($search) {
+                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($doMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveDeliveryOrder(Request $request)
+    {
+        $approve = Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectDeliveryOrder(Request $request)
+    {
+        $reject = Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function deliveryOrderAudit(Request $request)
+    {
+        $input = $request->all();
+        $deliveryOrderID = $input['deliveryOrderID'];
+        $data = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 71);
+        }, 'company'])->findWithoutFail($deliveryOrderID);
+
+
+        if (empty($data)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        return $this->sendResponse($data->toArray(), 'Delivery Order retrieved successfully');
+    }
+}

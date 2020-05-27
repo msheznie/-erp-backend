@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateItemIssueDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\DeliveryOrder;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -436,6 +437,26 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if (!empty($checkWhetherInvoice)) {
             return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        // check in delivery order
+        $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_delivery_order.deliveryOrderID',
+                'erp_delivery_order.deliveryOrderCode'
+            ])
+            ->groupBy(
+                'erp_delivery_order.deliveryOrderID',
+                'erp_delivery_order.companySystemID'
+            )
+            ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approvedYN', 0)
+            ->first();
+
+        if (!empty($checkWhetherDeliveryOrder)) {
+            return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
 

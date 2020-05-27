@@ -327,6 +327,34 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'currentWacRptCurrencyID',
                             'wacRpt' => 'wacAdjRpt');
                         break;
+                    case 71: //Delivery Order
+                        $docInforArr["approvedColumnName"] = 'approvedYN';
+                        $docInforArr["modelName"] = 'DeliveryOrder';
+                        $docInforArr["childRelation"] = 'detail';
+                        $docInforArr["autoID"] = 'deliveryOrderID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'wareHouseSystemCode' => 'wareHouseSystemCode',
+                            'documentCode' => 'deliveryOrderCode',
+                            'referenceNumber' => 'referenceNo');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCodeSystem',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'itemUnitOfMeasure',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
+                            'wacLocalCurrencyID' => 'companyLocalCurrencyID',
+                            'wacLocal' => 'wacValueLocal',
+                            'wacRptCurrencyID' => 'companyReportingCurrencyID',
+                            'wacRpt' => 'wacValueReporting');
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;

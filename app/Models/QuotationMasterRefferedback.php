@@ -503,6 +503,7 @@ class QuotationMasterRefferedback extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
+        'selectedForDeliveryOrder',
         'timestamp'
     ];
 
@@ -584,7 +585,8 @@ class QuotationMasterRefferedback extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'selectedForDeliveryOrder' => 'integer'
     ];
 
     /**

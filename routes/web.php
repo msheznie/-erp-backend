@@ -11,3 +11,7 @@ Route::resource('reportColumnTemplateDetails', 'ReportColumnTemplateDetailContro
 Route::resource('dashboardWidgetMasters', 'DashboardWidgetMasterController');
 
 Route::resource('fcmTokens', 'FcmTokenController');
+
+Route::resource('deliveryOrders', 'DeliveryOrderController');
+
+Route::resource('deliveryOrderDetails', 'DeliveryOrderDetailController');
