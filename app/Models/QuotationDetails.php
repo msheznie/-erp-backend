@@ -241,6 +241,8 @@ class QuotationDetails extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timesReferred',
+        'fullyOrdered',
+        'doQuantity',
         'timestamp'
     ];
 
@@ -285,7 +287,9 @@ class QuotationDetails extends Model
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'fullyOrdered' => 'integer',
+        'doQuantity' => 'float'
     ];
 
     /**
