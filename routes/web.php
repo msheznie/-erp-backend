@@ -15,3 +15,5 @@ Route::resource('fcmTokens', 'FcmTokenController');
 Route::resource('deliveryOrders', 'DeliveryOrderController');
 
 Route::resource('deliveryOrderDetails', 'DeliveryOrderDetailController');
+
+Route::resource('tenants', 'TenantController');
