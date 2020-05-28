@@ -18,7 +18,7 @@ class TenantEnforce
      */
     public function handle($request, Closure $next)
     {
-        $url = $request->getHttpHost();
+        /*$url = $request->getHttpHost();
         $url_array = explode('.',$url);
         $subDomain = $url_array[0];
         if($subDomain  == 'www'){
@@ -37,7 +37,7 @@ class TenantEnforce
             }else{
                 return "Sub domain " . $subDomain. " not found";
             }
-        }
+        }*/
         return $next($request);
     }
 }

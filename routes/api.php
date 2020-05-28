@@ -1802,4 +1802,8 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
 
 });
+
+
+
 Route::resource('tenants', 'TenantAPIController');
+Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
