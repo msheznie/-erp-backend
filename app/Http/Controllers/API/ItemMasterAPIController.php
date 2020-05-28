@@ -639,6 +639,7 @@ class ItemMasterAPIController extends AppBaseController
     public function updateItemMaster(Request $request)
     {
         $input = $request->all();
+        $input = array_except($input,['finance_sub_category']);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
         $validator = \Validator::make($input, [
@@ -684,6 +685,7 @@ class ItemMasterAPIController extends AppBaseController
                 }
             }
         }
+
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
 
             $validator = \Validator::make($input, [
@@ -782,7 +784,9 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['finalApprovedBy'])->first();
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['finalApprovedBy','financeSubCategory'=> function($q){
+            $q->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
+        }])->first();
 
 
         if (empty($itemMaster)) {
