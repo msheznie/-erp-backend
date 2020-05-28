@@ -11,1797 +11,1799 @@
 |
 */
 
-use Illuminate\Support\Facades\Artisan;
+Route::group(['middleware' => 'tenant'], function () {
 
-Route::group(['middleware' => 'auth:api'], function () {
+    Route::group(['middleware' => 'auth:api'], function () {
 
-    Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
+        Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
-    Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
-    Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
-    Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
+        Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
+        Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
+        Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
 
-    Route::resource('navigation_menuses', 'NavigationMenusAPIController');
+        Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
-    Route::resource('navigation_user_group_setups', 'NavigationUserGroupSetupAPIController');
+        Route::resource('navigation_user_group_setups', 'NavigationUserGroupSetupAPIController');
 
-    Route::get('user/companies', 'UserAPIController@userCompanies');
-    Route::get('checkUser', 'UserAPIController@checkUser');
+        Route::get('user/companies', 'UserAPIController@userCompanies');
+        Route::get('checkUser', 'UserAPIController@checkUser');
 
-    Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
-    Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
-    Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
-    Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
-    Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
+        Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
+        Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
+        Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
+        Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
+        Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
-    Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
-    Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
+        Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
+        Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
 
-    Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
-    Route::resource('supplier/masters', 'SupplierMasterAPIController');
-    Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack');
+        Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
+        Route::resource('supplier/masters', 'SupplierMasterAPIController');
+        Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack');
 
-    Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster');
+        Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster');
 
-    Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier');
+        Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier');
 
-    Route::get('allCurrencies', 'CurrencyMasterAPIController@getAllCurrencies');
-    Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency');
-    Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier');
+        Route::get('allCurrencies', 'CurrencyMasterAPIController@getAllCurrencies');
+        Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency');
+        Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier');
 
-    Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
-    Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
-    Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
-    Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
-    Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
+        Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
+        Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
+        Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
+        Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
+        Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
 
-    Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
-    Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
+        Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
+        Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
 
-    Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier');
+        Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier');
 
-    Route::resource('supplier/contactDetails', 'SupplierContactDetailsAPIController');
+        Route::resource('supplier/contactDetails', 'SupplierContactDetailsAPIController');
 
-    Route::resource('users', 'UserAPIController');
+        Route::resource('users', 'UserAPIController');
 
-    Route::resource('companies', 'CompanyAPIController');
+        Route::resource('companies', 'CompanyAPIController');
 
-    Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
+        Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
-    Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
+        Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
 
-    Route::resource('country_masters', 'CountryMasterAPIController');
-    Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
-    Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
+        Route::resource('country_masters', 'CountryMasterAPIController');
+        Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
+        Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
 
-    Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
+        Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
-    Route::resource('supplier_importances', 'SupplierImportanceAPIController');
+        Route::resource('supplier_importances', 'SupplierImportanceAPIController');
 
-    Route::resource('supplier_importances', 'SupplierImportanceAPIController');
+        Route::resource('supplier_importances', 'SupplierImportanceAPIController');
 
-    Route::resource('suppliernatures', 'suppliernatureAPIController');
+        Route::resource('suppliernatures', 'suppliernatureAPIController');
 
-    Route::resource('supplier_types', 'SupplierTypeAPIController');
+        Route::resource('supplier_types', 'SupplierTypeAPIController');
 
-    Route::post('addSubCategoryToSupplier', 'SupplierCategorySubAPIController@addSubCategoryToSupplier');
+        Route::post('addSubCategoryToSupplier', 'SupplierCategorySubAPIController@addSubCategoryToSupplier');
 
-    Route::get('subcategoriesBySupplier', 'SupplierMasterAPIController@getSubcategoriesBySupplier');
+        Route::get('subcategoriesBySupplier', 'SupplierMasterAPIController@getSubcategoriesBySupplier');
 
-    Route::post('removeSubCategoryToSupplier', 'SupplierCategorySubAPIController@removeSubCategoryToSupplier');
+        Route::post('removeSubCategoryToSupplier', 'SupplierCategorySubAPIController@removeSubCategoryToSupplier');
 
-    Route::resource('supplier_currencies', 'SupplierCurrencyAPIController');
+        Route::resource('supplier_currencies', 'SupplierCurrencyAPIController');
 
-    Route::resource('currency_masters', 'CurrencyMasterAPIController');
+        Route::resource('currency_masters', 'CurrencyMasterAPIController');
 
-    Route::resource('supplier_criticals', 'SupplierCriticalAPIController');
+        Route::resource('supplier_criticals', 'SupplierCriticalAPIController');
 
-    Route::resource('yes_no_selections', 'YesNoSelectionAPIController');
+        Route::resource('yes_no_selections', 'YesNoSelectionAPIController');
 
-    Route::resource('document_masters', 'DocumentMasterAPIController');
+        Route::resource('document_masters', 'DocumentMasterAPIController');
 
-    Route::resource('supplier_contact_types', 'SupplierContactTypeAPIController');
+        Route::resource('supplier_contact_types', 'SupplierContactTypeAPIController');
 
-    Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
+        Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
 
-    Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
-    Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId');
-    Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
-    Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
+        Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
+        Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId');
+        Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
+        Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
 
-    Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
-    Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
-    Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
-
-    Route::resource('item/masters', 'ItemMasterAPIController');
-    Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
-    Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
-    Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
-    Route::resource('units', 'UnitAPIController');
-    Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
-
-    Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
-
-    Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
-
-    Route::resource('item/masters', 'ItemMasterAPIController');
-    Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
-    Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
-
-    Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
-    Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
-    Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
-
-    Route::resource('item/assigneds', 'ItemAssignedAPIController');
-    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
-    Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
-    Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
-    Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
-
-    Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
-
-
-    Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
-    Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
-
-    Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
-    Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
-    Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
-
-    Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
-
-    /** Company Navigation Menu access*/
-    Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany');
-    Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
-    Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
-    Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
-    /** Company user group*/
-    Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
-    Route::resource('userGroups', 'UserGroupAPIController');
-    Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
-    Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
-
-    Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
-    Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
-    Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
-    Route::get('getNotAssignedCompanies', 'FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies');
-    Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
-    Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
-    Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
-    Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR');
-    Route::post('procumentOrderDeleteAllDetails', 'PurchaseOrderDetailsAPIController@procumentOrderDeleteAllDetails');
-    Route::get('procumentOrderDetailTotal', 'ProcumentOrderAPIController@procumentOrderDetailTotal');
-    Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView');
-    Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
-    Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
-    Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
-    Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
-    Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
-
-    /** Approval Level*/
-    Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
-    Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
-    Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments');
-    Route::resource('approval_levels', 'ApprovalLevelAPIController');
-    Route::resource('approval_roles', 'ApprovalRoleAPIController');
-    Route::resource('department_masters', 'DepartmentMasterAPIController');
-    Route::resource('approval_groups', 'ApprovalGroupsAPIController');
-
-    Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
-    Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
-    Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
-    Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
-    Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
-    Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
-
-    /** Chart of Account Created by Shafri */
-    Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
-    Route::resource('control_accounts', 'ControlAccountAPIController');
-    Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
-    Route::resource('chart_of_account', 'ChartOfAccountAPIController');
-    Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
-    Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
-    Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
-    Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
-    Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
-
-
-    Route::resource('erp_locations', 'ErpLocationAPIController');
-    Route::resource('accounts_types', 'AccountsTypeAPIController');
-
-
-    /** Segment master Created by Nazir  */
-
-    Route::post('getAllSegmentMaster', 'SegmentMasterAPIController@getAllSegmentMaster');
-    Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
-    Route::resource('segment/masters', 'SegmentMasterAPIController');
-
-    Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
-
-
-    /** Warehouse master Created by Pasan  */
-    Route::resource('warehouse/masters', 'WarehouseMasterAPIController');
-    Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData');
-    Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster');
-    Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
-    Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
-
-    /** Customer master Created by Fayas  */
-    Route::resource('customer_masters', 'CustomerMasterAPIController');
-    Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
-    Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
-    Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
-    Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
-    Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
-    Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
-    Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
-    Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
-    Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
-
-    /** Bank master Created by Pasan  */
-    Route::resource('bank/masters', 'BankMasterAPIController');
-    Route::post('getAllBankMaster', 'BankMasterAPIController@getAllBankMaster');
-    Route::post('updateBankMaster', 'BankMasterAPIController@updateBankMaster');
-    Route::post('assignedCompaniesByBank', 'BankMasterAPIController@assignedCompaniesByBank');
-    Route::get('getBankMasterFormData', 'BankMasterAPIController@getBankMasterFormData');
-    Route::resource('bank/assign', 'BankAssignAPIController');
-    Route::post('bank/update/assign', 'BankAssignAPIController@updateBankAssingCompany');
-
-
-    Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
-    Route::get('getAddedCurrenciesByCustomer', 'CustomerCurrencyAPIController@getAddedCurrenciesByCustomer');
-    Route::get('getNotAddedCurrenciesByCustomer', 'CustomerCurrencyAPIController@getNotAddedCurrenciesByCustomer');
-
-    /** Unit master Created by Pasan  */
-    Route::resource('unit/masters', 'UnitAPIController');
-    Route::post('getAllUnitMaster', 'UnitAPIController@getAllUnitMaster');
-    Route::post('updateUnitMaster', 'UnitAPIController@updateUnitMaster');
-    Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData');
-    Route::resource('unit/conversion', 'UnitConversionAPIController');
-    Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
-    Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
-
-    /** Approval Group Created by Mubashir  */
-    Route::post('getApprovalGroupByCompanyDatatable', 'ApprovalGroupsAPIController@getApprovalGroupByCompanyDatatable');
-    Route::resource('approval_groups', 'ApprovalGroupsAPIController');
-
-    Route::resource('purchase_requests', 'PurchaseRequestAPIController');
-    Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
-    Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
-    Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
-    Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
-
-    Route::resource('procurement-order', 'ProcumentOrderAPIController');
-    Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
-    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
-    Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
-    Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
-    Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
-    Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
-    Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
-    Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
-    Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
-    Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
-    Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
-    Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
-    Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
-    Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
-
-    Route::resource('priorities', 'PriorityAPIController');
-
-    Route::resource('locations', 'LocationAPIController');
-
-    Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
-
-    Route::resource('months', 'MonthsAPIController');
-
-    Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
-    Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
-    Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
-    Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
-    Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
-
-    Route::resource('document_approveds', 'DocumentApprovedAPIController');
-    Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
-
-    Route::resource('currency_conversions', 'CurrencyConversionAPIController');
-    Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
-
-    Route::resource('bank_accounts', 'BankAccountAPIController');
-    Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
-    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
-
-    Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
-    Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-    Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
-
-    Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
-    Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
-    Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
-
-    Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
-    Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
-    Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
-    Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
-
-    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
-    Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
-    Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
-    Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
-    Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
-    Route::post('updateEmployeeDepartmentActive', 'EmployeesDepartmentAPIController@updateEmployeeDepartmentActive');
-    Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
-    Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
-    Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
-    Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
-    Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
-
-    Route::post('approveItem', 'ItemMasterAPIController@approveItem');
-    Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
-
-    Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
-    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
-
-    Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
-    Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
-
-    Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
-    Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
-
-    Route::post('generateReport', 'ReportAPIController@generateReport');
-    Route::post('validateReport', 'ReportAPIController@validateReport');
-    Route::post('exportReport', 'ReportAPIController@exportReport');
-
-    Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport');
-    Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
-    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
-    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
-
-    Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
-    Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
-    Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
-    Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
-    Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
-    Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
-    Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
-
-    Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
-    Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
-    Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
-    Route::post('getGRVDrilldownSpentAnalysis', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysis');
-    Route::post('getGRVDrilldownSpentAnalysisTotal', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysisTotal');
-    Route::get('getInvoiceDetailsForPO', 'ProcumentOrderAPIController@getInvoiceDetailsForPO');
-
-    /** Po Related Tables Created by Nazir  */
-    Route::resource('erp_addresses', 'ErpAddressAPIController');
-    Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
-    Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
-    Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
-    Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
-    Route::post('updateAllPaymentTerms', 'PoPaymentTermsAPIController@updateAllPaymentTerms');
-    Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
-    Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
-    Route::post('amendProcumentSubWorkOrder', 'ProcumentOrderAPIController@amendProcumentSubWorkOrder');
-    Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
-    Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck');
-    Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
-    Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit');
-    Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
-    Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
-    Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
-    Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory');
-    Route::post('exportProcumentOrderMaster', 'ProcumentOrderAPIController@exportProcumentOrderMaster');
-
-    Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
-    Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
-    Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
-    Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
-    Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
-    Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
-    Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic');
-
-    Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
-    Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
-
-    Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
-    Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
-    Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
-    Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
-
-
-    Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
-    Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
-    Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
-    Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
-
-    Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-
-    Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
-
-    Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
-
-    Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
-
-    Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
-    Route::resource('g_r_v_details', 'GRVDetailsAPIController');
-
-    Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
-
-    Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
-
-    Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
-    Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
-
-    Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
-    Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
-
-    Route::resource('tax_authorities', 'TaxAuthorityAPIController');
-    Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable');
-    Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData');
-    Route::resource('taxes', 'TaxAPIController');
-    Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData');
-    Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable');
-
-    Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany');
-    Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority');
-
-    Route::resource('tax_types', 'TaxTypeAPIController');
-
-    // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
-    Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
-    Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
-    Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
-
-    Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
-    Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
-    Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
-    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
-
-    Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
-    Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax');
-
-    Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
-
-    Route::resource('alerts', 'AlertAPIController');
-    Route::resource('access_tokens', 'AccessTokensAPIController');
-    Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
-
-
-    Route::resource('addresses', 'AddressAPIController');
-    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
-    Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
-
-    Route::resource('address_types', 'AddressTypeAPIController');
-
-    Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
-    Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
-
-    Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
-    Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
-    Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
-
-    Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
-    Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
-    Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
-    Route::get('cancelPurchaseRequestPreCheck', 'PurchaseRequestAPIController@cancelPurchaseRequestPreCheck');
-    Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
-    Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
-    Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
-    Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
-
-    Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
-
-    Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
-
-    Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
-    Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
-    Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
-    Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
-    Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
-    Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
-    Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
-    Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
-    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
-    Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
-    Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-    Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
-    Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
-    Route::resource('g_r_v_types', 'GRVTypesAPIController');
-    Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
-    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
-    Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
-    Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
-    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
-    Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
-
-    Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
-    Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
-    Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse');
-    Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
-    Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
-    Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
-    Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
-    Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
-    Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
-    Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
-    Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
-    Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
-    Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
-    Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
-    Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
-    Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
-    Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
-    Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
-    Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
-    Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
-    Route::resource('materiel_requests', 'MaterielRequestAPIController');
-    Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
-    Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
-    Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-    Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-    Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
-    Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
-    Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
-    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
-    Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
-    Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
-    Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
-    Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
-    Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
-    Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
-
-    Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
-
-    Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
-    Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
-    Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser');
-    Route::post('getMaterielIssueApprovalByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovalByUser');
-    Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
-    Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
-    Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
-    Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
-    Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
-    Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
-    Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
-    Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
-    Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser');
-    Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
-    Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
-    Route::resource('general_ledgers', 'GeneralLedgerAPIController');
-    Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
-    Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
-    Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
-    Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
-    Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
-
-    Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
-    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
-    Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
-    Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
-    Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
-
-    Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
-    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
-    Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
-    Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
-    Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
-    Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
-    Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
-    Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
-
-    Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
-    Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
-    Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen');
-    Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
-    Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
-    Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
-    Route::resource('stock_transfers', 'StockTransferAPIController');
-    Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
-    Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval');
-    Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
-    Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
-    Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
-    Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
-
-
-    Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
-    Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
-    Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
-    Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
-    Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-    Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
-    Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
-    Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
-    Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
-    Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
-    Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
-    Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-    Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
-
-
-    Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
-    Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
-
-    Route::resource('po_addons', 'PoAddonsAPIController');
-    Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
-    Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
-
-    Route::resource('stock_receives', 'StockReceiveAPIController');
-    Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
-    Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
-    Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
-    Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
-    Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
-    Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
-    Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
-    Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
-    Route::post('storeReceiveDetailsFromTransfer', 'StockReceiveDetailsAPIController@storeReceiveDetailsFromTransfer');
-    Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
-    Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
-    Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
-    Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
-
-    Route::get('getCurrentUserInfo', function () {
-        $output = \Helper::getEmployeeInfo();
-        /*if($output->profilepic){
-            $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
-        }
-        $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
-        return $output;
+        Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
+        Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
+        Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
+
+        Route::resource('item/masters', 'ItemMasterAPIController');
+        Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
+        Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
+        Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
+        Route::resource('units', 'UnitAPIController');
+        Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
+
+        Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
+
+        Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
+
+        Route::resource('item/masters', 'ItemMasterAPIController');
+        Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
+        Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
+
+        Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
+        Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
+        Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
+
+        Route::resource('item/assigneds', 'ItemAssignedAPIController');
+        Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
+        Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
+        Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
+        Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
+
+        Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
+
+
+        Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
+        Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
+
+        Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
+        Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
+        Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
+
+        Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
+
+        /** Company Navigation Menu access*/
+        Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany');
+        Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
+        Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
+        Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
+        /** Company user group*/
+        Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
+        Route::resource('userGroups', 'UserGroupAPIController');
+        Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
+        Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
+
+        Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
+        Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
+        Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
+        Route::get('getNotAssignedCompanies', 'FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies');
+        Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
+        Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
+        Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
+        Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR');
+        Route::post('procumentOrderDeleteAllDetails', 'PurchaseOrderDetailsAPIController@procumentOrderDeleteAllDetails');
+        Route::get('procumentOrderDetailTotal', 'ProcumentOrderAPIController@procumentOrderDetailTotal');
+        Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView');
+        Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
+        Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
+        Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
+        Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
+        Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
+
+        /** Approval Level*/
+        Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
+        Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
+        Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments');
+        Route::resource('approval_levels', 'ApprovalLevelAPIController');
+        Route::resource('approval_roles', 'ApprovalRoleAPIController');
+        Route::resource('department_masters', 'DepartmentMasterAPIController');
+        Route::resource('approval_groups', 'ApprovalGroupsAPIController');
+
+        Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
+        Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
+        Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
+        Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
+        Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
+        Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
+
+        /** Chart of Account Created by Shafri */
+        Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
+        Route::resource('control_accounts', 'ControlAccountAPIController');
+        Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
+        Route::resource('chart_of_account', 'ChartOfAccountAPIController');
+        Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
+        Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
+        Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
+        Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
+        Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
+
+
+        Route::resource('erp_locations', 'ErpLocationAPIController');
+        Route::resource('accounts_types', 'AccountsTypeAPIController');
+
+
+        /** Segment master Created by Nazir  */
+
+        Route::post('getAllSegmentMaster', 'SegmentMasterAPIController@getAllSegmentMaster');
+        Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
+        Route::resource('segment/masters', 'SegmentMasterAPIController');
+
+        Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
+
+
+        /** Warehouse master Created by Pasan  */
+        Route::resource('warehouse/masters', 'WarehouseMasterAPIController');
+        Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData');
+        Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster');
+        Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
+        Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
+
+        /** Customer master Created by Fayas  */
+        Route::resource('customer_masters', 'CustomerMasterAPIController');
+        Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
+        Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
+        Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
+        Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
+        Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
+        Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
+        Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
+        Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
+
+        /** Bank master Created by Pasan  */
+        Route::resource('bank/masters', 'BankMasterAPIController');
+        Route::post('getAllBankMaster', 'BankMasterAPIController@getAllBankMaster');
+        Route::post('updateBankMaster', 'BankMasterAPIController@updateBankMaster');
+        Route::post('assignedCompaniesByBank', 'BankMasterAPIController@assignedCompaniesByBank');
+        Route::get('getBankMasterFormData', 'BankMasterAPIController@getBankMasterFormData');
+        Route::resource('bank/assign', 'BankAssignAPIController');
+        Route::post('bank/update/assign', 'BankAssignAPIController@updateBankAssingCompany');
+
+
+        Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
+        Route::get('getAddedCurrenciesByCustomer', 'CustomerCurrencyAPIController@getAddedCurrenciesByCustomer');
+        Route::get('getNotAddedCurrenciesByCustomer', 'CustomerCurrencyAPIController@getNotAddedCurrenciesByCustomer');
+
+        /** Unit master Created by Pasan  */
+        Route::resource('unit/masters', 'UnitAPIController');
+        Route::post('getAllUnitMaster', 'UnitAPIController@getAllUnitMaster');
+        Route::post('updateUnitMaster', 'UnitAPIController@updateUnitMaster');
+        Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData');
+        Route::resource('unit/conversion', 'UnitConversionAPIController');
+        Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
+        Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
+
+        /** Approval Group Created by Mubashir  */
+        Route::post('getApprovalGroupByCompanyDatatable', 'ApprovalGroupsAPIController@getApprovalGroupByCompanyDatatable');
+        Route::resource('approval_groups', 'ApprovalGroupsAPIController');
+
+        Route::resource('purchase_requests', 'PurchaseRequestAPIController');
+        Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
+        Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+        Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
+        Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
+
+        Route::resource('procurement-order', 'ProcumentOrderAPIController');
+        Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
+        Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
+        Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
+        Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
+        Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
+        Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
+        Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
+        Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
+        Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
+        Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
+        Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
+        Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
+        Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
+        Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
+
+        Route::resource('priorities', 'PriorityAPIController');
+
+        Route::resource('locations', 'LocationAPIController');
+
+        Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
+
+        Route::resource('months', 'MonthsAPIController');
+
+        Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
+        Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+        Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
+        Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
+        Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
+
+        Route::resource('document_approveds', 'DocumentApprovedAPIController');
+        Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
+
+        Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+        Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
+
+        Route::resource('bank_accounts', 'BankAccountAPIController');
+        Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
+        Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+        Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+        Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+        Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
+
+        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+        Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
+        Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
+
+        Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
+        Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
+        Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
+        Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+
+        Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+        Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
+        Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
+        Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+        Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
+        Route::post('updateEmployeeDepartmentActive', 'EmployeesDepartmentAPIController@updateEmployeeDepartmentActive');
+        Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
+        Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
+        Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
+        Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
+        Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
+
+        Route::post('approveItem', 'ItemMasterAPIController@approveItem');
+        Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
+
+        Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
+        Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
+
+        Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
+        Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
+
+        Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
+        Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
+
+        Route::post('generateReport', 'ReportAPIController@generateReport');
+        Route::post('validateReport', 'ReportAPIController@validateReport');
+        Route::post('exportReport', 'ReportAPIController@exportReport');
+
+        Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport');
+        Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
+        Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
+        Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
+
+        Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
+        Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
+        Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
+        Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
+        Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
+        Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
+        Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
+
+        Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
+        Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
+        Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
+        Route::post('getGRVDrilldownSpentAnalysis', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysis');
+        Route::post('getGRVDrilldownSpentAnalysisTotal', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysisTotal');
+        Route::get('getInvoiceDetailsForPO', 'ProcumentOrderAPIController@getInvoiceDetailsForPO');
+
+        /** Po Related Tables Created by Nazir  */
+        Route::resource('erp_addresses', 'ErpAddressAPIController');
+        Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
+        Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
+        Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
+        Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
+        Route::post('updateAllPaymentTerms', 'PoPaymentTermsAPIController@updateAllPaymentTerms');
+        Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
+        Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
+        Route::post('amendProcumentSubWorkOrder', 'ProcumentOrderAPIController@amendProcumentSubWorkOrder');
+        Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
+        Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck');
+        Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
+        Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit');
+        Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
+        Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
+        Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
+        Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory');
+        Route::post('exportProcumentOrderMaster', 'ProcumentOrderAPIController@exportProcumentOrderMaster');
+
+        Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
+        Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
+        Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
+        Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
+        Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
+        Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
+        Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic');
+
+        Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+        Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
+
+        Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
+        Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
+        Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
+        Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
+
+
+        Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
+        Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
+        Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
+        Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
+
+        Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+
+        Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
+
+        Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
+
+        Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
+
+        Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+        Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+
+        Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
+
+        Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
+
+        Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
+        Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
+
+        Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
+        Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
+
+        Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+        Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable');
+        Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData');
+        Route::resource('taxes', 'TaxAPIController');
+        Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData');
+        Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable');
+
+        Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany');
+        Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority');
+
+        Route::resource('tax_types', 'TaxTypeAPIController');
+
+        // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
+        Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
+        Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+        Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
+
+        Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
+        Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
+        Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
+        Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+
+        Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+        Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax');
+
+        Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+
+        Route::resource('alerts', 'AlertAPIController');
+        Route::resource('access_tokens', 'AccessTokensAPIController');
+        Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
+
+
+        Route::resource('addresses', 'AddressAPIController');
+        Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
+        Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
+
+        Route::resource('address_types', 'AddressTypeAPIController');
+
+        Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
+        Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
+
+        Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
+        Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
+        Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
+
+        Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
+        Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
+        Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
+        Route::get('cancelPurchaseRequestPreCheck', 'PurchaseRequestAPIController@cancelPurchaseRequestPreCheck');
+        Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
+        Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
+        Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
+        Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
+
+        Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
+
+        Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
+
+        Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
+        Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
+        Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
+        Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
+        Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
+        Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
+        Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
+        Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
+        Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+        Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
+        Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
+        Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
+        Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+        Route::resource('g_r_v_types', 'GRVTypesAPIController');
+        Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+        Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+        Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
+        Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
+        Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+        Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
+
+        Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
+        Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
+        Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse');
+        Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
+        Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
+        Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
+        Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
+        Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
+        Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
+        Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
+        Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
+        Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
+        Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
+        Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
+        Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
+        Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
+        Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
+        Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
+        Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
+        Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
+        Route::resource('materiel_requests', 'MaterielRequestAPIController');
+        Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
+        Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
+        Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
+        Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
+        Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
+        Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
+        Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
+        Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
+        Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
+        Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
+        Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
+        Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
+        Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
+        Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
+
+        Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
+
+        Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
+        Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
+        Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser');
+        Route::post('getMaterielIssueApprovalByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovalByUser');
+        Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
+        Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
+        Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
+        Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
+        Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
+        Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
+        Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
+        Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
+        Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser');
+        Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
+        Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
+        Route::resource('general_ledgers', 'GeneralLedgerAPIController');
+        Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
+        Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
+        Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
+        Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
+        Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
+
+        Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
+        Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
+        Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
+        Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
+        Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
+
+        Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
+        Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
+        Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
+        Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
+        Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
+        Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
+        Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
+
+        Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
+        Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
+        Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen');
+        Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
+        Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
+        Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
+        Route::resource('stock_transfers', 'StockTransferAPIController');
+        Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
+        Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval');
+        Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
+        Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
+        Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
+        Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
+
+
+        Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
+        Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
+        Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
+        Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+        Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
+        Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
+        Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
+        Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
+        Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
+        Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
+        Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
+        Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
+        Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+
+
+        Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
+        Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
+
+        Route::resource('po_addons', 'PoAddonsAPIController');
+        Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+        Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+
+        Route::resource('stock_receives', 'StockReceiveAPIController');
+        Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
+        Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
+        Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
+        Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
+        Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
+        Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
+        Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
+        Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
+        Route::post('storeReceiveDetailsFromTransfer', 'StockReceiveDetailsAPIController@storeReceiveDetailsFromTransfer');
+        Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
+        Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
+        Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
+        Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
+
+        Route::get('getCurrentUserInfo', function () {
+            $output = \Helper::getEmployeeInfo();
+            /*if($output->profilepic){
+                $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
+            }
+            $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
+            return $output;
+        });
+        Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
+
+        Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+        Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
+        Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
+        Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
+        Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
+        Route::post('getPoMasterAmendHistory', 'PurchaseOrderMasterRefferedHistoryAPIController@getPoMasterAmendHistory');
+        Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory');
+        Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory');
+        Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory');
+        Route::resource('poAddonsReffered_backs', 'PoAddonsRefferedBackAPIController');
+        Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
+
+        Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+        Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
+        Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData');
+        Route::resource('years', 'YearAPIController');
+        Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
+        Route::resource('employee_profiles', 'EmployeeProfileAPIController');
+
+        Route::post('pullPOAttachment', 'GRVMasterAPIController@pullPOAttachment');
+
+
+        Route::resource('employee_details', 'EmployeeDetailsAPIController');
+        Route::resource('designations', 'DesignationAPIController');
+
+        Route::resource('purchase_returns', 'PurchaseReturnAPIController');
+        Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+        Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
+        Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
+        Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
+        Route::post('getPurchaseReturnApprovedByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovedByUser');
+        Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
+        Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
+        Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
+        Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
+        Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+        Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
+        Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
+        Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
+
+        Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+        Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
+
+        Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
+
+        Route::resource('contracts', 'ContractAPIController');
+        Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
+
+
+        Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
+
+        Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
+        Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
+        Route::post('generateINVReport', 'InventoryReportAPIController@generateReport');
+        Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
+
+        Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+        Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
+
+        Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
+        Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
+        Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
+        Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
+
+        Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
+        Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
+        Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
+        Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
+        Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
+        Route::post('referBackPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@referBackPaymentVoucher');
+        Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
+        Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
+        Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
+        Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+        Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
+        Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails');
+        Route::post('deleteAllDirectPayment', 'DirectPaymentDetailsAPIController@deleteAllDirectPayment');
+        Route::post('updateDirectPaymentAccount', 'DirectPaymentDetailsAPIController@updateDirectPaymentAccount');
+        Route::get('getDPExchangeRateAmount', 'DirectPaymentDetailsAPIController@getDPExchangeRateAmount');
+        Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail');
+        Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail');
+        Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
+        Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen');
+        Route::post('getPaymentApprovalByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovalByUser');
+        Route::post('getPaymentApprovedByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovedByUser');
+        Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+        Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
+        Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
+        Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
+        Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
+        Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
+        Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
+        Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
+        Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
+        Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
+        Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
+        Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
+        Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
+        Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
+        Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
+        Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails');
+        Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
+        Route::get('getJobsByContractAndCustomer', 'CustomerMasterAPIController@getJobsByContractAndCustomer');
+        Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
+        Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
+        Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
+        Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
+
+        Route::resource('performa_details', 'PerformaDetailsAPIController');
+        Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+        Route::resource('ticket_masters', 'TicketMasterAPIController');
+        Route::resource('field_masters', 'FieldMasterAPIController');
+        Route::resource('taxdetails', 'TaxdetailAPIController');
+        Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+        Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+        Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
+        Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
+        Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
+        Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
+        Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
+
+        Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
+
+        Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+        Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+        Route::resource('performa_details', 'PerformaDetailsAPIController');
+
+        Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+
+        Route::resource('ticket_masters', 'TicketMasterAPIController');
+
+        Route::resource('field_masters', 'FieldMasterAPIController');
+
+        Route::resource('taxdetails', 'TaxdetailAPIController');
+
+        Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+
+        Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+
+        Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+        Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
+        Route::resource('debit_notes', 'DebitNoteAPIController');
+        Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
+        Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
+        Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
+        Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
+        Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
+        Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
+        Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+        Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
+        Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
+        Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
+        Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
+        Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
+        Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
+
+        Route::resource('performa_masters', 'PerformaMasterAPIController');
+        Route::resource('rig_masters', 'RigMasterAPIController');
+
+        Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
+        Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
+        Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
+        Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
+
+        Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+        Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen');
+        Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
+
+        Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
+
+        Route::post('getStockAdjustmentApprovedByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovedByUser');
+        Route::post('getStockAdjustmentApprovalByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovalByUser');
+
+        Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+        Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
+        Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
+        Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
+        Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack');
+
+        Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
+        Route::get('getItemsOptionForGRV', 'GRVMasterAPIController@getItemsOptionForGRV');
+        Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
+        Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
+        Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+        Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
+        Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
+        Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
+        Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
+        Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit');
+        Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
+        Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
+        Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
+        Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
+        Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+        Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
+        Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
+        Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
+        Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
+        Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
+        Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
+        Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
+        Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
+        Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
+        Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
+        Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
+        Route::get('getAllcontractbyclientbase', 'CreditNoteDetailsAPIController@getAllcontractbyclientbase');
+        Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
+        Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
+        Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
+        Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
+        Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
+        Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
+        Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
+        Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview');
+
+        Route::resource('warehouse_items', 'WarehouseItemsAPIController');
+        Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
+        Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
+        Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems');
+        Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+        Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
+
+        Route::resource('expense_claims', 'ExpenseClaimAPIController');
+        Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
+        Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
+        Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
+        Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
+        Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
+        Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
+        Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
+        Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview');
+        Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
+        Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
+
+        Route::resource('logistic_details', 'LogisticDetailsAPIController');
+        Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
+
+        Route::get('getPurchaseOrdersForLogistic', 'LogisticDetailsAPIController@getPurchaseOrdersForLogistic');
+        Route::get('getGrvByPOForLogistic', 'LogisticDetailsAPIController@getGrvByPOForLogistic');
+        Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
+        Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
+
+
+        Route::resource('logistics', 'LogisticAPIController');
+        Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
+        Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
+        Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
+        Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
+        Route::get('getLogisticAudit', 'LogisticAPIController@getLogisticAudit');
+        Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
+        Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
+        Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
+        Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
+        Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
+        Route::resource('logistic_statuses', 'LogisticStatusAPIController');
+
+        Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
+        Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
+        Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
+        Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
+        Route::post('getReceiptVoucherApproval', 'CustomerReceivePaymentAPIController@getReceiptVoucherApproval');
+        Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
+        Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
+        Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
+        Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
+        Route::post('amendReceiptVoucherReview', 'CustomerReceivePaymentAPIController@amendReceiptVoucherReview');
+        Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel');
+        Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher');
+
+        Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
+        Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
+        Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview');
+        Route::post('checkPaymentStatusSIPrint', 'BookInvSuppMasterAPIController@checkPaymentStatusSIPrint');
+        Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
+        Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
+        Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
+        Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails');
+        Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
+        Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
+
+        Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
+
+        Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+        Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
+        Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
+        Route::post('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
+        Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
+        Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
+        Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel');
+        Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
+        Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
+        Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
+        Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
+        Route::post('amendReceiptMatchingReview', 'MatchDocumentMasterAPIController@amendReceiptMatchingReview');
+        Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails');
+
+        Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
+        Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
+        Route::post('updateSentToTreasuryDetail', 'PaySupplierInvoiceMasterAPIController@updateSentToTreasuryDetail');
+
+        Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
+
+        Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
+        Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
+
+        Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
+        Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
+        Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
+        Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
+
+        Route::resource('bank_ledgers', 'BankLedgerAPIController');
+        Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
+        Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
+        Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
+
+        Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
+        Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
+        Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
+
+
+        Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+        Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
+        Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
+        Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
+        Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
+        Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
+        Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
+
+        Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
+        Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
+        Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+        Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
+        Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
+        Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
+        Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
+        Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
+        Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
+        Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
+        Route::resource('credit_notes', 'CreditNoteAPIController');
+        Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+        Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+        Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+        Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+        Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
+        Route::resource('performa_temps', 'PerformaTempAPIController');
+        Route::resource('free_billings', 'FreeBillingAPIController');
+        Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
+
+        Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
+        Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
+        Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
+        Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
+        Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
+        Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
+        Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
+        Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
+        Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
+        Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser');
+        Route::post('getCapitalizationApprovedByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovedByUser');
+        Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
+        Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
+        Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
+
+        Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
+        Route::resource('jv_details', 'JvDetailAPIController');
+        Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
+        Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+        Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
+        Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
+        Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
+        Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
+        Route::post('generateAllocation', 'JvDetailAPIController@generateAllocation');
+        Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
+        Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
+        Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
+        Route::post('jvDetailsExportToCSV', 'JvDetailAPIController@jvDetailsExportToCSV');
+        Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
+        Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
+        Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
+        Route::post('exportJournalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@exportJournalVoucherForPOAccrualJVDetail');
+        Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
+        Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
+        Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+        Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
+        Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
+        Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
+        Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
+        Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
+        Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
+        Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
+        Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
+        Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
+        Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
+        Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
+        Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
+        Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
+
+        Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
+        Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
+        Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
+        Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory');
+        Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
+        Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
+
+        Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
+        Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
+        Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
+        Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
+        Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
+        Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
+        Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
+        Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
+        Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
+        Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+
+        Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
+        Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
+        Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
+        Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
+        Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
+
+        Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+        Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
+        Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
+        Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
+        Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
+
+        Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
+        Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
+        Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
+        Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
+
+        Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
+        Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
+        Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
+        Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+        Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
+        Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
+        Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
+        Route::get('assetDepreciationMaster', 'FixedAssetDepreciationMasterAPIController@assetDepreciationMaster');
+        Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
+        Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
+        Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
+        Route::post('referBackDepreciation', 'FixedAssetDepreciationMasterAPIController@referBackDepreciation');
+        Route::post('amendAssetDepreciationReview', 'FixedAssetDepreciationMasterAPIController@amendAssetDepreciationReview');
+        Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
+
+        Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
+
+        Route::resource('budget_masters', 'BudgetMasterAPIController');
+        Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+        Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
+        Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
+        Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');
+        Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
+        Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
+        Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+        Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
+        Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
+
+
+        Route::resource('budjetdetails', 'BudjetdetailsAPIController');
+        Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
+        Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails');
+        Route::get('getBudgetDetailTotalSummary', 'BudjetdetailsAPIController@getBudgetDetailTotalSummary');
+        Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails');
+        Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
+        Route::resource('templates_masters', 'TemplatesMasterAPIController');
+        Route::resource('templates_details', 'TemplatesDetailsAPIController');
+        Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
+        Route::get('getTemplatesDetailsById', 'TemplatesDetailsAPIController@getTemplatesDetailsById');
+        Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
+        Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
+        Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
+        Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
+        Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
+        Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
+        Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
+        Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
+        Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
+        Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview');
+
+        Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
+        Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+        Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
+        Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
+        Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
+        Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
+        Route::get('getBudgetTransferAudit', 'BudgetTransferFormAPIController@getBudgetTransferAudit');
+        Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen');
+        Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
+        Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
+        Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
+        Route::get('checkBudgetAllocation', 'BudgetTransferFormDetailAPIController@checkBudgetAllocation');
+        Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
+
+        Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
+        Route::resource('audit_trails', 'AuditTrailAPIController');
+
+        Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
+        Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
+        Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+        Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory');
+        Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData');
+        Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
+        Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
+        Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
+        Route::resource('asset_types', 'AssetTypeAPIController');
+        Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+        Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain');
+
+        Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
+        Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
+        Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
+        Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
+        Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
+        Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+        Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+        Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
+        Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
+        Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
+        Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen');
+        Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany');
+        Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
+        Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
+        Route::post('amendEcMonthlyAdditionReview', 'MonthlyAdditionsMasterAPIController@amendEcMonthlyAdditionReview');
+        Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
+        Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition');
+        Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim');
+        Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition');
+        Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition');
+        Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails');
+        Route::post('deleteAllMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@deleteAllMonthlyAdditionDetails');
+        Route::resource('employment_types', 'EmploymentTypeAPIController');
+        Route::resource('period_masters', 'PeriodMasterAPIController');
+        Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
+        Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
+        Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
+        Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
+        Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
+
+        Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
+        Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
+        Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
+        Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
+
+        Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory');
+        Route::get('paymentVoucherHistoryByPVID', 'PaySupplierInvoiceMasterReferbackAPIController@paymentVoucherHistoryByPVID');
+        Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
+        Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
+
+        Route::get('getPOPaymentHistoryDetails', 'PaySupplierInvoiceDetailReferbackAPIController@getPOPaymentHistoryDetails');
+        Route::get('getADVPaymentHistoryDetails', 'AdvancePaymentReferbackAPIController@getADVPaymentHistoryDetails');
+        Route::get('getDirectPaymentHistoryDetails', 'DirectPaymentReferbackAPIController@getDirectPaymentHistoryDetails');
+        Route::get('getDirectPaymentDetailsHistoryByID', 'DirectPaymentReferbackAPIController@getDirectPaymentDetailsHistoryByID');
+        Route::get('getDPHistoryExchangeRateAmount', 'DirectPaymentReferbackAPIController@getDPHistoryExchangeRateAmount');
+
+        Route::resource('paymentVoucherDetailReferbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
+        Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
+
+        Route::resource('directReceiptHistories', 'DirectReceiptDetailsRefferedHistoryAPIController');
+        Route::resource('PaymentVoucherMasterReferbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
+
+        Route::resource('receiptVoucherAmendHistoryCRUD', 'CustomerReceivePaymentRefferedHistoryAPIController');
+        Route::resource('custreceivepaymentdethistories', 'CustReceivePaymentDetRefferedHistoryAPIController');
+
+        Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
+        Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
+        Route::post('getReceiptVoucherAmendHistory', 'CustomerReceivePaymentRefferedHistoryAPIController@getReceiptVoucherAmendHistory');
+        Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory');
+        Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory');
+
+        Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
+        Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
+        Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
+        Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
+
+        Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer');
+        Route::resource('stock_transfer_reffered_backs', 'StockTransferRefferedBackAPIController');
+        Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
+        Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack');
+
+        Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
+        Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
+        Route::resource('creditNoteDetailsRefferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
+        Route::get('getCapitalizationLinkedDocument', 'AssetCapitalizationAPIController@getCapitalizationLinkedDocument');
+        Route::get('getCNDetailAmendHistory', 'CreditNoteDetailsRefferdbackAPIController@getCNDetailAmendHistory');
+
+        Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
+        Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
+        Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
+        Route::post('approvalPreCheckCustomerInvoice', 'CustomerInvoiceDirectAPIController@approvalPreCheckCustomerInvoice');
+        Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
+        Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
+        Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
+        Route::post('amendCustomerInvoiceReview', 'CustomerInvoiceDirectAPIController@amendCustomerInvoiceReview');
+
+        Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
+        Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
+        Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
+        Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
+
+        Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
+        Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
+        Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
+        Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
+
+        Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
+        Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
+        Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory');
+
+        Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
+        Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
+        Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
+        Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
+
+        Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
+        Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
+        Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
+        Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
+
+        Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
+        Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
+        Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
+        Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
+
+        Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
+        Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
+        Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
+        Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
+
+        Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+        Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
+        Route::get('assetCapitalizationHistoryByID', 'AssetCapitalizationReferredAPIController@assetCapitalizationHistoryByID');
+        Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+        Route::get('getCapitalizationDetailsHistory', 'AssetCapitalizatioDetReferredAPIController@getCapitalizationDetailsHistory');
+        Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+        Route::post('getAllAssetDisposalAmendHistory', 'AssetDisposalReferredAPIController@getAllAssetDisposalAmendHistory');
+        Route::get('assetDisposalHistoryByID', 'AssetDisposalReferredAPIController@assetDisposalHistoryByAutoID');
+        Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
+        Route::get('getAssetDisposalDetailHistory', 'AssetDisposalDetailReferredAPIController@getAssetDisposalDetailHistory');
+
+        Route::resource('fixedassetmasterreferredhistory', 'FixedAssetMasterReferredHistoryAPIController');
+        Route::post('getAllAssetCostingAmendHistory', 'FixedAssetMasterReferredHistoryAPIController@getAllAssetCostingAmendHistory');
+        Route::get('assetCostingHistoryByAutoID', 'FixedAssetMasterReferredHistoryAPIController@assetCostingHistoryByAutoID');
+        Route::resource('depmasterreferredhistory', 'DepreciationMasterReferredHistoryAPIController');
+        Route::post('getAllDepreciationAmendHistory', 'DepreciationMasterReferredHistoryAPIController@getAllDepreciationAmendHistory');
+        Route::get('assetDepreciationHistoryByID', 'DepreciationMasterReferredHistoryAPIController@assetDepreciationHistoryByID');
+        Route::resource('depperiodsreferredhistory', 'DepreciationPeriodsReferredHistoryAPIController');
+        Route::post('getAssetDepPeriodHistoryByID', 'DepreciationPeriodsReferredHistoryAPIController@getAssetDepPeriodHistoryByID');
+
+        Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
+        Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest');
+        Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
+        Route::get('getItemRequestDetailsReferBack', 'RequestDetailsRefferedBackAPIController@getItemRequestDetailsReferBack');
+
+        Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+        Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+        Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+        Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
+
+        Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
+        Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
+        Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
+
+        Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
+        Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
+
+        Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
+        Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
+
+        Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
+        Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
+        Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory');
+        Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory');
+        Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
+        Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
+        Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
+
+        Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
+        Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
+
+        Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
+        Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
+        Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
+        Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
+
+        Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
+        Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
+        Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
+        Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
+        Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
+        Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
+        Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
+        Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
+        Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
+
+        Route::resource('report_templates', 'ReportTemplateAPIController');
+        Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+        Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
+        Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
+        Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
+        Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
+        Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
+        Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
+        Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
+        Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
+        Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
+        Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+        Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
+
+        Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
+        Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+        Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
+        Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
+        Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
+        Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
+        Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
+        Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
+        Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
+        Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
+        Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
+        Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks');
+        Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn');
+        Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate');
+        Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
+        Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
+
+        Route::post('getFinancialYearsByCompany', 'CompanyFinanceYearAPIController@getFinancialYearsByCompany');
+        Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');
+        Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear');
+        Route::resource('companyFinanceYearPeriodMasters', 'CompanyFinanceYearperiodMasterAPIController');
+
+        Route::resource('outlet_users', 'OutletUsersAPIController');
+        Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
+        Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
+        Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage');
+
+        Route::resource('counter', 'CounterAPIController');
+        Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
+        Route::get('getCounterFormData', 'CounterAPIController@getCounterFormData');
+
+        Route::resource('posPaymentGlConfigMasters', 'GposPaymentGlConfigMasterAPIController');
+        Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
+        Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
+        Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
+        Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
+        Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+        Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
+        Route::resource('shift_details', 'ShiftDetailsAPIController');
+        Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
+        Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
+        Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
+
+        Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
+        Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
+        Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+        Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
+        Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
+        Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
+        Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+        Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
+        Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData');
+        Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
+        Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
+
+        Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
+        Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+        Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
+
+        Route::resource('quotationMasters', 'QuotationMasterAPIController');
+        Route::resource('quotationDetails', 'QuotationDetailsAPIController');
+        Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
+        Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
+        Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+        Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+        Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
+        Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
+        Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
+        Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
+        Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
+        Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
+        Route::post('salesQuotationReopen', 'QuotationMasterAPIController@salesQuotationReopen');
+        Route::post('salesQuotationVersionCreate', 'QuotationMasterAPIController@salesQuotationVersionCreate');
+        Route::post('salesQuotationAmend', 'QuotationMasterAPIController@salesQuotationAmend');
+        Route::get('salesQuotationAudit', 'QuotationMasterAPIController@salesQuotationAudit');
+
+        Route::resource('gposInvoices', 'GposInvoiceAPIController');
+        Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
+        Route::post('getInvoicesByShift', 'GposInvoiceAPIController@getInvoicesByShift');
+        Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
+        Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
+
+        Route::resource('quotationMasterVersions', 'QuotationMasterVersionAPIController');
+        Route::resource('quotationVersionDetails', 'QuotationVersionDetailsAPIController');
+        Route::post('getSalesQuotationRevisionHistory', 'QuotationMasterVersionAPIController@getSalesQuotationRevisionHistory');
+        Route::get('getSQVDetailsHistory', 'QuotationVersionDetailsAPIController@getSQVDetailsHistory');
+
+
+        Route::resource('quotationDetailsRefferedbacks', 'QuotationDetailsRefferedbackAPIController');
+        Route::resource('quotationMasterRefferedbacks', 'QuotationMasterRefferedbackAPIController');
+        Route::post('getSalesQuotationAmendHistory', 'QuotationMasterRefferedbackAPIController@getSalesQuotationAmendHistory');
+        Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
+
+        Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+        Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
+        Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
+
+        Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
+        Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
+        Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
+        Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
+
+        Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+        Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
+        Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee');
+
+        // console jv
+        Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
+        Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
+        Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
+        Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
+        Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
+        Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
+        Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
+
+        Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
+        Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
+        Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
+        Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
+
+        /* For Profile -> Profile */
+        Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
+
+        Route::resource('genders', 'GenderAPIController');
+
+        Route::resource('maritial_statuses', 'MaritialStatusAPIController');
+
+        Route::resource('religions', 'ReligionAPIController');
+
+        Route::resource('salary_process_details', 'SalaryProcessDetailAPIController');
+
+        Route::resource('leave_data_masters', 'LeaveDataMasterAPIController');
+
+        Route::resource('leave_masters', 'LeaveMasterAPIController');
+
+        Route::resource('calender_masters', 'CalenderMasterAPIController');
+
+        Route::resource('schedule_masters', 'ScheduleMasterAPIController');
+
+        Route::resource('leave_data_details', 'LeaveDataDetailAPIController');
+
+        Route::resource('leave_application_types', 'LeaveApplicationTypeAPIController');
+
+        Route::resource('leave_document_approveds', 'LeaveDocumentApprovedAPIController');
+
+        Route::resource('employee_managers', 'EmployeeManagersAPIController');
+
+        Route::resource('document_managements', 'DocumentManagementAPIController');
+
+        Route::resource('hrms_document_attachments', 'HrmsDocumentAttachmentsAPIController');
+
+
+        /* For Profile -> Payslip */
+        Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
+        Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
+
+        /* For Profile -> Expenses Claim */
+        Route::get('getExpenseClaim', 'ExpenseClaimAPIController@getExpenseClaim');
+        Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
+        Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
+        Route::get('getExpenseDropDownData', 'ExpenseClaimAPIController@getExpenseDropDownData');
+        Route::post('saveExpenseClaimDetails', 'ExpenseClaimDetailsAPIController@saveExpenseClaimDetailsSingle');
+        Route::post('saveExpenseClaimAttachments', 'ExpenseClaimDetailsAPIController@saveAttachments');
+        Route::get('getExpenseClaimDetails', 'ExpenseClaimAPIController@getExpenseClaimDetails');
+
+        /* For Profile -> Leave Application */
+        Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
+        Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
+        Route::get('getLeaveAvailability', 'LeaveDataMasterAPIController@getLeaveAvailability');
+        Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
+        Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
+        Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
+        Route::get('downloadHrmsFile', 'HrmsDocumentAttachmentsAPIController@downloadFile');
+
+        /*Company Document Attachments*/
+        Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
+        Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
+
+        Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
+
+        /* ChequeRegister */
+        Route::resource('cheque_registers', 'ChequeRegisterAPIController');
+
+        Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
+
+        Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
+        Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
+
+        Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
+        Route::get('chequeRegisterDetailsAudit', 'ChequeRegisterDetailAPIController@chequeRegisterDetailsAudit');
+        Route::post('getAllChequeRegisterDetails', 'ChequeRegisterDetailAPIController@getAllChequeRegisterDetails');
+        Route::get('getAllUnusedCheckDetails', 'ChequeRegisterDetailAPIController@getAllUnusedCheckDetails');
+        Route::post('chequeRegisterDetailCancellation', 'ChequeRegisterDetailAPIController@chequeRegisterDetailCancellation');
+        Route::post('chequeRegisterDetailSwitch', 'ChequeRegisterDetailAPIController@chequeRegisterDetailSwitch');
+        Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData');
+        Route::post('exportChequeRegistry', 'ChequeRegisterAPIController@exportChequeRegistry');
+        Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
+        Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
+        Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
+        Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
+
+        Route::resource('allocation_masters', 'AllocationMasterAPIController');
+
+        Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
+
+        Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
+
+        Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
+
+        Route::get('getLeaveTypeWithBalance', 'LeaveDataMasterAPIController@getLeaveTypeWithBalance');
+
+        Route::resource('hrms_leave_accrual_masters', 'HRMSLeaveAccrualMasterAPIController');
+
+        Route::resource('hrms_leave_accrual_details', 'HRMSLeaveAccrualDetailAPIController');
+
+        Route::resource('hrms_period_masters', 'HRMSPeriodMasterAPIController');
+
+        Route::resource('hrms_personal_documents', 'HRMSPersonalDocumentsAPIController');
+
+        Route::get('getHRMSApprovals', 'LeaveDocumentApprovedAPIController@getHRMSApprovals');
+        Route::get('getLeaveApproval', 'LeaveDocumentApprovedAPIController@getLeaveApproval');
+        Route::post('leaveReferBack', 'LeaveDocumentApprovedAPIController@leaveReferBack');
+        Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
+        Route::resource('hrms_leave_accrual_policy_types', 'HRMSLeaveAccrualPolicyTypeAPIController');
+
+        Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
+        Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
+        Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
+
+        Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote');
+        Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice');
+
+        Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');
+
+        Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData');
+        Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
+        Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
+        Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
+        Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
+        Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
+
+        Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
+
+        Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData');
+        Route::get('getContractServiceLine', 'CustomerInvoiceTrackingAPIController@getContractServiceLine');
+        Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany');
+        Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
+        Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
+        Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
+        Route::post('exportBatchSubmissionDetails', 'CustomerInvoiceTrackingAPIController@exportBatchSubmissionDetails');
+        Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData');
+        Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
+        Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
+
+        Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail');
+
+        Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
+        Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');
+        Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
+
+        Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
+        Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
+
+        Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
+
+
+        Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+        Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+        Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
+        Route::resource('user_rights', 'UserRightsAPIController');
+        Route::resource('lpt_permissions', 'LptPermissionAPIController');
+        Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+        Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+        Route::resource('segment_rights', 'SegmentRightsAPIController');
+        Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+        Route::resource('service_lines', 'ServiceLineAPIController');
+        Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+        Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+        Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
+        Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+        Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+        Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+        Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
+        Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
+        Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
+        Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse');
+
+        Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
+
+        Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
+
+        Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
+        Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
+        Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
+
+        Route::resource('customer_catalog_masters', 'CustomerCatalogMasterAPIController');
+
+        Route::resource('customer_catalog_details', 'CustomerCatalogDetailAPIController');
+
+        Route::post('getAllCustomerCatalogsByCompany', 'CustomerCatalogMasterAPIController@getAllCustomerCatalogsByCompany');
+        Route::get('getItemsOptionsCustomerCatalog', 'CustomerCatalogMasterAPIController@getItemsOptionsCustomerCatalog');
+        Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
+        Route::get('getAssignedCurrenciesByCustomer', 'CustomerCatalogMasterAPIController@getAssignedCurrenciesByCustomer');
+
+        Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
+        Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
+        Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
+        Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
+        Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
+        Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
+        Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
+        Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
+        Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+        Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
+        Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
+        Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
+
+        Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO');
+        Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO');
+
+        Route::post('getDeliveryOrderApprovals', 'DeliveryOrderAPIController@getDeliveryOrderApprovals');
+        Route::post('getApprovedDeliveryOrderForUser', 'DeliveryOrderAPIController@getApprovedDeliveryOrderForUser');
+        Route::post('approveDeliveryOrder', 'DeliveryOrderAPIController@approveDeliveryOrder');
+        Route::post('rejectDeliveryOrder', 'DeliveryOrderAPIController@rejectDeliveryOrder');
+
+        Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
+        Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
     });
-    Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
 
-    Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
-    Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
-    Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
-    Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
-    Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
-    Route::post('getPoMasterAmendHistory', 'PurchaseOrderMasterRefferedHistoryAPIController@getPoMasterAmendHistory');
-    Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory');
-    Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory');
-    Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory');
-    Route::resource('poAddonsReffered_backs', 'PoAddonsRefferedBackAPIController');
-    Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
-
-    Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-    Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
-    Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData');
-    Route::resource('years', 'YearAPIController');
-    Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
-    Route::resource('employee_profiles', 'EmployeeProfileAPIController');
-
-    Route::post('pullPOAttachment', 'GRVMasterAPIController@pullPOAttachment');
-
-
-    Route::resource('employee_details', 'EmployeeDetailsAPIController');
-    Route::resource('designations', 'DesignationAPIController');
-
-    Route::resource('purchase_returns', 'PurchaseReturnAPIController');
-    Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
-    Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
-    Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
-    Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
-    Route::post('getPurchaseReturnApprovedByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovedByUser');
-    Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
-    Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
-    Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
-    Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
-    Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
-    Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
-    Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
-    Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
-
-    Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
-    Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
-
-    Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
-
-    Route::resource('contracts', 'ContractAPIController');
-    Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
-
-
-    Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
-
-    Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
-    Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
-    Route::post('generateINVReport', 'InventoryReportAPIController@generateReport');
-    Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
-
-    Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
-    Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
-
-    Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
-    Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
-    Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
-    Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
-
-    Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
-    Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
-    Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
-    Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
-    Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
-    Route::post('referBackPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@referBackPaymentVoucher');
-    Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
-    Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
-    Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
-    Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
-    Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
-    Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails');
-    Route::post('deleteAllDirectPayment', 'DirectPaymentDetailsAPIController@deleteAllDirectPayment');
-    Route::post('updateDirectPaymentAccount', 'DirectPaymentDetailsAPIController@updateDirectPaymentAccount');
-    Route::get('getDPExchangeRateAmount', 'DirectPaymentDetailsAPIController@getDPExchangeRateAmount');
-    Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail');
-    Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail');
-    Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
-    Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen');
-    Route::post('getPaymentApprovalByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovalByUser');
-    Route::post('getPaymentApprovedByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovedByUser');
-    Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
-    Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
-    Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
-    Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
-    Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
-    Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
-    Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
-    Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
-    Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
-    Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
-    Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
-    Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
-    Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
-    Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
-    Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-    Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails');
-    Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
-    Route::get('getJobsByContractAndCustomer', 'CustomerMasterAPIController@getJobsByContractAndCustomer');
-    Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
-    Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
-    Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
-    Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
-
-    Route::resource('performa_details', 'PerformaDetailsAPIController');
-    Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
-    Route::resource('ticket_masters', 'TicketMasterAPIController');
-    Route::resource('field_masters', 'FieldMasterAPIController');
-    Route::resource('taxdetails', 'TaxdetailAPIController');
-    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
-    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
-    Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
-    Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
-    Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
-    Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
-    Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
-
-    Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
-
-    Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
-    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
-    Route::resource('performa_details', 'PerformaDetailsAPIController');
-
-    Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
-
-    Route::resource('ticket_masters', 'TicketMasterAPIController');
-
-    Route::resource('field_masters', 'FieldMasterAPIController');
-
-    Route::resource('taxdetails', 'TaxdetailAPIController');
-
-    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
-
-    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
-
-    Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
-    Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
-    Route::resource('debit_notes', 'DebitNoteAPIController');
-    Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
-    Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
-    Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
-    Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
-    Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
-    Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
-    Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
-    Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
-    Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
-    Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
-    Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
-    Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
-    Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
-
-    Route::resource('performa_masters', 'PerformaMasterAPIController');
-    Route::resource('rig_masters', 'RigMasterAPIController');
-
-    Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
-    Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
-    Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
-    Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
-
-    Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
-    Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen');
-    Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
-
-    Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
-
-    Route::post('getStockAdjustmentApprovedByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovedByUser');
-    Route::post('getStockAdjustmentApprovalByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovalByUser');
-
-    Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
-    Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
-    Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
-    Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
-    Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack');
-
-    Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
-    Route::get('getItemsOptionForGRV', 'GRVMasterAPIController@getItemsOptionForGRV');
-    Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
-    Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
-    Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
-    Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
-    Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
-    Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
-    Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
-    Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit');
-    Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
-    Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
-    Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
-    Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
-    Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
-    Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
-    Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
-    Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
-    Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
-    Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
-    Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
-    Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
-    Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
-    Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
-    Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
-    Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
-    Route::get('getAllcontractbyclientbase', 'CreditNoteDetailsAPIController@getAllcontractbyclientbase');
-    Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
-    Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
-    Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
-    Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
-    Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
-    Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
-    Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
-    Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview');
-
-    Route::resource('warehouse_items', 'WarehouseItemsAPIController');
-    Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
-    Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
-    Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems');
-    Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
-    Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
-
-    Route::resource('expense_claims', 'ExpenseClaimAPIController');
-    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
-    Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
-    Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
-    Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
-    Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
-    Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
-    Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
-    Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview');
-    Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
-    Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
-
-    Route::resource('logistic_details', 'LogisticDetailsAPIController');
-    Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
-
-    Route::get('getPurchaseOrdersForLogistic', 'LogisticDetailsAPIController@getPurchaseOrdersForLogistic');
-    Route::get('getGrvByPOForLogistic', 'LogisticDetailsAPIController@getGrvByPOForLogistic');
-    Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
-    Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
-
-
-    Route::resource('logistics', 'LogisticAPIController');
-    Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
-    Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
-    Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
-    Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
-    Route::get('getLogisticAudit', 'LogisticAPIController@getLogisticAudit');
-    Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
-    Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
-    Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
-    Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
-    Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
-    Route::resource('logistic_statuses', 'LogisticStatusAPIController');
-
-    Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
-    Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
-    Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
-    Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
-    Route::post('getReceiptVoucherApproval', 'CustomerReceivePaymentAPIController@getReceiptVoucherApproval');
-    Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
-    Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
-    Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
-    Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
-    Route::post('amendReceiptVoucherReview', 'CustomerReceivePaymentAPIController@amendReceiptVoucherReview');
-    Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel');
-    Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher');
-
-    Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
-    Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
-    Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview');
-    Route::post('checkPaymentStatusSIPrint', 'BookInvSuppMasterAPIController@checkPaymentStatusSIPrint');
-    Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
-    Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
-    Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
-    Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails');
-    Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
-    Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
-
-    Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
-
-    Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
-    Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
-    Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
-    Route::post('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
-    Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
-    Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
-    Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel');
-    Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
-    Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
-    Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
-    Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
-    Route::post('amendReceiptMatchingReview', 'MatchDocumentMasterAPIController@amendReceiptMatchingReview');
-    Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails');
-
-    Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
-    Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
-    Route::post('updateSentToTreasuryDetail', 'PaySupplierInvoiceMasterAPIController@updateSentToTreasuryDetail');
-
-    Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
-
-    Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
-    Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
-
-    Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
-    Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
-    Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
-    Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
-
-    Route::resource('bank_ledgers', 'BankLedgerAPIController');
-    Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
-    Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
-    Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
-
-    Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
-    Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
-    Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
-
-
-    Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
-    Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
-    Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
-    Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
-    Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
-    Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
-    Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
-
-    Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
-    Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
-    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-    Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
-    Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
-    Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
-    Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
-    Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
-    Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
-    Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
-    Route::resource('credit_notes', 'CreditNoteAPIController');
-    Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
-    Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
-    Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
-    Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
-    Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
-    Route::resource('performa_temps', 'PerformaTempAPIController');
-    Route::resource('free_billings', 'FreeBillingAPIController');
-    Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
-
-    Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
-    Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
-    Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
-    Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
-    Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
-    Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
-    Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
-    Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
-    Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
-    Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser');
-    Route::post('getCapitalizationApprovedByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovedByUser');
-    Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
-    Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
-    Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
-
-    Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
-    Route::resource('jv_details', 'JvDetailAPIController');
-    Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
-    Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
-    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
-    Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
-    Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
-    Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
-    Route::post('generateAllocation', 'JvDetailAPIController@generateAllocation');
-    Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
-    Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
-    Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
-    Route::post('jvDetailsExportToCSV', 'JvDetailAPIController@jvDetailsExportToCSV');
-    Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
-    Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
-    Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
-    Route::post('exportJournalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@exportJournalVoucherForPOAccrualJVDetail');
-    Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
-    Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
-    Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
-    Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
-    Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
-    Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
-    Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
-    Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
-    Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
-    Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
-    Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
-    Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
-    Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
-    Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
-    Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
-    Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
-
-    Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
-    Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
-    Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
-    Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory');
-    Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
-    Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
-
-    Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
-    Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
-    Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
-    Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
-    Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
-    Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
-    Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
-    Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
-    Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
-    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
-
-    Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
-    Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
-    Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
-    Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
-    Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
-
-    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-    Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
-    Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
-    Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
-    Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
-
-    Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
-    Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
-    Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
-    Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
-
-    Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
-    Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
-    Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
-    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-    Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
-    Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
-    Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
-    Route::get('assetDepreciationMaster', 'FixedAssetDepreciationMasterAPIController@assetDepreciationMaster');
-    Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
-    Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
-    Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
-    Route::post('referBackDepreciation', 'FixedAssetDepreciationMasterAPIController@referBackDepreciation');
-    Route::post('amendAssetDepreciationReview', 'FixedAssetDepreciationMasterAPIController@amendAssetDepreciationReview');
-    Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
-
-    Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
-
-    Route::resource('budget_masters', 'BudgetMasterAPIController');
-    Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
-    Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
-    Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
-    Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');
-    Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
-    Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
-    Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
-    Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
-    Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
-
-
-    Route::resource('budjetdetails', 'BudjetdetailsAPIController');
-    Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
-    Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails');
-    Route::get('getBudgetDetailTotalSummary', 'BudjetdetailsAPIController@getBudgetDetailTotalSummary');
-    Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails');
-    Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
-    Route::resource('templates_masters', 'TemplatesMasterAPIController');
-    Route::resource('templates_details', 'TemplatesDetailsAPIController');
-    Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
-    Route::get('getTemplatesDetailsById', 'TemplatesDetailsAPIController@getTemplatesDetailsById');
-    Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
-    Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-    Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
-    Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
-    Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
-    Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
-    Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
-    Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
-    Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
-    Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview');
-
-    Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
-    Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
-    Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
-    Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
-    Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
-    Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
-    Route::get('getBudgetTransferAudit', 'BudgetTransferFormAPIController@getBudgetTransferAudit');
-    Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen');
-    Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
-    Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
-    Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
-    Route::get('checkBudgetAllocation', 'BudgetTransferFormDetailAPIController@checkBudgetAllocation');
-    Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
-
-    Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
-    Route::resource('audit_trails', 'AuditTrailAPIController');
-
-    Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
-    Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
-    Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-    Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory');
-    Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData');
-    Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-    Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
-    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
-    Route::resource('asset_types', 'AssetTypeAPIController');
-    Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-    Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain');
-
-    Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
-    Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
-    Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
-    Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
-    Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
-    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-    Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
-    Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
-    Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
-    Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
-    Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen');
-    Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany');
-    Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
-    Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
-    Route::post('amendEcMonthlyAdditionReview', 'MonthlyAdditionsMasterAPIController@amendEcMonthlyAdditionReview');
-    Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
-    Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition');
-    Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim');
-    Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition');
-    Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition');
-    Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails');
-    Route::post('deleteAllMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@deleteAllMonthlyAdditionDetails');
-    Route::resource('employment_types', 'EmploymentTypeAPIController');
-    Route::resource('period_masters', 'PeriodMasterAPIController');
-    Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
-    Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
-    Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
-    Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
-    Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
-
-    Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
-    Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
-    Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
-    Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
-
-    Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory');
-    Route::get('paymentVoucherHistoryByPVID', 'PaySupplierInvoiceMasterReferbackAPIController@paymentVoucherHistoryByPVID');
-    Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
-    Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
-
-    Route::get('getPOPaymentHistoryDetails', 'PaySupplierInvoiceDetailReferbackAPIController@getPOPaymentHistoryDetails');
-    Route::get('getADVPaymentHistoryDetails', 'AdvancePaymentReferbackAPIController@getADVPaymentHistoryDetails');
-    Route::get('getDirectPaymentHistoryDetails', 'DirectPaymentReferbackAPIController@getDirectPaymentHistoryDetails');
-    Route::get('getDirectPaymentDetailsHistoryByID', 'DirectPaymentReferbackAPIController@getDirectPaymentDetailsHistoryByID');
-    Route::get('getDPHistoryExchangeRateAmount', 'DirectPaymentReferbackAPIController@getDPHistoryExchangeRateAmount');
-
-    Route::resource('paymentVoucherDetailReferbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
-    Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
-
-    Route::resource('directReceiptHistories', 'DirectReceiptDetailsRefferedHistoryAPIController');
-    Route::resource('PaymentVoucherMasterReferbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
-
-    Route::resource('receiptVoucherAmendHistoryCRUD', 'CustomerReceivePaymentRefferedHistoryAPIController');
-    Route::resource('custreceivepaymentdethistories', 'CustReceivePaymentDetRefferedHistoryAPIController');
-
-    Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
-    Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
-    Route::post('getReceiptVoucherAmendHistory', 'CustomerReceivePaymentRefferedHistoryAPIController@getReceiptVoucherAmendHistory');
-    Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory');
-    Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory');
-
-    Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
-    Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
-    Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
-    Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
-
-    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer');
-    Route::resource('stock_transfer_reffered_backs', 'StockTransferRefferedBackAPIController');
-    Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
-    Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack');
-
-    Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
-    Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
-    Route::resource('creditNoteDetailsRefferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
-    Route::get('getCapitalizationLinkedDocument', 'AssetCapitalizationAPIController@getCapitalizationLinkedDocument');
-    Route::get('getCNDetailAmendHistory', 'CreditNoteDetailsRefferdbackAPIController@getCNDetailAmendHistory');
-
-    Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
-    Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
-    Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
-    Route::post('approvalPreCheckCustomerInvoice', 'CustomerInvoiceDirectAPIController@approvalPreCheckCustomerInvoice');
-    Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
-    Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
-    Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
-    Route::post('amendCustomerInvoiceReview', 'CustomerInvoiceDirectAPIController@amendCustomerInvoiceReview');
-
-    Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
-    Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
-    Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
-    Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
-
-    Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
-    Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
-    Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
-    Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
-
-    Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
-    Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
-    Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory');
-
-    Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
-    Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
-    Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
-    Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
-
-    Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
-    Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
-    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
-    Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
-
-    Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
-    Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
-    Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
-    Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
-
-    Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
-    Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
-    Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
-    Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
-
-    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
-    Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
-    Route::get('assetCapitalizationHistoryByID', 'AssetCapitalizationReferredAPIController@assetCapitalizationHistoryByID');
-    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
-    Route::get('getCapitalizationDetailsHistory', 'AssetCapitalizatioDetReferredAPIController@getCapitalizationDetailsHistory');
-    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
-    Route::post('getAllAssetDisposalAmendHistory', 'AssetDisposalReferredAPIController@getAllAssetDisposalAmendHistory');
-    Route::get('assetDisposalHistoryByID', 'AssetDisposalReferredAPIController@assetDisposalHistoryByAutoID');
-    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
-    Route::get('getAssetDisposalDetailHistory', 'AssetDisposalDetailReferredAPIController@getAssetDisposalDetailHistory');
-
-    Route::resource('fixedassetmasterreferredhistory', 'FixedAssetMasterReferredHistoryAPIController');
-    Route::post('getAllAssetCostingAmendHistory', 'FixedAssetMasterReferredHistoryAPIController@getAllAssetCostingAmendHistory');
-    Route::get('assetCostingHistoryByAutoID', 'FixedAssetMasterReferredHistoryAPIController@assetCostingHistoryByAutoID');
-    Route::resource('depmasterreferredhistory', 'DepreciationMasterReferredHistoryAPIController');
-    Route::post('getAllDepreciationAmendHistory', 'DepreciationMasterReferredHistoryAPIController@getAllDepreciationAmendHistory');
-    Route::get('assetDepreciationHistoryByID', 'DepreciationMasterReferredHistoryAPIController@assetDepreciationHistoryByID');
-    Route::resource('depperiodsreferredhistory', 'DepreciationPeriodsReferredHistoryAPIController');
-    Route::post('getAssetDepPeriodHistoryByID', 'DepreciationPeriodsReferredHistoryAPIController@getAssetDepPeriodHistoryByID');
-
-    Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
-    Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest');
-    Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
-    Route::get('getItemRequestDetailsReferBack', 'RequestDetailsRefferedBackAPIController@getItemRequestDetailsReferBack');
-
-    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
-    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
-    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
-    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
-
-    Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
-    Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
-    Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
-
-    Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
-    Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
-
-    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
-    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
-
-    Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
-    Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
-    Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory');
-    Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory');
-    Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
-    Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
-    Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
-
-    Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
-    Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
-
-    Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
-    Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
-    Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
-    Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
-
-    Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
-    Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
-    Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
-    Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
-    Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
-    Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack');
-    Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
-    Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount');
-    Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
-
-    Route::resource('report_templates', 'ReportTemplateAPIController');
-    Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
-    Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
-    Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
-    Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
-    Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
-    Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
-    Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
-    Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
-    Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
-    Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
-    Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
-    Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
-
-    Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
-    Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
-    Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
-    Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
-    Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
-    Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
-    Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
-    Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
-    Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
-    Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
-    Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
-    Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks');
-    Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn');
-    Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate');
-    Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
-    Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
-
-    Route::post('getFinancialYearsByCompany', 'CompanyFinanceYearAPIController@getFinancialYearsByCompany');
-    Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');
-    Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear');
-    Route::resource('companyFinanceYearPeriodMasters', 'CompanyFinanceYearperiodMasterAPIController');
-
-    Route::resource('outlet_users', 'OutletUsersAPIController');
-    Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
-    Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
-    Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage');
-
-    Route::resource('counter', 'CounterAPIController');
-    Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
-    Route::get('getCounterFormData', 'CounterAPIController@getCounterFormData');
-
-    Route::resource('posPaymentGlConfigMasters', 'GposPaymentGlConfigMasterAPIController');
-    Route::resource('posPaymentGlConfigDetails', 'GposPaymentGlConfigDetailAPIController');
-    Route::post('getPosGlConfigByCompany', 'GposPaymentGlConfigDetailAPIController@getConfigByCompany');
-    Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
-    Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
-    Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
-    Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
-    Route::resource('shift_details', 'ShiftDetailsAPIController');
-    Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
-    Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
-    Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
-
-    Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
-    Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
-    Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
-    Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
-    Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
-    Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
-    Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
-    Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
-    Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData');
-    Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
-    Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
-
-    Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-    Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
-
-    Route::resource('quotationMasters', 'QuotationMasterAPIController');
-    Route::resource('quotationDetails', 'QuotationDetailsAPIController');
-    Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
-    Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
-    Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
-    Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
-    Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
-    Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
-    Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
-    Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
-    Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
-    Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
-    Route::post('salesQuotationReopen', 'QuotationMasterAPIController@salesQuotationReopen');
-    Route::post('salesQuotationVersionCreate', 'QuotationMasterAPIController@salesQuotationVersionCreate');
-    Route::post('salesQuotationAmend', 'QuotationMasterAPIController@salesQuotationAmend');
-    Route::get('salesQuotationAudit', 'QuotationMasterAPIController@salesQuotationAudit');
-
-    Route::resource('gposInvoices', 'GposInvoiceAPIController');
-    Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
-    Route::post('getInvoicesByShift', 'GposInvoiceAPIController@getInvoicesByShift');
-    Route::resource('gposInvoiceDetails', 'GposInvoiceDetailAPIController');
-    Route::resource('gposInvoicePayments', 'GposInvoicePaymentsAPIController');
-
-    Route::resource('quotationMasterVersions', 'QuotationMasterVersionAPIController');
-    Route::resource('quotationVersionDetails', 'QuotationVersionDetailsAPIController');
-    Route::post('getSalesQuotationRevisionHistory', 'QuotationMasterVersionAPIController@getSalesQuotationRevisionHistory');
-    Route::get('getSQVDetailsHistory', 'QuotationVersionDetailsAPIController@getSQVDetailsHistory');
-
-
-    Route::resource('quotationDetailsRefferedbacks', 'QuotationDetailsRefferedbackAPIController');
-    Route::resource('quotationMasterRefferedbacks', 'QuotationMasterRefferedbackAPIController');
-    Route::post('getSalesQuotationAmendHistory', 'QuotationMasterRefferedbackAPIController@getSalesQuotationAmendHistory');
-    Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
-
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-    Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
-    Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
-
-    Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
-    Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
-    Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
-    Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
-
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-    Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
-    Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee');
-
-    // console jv
-    Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
-    Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
-    Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
-    Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
-    Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
-    Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
-    Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
-
-    Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
-    Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
-    Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
-    Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
-
-    /* For Profile -> Profile */
-    Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
-
-    Route::resource('genders', 'GenderAPIController');
-
-    Route::resource('maritial_statuses', 'MaritialStatusAPIController');
-
-    Route::resource('religions', 'ReligionAPIController');
-
-    Route::resource('salary_process_details', 'SalaryProcessDetailAPIController');
-
-    Route::resource('leave_data_masters', 'LeaveDataMasterAPIController');
-
-    Route::resource('leave_masters', 'LeaveMasterAPIController');
-
-    Route::resource('calender_masters', 'CalenderMasterAPIController');
-
-    Route::resource('schedule_masters', 'ScheduleMasterAPIController');
-
-    Route::resource('leave_data_details', 'LeaveDataDetailAPIController');
-
-    Route::resource('leave_application_types', 'LeaveApplicationTypeAPIController');
-
-    Route::resource('leave_document_approveds', 'LeaveDocumentApprovedAPIController');
-
-    Route::resource('employee_managers', 'EmployeeManagersAPIController');
-
-    Route::resource('document_managements', 'DocumentManagementAPIController');
-
-    Route::resource('hrms_document_attachments', 'HrmsDocumentAttachmentsAPIController');
-
-
-    /* For Profile -> Payslip */
-    Route::get('getPeriodsForPayslip', 'EmployeePayslipAPIController@getPeriodsForPayslip');
-    Route::get('getEmployeePayslip', 'EmployeePayslipAPIController@getEmployeePayslip');
-
-    /* For Profile -> Expenses Claim */
-    Route::get('getExpenseClaim', 'ExpenseClaimAPIController@getExpenseClaim');
-    Route::get('getExpenseClaimHistory', 'ExpenseClaimAPIController@getExpenseClaimHistory');
-    Route::get('getExpenseClaimDepartment', 'ExpenseClaimAPIController@getExpenseClaimDepartment');
-    Route::get('getExpenseDropDownData', 'ExpenseClaimAPIController@getExpenseDropDownData');
-    Route::post('saveExpenseClaimDetails', 'ExpenseClaimDetailsAPIController@saveExpenseClaimDetailsSingle');
-    Route::post('saveExpenseClaimAttachments', 'ExpenseClaimDetailsAPIController@saveAttachments');
-    Route::get('getExpenseClaimDetails', 'ExpenseClaimAPIController@getExpenseClaimDetails');
-
-    /* For Profile -> Leave Application */
-    Route::get('getLeaveHistory', 'LeaveDataMasterAPIController@getLeaveHistory');
-    Route::get('getLeaveTypes', 'LeaveMasterAPIController@getLeaveTypes');
-    Route::get('getLeaveAvailability', 'LeaveDataMasterAPIController@getLeaveAvailability');
-    Route::post('saveLeaveDetails', 'LeaveDataMasterAPIController@saveLeaveDetails');
-    Route::post('updateLeaveDetails', 'LeaveDataMasterAPIController@updateLeaveDetails');
-    Route::get('getLeaveDetails', 'LeaveDataMasterAPIController@getLeaveDetails');
-    Route::get('downloadHrmsFile', 'HrmsDocumentAttachmentsAPIController@downloadFile');
-
-    /*Company Document Attachments*/
-    Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
-    Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
-
-    Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
-    
-    /* ChequeRegister */
-    Route::resource('cheque_registers', 'ChequeRegisterAPIController');
-
-    Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
-
-    Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
-    Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
-
-    Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
-    Route::get('chequeRegisterDetailsAudit', 'ChequeRegisterDetailAPIController@chequeRegisterDetailsAudit');
-    Route::post('getAllChequeRegisterDetails', 'ChequeRegisterDetailAPIController@getAllChequeRegisterDetails');
-    Route::get('getAllUnusedCheckDetails', 'ChequeRegisterDetailAPIController@getAllUnusedCheckDetails');
-    Route::post('chequeRegisterDetailCancellation', 'ChequeRegisterDetailAPIController@chequeRegisterDetailCancellation');
-    Route::post('chequeRegisterDetailSwitch', 'ChequeRegisterDetailAPIController@chequeRegisterDetailSwitch');
-    Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData');
-    Route::post('exportChequeRegistry', 'ChequeRegisterAPIController@exportChequeRegistry');
-    Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
-    Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
-    Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
-    Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
-
-    Route::resource('allocation_masters', 'AllocationMasterAPIController');
-
-    Route::resource('coa_allocation_masters', 'ChartOfAccountAllocationMasterAPIController');
-
-    Route::resource('coa_allocation_details', 'ChartOfAccountAllocationDetailAPIController');
-
-    Route::get('getAllocationConfigurationAssignFormData', 'ChartOfAccountAllocationMasterAPIController@getAllocationConfigurationAssignFormData');
-
-    Route::get('getLeaveTypeWithBalance', 'LeaveDataMasterAPIController@getLeaveTypeWithBalance');
-
-    Route::resource('hrms_leave_accrual_masters', 'HRMSLeaveAccrualMasterAPIController');
-
-    Route::resource('hrms_leave_accrual_details', 'HRMSLeaveAccrualDetailAPIController');
-
-    Route::resource('hrms_period_masters', 'HRMSPeriodMasterAPIController');
-
-    Route::resource('hrms_personal_documents', 'HRMSPersonalDocumentsAPIController');
-
-    Route::get('getHRMSApprovals', 'LeaveDocumentApprovedAPIController@getHRMSApprovals');
-    Route::get('getLeaveApproval', 'LeaveDocumentApprovedAPIController@getLeaveApproval');
-    Route::post('leaveReferBack', 'LeaveDocumentApprovedAPIController@leaveReferBack');
-    Route::post('approveLeave', 'LeaveDocumentApprovedAPIController@approveLeave');
-    Route::resource('hrms_leave_accrual_policy_types', 'HRMSLeaveAccrualPolicyTypeAPIController');
-
-    Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
-    Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
-    Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
-
-    Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote');
-    Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice');
-
-    Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');
-
-    Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData');
-    Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
-    Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
-    Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
-    Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
-    Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
-
-    Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
-
-    Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData');
-    Route::get('getContractServiceLine', 'CustomerInvoiceTrackingAPIController@getContractServiceLine');
-    Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany');
-    Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
-    Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
-    Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
-    Route::post('exportBatchSubmissionDetails', 'CustomerInvoiceTrackingAPIController@exportBatchSubmissionDetails');
-    Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData');
-    Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
-    Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
-
-    Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail');
-
-    Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
-    Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');
-    Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
-
-    Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
-    Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
-
-    Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
+    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+    Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
+    Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
+    Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
+    Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
+    Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+    Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
+    Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
+    Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
+    Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
+    Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
+    Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
+    Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+    Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
+    Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
+    Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+    Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
+    Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
+    Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+    Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
+    Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
+    Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
+    Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
+    Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
+    Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+    Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
+    Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
+    Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
+    Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
+    Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
+
+    Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
+    Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
+    Route::get('loginwithToken', 'UserAPIController@loginwithToken');
+    Route::resource('user_activity_logs', 'UserActivityLogAPIController');
+
+    Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
+    Route::get('getBcryptPassword/{password}', function ($password) {
+        echo bcrypt($password);
+    });
+
+    Route::get('runQueue', function () {
+        //$master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+        //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+
+        \App\Jobs\WarehouseItemUpdate::dispatch(57910);
+
+    });
+
+
+    Route::get('runQueuePushNotification', function () {
+        \App\Jobs\PushNotification::dispatch();
+    });
+
+    Route::get('runQueueSR', function () {
+        //$bt = \App\Models\CompanyFinanceYear::find(300);
+        //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
+        $date = '2019-09-10 23:59:59';
+        return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
+    });
+
+    Route::post('login', 'AuthAPIController@auth');
+
+
+    Route::resource('fcm_tokens', 'FcmTokenAPIController');
 
 
     Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+
     Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+
     Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
+
     Route::resource('user_rights', 'UserRightsAPIController');
+
     Route::resource('lpt_permissions', 'LptPermissionAPIController');
+
     Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+
+
     Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
     Route::resource('segment_rights', 'SegmentRightsAPIController');
     Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+
     Route::resource('service_lines', 'ServiceLineAPIController');
     Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
     Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
     Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
+
+
     Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
-    Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
-    Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
-    Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
-
-    Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
-    Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
-    Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse');
-
-    Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
-
-    Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
-
-    Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
-    Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
-    Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
-
-    Route::resource('customer_catalog_masters', 'CustomerCatalogMasterAPIController');
-
-    Route::resource('customer_catalog_details', 'CustomerCatalogDetailAPIController');
-
-    Route::post('getAllCustomerCatalogsByCompany', 'CustomerCatalogMasterAPIController@getAllCustomerCatalogsByCompany');
-    Route::get('getItemsOptionsCustomerCatalog', 'CustomerCatalogMasterAPIController@getItemsOptionsCustomerCatalog');
-    Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
-    Route::get('getAssignedCurrenciesByCustomer', 'CustomerCatalogMasterAPIController@getAssignedCurrenciesByCustomer');
-
-    Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
-    Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
-    Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
-    Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
-    Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
-    Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
-    Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
-    Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
-    Route::resource('delivery_orders', 'DeliveryOrderAPIController');
-    Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
-    Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
-    Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
-
-    Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO');
-    Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO');
-
-    Route::post('getDeliveryOrderApprovals', 'DeliveryOrderAPIController@getDeliveryOrderApprovals');
-    Route::post('getApprovedDeliveryOrderForUser', 'DeliveryOrderAPIController@getApprovedDeliveryOrderForUser');
-    Route::post('approveDeliveryOrder', 'DeliveryOrderAPIController@approveDeliveryOrder');
-    Route::post('rejectDeliveryOrder', 'DeliveryOrderAPIController@rejectDeliveryOrder');
-
-    Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
-    Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
-});
-
-Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
-Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
-Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
-Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
-Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
-Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
-Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
-Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
-Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
-Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
-Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
-Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
-Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
-Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
-Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
-Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
-Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
-Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
-Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
-Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
-Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
-Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
-Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
-Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
-Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
-Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
-Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
-Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
-Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
-
-Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
-Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
-Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-Route::resource('user_activity_logs', 'UserActivityLogAPIController');
-
-Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
-Route::get('getBcryptPassword/{password}', function ($password) {
-    echo bcrypt($password);
-});
-
-Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-
-    \App\Jobs\WarehouseItemUpdate::dispatch(57910);
-
-});
-
-
-Route::get('runQueuePushNotification', function () {
-    \App\Jobs\PushNotification::dispatch();
-});
-
-Route::get('runQueueSR', function () {
-    //$bt = \App\Models\CompanyFinanceYear::find(300);
-    //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
-    $date = '2019-09-10 23:59:59';
-    return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
-});
-
-Route::post('login', 'AuthAPIController@auth');
-Route::resource('fcm_tokens', 'FcmTokenAPIController');
-
-Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
-
-Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
-
-Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
-
-Route::resource('user_rights', 'UserRightsAPIController');
-
-Route::resource('lpt_permissions', 'LptPermissionAPIController');
-
-Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
-
-
-Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
-
-
-Route::resource('segment_rights', 'SegmentRightsAPIController');
-Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
-
-Route::resource('service_lines', 'ServiceLineAPIController');
-Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
-
-Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
-Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
-
-
-Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
 
 
 //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
-Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+    Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 
 
-Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+    Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
-Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+    Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
 
-
-
-
-
+});
 
 
 
+Route::resource('tenants', 'TenantAPIController');
+Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');

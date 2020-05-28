@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
 
 class EmailForQueuing extends Mailable implements ShouldQueue
@@ -16,17 +17,17 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     public $content;
     public $subject;
     public $to;
-    public $mailAttachments;
+    public $mailAttachment;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($subject, $content, $attachments = '')
+    public function __construct($subject, $content, $attachment = '')
     {
         $this->subject = $subject;
         $this->content = $content;
-        $this->mailAttachments = $attachments;
+        $this->mailAttachment = $attachment;
         self::onConnection('database');
     }
 
@@ -37,7 +38,7 @@ class EmailForQueuing extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->view('email.default_email')
+       $mail = $this->view('email.default_email')
                     ->subject($this->subject)
                     ->sendgrid([
                         'personalizations' => [
@@ -48,5 +49,12 @@ class EmailForQueuing extends Mailable implements ShouldQueue
                             ],
                         ],
                     ]);
+        Log::info('mailAttachment path');
+        Log::info($this->mailAttachment);
+       if($this->mailAttachment){
+           $mail->attach($this->mailAttachment);
+       }
+
+       return $mail;
     }
 }
