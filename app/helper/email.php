@@ -386,6 +386,7 @@ class email
 
                 if ($hasPolicy) {
                     Log::info('Email send start');
+                    $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
                     if(isset($data['empEmail']) && $data['empEmail']) {
                         Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
                     }
@@ -412,6 +413,7 @@ class email
 
         if ($hasPolicy) {
             Log::info('Email send start');
+            $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
             if(isset($data['empEmail']) && $data['empEmail']){
                 Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'],$data['attachmentFileName']));
             }
