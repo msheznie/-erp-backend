@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Utils\ResponseUtil;
@@ -71,6 +72,40 @@ class AuthAPIController extends PassportAccessTokenController
                 }else{
                     return response(["message" => 'Invalid username or password.'], 401);
                 }
+            });
+        }
+    }
+
+
+    public function authWithToken(ServerRequestInterface $request, Request $request2)
+    {
+
+        $input = $request2->all();
+        $validator = Validator::make($input, [
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return Response::json(ResponseUtil::makeError($validator->messages(), array('type' => '')), 422);
+        }
+        $user = User::where(['login_token' => $input['token']])->first();
+        if (empty($user)) {
+            return Response::json(ResponseUtil::makeError('Token expired', array('type' => '')), 500);
+        }
+
+        if($user){
+            $employees = Employee::find($user->employee_id);
+            if(!empty($employees) && $employees->isLock == 4){
+                return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
+            }
+        }
+        try {
+            $user->login_token = null;
+            $user->save();
+            return $token = $user->createToken('personal');
+        } catch (OAuthServerException $exception) {
+            return $this->withErrorHandling(function () use($exception) {
+                return response(["message" => 'Error'], 401);
             });
         }
     }
