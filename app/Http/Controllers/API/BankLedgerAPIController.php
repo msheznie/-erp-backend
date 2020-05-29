@@ -557,7 +557,7 @@ class BankLedgerAPIController extends AppBaseController
 
                             //$location = \DB::table('systemmanualfolder')->first();
                             $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $path;
+                            $dataEmail['attachmentFileName'] = realpath($path);
                             $dataEmail['alertMessage'] = "Payment Released";
                             $dataEmail['emailAlertMessage'] = $temp;
 

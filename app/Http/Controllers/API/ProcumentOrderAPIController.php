@@ -4397,7 +4397,7 @@ ORDER BY
                     $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
                     //$location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = "uploads\\emailAttachment\\po_print_" . $nowTime . ".pdf";
+                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
@@ -4432,7 +4432,7 @@ ORDER BY
                     $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
                     //$location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = "uploads\\emailAttachment\\po_print_" . $nowTime . ".pdf";
+                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
