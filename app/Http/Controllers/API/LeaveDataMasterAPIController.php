@@ -1244,7 +1244,19 @@ class LeaveDataMasterAPIController extends AppBaseController
     }
 
     public function getLeaveTypeWithBalance(){
-        return $this->emp_all_leave_balance();
+        $user_data = Helper::getEmployeeInfo();
+        $emp_det = Employee::select('employeeSystemID','empName','religion','gender','empID')
+                    ->with( ['details' => function ($q) {
+                        $q->select('employeeSystemID','expatOrLocal');
+                    }])->where('employeeSystemID', $user_data->employeeSystemID)->first();
+        $emp_det = $emp_det->toArray();
+        $emp_data = [
+            'empID'=> $emp_det['empID'],
+            'gender'=> $emp_det['gender'],
+            'religion'=> $emp_det['religion'],
+            'isLocal'=> $emp_det['details']['expatOrLocal']
+        ];
+        return $this->leaveType_dropDown($emp_data);
 
         $policyArray = $this->getPolicyArray();
         $employee = Helper::getEmployeeInfo();
@@ -1311,11 +1323,11 @@ class LeaveDataMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
     }
 
-    function emp_all_leave_balance(){
-        $user_data = Helper::getEmployeeInfo();
-        $empID = $user_data->empID;
+    function leaveType_dropDown($emp_data){
+        $empID = $emp_data['empID'];
 
-        $leaveTypes = DB::select("SELECT typMas.leavemasterID, typMas.leavetype
+        $types = DB::select("SELECT typMas.leavemasterID, typMas.leavetype
+                              #SELECT typMas.leavemasterID AS `value`, typMas.leavetype AS label
                               FROM hrms_leaveaccrualmaster lMaster
                               JOIN hrms_leaveaccrualdetail lDet ON lDet.leaveaccrualMasterID = lMaster.leaveaccrualMasterID   
                               LEFT JOIN hrms_periodmaster hrPeriod ON hrPeriod.periodMasterID = lDet.leavePeriod
@@ -1323,37 +1335,74 @@ class LeaveDataMasterAPIController extends AppBaseController
                               WHERE empID = '{$empID}' AND approvedYN = -1 
                               GROUP BY typMas.leavemasterID, typMas.leavetype");
 
+        $drop_down = []; $track = 0;
+        foreach ($types as $val) {
+            $id = $val->leavemasterID;
+            $balance_data = $this->employee_leave_acc($emp_data['empID'], $id, 1);
+            $leaveBalance = $balance_data['balance'];
+            $is_in_list = $balance_data['in_list'];
 
-        $emp_det = Employee::select('employeeSystemID','empName','religion','gender','empID')
-                    ->with( ['details' => function ($q) {
-                        $q->select('employeeSystemID','expatOrLocal');
-                    }])->where('employeeSystemID', $user_data->employeeSystemID)->first();
-        $emp_det = $emp_det->toArray();
-        $emp_data = [
-            'empID'=> $emp_det['empID'],
-            'gender'=> $emp_det['gender'],
-            'religion'=> $emp_det['religion'],
-            'isLocal'=> $emp_det['details']['expatOrLocal']
-        ];
+            if ($id == 2 || $id == 3 || $id == 4 || $id == 21) {
+                $isCan = false;
+                if ($id == 2) {
+                    if ($leaveBalance == 0) {
+                        $track = 1;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 3 && $track == 1) {
+                    if ($leaveBalance == 0) {
+                        $track = 2;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 4 && $track == 2) {
+                    if ($leaveBalance == 0) {
+                        $track = 3;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 21 && $track == 3) {
+                    if ($leaveBalance == 0) {
+                        $track = 4;
+                    } else {
+                        $isCan = true;
+                    }
+                }
 
-        $data = [];
-        foreach ($leaveTypes as $key=>$item){
-            $balance_data = $this->employee_leave_acc($empID, $item->leavemasterID, 1);
-            $balance = $balance_data['balance'];
-            if(!$balance_data['in_list']){
-                unset($leaveTypes[$key]);
-                continue;
+                if($isCan){
+                    $drop_down[] = ['leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
             }
-            $leaveTypes[$key]->balance = $balance;
-            $policy = [];
-            if($item->leavemasterID == 15){
-                $policy = $this->policyType($emp_data);
+            else if ($id == 11) {
+                if ($emp_data['gender'] == 2 && $is_in_list) {
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
             }
-            $leaveTypes[$key]->policy = $policy;
-            $data[] = $leaveTypes[$key];
+            else if ($id == 13) {
+                if ($emp_data['religion'] == 1 && $is_in_list) {
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
+            else {
+                if($is_in_list){
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
         }
 
-        return $this->sendResponse($data, 'Leave balance retrieved successfully');
+        $lType = LeaveMaster::where('leavemasterID', 15)->value('leavetype');
+        $policy = $this->policyType($emp_data);
+        $drop_down[] = [ 'leavemasterID'=> 15, 'leavetype'=> $lType, 'balance'=> 0, 'policy'=> $policy];
+
+        return $this->sendResponse($drop_down, 'Leave Type with balance retrieved successfully');
     }
 
     function employee_leave_acc($empID, $leaveType, $makeDecision=0){
