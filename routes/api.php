@@ -1758,7 +1758,7 @@ Route::group(['middleware' => 'tenant'], function () {
     });
 
     Route::post('login', 'AuthAPIController@auth');
-
+    Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
 
     Route::resource('fcm_tokens', 'FcmTokenAPIController');
 
@@ -1800,6 +1800,7 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
     Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+
 
 });
 
