@@ -124,7 +124,19 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $financeItemCategorySub = $financeItemCategorySub->where('categoryDescription','LIKE',"%{$search}%");
+            $financeItemCategorySub = $financeItemCategorySub->where(function ($query) use($search){
+                $query->where('categoryDescription','LIKE',"%{$search}%")
+                ->orWhere('financeGLcodePL','LIKE',"%{$search}%")
+                ->orWhere('financeGLcodebBS','LIKE',"%{$search}%")
+                ->orWhere('financeGLcodeRevenue','LIKE',"%{$search}%")
+                ->orWhereHas('finance_gl_code_bs', function($q) use($search){
+                    $q->where('AccountDescription','LIKE',"%{$search}%");
+                })->orWhereHas('finance_gl_code_pl', function($q) use($search){
+                        $q->where('AccountDescription','LIKE',"%{$search}%");
+                    })->orWhereHas('finance_gl_code_revenue', function($q) use($search){
+                        $q->where('AccountDescription','LIKE',"%{$search}%");
+                    });
+            });
         }
 
         return \DataTables::eloquent($financeItemCategorySub)
