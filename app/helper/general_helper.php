@@ -38,6 +38,7 @@ use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\User;
 use App\Models\FcmToken;
+use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -2403,6 +2404,71 @@ class Helper
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
+
+                        /*send Email*/
+                        $confirmedUser = 0;
+                        $emails = array();
+
+                        $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                        if (!empty($sourceModel)) {
+
+                            $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+                            $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                            $confirmedUser = $currentApproved->docConfirmedByEmpSystemID;
+//                                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+//                                    ->where('documentSystemID', $currentApproved->documentSystemID)
+//                                    ->first();
+//
+//                                if (empty($companyDocument)) {
+//                                    return ['success' => false, 'message' => 'Policy not found for this document'];
+//                                }
+
+                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+
+                            $subject = $subjectName . " is rejected.";
+                            $body = $bodyName . " is rejected for below reason by ". $empInfo->empName."<br> ".$input["rejectedComments"];
+
+
+                           // get previously approved person for send Emil
+                            if ($input["rollLevelOrder"] > 1) {
+
+                                $previousApprovals = ApproveRejectTransaction::previousDocumentApprovers($currentApproved->documentSystemID, $currentApproved->documentSystemCode, $currentApproved->rollLevelOrder, $currentApproved->companySystemID);
+
+                                if(count((array)$previousApprovals)>0){
+                                    foreach ($previousApprovals as $row){
+                                        if($row->employeeSystemID > 0){
+                                            $emails[] = array(
+                                                'empSystemID' => $row->employeeSystemID,
+                                                'companySystemID' => $row->companySystemID,
+                                                'docSystemID' => $row->documentSystemID,
+                                                'alertMessage' => $subject,
+                                                'emailAlertMessage' => $body,
+                                                'docSystemCode' => $row->documentSystemCode);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // get confirmed user for send Emil
+                            if($confirmedUser>0){
+                                $emails[] = array(
+                                    'empSystemID' => $confirmedUser,
+                                    'companySystemID' => $currentApproved->companySystemID,
+                                    'docSystemID' => $currentApproved->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $input["documentSystemCode"]
+                                );
+                            }
+
+                            $sendEmail = email::sendEmail($emails);
+                            if (!$sendEmail["success"]) {
+                                return ['success' => false, 'message' => $sendEmail["message"]];
+                            }
+
+                        }
+
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }

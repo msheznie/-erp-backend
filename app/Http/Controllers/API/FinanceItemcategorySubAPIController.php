@@ -11,6 +11,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateFinanceItemCategorySubAPIRequest;
 use App\Http\Requests\API\UpdateFinanceItemCategorySubAPIRequest;
 use App\Models\ChartOfAccount;
@@ -271,6 +272,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         if (empty($financeItemCategorySub)) {
             return $this->sendError('Finance Item Category Sub not found');
         }
+
+        $employee = Helper::getEmployeeInfo();
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
 
         $financeItemCategorySub = $this->financeItemCategorySubRepository->update($input, $id);
 
