@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+
         Queue::failing(function (JobFailed $event) {
             // $event->connectionName
             // $event->job
@@ -64,6 +65,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        /*$this->app['queue']->createPayloadUsing(function () {
+            return Tenant::get() ? [
+                'tenant_id' => Tenant::get()->id
+            ] : [];
+        });*/
+
+        /*$this->app['events']->listen(\Illuminate\Queue\Events\JobProcessing::class, function($event){
+            if (isset($event->job->payload()['tenant_id'])) {
+                Tenant::set($event->job->payload()['tenant_id']);
+            }
+        }﻿);*/
     }
 }

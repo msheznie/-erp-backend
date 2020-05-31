@@ -17,6 +17,7 @@
  * -- Date 06- Spetember 2019 By Rilwan updateLeaveDetails()
  * -- Date 18- November 2019 By Rilwan getLeaveBalance() - get leave balance, old portal code get this from mysql views. it consumes too much time. so i used particular table for retrieving data
  * -- Date 19- November 2019 By Rilwan getLeaveTypeWithBalance() - combine leave balance array with leave type
+ * -- Date 29- May 2020 By Nasik getLeaveTypeWithBalance() - update the function to match with New Portal implementaion
  */
 
 namespace App\Http\Controllers\API;
@@ -1243,6 +1244,19 @@ class LeaveDataMasterAPIController extends AppBaseController
     }
 
     public function getLeaveTypeWithBalance(){
+        $user_data = Helper::getEmployeeInfo();
+        $emp_det = Employee::select('employeeSystemID','empName','religion','gender','empID')
+                    ->with( ['details' => function ($q) {
+                        $q->select('employeeSystemID','expatOrLocal');
+                    }])->where('employeeSystemID', $user_data->employeeSystemID)->first();
+        $emp_det = $emp_det->toArray();
+        $emp_data = [
+            'empID'=> $emp_det['empID'],
+            'gender'=> $emp_det['gender'],
+            'religion'=> $emp_det['religion'],
+            'isLocal'=> $emp_det['details']['expatOrLocal']
+        ];
+        return $this->leaveType_dropDown($emp_data);
 
         $policyArray = $this->getPolicyArray();
         $employee = Helper::getEmployeeInfo();
@@ -1307,6 +1321,176 @@ class LeaveDataMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse($output, 'Leave Type with balance retrieved successfully');
+    }
+
+    function leaveType_dropDown($emp_data){
+        $empID = $emp_data['empID'];
+
+        $types = DB::select("SELECT typMas.leavemasterID, typMas.leavetype
+                              #SELECT typMas.leavemasterID AS `value`, typMas.leavetype AS label
+                              FROM hrms_leaveaccrualmaster lMaster
+                              JOIN hrms_leaveaccrualdetail lDet ON lDet.leaveaccrualMasterID = lMaster.leaveaccrualMasterID   
+                              LEFT JOIN hrms_periodmaster hrPeriod ON hrPeriod.periodMasterID = lDet.leavePeriod
+                              JOIN hrms_leavemaster AS typMas ON typMas.leavemasterID =  lDet.leaveType
+                              WHERE empID = '{$empID}' AND approvedYN = -1 
+                              GROUP BY typMas.leavemasterID, typMas.leavetype");
+
+        $drop_down = []; $track = 0;
+        foreach ($types as $val) {
+            $id = $val->leavemasterID;
+            $balance_data = $this->employee_leave_acc($emp_data['empID'], $id, 1);
+            $leaveBalance = $balance_data['balance'];
+            $is_in_list = $balance_data['in_list'];
+
+            if ($id == 2 || $id == 3 || $id == 4 || $id == 21) {
+                $isCan = false;
+                if ($id == 2) {
+                    if ($leaveBalance == 0) {
+                        $track = 1;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 3 && $track == 1) {
+                    if ($leaveBalance == 0) {
+                        $track = 2;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 4 && $track == 2) {
+                    if ($leaveBalance == 0) {
+                        $track = 3;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+                if ($id == 21 && $track == 3) {
+                    if ($leaveBalance == 0) {
+                        $track = 4;
+                    } else {
+                        $isCan = true;
+                    }
+                }
+
+                if($isCan){
+                    $drop_down[] = ['leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
+            else if ($id == 11) {
+                if ($emp_data['gender'] == 2 && $is_in_list) {
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
+            else if ($id == 13) {
+                if ($emp_data['religion'] == 1 && $is_in_list) {
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
+            else {
+                if($is_in_list){
+                    $drop_down[] = [ 'leavemasterID'=> $id, 'leavetype'=> $val->leavetype,
+                        'balance'=> $leaveBalance, 'policy'=> []];
+                }
+            }
+        }
+
+        $lType = LeaveMaster::where('leavemasterID', 15)->value('leavetype');
+        $policy = $this->policyType($emp_data);
+        $drop_down[] = [ 'leavemasterID'=> 15, 'leavetype'=> $lType, 'balance'=> 0, 'policy'=> $policy];
+
+        return $this->sendResponse($drop_down, 'Leave Type with balance retrieved successfully');
+    }
+
+    function employee_leave_acc($empID, $leaveType, $makeDecision=0){
+        $asOfDate = date('Y-12-31');
+        $yearFirst = date('Y-01-01', strtotime($asOfDate));
+
+        $isCarryForward = LeaveMaster::where('leavemasterID', $leaveType)->value('isCarryForward');
+
+        $periodYear = " WHERE lStartDate BETWEEN '{$yearFirst}' AND '{$asOfDate}'";
+        $periodYear2 = " AND DATE(lMaster.approvedDate) BETWEEN '{$yearFirst}' AND '{$asOfDate}'";
+
+        if($isCarryForward == -1){
+            $periodYear = " WHERE lStartDate <= '{$asOfDate}' ";
+            $periodYear2 = " AND DATE(lMaster.approvedDate) <= '{$asOfDate}' ";
+        }
+
+
+        $accrued = DB::select("SELECT SUM( daysEntitled ) AS daysEntitled FROM (                               
+                          SELECT leaveaccrualMasterCode, lMaster.Description, daysEntitled,
+                          DATE_FORMAT(lDet.startDate ,'%d/%m/%y') startDate, DATE_FORMAT(lDet.endDate ,'%d/%m/%y') endDate,
+                          IF ( ( lDet.leavePeriod IS NOT NULL ), hrPeriod.periodYear, YEAR ( lDet.startDate) ) AS leavePeriod,
+                          IF ( ( lDet.leavePeriod IS NOT NULL ), hrPeriod.startDate, lDet.startDate ) AS lStartDate
+                          FROM hrms_leaveaccrualmaster lMaster
+                          JOIN hrms_leaveaccrualdetail lDet ON lDet.leaveaccrualMasterID = lMaster.leaveaccrualMasterID   
+                          LEFT JOIN hrms_periodmaster hrPeriod ON hrPeriod.periodMasterID = lDet.leavePeriod
+                          WHERE empID = '{$empID}' AND lDet.leaveType = {$leaveType} AND approvedYN = -1 
+                          ORDER BY lMaster.leaveaccrualMasterID DESC
+                          ) t1 {$periodYear}");
+        $accrued = $accrued[0]->daysEntitled;
+
+        $applied = DB::select("SELECT SUM(calculatedDays) AS calculatedDays 
+                              FROM hrms_leavedatamaster lMaster
+                              JOIN hrms_leavedatadetail lDet ON lDet.leavedatamasterID = lMaster.leavedatamasterID
+                              WHERE empID = '{$empID}' AND lDet.leavemasterID = {$leaveType} AND approvedYN = -1 {$periodYear2}
+                              ORDER BY lMaster.leavedatamasterID DESC");
+        $applied = $applied[0]->calculatedDays;
+
+        if($makeDecision == 0){
+            return $accrued - $applied;
+        }
+
+        $accrued = (is_numeric($accrued))? $accrued: 0;
+
+        return [
+            'in_list'=> ($accrued > 0),
+            'balance'=> ($accrued - $applied)
+        ];
+    }
+
+    function policyType($emp_data){
+        $drop = [];
+        $emp_data['isLocal'] = ($emp_data['isLocal'] == 2)? -1: $emp_data['isLocal'];
+        if($emp_data['isLocal'] == 1){
+            $policy = DB::table('hrms_leaveaccrualpolicytype')->where('isExpat', 0)->get();
+
+            if(!empty($policy)){
+                foreach($policy as $val) {
+                    $is_can = true;
+                    if($val->isOnlyMuslim == -1){
+                        if($emp_data['religion'] != 1){
+                            $is_can = false;
+                        }
+                    }
+
+                    if($val->isOnlyFemale == -1){
+                        if($emp_data['gender'] != 2){
+                            $is_can = false;
+                        }
+                    }
+
+                    if($is_can){
+                        $drop[] = ['leaveaccrualpolicyTypeID'=> $val->leaveaccrualpolicyTypeID, 'description'=> $val->description];
+                    }
+                }
+            }
+        }
+        else{
+            $policy = DB::table('hrms_leaveaccrualpolicytype')->select('leaveaccrualpolicyTypeID','description')
+                ->where('isExpat', -1)->get();
+
+            if(!empty($policy)){
+                foreach($policy as $val) {
+                    $drop[] = ['value'=> $val->leaveaccrualpolicyTypeID, 'label'=> $val->description];
+                }
+            }
+        }
+
+        return $drop;
     }
 
     public function getLeaveBalanceTest(){

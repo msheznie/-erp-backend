@@ -386,7 +386,10 @@ class email
 
                 if ($hasPolicy) {
                     Log::info('Email send start');
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
+                    $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+                    if(isset($data['empEmail']) && $data['empEmail']) {
+                        Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
+                    }
                     Log::info('email sent success fully to :' . $data['empEmail']);
                     $count = $count + 1;
                     Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
@@ -410,7 +413,10 @@ class email
 
         if ($hasPolicy) {
             Log::info('Email send start');
-            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage']));
+            $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+            if(isset($data['empEmail']) && $data['empEmail']){
+                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'],$data['attachmentFileName']));
+            }
             Log::info('email sent success fully to :' . $data['empEmail']);
             Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
         }else{

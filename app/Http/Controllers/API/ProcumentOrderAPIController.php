@@ -4366,7 +4366,7 @@ ORDER BY
         $html = view('print.purchase_order_print_pdf', $order);
         $pdf = \App::make('dompdf.wrapper');
 
-        $pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
+        $pdf->loadHTML($html)->save('uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
 
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->get();
@@ -4396,8 +4396,8 @@ ORDER BY
 
                     $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
-                    $location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
+                    //$location = \DB::table('systemmanualfolder')->first();
+                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
@@ -4431,8 +4431,8 @@ ORDER BY
 
                     $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
-                    $location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
+                    //$location = \DB::table('systemmanualfolder')->first();
+                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;

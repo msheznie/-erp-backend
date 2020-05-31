@@ -517,10 +517,10 @@ class BankLedgerAPIController extends AppBaseController
                             //$pdf->loadHTML($html);
                             //return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
-                            $path = 'C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/'.$pdfName;
+                            $path = 'uploads\\'.$pdfName;
 
-                            if (Storage::disk('public')->exists($pdfName)) {
-                                 Storage::disk('public')->delete($pdfName);
+                            if (Storage::disk('local_public')->exists($path)) {
+                                 Storage::disk('local_public')->delete($path);
                             }
 
                             $pdf->loadHTML($html)->save($path);
@@ -555,9 +555,9 @@ class BankLedgerAPIController extends AppBaseController
 
                             $temp = "Dear " . $supplierMaster->nameOnPaymentCheque . ",<p> " .$emailTitle. " from <b>" . $company->CompanyName . "<b/>.<p>" . $invoiceNumbers . "<p><p>" . $footer;
 
-                            $location = \DB::table('systemmanualfolder')->first();
+                            //$location = \DB::table('systemmanualfolder')->first();
                             $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $location->folderDes.$pdfName;
+                            $dataEmail['attachmentFileName'] = realpath($path);
                             $dataEmail['alertMessage'] = "Payment Released";
                             $dataEmail['emailAlertMessage'] = $temp;
 
