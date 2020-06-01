@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -41,6 +42,7 @@ class EmployeeProfile extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'empPorfileID';
+    protected $appends = ['profile_image_url'];
 
     public $fillable = [
         'employeeSystemID',
@@ -71,5 +73,11 @@ class EmployeeProfile extends Model
         
     ];
 
-    
+    public function getProfileImageUrlAttribute(){
+        return asset($this->profileImage);
+    }
+
+    public function getProfileImageAttribute($value){
+        return Helper::getFileUrlFromS3($value);
+    }
 }
