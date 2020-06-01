@@ -41,8 +41,10 @@ use App\Models\FcmToken;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 
@@ -4510,5 +4512,21 @@ class Helper
             }
         }
         return 'false';
+    }
+
+    public static function getFileUrlFromS3($key)
+    {
+        if($key) {
+            $s3 = Storage::disk('s3');
+            $client = $s3->getDriver()->getAdapter()->getClient();
+            $bucket = Config::get('filesystems.disks.s3.bucket');
+            $command = $client->getCommand('GetObject', [
+                'Bucket' => $bucket,
+                'Key' => $key
+            ]);
+            $request = $client->createPresignedRequest($command, '+60 minutes');
+            return (string)$request->getUri();
+        }
+        return '';
     }
 }
