@@ -527,7 +527,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $temp['warehouseSystemCode'] = $value['warehouseSystemCode'];
                 $temp['reportingManagerID'] = $value['reportingManagerID'];
                 $temp['isDefault'] = $value['isDefault'];
-                $temp['dischargedYN'] = $value['dischargedYN'];
+                $temp['dischargedYN'] = 0;
                 $temp['approvalDeligated'] = $value['approvalDeligated'];
                 $temp['approvalDeligatedFromEmpID'] = $value['approvalDeligatedFromEmpID'];
                 $temp['approvalDeligatedFrom'] = $value['approvalDeligatedFrom'];
