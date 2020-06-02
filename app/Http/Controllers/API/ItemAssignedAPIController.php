@@ -69,7 +69,7 @@ class ItemAssignedAPIController extends AppBaseController
     public function store(CreateItemAssignedAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input,['finance_sub_category']);
         unset($input['company']);
         unset($input['final_approved_by']);
 
