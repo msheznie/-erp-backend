@@ -58,7 +58,7 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $company = Company::whereIN('companySystemID', $companiesByGroup)->get();
+        $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup',0)->get();
 
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"));
         $companyFinanceYear = $companyFinanceYear->whereIn('companySystemID', $companiesByGroup);
