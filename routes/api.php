@@ -1757,6 +1757,10 @@ Route::group(['middleware' => 'tenant'], function () {
         return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
     });
 
+    Route::get('/debug-sentry', function () {
+        throw new Exception('My first Sentry error!');
+    });
+
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
 
