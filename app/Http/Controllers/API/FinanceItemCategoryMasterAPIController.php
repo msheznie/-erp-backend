@@ -117,7 +117,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         }
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
-                                                         ->with(['finance_gl_code_bs','finance_gl_code_pl'])
+                                                         ->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
                                                          ->select('financeitemcategorysub.*');
 
 

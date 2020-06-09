@@ -457,7 +457,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategory = FinanceItemCategoryMaster::all();
 
         /** all FinanceItemCategorySub Drop Down */
-        $itemCategorySub = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl'])->get();
+        $itemCategorySub = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl'])->where('isActive',1)->get();
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
