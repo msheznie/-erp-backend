@@ -716,7 +716,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
         Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
         Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
-        Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
+        //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
         Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
         Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');

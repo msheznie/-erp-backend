@@ -10,10 +10,12 @@ use App\Observers\CapitalizationDetailObserver;
 use App\Observers\CapitalizationObserver;
 use App\Observers\DepreciationObserver;
 use App\Observers\DisposalObserver;
+use Carbon\Carbon;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -56,25 +58,11 @@ class AppServiceProvider extends ServiceProvider
         Validator::replacer('greater_than_or_equal_field', function($message, $attribute, $rule, $parameters) {
             return str_replace(':field', $parameters[0], $message);
         });
-    }
 
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
-    {
-        /*$this->app['queue']->createPayloadUsing(function () {
-            return Tenant::get() ? [
-                'tenant_id' => Tenant::get()->id
-            ] : [];
-        });*/
-
-        /*$this->app['events']->listen(\Illuminate\Queue\Events\JobProcessing::class, function($event){
-            if (isset($event->job->payload()['tenant_id'])) {
-                Tenant::set($event->job->payload()['tenant_id']);
-            }
-        }﻿);*/
+        Passport::routes();
+        passport::$revokeOtherTokens;
+        passport::$pruneRevokedTokens;
+        Passport::tokensExpireIn(Carbon::now()->addDays(1));
+        Passport::refreshTokensExpireIn(Carbon::now()->addDays(2));
     }
 }
