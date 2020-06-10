@@ -336,7 +336,7 @@ class FcmTokenAPIController extends AppBaseController
                 $resp = $request->user()->token()->revoke();
             }
 
-            return $this->sendResponse([$resp, $logged], 'Use logged out Successfully');
+            return $this->sendResponse([$resp, $logged], 'User logged out Successfully');
         } catch (\Exception $exception) {
             return $this->sendError('Something went wrong');
         }
