@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\Email;
 
+use App\helper\email;
 use App\Http\Controllers\AppBaseController;
 use App\Mail\EmailForQueuing;
 use Illuminate\Http\Request;
@@ -32,15 +33,18 @@ class SendEmailAPIController extends AppBaseController
                 && isset($d['alertMessage']) && $d['alertMessage']
                 && isset($d['emailAlertMessage']) && $d['emailAlertMessage']) {
 
-                if (!isset($d['attachmentFileName'])) {
-                    $d['attachmentFileName'] = '';
+                $d['empEmail'] = email::emailAddressFormat($d['empEmail']);
+                if($d['empEmail']) {
+                    if (!isset($d['attachmentFileName'])) {
+                        $d['attachmentFileName'] = '';
+                    }
+                    Log::info('API Email send start');
+                    Log::info('API Email processing');
+                    Mail::to($d['empEmail'])->send(new EmailForQueuing($d['alertMessage'], $d['emailAlertMessage'], $d['attachmentFileName']));
+                    Log::info('API email sent success fully to :' . $d['empEmail']);
+                    Log::info('API Email send end');
+                    $count = $count + 1;
                 }
-                Log::info('API Email send start');
-                Log::info('API Email processing');
-                Mail::to($d['empEmail'])->send(new EmailForQueuing($d['alertMessage'], $d['emailAlertMessage'], $d['attachmentFileName']));
-                Log::info('API email sent success fully to :' . $d['empEmail']);
-                Log::info('API Email send end');
-                $count = $count + 1;
             }
         }
         return $this->sendResponse([], 'successfully sent '. $count . ' emails');

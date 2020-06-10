@@ -388,7 +388,10 @@ class email
                     Log::info('Email send start');
                     $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
                     if(isset($data['empEmail']) && $data['empEmail']) {
-                        Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
+                        $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                        if($data['empEmail']) {
+                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
+                        }
                     }
                     Log::info('email sent success fully to :' . $data['empEmail']);
                     $count = $count + 1;
@@ -415,7 +418,10 @@ class email
             Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
             if(isset($data['empEmail']) && $data['empEmail']){
-                Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'],$data['attachmentFileName']));
+                $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
+                if($data['empEmail']){
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'],$data['attachmentFileName']));
+                }
             }
             Log::info('email sent success fully to :' . $data['empEmail']);
             Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
@@ -424,5 +430,19 @@ class email
         }
 
         return ['success' => true, 'message' => 'Successfully Inserted'];
+    }
+
+    public static function emailAddressFormat($email){
+
+        if($email){
+            $email = str_replace(" ","",$email);
+
+            if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::info(' Email not valid : '. $email);
+                $email = ''; // Email not valid
+            }
+        }
+
+        return $email;
     }
 }
