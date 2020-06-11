@@ -949,8 +949,6 @@ FROM
                         }
                     }
 
-                    return $data;
-
                     $csv = \Excel::create('stock_transaction', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
