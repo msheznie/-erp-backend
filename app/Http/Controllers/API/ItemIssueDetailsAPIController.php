@@ -891,7 +891,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if ($input['issueType'] == 1) {
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('financeCategoryMaster', 1)
-                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode']);
+                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 
                 if (array_key_exists('search', $input)) {
                     $search = $input['search'];
