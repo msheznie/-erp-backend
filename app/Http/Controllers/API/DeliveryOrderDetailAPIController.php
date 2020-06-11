@@ -10,6 +10,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\QuotationDetails;
@@ -292,7 +293,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
         $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
-
         $input['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
         $input['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
@@ -311,6 +311,29 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if ($input['wacValueLocal'] < 0 || $input['wacValueReporting'] < 0) {
             return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
+
+        if($deliveryOrderMaster->transactionCurrencyID == $deliveryOrderMaster->companyLocalCurrencyID){
+
+            $input['unitTransactionAmount'] = $input['wacValueLocal'];
+            $input['companyLocalAmount'] = $input['wacValueLocal'];
+
+        }elseif ($deliveryOrderMaster->transactionCurrencyID == $deliveryOrderMaster->companyReportingCurrencyID){
+
+            $input['unitTransactionAmount'] = $input['wacValueReporting'];
+            $input['companyReportingAmount'] = $input['wacValueReporting'];
+
+        }else{
+
+            $currencyConversion = Helper::currencyConversion($deliveryOrderMaster->companySystemID,$deliveryOrderMaster->companyLocalCurrencyID,$deliveryOrderMaster->transactionCurrencyID,$input['wacValueLocal']);
+            if(!empty($currencyConversion)){
+                $input['unitTransactionAmount'] = $currencyConversion['documentAmount'];
+            }
+        }
+
+        $amounts = $this->updateAmountsByTransactionAmount($input,$deliveryOrderMaster);
+        $input['companyLocalAmount'] = $amounts['companyLocalAmount'];
+        $input['companyReportingAmount'] = $amounts['companyReportingAmount'];
+
         $input['transactionCurrencyID'] = $deliveryOrderMaster->transactionCurrencyID;
         $input['transactionCurrencyER'] = $deliveryOrderMaster->transactionCurrencyER;
         $input['companyLocalCurrencyID'] = $deliveryOrderMaster->companyLocalCurrencyID;
@@ -318,12 +341,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['companyReportingCurrencyID'] = $deliveryOrderMaster->companyReportingCurrencyID;
         $input['companyReportingCurrencyER'] = $deliveryOrderMaster->companyReportingCurrencyER;
 
-        $input['unitTransactionAmount'] = 0;
         $input['discountPercentage'] = 0;
         $input['discountAmount'] = 0;
         $input['transactionAmount'] = 0;
-        $input['companyLocalAmount'] = 0;
-        $input['companyReportingAmount'] = 0;
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
 
