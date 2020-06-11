@@ -861,7 +861,8 @@ FROM
                     $document = collect($document)->pluck('documentSystemID');
 
 
-                    $output = DB::table("erp_itemledger")->selectRaw("erp_itemledger.itemLedgerAutoID,
+                    $output = DB::table("erp_itemledger")
+                                 ->selectRaw("erp_itemledger.itemLedgerAutoID,
                                     erp_itemledger.companySystemID,
                                     erp_itemledger.companyID,
                                     erp_itemledger.serviceLineCode,
@@ -887,7 +888,12 @@ FROM
                                     itemassigned.maximunQty,
                                     itemassigned.minimumQty,
                                     financeitemcategorysub.financeGLcodePL as AccountCode,
-                                    chartofaccounts.AccountDescription")
+                                    chartofaccounts.AccountDescription,
+                                    ticketmaster.ticketNo,
+                                    erp_itemissuemaster.issueRefNo,
+                                    customermaster.CustomerName,
+                                    contractmaster.ContractNumber
+                                    ")
                         ->join('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                         ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                         ->join('employees', 'erp_itemledger.createdUserID', '=', 'employees.empID')
@@ -896,11 +902,19 @@ FROM
                             $query->on('erp_itemledger.itemSystemCode', '=', 'itemassigned.itemCodeSystem');
                             $query->on('erp_itemledger.companyID', '=', 'itemassigned.companyID');
                         })
+                        ->leftJoin('erp_itemissuemaster', function ($query) {
+                            $query->on('erp_itemledger.documentSystemCode', '=', 'erp_itemissuemaster.itemIssueAutoID');
+                            $query->on('erp_itemledger.companySystemID', '=', 'erp_itemissuemaster.companySystemID');
+                            $query->on('erp_itemledger.documentSystemID', '=', 'erp_itemissuemaster.documentSystemID');
+                        })
                         ->leftJoin('financeitemcategorysub', function ($query) {
                             $query->on('itemassigned.financeCategoryMaster', '=', 'financeitemcategorysub.itemCategoryID');
                             $query->on('itemassigned.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID');
                         })
                         ->leftJoin('chartofaccounts', 'financeitemcategorysub.financeGLcodePL', '=', 'chartofaccounts.AccountCode')
+                        ->leftJoin('customermaster', 'erp_itemissuemaster.customerSystemID', '=', 'customermaster.customerCodeSystem')
+                        ->leftJoin('ticketmaster', 'erp_itemissuemaster.jobNo', '=', 'ticketmaster.ticketidAtuto')
+                        ->leftJoin('contractmaster', 'erp_itemissuemaster.contractUIID', '=', 'contractmaster.contractUID')
                         ->whereIN('erp_itemledger.companySystemID', $companyID)
                         ->whereIN('erp_itemledger.wareHouseSystemCode', $warehouse)
                         ->whereIN('erp_itemledger.documentSystemID', $document)
@@ -928,6 +942,10 @@ FROM
                             $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
                             $data[$x]['Account Code'] = $val->AccountCode;
                             $data[$x]['Account Desc'] = $val->AccountDescription;
+                            $data[$x]['Customer'] = $val->CustomerName;
+                            $data[$x]['Contract'] = $val->ContractNumber;
+                            $data[$x]['Jobs'] = $val->ticketNo;
+                            $data[$x]['Job/Ref No'] = $val->issueRefNo;
                         }
                     }
 
