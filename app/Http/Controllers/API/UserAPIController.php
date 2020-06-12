@@ -13,6 +13,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateUserAPIRequest;
 use App\Http\Requests\API\UpdateUserAPIRequest;
 use App\Models\EmployeeNavigation;
@@ -241,5 +242,14 @@ class UserAPIController extends AppBaseController
           return $this->sendError('', 500);
       }
 
+    }
+
+    public function getCurrentUserInfo(Request $request){
+        $output = Helper::getEmployeeInfo();
+        /*if($output->profilepic){
+            $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
+        }
+        $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
+        return $this->sendResponse($output, 'User retrieved successfully');
     }
 }
