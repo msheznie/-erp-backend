@@ -312,30 +312,31 @@
         <table class="table table-bordered table-striped" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-                <th></th>
-                <th colspan="3">Item</th>
-                <th>{{$entity->companyID}}</th>
-                <th>Manufacture</th>
-                <th>PDO</th>
-                <th>Item Description</th>
-                <th colspan="3">"Material PO no(enter 13 digits) including PO line
+                <th class="text-center">Item</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">{{$entity->companyID}}</th>
+                <th class="text-center">Manufacture</th>
+                <th class="text-center">PDO Item</th>
+                <th class="text-center">Item Description</th>
+                <th class="text-center" colspan="3">"Material PO no(enter 13 digits) including PO line
                     Item"
                 </th>
-                <th>GR Number</th>
+                <th>Batch / Serial Number</th>
             </tr>
             <tr class="theme-tr-head">
-                <th style="width: 2%">#</th>
-                <th style="width: 3%">DEL</th>
-                <th style="width: 4%">Bacl Load</th>
-                <th style="width: 4%">USED</th>
-                <th style="width: 5%">Item Code</th>
-                <th style="width: 5%">Part No</th>
-                <th style="width: 5%">Item SAP Number</th>
-                <th style="width: 16%"></th>
-                <th style="width: 6%"></th>
-                <th style="width: 1%"></th>
-                <th style="width: 4%"></th>
-                <th style="width: 5%"></th>
+                <th class="text-center" style="width: 2%"></th>
+                <th class="text-center" style="width: 3%">Delivered</th>
+                <th class="text-center" style="width: 4%">Back Load</th>
+               {{-- <th style="width: 4%">USED</th>--}}
+                <th class="text-center" style="width: 5%">Item Code</th>
+                <th class="text-center" style="width: 5%">Part No</th>
+                <th class="text-center" style="width: 5%">SAP Number</th>
+                <th class="text-center" style="width: 20%"></th>
+                <th class="text-center" style="width: 4%"></th>
+                <th class="text-center" style="width: 1%"></th>
+                <th class="text-center" style="width: 4%"></th>
+                <th class="text-center" style="width: 7%"></th>
             </tr>
             </thead>
             <tbody>
@@ -346,9 +347,9 @@
                     <td>
                         {{$item->backLoad}}
                     </td>
-                    <td>
+                    {{--<td>
                         {{$item->used}}
-                    </td>
+                    </td>--}}
                     <td>
                         {{$item->itemPrimaryCode}}
                     </td>
@@ -364,11 +365,11 @@
                         {{$item->itemDescription}}
                     </td>
                     <td>
-                        {{--<!--{{$item->pl10}}-->--}}
-                        {{$entity->purchaseOrderNo}}
+                        {{--{{$entity->purchaseOrderNo}}--}}
+                        {{$item->p1}}
                     </td>
                     <td>
-                        /
+                        {{$item->pl10}}
                     </td>
                     <td>
                         {{$item->pl3}}
