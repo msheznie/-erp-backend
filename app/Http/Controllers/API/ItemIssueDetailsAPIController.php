@@ -213,6 +213,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
         $input['itemIssueCode'] = $itemIssueMaster->itemIssueCode;
+        $input['p1'] =  $itemIssueMaster->purchaseOrderNo;
         $input['comments'] = null;
 
 
@@ -627,7 +628,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if(isset($input['deliveryPrint'])){
             if($input['deliveryPrint'] == 1){
-                $this->itemIssueDetailsRepository->update(array_only($input, ['backLoad','used','pl10','pl3','grvDocumentNO']), $id);
+                if(isset($input['p1'])) {
+                    $input['p1'] = intval($input['p1']);
+                }
+                $this->itemIssueDetailsRepository->update(array_only($input, ['backLoad','used','p1','pl10','pl3','grvDocumentNO']), $id);
                 return $this->sendResponse($itemIssueDetails->toArray(), $message);
             }
         }

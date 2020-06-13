@@ -442,7 +442,7 @@ class ItemIssueDetails extends Model
         'financeGLcodePLSystemID' => 'integer',
         'financeGLcodePL' => 'string',
         'includePLForGRVYN' => 'integer',
-        'p1' => 'integer',
+        'p1' => 'string',
         'p2' => 'integer',
         'p3' => 'integer',
         'p4' => 'integer',
@@ -456,6 +456,7 @@ class ItemIssueDetails extends Model
         'p12' => 'integer',
         'p13' => 'integer',
         'pl3' => 'integer',
+        'pl10' => 'string',
         'timesReferred' => 'integer'
     ];
 
