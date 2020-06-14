@@ -644,14 +644,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
         Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
 
-        Route::get('getCurrentUserInfo', function () {
-            $output = \Helper::getEmployeeInfo();
-            /*if($output->profilepic){
-                $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
-            }
-            $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
-            return $output;
-        });
+
+        Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
         Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
 
         Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
@@ -1733,33 +1727,6 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::resource('user_activity_logs', 'UserActivityLogAPIController');
 
     Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
-    Route::get('getBcryptPassword/{password}', function ($password) {
-        echo bcrypt($password);
-    });
-
-    Route::get('runQueue', function () {
-        //$master = ['documentSystemID' => 4, 'autoID' => 88198, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-        //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-
-        \App\Jobs\WarehouseItemUpdate::dispatch(57910);
-
-    });
-
-
-    Route::get('runQueuePushNotification', function () {
-        \App\Jobs\PushNotification::dispatch();
-    });
-
-    Route::get('runQueueSR', function () {
-        //$bt = \App\Models\CompanyFinanceYear::find(300);
-        //$job = \App\Jobs\CreateFinancePeriod::dispatch($bt);;
-        $date = '2019-09-10 23:59:59';
-        return \App\helper\Helper::dateAddTime($date); // date('Y-m-d H:i:s');
-    });
-
-    Route::get('/debug-sentry', function () {
-        throw new Exception('My first Sentry error!');
-    });
 
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
@@ -1796,7 +1763,7 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
 
 
-//Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+    //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
     Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
 

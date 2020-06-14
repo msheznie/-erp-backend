@@ -555,6 +555,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
                 $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                 $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
+                //$updateItem->p1 =  $itemIssueMaster->purchaseOrderNo;
                 $updateItem->save();
 
                 if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
