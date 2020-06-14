@@ -413,6 +413,7 @@ class DeliveryOrder extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
+        'selectedForCustomerInvoice',
         'timestamp'
     ];
 
@@ -483,6 +484,7 @@ class DeliveryOrder extends Model
         'modifiedUserID' => 'integer',
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
+        'selectedForCustomerInvoice' => 'integer',
         'timestamp' => 'datetime'
     ];
 

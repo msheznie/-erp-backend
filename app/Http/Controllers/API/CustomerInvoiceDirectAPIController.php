@@ -1114,13 +1114,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->where('isYesNO', 1)
             ->exists();
 
+        // check policy 42 is on for CI
+        $isEDOINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 42)
+            ->where('isYesNO', 1)
+            ->exists();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'customer' => $customer,
-            'isAICINVPolicyOn' => $isAICINVPolicyOn
+            'isAICINVPolicyOn' => $isAICINVPolicyOn,
+            'isEDOINVPolicyOn' => $isEDOINVPolicyOn
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1323,6 +1330,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (isset($AICINV->isYesNO) && $AICINV->isYesNO == 1) {
             $output['isPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 2, 'label' => 'Item Sales Invoice');
+            $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+        }
+
+        $EDOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 42)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        if ($EDOINV) {
+            $output['isEDOINVPolicyOn'] = 1;
+            $output['invoiceType'][] = array('value' => 3, 'label' => 'From Delivery Note');
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }

@@ -1805,6 +1805,10 @@ Route::group(['middleware' => 'tenant'], function () {
 
     Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
 
+    Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice');
+    Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice');
+    Route::post('storeInvoiceDetailFromDeliveryOrder','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromDeliveryOrder');
+
 
 });
 
