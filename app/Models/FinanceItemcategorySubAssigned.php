@@ -122,4 +122,9 @@ class FinanceItemcategorySubAssigned extends Model
     {
         return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodeRevenueSystemID','chartOfAccountSystemID');
     }
+
+    public function finance_item_category_sub(){
+        return $this->belongsTo('App\Models\FinanceItemCategorySub','itemCategorySubID','itemCategorySubID');
+    }
+
 }
