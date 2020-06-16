@@ -72,7 +72,7 @@ class NavigationUserGroupSetup extends Model
     protected $casts = [
         'UserGroupSetupID' => 'integer',
         'userGroupID' => 'integer',
-        'companyID' => 'string',
+        'companyID' => 'integer',
         'navigationMenuID' => 'integer',
         'description' => 'string',
         'masterID' => 'integer',

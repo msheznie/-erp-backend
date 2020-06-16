@@ -75,6 +75,9 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
                 $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$request->get('itemCategoryID'))
                                                     ->where('isActive',1)
+                                                    ->whereHas('finance_item_category_sub', function ($query){
+                                                        $query->where('isActive',1);
+                                                    })
                                                     ->whereIn('companySystemID',$companyID)
                                                     ->where('isAssigned',-1)
                                                     ->with(['finance_gl_code_bs','finance_gl_code_pl'])
@@ -83,6 +86,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             }else{
                 $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
                     ->with(['finance_gl_code_bs','finance_gl_code_pl'])
+                    ->where('isActive',1)
                     ->get();
             }
 

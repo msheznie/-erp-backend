@@ -284,6 +284,8 @@ class CustomerInvoiceItemDetails extends Model
         'sellingCostAfterMarginRpt',
         'customerCatalogDetailID',
         'customerCatalogMasterID',
+        'deliveryOrderDetailID',
+        'deliveryOrderID',
         'timestamp'
     ];
 
@@ -334,6 +336,8 @@ class CustomerInvoiceItemDetails extends Model
         'sellingCostAfterMarginRpt' => 'float',
         'customerCatalogDetailID'=> 'integer',
         'customerCatalogMasterID'=> 'integer',
+        'deliveryOrderDetailID'=> 'integer',
+        'deliveryOrderID'=> 'integer',
         'timestamp' => 'datetime'
     ];
 
