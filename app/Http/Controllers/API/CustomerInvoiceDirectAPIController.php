@@ -391,7 +391,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
-        if ($isPerforma == 2) {
+        if ($isPerforma == 2 || $isPerforma == 3) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
@@ -402,7 +402,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID','wareHouseSystemCode','serviceLineSystemID'));
-            if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+            if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3)) {
                 $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
 
                 if (!$wareHouse) {
@@ -620,7 +620,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-        if($isPerforma==2){
+        if($isPerforma==2 || $isPerforma == 3){
             $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"),DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
         }else{
             $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
@@ -732,7 +732,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
                 } else {
 
-                    if ($isPerforma == 2) {   // item sales invoice
+                    if ($isPerforma == 2 || $isPerforma == 3) {   // item sales invoice || From Delivery Note
 
                         $checkQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->where(function ($q) {
@@ -771,8 +771,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                             $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
 
-                            $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$updateItem->issueCostRpt);
-                            $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
+                            if($isPerforma == 2){
+                                $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$updateItem->issueCostRpt);
+                                $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
+                            }
 
                             /*margin calculation*/
                             if($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null){
@@ -1622,7 +1624,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        if($master->isPerforma == 2){
+        if($master->isPerforma == 2 || $master->isPerforma == 3){
             $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         }else{
             $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
@@ -1635,7 +1637,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        if($master->isPerforma == 2){
+        if($master->isPerforma == 2 || $master->isPerforma == 3){
             $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
             if (!empty($totalDetail)) {
                 $totalAmount = $totalDetail->amount;

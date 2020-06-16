@@ -365,7 +365,15 @@ class ItemLedgerInsert implements ShouldQueue
                     if($masterModel["documentSystemID"] == 3){
                         $query->where('itemFinanceCategoryID',1);
                     }
-                }])->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])->find($masterModel["autoID"]);
+//                    if($masterModel["documentSystemID"] == 20){
+//                        $query->where('isPerforma','!=',3);// from delivery note
+//                    }
+                }])
+                    ->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])
+                    ->when($masterModel["documentSystemID"] == 20, function ($q) {
+                        return $q->where('isPerforma','!=',3);
+                    })
+                    ->find($masterModel["autoID"]);
                 if ($masterRec) {
                     if ($masterRec[$docInforArr["childRelation"]]) {
                         $data = [];
