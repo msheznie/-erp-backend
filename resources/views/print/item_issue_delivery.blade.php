@@ -161,6 +161,9 @@
             width: 300px;
             height: 25px
         }
+        thead .vertical-align {
+            vertical-align : middle !important;
+        }
     </style>
 </head>
 <body>
@@ -312,32 +315,23 @@
         <table class="table table-bordered table-striped" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-                <th class="text-center">Item</th>
-                <th class="text-center">Quantity</th>
-                <th class="text-center">Quantity</th>
-                <th class="text-center">{{$entity->companyID}}</th>
-                <th class="text-center">Manufacture</th>
-                <th class="text-center">PDO Item</th>
-                <th class="text-center">Item Description</th>
-                <th class="text-center" colspan="3">"Material PO no(enter 13 digits) including PO line
+                <th class="text-center vertical-align"  style="width: 2%">Item</th>
+                <th class="text-center vertical-align"  style="width: 3%">Quantity Delivered</th>
+                <th class="text-center vertical-align"  style="width: 4%">Quantity Back Load</th>
+                <th class="text-center vertical-align"  style="width: 5%">{{$entity->companyID}} Item Code</th>
+                <th class="text-center vertical-align"  style="width: 5%">Manufacture Part No</th>
+                <th class="text-center vertical-align"  style="width: 5%">PDO Item SAP Number</th>
+                <th class="text-center vertical-align"  style="width: 18%">Item Description</th>
+                <th class="text-center vertical-align"   colspan="2" style="width: 7%">"Material PO no(enter 13 digits) including PO line
                     Item"
                 </th>
-                <th>Batch / Serial Number</th>
+                <th class="text-center vertical-align"  style="width: 4%">Work Order Number</th>
+                <th class="text-center vertical-align"  style="width: 7%">Batch / Serial Number</th>
             </tr>
-            <tr class="theme-tr-head">
-                <th class="text-center" style="width: 2%"></th>
-                <th class="text-center" style="width: 3%">Delivered</th>
-                <th class="text-center" style="width: 4%">Back Load</th>
-               {{-- <th style="width: 4%">USED</th>--}}
-                <th class="text-center" style="width: 5%">Item Code</th>
-                <th class="text-center" style="width: 5%">Part No</th>
-                <th class="text-center" style="width: 5%">SAP Number</th>
-                <th class="text-center" style="width: 20%"></th>
-                <th class="text-center" style="width: 4%"></th>
+            {{--<tr class="theme-tr-head">
                 <th class="text-center" style="width: 1%"></th>
                 <th class="text-center" style="width: 4%"></th>
-                <th class="text-center" style="width: 7%"></th>
-            </tr>
+            </tr>--}}
             </thead>
             <tbody>
             @foreach ($entity->details as $item)
@@ -364,11 +358,11 @@
                     <td>
                         {{$item->itemDescription}}
                     </td>
-                    <td>
+                    <td style="width: 5%">
                         {{--{{$entity->purchaseOrderNo}}--}}
                         {{$item->p1}}
                     </td>
-                    <td>
+                    <td style="width: 2%">
                         {{$item->pl10}}
                     </td>
                     <td>
