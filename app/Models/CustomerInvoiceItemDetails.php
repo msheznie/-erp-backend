@@ -284,6 +284,8 @@ class CustomerInvoiceItemDetails extends Model
         'sellingCostAfterMarginRpt',
         'customerCatalogDetailID',
         'customerCatalogMasterID',
+        'deliveryOrderDetailID',
+        'deliveryOrderID',
         'timestamp'
     ];
 
@@ -334,6 +336,8 @@ class CustomerInvoiceItemDetails extends Model
         'sellingCostAfterMarginRpt' => 'float',
         'customerCatalogDetailID'=> 'integer',
         'customerCatalogMasterID'=> 'integer',
+        'deliveryOrderDetailID'=> 'integer',
+        'deliveryOrderID'=> 'integer',
         'timestamp' => 'datetime'
     ];
 
@@ -356,6 +360,10 @@ class CustomerInvoiceItemDetails extends Model
 
     public function item_by(){
         return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
+    }
+
+    public function delivery_order(){
+        return $this->belongsTo('App\Models\DeliveryOrder','deliveryOrderID','deliveryOrderID');
     }
 
     

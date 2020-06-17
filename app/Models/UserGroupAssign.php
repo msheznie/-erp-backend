@@ -83,7 +83,7 @@ class UserGroupAssign extends Model
     protected $casts = [
         'id' => 'integer',
         'userGroupID' => 'integer',
-        'companyID' => 'string',
+        'companyID' => 'integer',
         'navigationMenuID' => 'integer',
         'description' => 'string',
         'masterID' => 'integer',

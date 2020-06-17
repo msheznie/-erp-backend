@@ -241,6 +241,8 @@ class DeliveryOrderDetail extends Model
         'remarks',
         'requestedQty',
         'balanceQty',
+        'fullyReceived',
+        'invQty',
         'timestamp'
     ];
 
@@ -292,6 +294,8 @@ class DeliveryOrderDetail extends Model
         'remarks' => 'string',
         'requestedQty'  => 'float',
         'balanceQty'  => 'float',
+        'fullyReceived' => 'integer',
+        'invQty' => 'float',
         'timestamp' => 'datetime'
     ];
 
