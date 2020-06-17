@@ -1017,18 +1017,8 @@ class ItemMasterAPIController extends AppBaseController
 
         $input = $request->all();
         $itemCode = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
-        $companyID = isset($input['companySystemID'])?$input['companySystemID']:0;
-
-        $isGroup = Helper::checkIsCompanyGroup($companyID);
-
-        if ($isGroup) {
-            $companies = Helper::getGroupCompany($companyID);
-        } else {
-            $companies = [$companyID];
-        }
 
         $supplierCatalog = SupplierCatalogMaster::where('isActive',1)
-            ->whereIn('companySystemID',$companies)
             ->with(['supplier','company','data'=> function($query) use($itemCode){
                 $query->with(['uom_default','local_currency'])
                     ->where('itemCodeSystem',$itemCode);
