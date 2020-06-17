@@ -493,7 +493,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits']);
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $message = "Item updated successfully";
@@ -679,6 +679,37 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         $customerInvoiceItemDetails->delete();
 
+        /*for Customer Invoice type -> From Delivery Note*/
+
+        if($customerInvoice->isPerforma == 3){
+
+            if (!empty($customerInvoiceItemDetails->deliveryOrderDetailID) && !empty($customerInvoiceItemDetails->deliveryOrderID)) {
+                $updateDO = DeliveryOrder::find($customerInvoiceItemDetails->deliveryOrderID)
+                    ->update([
+                        'selectedForCustomerInvoice' => 0,
+                        'closedYN' => 0
+                    ]);
+
+
+                //checking the fullyOrdered or partial in po
+                $detailSum = CustomerInvoiceItemDetails::select(DB::raw('COALESCE(SUM(qtyIssuedDefaultMeasure),0) as totalQty'))
+                    ->where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
+                    ->first();
+
+                $updatedQuoQty = $detailSum['totalQty'];
+
+                if ($updatedQuoQty == 0) {
+                    $fullyReceived = 0;
+                } else {
+                    $fullyReceived = 1;
+                }
+
+                $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
+                    ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
+            }
+
+        }
+
         return $this->sendResponse($id, 'Customer Invoice Item Details deleted successfully');
     }
 
@@ -688,7 +719,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $id = $input['custInvoiceDirectAutoID'];
 
         $items = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
-            ->with(['uom_default', 'uom_issuing','item_by'])
+            ->with(['uom_default', 'uom_issuing','item_by','delivery_order'])
             ->get();
 
 
@@ -796,6 +827,10 @@ WHERE
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
+
+                if($newValidation['noQty'] == 0){
+                    return $this->sendError('Invoice Quantity should be greater than zero', 500);
+                }
             }
         }
 
@@ -804,14 +839,14 @@ WHERE
         foreach ($input['detailTable'] as $itemExist) {
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
-                $QuoDetailExist = CustomerInvoiceItemDetails::select(DB::raw('deliveryOrderDetailID,itemPrimaryCode'))
+                $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
-                    ->where('deliveryOrderDetailID', $itemExist['deliveryOrderDetailID'])
+                    ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
-                if (!empty($QuoDetailExist)) {
-                    foreach ($QuoDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " all ready exist";
+                if (!empty($doDetailExist)) {
+                    foreach ($doDetailExist as $row) {
+                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -874,14 +909,13 @@ WHERE
                 /*pending approval checking*/
                 // check the item pending pending for approval in other delivery orders
 
-                $checkWhether = DeliveryOrder::where('custInvoiceDirectAutoID', '!=', $deliveryOrder->custInvoiceDirectAutoID)
-                    ->where('companySystemID', $row['companySystemID'])
+                $checkWhether = DeliveryOrder::where('companySystemID', $row['companySystemID'])
                     ->select([
-                        'erp_delivery_order.custInvoiceDirectAutoID',
+                        'erp_delivery_order.deliveryOrderID',
                         'erp_delivery_order.deliveryOrderCode'
                     ])
                     ->groupBy(
-                        'erp_delivery_order.custInvoiceDirectAutoID',
+                        'erp_delivery_order.deliveryOrderID',
                         'erp_delivery_order.companySystemID'
                     )
                     ->whereHas('detail', function ($query) use ($row) {
@@ -891,7 +925,7 @@ WHERE
                     ->first();
 
                 if (!empty($checkWhether)) {
-                    return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemPrimaryCode'].". Please check again.", 500);
                 }
 
 
@@ -920,7 +954,7 @@ WHERE
                 /* approved=0*/
 
                 if (!empty($checkWhetherItemIssueMaster)) {
-                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemPrimaryCode'].". Please check again.", 500);
                 }
 
                 $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
@@ -947,10 +981,11 @@ WHERE
                 /* approved=0*/
 
                 if (!empty($checkWhetherStockTransfer)) {
-                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemPrimaryCode'].". Please check again.", 500);
                 }
 
-                $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $row['companySystemID'])
+                $checkWhetherInvoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $deliveryOrder->custInvoiceDirectAutoID)
+                    ->where('companySystemID', $row['companySystemID'])
                     ->select([
                         'erp_custinvoicedirect.custInvoiceDirectAutoID',
                         'erp_custinvoicedirect.bookingInvCode',
@@ -973,7 +1008,7 @@ WHERE
                 /* approved=0*/
 
                 if (!empty($checkWhetherInvoice)) {
-                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemPrimaryCode'].". Please check again.", 500);
                 }
 
 
@@ -1091,13 +1126,13 @@ WHERE
 //                            $invDetail_arr['balanceQty'] = $balanceQty;
 //                            $invDetail_arr['requestedQty'] = $new['requestedQty'];
 
-                            $invDetail_arr['sellingCost'] = $new['unitTransactionAmount'];
-                            $invDetail_arr['marginPercentage'] = $new['discountPercentage'];
-                            if ($invDetail_arr['marginPercentage'] != 0){
-                                $invDetail_arr['sellingCostAfterMargin'] = ($invDetail_arr['sellingCost']) + ($invDetail_arr['sellingCost']*$invDetail_arr['marginPercentage']/100);
+                            $invDetail_arr['marginPercentage'] = 0;
+                            if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
+                                $invDetail_arr['sellingCost'] = ($new['unitTransactionAmount']) - ($new['unitTransactionAmount']*$new['discountPercentage']/100);
                             }else{
-                                $invDetail_arr['sellingCostAfterMargin'] = $invDetail_arr['sellingCost'];
+                                $invDetail_arr['sellingCost'] = $new['unitTransactionAmount'];
                             }
+                            $invDetail_arr['sellingCostAfterMargin'] = $invDetail_arr['sellingCost'];
 
                             $costs = $this->updateCostBySellingCost($invDetail_arr,$customerInvoioce);
                             $invDetail_arr['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
@@ -1171,6 +1206,26 @@ WHERE
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
         
+    }
+
+    public function getDeliveryOrderRecord(Request $request){
+
+        $input = $request->all();
+        $id = $input['deliveryOrderID'];
+        $companySystemID = $input['companySystemID'];
+        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+            $query->with(['quotation','uom_default','uom_issuing']);
+        },'approved_by' => function($query) use($companySystemID){
+            $query->where('companySystemID',$companySystemID)
+                ->where('documentSystemID',71)
+            ->with(['employee']);
+        }])->find($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');
     }
 
 

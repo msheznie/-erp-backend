@@ -170,4 +170,19 @@ class SupplierCatalogMaster extends Model
         return $this->hasMany('App\Models\SupplierCatalogDetail', 'supplierCatalogMasterID', 'supplierCatalogMasterID');
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function data()
+    {
+        return $this->belongsTo('App\Models\SupplierCatalogDetail', 'supplierCatalogMasterID', 'supplierCatalogMasterID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
 }

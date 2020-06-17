@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
+use App\Models\DeliveryOrder;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -35,6 +36,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMasterRefferedBack;
+use App\Models\SupplierCatalogMaster;
 use App\Models\Unit;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
@@ -1009,5 +1011,70 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function getSupplierByCatalogItemDetail(Request $request) {
+
+        $input = $request->all();
+        $itemCode = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
+        $companyID = isset($input['companySystemID'])?$input['companySystemID']:0;
+
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
+
+        if ($isGroup) {
+            $companies = Helper::getGroupCompany($companyID);
+        } else {
+            $companies = [$companyID];
+        }
+
+        $supplierCatalog = SupplierCatalogMaster::where('isActive',1)
+            ->whereIn('companySystemID',$companies)
+            ->with(['supplier','company','data'=> function($query) use($itemCode){
+                $query->with(['uom_default','local_currency'])
+                    ->where('itemCodeSystem',$itemCode);
+            }])
+            ->whereHas('details', function ($query) use($itemCode){
+                $query->where('itemCodeSystem',$itemCode)
+                    ->where(function ($q){
+                        $q->whereNull('isDeleted')
+                            ->orWhere('isDeleted',0);
+                    });
+            })
+        ->paginate(15);
+        return $this->sendResponse($supplierCatalog, 'Data retrieved successfully');
+
+//        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+//            $sort = 'asc';
+//        } else {
+//            $sort = 'desc';
+//        }
+        //        $search = $request->input('search.value');
+//        if ($search) {
+//            $search = str_replace("\\", "\\\\", $search);
+//            $supplierCatalog = $supplierCatalog->where(function ($query) use ($search) {
+//                $query->where('catalogID', 'LIKE', "%{$search}%")
+//                    ->orWhere('catalogName', 'LIKE', "%{$search}%")
+//                    ->orWhereHas('supplier', function($q) use ($search){
+//                        $q->where('primarySupplierCode', 'LIKE', "%{$search}%")
+//                            ->orWhere('supplierName', 'LIKE', "%{$search}%");
+//                    });
+//            });
+//        }
+//
+//
+//        return \DataTables::eloquent($supplierCatalog)
+//            ->addColumn('Actions', 'Actions', "Actions")
+//            ->order(function ($query) use ($input) {
+//                if (request()->has('order')) {
+//                    if ($input['order'][0]['column'] == 0) {
+//                        $query->orderBy('supplierCatalogMasterID', $input['order'][0]['dir']);
+//                    }
+//                }
+//            })
+//            ->addIndexColumn()
+//            ->with('orderCondition', $sort)
+//            ->make(true);
+
+
     }
 }
