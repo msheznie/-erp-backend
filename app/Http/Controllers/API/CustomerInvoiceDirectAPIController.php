@@ -1899,9 +1899,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $line_rentalPeriod = false;
         $line_po_detail = false;
         $footerDate = true;
-
-
-        $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder, invoiceQty, unitCost FROM (SELECT
+        $temp = [];
+        if ($master->isPerforma == 1) {
+            $temp = DB::select("SELECT 	myStdTitle,sumofsumofStandbyAmount,sortOrder, invoiceQty, unitCost FROM (SELECT
                             performaMasterID ,companyID, invoiceQty, unitCost
                         FROM
                             erp_custinvoicedirectdet 
@@ -1910,6 +1910,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
                             AND erp_custinvoicedirectdet.companyID = performatemp.companyID
                             WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
+        }
         $customerInvoice->is_po_in_line = false;
         switch ($companySystemID) {
             case 7:
