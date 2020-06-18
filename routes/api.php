@@ -1779,6 +1779,8 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord');
     Route::get('getSupplierCatalog','ItemMasterAPIController@getSupplierByCatalogItemDetail');
 
+    Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
+
 
 });
 
