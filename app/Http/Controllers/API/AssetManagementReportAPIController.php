@@ -101,7 +101,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                         'typeID' => 'required'
                     ]);
-                }
+                }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'assetCategory' => 'required',
+                    'typeID' => 'required'
+                ]);
+            }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -193,7 +200,6 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
 
-
                     return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
 
@@ -255,6 +261,16 @@ class AssetManagementReportAPIController extends AppBaseController
                     $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
                     $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
                     return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period']);
+                }
+
+                if($request->reportTypeID == 'ARGD'){ // Asset Register Group Detail
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+
+                    $output = $this->getAssetRegisterDetail($request);
+
+                    return $this->getAssetRegisterGroupedDetailFinalArray($output);
+
                 }
 
                 break;
@@ -897,8 +913,213 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 }
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $output = $this->getAssetRegisterDetail($request);
+                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    $outputArr = $final['reportData'];
 
+                    $x = 0;
+                    if (!empty($outputArr)) {
+
+                        foreach ($outputArr as $masterKey => $masterVal) {
+                            $data[$x]['Cost GL'] = $masterKey;
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = '';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = '';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = 'Cost GL';
+                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                            $data[$x]['Type'] = 'Type';
+                            $data[$x]['Segment'] = 'Segment';
+                            $data[$x]['category'] = 'Finance Category';
+                            $data[$x]['FA Code'] = 'FA Code';
+                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                            $data[$x]['Serial Number'] = 'Serial Number';
+                            $data[$x]['Asset Description'] = 'Asset Description';
+                            $data[$x]['DEP %'] = 'DEP %';
+                            $data[$x]['Date Aquired'] = 'Date Aquired';
+                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = 'Local Amount';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+
+                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                            $x++;
+
+
+                            $COSTUNIT = 0;
+                            $depAmountLocal = 0;
+                            $localnbv = 0;
+                            $costUnitRpt = 0;
+                            $depAmountRpt = 0;
+                            $rptnbv = 0;
+
+                            foreach ($masterVal as $mainAsset => $assetArray) {
+
+                                foreach ($assetArray as $value){
+
+                                    $x++;
+
+                                    $data[$x]['Cost GL'] = $value->COSTGLCODE;
+                                    $data[$x]['Acc Dep GL'] = $value->ACCDEPGLCODE;
+                                    $data[$x]['Type'] = $value->typeDes;
+                                    $data[$x]['Segment'] = $value->ServiceLineDes;
+                                    $data[$x]['category'] = $masterKey;
+                                    $data[$x]['FA Code'] = $value->faCode;
+                                    $data[$x]['Grouped YN'] = $value->groupbydesc;
+                                    $data[$x]['Serial Number'] = $value->faUnitSerialNo;
+                                    $data[$x]['Asset Description'] = $value->assetDescription;
+                                    $data[$x]['DEP %'] = round($value->DEPpercentage, 2);
+                                    $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
+                                    $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
+
+                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
+                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
+                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
+                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
+                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
+                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+
+                                    if(!$value->isHeader ){
+                                        $COSTUNIT += $value->COSTUNIT;
+                                        $depAmountLocal += $value->depAmountLocal;
+                                        $localnbv += $value->localnbv;
+                                        $costUnitRpt += $value->costUnitRpt;
+                                        $depAmountRpt += $value->depAmountRpt;
+                                        $rptnbv += $value->rptnbv;
+
+                                    }
+                                }
+
+
+                                $x++;
+                                $data[$x]['Cost GL'] = '';
+                                $data[$x]['Acc Dep GL'] = '';
+                                $data[$x]['Type'] = '';
+
+                                $data[$x]['Segment'] = '';
+                                $data[$x]['category'] = '';
+                                $data[$x]['FA Code'] = '';
+                                $data[$x]['Grouped YN'] = '';
+                                $data[$x]['Serial Number'] = '';
+                                $data[$x]['Asset Description'] = '';
+                                $data[$x]['DEP %'] = '';
+                                $data[$x]['Date Aquired'] = '';
+                                $data[$x]['Dep Start Date'] = '';
+                                $data[$x]['Local Amount unitcost'] = '';
+                                $data[$x]['Local Amount accDep'] = '';
+                                $data[$x]['Local Amount net Value'] = '';
+                                $data[$x]['Rpt Amount unit cost'] = '';
+                                $data[$x]['Rpt Amount acc dep'] = '';
+                                $data[$x]['Rpt Amount acc net value'] = '';
+
+                            }
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                            $data[$x]['Local Amount net Value'] = $localnbv;
+                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+                            $x++;
+
+                        }
+
+                        $x++;
+
+                        $data[$x]['Cost GL'] = '';
+                        $data[$x]['Acc Dep GL'] = '';
+                        $data[$x]['Type'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['category'] = '';
+                        $data[$x]['FA Code'] = '';
+                        $data[$x]['Grouped YN'] = '';
+                        $data[$x]['Serial Number'] = '';
+                        $data[$x]['Asset Description'] = '';
+                        $data[$x]['DEP %'] = '';
+                        $data[$x]['Date Aquired'] = '';
+                        $data[$x]['Dep Start Date'] = 'Total';
+                        $data[$x]['Local Amount unitcost'] =  $final['COSTUNIT'];
+                        $data[$x]['Local Amount accDep'] =  $final['depAmountLocal'];
+                        $data[$x]['Local Amount net Value'] =  $final['localnbv'];
+                        $data[$x]['Rpt Amount unit cost'] =  $final['costUnitRpt'];
+                        $data[$x]['Rpt Amount acc dep'] =  $final['depAmountRpt'];
+                        $data[$x]['Rpt Amount acc net value'] =  $final['rptnbv'];
+                    }
+
+//                    return $data;
+
+                    $csv = \Excel::create('Asset_Register_Group_detail_Report', function ($excel) use ($data) {
+                        $excel->sheet('asset register grouped', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true, false);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                }
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             case 'AMAA': //Asset Additions
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
@@ -3088,5 +3309,136 @@ WHERE
 
         $output = \DB::select($query);
         return ['data' => $output, 'period' => $periodArr];
+    }
+
+    private function getAssetRegisterGroupedDetailFinalArray($output){
+        $finalArr = [];
+        $totalArray = [];
+
+        $totCOSTUNIT = 0;
+        $totcostUnitRpt = 0;
+        $totdepAmountLocal = 0;
+        $totdepAmountRpt = 0;
+        $totlocalnbv = 0;
+        $totrptnbv = 0;
+
+        if ($output) {
+
+            foreach ($output as $val) {     // for getting final toatal
+                $totlocalnbv += $val->localnbv;
+                $totCOSTUNIT += $val->COSTUNIT;
+                $totcostUnitRpt += $val->costUnitRpt;
+                $totdepAmountRpt += $val->depAmountRpt;
+                $totdepAmountLocal += $val->depAmountLocal;
+                $totrptnbv += $val->rptnbv;
+            }
+
+            $outputArr= collect($output)->groupBy(['financeCatDescription','groupbydesc']);
+
+            $subkeys = [];
+            foreach ($outputArr as $key => $masterArray){
+                $subkeys[$key] = $masterArray->keys();
+            }
+
+            // setting final array
+            foreach ($subkeys as $key => $value){
+
+                foreach ($value as $v){
+
+                    foreach ($output as $x){
+                        $x->isHeader = false;
+                        if($v != '' && $v == $x->faCode){
+
+                            $finalArr[$key][$v][] = $x;     // get main asset detail master code empty
+
+                            $finalArr[$key][$v][] = clone $x;   // duplicate main asset detail
+
+                        }elseif($key==$x->financeCatDescription && $v==$x->groupbydesc){
+
+                            if($v == ''  && in_array($x->faCode,$value->toArray())){    // check main asset details are on emty master code array
+                                continue;                       // remove main asset detail from master code empty
+                            }
+                            $finalArr[$key][$v][] = $x;
+                        }
+
+                    }
+                }
+
+            }
+
+            // get main asset wise sum
+            foreach ( $finalArr as $masterKey=> $value){
+
+
+                foreach ($value as $key => $val) {
+
+                    if($key != '' ){
+
+                        $COSTUNIT = 0;
+                        $costUnitRpt = 0;
+                        $depAmountLocal = 0;
+                        $depAmountRpt = 0;
+                        $localnbv = 0;
+                        $rptnbv = 0;
+                        foreach ($val as $no => $array){
+
+                            if($array->groupbydesc == '' && $no==0) {
+                                continue;
+                            }
+                            $COSTUNIT +=  $array->COSTUNIT;
+                            $costUnitRpt +=  $array->costUnitRpt;
+                            $depAmountLocal +=  $array->depAmountLocal;
+                            $depAmountRpt +=  $array->depAmountRpt;
+                            $localnbv +=  $array->localnbv;
+                            $rptnbv +=  $array->rptnbv;
+
+
+                        }
+
+                        $totalArray[$masterKey][$key]['COSTUNIT'] = $COSTUNIT;
+                        $totalArray[$masterKey][$key]['costUnitRpt'] = $costUnitRpt;
+                        $totalArray[$masterKey][$key]['depAmountLocal'] = $depAmountLocal;
+                        $totalArray[$masterKey][$key]['depAmountRpt'] = $depAmountRpt;
+                        $totalArray[$masterKey][$key]['localnbv'] = $localnbv;
+                        $totalArray[$masterKey][$key]['rptnbv'] = $rptnbv;
+
+                    }
+
+                }
+
+            }
+
+            // set main asset wise sum
+            foreach ($totalArray as $masterKey => $masterValue){
+
+                foreach ($masterValue as $mainAsset => $sumArray){
+
+
+                    if (isset($finalArr[$masterKey][$mainAsset][0]) && $finalArr[$masterKey][$mainAsset][0]->groupTO ==''){
+
+                        $finalArr[$masterKey][$mainAsset][0]->COSTUNIT = isset($totalArray[$masterKey][$mainAsset]['COSTUNIT'])?$totalArray[$masterKey][$mainAsset]['COSTUNIT']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->costUnitRpt = isset($totalArray[$masterKey][$mainAsset]['costUnitRpt'])?$totalArray[$masterKey][$mainAsset]['costUnitRpt']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->depAmountLocal = isset($totalArray[$masterKey][$mainAsset]['depAmountLocal'])?$totalArray[$masterKey][$mainAsset]['depAmountLocal']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->depAmountRpt = isset($totalArray[$masterKey][$mainAsset]['depAmountRpt'])?$totalArray[$masterKey][$mainAsset]['depAmountRpt']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->localnbv = isset($totalArray[$masterKey][$mainAsset]['localnbv'])?$totalArray[$masterKey][$mainAsset]['localnbv']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->rptnbv = isset($totalArray[$masterKey][$mainAsset]['rptnbv'])?$totalArray[$masterKey][$mainAsset]['rptnbv']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->isHeader = true;
+                    }
+
+
+                }
+            }
+
+        }
+
+        return array(
+            'reportData' => $finalArr,
+            'localnbv' => $totlocalnbv,
+            'rptnbv' => $totrptnbv,
+            'COSTUNIT' => $totCOSTUNIT,
+            'costUnitRpt' => $totcostUnitRpt,
+            'depAmountLocal' => $totdepAmountLocal,
+            'depAmountRpt' => $totdepAmountRpt
+        );
     }
 }
