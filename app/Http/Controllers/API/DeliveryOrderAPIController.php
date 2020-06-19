@@ -7,13 +7,19 @@ use App\helper\inventory;
 use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
@@ -164,6 +170,8 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
 
+
+
         //deliveryOrderCode
         $lastSerial = DeliveryOrder::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -189,6 +197,11 @@ class DeliveryOrderAPIController extends AppBaseController
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+
+        // check date within financial period
+        if (!(($input['deliveryOrderDate'] >= $input['FYPeriodDateFrom']) && ($input['deliveryOrderDate'] <= $input['FYPeriodDateTo']))) {
+            return $this->sendError('Document date should be between financial period start date and end date',500);
+        }
 
         $companyCurrency = Helper::companyCurrency($input['companySystemID']);
         $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
@@ -995,6 +1008,118 @@ WHERE
         }
 
         return $this->sendResponse($data->toArray(), 'Delivery Order retrieved successfully');
+    }
+
+    public function deliveryOrderReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $deliveryOrder= DeliveryOrder::find($deliveryOrderID);
+        $emails = array();
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        if ($deliveryOrder->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this delivery order. it is already partially approved');
+        }
+
+        if ($deliveryOrder->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this delivery order. it is already fully approved');
+        }
+
+        if ($deliveryOrder->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this delivery order. it is not confirmed');
+        }
+
+        // updating fields
+        $deliveryOrder->confirmedYN = 0;
+        $deliveryOrder->confirmedByEmpSystemID = null;
+        $deliveryOrder->confirmedByEmpID = null;
+        $deliveryOrder->confirmedByName = null;
+        $deliveryOrder->confirmedDate = null;
+        $deliveryOrder->RollLevForApp_curr = 1;
+        $deliveryOrder->save();
+
+        $employee = Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $deliveryOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $deliveryOrder->deliveryOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $deliveryOrder->deliveryOrderCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $deliveryOrder->companySystemID)
+            ->where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+            ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $deliveryOrder->companySystemID)
+                    ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                    ->first();
+
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                /* if ($companyDocument['isServiceLineApproval'] == -1) {
+                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                 }*/
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $deliveryOrder->companySystemID)
+            ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
+    }
+
+    function getInvoiceDetailsForDO(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $detail = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)
+            ->select(DB::raw('*,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as totTransactionAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as totRptAmount'))
+            ->with(['master'=> function($query){
+                $query->with(['customer','report_currency','currency']);
+            }])
+            ->groupBy('custInvoiceDirectAutoID')
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 
 

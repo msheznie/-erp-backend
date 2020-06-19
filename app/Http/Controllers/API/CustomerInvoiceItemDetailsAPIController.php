@@ -707,6 +707,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
                     ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
             }
+            $this->updateDOInvoicedStatus($customerInvoiceItemDetails->deliveryOrderID);
 
         }
 
@@ -788,14 +789,15 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 	erp_delivery_order.serviceLineSystemID,
 	"" AS isChecked,
 	"" AS noQty,
-	IFNULL(invdetails.invTakenQty,0) as invTakenQty 
+	IFNULL(sum(invdetails.invTakenQty),0) as invTakenQty 
 FROM
 	erp_delivery_order_detail dodetail
 	INNER JOIN erp_delivery_order ON dodetail.deliveryOrderID = erp_delivery_order.deliveryOrderID
 	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,deliveryOrderDetailID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY customerItemDetailID, itemCodeSystem ) AS invdetails ON dodetail.deliveryOrderDetailID = invdetails.deliveryOrderDetailID 
 WHERE
 	dodetail.deliveryOrderID = ' . $id . ' 
-	AND fullyReceived != 2 ');
+	AND fullyReceived != 2 
+	GROUP BY dodetail.deliveryOrderDetailID');
 
         return $this->sendResponse($detail, 'Delivery order Details retrieved successfully');
     }
@@ -1197,6 +1199,8 @@ WHERE
                         ]);
                 }
 
+                $this->updateDOInvoicedStatus($new['deliveryOrderID']);
+
             }
 
             DB::commit();
@@ -1226,6 +1230,23 @@ WHERE
         }
 
         return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');
+    }
+
+    private function updateDOInvoicedStatus($deliveryOrderID){
+
+        $status = 0;
+        $invQty = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)->sum('qtyIssuedDefaultMeasure');
+
+        if($invQty!=0) {
+            $doQty = DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->sum('qtyIssuedDefaultMeasure');
+            if($invQty == $doQty){
+                $status = 2;    // fully invoiced
+            }else{
+                $status = 1;    // partially invoiced
+            }
+        }
+        return DeliveryOrder::where('deliveryOrderID',$deliveryOrderID)->update(['invoiceStatus'=>$status]);
+
     }
 
 

@@ -366,5 +366,9 @@ class CustomerInvoiceItemDetails extends Model
         return $this->belongsTo('App\Models\DeliveryOrder','deliveryOrderID','deliveryOrderID');
     }
 
+    public function master(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
+    }
+
     
 }
