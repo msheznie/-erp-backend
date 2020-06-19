@@ -2722,6 +2722,9 @@ class Helper
     public static function getCurrencyDecimalPlace($currencyID)
     {
         $decimal = Models\CurrencyMaster::where('currencyID', $currencyID)->first();
+        if(empty($decimal)){
+            $decimal['DecimalPlaces'] = 2;
+        }
         return $decimal['DecimalPlaces'];
     }
 

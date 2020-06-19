@@ -29,6 +29,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CustomValidation;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -128,7 +129,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $this->bookInvSuppMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppMasters = $this->bookInvSuppMasterRepository->all();
 
-        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Book Inv Supp Masters retrieved successfully');
+        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Supplier Invoice Masters retrieved successfully');
     }
 
     /**
@@ -421,6 +422,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
+        }
+
+        $confirm = CustomValidation::validation(11,$bookInvSuppMaster,2,$input);
+        if (!$confirm["success"]) {
+            return $this->sendError($confirm["message"],500, array('type' => 'already_confirmed'));
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
@@ -936,12 +942,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Supplier Invoice Master not found');
+        }
+
+        $confirm = CustomValidation::validation(11,$bookInvSuppMaster,2,[]);
+        if (!$confirm["success"]) {
+            return $this->sendError($confirm["message"],500);
         }
 
         $bookInvSuppMaster->delete();
 
-        return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
+        return $this->sendResponse($id, 'Supplier Invoice Master deleted successfully');
     }
 
     public function getInvoiceMasterRecord(Request $request)

@@ -707,12 +707,14 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
-        Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
-        Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
+        // Supplier Invoice
+        Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController',['only' => ['store', 'show', 'update']]);
+        Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController', ['except' => ['index','store']]);
+        Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController', ['except' => ['index']]);
         Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
-        Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
+
         Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
         Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');

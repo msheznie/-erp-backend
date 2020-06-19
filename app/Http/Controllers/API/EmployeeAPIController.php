@@ -414,6 +414,7 @@ class EmployeeAPIController extends AppBaseController
             $personal_details = [
                 'empID' => $employee->empID,
                 'CompanyName' => isset($employee->company->CompanyName)?$employee->company->CompanyName:null,
+                'empCompanySystemID' => $employee->empCompanySystemID,
                 'empFullName' => $employee->empFullName,
                 'empEmail' => $employee->empEmail,
                 'empTelOffice' => $employee->empTelOffice,

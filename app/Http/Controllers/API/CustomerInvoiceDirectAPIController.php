@@ -275,8 +275,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             return $this->sendResponse('e', 'Document date should be between financial period start date and end date');
         }
-
-
     }
 
     /**
