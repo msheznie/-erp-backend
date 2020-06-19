@@ -707,6 +707,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
                     ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
             }
+            $this->updateDOInvoicedStatus($customerInvoiceItemDetails->deliveryOrderID);
 
         }
 
@@ -1198,6 +1199,8 @@ WHERE
                         ]);
                 }
 
+                $this->updateDOInvoicedStatus($new['deliveryOrderID']);
+
             }
 
             DB::commit();
@@ -1227,6 +1230,23 @@ WHERE
         }
 
         return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');
+    }
+
+    private function updateDOInvoicedStatus($deliveryOrderID){
+
+        $status = 0;
+        $invQty = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)->sum('qtyIssuedDefaultMeasure');
+
+        if($invQty!=0) {
+            $doQty = DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->sum('qtyIssuedDefaultMeasure');
+            if($invQty == $doQty){
+                $status = 2;    // fully invoiced
+            }else{
+                $status = 1;    // partially invoiced
+            }
+        }
+        return DeliveryOrder::where('deliveryOrderID',$deliveryOrderID)->update(['invoiceStatus'=>$status]);
+
     }
 
 

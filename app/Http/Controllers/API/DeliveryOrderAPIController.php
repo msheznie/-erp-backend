@@ -12,6 +12,8 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
@@ -1102,6 +1104,22 @@ WHERE
             ->delete();
 
         return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
+    }
+
+    function getInvoiceDetailsForDO(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $detail = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)
+            ->select(DB::raw('*,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as totTransactionAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as totRptAmount'))
+            ->with(['master'=> function($query){
+                $query->with(['customer','report_currency','currency']);
+            }])
+            ->groupBy('custInvoiceDirectAutoID')
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 
 
