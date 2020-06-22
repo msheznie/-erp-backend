@@ -740,16 +740,21 @@ class DeliveryOrderAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('salesPersonID', $input)) {
-            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $deliveryOrder->where('salesPersonID', $input['salesPersonID']);
+        if (array_key_exists('orderType', $input)) {
+            if ($input['orderType'] && !is_null($input['orderType'])) {
+                $deliveryOrder->where('orderType', $input['orderType']);
             }
         }
 
         $search = $request->input('search.value');
         if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $deliveryOrder = $deliveryOrder->where(function ($query) use ($search) {
-                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%");
+                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                ->orWhereHas('customer', function ($q) use ($search){
+                    $q->where('CustomerName', 'LIKE', "%{$search}%");
+                });
             });
         }
 
@@ -1113,11 +1118,11 @@ WHERE
         $deliveryOrderID = $input['deliveryOrderID'];
 
         $detail = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)
-            ->select(DB::raw('*,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as totTransactionAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as totRptAmount'))
+//            ->select(DB::raw('*,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as totTransactionAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as totRptAmount'))
             ->with(['master'=> function($query){
-                $query->with(['customer','report_currency','currency']);
-            }])
-            ->groupBy('custInvoiceDirectAutoID')
+                $query->with(['currency']);
+            },'delivery_order_detail','uom_issuing'])
+//            ->groupBy('custInvoiceDirectAutoID')
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
