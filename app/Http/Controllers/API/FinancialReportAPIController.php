@@ -1155,6 +1155,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Narration'] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
@@ -2169,6 +2170,7 @@ class FinancialReportAPIController extends AppBaseController
                                     erp_generalledger.documentCode,
                                     erp_generalledger.documentDate,
                                     erp_generalledger.glCode,
+                                    erp_generalledger.documentNarration,
                                     If ( documentLocalAmount> 0,documentLocalAmount, 0 ) as localDebit,
                                     If ( documentLocalAmount> 0,0, documentLocalAmount*-1 ) as localCredit,
                                     If ( documentRptAmount> 0,documentRptAmount, 0 ) as rptDebit,
