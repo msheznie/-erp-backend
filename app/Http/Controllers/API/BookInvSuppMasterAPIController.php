@@ -424,9 +424,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        $confirm = CustomValidation::validation(11,$bookInvSuppMaster,2,$input);
-        if (!$confirm["success"]) {
-            return $this->sendError($confirm["message"],500, array('type' => 'already_confirmed'));
+        $customValidation = CustomValidation::validation(11,$bookInvSuppMaster,2,$input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"],500, array('type' => 'already_confirmed'));
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);

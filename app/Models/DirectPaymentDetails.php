@@ -404,6 +404,10 @@ class DirectPaymentDetails extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'directPaymentAutoID', 'PayMasterAutoId');
+    }
 
 
 }

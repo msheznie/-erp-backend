@@ -357,6 +357,11 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 return $this->sendError('Advance Payment Details not found');
             }
 
+            if($advancePaymentDetails->pay_invoice && $advancePaymentDetails->pay_invoice->confirmedYN){
+                return $this->sendError('You cannot delete Advance Payment Detail, this document already confirmed',500);
+            }
+
+
             $advancePaymentDetails->delete();
 
             $advancePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID);
@@ -397,6 +402,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $payMaster = PaySupplierInvoiceMaster::find($payMasterAutoId);
+
+            if (empty($payMaster)) {
+                return $this->sendError('Payment voucher not found');
+            }
+
+            if($payMaster->confirmedYN){
+                return $this->sendError('You cannot delete Advance Payment Detail, this document already confirmed',500);
+            }
+
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
@@ -465,6 +481,14 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+
+        if (empty($payMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if($payMaster->confirmedYN){
+            return $this->sendError('You cannot add Advance Payment Detail, this document already confirmed',500);
+        }
 
         DB::beginTransaction();
         try {

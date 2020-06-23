@@ -31,6 +31,15 @@ class CustomValidation
                 $docInfoArr["detailRelation"] = "detail";
                 $docInfoArr["keys"] = ['documentType', 'supplierID', 'supplierTransactionCurrencyID', 'financeYear'];
                 break;
+            case 4: // Payment voucher
+                $docInfoArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInfoArr["primaryKey"] = 'PayMasterAutoId';
+                $docInfoArr["approvedColumnName"] = 'approved';
+                $docInfoArr["confirmedYN"] = 'confirmedYN';
+                $docInfoArr["detailRelation"] = 'directdetail';
+                $docInfoArr["keys"] = ['invoiceType', 'payeeType', 'BPVsupplierID', 'directPaymentPayeeEmpID','supplierTransCurrencyID',
+                    'BPVbank','BPVAccount','expenseClaimOrPettyCash','directPaymentPayee','companyFinanceYearID'];
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -47,8 +56,16 @@ class CustomValidation
             }
 
             switch ($documentSystemID) {
-                case 11:
+                case 11: // Supplier Invoice
                     if (($entity->directdetail && count($entity->directdetail)) || (($entity->detail && count($entity->detail)))) {
+                        $detailsExist = true;
+                    }
+                    break;
+                case 4: // Payment voucher
+                    if (($entity->directdetail && count($entity->directdetail)) ||
+                        (($entity->advancedetail && count($entity->advancedetail))) ||
+                        (($entity->supplierdetail && count($entity->supplierdetail)))
+                    ) {
                         $detailsExist = true;
                     }
                     break;

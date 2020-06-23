@@ -248,6 +248,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
+        if (empty($payMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if($payMaster->confirmedYN){
+            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed',500);
+        }
+
         $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
@@ -391,6 +399,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
 
+            if($paySupplierInvoiceDetail->payment_master && $paySupplierInvoiceDetail->payment_master->confirmedYN){
+                return $this->sendError('You cannot delete Supplier PO Payment Detail, this document already confirmed',500);
+            }
+
             $paySupplierInvoiceDetailDelete->delete();
 
             $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
@@ -435,7 +447,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendResponse($id, 'Pay Supplier Invoice Detail deleted successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage(),500);
         }
     }
 
@@ -446,6 +458,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $payMaster = PaySupplierInvoiceMaster::find($payMasterAutoId);
+
+            if (empty($payMaster)) {
+                return $this->sendError('Payment voucher not found');
+            }
+
+            if($payMaster->confirmedYN){
+                return $this->sendError('You cannot delete Supplier PO Payment Detail, this document already confirmed',500);
+            }
+
             /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
             $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
@@ -513,6 +536,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+
+        if (empty($payMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if($payMaster->confirmedYN){
+            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed',500);
+        }
         $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
 
         DB::beginTransaction();
