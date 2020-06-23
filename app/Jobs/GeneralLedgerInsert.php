@@ -2729,10 +2729,9 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 71:
                         /*Delivery Order*/
                         $masterData = DeliveryOrder::with(['finance_period_by'])->find($masterModel["autoID"]);
-                        $customer = CustomerMaster::find($masterData->customerID);
                         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
 
-                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $customer->custUnbilledAccountSystemID)->first();
+                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->custUnbilledAccountSystemID)->first();
                         $masterDocumentDate = Carbon::now();
                         $time = Carbon::now();
 
@@ -2746,8 +2745,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['documentDate'] = $masterDocumentDate;
                         $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
                         $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
-//                        $data['invoiceNumber'] = $masterData->customerInvoiceNo;
-//                        $data['invoiceDate'] = $masterData->customerInvoiceDate;
+
                         $data['documentConfirmedDate'] = $masterData->confirmedDate;
                         $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;

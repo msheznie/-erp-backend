@@ -170,7 +170,23 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
 
+        $customer = CustomerMaster::find($input['customerID']);
+        if(empty($customer)){
+            return $this->sendError('Selected customer not found on db',500);
+        }
 
+        if(!$customer->custGLAccountSystemID){
+            return $this->sendError('GL account is not configured for this customer',500);
+        }
+
+        if(!$customer->custUnbilledAccountSystemID){
+            return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+        }
+
+        $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+        $input['custGLAccountCode'] = $customer->custGLaccount;
+        $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+        $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
 
         //deliveryOrderCode
         $lastSerial = DeliveryOrder::where('companySystemID', $input['companySystemID'])
@@ -384,6 +400,29 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['modifiedUserName'] = $employee->empName;
         $input['modifiedDateTime'] = Carbon::now();
 
+        // check gl account is configure for new customer
+        if(!empty($input['customerID'])){
+            if($input['customerID'] != $deliveryOrder->customerID){
+                // check customer master unbilled gl account configured
+                $customer = CustomerMaster::find($input['customerID']);
+
+                if(!$customer->custGLAccountSystemID){
+                    return $this->sendError('GL account is not configured for this customer',500);
+                }
+
+                if(!$customer->custUnbilledAccountSystemID){
+                    return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+                }
+
+                $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+                $input['custGLAccountCode'] = $customer->custGLaccount;
+                $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+                $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
+            }
+        }
+
+
         if ($input['confirmedYN'] == 1 && $deliveryOrder->confirmedYN == 0) {
 
             // check document date between financial period
@@ -424,6 +463,11 @@ class DeliveryOrderAPIController extends AppBaseController
             if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
                 return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
             }
+            $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+            $input['custGLAccountCode'] = $customer->custGLaccount;
+            $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+            $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
 
             $detail = DeliveryOrderDetail::where('deliveryOrderID', $id)->get();
             if(count((array)$detail) == 0){
@@ -1118,13 +1162,49 @@ WHERE
         $deliveryOrderID = $input['deliveryOrderID'];
 
         $detail = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)
-//            ->select(DB::raw('*,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as totTransactionAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as totRptAmount'))
             ->with(['master'=> function($query){
                 $query->with(['currency']);
             },'delivery_order_detail','uom_issuing'])
-//            ->groupBy('custInvoiceDirectAutoID')
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+    function printDeliveryOrder(Request $request){
+        $id = $request->get('id');
+
+        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 71);
+        }, 'company','customer','transaction_currency','detail'=> function($query){
+            $query->with(['uom_issuing']);
+        }])->findWithoutFail($id);
+
+
+        if (empty($do)) {
+            return $this->sendError('Delivery order not found');
+        }
+
+        if($do->transaction_currency){
+            $do->currency = (isset($do->transaction_currency->DecimalPlaces) && $do->transaction_currency->DecimalPlaces)?$do->transaction_currency->DecimalPlaces:2;
+        }
+
+        $do->docRefNo = Helper::getCompanyDocRefNo($do->companySystemID, $do->documentSystemID);
+        $do->logoExists = false;
+        $companyLogo = isset($do->company->companyLogo)?"logos/".$do->company->companyLogo:'';
+
+        if (file_exists($companyLogo)) {
+            $do->logoExists = true;
+            $do->companyLogo = $companyLogo;
+        }
+
+        $array = array('entity' => $do);
+        $time = strtotime("now");
+        $fileName = 'delivery_order_' . $id . '_' . $time . '.pdf';
+        $html = view('print.delivery_order', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
 
