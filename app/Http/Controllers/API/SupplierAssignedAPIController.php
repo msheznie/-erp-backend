@@ -121,6 +121,7 @@ class SupplierAssignedAPIController extends AppBaseController
         $input['companyID'] = $company['CompanyID'];
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+        $input['markupPercentage'] = (isset($supplier->markupPercentage)?$supplier->markupPercentage:0);
 
         if( array_key_exists ('supplierAssignedID' , $input )){
 
