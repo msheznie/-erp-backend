@@ -1788,6 +1788,12 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
     Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory');
+    Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend');
+
+    Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
+
+    Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
 
 });
@@ -1796,3 +1802,6 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+

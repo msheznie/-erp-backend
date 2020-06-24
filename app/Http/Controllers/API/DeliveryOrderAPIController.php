@@ -17,9 +17,13 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use App\Models\DeliveryOrderDetailRefferedback;
+use App\Models\DeliveryOrderRefferedback;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
 use App\Models\Months;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
@@ -861,8 +865,6 @@ WHERE
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }
 
-
-
     public function getDeliveryOrderApprovals(Request $request)
     {
         $input = $request->all();
@@ -1205,6 +1207,73 @@ WHERE
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
+    public function getDeliveryOrderAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $doData = DeliveryOrder::find($deliveryOrderID);
+        if (empty($doData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        if ($doData->refferedBackYN != -1) {
+            return $this->sendError('You cannot amend this delivery order');
+        }
+
+        $deliveryOrderArray = $doData->toArray();
+
+        $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
+
+        $fetchDeliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+            ->get();
+
+//        if (!empty($fetchDeliveryOrderDetails)) {
+//            foreach ($fetchDeliveryOrderDetails as $doDetail) {
+//                $doDetail['timesReferred'] = $doData->timesReferred;
+//            }
+//        }
+
+        $doDetailArray = $fetchDeliveryOrderDetails->toArray();
+
+        $storeDeliveryOrderDetaillHistory = DeliveryOrderDetailRefferedback::insert($doDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $doData->companySystemID)
+            ->where('documentSystemID', $doData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $doData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $doData->companySystemID)
+            ->where('documentSystemID', $doData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $doData->refferedBackYN = 0;
+            $doData->confirmedYN = 0;
+            $doData->confirmedByEmpSystemID = null;
+            $doData->confirmedByEmpID = null;
+            $doData->confirmedByName = null;
+            $doData->confirmedDate = null;
+            $doData->RollLevForApp_curr = 1;
+            $doData->save();
+        }
+
+        return $this->sendResponse($doData->toArray(), 'Delivery Order Amend successfully');
     }
 
 
