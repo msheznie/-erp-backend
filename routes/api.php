@@ -1790,6 +1790,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
     Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
     Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
+    Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
 
 
 });

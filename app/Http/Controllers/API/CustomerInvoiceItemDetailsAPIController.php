@@ -772,6 +772,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             ->where('selectedForCustomerInvoice', 0)
             ->where('closedYN',0)
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
+            ->where('wareHouseSystemCode', $invoice->wareHouseSystemCode)
             ->where('customerID', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
             ->orderBy('deliveryOrderID','DESC')
