@@ -24,6 +24,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CustomValidation;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
@@ -638,10 +639,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Match Document Master not found');
         }
 
+
         if (isset($input['matchingDocdate'])) {
             if ($input['matchingDocdate']) {
                 $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
             }
+        }
+
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
 
         $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -831,6 +838,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $machAmount = 0;
                 if ($matchedAmount) {
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                }
+
+                if (!$supplierPaidAmountSum) {
+                    $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
                 }
 
                 $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount);

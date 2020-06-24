@@ -40,6 +40,14 @@ class CustomValidation
                 $docInfoArr["keys"] = ['invoiceType', 'payeeType', 'BPVsupplierID', 'directPaymentPayeeEmpID','supplierTransCurrencyID',
                     'BPVbank','BPVAccount','expenseClaimOrPettyCash','directPaymentPayee','companyFinanceYearID'];
                 break;
+            case 70: // Matching Document
+                $docInfoArr["modelName"] = 'MatchDocumentMaster';
+                $docInfoArr["primaryKey"] = 'matchDocumentMasterAutoID';
+                $docInfoArr["approvedColumnName"] = 'approved';
+                $docInfoArr["confirmedYN"] = 'matchingConfirmedYN';
+                $docInfoArr["detailRelation"] = 'detail';
+                $docInfoArr["keys"] = ['matchingDocdate'];
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -66,6 +74,11 @@ class CustomValidation
                         (($entity->advancedetail && count($entity->advancedetail))) ||
                         (($entity->supplierdetail && count($entity->supplierdetail)))
                     ) {
+                        $detailsExist = true;
+                    }
+                    break;
+                case 70: //  Matching Document
+                    if (($entity->detail && count($entity->detail))) {
                         $detailsExist = true;
                     }
                     break;
