@@ -523,6 +523,11 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['createdUserID'] = $user->employee['empID'];
                         $GRVDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
+                        $GRVDetail_arr['markupPercentage'] = $new['markupPercentage'];
+                        $GRVDetail_arr['markupTransactionAmount'] = $new['markupTransactionAmount'];
+                        $GRVDetail_arr['markupLocalAmount'] = $new['markupLocalAmount'];
+                        $GRVDetail_arr['markupReportingAmount'] = $new['markupReportingAmount'];
+
                         $item = $this->gRVDetailsRepository->create($GRVDetail_arr);
 
                         $update = PurchaseOrderDetails::where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
