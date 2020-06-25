@@ -384,7 +384,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','supplier' => function($query){
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         },'currency'=> function($query){
-            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
+            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID,CurrencyCode');
         }])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
@@ -1377,7 +1377,6 @@ class ProcumentOrderAPIController extends AppBaseController
         $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
             ->select('paymentTermsCategoryID', 'categoryDescription')
             ->get();
-
         if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->where('companySystemID', $companyId)
@@ -1386,6 +1385,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($checkDetailExist)) {
                 $detail = 1;
             }
+
         }
 
         $poAddonCategoryDrop = AddonCostCategories::all();
@@ -1421,6 +1421,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $icvCategories = SupplierCategoryICVMaster::all();
 
         $hasPolicy = false;
+        $hasEEOSSPolicy = false;
         if($purchaseOrderID){
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             $sup= SupplierMaster::find($purchaseOrder->supplierID);
@@ -1428,6 +1429,13 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('companyPolicyCategoryID', 38)
                 ->where('isYesNO',1)
                 ->exists();
+
+            if($sup->primaryCompanySystemID){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
         }
 
 
@@ -1451,7 +1459,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'invoiceBooked' => $invoiceBooked,
             'poAddonCategoryDrop' => $poAddonCategoryDrop,
             'icvCategories' => $icvCategories,
-            'isSupplierCatalogPolicy' => $hasPolicy
+            'isSupplierCatalogPolicy' => $hasPolicy,
+            'isEEOSSPolicy' => $hasEEOSSPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

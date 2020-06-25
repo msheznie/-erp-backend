@@ -18,6 +18,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
 use App\Models\ProcumentOrderDetail;
@@ -28,6 +29,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierMaster;
 use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
 use Illuminate\Http\Request;
@@ -324,7 +326,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
+        $markupArray = $this->setMarkupPercentage(0,$purchaseOrder);
+        $input['markupPercentage'] = $markupArray['markupPercentage'];
+        $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
+        $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
+        $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
+
+
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
+
 
         //calculate tax amount according to the percantage for tax update
 
@@ -548,6 +558,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
                         }
 
+                        $markupArray = $this->setMarkupPercentage($prDetail_arr['netAmount'],$purchaseOrder);
+                        $prDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
+                        $prDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
+                        $prDetail_arr['markupLocalAmount'] = $markupArray['markupLocalAmount'];
+                        $prDetail_arr['markupReportingAmount'] = $markupArray['markupReportingAmount'];
+
                         $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);
 
                         $update = PurchaseRequestDetails::where('purchaseRequestDetailsID', $new['purchaseRequestDetailsID'])
@@ -708,6 +724,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 $input['modifiedPc'] = gethostname();
                 $input['modifiedUser'] = $user->employee['empID'];
+
+                $markupArray = $this->setMarkupPercentage($input['netAmount'],$purchaseOrder,$input['markupPercentage']);
+                $input['markupPercentage'] = $markupArray['markupPercentage'];
+                $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
+                $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
+                $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
 
                 $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
 
@@ -1061,5 +1083,56 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     }
 
+    public function setMarkupPercentage($netAmount, $poData , $markupPercentage=0){
+        $output['markupPercentage'] = 0;
+        $output['markupTransactionAmount'] = 0;
+        $output['markupLocalAmount'] = 0;
+        $output['markupReportingAmount'] = 0;
 
+        if(isset($poData->supplierID) && $poData->supplierID){
+
+            $supplier = SupplierMaster::find($poData->supplierID);
+
+            if($supplier->primaryCompanySystemID){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+                $percentage = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
+
+                if($hasEEOSSPolicy && $percentage != 0){
+                    $output['markupPercentage'] = $percentage;
+
+                    if($netAmount>0){
+                        $output['markupTransactionAmount'] = $percentage*$netAmount/100;
+
+
+                        if($poData->supplierTransactionCurrencyID != $poData->localCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->localCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupLocalAmount'] = $output['markupTransactionAmount'];
+                        }
+
+                        if($poData->supplierTransactionCurrencyID != $poData->companyReportingCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupReportingAmount'] =$output['markupTransactionAmount'];
+                        }
+
+                    }
+
+                }
+            }
+
+        }
+
+        return $output;
+    }
 }
