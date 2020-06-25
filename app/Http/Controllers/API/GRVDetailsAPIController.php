@@ -15,6 +15,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
 use App\Models\FinanceItemCategorySub;
@@ -27,6 +28,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
+use App\Models\SupplierMaster;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseMaster;
 use App\Repositories\GRVDetailsRepository;
@@ -523,10 +525,12 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['createdUserID'] = $user->employee['empID'];
                         $GRVDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-                        $GRVDetail_arr['markupPercentage'] = $new['markupPercentage'];
-                        $GRVDetail_arr['markupTransactionAmount'] = $new['markupTransactionAmount'];
-                        $GRVDetail_arr['markupLocalAmount'] = $new['markupLocalAmount'];
-                        $GRVDetail_arr['markupReportingAmount'] = $new['markupReportingAmount'];
+                        $markupArray = $this->setMarkupPercentage($GRVDetail_arr['netAmount'],$GRVMaster);
+
+                        $GRVDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
+                        $GRVDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
+                        $GRVDetail_arr['markupLocalAmount'] = $markupArray['markupLocalAmount'];
+                        $GRVDetail_arr['markupReportingAmount'] = $markupArray['markupReportingAmount'];
 
                         $item = $this->gRVDetailsRepository->create($GRVDetail_arr);
 
@@ -845,5 +849,54 @@ class GRVDetailsAPIController extends AppBaseController
             ]);
 
         return $this->sendResponse($grvAutoID, 'GRV details deleted successfully');
+    }
+
+    public function setMarkupPercentage($netAmount, $grvData , $markupPercentage=0){
+        $output['markupPercentage'] = 0;
+        $output['markupTransactionAmount'] = 0;
+        $output['markupLocalAmount'] = 0;
+        $output['markupReportingAmount'] = 0;
+
+        if(isset($grvData->supplierID) && $grvData->supplierID){
+
+            $supplier = SupplierMaster::find($grvData->supplierID);
+            $output['markupPercentage'] = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
+            if($supplier->primaryCompanySystemID){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+                if($hasEEOSSPolicy && $output['markupPercentage'] != 0){
+
+                    if($netAmount>0){
+                        $output['markupTransactionAmount'] = $output['markupPercentage']*$netAmount/100;
+
+                        if($grvData->supplierDefaultCurrencyID != $grvData->localCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->localCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupLocalAmount'] = $output['markupTransactionAmount'];
+                        }
+
+                        if($grvData->supplierDefaultCurrencyID != $grvData->companyReportingCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupReportingAmount'] =$output['markupTransactionAmount'];
+                        }
+
+                    }
+
+                }
+            }
+
+        }
+
+        return $output;
     }
 }
