@@ -638,7 +638,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             'toBankAccountID' => 'required|not_in:0',
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

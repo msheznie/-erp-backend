@@ -2245,7 +2245,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $supplierReportGRVBase = array();
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $supplierReportGRVBase = array();
             return $this->sendError($validator->messages(), 422);
         }
@@ -2463,9 +2463,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $supplierReportGRVBase = array();
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
-            exit();
         }
 
         $type = $request->type;
@@ -2684,7 +2683,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-        $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -3284,7 +3283,7 @@ WHERE
         }
 
 
-        $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -4784,7 +4783,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data = array();
             }
         }
-        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+         \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -4934,10 +4933,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Transaction Amount'] = $val->poTotalSupplierTransactionCurrency;
                 }
                 if ($val->localcurrency) {
-                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;;
+                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;
                 }
                 if ($val->reportingcurrency) {
-                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;;
+                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;
                 }
                 if ($val->advance_detail) {
                     if (isset($val->advance_detail[0]->advanceSum)) {
@@ -4970,7 +4969,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $data = array();
         }
 
-        $csv = \Excel::create('po_master', function ($excel) use ($data) {
+         \Excel::create('po_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -5316,7 +5315,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-        $csv = \Excel::create('po_to_payment', function ($excel) use ($data) {
+         \Excel::create('po_to_payment', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

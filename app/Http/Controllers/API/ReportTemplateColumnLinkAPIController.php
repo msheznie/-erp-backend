@@ -128,7 +128,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             'columnID' => 'required'
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

@@ -926,7 +926,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+                     \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
@@ -1123,7 +1123,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1196,7 +1196,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1285,7 +1285,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1334,7 +1334,7 @@ WHERE
                     );
                 }
 
-                $csv = \Excel::create('order_inquiry', function ($excel) use ($data) {
+                 \Excel::create('order_inquiry', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1804,7 +1804,7 @@ WHERE
             }
         }
 
-        $csv = \Excel::create('saving_report', function ($excel) use ($data) {
+         \Excel::create('saving_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

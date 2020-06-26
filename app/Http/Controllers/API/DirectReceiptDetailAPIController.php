@@ -360,7 +360,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
         $directReceiptAutoID = $input['directReceiptAutoID'];
-        $glCode = $input['glCode'];;
+        $glCode = $input['glCode'];
 
 
         /*get master*/

@@ -327,63 +327,6 @@ class BudjetdetailsAPIController extends AppBaseController
             return $this->sendError('Budget Master not found');
         }
 
-        /* $glData = TemplatesGLCode::where('templateMasterID', $budgetMaster->templateMasterID)
-             ->whereNotNull('chartOfAccountSystemID')
-             ->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                 $q->where('companySystemID', $budgetMaster->companySystemID)
-                     ->where('isActive', 1)
-                     ->where('isAssigned', -1);
-             })
-             ->with(['template_detail'])
-             //->limit(20)
-             ->get();*/
-
-        /*$search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $glData = $glData->where(function ($query) use ($search) {
-                $query->where('glCode', 'LIKE', "%{$search}%")
-                      ->orWhere('glDescription', 'LIKE', "%{$search}%")
-                     ->orWhereHas('template_detail',function ($q) use($search){
-                            $q->where('templateDetailDescription', 'LIKE', "%{$search}%");
-                     });
-            });
-        }*/
-
-        /*return \DataTables::eloquent($glData)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                       // $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('items', function ($data) use($budgetMaster) {
-                $details =  $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $data->chartOfAccountSystemID,
-                    'templateDetailID' => $data->templatesDetailsAutoID
-                ]);
-
-                return $details->toArray();
-            })
-            ->make(true);*/
-
-        /*foreach ($glData as $key1 => $data) {
-            $data['items'] = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                'Year' => $budgetMaster->Year,
-                'chartOfAccountID' => $data->chartOfAccountSystemID,
-                'templateDetailID' => $data->templatesDetailsAutoID
-            ]);
-            //->orderBy('month','asc');
-        }*/
-
         // Incomes
         $income = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
             ->where('controlAccountSystemID', 1)
@@ -452,7 +395,6 @@ class BudjetdetailsAPIController extends AppBaseController
                     'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
                     'templateDetailID' => $gl_code['templatesDetailsAutoID']
                 ]);
-                //->orderBy('month','asc');
             }
 
         }
@@ -527,7 +469,6 @@ class BudjetdetailsAPIController extends AppBaseController
             /** @var Budjetdetails $budgetDetail */
             $budgetDetail = $this->budjetdetailsRepository->findWithoutFail($item['budjetDetailsID']);
             if (!empty($budgetDetail)) {
-                //return $this->sendError('Budget details not found');
                 $budgetDetail->delete();
             }
         }
@@ -546,45 +487,7 @@ class BudjetdetailsAPIController extends AppBaseController
         if (empty($budgetMaster)) {
             return $this->sendError('Budget Master not found');
         }
-
-        //$incomesTotal
-        /*$income = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
-            ->where('controlAccountSystemID', 1)
-            ->whereHas('gl_codes', function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            })
-            ->with(['gl_codes' => function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            }])
-            ->orderBy('sortOrder', 'asc')
-            ->get();
-
-        foreach ($income as $data) {
-
-            foreach ($data['gl_codes'] as $gl_code) {
-
-                $gl_code['items'] = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
-                    'templateDetailID' => $gl_code['templatesDetailsAutoID']
-                ]);
-                //->orderBy('month','asc');
-            }
-        }*/
-
-        $incomesTotal = 0;
         $total = array();
-
-
         return $this->sendResponse($total, 'Budjet details summary updated successfully');
     }
 

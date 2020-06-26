@@ -779,7 +779,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 'Comments' => $comments,
             );
         }
-        $csv = \Excel::create('order_status', function ($excel) use ($data) {
+         \Excel::create('order_status', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

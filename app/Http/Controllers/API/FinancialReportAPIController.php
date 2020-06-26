@@ -177,7 +177,7 @@ class FinancialReportAPIController extends AppBaseController
                     return $this->sendError('The To date must be greater than the From date !', 500);
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
 
@@ -187,7 +187,7 @@ class FinancialReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                     ]);
 
-                    if ($validator1->fails()) {//echo 'in';exit;
+                    if ($validator1->fails()) {
                         return $this->sendError($validator1->messages(), 422);
                     }
                 }
@@ -204,7 +204,7 @@ class FinancialReportAPIController extends AppBaseController
                     'contracts' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -215,10 +215,10 @@ class FinancialReportAPIController extends AppBaseController
                     'tempType' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
-                if ($request->tempType == 0) {//echo 'in';exit;
+                if ($request->tempType == 0) {
                     return $this->sendError('Please select a type');
                 }
                 break;
@@ -235,7 +235,7 @@ class FinancialReportAPIController extends AppBaseController
                     'month' => 'required_if:dateType,2',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -491,10 +491,8 @@ class FinancialReportAPIController extends AppBaseController
                 if ($request->accountType == 1 || $request->accountType == 2) { // get uncategorized value
                     $uncategorizeData = collect($this->getCustomizeFinancialUncategorizeQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID));
                     $grandTotal = collect($this->getCustomizeFinancialGrandTotalQry($request, $linkedcolumnQry, $linkedcolumnQry2, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $columnTemplateID));
-                    //$lastColumn = collect($headers)->last(); // considering net total
                     if ($uncategorizeData['output']) {
                         foreach ($columnKeys as $key => $val) {
-                            //$grandTotalUncatArr[$val] = $lastColumn->$val + $uncategorizeData['output'][0]->$val;
                             $uncategorizeArr[$val] = $uncategorizeData['output'][0]->$val;
                         }
                     }
@@ -1098,7 +1096,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                 }
-                $csv = \Excel::create('trial_balance', function ($excel) use ($data) {
+                 \Excel::create('trial_balance', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1168,7 +1166,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('trial_balance_details', function ($excel) use ($data) {
+                 \Excel::create('trial_balance_details', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1370,7 +1368,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+                 \Excel::create('general_ledger', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1438,7 +1436,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('trial_balance_details', function ($excel) use ($data) {
+                 \Excel::create('trial_balance_details', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1515,7 +1513,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('jv_detail', function ($excel) use ($data) {
+                 \Excel::create('jv_detail', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -4042,7 +4040,7 @@ GROUP BY
         }
 
 
-        $csv = \Excel::create('trial_balance', function ($excel) use ($data) {
+         \Excel::create('trial_balance', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -4219,7 +4217,7 @@ GROUP BY
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
 	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     }
-                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;;
+                    $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }
                 if ($val->shortCode == 'BCM') {
 

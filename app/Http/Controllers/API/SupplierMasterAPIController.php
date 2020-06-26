@@ -186,7 +186,7 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
         }
 
-        $csv = \Excel::create('supplier_master', function ($excel) use ($data) {
+         \Excel::create('supplier_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

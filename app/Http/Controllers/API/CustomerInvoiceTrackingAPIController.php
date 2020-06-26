@@ -888,7 +888,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('batch_submission_detail', function ($excel) use ($data) {
+         \Excel::create('batch_submission_detail', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

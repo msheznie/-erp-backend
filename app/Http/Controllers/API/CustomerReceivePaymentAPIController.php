@@ -497,7 +497,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['bankID'] = null;
                     $input['bankAccount'] = null;
@@ -539,7 +539,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['bankID'] = null;
                     $input['bankAccount'] = null;
@@ -603,7 +603,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     /*exchange added*/
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
             }
@@ -623,7 +623,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     /*exchange added*/
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
             }

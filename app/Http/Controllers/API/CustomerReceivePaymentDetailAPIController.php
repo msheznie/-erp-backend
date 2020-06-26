@@ -672,7 +672,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $tempArray["bookingAmountTrans"] = $new['custInvoiceAmount'];
                     $tempArray["bookingAmountLocal"] = $new['localAmount'];
                     $tempArray["bookingAmountRpt"] = $new['comRptAmount'];
-                    $tempArray["custbalanceAmount"] = $new['balanceMemAmountNotRounded'];;
+                    $tempArray["custbalanceAmount"] = $new['balanceMemAmountNotRounded'];
                     $tempArray["receiveAmountTrans"] = 0;
                     $tempArray["receiveAmountLocal"] = 0;
                     $tempArray["receiveAmountRpt"] = 0;

@@ -462,7 +462,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
                 if(count($details)){
 
-                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();;
+                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();
 
                     if (count(array_unique($poIdArray)) > 1) {
                         return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
@@ -471,7 +471,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 }
 
                 $inputDetails = $input['detailTable'];
-                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();;
+                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();
                 if (count(array_unique($inputPoIdArray)) > 1) {
                     return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected details');
                 }

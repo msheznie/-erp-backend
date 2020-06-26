@@ -104,7 +104,6 @@ class CurrencyMasterAPIController extends AppBaseController
         $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)->first();
 
         if ($supplier) {
-            //$supplierCurrencies = SupplierCurrency::where('supplierCodeSystem','=',$supplierId)->get();
             $supplierCurrencies = DB::table('suppliercurrency')
                 ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
                 ->where('supplierCodeSystem', '=', $supplierId);
@@ -171,9 +170,6 @@ class CurrencyMasterAPIController extends AppBaseController
         $supplierCurrency->save();
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $request['supplierId'])->first();
-
-
-        //$companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID', $supplier->primaryCompanySystemID)->get();
 
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
 

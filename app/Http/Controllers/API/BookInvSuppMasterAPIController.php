@@ -462,25 +462,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
         }
 
-        //$supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
-        /*if (!empty($supplier)) {
-            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplier->liabilityAccount;
-        }*/
-
-        if (isset($input['bookingDate'])) {
-            if ($input['bookingDate']) {
-                $input['bookingDate'] = new Carbon($input['bookingDate']);
-            }
+        if (isset($input['bookingDate']) && $input['bookingDate']) {
+            $input['bookingDate'] = new Carbon($input['bookingDate']);
         }
 
-        if (isset($input['supplierInvoiceDate'])) {
-            if ($input['supplierInvoiceDate']) {
-                $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
-            }
+        if (isset($input['supplierInvoiceDate']) && $input['supplierInvoiceDate']) {
+            $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
         }
 
-        // calculating header total;
+        // calculating header total
         $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
 
@@ -684,27 +674,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
             }
-
-            /*            //checking Supplier Invoice amount is greater than PO Amount validations
-                        if ($input['documentType'] == 0) {
-                            $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                                ->with(['pomaster'])
-                                ->get();
-                            if ($checktotalExceed) {
-                                foreach ($checktotalExceed as $exc) {
-
-                                    $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
-
-                                    $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $exc->purchaseOrderID)
-                                        ->where('supplierID', $exc->supplierID)
-                                        ->sum('totTransactionAmount');
-
-                                    if (round($checkPreTotal, $documentCurrencyDecimalPlace) > $poMasterTotal->poTotalSupplierTransactionCurrency) {
-                                        return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
-                                    }
-                                }
-                            }
-                        }*/
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
             if ($input['documentType'] == 0) {
@@ -1009,7 +978,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
         if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-            //$companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
@@ -1203,7 +1171,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if ($checkTaxExist) {
-            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+             Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMaster->companySystemID)
                 ->where('documentSystemID', 11)
                 ->delete();
@@ -1268,7 +1236,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+         DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
             ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
             ->delete();
@@ -1326,7 +1294,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
+        })->join('erp_bookinvsuppmaster', function ($query) use ($companyID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_bookinvsuppmaster.companySystemID', $companyID)
@@ -1406,7 +1374,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
+        )->join('erp_bookinvsuppmaster', function ($query) use ($companyID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
                 ->where('erp_bookinvsuppmaster.companySystemID', $companyID)
                 ->where('erp_bookinvsuppmaster.approved', -1)
@@ -1783,7 +1751,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $supplierInvoiceArray = $bookInvSuppMaster->toArray();
 
-        $storeSupplierInvoiceHistory = BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
+        BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
 
         $fetchBookInvoiceDetails = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
             ->get();
@@ -1796,7 +1764,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookInvoiceDetailArray = $fetchBookInvoiceDetails->toArray();
 
-        $storeSupplierInvoiceBookDetailHistory = BookInvSuppDetRefferedBack::insert($bookInvoiceDetailArray);
+        BookInvSuppDetRefferedBack::insert($bookInvoiceDetailArray);
 
         $fetchBookInvoiceDirectDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
             ->get();
@@ -1809,7 +1777,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $bookInvoiceDirectDetailArray = $fetchBookInvoiceDirectDetails->toArray();
 
-        $storeSupplierInvoiceBookDirectDetailHistory = DirectInvoiceDetailsRefferedBack::insert($bookInvoiceDirectDetailArray);
+        DirectInvoiceDetailsRefferedBack::insert($bookInvoiceDirectDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
@@ -1824,7 +1792,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+        DocumentReferedHistory::insert($DocumentApprovedArray);
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
@@ -1849,7 +1817,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             ->first();
 
         if ($checkTaxExist) {
-            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+             Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMaster->companySystemID)
                 ->where('documentSystemID', 11)
                 ->delete();
@@ -1936,19 +1904,19 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             }
 
             //deleting from approval table
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
             //deleting from general ledger table
-            $deleteGLData = GeneralLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            GeneralLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
             //deleting records from accounts payable
-            $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();

@@ -130,7 +130,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             'toDate' => 'required|date|after_or_equal:fromDate',
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

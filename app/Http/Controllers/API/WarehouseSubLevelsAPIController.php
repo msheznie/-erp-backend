@@ -400,7 +400,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         }
 
         $data['is_deleted'] = 1;
-        $data['deleted_by'] = Helper::getEmployeeSystemID();;
+        $data['deleted_by'] = Helper::getEmployeeSystemID();
         $data['deleted_at'] = now();
 
         $this->warehouseSubLevelsRepository->update($data,$id);

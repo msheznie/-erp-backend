@@ -188,9 +188,8 @@ class AssetDisposalDetailAPIController extends AppBaseController
                         $tempArray["revenuePercentage"] = 0;
                     }
 
-                    $assetDisposalDetails = $this->assetDisposalDetailRepository->create($tempArray);
-
-                    $updateAsset = FixedAssetMaster::find($new["faID"])
+                    $this->assetDisposalDetailRepository->create($tempArray);
+                     FixedAssetMaster::find($new["faID"])
                         ->update(['DIPOSED' => -1, 'selectedForDisposal' => -1, 'disposedDate' => $assetDisposalMaster->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["assetdisposalMasterAutoID"]]);
                 }
             }
@@ -389,7 +388,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
 
             $assetDisposalDetail->delete();
 
-            $updateAsset = FixedAssetMaster::find($assetDisposalDetail2->faID)
+            FixedAssetMaster::find($assetDisposalDetail2->faID)
                 ->update(['DIPOSED' => 0, 'selectedForDisposal' => 0, 'disposedDate' => null, 'assetdisposalMasterAutoID' => null]);
             DB::commit();
             return $this->sendResponse($id, 'Asset Disposal Detail deleted successfully');
@@ -425,7 +424,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                 $detail = $this->assetDisposalDetailRepository->find($val->assetDisposalDetailAutoID);
                 $detail->delete();
 
-                $updateAsset = FixedAssetMaster::find($val->faID)
+                FixedAssetMaster::find($val->faID)
                     ->update(['DIPOSED' => 0, 'selectedForDisposal' => 0, 'disposedDate' => null, 'assetdisposalMasterAutoID' => null]);
             }
 

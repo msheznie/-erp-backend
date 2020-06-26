@@ -741,7 +741,7 @@ WHERE
             );
         }
 
-        $csv = \Excel::create('Stock_ledger_report', function ($excel) use ($data) {
+         \Excel::create('Stock_ledger_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -770,7 +770,7 @@ WHERE
                     'reportType' => 'required',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -791,7 +791,7 @@ WHERE
                     'segment' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -810,7 +810,7 @@ WHERE
                     'warehouse' => 'required',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -849,7 +849,7 @@ WHERE
 //            'reportType' => 'required',
 //        ]);
 
-//        if ($validator->fails()) {//echo 'in';exit;
+//        if ($validator->fails()) {
 //            return $this->sendError($validator->messages(), 422 );
 //            die();
 //        }
@@ -1089,7 +1089,7 @@ WHERE
             );
         }
 
-        $csv = \Excel::create('Stock_valuation_report', function ($excel) use ($data) {
+         \Excel::create('Stock_valuation_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1520,7 +1520,7 @@ GROUP BY
             );
         }
 
-        $csv = \Excel::create('Stock_taking_report', function ($excel) use ($data) {
+         \Excel::create('Stock_taking_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

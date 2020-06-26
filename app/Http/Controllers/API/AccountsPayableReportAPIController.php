@@ -1194,7 +1194,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
+                \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1365,7 +1365,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
+                \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1411,7 +1411,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
+                \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -3998,7 +3998,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         if ($localOrForeign == 2) {
             $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
         } else if ($localOrForeign == 3) {
-            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;
         }
 
         $supplierGroup = "";

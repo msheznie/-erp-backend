@@ -169,7 +169,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 'tempType' => 'required'
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -359,7 +359,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 'tempType' => 'required'
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -859,7 +859,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             $input['matchingConfirmedYN'] = 1;
-            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
@@ -1400,7 +1400,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
 
             $input['matchingConfirmedYN'] = 1;
-            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
