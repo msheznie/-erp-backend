@@ -251,15 +251,6 @@ class BankMasterAPIController extends AppBaseController
         }
 
         $itemCompanies = BankAssign::with(['company'])->where('bankmasterAutoID',$bankId);
-//            ->select(
-//                'erp_bankassigned.bankAssignedAutoID',
-//                'erp_bankassigned.bankmasterAutoID',
-//                'erp_bankassigned.isDefault',
-//                'erp_bankassigned.isAssigned',
-//                'erp_bankassigned.isActive',
-//                //'companymaster.CompanyName',
-//                //'company.companyID'
-//            );
 
         return \DataTables::of($itemCompanies)
             ->order(function ($query) use ($input) {
@@ -273,9 +264,6 @@ class BankMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-
-        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
-
     }
 
     /**

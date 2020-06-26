@@ -908,18 +908,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         }
 
-                        /*  $employee=\Helper::getEmployeeInfo();
-                          $input['createdPcID'] = getenv('COMPUTERNAME');
-                          $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
-                          $input['confirmedByName'] = $employee->empName;
-                          $input['confirmedDate'] = Carbon::now();
-                          $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
-
-
                         $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
                         $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
-                        if (count($groupby) != 0 || count($groupby) != 0) {
+                        if (count($groupby) != 0) {
 
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
                                 return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
