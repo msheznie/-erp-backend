@@ -399,7 +399,12 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment Detail not found');
         }
 
-        if($customerReceivePaymentDetail->master && $customerReceivePaymentDetail->master->confirmedYN){
+        if($customerReceivePaymentDetail->matchingDocID == 0 && $customerReceivePaymentDetail->master && $customerReceivePaymentDetail->master->confirmedYN){
+            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+        }
+
+        if($customerReceivePaymentDetail->matchingDocID != 0 && $customerReceivePaymentDetail->matching_master
+            && $customerReceivePaymentDetail->matching_master->matchingConfirmedYN){
             return $this->sendError('You cannot delete detail, this document already confirmed', 500);
         }
 
@@ -590,6 +595,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
+        if (empty($matchDocumentMasterData)) {
+            return $this->sendError('Matching document not found');
+        }
+
+        if ($matchDocumentMasterData->matchingConfirmedYN) {
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
         $itemExistArray = array();
 
         //check supplier invoice all ready exist
@@ -699,6 +712,9 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        if ($matchDocumentMasterData->matchingConfirmedYN) {
+            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+        }
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
         if ($input['receiveAmountTrans'] == "") {
@@ -758,6 +774,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
             ->groupBy('PayMasterAutoId', 'documentSystemID')->first();
+
+        if(!$matchedAmount){
+            $matchedAmount['SumOfmatchedAmount'] = 0;
+        }
 
         $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 

@@ -1143,6 +1143,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
+
         $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
             ->sum('receiveAmountTrans');
 
@@ -1278,6 +1283,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('PayMasterAutoId', $val["bookingInvCodeSystem"])
                     ->where('documentSystemID', $val["addedDocumentSystemID"])
                     ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+                if(!$matchedAmount){
+                    $matchedAmount['SumOfmatchedAmount'] = 0;
+                }
 
                 $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 
@@ -2261,6 +2270,11 @@ ORDER BY
         if (empty($MatchDocumentMasterData)) {
             return $this->sendError('Match document master not found');
         }
+
+        if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
+            return $this->sendError('You cannot delete the detail, Document already confirmed');
+        }
+
 
         $detailExistAll = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
             ->where('companySystemID', $MatchDocumentMasterData->companySystemID )
