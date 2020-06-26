@@ -815,25 +815,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             $updateItem->save();
 
-                            if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                                return $this->sendError('Item must not have zero cost', 500);
-                            }
-                            if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                                return $this->sendError('Item must not have negative cost', 500);
-                            }
-                            if ($updateItem->currentWareHouseStockQty <= 0) {
-                                return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
-                            }
-                            if ($updateItem->currentStockQty <= 0) {
-                                return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
-                            }
-                            if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
+                            if($isPerforma == 2){// only item sales invoice. we won't get from from delivery note type.
+                                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                                    return $this->sendError('Item must not have zero cost', 500);
+                                }
+                                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                                    return $this->sendError('Item must not have negative cost', 500);
+                                }
+                                if ($updateItem->currentWareHouseStockQty <= 0) {
+                                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                                }
+                                if ($updateItem->currentStockQty <= 0) {
+                                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                                }
+                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
+                                }
+
+                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
+                                }
                             }
 
-                            if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
-                            }
 
                         }
 
