@@ -139,6 +139,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['id'])->first();
 
+        if(empty($master)){
+            return $this->sendError('Receipt Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
         $detail = CustomerReceivePaymentDetail::select('bookingInvCode')
             ->where('custReceivePaymentAutoID', $input['id'])
             ->whereIn('arAutoID', $arAutoID)
@@ -391,6 +399,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment Detail not found');
         }
 
+        if($customerReceivePaymentDetail->master && $customerReceivePaymentDetail->master->confirmedYN){
+            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+        }
+
         AccountsReceivableLedger::where('arAutoID', $customerReceivePaymentDetail->arAutoID)->update(array('selectedToPaymentInv' => 0, 'fullyInvoiced' => 1));
         $customerReceivePaymentDetail->delete();
 
@@ -404,6 +416,15 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
 
         $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->first();
+
+
+        if(empty($output)){
+            return $this->sendError('Receipt Voucher not found.');
+        }
+
+        if($output->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
 
         if (empty($input['receiveAmountTrans']) || $input['receiveAmountTrans'] == 0 || $input['receiveAmountTrans'] == '' || $input['receiveAmountTrans'] < 0) {
             return $this->sendError('Amount cannot be 0 or null');
@@ -444,6 +465,15 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $input = $request->all();
 
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
+
+        if(empty($detail)){
+            return $this->sendError('Receipt Voucher Detail not found.');
+        }
+
+        if($detail->master && $detail->master->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
         if ($detail->comments != $input['comments']) {
             $post['comments'] = $input['comments'];
         }
@@ -465,6 +495,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         if($input['tempType'] == 1){
             $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+        }
+
+        if(!$matchedAmountPreCheck){
+            $matchedAmountPreCheck['SumOfmatchedAmount'] = 0;
         }
 
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);

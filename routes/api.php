@@ -959,8 +959,6 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
-        Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
-        Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
 
         Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
         Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
@@ -997,9 +995,15 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
         Route::resource('credit_notes', 'CreditNoteAPIController');
         Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
-        Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
-        Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
-        Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+
+        // Receipt Voucher
+        Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController',['only' => ['store', 'show', 'update']]);
+        Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController',['only' => ['store', 'show', 'destroy']]);
+        Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController',['only' => ['show', 'destroy']]);
+        Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
+        Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
+
+
         Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
         Route::resource('performa_temps', 'PerformaTempAPIController');
         Route::resource('free_billings', 'FreeBillingAPIController');

@@ -290,6 +290,10 @@ class DirectReceiptDetailAPIController extends AppBaseController
         if (empty($directReceiptDetail)) {
             return $this->sendError('Direct Receipt Detail not found');
         }
+
+        if($directReceiptDetail->master && $directReceiptDetail->master->confirmedYN){
+            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+        }
         $masterID = $directReceiptDetail->directReceiptAutoID;
 
         $directReceiptDetail->delete();
@@ -311,7 +315,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
             ->where('matchingDocID', 0)
             ->get();
 
-        return $this->sendResponse($detail, 'Direct Receipt Detail deleted successfully');
+        return $this->sendResponse($detail, 'Direct Receipt Detail retrieved successfully');
     }
 
     public function directReceiptContractDropDown(request $request)
@@ -361,6 +365,15 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         /*get master*/
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $directReceiptAutoID)->first();
+
+        if(empty($master)){
+            return $this->sendError('Receipt Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
         if ($master->custChequeDate == '') {
             return $this->sendError('Cheque date field is required.', 500);
         }
@@ -431,6 +444,13 @@ class DirectReceiptDetailAPIController extends AppBaseController
         }
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
 
+        if(empty($master)){
+            return $this->sendError('Receipt Voucher not found.');
+        }
+
+        if($master->confirmedYN){
+            return $this->sendError('You cannot update detail, this document already confirmed', 500);
+        }
 
         if ($input['contractUID'] != $detail->contractUID) {
             $input['contractID'] = NULL;

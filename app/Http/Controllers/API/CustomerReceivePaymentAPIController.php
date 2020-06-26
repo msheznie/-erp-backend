@@ -21,6 +21,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CustomValidation;
 use App\Http\Requests\API\CreateCustomerReceivePaymentAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
@@ -417,6 +418,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
+
+        $customValidation = CustomValidation::validation($customerReceivePayment->documentSystemID, $customerReceivePayment, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
@@ -961,6 +967,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->where('PayMasterAutoId', $row["bookingInvCodeSystem"])
                         ->where('documentSystemID', $row["addedDocumentSystemID"])
                         ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+                    if(!$matchedAmount){
+                        $matchedAmount['SumOfmatchedAmount'] = 0;
+                    }
 
                     $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 

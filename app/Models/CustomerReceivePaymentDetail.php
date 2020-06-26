@@ -257,5 +257,8 @@ class CustomerReceivePaymentDetail extends Model
         
     ];
 
-    
+    public function master()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+    }
 }
