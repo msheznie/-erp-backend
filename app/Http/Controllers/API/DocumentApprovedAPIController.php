@@ -837,7 +837,6 @@ WHERE
             ->count('documentApprovedID');*/
 
         return $this->sendResponse(0, 'Document approved count retrieved successfully');
-        return $this->sendResponse($output[0]->totalCount, 'Document approved count retrieved successfully');
 
     }
 

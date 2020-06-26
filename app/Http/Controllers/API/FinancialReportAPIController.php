@@ -2793,7 +2793,7 @@ AND MASTER .canceledYN = 0';
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
                 $output = $this->getGeneralLedgerQryForPDF($request);
-
+                $decimalPlace = array();
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
 
