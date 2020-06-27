@@ -213,7 +213,6 @@ class CreditNoteAPIController extends AppBaseController
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
 
-        //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['localCurrencyID'] = $company->localCurrencyID;
@@ -484,7 +483,7 @@ class CreditNoteAPIController extends AppBaseController
             /*serviceline and contract validation*/
             $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
             $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
-            if (count($groupby) != 0 || count($groupby) != 0) {
+            if (count($groupby) != 0) {
                 if (count($groupby) > 1 || count($groupbycontract) > 1) {
                     return $this->sendError('You cannot continue. Multiple service line or contract exist in details.', 500);
                 }

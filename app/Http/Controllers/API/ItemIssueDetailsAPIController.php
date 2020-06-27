@@ -187,7 +187,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     ->where('companySystemID', $companySystemID)
                     ->first();
             } else if ($input['issueType'] == 2) {
-                $item = MaterielRequestDetails::where('RequestDetailsID', $input['itemCode'])->with(['item_by'])->first();;
+                $item = MaterielRequestDetails::where('RequestDetailsID', $input['itemCode'])->with(['item_by'])->first();
             }
         } else {
             return $this->sendError('Please select Issue Type', 500);

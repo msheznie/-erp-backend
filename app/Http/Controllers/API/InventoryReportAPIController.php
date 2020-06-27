@@ -949,7 +949,7 @@ FROM
                         }
                     }
 
-                    $csv = \Excel::create('stock_transaction', function ($excel) use ($data) {
+                     \Excel::create('stock_transaction', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1106,7 +1106,7 @@ FROM
                         }
                     }
 
-                    $csv = \Excel::create('stock_aging', function ($excel) use ($data) {
+                     \Excel::create('stock_aging', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1166,7 +1166,7 @@ FROM
                         }
                     }
                 }
-                $csv = \Excel::create('stock_Detail', function ($excel) use ($data) {
+                 \Excel::create('stock_Detail', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1198,7 +1198,7 @@ FROM
                         $x ++;
                     }
                 }
-                $csv = \Excel::create('stock_Detail', function ($excel) use ($data) {
+                 \Excel::create('stock_Detail', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1246,7 +1246,7 @@ FROM
                 }
 
 
-                $csv = \Excel::create('item_movements', function ($excel) use ($data) {
+                 \Excel::create('item_movements', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

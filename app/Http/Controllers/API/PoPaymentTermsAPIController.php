@@ -251,7 +251,7 @@ class PoPaymentTermsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var PoPaymentTerms $poPaymentTerms */
-        $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);;
+        $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
         }

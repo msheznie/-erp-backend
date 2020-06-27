@@ -1195,7 +1195,7 @@ class BankLedgerAPIController extends AppBaseController
 //            ->where("BPVsupplierID",'!=', null) // check supplier id only for direct. not for cheque
             ->where(function ($q) use($input) {
                 $q->where(function ($q){
-                    $q->where('invoiceType', '!=',3)->where("BPVsupplierID", '!=', null);;
+                    $q->where('invoiceType', '!=',3)->where("BPVsupplierID", '!=', null);
                 })->orWhere(function($q){
                     $q->where('invoiceType', 3);
 
@@ -1594,7 +1594,7 @@ class BankLedgerAPIController extends AppBaseController
 
                 $array = array('entity' => $entity, 'date' => now(),'type'=>$htmlName);
                 if ($htmlName) {
-                    $html = view('print.' . $htmlName, $array)->render();;
+                    $html = view('print.' . $htmlName, $array)->render();
                     DB::commit();
                     if(isset($input['isPrint']) && $input['isPrint']) {
                         return $this->sendResponse($html, 'Print successfully');
@@ -1789,7 +1789,7 @@ class BankLedgerAPIController extends AppBaseController
             }
             $array = array('entities' => $bankLedger, 'date' => now());
             if ($htmlName) {
-                $html = view('print.' . $htmlName, $array)->render();;
+                $html = view('print.' . $htmlName, $array)->render();
                 //$pdf = \App::make('dompdf.wrapper');
                 //$pdf->loadHTML($html);
                 //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);

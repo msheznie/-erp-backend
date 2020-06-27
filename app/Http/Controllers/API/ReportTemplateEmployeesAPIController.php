@@ -123,7 +123,7 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
             'employeeSystemID' => 'required|array'
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

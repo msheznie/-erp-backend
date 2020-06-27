@@ -1483,7 +1483,7 @@ UNION ALL
             }
         }
 
-        $csv = \Excel::create('debit_note_by_company', function ($excel) use ($data) {
+         \Excel::create('debit_note_by_company', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

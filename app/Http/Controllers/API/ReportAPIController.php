@@ -126,6 +126,7 @@ class ReportAPIController extends AppBaseController
                     approved,
                     YEAR ( approvedDate ) AS postingYear,
                     approvedDate AS orderDate,
+                    erp_purchaseordermaster.createdDateTime,
                     purchaseOrderCode,IF( sentToSupplier = 0, "Not Released", "Released" ) AS STATUS,
                     supplierID,
                     supplierPrimaryCode,
@@ -253,6 +254,7 @@ class ReportAPIController extends AppBaseController
                             erp_purchaseordermaster.manuallyClosed,
                             erp_purchaseordermaster.narration,
                             erp_purchaseordermaster.approvedDate as orderDate,
+                            erp_purchaseordermaster.createdDateTime,
                             erp_purchaseordermaster.serviceLine,
                             erp_purchaseordermaster.supplierPrimaryCode,
                             erp_purchaseordermaster.supplierName,
@@ -784,6 +786,7 @@ class ReportAPIController extends AppBaseController
                     approved,
                     YEAR ( approvedDate ) AS postingYear,
                     approvedDate AS orderDate,
+                    erp_purchaseordermaster.createdDateTime,
                     purchaseOrderCode,IF( sentToSupplier = 0, "Not Released", "Released" ) AS STATUS,
                     supplierID,
                     supplierPrimaryCode,
@@ -882,7 +885,8 @@ WHERE
                         $data[] = array(
                             'CompanyID' => $val->companyID,
                             'Posting Year' => $val->postingYear,
-                            'Order Date' => \Helper::dateFormat($val->orderDate),
+                            'Approved Date' => \Helper::dateFormat($val->orderDate),
+                            'Created Date' => \Helper::dateFormat($val->createdDateTime),
                             'PO Code' => $val->purchaseOrderCode,
                             'Status' => $val->STATUS,
                             'Location' => $val->location,
@@ -922,7 +926,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+                     \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
@@ -942,6 +946,7 @@ WHERE
                             IF( erp_purchaseordermaster.manuallyClosed = 1, "YES", "NO" ) AS manuallyClosed,
                             erp_purchaseordermaster.narration,
                             erp_purchaseordermaster.approvedDate as orderDate,
+                            erp_purchaseordermaster.createdDateTime,
                             erp_purchaseordermaster.serviceLine,
                             erp_purchaseordermaster.supplierPrimaryCode,
                             erp_purchaseordermaster.supplierName,
@@ -1090,7 +1095,8 @@ WHERE
                             'PO Code' => $val->purchaseOrderCode,
                             'Segment' => $val->segment,
                             'Narration' => $val->narration,
-                            'Order Date' => \Helper::dateFormat($val->orderDate),
+                            'Approved Date' => \Helper::dateFormat($val->orderDate),
+                            'Created Date' => \Helper::dateFormat($val->createdDateTime),
                             'Expected Delivery Date' => \Helper::dateFormat($val->expectedDeliveryDate),
                             'Supplier Code' => $val->supplierPrimaryCode,
                             'Supplier Name' => $val->supplierName,
@@ -1117,7 +1123,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1190,7 +1196,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1279,7 +1285,7 @@ WHERE
                         );
                     }
 
-                    $csv = \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
+                     \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1328,7 +1334,7 @@ WHERE
                     );
                 }
 
-                $csv = \Excel::create('order_inquiry', function ($excel) use ($data) {
+                 \Excel::create('order_inquiry', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1798,7 +1804,7 @@ WHERE
             }
         }
 
-        $csv = \Excel::create('saving_report', function ($excel) use ($data) {
+         \Excel::create('saving_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

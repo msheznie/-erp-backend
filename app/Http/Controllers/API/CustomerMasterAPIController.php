@@ -743,7 +743,7 @@ class CustomerMasterAPIController extends AppBaseController
             $data = array();
         }
 
-        $csv = \Excel::create('customer_master', function ($excel) use ($data) {
+         \Excel::create('customer_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

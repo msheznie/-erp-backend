@@ -145,6 +145,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Payment voucher not found');
         }
 
+        if($payMaster->confirmedYN){
+            return $this->sendError('You cannot add Direct Payment Detail, this document already confirmed',500);
+        }
+
+
         $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
@@ -370,6 +375,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Payment Supp Master not found');
         }
 
+        if($payMaster->confirmedYN){
+            return $this->sendError('You cannot update Direct Payment Detail, this document already confirmed',500);
+        }
+
+
         $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
@@ -564,6 +574,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Payment Details not found');
         }
 
+        if($directPaymentDetails->master && $directPaymentDetails->master->confirmedYN){
+            return $this->sendError('You cannot delete Direct Payment Detail, this document already confirmed',500);
+        }
+
         $directPaymentDetails->delete();
 
         return $this->sendResponse($id, 'Direct Payment Details deleted successfully');
@@ -583,6 +597,16 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     {
 
         $id = $request->directPaymentAutoID;
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        if($paySupplierInvoiceMaster->confirmedYN){
+            return $this->sendError('You cannot delete Direct Payment Detail, this document already confirmed',500);
+        }
 
         $expenseClaimDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
 
@@ -614,7 +638,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             'toBankAccountID' => 'required|not_in:0',
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

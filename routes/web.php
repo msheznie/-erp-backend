@@ -17,3 +17,7 @@ Route::resource('deliveryOrders', 'DeliveryOrderController');
 Route::resource('deliveryOrderDetails', 'DeliveryOrderDetailController');
 
 Route::resource('tenants', 'TenantController');
+
+Route::resource('deliveryOrderRefferedbacks', 'DeliveryOrderRefferedbackController');
+
+Route::resource('deliveryOrderDetailRefferedbacks', 'DeliveryOrderDetailRefferedbackController');

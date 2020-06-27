@@ -644,7 +644,7 @@ class ChequeRegisterAPIController extends AppBaseController
             }
 
         }
-        $csv = \Excel::create('cheque_registry', function ($excel) use ($data) {
+         \Excel::create('cheque_registry', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

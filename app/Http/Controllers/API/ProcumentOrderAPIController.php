@@ -384,7 +384,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','supplier' => function($query){
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         },'currency'=> function($query){
-            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
+            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID,CurrencyCode');
         }])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
@@ -1377,7 +1377,6 @@ class ProcumentOrderAPIController extends AppBaseController
         $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
             ->select('paymentTermsCategoryID', 'categoryDescription')
             ->get();
-
         if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->where('companySystemID', $companyId)
@@ -1386,6 +1385,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($checkDetailExist)) {
                 $detail = 1;
             }
+
         }
 
         $poAddonCategoryDrop = AddonCostCategories::all();
@@ -1421,6 +1421,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $icvCategories = SupplierCategoryICVMaster::all();
 
         $hasPolicy = false;
+        $hasEEOSSPolicy = false;
         if($purchaseOrderID){
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             $sup= SupplierMaster::find($purchaseOrder->supplierID);
@@ -1428,6 +1429,13 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('companyPolicyCategoryID', 38)
                 ->where('isYesNO',1)
                 ->exists();
+
+            if($sup->primaryCompanySystemID){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
         }
 
 
@@ -1451,7 +1459,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'invoiceBooked' => $invoiceBooked,
             'poAddonCategoryDrop' => $poAddonCategoryDrop,
             'icvCategories' => $icvCategories,
-            'isSupplierCatalogPolicy' => $hasPolicy
+            'isSupplierCatalogPolicy' => $hasPolicy,
+            'isEEOSSPolicy' => $hasEEOSSPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2236,7 +2245,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $supplierReportGRVBase = array();
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $supplierReportGRVBase = array();
             return $this->sendError($validator->messages(), 422);
         }
@@ -2454,9 +2463,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $supplierReportGRVBase = array();
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
-            exit();
         }
 
         $type = $request->type;
@@ -2675,7 +2683,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-        $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -3275,7 +3283,7 @@ WHERE
         }
 
 
-        $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -4775,7 +4783,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data = array();
             }
         }
-        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+         \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -4925,10 +4933,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Transaction Amount'] = $val->poTotalSupplierTransactionCurrency;
                 }
                 if ($val->localcurrency) {
-                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;;
+                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;
                 }
                 if ($val->reportingcurrency) {
-                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;;
+                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;
                 }
                 if ($val->advance_detail) {
                     if (isset($val->advance_detail[0]->advanceSum)) {
@@ -4961,7 +4969,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $data = array();
         }
 
-        $csv = \Excel::create('po_master', function ($excel) use ($data) {
+         \Excel::create('po_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -5307,7 +5315,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-        $csv = \Excel::create('po_to_payment', function ($excel) use ($data) {
+         \Excel::create('po_to_payment', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

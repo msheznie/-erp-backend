@@ -151,7 +151,6 @@ class ApprovalRoleAPIController extends AppBaseController
     }
 
     public function assignApprovalGroup(Request $request){
-        $input = $request->all();
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($request->rollMasterID);
         if (empty($approvalRole)) {
             return $this->sendError('Approval Groups not found');

@@ -56,7 +56,7 @@ class DocumentControlAPIController extends AppBaseController
             'reportTypeID' => 'required'
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

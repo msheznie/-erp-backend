@@ -904,7 +904,7 @@ class BankReconciliationAPIController extends AppBaseController
                     ]);
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -970,7 +970,7 @@ class BankReconciliationAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('bank_reconciliation', function ($excel) use ($data) {
+                 \Excel::create('bank_reconciliation', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);

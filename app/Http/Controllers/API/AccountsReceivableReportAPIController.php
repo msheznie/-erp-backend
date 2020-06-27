@@ -77,7 +77,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ]);
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
 
@@ -97,7 +97,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ]);
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
 
@@ -133,7 +133,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
 
@@ -160,7 +160,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     ]);
                 }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
 
@@ -1040,7 +1040,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_balance_statement', function ($excel) use ($data) {
+                 \Excel::create('customer_balance_statement', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1122,7 +1122,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_aging', function ($excel) use ($data) {
+                 \Excel::create('customer_aging', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1191,7 +1191,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_ledger', function ($excel) use ($data) {
+                 \Excel::create('customer_ledger', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1271,7 +1271,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $csv = \Excel::create('customer_balance_summary', function ($excel) use ($data) {
+                     \Excel::create('customer_balance_summary', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -1320,7 +1320,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_sales_register', function ($excel) use ($data) {
+                 \Excel::create('customer_sales_register', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1423,7 +1423,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_collection', function ($excel) use ($data) {
+                 \Excel::create('customer_collection', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1507,7 +1507,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $csv = \Excel::create('revenue_by_customer', function ($excel) use ($data) {
+                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -1568,7 +1568,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $csv = \Excel::create('revenue_by_customer', function ($excel) use ($data) {
+                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -1630,7 +1630,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('customer_collection', function ($excel) use ($data) {
+                 \Excel::create('customer_collection', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -1687,7 +1687,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $data = [];
                 }
 
-                $csv = \Excel::create('invoice_tracker_', function ($excel) use ($data) {
+                 \Excel::create('invoice_tracker_', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

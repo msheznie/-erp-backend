@@ -82,7 +82,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         $this->bookInvSuppDetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppDets = $this->bookInvSuppDetRepository->all();
 
-        return $this->sendResponse($bookInvSuppDets->toArray(), 'Book Inv Supp Dets retrieved successfully');
+        return $this->sendResponse($bookInvSuppDets->toArray(), 'Supplier Invoice Details retrieved successfully');
     }
 
     /**
@@ -129,7 +129,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $bookInvSuppDets = $this->bookInvSuppDetRepository->create($input);
 
-        return $this->sendResponse($bookInvSuppDets->toArray(), 'Book Inv Supp Det saved successfully');
+        return $this->sendResponse($bookInvSuppDets->toArray(), 'Supplier Invoice Detail saved successfully');
     }
 
     /**
@@ -176,10 +176,10 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Book Inv Supp Det not found');
+            return $this->sendError('Supplier Invoice Detail not found');
         }
 
-        return $this->sendResponse($bookInvSuppDet->toArray(), 'Book Inv Supp Det retrieved successfully');
+        return $this->sendResponse($bookInvSuppDet->toArray(), 'Supplier Invoice Detail retrieved successfully');
     }
 
     /**
@@ -237,7 +237,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Book Inv Supp Det not found');
+            return $this->sendError('Supplier Invoice Detail not found');
+        }
+
+        if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
+            return $this->sendError('You cannot update Supplier Invoice Detail, this document already confirmed',500);
         }
 
         $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
@@ -341,11 +345,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Book Inv Supp Det not found',500);
+            return $this->sendError('Supplier Invoice Detail not found',500);
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            return $this->sendError('You cannot delete book Inv Supp Det , this document confirmed',500);
+            return $this->sendError('You cannot delete Supplier Invoice Detail, this document already confirmed',500);
         }
 
         $unbilledSum = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID);
@@ -394,7 +398,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $poMasterTableTotal->save();
 
-        return $this->sendResponse($id, 'Book Inv Supp Det deleted successfully');
+        return $this->sendResponse($id, 'Supplier Invoice Detail deleted successfully');
     }
 
     public function storePOBaseDetail(Request $request)
@@ -413,6 +417,11 @@ class BookInvSuppDetAPIController extends AppBaseController
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
+
+        if($bookInvSuppMaster->confirmedYN){
+            return $this->sendError('You cannot add Supplier Invoice Detail, this document already confirmed',500);
+        }
+
 
         $itemExistArray = array();
         //check added item exist
@@ -453,7 +462,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
                 if(count($details)){
 
-                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();;
+                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();
 
                     if (count(array_unique($poIdArray)) > 1) {
                         return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
@@ -462,7 +471,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 }
 
                 $inputDetails = $input['detailTable'];
-                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();;
+                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();
                 if (count(array_unique($inputPoIdArray)) > 1) {
                     return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected details');
                 }

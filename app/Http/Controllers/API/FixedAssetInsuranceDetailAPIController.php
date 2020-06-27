@@ -121,7 +121,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
             'dateOfExpiry' => 'required|date|after_or_equal:dateOfInsurance',
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -260,7 +260,7 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
             'dateOfExpiry' => 'required|date|after_or_equal:dateOfInsurance',
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
