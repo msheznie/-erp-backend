@@ -198,5 +198,9 @@ class DirectReceiptDetail extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'directReceiptAutoID', 'custReceivePaymentAutoID');
+    }
     
 }

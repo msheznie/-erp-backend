@@ -221,5 +221,9 @@ class DirectInvoiceDetails extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
+    public function supplier_invoice_master()
+    {
+        return $this->belongsTo('App\Models\BookInvSuppMaster', 'directInvoiceAutoID', 'bookingSuppMasInvAutoID');
+    }
     
 }

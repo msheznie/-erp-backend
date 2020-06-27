@@ -199,7 +199,6 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-        return $this->sendResponse($companyDocumentAttachment->toArray(), 'Company Document Attachments Retrieved Successfully');
     }
 
     /*

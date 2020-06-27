@@ -173,7 +173,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'assetSerialNo.*.faUnitSerialNo' => 'required|unique:erp_fa_asset_master,faUnitSerialNo',
             ], $messages);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -389,7 +389,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
             ], $messages);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -623,7 +623,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
             ], $messages);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -1366,7 +1366,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
-        $csv = \Excel::create('asset_insurance_report', function ($excel) use ($data) {
+         \Excel::create('asset_insurance_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -1790,7 +1790,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $data = array();
         }
 
-        $csv = \Excel::create('po_master', function ($excel) use ($data) {
+         \Excel::create('po_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

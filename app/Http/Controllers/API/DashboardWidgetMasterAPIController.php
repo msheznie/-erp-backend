@@ -593,11 +593,11 @@ supplierID LIMIT 10
                     $ontime[]=array(
                         'y'=> round($raw->ontime,2),
                         'description'=> $raw->name
-                    );;
+                    );
                     $late[]=array(
                         'y'=> round($raw->late,2),
                         'description'=> $raw->name
-                    );;
+                    );
 
                     $temSeries['categories'][]= $raw->code;
                 }

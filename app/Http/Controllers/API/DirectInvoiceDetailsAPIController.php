@@ -135,6 +135,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Please select a document currency');
         }
 
+        if($BookInvSuppMaster->confirmedYN){
+            return $this->sendError('You cannot add detail, this document already confirmed',500);
+        }
+
 /*        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
             ->whereHas('directdetail', function ($query) use ($input) {
                 $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
@@ -293,7 +297,11 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
 
         if (empty($BookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Supplier Invoice Master not found');
+        }
+
+        if($BookInvSuppMaster->confirmedYN){
+            return $this->sendError('You cannot update detail, this document already confirmed',500);
         }
 
         if (isset($input['serviceLineSystemID'])) {
@@ -381,6 +389,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Invoice Details not found');
         }
 
+        if($directInvoiceDetails->supplier_invoice_master && $directInvoiceDetails->supplier_invoice_master->confirmedYN){
+            return $this->sendError('You cannot delete Supplier Invoice Details, this document already confirmed',500);
+        }
+
         $directInvoiceDetails->delete();
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
@@ -402,13 +414,24 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $directInvoiceAutoID = $input['directInvoiceAutoID'];
+        $directInvoiceAutoID = isset($input['directInvoiceAutoID']) ? $input['directInvoiceAutoID'] : 0;
+
+        $supInvoice = BookInvSuppMaster::find($directInvoiceAutoID);
+
+        if (empty($supInvoice)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if($supInvoice->confirmedYN){
+            return $this->sendError('You cannot delete Supplier Invoice Details , this document already confirmed',500);
+        }
+
 
         $detailExistAll = DirectInvoiceDetails::where('directInvoiceAutoID', $directInvoiceAutoID)
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError('There are no details to delete',500);
         }
 
         if (!empty($detailExistAll)) {

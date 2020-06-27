@@ -7,13 +7,23 @@ use App\helper\inventory;
 use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use App\Models\DeliveryOrderDetailRefferedback;
+use App\Models\DeliveryOrderRefferedback;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
+use App\Models\EmployeesDepartment;
+use App\Models\GeneralLedger;
 use App\Models\Months;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
@@ -152,7 +162,7 @@ class DeliveryOrderAPIController extends AppBaseController
             'deliveryOrderDate' => 'required|date'
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -163,6 +173,24 @@ class DeliveryOrderAPIController extends AppBaseController
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
+
+        $customer = CustomerMaster::find($input['customerID']);
+        if(empty($customer)){
+            return $this->sendError('Selected customer not found on db',500);
+        }
+
+        if(!$customer->custGLAccountSystemID){
+            return $this->sendError('GL account is not configured for this customer',500);
+        }
+
+        if(!$customer->custUnbilledAccountSystemID){
+            return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+        }
+
+        $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+        $input['custGLAccountCode'] = $customer->custGLaccount;
+        $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+        $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
 
         //deliveryOrderCode
         $lastSerial = DeliveryOrder::where('companySystemID', $input['companySystemID'])
@@ -189,6 +217,11 @@ class DeliveryOrderAPIController extends AppBaseController
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+
+        // check date within financial period
+        if (!(($input['deliveryOrderDate'] >= $input['FYPeriodDateFrom']) && ($input['deliveryOrderDate'] <= $input['FYPeriodDateTo']))) {
+            return $this->sendError('Document date should be between financial period start date and end date',500);
+        }
 
         $companyCurrency = Helper::companyCurrency($input['companySystemID']);
         $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
@@ -371,6 +404,29 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['modifiedUserName'] = $employee->empName;
         $input['modifiedDateTime'] = Carbon::now();
 
+        // check gl account is configure for new customer
+        if(!empty($input['customerID'])){
+            if($input['customerID'] != $deliveryOrder->customerID){
+                // check customer master unbilled gl account configured
+                $customer = CustomerMaster::find($input['customerID']);
+
+                if(!$customer->custGLAccountSystemID){
+                    return $this->sendError('GL account is not configured for this customer',500);
+                }
+
+                if(!$customer->custUnbilledAccountSystemID){
+                    return $this->sendError('Unbilled receivable account is not configured for this customer',500);
+                }
+
+                $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+                $input['custGLAccountCode'] = $customer->custGLaccount;
+                $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+                $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
+            }
+        }
+
+
         if ($input['confirmedYN'] == 1 && $deliveryOrder->confirmedYN == 0) {
 
             // check document date between financial period
@@ -402,7 +458,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 'deliveryOrderDate' => 'required|date'
             ], $messages);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -411,6 +467,11 @@ class DeliveryOrderAPIController extends AppBaseController
             if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
                 return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
             }
+            $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+            $input['custGLAccountCode'] = $customer->custGLaccount;
+            $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+            $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
 
             $detail = DeliveryOrderDetail::where('deliveryOrderID', $id)->get();
             if(count((array)$detail) == 0){
@@ -727,16 +788,21 @@ class DeliveryOrderAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('salesPersonID', $input)) {
-            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $deliveryOrder->where('salesPersonID', $input['salesPersonID']);
+        if (array_key_exists('orderType', $input)) {
+            if ($input['orderType'] && !is_null($input['orderType'])) {
+                $deliveryOrder->where('orderType', $input['orderType']);
             }
         }
 
         $search = $request->input('search.value');
         if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $deliveryOrder = $deliveryOrder->where(function ($query) use ($search) {
-                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%");
+                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                ->orWhereHas('customer', function ($q) use ($search){
+                    $q->where('CustomerName', 'LIKE', "%{$search}%");
+                });
             });
         }
 
@@ -798,8 +864,6 @@ WHERE
 
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }
-
-
 
     public function getDeliveryOrderApprovals(Request $request)
     {
@@ -995,6 +1059,221 @@ WHERE
         }
 
         return $this->sendResponse($data->toArray(), 'Delivery Order retrieved successfully');
+    }
+
+    public function deliveryOrderReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $deliveryOrder= DeliveryOrder::find($deliveryOrderID);
+        $emails = array();
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        if ($deliveryOrder->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this delivery order. it is already partially approved');
+        }
+
+        if ($deliveryOrder->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this delivery order. it is already fully approved');
+        }
+
+        if ($deliveryOrder->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this delivery order. it is not confirmed');
+        }
+
+        // updating fields
+        $deliveryOrder->confirmedYN = 0;
+        $deliveryOrder->confirmedByEmpSystemID = null;
+        $deliveryOrder->confirmedByEmpID = null;
+        $deliveryOrder->confirmedByName = null;
+        $deliveryOrder->confirmedDate = null;
+        $deliveryOrder->RollLevForApp_curr = 1;
+        $deliveryOrder->save();
+
+        $employee = Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $deliveryOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $deliveryOrder->deliveryOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $deliveryOrder->deliveryOrderCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $deliveryOrder->companySystemID)
+            ->where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+            ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $deliveryOrder->companySystemID)
+                    ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                    ->first();
+
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                /* if ($companyDocument['isServiceLineApproval'] == -1) {
+                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                 }*/
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $deliveryOrder->companySystemID)
+            ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
+    }
+
+    function getInvoiceDetailsForDO(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $detail = CustomerInvoiceItemDetails::where('deliveryOrderID',$deliveryOrderID)
+            ->with(['master'=> function($query){
+                $query->with(['currency']);
+            },'delivery_order_detail','uom_issuing'])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+    function printDeliveryOrder(Request $request){
+        $id = $request->get('id');
+
+        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 71);
+        }, 'company','customer','transaction_currency','detail'=> function($query){
+            $query->with(['uom_issuing']);
+        }])->findWithoutFail($id);
+
+
+        if (empty($do)) {
+            return $this->sendError('Delivery order not found');
+        }
+
+        if($do->transaction_currency){
+            $do->currency = (isset($do->transaction_currency->DecimalPlaces) && $do->transaction_currency->DecimalPlaces)?$do->transaction_currency->DecimalPlaces:2;
+        }
+
+        $do->docRefNo = Helper::getCompanyDocRefNo($do->companySystemID, $do->documentSystemID);
+        $do->logoExists = false;
+        $companyLogo = isset($do->company->companyLogo)?"logos/".$do->company->companyLogo:'';
+
+        if (file_exists($companyLogo)) {
+            $do->logoExists = true;
+            $do->companyLogo = $companyLogo;
+        }
+
+        $array = array('entity' => $do);
+        $time = strtotime("now");
+        $fileName = 'delivery_order_' . $id . '_' . $time . '.pdf';
+        $html = view('print.delivery_order', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
+    public function getDeliveryOrderAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $deliveryOrderID = $input['deliveryOrderID'];
+
+        $doData = DeliveryOrder::find($deliveryOrderID);
+        if (empty($doData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        if ($doData->refferedBackYN != -1) {
+            return $this->sendError('You cannot amend this delivery order');
+        }
+
+        $deliveryOrderArray = $doData->toArray();
+
+        $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
+
+        $fetchDeliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+            ->get();
+
+//        if (!empty($fetchDeliveryOrderDetails)) {
+//            foreach ($fetchDeliveryOrderDetails as $doDetail) {
+//                $doDetail['timesReferred'] = $doData->timesReferred;
+//            }
+//        }
+
+        $doDetailArray = $fetchDeliveryOrderDetails->toArray();
+
+        $storeDeliveryOrderDetaillHistory = DeliveryOrderDetailRefferedback::insert($doDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $doData->companySystemID)
+            ->where('documentSystemID', $doData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $doData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+            ->where('companySystemID', $doData->companySystemID)
+            ->where('documentSystemID', $doData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $doData->refferedBackYN = 0;
+            $doData->confirmedYN = 0;
+            $doData->confirmedByEmpSystemID = null;
+            $doData->confirmedByEmpID = null;
+            $doData->confirmedByName = null;
+            $doData->confirmedDate = null;
+            $doData->RollLevForApp_curr = 1;
+            $doData->save();
+        }
+
+        return $this->sendResponse($doData->toArray(), 'Delivery Order Amend successfully');
     }
 
 

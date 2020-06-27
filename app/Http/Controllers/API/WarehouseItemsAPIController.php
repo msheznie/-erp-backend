@@ -408,7 +408,7 @@ class WarehouseItemsAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('items_by_warehouse', function ($excel) use ($data) {
+         \Excel::create('items_by_warehouse', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

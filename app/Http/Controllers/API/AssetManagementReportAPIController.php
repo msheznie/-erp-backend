@@ -101,9 +101,16 @@ class AssetManagementReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                         'typeID' => 'required'
                     ]);
-                }
+                }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'assetCategory' => 'required',
+                    'typeID' => 'required'
+                ]);
+            }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -114,7 +121,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -125,7 +132,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -137,7 +144,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'currencyID' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -149,7 +156,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'currencyID' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -192,7 +199,6 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-
 
                     return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
@@ -255,6 +261,16 @@ class AssetManagementReportAPIController extends AppBaseController
                     $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
                     $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
                     return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period']);
+                }
+
+                if($request->reportTypeID == 'ARGD'){ // Asset Register Group Detail
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+
+                    $output = $this->getAssetRegisterDetail($request);
+
+                    return $this->getAssetRegisterGroupedDetailFinalArray($output);
+
                 }
 
                 break;
@@ -711,7 +727,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                         $excel->sheet('asset register', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true, false);
                             $sheet->setAutoSize(true);
@@ -769,7 +785,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
 
-                    $csv = \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
+                     \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -885,7 +901,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
 
-                    $csv = \Excel::create('asset_register_summary', function ($excel) use ($data) {
+                     \Excel::create('asset_register_summary', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -897,8 +913,213 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 }
 
-                return $this->sendResponse(array(), 'successfully export');
+                if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $output = $this->getAssetRegisterDetail($request);
+                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    $outputArr = $final['reportData'];
 
+                    $x = 0;
+                    if (!empty($outputArr)) {
+
+                        foreach ($outputArr as $masterKey => $masterVal) {
+                            $data[$x]['Cost GL'] = $masterKey;
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = '';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = '';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = 'Cost GL';
+                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                            $data[$x]['Type'] = 'Type';
+                            $data[$x]['Segment'] = 'Segment';
+                            $data[$x]['category'] = 'Finance Category';
+                            $data[$x]['FA Code'] = 'FA Code';
+                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                            $data[$x]['Serial Number'] = 'Serial Number';
+                            $data[$x]['Asset Description'] = 'Asset Description';
+                            $data[$x]['DEP %'] = 'DEP %';
+                            $data[$x]['Date Aquired'] = 'Date Aquired';
+                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = 'Local Amount';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+
+                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                            $x++;
+
+
+                            $COSTUNIT = 0;
+                            $depAmountLocal = 0;
+                            $localnbv = 0;
+                            $costUnitRpt = 0;
+                            $depAmountRpt = 0;
+                            $rptnbv = 0;
+
+                            foreach ($masterVal as $mainAsset => $assetArray) {
+
+                                foreach ($assetArray as $value){
+
+                                    $x++;
+
+                                    $data[$x]['Cost GL'] = $value->COSTGLCODE;
+                                    $data[$x]['Acc Dep GL'] = $value->ACCDEPGLCODE;
+                                    $data[$x]['Type'] = $value->typeDes;
+                                    $data[$x]['Segment'] = $value->ServiceLineDes;
+                                    $data[$x]['category'] = $masterKey;
+                                    $data[$x]['FA Code'] = $value->faCode;
+                                    $data[$x]['Grouped YN'] = $value->groupbydesc;
+                                    $data[$x]['Serial Number'] = $value->faUnitSerialNo;
+                                    $data[$x]['Asset Description'] = $value->assetDescription;
+                                    $data[$x]['DEP %'] = round($value->DEPpercentage, 2);
+                                    $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
+                                    $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
+
+                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
+                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
+                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
+                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
+                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
+                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+
+                                    if(!$value->isHeader ){
+                                        $COSTUNIT += $value->COSTUNIT;
+                                        $depAmountLocal += $value->depAmountLocal;
+                                        $localnbv += $value->localnbv;
+                                        $costUnitRpt += $value->costUnitRpt;
+                                        $depAmountRpt += $value->depAmountRpt;
+                                        $rptnbv += $value->rptnbv;
+
+                                    }
+                                }
+
+
+                                $x++;
+                                $data[$x]['Cost GL'] = '';
+                                $data[$x]['Acc Dep GL'] = '';
+                                $data[$x]['Type'] = '';
+
+                                $data[$x]['Segment'] = '';
+                                $data[$x]['category'] = '';
+                                $data[$x]['FA Code'] = '';
+                                $data[$x]['Grouped YN'] = '';
+                                $data[$x]['Serial Number'] = '';
+                                $data[$x]['Asset Description'] = '';
+                                $data[$x]['DEP %'] = '';
+                                $data[$x]['Date Aquired'] = '';
+                                $data[$x]['Dep Start Date'] = '';
+                                $data[$x]['Local Amount unitcost'] = '';
+                                $data[$x]['Local Amount accDep'] = '';
+                                $data[$x]['Local Amount net Value'] = '';
+                                $data[$x]['Rpt Amount unit cost'] = '';
+                                $data[$x]['Rpt Amount acc dep'] = '';
+                                $data[$x]['Rpt Amount acc net value'] = '';
+
+                            }
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                            $data[$x]['Local Amount net Value'] = $localnbv;
+                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+                            $x++;
+
+                        }
+
+                        $x++;
+
+                        $data[$x]['Cost GL'] = '';
+                        $data[$x]['Acc Dep GL'] = '';
+                        $data[$x]['Type'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['category'] = '';
+                        $data[$x]['FA Code'] = '';
+                        $data[$x]['Grouped YN'] = '';
+                        $data[$x]['Serial Number'] = '';
+                        $data[$x]['Asset Description'] = '';
+                        $data[$x]['DEP %'] = '';
+                        $data[$x]['Date Aquired'] = '';
+                        $data[$x]['Dep Start Date'] = 'Total';
+                        $data[$x]['Local Amount unitcost'] =  $final['COSTUNIT'];
+                        $data[$x]['Local Amount accDep'] =  $final['depAmountLocal'];
+                        $data[$x]['Local Amount net Value'] =  $final['localnbv'];
+                        $data[$x]['Rpt Amount unit cost'] =  $final['costUnitRpt'];
+                        $data[$x]['Rpt Amount acc dep'] =  $final['depAmountRpt'];
+                        $data[$x]['Rpt Amount acc net value'] =  $final['rptnbv'];
+                    }
+
+//                    return $data;
+
+                     \Excel::create('Asset_Register_Group_detail_Report', function ($excel) use ($data) {
+                        $excel->sheet('asset register grouped', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true, false);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                }
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             case 'AMAA': //Asset Additions
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
@@ -933,7 +1154,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -979,7 +1200,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $x++;
                 }
-                $csv = \Excel::create('asset_disposal', function ($excel) use ($data) {
+                 \Excel::create('asset_disposal', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1087,7 +1308,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                 }
-                $csv = \Excel::create('asset_depreciation', function ($excel) use ($data) {
+                 \Excel::create('asset_depreciation', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1117,7 +1338,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('asset_cwip', function ($excel) use ($data) {
+                 \Excel::create('asset_cwip', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1204,10 +1425,7 @@ FROM
                 GROUP BY
                     erp_fa_asset_master.companySystemID,
                     erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';
-        //echo $query;
-        //exit();
-        $output = \DB::select($query);
-        return $output;
+        return \DB::select($query);
     }
 
     function getAssetDisposal($request)
@@ -1225,8 +1443,6 @@ FROM
         } else {
             $companyID = (array)$request->companySystemID;
         }
-
-        //DB::enableQueryLog();
 
         $qry = 'SELECT
                     erp_fa_asset_disposalmaster.companyID,
@@ -1366,9 +1582,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID';
 
-        //DB::enableQueryLog();
         $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'month' => $arrayMonth];
     }
 
@@ -1548,10 +1762,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID;';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationDetailMonthlyQRY($request)
@@ -1754,11 +1965,7 @@ IF
 GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID;';
-
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationCategorySummaryQRY($request)
@@ -1918,10 +2125,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.AUDITCATOGARY;';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationCategorySummaryMonthlyQRY($request)
@@ -2103,10 +2307,7 @@ IF
 GROUP BY
 	erp_fa_asset_master.companySystemID,erp_fa_asset_master.AUDITCATOGARY';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function generateAssetDetailDrilldown(Request $request)
@@ -2680,7 +2881,7 @@ WHERE
             $x++;
         }
 
-        $csv = \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
+         \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -2735,7 +2936,8 @@ WHERE
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
 	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')
             ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
-            $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID');
+            })
             ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur*noQty ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur*noQty ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
@@ -2752,7 +2954,8 @@ WHERE
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
 	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')
             ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
-                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID');
+            })
             ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur*noQty ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur*noQty ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
@@ -2848,65 +3051,6 @@ WHERE
             $periodQry2 .= 'IFNULL(`' . $val->format('M-Y') . '`,0) as `' . $val->format('M-Y') . '`,';
             $periodArr[] = $val->format('M-Y');
         }
-
-        /*$addition = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,0 as opening,' . $currencyColumn . ' as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereRAW('DATE(postedDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '"')->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->ofCompany($companyID)->get();
-
-        $openingDisposed = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate) {
-                $query->whereDate('depDate', '<', $fromDate);
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(-1)->ofCompany($companyID)->whereDate('disposedDate', '>', $fromDate)->get();
-
-        $opening = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate) {
-                $query->whereDate('depDate', '<', $fromDate);
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,0 as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(0)->ofCompany($companyID)->get();
-
-        $output = $opening->merge($openingDisposed)->merge($addition);*/
-
 
         $query = 'SELECT 
                 ' . $periodQry2 . '
@@ -3088,5 +3232,136 @@ WHERE
 
         $output = \DB::select($query);
         return ['data' => $output, 'period' => $periodArr];
+    }
+
+    private function getAssetRegisterGroupedDetailFinalArray($output){
+        $finalArr = [];
+        $totalArray = [];
+
+        $totCOSTUNIT = 0;
+        $totcostUnitRpt = 0;
+        $totdepAmountLocal = 0;
+        $totdepAmountRpt = 0;
+        $totlocalnbv = 0;
+        $totrptnbv = 0;
+
+        if ($output) {
+
+            foreach ($output as $val) {     // for getting final toatal
+                $totlocalnbv += $val->localnbv;
+                $totCOSTUNIT += $val->COSTUNIT;
+                $totcostUnitRpt += $val->costUnitRpt;
+                $totdepAmountRpt += $val->depAmountRpt;
+                $totdepAmountLocal += $val->depAmountLocal;
+                $totrptnbv += $val->rptnbv;
+            }
+
+            $outputArr= collect($output)->groupBy(['financeCatDescription','groupbydesc']);
+
+            $subkeys = [];
+            foreach ($outputArr as $key => $masterArray){
+                $subkeys[$key] = $masterArray->keys();
+            }
+
+            // setting final array
+            foreach ($subkeys as $key => $value){
+
+                foreach ($value as $v){
+
+                    foreach ($output as $x){
+                        $x->isHeader = false;
+                        if($v != '' && $v == $x->faCode){
+
+                            $finalArr[$key][$v][] = $x;     // get main asset detail master code empty
+
+                            $finalArr[$key][$v][] = clone $x;   // duplicate main asset detail
+
+                        }elseif($key==$x->financeCatDescription && $v==$x->groupbydesc){
+
+                            if($v == ''  && in_array($x->faCode,$value->toArray())){    // check main asset details are on emty master code array
+                                continue;                       // remove main asset detail from master code empty
+                            }
+                            $finalArr[$key][$v][] = $x;
+                        }
+
+                    }
+                }
+
+            }
+
+            // get main asset wise sum
+            foreach ( $finalArr as $masterKey=> $value){
+
+
+                foreach ($value as $key => $val) {
+
+                    if($key != '' ){
+
+                        $COSTUNIT = 0;
+                        $costUnitRpt = 0;
+                        $depAmountLocal = 0;
+                        $depAmountRpt = 0;
+                        $localnbv = 0;
+                        $rptnbv = 0;
+                        foreach ($val as $no => $array){
+
+                            if($array->groupbydesc == '' && $no==0) {
+                                continue;
+                            }
+                            $COSTUNIT +=  $array->COSTUNIT;
+                            $costUnitRpt +=  $array->costUnitRpt;
+                            $depAmountLocal +=  $array->depAmountLocal;
+                            $depAmountRpt +=  $array->depAmountRpt;
+                            $localnbv +=  $array->localnbv;
+                            $rptnbv +=  $array->rptnbv;
+
+
+                        }
+
+                        $totalArray[$masterKey][$key]['COSTUNIT'] = $COSTUNIT;
+                        $totalArray[$masterKey][$key]['costUnitRpt'] = $costUnitRpt;
+                        $totalArray[$masterKey][$key]['depAmountLocal'] = $depAmountLocal;
+                        $totalArray[$masterKey][$key]['depAmountRpt'] = $depAmountRpt;
+                        $totalArray[$masterKey][$key]['localnbv'] = $localnbv;
+                        $totalArray[$masterKey][$key]['rptnbv'] = $rptnbv;
+
+                    }
+
+                }
+
+            }
+
+            // set main asset wise sum
+            foreach ($totalArray as $masterKey => $masterValue){
+
+                foreach ($masterValue as $mainAsset => $sumArray){
+
+
+                    if (isset($finalArr[$masterKey][$mainAsset][0]) && $finalArr[$masterKey][$mainAsset][0]->groupTO ==''){
+
+                        $finalArr[$masterKey][$mainAsset][0]->COSTUNIT = isset($totalArray[$masterKey][$mainAsset]['COSTUNIT'])?$totalArray[$masterKey][$mainAsset]['COSTUNIT']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->costUnitRpt = isset($totalArray[$masterKey][$mainAsset]['costUnitRpt'])?$totalArray[$masterKey][$mainAsset]['costUnitRpt']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->depAmountLocal = isset($totalArray[$masterKey][$mainAsset]['depAmountLocal'])?$totalArray[$masterKey][$mainAsset]['depAmountLocal']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->depAmountRpt = isset($totalArray[$masterKey][$mainAsset]['depAmountRpt'])?$totalArray[$masterKey][$mainAsset]['depAmountRpt']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->localnbv = isset($totalArray[$masterKey][$mainAsset]['localnbv'])?$totalArray[$masterKey][$mainAsset]['localnbv']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->rptnbv = isset($totalArray[$masterKey][$mainAsset]['rptnbv'])?$totalArray[$masterKey][$mainAsset]['rptnbv']:0;
+                        $finalArr[$masterKey][$mainAsset][0]->isHeader = true;
+                    }
+
+
+                }
+            }
+
+        }
+
+        return array(
+            'reportData' => $finalArr,
+            'localnbv' => $totlocalnbv,
+            'rptnbv' => $totrptnbv,
+            'COSTUNIT' => $totCOSTUNIT,
+            'costUnitRpt' => $totcostUnitRpt,
+            'depAmountLocal' => $totdepAmountLocal,
+            'depAmountRpt' => $totdepAmountRpt
+        );
     }
 }

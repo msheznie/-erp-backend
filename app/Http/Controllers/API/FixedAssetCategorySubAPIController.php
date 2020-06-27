@@ -132,7 +132,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             return $this->sendError('Asset Category not found');
         }
 
-        $input['mainCatDescription'] = $fixedAssetCategory->catDescription;;
+        $input['mainCatDescription'] = $fixedAssetCategory->catDescription;
         $input['companySystemID'] = $fixedAssetCategory->companySystemID;
         $input['companyID'] = $fixedAssetCategory->companyID;
         $input['createdPcID'] = gethostname();
@@ -268,7 +268,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             return $this->sendError('Asset Category not found');
         }
 
-        $input['mainCatDescription'] = $fixedAssetCategory->catDescription;;
+        $input['mainCatDescription'] = $fixedAssetCategory->catDescription;
         $input['companySystemID'] = $fixedAssetCategory->companySystemID;
         $input['companyID'] = $fixedAssetCategory->companyID;
         $input['modifiedPc'] = gethostname();

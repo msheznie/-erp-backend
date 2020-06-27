@@ -160,27 +160,6 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
             $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->create($input);
-
-           /*$detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $input['capitalizationID'])->first();
-            $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $input['capitalizationID']]);
-            if ($detail) {
-                foreach ($detail as $val) {
-                    $allocatedAmountLocal = 0;
-                    $allocatedAmountRpt = 0;
-                    if($detailSUM->assetNBVLocal){
-                        $allocatedAmountLocal = ($val->assetNBVLocal / $detailSUM->assetNBVLocal) * $master->assetNBVLocal;
-                    }
-
-                    if($detailSUM->assetNBVRpt){
-                        $allocatedAmountRpt = ($val->assetNBVRpt / $detailSUM->assetNBVRpt) * $master->assetNBVRpt;
-                    }
-
-                    $detailArr["allocatedAmountLocal"] = $allocatedAmountLocal;
-                    $detailArr["allocatedAmountRpt"] = $allocatedAmountRpt;
-                    $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($detailArr, $val->capitalizationDetailID);
-
-                }
-            }*/
             DB::commit();
             return $this->sendResponse($assetCapitalizationDetails->toArray(), 'Asset Capitalization Detail saved successfully');
 
@@ -346,27 +325,10 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->findWithoutFail($id);
-            $capitalizationID = $assetCapitalizationDetail->capitalizationID;
             if (empty($assetCapitalizationDetail)) {
                 return $this->sendError('Asset Capitalization Detail not found');
             }
-
             $assetCapitalizationDetail->delete();
-
-            /*$master = AssetCapitalization::find($capitalizationID);
-            return $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $capitalizationID)->first();
-            $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $capitalizationID]);
-            if ($detail) {
-                foreach ($detail as $val) {
-                    $allocatedAmountLocal = ($val->assetNBVLocal / $detailSUM->assetNBVLocal) * $master->assetNBVLocal;
-                    $allocatedAmountRpt = ($val->assetNBVRpt / $detailSUM->assetNBVRpt) * $master->assetNBVRpt;
-
-                    $detailArr["allocatedAmountLocal"] = $allocatedAmountLocal;
-                    $detailArr["allocatedAmountRpt"] = $allocatedAmountRpt;
-                    $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($detailArr, $val->capitalizationDetailID);
-
-                }
-            }*/
             DB::commit();
             return $this->sendResponse($id, 'Asset Capitalization Detail deleted successfully');
 
@@ -374,7 +336,6 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
-
     }
 
     public function getCapitalizationDetails(Request $request)

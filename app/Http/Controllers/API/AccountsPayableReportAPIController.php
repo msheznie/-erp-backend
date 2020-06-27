@@ -66,11 +66,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             $departments = array();
 
-            /*$filterSuppliers = UnbilledGrvGroupBy::whereIN('companySystemID', $companiesByGroup)
-                ->select('supplierID')
-                ->groupBy('supplierID')
-                ->pluck('supplierID');*/
-
             $unbilledGrvSup = collect(UnbilledGrvGroupBy::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
             $erp_bookinvsuppmaster = collect(BookInvSuppMaster::select('supplierID')->groupBy('supplierID')->get())->pluck('supplierID')->toArray();
             $filterSuppliers = array_merge($unbilledGrvSup,$erp_bookinvsuppmaster);
@@ -125,7 +120,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'currencyID' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -144,7 +139,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'currencyID' => 'required'
                     ]);
 
-                    if ($validator->fails()) {//echo 'in';exit;
+                    if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
                 } else if ($reportTypeID == 'SBSR') {
@@ -155,7 +150,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'controlAccountsSystemID' => 'required'
                     ]);
 
-                    if ($validator->fails()) {//echo 'in';exit;
+                    if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
                 }
@@ -220,7 +215,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'through' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -343,12 +338,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
-
-                    /*          if ($output) {
-                                  foreach ($output as $val) {
-                                      $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
-                                  }
-                              }*/
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }
 
@@ -647,11 +636,9 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 } else if ($reportTypeID == 'UGRVAD') {
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
-                    if ($reportTypeID == 'UGRVAD') {
-                        if ($output) {
-                            foreach ($output as $val) {
-                                $outputArr[$val->supplierName][] = $val;
-                            }
+                    if ($reportTypeID == 'UGRVAD' && $output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->supplierName][] = $val;
                         }
                     }
                 } else if ($reportTypeID == 'UGRVAS') {
@@ -704,12 +691,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
                 $companyCurrency = Helper::companyCurrency($request->companySystemID);
-                if ($companyCurrency) {
-//                    if ($request->currencyID == 2) {
-//                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-//                    } else if ($request->currencyID == 3) {
-//                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
-//                    }
+                if ($companyCurrency && $companyCurrency->reportingcurrency) {
                     $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                 }
                 return array('reportData' => $outputArr,
@@ -794,7 +776,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
                                 $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                //$data[$x]['Payment Type'] = $val->PaymentType;
                                 $data[$x]['Payment Document Number'] = $val->documentCode;
                                 $data[$x]['GL Code'] = $val->glCode;
                                 $data[$x]['Account Description'] = $val->AccountDescription;
@@ -891,7 +872,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                                 if ($val->approved == -1) {
                                     $status = "Fully Approved";
-                                } else if ((($val->chequeSentToTreasury) == -1)) {
+                                } else if (($val->chequeSentToTreasury) == -1) {
                                     $status = "Payment Sent to Treasury";
                                 } else if (($val->chequeSentToTreasury == 0) && ($val->chequePaymentYN == 0)) {
                                     $status = "Payment Not Printed and Not Sent to Treasury";
@@ -904,7 +885,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+               \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -946,7 +927,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -983,7 +964,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                    $csv = \Excel::create('supplier_balance_statement', function ($excel) use ($data) {
+                    \Excel::create('supplier_balance_statement', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -1019,7 +1000,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1049,7 +1030,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1170,7 +1151,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('supplier_aging', function ($excel) use ($data) {
+                 \Excel::create('supplier_aging', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1213,7 +1194,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
+                \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1384,7 +1365,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
+                \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1419,7 +1400,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Posted Date'] = Helper::dateFormat($val->postedDate);
 
                         $data[$x]['Payment Voucher No'] = $val->BPVcode;
-                        $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount,$decimalPlaces);;
+                        $data[$x]['Paid Amount'] = number_format($val->paidRPTAmount,$decimalPlaces);
                         $data[$x]['Cheque No'] = $val->BPVchequeNo;
                         $data[$x]['Cheque Date'] = Helper::dateFormat($val->BPVchequeDate);
                         $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
@@ -1430,7 +1411,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
+                \Excel::create('invoice_to_paymentpayment', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1450,11 +1431,9 @@ class AccountsPayableReportAPIController extends AppBaseController
     function getSupplierLedgerQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $asOfDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -1638,15 +1617,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
                  LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
                  GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate,suppliername';
-        $output = \DB::select($query);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($query);
     }
 
     function getSupplierStatementQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -1696,7 +1672,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
         $currencyID = $request->currencyID;
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -1973,7 +1948,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         if ($reportTypeID == 'APPSY') {
             if ($reportSD == 'detail') {
-                //DB::enableQueryLog();
                 $output = \DB::select('SELECT
                                     paymentsBySupplierSummary.companySystemID,
                                     paymentsBySupplierSummary.companyID,
@@ -2044,7 +2018,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ) AS paymentsBySupplierSummary
                                 ORDER BY paymentsBySupplierSummary.documentRptAmount DESC');
             } else {
-                //DB::enableQueryLog();
                 $output = \DB::select('SELECT
                                 paymentsBySupplierSummary.companySystemID,
                                 paymentsBySupplierSummary.companyID,
@@ -2601,7 +2574,6 @@ class AccountsPayableReportAPIController extends AppBaseController
     function getSupplierBalanceSummeryQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$fromDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -2658,14 +2630,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_generalledger.supplierCodeSystem;';
 
         $output = \DB::select($query);
-        //dd(DB::getQueryLog());
         return $output;
     }
 
     function getSupplierAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -2750,7 +2720,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
 
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -2984,14 +2953,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
 
     function getSupplierAgingSummaryQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -3075,7 +3042,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
-        //DB::enableQueryLog();
+
         $output = \DB::select('SELECT *,SUM(grandFinal.unAllocatedAmount) as unAllocatedAmount,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -3310,14 +3277,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID ORDER BY suppliername;');
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
 
     function getSupplierAgingDetailAdvanceQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -3398,7 +3363,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
 
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -3638,7 +3602,6 @@ class AccountsPayableReportAPIController extends AppBaseController
     function getSupplierAgingSummaryAdvanceQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -3718,7 +3681,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
-        //DB::enableQueryLog();
+
         $output = \DB::select('SELECT *, ' . $agingField . ' FROM (SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
@@ -3952,7 +3915,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID ORDER BY suppliername;');
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -4006,7 +3968,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                     GROUP BY
                         ' . $companyWise . '
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';
-        //DB::enableQueryLog();
         $output = \DB::select($qry);
 
         return $output;
@@ -4037,7 +3998,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         if ($localOrForeign == 2) {
             $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
         } else if ($localOrForeign == 3) {
-            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;
         }
 
         $supplierGroup = "";
@@ -4213,7 +4174,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
-        //DB::enableQueryLog();
         $output = \DB::select($qry);
 
         return $output;
@@ -4286,7 +4246,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_unbilledgrvgroupby.unbilledgrvAutoID,
                 erp_grvmaster.grvAutoID,
                 erp_grvmaster.companySystemID;';
-        //DB::enableQueryLog();
         $output = \DB::select($qry);
 
         return $output;
@@ -4319,7 +4278,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         if ($localOrForeign == 2) {
             $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
         } else if ($localOrForeign == 3) {
-            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;
         }
 
         $supplierGroup = "";
@@ -4499,7 +4458,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup . ') as agingFinal';
-        //DB::enableQueryLog();
         $output = \DB::select($qry);
 
         return $output;
@@ -4532,7 +4490,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         if ($localOrForeign == 2) {
             $countryFilter = 'AND countryID = ' . $checkIsGroup->companyCountry;
         } else if ($localOrForeign == 3) {
-            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;;
+            $countryFilter = 'AND countryID != ' . $checkIsGroup->companyCountry;
         }
 
         $supplierGroup = "";
@@ -4732,17 +4690,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ') as agingFinal ' . $supplierGroup;
 
-        //DB::enableQueryLog();
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return \DB::select($qry);
     }
 
     function getSupplierBalanceStatementReconcileQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -5048,11 +5001,7 @@ OR (
 )
 ORDER BY
 	documentDate ASC';
-        //echo $qry;
-        //exit();
-        return $output = \DB::select($qry);
-        //dd(DB::getQueryLog());
-        //return ['data' => $output];
+        return  \DB::select($qry);
     }
 
     public function pdfExportReport(Request $request)
@@ -5088,8 +5037,6 @@ ORDER BY
                         }
                     }
 
-                    //echo '<pre>';print_r($outputArr); echo '</pre>'; die();
-
 
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal);
 
@@ -5118,7 +5065,6 @@ ORDER BY
         }
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
-//        $currency = $request->currencyID;
 
         if (isset($request->suppliers)) {
             $suppliers = $request->suppliers;
@@ -5126,12 +5072,6 @@ ORDER BY
         } else {
             $supplierSystemID = [];
         }
-
-//        if (isset($request->year)) {
-//            $year = $request->year;
-//        } else {
-//            $year = 0;
-//        }
 
 
         $output = \DB::select('SELECT

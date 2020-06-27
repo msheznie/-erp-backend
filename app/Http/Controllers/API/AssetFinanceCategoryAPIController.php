@@ -131,7 +131,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input['DEPGLCODE'] = $this->getAccountCode($input['DEPGLCODESystemID']);
         $input['DISPOGLCODE'] = $this->getAccountCode($input['DISPOGLCODESystemID']);
 
-        $input['createdPcID'] = gethostname();;
+        $input['createdPcID'] = gethostname();
         $input['createdUserID'] = Helper::getEmployeeID();
         $input['sortOrder'] = AssetFinanceCategory::max('sortOrder') + 1;
         $assetFinanceCategories = $this->assetFinanceCategoryRepository->create($input);
@@ -275,7 +275,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input['DEPGLCODE'] = $this->getAccountCode($input['DEPGLCODESystemID']);
         $input['DISPOGLCODE'] = $this->getAccountCode($input['DISPOGLCODESystemID']);
 
-        $input['modifiedPc'] = gethostname();;
+        $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = Helper::getEmployeeID();
 
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID',$input['faFinanceCatID'])->update($input);

@@ -707,21 +707,27 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
-        Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
-        Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
-        Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
-        Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
-        Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
-        Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
+        // Supplier Invoice
+        Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController',['only' => ['store', 'show', 'update']]);
+        Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController', ['except' => ['index','store']]);
+        Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController', ['except' => ['index']]);
+        Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
+
+
+        // Payment Voucher
+        Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController', ['only' => ['store', 'show', 'update']]);
+        Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
+        Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController',['except' => ['index']]);
+        Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController',['except' => ['index','store']]);
+
+
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
         Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
         Route::post('referBackPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@referBackPaymentVoucher');
         Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
         Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
-        Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
-        Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
         Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
         Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails');
         Route::post('deleteAllDirectPayment', 'DirectPaymentDetailsAPIController@deleteAllDirectPayment');
@@ -930,7 +936,10 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
 
-        Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+        // Matching
+        Route::resource('match_document_masters', 'MatchDocumentMasterAPIController',['only' => ['store', 'show', 'update']]);
+
+
         Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
         Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
         Route::post('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
@@ -950,8 +959,6 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
-        Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
-        Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
 
         Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
         Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
@@ -988,9 +995,15 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
         Route::resource('credit_notes', 'CreditNoteAPIController');
         Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
-        Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
-        Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
-        Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+
+        // Receipt Voucher
+        Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController',['only' => ['store', 'show', 'update']]);
+        Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController',['only' => ['store', 'show', 'destroy']]);
+        Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController',['only' => ['show', 'destroy']]);
+        Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
+        Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
+
+
         Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
         Route::resource('performa_temps', 'PerformaTempAPIController');
         Route::resource('free_billings', 'FreeBillingAPIController');
@@ -1779,6 +1792,16 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord');
     Route::get('getSupplierCatalog','ItemMasterAPIController@getSupplierByCatalogItemDetail');
 
+    Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
+    Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
+    Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory');
+    Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend');
+
+    Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
+
+    Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
+
 
 });
 
@@ -1786,3 +1809,6 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+

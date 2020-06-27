@@ -792,7 +792,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $leaveDataMasterID = $input['leavedatamasterID'];
             $documentCode = "LA";
             $input['documentSystemID'] = Helper::getDocumentSystemIDByCode($documentCode);
-            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);;
+            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);
             $input['empSystemID'] = $employee->employeeSystemID;
 
             $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);
@@ -1113,7 +1113,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $leaveDataMasterID = $input['leavedatamasterID'];
             $documentCode = "LA";
             $input['documentSystemID'] = Helper::getDocumentSystemIDByCode($documentCode);
-            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);;
+            $input['companySystemID'] = Helper::getCompanySystemIDByCode($employee->empCompanyID);
             $input['empSystemID'] = $employee->employeeSystemID;
 
             $leaveDataMasters = LeaveDataMaster::find($leaveDataMasterID);

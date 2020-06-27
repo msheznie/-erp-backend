@@ -107,7 +107,8 @@ class SupplierAssigned extends Model
         'timestamp',
         'supCategoryICVMasterID',
         'supCategorySubICVID',
-        'isLCCYN'
+        'isLCCYN',
+        'markupPercentage'
     ];
 
     /**
@@ -153,7 +154,8 @@ class SupplierAssigned extends Model
         'isAssigned' => 'integer',
         'supCategoryICVMasterID' => 'integer',
         'supCategorySubICVID' => 'integer',
-        'isLCCYN' => 'integer'
+        'isLCCYN' => 'integer',
+        'markupPercentage' => 'float'
     ];
 
     /**

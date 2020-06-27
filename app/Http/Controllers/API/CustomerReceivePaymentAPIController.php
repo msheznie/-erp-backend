@@ -21,6 +21,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CustomValidation;
 use App\Http\Requests\API\CreateCustomerReceivePaymentAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
@@ -418,6 +419,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
+        $customValidation = CustomValidation::validation($customerReceivePayment->documentSystemID, $customerReceivePayment, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
+
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
@@ -491,7 +497,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['bankID'] = null;
                     $input['bankAccount'] = null;
@@ -533,7 +539,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['bankID'] = null;
                     $input['bankAccount'] = null;
@@ -597,7 +603,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     /*exchange added*/
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
             }
@@ -617,7 +623,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     /*exchange added*/
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
             }
@@ -961,6 +967,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->where('PayMasterAutoId', $row["bookingInvCodeSystem"])
                         ->where('documentSystemID', $row["addedDocumentSystemID"])
                         ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+                    if(!$matchedAmount){
+                        $matchedAmount['SumOfmatchedAmount'] = 0;
+                    }
 
                     $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 

@@ -147,9 +147,7 @@ class BankMemoSupplierAPIController extends AppBaseController
         $createdArray = array();
 
         $employee = \Helper::getEmployeeInfo();
-        // $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
         foreach ($companyDefaultBankMemos as $value) {
-
             if($value['isChecked']){
                 $temBankMemo = new BankMemoSupplier();
                 $temBankMemo->memoHeader = $value['bankMemoHeader'];

@@ -248,6 +248,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
+        if (empty($payMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if ($payMaster->confirmedYN) {
+            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed', 500);
+        }
+
         $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
@@ -391,18 +399,45 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
 
+            if ($paySupplierInvoiceDetail->matchingDocID == 0) {
+                if ($paySupplierInvoiceDetail->payment_master && $paySupplierInvoiceDetail->payment_master->confirmedYN) {
+                    return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
+                }
+            }
+
+            if ($paySupplierInvoiceDetail->documentSystemID != 0) {
+                if ($paySupplierInvoiceDetail->matching_master && $paySupplierInvoiceDetail->matching_master->matchingConfirmedYN) {
+                    return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
+                }
+            }
+
             $paySupplierInvoiceDetailDelete->delete();
 
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
+                       Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                ->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
+                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                ->first();
 
-            $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $paySupplierInvoiceDetail->bookingInvSystemCode)->where('documentSystemID', $paySupplierInvoiceDetail->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+            $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, 
+                   Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                ->where('PayMasterAutoId', $paySupplierInvoiceDetail->bookingInvSystemCode)
+                ->where('documentSystemID', $paySupplierInvoiceDetail->addedDocumentSystemID)
+                ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                ->first();
+
 
             $machAmount = 0;
             if ($matchedAmount) {
                 $machAmount = $matchedAmount["SumOfmatchedAmount"];
             }
 
-            $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+            if ($supplierPaidAmountSum) {
+                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+            } else {
+                $totalPaidAmount = ($machAmount * -1);
+            }
+
 
             if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
                 if ($totalPaidAmount == 0) {
@@ -435,7 +470,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendResponse($id, 'Pay Supplier Invoice Detail deleted successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage(), 500);
         }
     }
 
@@ -446,6 +481,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $payMaster = PaySupplierInvoiceMaster::find($payMasterAutoId);
+
+            if (empty($payMaster)) {
+                return $this->sendError('Payment voucher not found');
+            }
+
+            if ($payMaster->confirmedYN) {
+                return $this->sendError('You cannot delete Supplier PO Payment Detail, this document already confirmed', 500);
+            }
+
             /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
             $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
@@ -513,6 +559,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+
+        if (empty($payMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if ($payMaster->confirmedYN) {
+            return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed', 500);
+        }
         $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
 
         DB::beginTransaction();
@@ -659,6 +713,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
+        if (empty($matchDocumentMasterData)) {
+            return $this->sendError('Matching not found');
+        }
+
+        if ($matchDocumentMasterData->matchingConfirmedYN) {
+            return $this->sendError('You cannot add detail, this document already confirmed', 500);
+        }
+
         $itemExistArray = array();
 
         //check supplier invoice all ready exist
@@ -790,6 +852,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        if ($matchDocumentMasterData->matchingConfirmedYN) {
+            return $this->sendError('You cannot update the detail, this document already confirmed', 500);
+        }
+
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
         if ($input['supplierPaymentAmount'] > $input['paymentBalancedAmount']) {
@@ -803,7 +869,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             ->sum('supplierPaymentAmount');
 
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
-        if ( ($existTotal - $matchDocumentMasterData->matchBalanceAmount) > 0.00001) {
+        if (($existTotal - $matchDocumentMasterData->matchBalanceAmount) > 0.00001) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
         }
 
@@ -822,8 +888,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        if($input['temptype'] == 1){
+        if ($input['temptype'] == 1) {
             $input['supplierPaymentAmount'] = $input['paymentBalancedAmount'];
+        }
+
+        if (!$supplierPaidAmountSum) {
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
         }
 
         $paymentBalancedAmount = $paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
@@ -844,8 +914,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["paymentLocalAmount"] =  \Helper::roundValue($conversionAmount["localAmount"]);
-        $input["paymentComRptAmount"] =  \Helper::roundValue($conversionAmount["reportingAmount"]);
+        $input["paymentLocalAmount"] = \Helper::roundValue($conversionAmount["localAmount"]);
+        $input["paymentComRptAmount"] = \Helper::roundValue($conversionAmount["reportingAmount"]);
 
         unset($input['pomaster']);
 
@@ -861,6 +931,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+        if (!$supplierPaidAmountSum) {
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
+        }
 
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 

@@ -135,11 +135,17 @@ class CompanyAPIController extends AppBaseController
         $icvCategories = SupplierCategoryICVMaster::all();
 
         $hasPolicy = false;
+        $hasEEOSSPolicy = false;
         if($supplierID !=0){
             $supplier = SupplierMaster::find($supplierID);
             if(isset($supplier->primaryCompanySystemID) && $supplier->primaryCompanySystemID){
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
                     ->where('companyPolicyCategoryID', 38)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 41)
                     ->where('isYesNO',1)
                     ->exists();
             }
@@ -159,7 +165,8 @@ class CompanyAPIController extends AppBaseController
             'allCompanies' => $allCompanies,
             'contactTypes' => $contactTypes,
             'icvCategories' => $icvCategories,
-            'isSupplierCatalogPolicy' => $hasPolicy
+            'isSupplierCatalogPolicy' => $hasPolicy,
+            'isEEOSSPolicy' => $hasEEOSSPolicy
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

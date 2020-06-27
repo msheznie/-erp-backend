@@ -368,7 +368,7 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         } else {
             $data = array();
         }
-        $csv = \Excel::create('asset_depreciation', function ($excel) use ($data) {
+         \Excel::create('asset_depreciation', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

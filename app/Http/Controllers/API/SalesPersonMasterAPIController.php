@@ -133,7 +133,7 @@ class SalesPersonMasterAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '' && $input['SalesPersonName'] == '')) {
+        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '')) {
             return $this->sendError('Sales person name is required');
         }
 
@@ -308,7 +308,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         /** @var SalesPersonMaster $salesPersonMaster */
         $salesPersonMaster = $this->salesPersonMasterRepository->findWithoutFail($id);
 
-        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '' && $input['SalesPersonName'] == '')) {
+        if ((empty($input['empSystemID']) && empty($input['SalesPersonName'])) || ($input['SalesPersonName'] == '')) {
             return $this->sendError('Sales person name is required');
         }
 
@@ -425,7 +425,7 @@ class SalesPersonMasterAPIController extends AppBaseController
         $salesPersonMaster->delete();
 
         // deleting detail records
-        $deleteSalesTargetDetail = SalesPersonTarget::where('salesPersonID', $id)->delete();
+        SalesPersonTarget::where('salesPersonID', $id)->delete();
 
         return $this->sendResponse($id, 'Sales Person Master deleted successfully');
     }

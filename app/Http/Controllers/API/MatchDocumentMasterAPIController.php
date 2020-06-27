@@ -24,6 +24,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CustomValidation;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
@@ -168,7 +169,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 'tempType' => 'required'
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -358,7 +359,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 'tempType' => 'required'
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -638,10 +639,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Match Document Master not found');
         }
 
+
         if (isset($input['matchingDocdate'])) {
             if ($input['matchingDocdate']) {
                 $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
             }
+        }
+
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
 
         $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -833,6 +840,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
+                if (!$supplierPaidAmountSum) {
+                    $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
+                }
+
                 $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount);
 
                 if ($totalPaidAmount == 0) {
@@ -848,7 +859,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             $input['matchingConfirmedYN'] = 1;
-            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
@@ -1132,6 +1143,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
+
         $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
             ->sum('receiveAmountTrans');
 
@@ -1268,6 +1284,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('documentSystemID', $val["addedDocumentSystemID"])
                     ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
+                if(!$matchedAmount){
+                    $matchedAmount['SumOfmatchedAmount'] = 0;
+                }
+
                 $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 
                 $arLedgerUpdate = AccountsReceivableLedger::find($val['arAutoID']);
@@ -1380,7 +1400,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
 
             $input['matchingConfirmedYN'] = 1;
-            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;
             $input['matchingConfirmedByEmpID'] = $employee->empID;
             $input['matchingConfirmedByName'] = $employee->empName;
             $input['matchingConfirmedDate'] = \Helper::currentDateTime();
@@ -2250,6 +2270,11 @@ ORDER BY
         if (empty($MatchDocumentMasterData)) {
             return $this->sendError('Match document master not found');
         }
+
+        if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
+            return $this->sendError('You cannot delete the detail, Document already confirmed');
+        }
+
 
         $detailExistAll = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
             ->where('companySystemID', $MatchDocumentMasterData->companySystemID )
