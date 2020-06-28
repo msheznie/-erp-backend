@@ -285,17 +285,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 ->first();
 
             if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                $updatePayment = PoAdvancePayment::find($input['poAdvPaymentID'])
+                PoAdvancePayment::find($input['poAdvPaymentID'])
                     ->update(['fullyPaid' => 2]);
             }
 
             if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                $updatePayment = PoAdvancePayment::find($input['poAdvPaymentID'])
+                 PoAdvancePayment::find($input['poAdvPaymentID'])
                     ->update(['fullyPaid' => 1]);
             }
 
             if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                $updatePayment = PoAdvancePayment::find($input['poAdvPaymentID'])
+                 PoAdvancePayment::find($input['poAdvPaymentID'])
                     ->update(['fullyPaid' => 0]);
             }
 
@@ -373,17 +373,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 ->first();
 
             if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                $updatePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+               PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
                     ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
             }
 
             if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                $updatePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
                     ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
             }
 
             if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                $updatePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                 PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
                     ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
             }
 
@@ -434,17 +434,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     ->first();
 
                 if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                    $updatePayment = PoAdvancePayment::find($val->poAdvPaymentID)
+                     PoAdvancePayment::find($val->poAdvPaymentID)
                         ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
                 }
 
                 if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                    $updatePayment = PoAdvancePayment::find($val->poAdvPaymentID)
+                     PoAdvancePayment::find($val->poAdvPaymentID)
                         ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
                 }
 
                 if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                    $updatePayment = PoAdvancePayment::find($val->poAdvPaymentID)
+                     PoAdvancePayment::find($val->poAdvPaymentID)
                         ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
                 }
             }
@@ -456,7 +456,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input['payAmountCompRpt'] = 0;
             $input['suppAmountDocTotal'] = 0;
 
-            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $payMasterAutoId);
+            $this->paySupplierInvoiceMasterRepository->update($input, $payMasterAutoId);
 
             DB::commit();
             return $this->sendResponse($payMasterAutoId, 'Pay Supplier Invoice Detail deleted successfully');
@@ -571,7 +571,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     if ($tempArray) {
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
                         $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $new["BalanceAmount"]);
-                        $advancePaymentUpdate = AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+                        AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
 
                         $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
 
@@ -582,17 +582,17 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                             ->first();
 
                         if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                            $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
+                             PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 2, 'selectedToPayment' => -1]);
                         }
 
                         if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                            $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
+                             PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 1, 'selectedToPayment' => -1]);
                         }
 
                         if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                            $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
+                             PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 0, 'selectedToPayment' => -1]);
                         }
 

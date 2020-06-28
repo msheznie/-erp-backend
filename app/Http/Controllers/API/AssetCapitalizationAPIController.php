@@ -149,7 +149,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 'documentDate' => 'required|date',
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -779,7 +779,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+           DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $assetCapitalization->companySystemID)
                 ->where('documentSystemID', $assetCapitalization->documentSystemID)
                 ->delete();
@@ -842,7 +842,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                     ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.removedYN', 0);
             })
-            ->join('erp_fa_assetcapitalization', function ($query) use ($companyId, $search) {
+            ->join('erp_fa_assetcapitalization', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'capitalizationID')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_fa_assetcapitalization.companySystemID', $companyId)
@@ -900,7 +900,6 @@ class AssetCapitalizationAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
-        $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
             ->select(
                 'erp_fa_assetcapitalization.*',
@@ -909,7 +908,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_fa_assetcapitalization', function ($query) use ($companyId, $search) {
+            ->join('erp_fa_assetcapitalization', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'capitalizationID')
                     ->where('erp_fa_assetcapitalization.companySystemID', $companyId)
                     ->where('erp_fa_assetcapitalization.confirmedYN', 1);
@@ -978,7 +977,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $capitalizationArray = $capitalization->toArray();
 
-            $storeCAHistory = AssetCapitalizationReferred::create($capitalizationArray);
+            AssetCapitalizationReferred::create($capitalizationArray);
 
             $fetchCADetails = AssetCapitalizationDetail::OfCapitalization($capitalizationID)
                 ->get();
@@ -991,7 +990,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $caDetailArray = $fetchCADetails->toArray();
 
-            $storePVDetailHistory = AssetCapitalizatioDetReferred::insert($caDetailArray);
+            AssetCapitalizatioDetReferred::insert($caDetailArray);
 
 
             $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $capitalizationID)
@@ -1007,7 +1006,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+            DocumentReferedHistory::insert($DocumentApprovedArray);
 
             $deleteApproval = DocumentApproved::where('documentSystemCode', $capitalizationID)
                 ->where('companySystemID', $capitalization->companySystemID)

@@ -1036,7 +1036,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
 
-        $csv = Excel::create($fileName, function ($excel) use ($data,$columnArray) {
+         Excel::create($fileName, function ($excel) use ($data,$columnArray) {
             $excel->sheet('Firstsheet', function ($sheet) use ($data,$columnArray) {
                 $sheet->setColumnFormat($columnArray);
                 $sheet->fromArray($data, null, 'A1', true);

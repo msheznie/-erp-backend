@@ -197,7 +197,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['custTransactionCurrencyER'] = 1;
         $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
         $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-        $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+        $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
@@ -434,7 +434,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $_post['custTransactionCurrencyER'] = 1;
                     /* $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                      $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                     $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                     $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                      $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];*/
                     $_post['bankAccountID'] = NULL;
 
@@ -555,7 +555,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['custTransactionCurrencyER'] = 1;
                 //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
@@ -911,18 +911,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         }
 
-                        /*  $employee=\Helper::getEmployeeInfo();
-                          $input['createdPcID'] = getenv('COMPUTERNAME');
-                          $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
-                          $input['confirmedByName'] = $employee->empName;
-                          $input['confirmedDate'] = Carbon::now();
-                          $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
-
-
                         $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
                         $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
-                        if (count($groupby) != 0 || count($groupby) != 0) {
+                        if (count($groupby) != 0) {
 
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
                                 return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
@@ -1520,7 +1512,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
-                $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];;
+                $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $addToCusInvDetails[$x]['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
                 $addToCusInvDetails[$x]['comRptCurrency'] = $master->companyReportingCurrencyID;
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
@@ -1676,7 +1668,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['companyID'] = $master->companyID;
         $_post['companySystemID'] = $master->companySystemID;
         $_post['documentID'] = 'INV';
-        $_post['documentSystemID'] = $master->documentSystemiD;;
+        $_post['documentSystemID'] = $master->documentSystemiD;
         $_post['documentSystemCode'] = $custInvoiceDirectAutoID;
         $_post['documentCode'] = $master->bookingInvCode;
         $_post['taxShortCode'] = $taxMaster->taxShortCode;

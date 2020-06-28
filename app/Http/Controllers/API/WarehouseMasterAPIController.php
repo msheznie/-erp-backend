@@ -105,7 +105,7 @@ class WarehouseMasterAPIController extends AppBaseController
             'wareHouseDescription' => 'required'
         ],$messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422 );
         }
         $input['companyID'] = $this->getCompanyById($input['companySystemID']);

@@ -142,7 +142,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             'inventoryReclassificationDate' => 'required|date|before_or_equal:today',
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -338,7 +338,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             'inventoryReclassificationDate' => 'required|date|before_or_equal:today'
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 

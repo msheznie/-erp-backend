@@ -177,7 +177,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             );
         }
 
-        $csv = \Excel::create('purchaseHistory', function ($excel) use ($data) {
+         \Excel::create('purchaseHistory', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);

@@ -257,5 +257,15 @@ class CustomerReceivePaymentDetail extends Model
         
     ];
 
-    
+    public function master()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+    }
+
+    public function matching_master()
+    {
+        return $this->belongsTo(MatchDocumentMaster::class, 'matchingDocID', 'matchDocumentMasterAutoID');
+    }
+
+
 }

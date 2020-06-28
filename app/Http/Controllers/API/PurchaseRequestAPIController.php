@@ -732,7 +732,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('pr_to_grv', function ($excel) use ($data) {
+         \Excel::create('pr_to_grv', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -2181,7 +2181,7 @@ class PurchaseRequestAPIController extends AppBaseController
             );
         }
 
-        $csv = \Excel::create('open_requests', function ($excel) use ($data) {
+         \Excel::create('open_requests', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);

@@ -48,6 +48,15 @@ class CustomValidation
                 $docInfoArr["detailRelation"] = 'detail';
                 $docInfoArr["keys"] = ['matchingDocdate'];
                 break;
+            case 21: // Receipt Voucher
+                $docInfoArr["modelName"] = 'CustomerReceivePayment';
+                $docInfoArr["primaryKey"] = 'custReceivePaymentAutoID';
+                $docInfoArr["approvedColumnName"] = 'approved';
+                $docInfoArr["confirmedYN"] = 'confirmedYN';
+                $docInfoArr["detailRelation"] = 'details';
+                $docInfoArr["keys"] = ['customerID','custTransactionCurrencyID','narration','bankID','bankAccount','bankCurrency',
+                    'companyFinanceYearID','custChequeNo','expenseClaimOrPettyCash']; //'custChequeDate'
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -65,20 +74,25 @@ class CustomValidation
 
             switch ($documentSystemID) {
                 case 11: // Supplier Invoice
-                    if (($entity->directdetail && count($entity->directdetail)) || (($entity->detail && count($entity->detail)))) {
+                    if (($entity->directdetail && count($entity->directdetail)) || ($entity->detail && count($entity->detail))) {
                         $detailsExist = true;
                     }
                     break;
                 case 4: // Payment voucher
                     if (($entity->directdetail && count($entity->directdetail)) ||
-                        (($entity->advancedetail && count($entity->advancedetail))) ||
-                        (($entity->supplierdetail && count($entity->supplierdetail)))
+                        ($entity->advancedetail && count($entity->advancedetail)) ||
+                        ($entity->supplierdetail && count($entity->supplierdetail))
                     ) {
                         $detailsExist = true;
                     }
                     break;
                 case 70: //  Matching Document
-                    if (($entity->detail && count($entity->detail))) {
+                    if ($entity->detail && count($entity->detail)) {
+                        $detailsExist = true;
+                    }
+                    break;
+                case 21: // Receipt Voucher
+                    if ( ($entity->details && count($entity->details)) || ($entity->directdetails && count($entity->directdetails))) {
                         $detailsExist = true;
                     }
                     break;

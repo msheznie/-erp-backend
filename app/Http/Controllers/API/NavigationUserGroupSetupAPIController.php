@@ -56,7 +56,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
         //$navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->all();
 
-       return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
+        $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
                                                 ->paginate(20);
 
         return $this->sendResponse($navigationUserGroupSetups->toArray(), 'Navigation User Group Setups retrieved successfully');

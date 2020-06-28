@@ -991,7 +991,7 @@ GROUP BY
             $x++;
         }
 
-        $csv = \Excel::create('jv_details', function ($excel) use ($data) {
+         \Excel::create('jv_details', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 $sheet->setColumnFormat(array(
@@ -1311,7 +1311,7 @@ GROUP BY
         $temp['glAccountDescription'] = $AccountDescription;
         $temp['currencyID'] = $jvMaster['currencyID'];
         $temp['currencyER'] = $jvMaster['currencyER'];
-        $temp['createdPcID'] = gethostname();;
+        $temp['createdPcID'] = gethostname();
         $temp['createdUserID'] = $user->employee['empID'];
         $temp['createdUserSystemID'] = $user->employee['employeeSystemID'];
 

@@ -135,7 +135,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 'sortOrder' => 'required',
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -406,7 +406,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 'subCategory.*.sortOrder' => 'required',
             ]);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 

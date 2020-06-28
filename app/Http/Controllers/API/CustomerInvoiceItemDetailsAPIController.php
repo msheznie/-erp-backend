@@ -548,7 +548,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
-        if ($customerInvoiceItemDetails->issueCostLocal == 0 || $customerInvoiceItemDetails->issueCostLocal == 0) {
+        if ($customerInvoiceItemDetails->issueCostLocal == 0) {
             $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Cost is 0. You cannot issue.", 500);
         }

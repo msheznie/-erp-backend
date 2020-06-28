@@ -159,7 +159,7 @@ class EmployeeAPIController extends AppBaseController
             } else {
                 $validator = \Validator::make($input, [
                                     'empUserName' => 'required|email|max:255',
-                                ]);;
+                                ]);
                 if ($validator->fails()) {
                     return $this->sendError('User name is not valid.');
                 }

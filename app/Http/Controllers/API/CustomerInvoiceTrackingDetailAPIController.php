@@ -332,7 +332,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
                     ->where('bookingInvCode', $itemExist['bookingInvCode'])
                     ->first();
 
-                if (!empty($siDetailExistPS)) {
+                if (!empty($siDetailExist)) {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvCode'] . " is all ready added. Please check again";
                     $itemExistArray[] = [$itemDrt];
                 }
@@ -351,7 +351,6 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
                     $tempArray = $new;
                     $tempArray["customerInvoiceTrackingID"] = $masterData->customerInvoiceTrackingID;
                     $tempArray["companyID"] = $new['companyID'];
-//                    $tempArray["companySystemID"] = $new[''];
                     $tempArray["customerID"] = $masterData->customerID;
                     $tempArray["custInvoiceDirectAutoID"] = $new['custInvoiceDirectID'];
                     $tempArray["bookingInvCode"] = $new['bookingInvCode'];
@@ -373,15 +372,15 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
 
                     if ($tempArray) {
 
-                        $dtails = $this->customerInvoiceTrackingDetailRepository->create($tempArray);
-                        $updatePayment = CustomerInvoiceDirect::find($new['custInvoiceDirectID'])
+                       $this->customerInvoiceTrackingDetailRepository->create($tempArray);
+                       CustomerInvoiceDirect::find($new['custInvoiceDirectID'])
                             ->update(['selectedForTracking' => -1, 'customerInvoiceTrackingID' => $masterData->customerInvoiceTrackingID]);
                     }
                 }
             }
             $current_total = $masterData->totalBatchAmount;
             $total_amount = $total_amount+$current_total;
-            $updatePayment = $masterData->update(['totalBatchAmount' => $total_amount]);
+            $masterData->update(['totalBatchAmount' => $total_amount]);
             DB::commit();
             return $this->sendResponse('', 'Details saved successfully');
         } catch (\Exception $exception) {

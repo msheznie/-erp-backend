@@ -119,8 +119,6 @@ class CompanyPolicyMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
-
-        return $this->sendResponse($companyPolicyMasters->toArray(), 'Company Policy Masters retrieved successfully');
     }
 
     /**
@@ -223,7 +221,6 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
-        //$input['modifiedByUserID'] = $employee['empID'];;
         $input['modifiedByUserID'] = $employee['employeeSystemID'];
         $input['timestamp'] = now();
 

@@ -124,7 +124,6 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $companySystemID = $input['companySystemID'];
         $customerInvoiceID = $input['customerInvoiceID'];
 
         $invoiceMasterData = CustomerInvoiceDirect::find($customerInvoiceID);
@@ -132,10 +131,8 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
             return $this->sendError('Invoice not found');
         }
 
-        if (isset($input['collectionDate'])) {
-            if ($input['collectionDate']) {
-                $input['collectionDate'] = new Carbon($input['collectionDate']);
-            }
+        if (isset($input['collectionDate']) && $input['collectionDate']) {
+            $input['collectionDate'] = new Carbon($input['collectionDate']);
         }
 
         $input['companySystemID'] = $invoiceMasterData->companySystemID;
@@ -265,10 +262,8 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
             return $this->sendError('Invoice not found');
         }
 
-        if (isset($input['collectionDate'])) {
-            if ($input['collectionDate']) {
-                $input['collectionDate'] = new Carbon($input['collectionDate']);
-            }
+        if (isset($input['collectionDate']) && $input['collectionDate']) {
+            $input['collectionDate'] = new Carbon($input['collectionDate']);
         }
 
         $input['modifiedUser'] = \Helper::getEmployeeID();

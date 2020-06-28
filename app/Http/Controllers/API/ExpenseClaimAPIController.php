@@ -841,7 +841,7 @@ class ExpenseClaimAPIController extends AppBaseController
         $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments','confirmedYN','addedForPayment','approved']);
         $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
         $output['claim']['claim_type'] = $claimType;
-        $output['claim']['currency'] = isset($expenseClaim->details[0]->currency) ? array_only($expenseClaim->details[0]->currency->toArray(),['currencyID','CurrencyName','CurrencyCode','DecimalPlaces']) : NULL;;
+        $output['claim']['currency'] = isset($expenseClaim->details[0]->currency) ? array_only($expenseClaim->details[0]->currency->toArray(),['currencyID','CurrencyName','CurrencyCode','DecimalPlaces']) : NULL;
 
 
         /*set Detail Array*/

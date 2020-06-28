@@ -970,7 +970,7 @@ class LeaveDocumentApprovedAPIController extends AppBaseController
 
             $isDelete = LeaveDocumentApproved::where('documentApprovedID',$input['documentApprovedID'])->delete();
             if($isDelete){
-                $$notificationType = "";
+                $notificationType = "";
                 $pushNotificationUserIds = [];
                 $pushNotificationArray = [];
                 if($input['documentSystemID'] == 6){

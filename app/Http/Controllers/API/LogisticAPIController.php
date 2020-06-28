@@ -676,7 +676,7 @@ class LogisticAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('logistic_by_company', function ($excel) use ($data) {
+         \Excel::create('logistic_by_company', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

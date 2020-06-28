@@ -162,7 +162,7 @@ class DeliveryOrderAPIController extends AppBaseController
             'deliveryOrderDate' => 'required|date'
         ], $messages);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -458,7 +458,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 'deliveryOrderDate' => 'required|date'
             ], $messages);
 
-            if ($validator->fails()) {//echo 'in';exit;
+            if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 

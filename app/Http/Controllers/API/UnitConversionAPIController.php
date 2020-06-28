@@ -193,7 +193,5 @@ class UnitConversionAPIController extends AppBaseController
         $unitConversion = $this->unitConversionRepository->update($data, $input['unitsConversionAutoID']);
 
         return $this->sendResponse($unitConversion->toArray(), 'Unit Conversion updated successfully');
-        dd($data);
-
     }
 }

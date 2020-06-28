@@ -124,7 +124,6 @@ class LeaveDataMasterRepository extends BaseRepository
                 );
                 return LeaveDataMaster::where('leavedatamasterID', $data['leavedatamasterID'])->update($update_array);
             }
-            return false;
         }
 
     }

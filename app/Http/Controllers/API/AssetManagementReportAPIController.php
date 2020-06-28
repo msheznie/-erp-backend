@@ -110,7 +110,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 ]);
             }
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -121,7 +121,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -132,7 +132,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -144,7 +144,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'currencyID' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -156,7 +156,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'currencyID' => 'required'
                 ]);
 
-                if ($validator->fails()) {//echo 'in';exit;
+                if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
@@ -727,7 +727,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                    $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                         $excel->sheet('asset register', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true, false);
                             $sheet->setAutoSize(true);
@@ -785,7 +785,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
 
-                    $csv = \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
+                     \Excel::create('asset_register_detail_2', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -901,7 +901,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
 
-                    $csv = \Excel::create('asset_register_summary', function ($excel) use ($data) {
+                     \Excel::create('asset_register_summary', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             $sheet->setAutoSize(true);
@@ -1106,7 +1106,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
 //                    return $data;
 
-                    $csv = \Excel::create('Asset_Register_Group_detail_Report', function ($excel) use ($data) {
+                     \Excel::create('Asset_Register_Group_detail_Report', function ($excel) use ($data) {
                         $excel->sheet('asset register grouped', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true, false);
                             $sheet->setAutoSize(true);
@@ -1154,7 +1154,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1200,7 +1200,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $x++;
                 }
-                $csv = \Excel::create('asset_disposal', function ($excel) use ($data) {
+                 \Excel::create('asset_disposal', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1308,7 +1308,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                 }
-                $csv = \Excel::create('asset_depreciation', function ($excel) use ($data) {
+                 \Excel::create('asset_depreciation', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1338,7 +1338,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $csv = \Excel::create('asset_cwip', function ($excel) use ($data) {
+                 \Excel::create('asset_cwip', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1425,10 +1425,7 @@ FROM
                 GROUP BY
                     erp_fa_asset_master.companySystemID,
                     erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';
-        //echo $query;
-        //exit();
-        $output = \DB::select($query);
-        return $output;
+        return \DB::select($query);
     }
 
     function getAssetDisposal($request)
@@ -1446,8 +1443,6 @@ FROM
         } else {
             $companyID = (array)$request->companySystemID;
         }
-
-        //DB::enableQueryLog();
 
         $qry = 'SELECT
                     erp_fa_asset_disposalmaster.companyID,
@@ -1587,9 +1582,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID';
 
-        //DB::enableQueryLog();
         $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'month' => $arrayMonth];
     }
 
@@ -1769,10 +1762,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID;';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationDetailMonthlyQRY($request)
@@ -1975,11 +1965,7 @@ IF
 GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.faID;';
-
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationCategorySummaryQRY($request)
@@ -2139,10 +2125,7 @@ GROUP BY
 	erp_fa_asset_master.companySystemID,
 erp_fa_asset_master.AUDITCATOGARY;';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function assetDepreciationCategorySummaryMonthlyQRY($request)
@@ -2324,10 +2307,7 @@ IF
 GROUP BY
 	erp_fa_asset_master.companySystemID,erp_fa_asset_master.AUDITCATOGARY';
 
-        //DB::enableQueryLog();
-        $output = \DB::select($sql);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($sql);
     }
 
     public function generateAssetDetailDrilldown(Request $request)
@@ -2901,7 +2881,7 @@ WHERE
             $x++;
         }
 
-        $csv = \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
+         \Excel::create('asset_register_drilldown', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -2956,7 +2936,8 @@ WHERE
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
 	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,2 as type')
             ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
-            $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID');
+            })
             ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur*noQty ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur*noQty ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
@@ -2973,7 +2954,8 @@ WHERE
 	IFNULL(fa.' . $capitlizationColumn . ',0) as capitalization,
 	(IFNULL(grvd.' . $additionColumn . ',0) - IFNULL(fa.' . $capitlizationColumn . ',0)) as closing, erp_grvmaster.grvAutoID,1 as type')
             ->join(DB::raw('(SELECT * FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 GROUP BY grvAutoID) as grvdd'), function ($join) {
-                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID'); })
+                $join->on('erp_grvmaster.grvAutoID', '=', 'grvdd.grvAutoID');
+            })
             ->leftJoin(DB::raw('(SELECT IFNULL(SUM( landingCost_LocalCur*noQty ),0) AS grvLocalAmount,IFNULL(SUM( landingCost_RptCur*noQty ),0) AS grvRptAmount,grvAutoID FROM erp_grvdetails WHERE itemFinanceCategoryID = 3 AND itemFinanceCategorySubID IN (16, 162, 164, 166) GROUP BY grvAutoID) as grvd'), function ($query) {
             $query->on('erp_grvmaster.grvAutoID', '=', 'grvd.grvAutoID');
         })->leftJoin(DB::raw('(SELECT IFNULL(SUM( COSTUNIT ),0) AS costLocal, IFNULL(SUM( costUnitRpt ),0) AS costRpt, docOriginSystemCode, docOriginDocumentSystemID FROM erp_fa_asset_master WHERE DATE(postedDate) BETWEEN "' . $fromDate . '" 
@@ -3069,65 +3051,6 @@ WHERE
             $periodQry2 .= 'IFNULL(`' . $val->format('M-Y') . '`,0) as `' . $val->format('M-Y') . '`,';
             $periodArr[] = $val->format('M-Y');
         }
-
-        /*$addition = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('0 as openingDep,IFNULL(SUM(' . $currencyColumnDep . '),0) as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,0 as opening,' . $currencyColumn . ' as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereRAW('DATE(postedDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '"')->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->ofCompany($companyID)->get();
-
-        $openingDisposed = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate) {
-                $query->whereDate('depDate', '<', $fromDate);
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,if(DIPOSED = -1 && ("' . $fromDate . '" < disposedDate  && "' . $toDate . '" >  disposedDate),' . $currencyColumn . ',0) as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(-1)->ofCompany($companyID)->whereDate('disposedDate', '>', $fromDate)->get();
-
-        $opening = FixedAssetMaster::with(['department', 'supplier', 'group_to', 'category_by',
-            'depperiod_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw($periodQry . 'faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate, $toDate) {
-                $query->whereRAW('DATE(depDate) BETWEEN "' . $fromDate . '" 
-	AND "' . $toDate . '" ');
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }, 'depperiod2_by' => function ($q) use ($periodQry, $fromDate, $toDate, $currencyColumnDep) {
-            $q->selectRaw('IFNULL(SUM(' . $currencyColumnDep . '),0) as openingDep,0 as additionDep, faID,depMasterAutoID');
-            $q->whereHas('master_by', function ($query) use ($fromDate) {
-                $query->whereDate('depDate', '<', $fromDate);
-                $query->where('approved', -1);
-            });
-            $q->groupBy('faID');
-        }])->selectRaw('COSTGLCODE,faCode,postedDate,dateDEP,DEPpercentage,' . $currencyColumn . ' as opening,0 as addition,' . $currencyColumn . ' as cost,dateAQ,docOrigin,faID,serviceLineSystemID,supplierIDRentedAsset, groupTO,faCatID,DIPOSED,disposedDate,0 as disposed')->whereDate('postedDate', '<', $fromDate)->whereIN('AUDITCATOGARY', $assetCategory)->isApproved()->disposed(0)->ofCompany($companyID)->get();
-
-        $output = $opening->merge($openingDisposed)->merge($addition);*/
-
 
         $query = 'SELECT 
                 ' . $periodQry2 . '
