@@ -108,6 +108,7 @@ class SupplierAssigned extends Model
         'supCategoryICVMasterID',
         'supCategorySubICVID',
         'isLCCYN',
+        'isMarkupPercentage',
         'markupPercentage'
     ];
 
@@ -155,6 +156,7 @@ class SupplierAssigned extends Model
         'supCategoryICVMasterID' => 'integer',
         'supCategorySubICVID' => 'integer',
         'isLCCYN' => 'integer',
+        'isMarkupPercentage' => 'integer',
         'markupPercentage' => 'float'
     ];
 
