@@ -77,6 +77,7 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['description']);
         unset( $input['idyesNoselection']);
         unset( $input['YesNo']);
+        unset( $input['masterIsMarkupPercentage']);
 
         $input = array_except($input, ['final_approved_by']);
         $input = $this->convertArrayToValue($input);
@@ -115,13 +116,13 @@ class SupplierAssignedAPIController extends AppBaseController
 
 
         $company = Company::where('companySystemID',$input['companySystemID'])->first();
-        $supplier = SupplierMaster::where('supplierCodeSystem',$input['supplierCodeSytem'])->first();
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
         $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
         $input['companyID'] = $company['CompanyID'];
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
-        $input['markupPercentage'] = (isset($supplier->markupPercentage)?$supplier->markupPercentage:0);
+        $input['isMarkupPercentage'] = isset($input['isMarkupPercentage'])?$input['isMarkupPercentage']:0;
+        $input['markupPercentage'] = (isset($input['markupPercentage']) && $input['isMarkupPercentage']==1)?$input['markupPercentage']:0;
 
         if( array_key_exists ('supplierAssignedID' , $input )){
 

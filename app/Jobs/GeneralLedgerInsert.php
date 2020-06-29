@@ -753,7 +753,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                            $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+                            $data['documentTransAmount'] = 0;
 
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -772,11 +772,11 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = $time;
                             array_push($finalData, $data);
 
-                            $bs = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCost) as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                            $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
                             //get pnl account
-                            $pl = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCost) as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+                            $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
 
-                            $revenue = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
+                            $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
                             if ($bs) {
 
@@ -924,7 +924,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+                                $data['documentTransAmount'] = 0;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -981,7 +981,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = ABS($masterData->bookingAmountTrans) * -1;
+                                $data['documentTransAmount'] = 0;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -1023,7 +1023,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['documentTransCurrencyID'] = $tax->currency;
                                     $data['documentTransCurrencyER'] = $tax->currencyER;
-                                    $data['documentTransAmount'] = $tax->amount * -1;
+                                    $data['documentTransAmount'] = 0;
                                     $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
                                     $data['documentLocalAmount'] = $tax->localAmount * -1;
@@ -2769,7 +2769,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
-                        $data['documentTransAmount'] = $masterData->transactionAmount;
+//                        $data['documentTransAmount'] = $masterData->transactionAmount;
+                        $data['documentTransAmount'] = 0;
 
                         $data['documentLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
@@ -2788,11 +2789,11 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['timestamp'] = $time;
                         array_push($finalData, $data);
 
-                        $bs = DeliveryOrderDetail::selectRaw("SUM(qtyIssuedDefaultMeasure * unitTransactionAmount) as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                        $bs = DeliveryOrderDetail::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
                         //get pnl account
-                        $pl = DeliveryOrderDetail::selectRaw("SUM(qtyIssuedDefaultMeasure * unitTransactionAmount) as transAmount,SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+                        $pl = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
 
-                        $revenue = DeliveryOrderDetail::selectRaw("SUM(qtyIssuedDefaultMeasure * (unitTransactionAmount - (unitTransactionAmount*discountPercentage/100))) as transAmount,SUM(qtyIssuedDefaultMeasure * (companyLocalAmount - (companyLocalAmount*discountPercentage/100))) as localAmount, SUM(qtyIssuedDefaultMeasure * (companyReportingAmount - (companyReportingAmount*discountPercentage/100))) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
+                        $revenue = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * (companyLocalAmount - (companyLocalAmount*discountPercentage/100))) as localAmount, SUM(qtyIssuedDefaultMeasure * (companyReportingAmount - (companyReportingAmount*discountPercentage/100))) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
                         if ($bs) {
 
