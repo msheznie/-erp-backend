@@ -5714,6 +5714,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
             }
 
+            if(!$hasEEOSSPolicy){
+                PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->update([
+                    'markupPercentage' =>0,
+                    'markupTransactionAmount' => 0,
+                    'markupLocalAmount' => 0,
+                    'markupReportingAmount' => 0
+                ]);
+            }
+
         }
 
         $output = array('isEEOSSPolicy' => $hasEEOSSPolicy);
