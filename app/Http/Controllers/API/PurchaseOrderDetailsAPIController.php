@@ -1091,10 +1091,14 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if(isset($poData->supplierID) && $poData->supplierID){
 
-            $supplier = SupplierMaster::find($poData->supplierID);
+            $supplier= SupplierAssigned::where('supplierCodeSytem',$poData->supplierID)
+                ->where('companySystemID',$poData->companySystemID)
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
+                ->first();
 
-            if($supplier->primaryCompanySystemID){
-                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+            if($supplier->companySystemID && $supplier->isMarkupPercentage ){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->companySystemID)
                     ->where('companyPolicyCategoryID', 41)
                     ->where('isYesNO',1)
                     ->exists();

@@ -28,6 +28,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseMaster;
@@ -859,14 +860,18 @@ class GRVDetailsAPIController extends AppBaseController
 
         if(isset($grvData->supplierID) && $grvData->supplierID){
 
-            $supplier = SupplierMaster::find($grvData->supplierID);
-            $output['markupPercentage'] = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
-            if($supplier->primaryCompanySystemID){
-                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->primaryCompanySystemID)
+            $supplier= SupplierAssigned::where('supplierCodeSytem',$grvData->supplierID)
+                ->where('companySystemID',$grvData->companySystemID)
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
+                ->first();
+
+            if($supplier->companySystemID && $supplier->isMarkupPercentage){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplier->companySystemID)
                     ->where('companyPolicyCategoryID', 41)
                     ->where('isYesNO',1)
                     ->exists();
-
+                $output['markupPercentage'] = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
                 if($hasEEOSSPolicy && $output['markupPercentage'] != 0){
 
                     if($netAmount>0){

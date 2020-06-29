@@ -150,6 +150,7 @@ class SupplierMaster extends Model
         'supCategorySubICVID',
         'isLCCYN',
         'isSMEYN',
+        'isMarkupPercentage',
         'markupPercentage',
         'refferedBackYN',
         'timesReferred'
@@ -222,6 +223,7 @@ class SupplierMaster extends Model
         'supCategorySubICVID' => 'integer',
         'isLCCYN' => 'integer',
         'isSMEYN' => 'integer',
+        'isMarkupPercentage' => 'integer',
         'markupPercentage' => 'float',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer'

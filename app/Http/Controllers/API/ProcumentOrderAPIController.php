@@ -1425,19 +1425,26 @@ class ProcumentOrderAPIController extends AppBaseController
         if($purchaseOrderID){
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             $sup= SupplierMaster::find($purchaseOrder->supplierID);
-            $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
-                ->where('companyPolicyCategoryID', 38)
-                ->where('isYesNO',1)
-                ->exists();
-
             if($sup->primaryCompanySystemID){
-                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
+                    ->where('companyPolicyCategoryID', 38)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
+
+            $supAssigned= SupplierAssigned::where('supplierCodeSytem',$purchaseOrder->supplierID)
+                ->where('companySystemID',$companyId)
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
+                ->first();
+            if(!empty($supAssigned) && $supAssigned->isMarkupPercentage){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
                     ->where('companyPolicyCategoryID', 41)
                     ->where('isYesNO',1)
                     ->exists();
             }
-        }
 
+        }
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
