@@ -924,7 +924,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = 0;
+                                $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -981,7 +981,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = 0;
+                                $data['documentTransAmount'] = ABS($masterData->bookingAmountTrans) * -1;;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -1023,7 +1023,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['documentTransCurrencyID'] = $tax->currency;
                                     $data['documentTransCurrencyER'] = $tax->currencyER;
-                                    $data['documentTransAmount'] = 0;
+                                    $data['documentTransAmount'] = $tax->amount * -1;;
                                     $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
                                     $data['documentLocalAmount'] = $tax->localAmount * -1;
