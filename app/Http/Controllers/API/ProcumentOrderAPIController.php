@@ -47,6 +47,7 @@
  * -- Date: 21-September 2018 By: Nazir Description: Added new functions named as exportProcumentOrderMaster()
  * -- Date: 13-November 2018 By: Fayas Description: Added new functions named as getAdvancePaymentRequestStatusHistory(),
  * -- Date: 07-February 2020 By: Zakeeul Description: Added new functions named as getReportSavingFliterData(),
+ * -- Date: 29-June 2020 By: Rilwan Description: Added new functions named as checkEOSPolicyAndSupplier(),
  */
 
 namespace App\Http\Controllers\API;
@@ -5643,5 +5644,79 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendResponse($is_update,$message);
         }
 
+    }
+
+    public function checkEOSPolicyAndSupplier(Request $request){
+        $input = $request->all();
+        $companyId = $input['companySystemID'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $hasEEOSSPolicy = false;
+        if($purchaseOrderID){
+            $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+            $supAssigned= SupplierAssigned::where('supplierCodeSytem',$purchaseOrder->supplierID)
+                ->where('companySystemID',$companyId)
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
+                ->first();
+            if(!empty($supAssigned) && $supAssigned->isMarkupPercentage){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+                // change markup percentage when changing supplier
+                if($hasEEOSSPolicy){
+                    $detail = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->get();
+                    foreach ($detail as $row){
+
+                        if($row->netAmount>0 && $supAssigned->markupPercentage > 0){
+
+                            $markupTransactionAmount = $supAssigned->markupPercentage*$row->netAmount/100;
+                            $markupLocalAmount = 0;
+                            $markupReportingAmount = 0;
+
+                            if($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->localCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID,$purchaseOrder->supplierTransactionCurrencyID,$purchaseOrder->localCurrencyID,$markupTransactionAmount);
+                                if(!empty($currencyConversion)){
+                                    $markupLocalAmount = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $markupLocalAmount = $markupTransactionAmount;
+                            }
+
+                            if($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->companyReportingCurrencyID){
+                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID,$purchaseOrder->supplierTransactionCurrencyID,$purchaseOrder->companyReportingCurrencyID,$markupTransactionAmount);
+                                if(!empty($currencyConversion)){
+                                    $markupReportingAmount = $currencyConversion['documentAmount'];
+                                }
+                            }else{
+                                $markupReportingAmount = $markupTransactionAmount;
+                            }
+
+
+                            $updateArray = [
+                                'markupPercentage' =>$supAssigned->markupPercentage,
+                                'markupTransactionAmount' => $markupTransactionAmount,
+                                'markupLocalAmount' => $markupLocalAmount,
+                                'markupReportingAmount' => $markupReportingAmount
+                            ];
+
+                        }else{
+                            $updateArray = [
+                                'markupPercentage' =>$supAssigned->markupPercentage,
+                                'markupTransactionAmount' => 0,
+                                'markupLocalAmount' => 0,
+                                'markupReportingAmount' => 0
+                            ];
+                        }
+                        PurchaseOrderDetails::where('purchaseOrderDetailsID',$row->purchaseOrderDetailsID)->update($updateArray);
+                    }
+                }
+            }
+
+        }
+
+        $output = array('isEEOSSPolicy' => $hasEEOSSPolicy);
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
