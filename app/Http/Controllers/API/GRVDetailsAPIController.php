@@ -258,7 +258,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->count();
 
         if($logisticItems){
-            return $this->sendError('GRV details cannot be deleted as this GRV is linked with a logistics. Unlink the logistic data and try again.',500);
+            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
         }
 
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
@@ -812,7 +812,7 @@ class GRVDetailsAPIController extends AppBaseController
             ->count();
 
         if($logisticItems){
-            return $this->sendError('GRV details cannot be deleted as this GRV is linked with a logistics. Unlink the logistic data and try again.',500);
+            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
         }
 
         if (!empty($detailExistAll)) {
