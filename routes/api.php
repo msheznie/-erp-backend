@@ -1804,6 +1804,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
     Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
+    Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
 
 });
 
