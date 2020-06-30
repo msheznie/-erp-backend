@@ -23,6 +23,7 @@ use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
+use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
@@ -249,6 +250,17 @@ class GRVDetailsAPIController extends AppBaseController
         if (empty($gRVDetails)) {
             return $this->sendError('GRV Details not found');
         }
+
+        // check logistic item exist
+        $logisticItems = PoAdvancePayment::where('grvAutoID', $gRVDetails->grvAutoID)
+            ->where('confirmedYN', 1)
+            ->where('approvedYN', -1)
+            ->count();
+
+        if($logisticItems){
+            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
+        }
+
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
 
         if($grvMaster->grvTypeID == 2) {
@@ -791,6 +803,16 @@ class GRVDetailsAPIController extends AppBaseController
 
         if (empty($detailExistAll)) {
             return $this->sendError('There are no details to delete');
+        }
+
+        // check logistic item exist
+        $logisticItems = PoAdvancePayment::where('grvAutoID', $grvAutoID)
+            ->where('confirmedYN', 1)
+            ->where('approvedYN', -1)
+            ->count();
+
+        if($logisticItems){
+            return $this->sendError('GRV details cannot be deleted as this GRV is linked with logistics. Unlink the logistic data and try again.',500);
         }
 
         if (!empty($detailExistAll)) {

@@ -4,8 +4,11 @@
 namespace App\helper;
 
 
+use Carbon\Carbon;
+
 class CustomValidation
 {
+
 
     /**
      * send emails
@@ -136,10 +139,19 @@ class CustomValidation
 
     private static function checkValueChanges($entity, $input, $keys)
     {
+        $dates = ['matchingDocdate'];
         $changeKeys = array();
         foreach ($keys as $key) {
             if (isset($entity[$key]) && isset($input[$key]) && $entity[$key] != $input[$key]) {
-                array_push($changeKeys, $key);
+                if(in_array($key,$dates)){
+                    $entity[$key]  = Carbon::parse($entity[$key])->format('Y-m-d');
+                    $input[$key]   = Carbon::parse($input[$key])->format('Y-m-d');
+                    if($entity[$key] != $input[$key]){
+                        array_push($changeKeys, $key);
+                    }
+                }else{
+                    array_push($changeKeys, $key);
+                }
             }
         }
         return $changeKeys;
