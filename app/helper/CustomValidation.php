@@ -40,8 +40,9 @@ class CustomValidation
                 $docInfoArr["approvedColumnName"] = 'approved';
                 $docInfoArr["confirmedYN"] = 'confirmedYN';
                 $docInfoArr["detailRelation"] = 'directdetail';
-                $docInfoArr["keys"] = ['invoiceType', 'payeeType', 'BPVsupplierID', 'directPaymentPayeeEmpID','supplierTransCurrencyID',
-                    'BPVbank','BPVAccount','expenseClaimOrPettyCash','directPaymentPayee','companyFinanceYearID'];
+//                $docInfoArr["keys"] = ['invoiceType', 'payeeType', 'BPVsupplierID', 'directPaymentPayeeEmpID','supplierTransCurrencyID',
+//                    'BPVbank','BPVAccount','expenseClaimOrPettyCash','directPaymentPayee','companyFinanceYearID'];
+                $docInfoArr["keys"] = [];
                 break;
             case 70: // Matching Document
                 $docInfoArr["modelName"] = 'MatchDocumentMaster';
