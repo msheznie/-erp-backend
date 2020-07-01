@@ -231,6 +231,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             ->where('documentSystemID',$documentSystemID)
             ->first();
 
+        if(empty($result)){
+            return $this->sendError('Policy Not Found');
+        }
+
         return $this->sendResponse($result, 'Record retrieved successfully');
     }
 }
