@@ -78,6 +78,7 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['idyesNoselection']);
         unset( $input['YesNo']);
         unset( $input['masterIsMarkupPercentage']);
+        unset( $input['isEEOSSPolicy']);
 
         $input = array_except($input, ['final_approved_by']);
         $input = $this->convertArrayToValue($input);

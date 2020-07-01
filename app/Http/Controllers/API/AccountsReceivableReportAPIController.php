@@ -281,7 +281,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
-                    //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
                     $grandTotal = array_sum($grandTotal);
@@ -303,7 +302,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $customerName = CustomerMaster::find($request->singleCustomer);
 
                     $output = $this->getCustomerStatementAccountQRY($request);
-                    //dd(DB::getQueryLog());
 
                     $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
                     $balanceTotal = array_sum($balanceTotal);
@@ -900,7 +898,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
-                    //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
                     $grandTotal = array_sum($grandTotal);
@@ -908,92 +905,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
                     $decimalPlace = !empty($decimalPlace) ? $decimalPlace[0] : 2;
-
-                    /*if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
-                        }
-                    }
-
-                    if (!empty($outputArr)) {
-                        $x = 0;
-                        foreach ($outputArr as $customerName => $currency) {
-                            $data[$x][''] = $customerName;
-                            if (!empty($currency)) {
-                                $x++;
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                $data[$x][''] = '';
-                                foreach ($currency as $key => $val) {
-                                    $x++;
-                                    $data[$x]['Document Code'] = 'Document Code';
-                                    $data[$x]['Posted Date'] = 'Posted Date';
-                                    $data[$x]['Narration'] = 'Narration';
-                                    $data[$x]['Contract'] = 'Contract';
-                                    $data[$x]['PO Number'] = 'PO Number';
-                                    $data[$x]['Invoice Number'] = 'Invoice Number';
-                                    $data[$x]['Invoice Date'] = 'Invoice Date';
-                                    $data[$x]['Currency'] = 'Currency';
-                                    $data[$x]['Balance Amount'] = 'Balance Amount';
-                                    if (!empty($val)) {
-                                        $subTotal = 0;
-                                        foreach ($val as $key2 => $values) {
-                                            $x++;
-                                            $data[$x]['Document Code'] = $values->DocumentCode;
-                                            $data[$x]['Posted Date'] = $values->PostedDate;
-                                            $data[$x]['Narration'] = $values->DocumentNarration;
-                                            $data[$x]['Contract'] = $values->Contract;
-                                            $data[$x]['PO Number'] = '';
-                                            $data[$x]['Invoice Number'] = $values->invoiceNumber;
-                                            $data[$x]['Invoice Date'] = $values->InvoiceDate;
-                                            $data[$x]['Currency'] = $values->documentCurrency;
-                                            $data[$x]['Balance Amount'] = round($values->balanceAmount,$values->balanceDecimalPlaces);
-                                            $subTotal += $values->balanceAmount;
-                                        }
-                                        $x++;
-                                        $data[$x]['Document Code'] = '';
-                                        $data[$x]['Posted Date'] = '';
-                                        $data[$x]['Narration'] = '';
-                                        $data[$x]['Contract'] = '';
-                                        $data[$x]['PO Number'] = '';
-                                        $data[$x]['Invoice Number'] = '';
-                                        $data[$x]['Invoice Date'] = '';
-                                        $data[$x]['Currency'] = 'Total';
-                                        $data[$x]['Balance Amount'] = round($subTotal,$val[0]->balanceDecimalPlaces);
-
-                                        $x++;
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                        $data[$x][''] = '';
-                                    }
-                                }
-                            }
-                            $x++;
-                        }
-                        $x++;
-                        $data[$x]['Document Code'] = '';
-                        $data[$x]['Posted Date'] = '';
-                        $data[$x]['Narration'] = '';
-                        $data[$x]['Contract'] = '';
-                        $data[$x]['PO Number'] = '';
-                        $data[$x]['Invoice Number'] = '';
-                        $data[$x]['Invoice Date'] = '';
-                        $data[$x]['Currency'] = 'Grand Total';
-                        $data[$x]['Balance Amount'] = round($grandTotal,$decimalPlace);
-                    }
-                }*/
 
                     if ($output) {
                         foreach ($output as $val) {
@@ -1016,7 +927,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else if ($request->reportTypeID == 'CSA') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
-                    //dd(DB::getQueryLog());
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -1043,7 +953,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                  \Excel::create('customer_balance_statement', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1125,7 +1034,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                  \Excel::create('customer_aging', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1194,7 +1102,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                  \Excel::create('customer_ledger', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1323,7 +1230,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                  \Excel::create('customer_sales_register', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1426,7 +1332,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                  \Excel::create('customer_collection', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -2250,7 +2155,6 @@ GROUP BY
     function getCustomerBalanceStatementQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -2289,7 +2193,6 @@ GROUP BY
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
         }
         $currencyID = $request->currencyID;
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
@@ -2543,7 +2446,6 @@ WHERE
     function getCustomerAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -2633,7 +2535,6 @@ WHERE
             $invoiceQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT
         DocumentCode,commentAndStatus,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,creditDays,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName,serviceLineName,documentSystemCode,documentSystemID FROM (SELECT
 	final.documentCode AS DocumentCode,
@@ -2956,7 +2857,6 @@ WHERE
 	) AS final
 WHERE
 ' . $whereQry . ' <> 0) as grandFinal ORDER BY PostedDate ASC');
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -2964,7 +2864,6 @@ WHERE
     function getCustomerAgingSummaryQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -3042,7 +2941,6 @@ WHERE
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
         }
         $currencyID = $request->currencyID;
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName, creditDays,CustomerCode,customerCodeSystem,companyID,CompanyName,concatCompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
@@ -3417,7 +3315,6 @@ GROUP BY
     function getCustomerLedgerTemplate1QRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -3459,7 +3356,6 @@ GROUP BY
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
         $currencyID = $request->currencyID;
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,

@@ -2365,8 +2365,7 @@ class FinancialReportAPIController extends AppBaseController
     }
 
 
-    public
-    function getGeneralLedger($request)
+    public function getGeneralLedger($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
@@ -2397,7 +2396,6 @@ class FinancialReportAPIController extends AppBaseController
         array_push($contractsId, 159);
         //contracts
 
-        //DB::enableQueryLog();
         $query = 'SELECT * 
                     FROM
                         (
@@ -2501,7 +2499,7 @@ class FinancialReportAPIController extends AppBaseController
                         LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
                         WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                        AND erp_generalledger.glAccountType = "BS" 
+                        AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
                         AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
@@ -2514,14 +2512,10 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS GL_final 
                     ORDER BY
                         documentDate ASC';
-        $output = \DB::select($query);
-        //dd(DB::getQueryLog());
-        return $output;
-
+        return \DB::select($query);
     }
 
-    public
-    function getGeneralLedgerQryForPDF($request)
+    public function getGeneralLedgerQryForPDF($request)
     {
         $fromDate = new Carbon($request->fromDate);
         $fromDate = $fromDate->format('Y-m-d');
