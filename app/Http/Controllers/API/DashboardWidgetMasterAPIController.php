@@ -389,7 +389,7 @@ END AS sortDashboard')
         }
 
         $dashBoardWidget = DashboardWidgetMaster::find($id);
-
+        $currentYear = date("Y");
         switch ($id){
             case 1:// top 10 subcategory by spent
                 $temSeries = array(
@@ -840,6 +840,7 @@ GROUP BY
 	erp_generalledger.supplierCodeSystem
                  * */
 
+
                 $data = [];
                 $temSeries = array(
                     'name' => '',
@@ -849,30 +850,131 @@ GROUP BY
                 );
                 $pieData = [];
 
-                $result = GeneralLedger::where('documentSystemID',20)
-                    ->whereHas('customer', function ($query){
-                        $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
-                    })
-                    ->whereIn('companySystemID', $childCompanies)
-                    ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
-                    ->with(['customer'])
-                    ->groupBy('supplierCodeSystem')
-                    ->orderBy('total','DESC')
-                    ->limit(10)
-                    ->get();
+//                $result = GeneralLedger::where('documentSystemID',20)
+//                    ->whereHas('customer', function ($query){
+//                        $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+//                    })
+//                    ->whereIn('companySystemID', $childCompanies)
+//                    ->select(DB::raw('supplierCodeSystem,SUM(documentRptAmount) AS total'))
+//                    ->with(['customer'])
+//                    ->groupBy('supplierCodeSystem')
+//                    ->orderBy('total','DESC')
+//                    ->limit(10)
+//                    ->get();
 
-                if(!empty($result) && $result->count()){
+                $result = DB::select('SELECT
+                                revenueCustomerDetail.companySystemID,
+                                revenueCustomerDetail.companyID,
+                                revenueCustomerDetail.CompanyName,
+                                customermaster.CutomerCode,
+                                customermaster.CustomerName,
+                                revenueCustomerDetail.documentCode,
+                                revenueCustomerDetail.documentSystemCode,
+                                revenueCustomerDetail.documentSystemID,
+                                revenueCustomerDetail.serviceLineCode,
+                                revenueCustomerDetail.ContractNumber,
+                                revenueCustomerDetail.contractDescription,
+                                revenueCustomerDetail.CONTRACT_PO,
+                                revenueCustomerDetail.ContEndDate,
+                                revenueCustomerDetail.glCode,
+                                revenueCustomerDetail.AccountDescription,
+                                revenueCustomerDetail.documentDate,
+                                documentLocalCurrency,
+                                documentLocalDecimalPlaces,
+                                documentRptCurrency,
+                                documentRptDecimalPlaces,
+                                month(revenueCustomerDetail.documentDate) as PostingMonth,
+                                year(revenueCustomerDetail.documentDate) as PostingYear,
+                                revenueCustomerDetail.documentNarration,
+                                round(revenueCustomerDetail.MyLocalAmount,0) localAmount,
+                                round(SUM(revenueCustomerDetail.MyRptAmount),0) RptAmount
+                            FROM
+                            (
+                            SELECT
+                                erp_generalledger.companySystemID,
+                                erp_generalledger.companyID,
+                                companymaster.CompanyName,
+                                erp_generalledger.serviceLineCode,
+                                erp_generalledger.clientContractID,
+                                contractmaster.ContractNumber,
+                                contractmaster.contractDescription,
+                                contractmaster.ContEndDate,
+                                erp_generalledger.documentID,
+                                erp_generalledger.documentSystemCode,
+                                erp_generalledger.documentCode,
+                                erp_generalledger.documentSystemID,
+                                erp_generalledger.documentDate,
+                                erp_generalledger.documentNarration,
+                                erp_generalledger.glCode,
+                                erp_generalledger.glAccountType,
+                                chartofaccounts.controlAccounts,
+                                chartofaccounts.AccountDescription,
+                                erp_generalledger.supplierCodeSystem,
+                                currLocal.CurrencyCode as documentLocalCurrency,
+                                currLocal.DecimalPlaces as documentLocalDecimalPlaces,
+                                currRpt.CurrencyCode as documentRptCurrency,
+                                currRpt.DecimalPlaces as documentRptDecimalPlaces,
+                            IF
+                                (
+                                erp_generalledger.clientContractID = "X" 
+                                AND erp_generalledger.supplierCodeSystem = 0,
+                                0,
+                            IF
+                                (
+                                erp_generalledger.clientContractID <> "X" 
+                                AND erp_generalledger.supplierCodeSystem = 0,
+                                contractmaster.clientID,
+                            IF
+                                ( erp_generalledger.documentSystemID = 11 OR erp_generalledger.documentSystemID = 15 OR erp_generalledger.documentSystemID = 4, contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
+                                ) 
+                                ) AS mySupplierCode,
+                                erp_generalledger.documentLocalCurrencyID,
+                                erp_generalledger.documentLocalAmount,
+                                (documentLocalAmount * -1) AS MyLocalAmount,
+                                erp_generalledger.documentRptCurrencyID,
+                                erp_generalledger.documentRptAmount,
+                                (documentRptAmount * -1) AS MyRptAmount,
+                            IF
+                                ( contractmaster.isContract = 1, "Contract", "PO" ) AS CONTRACT_PO 
+                            FROM
+                                erp_generalledger
+                                INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                                LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
+                                AND erp_generalledger.clientContractID = contractmaster.ContractNumber
+                                LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+                                LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+                                INNER JOIN (
+                            SELECT
+                                erp_templatesdetails.templatesDetailsAutoID,
+                                erp_templatesdetails.templatesMasterAutoID,
+                                erp_templatesdetails.templateDetailDescription,
+                                erp_templatesdetails.controlAccountID,
+                                erp_templatesdetails.controlAccountSubID,
+                                erp_templatesglcode.chartOfAccountSystemID,
+                                erp_templatesglcode.glCode 
+                            FROM
+                                erp_templatesdetails
+                                INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                            WHERE
+                                erp_templatesdetails.templatesMasterAutoID = 15 AND erp_templatesdetails.controlAccountID = "PLI"
+                                ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
+                                WHERE erp_generalledger.companySystemID IN (' . join(',', $childCompanies) . ')
+                            
+                                AND YEAR(erp_generalledger.documentDate) = '.$currentYear.'
+                                ) AS revenueCustomerDetail
+                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
+																Group By mySupplierCode
+																LIMIT 10');
 
-//                    $finalTotal = 0;
-//                    foreach ($result as $raw){
-//                        $finalTotal = $finalTotal+$raw->total;
-//                    }
+                if(!empty($result) && count($result)){
+
 
                     foreach ($result as $raw){
-                        $temSeries['name'] = isset($raw->customer->customerShortCode)?$raw->customer->customerShortCode:'';
-                        $temSeries['id'] = $raw->supplierCodeSystem;
+                        $temSeries['name'] = isset($raw->CustomerName)?$raw->CustomerName:'';
+//                        $temSeries['id'] = $raw->supplierCodeSystem;
 //                        $temSeries['y'] = $raw->total*100/$finalTotal;
-                        $temSeries['y'] = $raw->total;
+                        $temSeries['y'] = $raw->RptAmount;
                         array_push($pieData, $temSeries);
                     }
                     $data[0]['data'] = $pieData;

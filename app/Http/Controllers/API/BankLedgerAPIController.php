@@ -709,8 +709,6 @@ class BankLedgerAPIController extends AppBaseController
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
-        //$pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/'.$pdfName);
-
     }
 
 

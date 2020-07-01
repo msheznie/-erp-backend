@@ -2905,10 +2905,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         );
 
         $html = view('print.purchase_order_print_pdf', $order);
-
-        // echo $html;
-        // exit();
-
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
