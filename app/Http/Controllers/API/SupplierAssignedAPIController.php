@@ -78,42 +78,25 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['idyesNoselection']);
         unset( $input['YesNo']);
         unset( $input['masterIsMarkupPercentage']);
+        unset( $input['isEEOSSPolicy']);
 
         $input = array_except($input, ['final_approved_by']);
         $input = $this->convertArrayToValue($input);
-        /*if (is_array($input['supplierCountryID']))
-            $input['supplierCountryID'] = $input['supplierCountryID'][0];
-        if (is_array($input['currency']))
-            $input['currency'] = $input['currency'][0];
-        if (is_array($input['supCategoryMasterID']))
-            $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
-        if (is_array($input['supCategoryMasterID']))
-            $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
-        if (is_array($input['companySystemID']))
-            $input['companySystemID'] = $input['companySystemID'][0];
-        if (is_array($input['liabilityAccountSysemID']))
-            $input['liabilityAccountSysemID'] = $input['liabilityAccountSysemID'][0];
-        if (is_array($input['UnbilledGRVAccountSystemID']))
-            $input['UnbilledGRVAccountSystemID'] = $input['UnbilledGRVAccountSystemID'][0];
-        if (is_array($input['isCriticalYN']))
-            $input['isCriticalYN'] = $input['isCriticalYN'][0];
-        if (is_array($input['isActive']))
-            $input['isActive'] = $input['isActive'][0];
-        if (is_array($input['supplierImportanceID']))
-            $input['supplierImportanceID'] = $input['supplierImportanceID'][0];
-        if (is_array($input['supplierNatureID']))
-            $input['supplierNatureID'] = $input['supplierNatureID'][0];
-        if (is_array($input['supplierTypeID']))
-            $input['supplierTypeID'] = $input['supplierTypeID'][0];
-        if (is_array($input['WHTApplicable']))
-            $input['WHTApplicable'] = $input['WHTApplicable'][0];
-        if (is_array($input['supCategoryICVMasterID']))
-            $input['supCategoryICVMasterID'] = $input['supCategoryICVMasterID'][0];
-        if (is_array($input['supCategorySubICVID']))
-            $input['supCategorySubICVID'] = $input['supCategorySubICVID'][0];
-        if (is_array($input['isLCCYN']))
-            $input['isLCCYN'] = $input['isLCCYN'][0];*/
 
+        $messages = [
+            'companySystemID.required' => 'Company field is required.',
+            'liabilityAccountSysemID.required' => 'Liability Account field is required.',
+            'UnbilledGRVAccountSystemID.required' => 'Un-billed Account field is required.',
+        ];
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'liabilityAccountSysemID' => 'required',
+            'UnbilledGRVAccountSystemID' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         $company = Company::where('companySystemID',$input['companySystemID'])->first();
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
@@ -127,7 +110,6 @@ class SupplierAssignedAPIController extends AppBaseController
         if( array_key_exists ('supplierAssignedID' , $input )){
 
             $supplierAssigneds = SupplierAssigned::where('supplierAssignedID', $input['supplierAssignedID'])->first();
-
 
             if (empty($supplierAssigneds)) {
                 return $this->sendError('supplier Assigned not found');

@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- functions : getAllCompanyDocumentAttachment() - created by Rilwan 2019-09-17
  * -- functions : getCompanyPolicyFilterOptions() - created by Rilwan 2019-09-18
+ * -- functions : checkDocumentAttachmentPolicy() - created by Rilwan 2020-06-30
  */
 namespace App\Http\Controllers\API;
 
@@ -218,5 +219,22 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $output['companies'] = Company::whereIn("companySystemID",$subCompanies)->get();
         $output['documents'] = DocumentMaster::select('documentSystemID','documentID','documentDescription')->get();
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function checkDocumentAttachmentPolicy(Request $request){
+
+        $input = $request->all();
+        $companySystemID = isset($input['companySystemID'])?$input['companySystemID']:0;
+        $documentSystemID = isset($input['documentSystemID'])?$input['documentSystemID']:0;
+
+        $result = CompanyDocumentAttachment::where('companySystemID',$companySystemID)
+            ->where('documentSystemID',$documentSystemID)
+            ->first();
+
+        if(empty($result)){
+            return $this->sendError('Policy Not Found');
+        }
+
+        return $this->sendResponse($result, 'Record retrieved successfully');
     }
 }

@@ -1702,6 +1702,63 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
 
+
+        Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
+
+        Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
+
+        Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
+
+        Route::resource('user_rights', 'UserRightsAPIController');
+
+        Route::resource('lpt_permissions', 'LptPermissionAPIController');
+
+        Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
+
+
+        Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
+
+
+        Route::resource('segment_rights', 'SegmentRightsAPIController');
+        Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
+
+        Route::resource('service_lines', 'ServiceLineAPIController');
+        Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
+
+        Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+        Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
+
+        Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+
+
+        //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
+
+        Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
+
+
+        Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
+
+        Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+
+        Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice');
+        Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice');
+        Route::post('storeInvoiceDetailFromDeliveryOrder','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromDeliveryOrder');
+
+        Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord');
+        Route::get('getSupplierCatalog','ItemMasterAPIController@getSupplierByCatalogItemDetail');
+
+        Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
+        Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
+
+        Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory');
+        Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend');
+
+        Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
+
+        Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
+
+        Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1748,61 +1805,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
     Route::resource('fcm_tokens', 'FcmTokenAPIController');
 
-
-    Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
-
-    Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
-
-    Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
-
-    Route::resource('user_rights', 'UserRightsAPIController');
-
-    Route::resource('lpt_permissions', 'LptPermissionAPIController');
-
-    Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
-
-
-    Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
-
-
-    Route::resource('segment_rights', 'SegmentRightsAPIController');
-    Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
-
-    Route::resource('service_lines', 'ServiceLineAPIController');
-    Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
-
-    Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
-    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
-
-
-    Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
-
-
-    //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
-
-    Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
-
-
-    Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
-
-    Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
-
-    Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice');
-    Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice');
-    Route::post('storeInvoiceDetailFromDeliveryOrder','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromDeliveryOrder');
-
-    Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord');
-    Route::get('getSupplierCatalog','ItemMasterAPIController@getSupplierByCatalogItemDetail');
-
-    Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
-    Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
-    Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory');
-    Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend');
-
-    Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
-
-    Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
 
 });
