@@ -399,7 +399,23 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
-                return array('reportData' => $output,
+
+                $sort = 'asc';
+
+                return \DataTables::of($output)
+                            ->addIndexColumn()
+                            ->with('companyName', $checkIsGroup->CompanyName)
+                            ->with('isGroup', $checkIsGroup->isGroup)
+                            ->with('total', $total)
+                            ->with('decimalPlaceLocal', $decimalPlaceLocal)
+                            ->with('decimalPlaceRpt', $decimalPlaceRpt)
+                            ->with('currencyLocal', $requestCurrencyLocal->CurrencyCode)
+                            ->with('currencyRpt', $requestCurrencyRpt->CurrencyCode)
+                            ->addIndexColumn()
+                           // ->with('orderCondition', $sort)
+                            ->make(true);
+
+                /*return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
@@ -407,7 +423,7 @@ class FinancialReportAPIController extends AppBaseController
                     'decimalPlaceRpt' => $decimalPlaceRpt,
                     'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
                     'currencyRpt' => $requestCurrencyRpt->CurrencyCode,
-                );
+                );*/
                 break;
             case 'FTD': // Tax Detail
 
@@ -1187,6 +1203,7 @@ class FinancialReportAPIController extends AppBaseController
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
                 $output = $this->getGeneralLedger($request);
+
 
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
@@ -2512,7 +2529,8 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS GL_final 
                     ORDER BY
                         documentDate ASC';
-        return \DB::select($query);
+
+        return  \DB::select($query);
     }
 
     public function getGeneralLedgerQryForPDF($request)
