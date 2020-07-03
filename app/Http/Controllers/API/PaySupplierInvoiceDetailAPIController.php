@@ -739,22 +739,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
-        /*        //check record exist in General Ledger table
-                foreach ($input['detailTable'] as $itemExist) {
-
-                    if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                        $siDetailExistGL = GeneralLedger::where('documentSystemID', $itemExist['addedDocumentSystemID'])
-                            ->where('companySystemID', $itemExist['companySystemID'])
-                            ->where('documentSystemCode', $itemExist['bookingInvSystemCode'])
-                            ->first();
-
-                        if (empty($siDetailExistGL)) {
-                            $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                            $itemExistArray[] = [$itemDrt];
-                        }
-                    }
-                }*/
-
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -900,17 +884,19 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
-            if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
+            if (($input["supplierPaymentAmount"] - $paymentBalancedAmount) > 0.00001) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             //debit note
-            if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
+            if (($paymentBalancedAmount - $input["supplierPaymentAmount"]) > 0.00001) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         }
 
-        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $input["supplierPaymentAmount"];
+        $paymentBalancedAmount = $paymentBalancedAmount - $input["supplierPaymentAmount"];
+
+        $input["paymentBalancedAmount"] = \Helper::roundValue($paymentBalancedAmount);
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
