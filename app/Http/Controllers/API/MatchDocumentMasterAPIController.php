@@ -31,6 +31,8 @@ use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BookInvSuppMaster;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CurrencyMaster;
@@ -569,7 +571,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by','localcurrency','rptcurrency'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -627,7 +629,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by']);
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -650,6 +652,42 @@ class MatchDocumentMasterAPIController extends AppBaseController
         if (!$customValidation["success"]) {
             return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
+
+        // check date within financial period
+        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
+            ->where('isActive', -1)
+            ->where('isCurrent', -1)
+            ->first();
+
+        if(empty($companyFinanceYear)){
+            return $this->sendError('No Active Finance Year Found', 500);
+        }
+
+        if($input['matchingType'] == 'AP'){
+            $department = 1;
+        }elseif ($input['matchingType'] == 'AR'){
+            $department = 4;
+        }else{
+            return $this->sendError('Matching Type Found', 500);
+        }
+        $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
+            ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+            ->where('departmentSystemID', $department)
+            ->where('isActive', -1)
+            ->where('isCurrent', -1)
+            ->first();
+
+        if(empty($companyFinancePeriod)){
+            return $this->sendError('No Active Finance Period Found', 500);
+        }
+
+        $FYPeriodDateFrom = $companyFinancePeriod->dateFrom;
+        $FYPeriodDateTo = $companyFinancePeriod->dateTo;
+
+        if (!(($input['matchingDocdate'] >= $FYPeriodDateFrom) && ($input['matchingDocdate'] <= $FYPeriodDateTo))) {
+            return $this->sendError('Document date should be between financial period start date and end date',500, array('type' => 'already_confirmed'));
+        }
+        // end of check date within financial period
 
         $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
             ->sum('supplierPaymentAmount');
@@ -1121,7 +1159,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function updateReceiptVoucherMatching(Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by']);
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
