@@ -1758,6 +1758,10 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
         Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
+        Route::resource('customer_invoice_status_types', 'CustomerInvoiceStatusTypeAPIController');
+        Route::resource('tax_masters', 'TaxMasterAPIController');
+        Route::resource('fcm_tokens', 'FcmTokenAPIController');
+        Route::resource('user_activity_logs', 'UserActivityLogAPIController');
 
     });
 
@@ -1792,21 +1796,13 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
     Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
     Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
-
     Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-    Route::resource('user_activity_logs', 'UserActivityLogAPIController');
-
     Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
-
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
-
-    Route::resource('fcm_tokens', 'FcmTokenAPIController');
-
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
-
 
 });
 
@@ -1814,6 +1810,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
 
 
 
