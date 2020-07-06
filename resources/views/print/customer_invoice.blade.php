@@ -388,7 +388,7 @@
 
                         <h3 class="font-weight-bold">
                             @if($request->is_pdo_vendor)
-                                Tax
+                                VAT
                             @endif
                             Invoice
                         </h3>
@@ -788,7 +788,7 @@
                     </td>
                     <td class="text-right" style="border:none !important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 11.5px">Tax Amount ({{$request->tax->taxPercent}} %)
+                                style="font-size: 11.5px">VAT Amount ({{$request->tax->taxPercent}} %)
                             </span></td>
                     <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span

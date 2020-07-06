@@ -1,0 +1,35 @@
+[
+    {
+        "name": "typeAutoID",
+        "dbType": "integer,true",
+        "htmlType": null,
+        "validations": null,
+        "searchable": false,
+        "fillable": false,
+        "primary": true,
+        "inForm": false,
+        "inIndex": false
+    },
+    {
+        "name": "description",
+        "dbType": "string,200:nullable",
+        "htmlType": "text",
+        "validations": null,
+        "searchable": true,
+        "fillable": true,
+        "primary": false,
+        "inForm": true,
+        "inIndex": true
+    },
+    {
+        "name": "timestamp",
+        "dbType": "string,45:nullable",
+        "htmlType": "text",
+        "validations": null,
+        "searchable": true,
+        "fillable": true,
+        "primary": false,
+        "inForm": true,
+        "inIndex": true
+    }
+]
