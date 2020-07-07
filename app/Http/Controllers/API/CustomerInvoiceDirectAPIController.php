@@ -45,6 +45,7 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
 use App\Models\CustomerInvoiceDirectRefferedback;
 use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerInvoiceStatusType;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
@@ -58,6 +59,7 @@ use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
+use App\Models\TaxMaster;
 use App\Models\TicketMaster;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
@@ -180,15 +182,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
         $companyFinanceYearID = $input['companyFinanceYearID'];
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
+
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $companyFinanceYearID)->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-        /*  $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
-          custTransactionCurrencyID*/
-        /* if ($currency) {*/
-        //$input['custTransactionCurrencyID'] = $currency->currencyID;
         $myCurr = $input['custTransactionCurrencyID'];
 
         $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
@@ -200,23 +199,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
-        $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+        $bank = BankAssign::select('bankmasterAutoID')
+                           ->where('companySystemID', $input['companyID'])
+                           ->where('isDefault', -1)
+                           ->first();
         if ($bank) {
             $input['bankID'] = $bank->bankmasterAutoID;
-            $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+            $bankAccount = BankAccount::where('companySystemID', $input['companyID'])
+                                       ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                       ->where('isDefault', 1)
+                                       ->where('accountCurrencyID', $myCurr)
+                                       ->first();
             if ($bankAccount) {
                 $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
             }
 
         }
-        /*  }*/
-
-        /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
-             return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
-         }*/
-
-
-        /**/
 
         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
             $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
@@ -559,10 +557,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
-                $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
+                $bank = BankAssign::select('bankmasterAutoID')
+                                     ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                     ->where('isDefault', -1)
+                                     ->first();
+
                 if ($bank) {
                     $_post['bankID'] = $bank->bankmasterAutoID;
-                    $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
+                    $bankAccount = BankAccount::where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                                ->where('isDefault', 1)
+                                                ->where('accountCurrencyID', $currency->currencyID)
+                                                ->first();
+
                     if ($bankAccount) {
                         $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
                     }
@@ -1253,7 +1260,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')
+                ->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -1276,27 +1284,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                           ->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
-        $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
-        $output['collectionType'] = \DB::select("SELECT * FROM erp_customerinvoicestatustype");
+        $companySystemID = (isset($output['company']) &&  $output['company']) ? $output['company']['companySystemID'] : 0;
+        $output['tax'] =  TaxMaster::where('taxType',2)
+                                    ->where('companySystemID', $companySystemID)
+                                    ->get();
+        $output['collectionType'] = CustomerInvoiceStatusType::all();
         $output['segment'] = [];
         if ($id) {
             if ($master->customerID != '') {
-                $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')->get();
+                $output['currencies'] = DB::table('customercurrency')
+                                     ->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+                                     ->where('customerCodeSystem', $master->customerID)
+                                     ->where('isAssigned', -1)
+                                     ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')
+                                     ->get();
             } else {
                 $output['currencies'] = [];
             }
+            $output['bankDropdown'] = BankAssign::where('isActive', 1)
+                                                ->where('isAssigned', -1)
+                                                ->where('companySystemID', $companySystemID)
+                                                ->get();
 
-            /* $output['currencies'] = CurrencyMaster::all();*/
-            $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
             $output['bankAccount'] = [];
             if ($bankID != '' && $master->custTransactionCurrencyID != '') {
-
-                /*                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])
-                                    ->where('bankmasterAutoID', $bankID)
-                                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
-                                    ->get();*/
-
-                $output['bankAccount'] = BankAccount::where('erp_bankaccount.companySystemID', $output['company']['companySystemID'])
+                $output['bankAccount'] = BankAccount::where('companySystemID', $companySystemID)
                     ->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')
                     ->where('bankmasterAutoID', $bankID)
                     //->where('accountCurrencyID', $master->custTransactionCurrencyID)
@@ -1306,7 +1318,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
-            $output['uom'] = Unit::select('UnitID', 'UnitShortCode')->get();
+            $output['uom']     = Unit::select('UnitID', 'UnitShortCode')->get();
 
         }
 

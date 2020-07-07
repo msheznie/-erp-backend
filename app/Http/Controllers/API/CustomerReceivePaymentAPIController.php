@@ -502,10 +502,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['bankID'] = null;
                     $input['bankAccount'] = null;
                     $input['bankCurrencyER'] = 0;
-                    $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerReceivePayment->companyID)->where('isDefault', -1)->first();
+                    $bank = BankAssign::select('bankmasterAutoID')
+                                     ->where('companySystemID', $customerReceivePayment->companySystemID)
+                                     ->where('isDefault', -1)
+                                     ->first();
                     if ($bank) {
                         $input['bankID'] = $bank->bankmasterAutoID;
-                        $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+                        $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                            ->where('isDefault', 1)
+                                            ->where('accountCurrencyID', $myCurr)
+                                            ->first();
                         if ($bankAccount) {
                             $input['bankAccount'] = $bankAccount->bankAccountAutoID;
                             $input['bankCurrency'] = $myCurr;
@@ -547,8 +554,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['bankCurrencyER'] = 0;
 
 
-                    $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerReceivePayment->companyID)->where('isDefault', -1)->first();
-                    $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+                    $bank = BankAssign::select('bankmasterAutoID')
+                                        ->where('companySystemID', $customerReceivePayment->companySystemID)
+                                        ->where('isDefault', -1)->first();
+                    $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                                                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                                                ->where('isDefault', 1)
+                                                ->where('accountCurrencyID', $myCurr)
+                                                ->first();
                     if ($bank) {
                         $input['bankID'] = $bank->bankmasterAutoID;
                     }
@@ -563,7 +576,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
 
             if ($input['bankID'] != $customerReceivePayment->bankID) {
-                $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $input['bankID'])->where('isDefault', 1)->where('accountCurrencyID', $input['custTransactionCurrencyID'])->first();
+                $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                    ->where('bankmasterAutoID', $input['bankID'])
+                    ->where('isDefault', 1)
+                    ->where('accountCurrencyID', $input['custTransactionCurrencyID'])
+                    ->first();
+
                 $input['bankAccount'] = null;
                 $input['bankCurrencyER'] = 0;
                 $input['bankCurrency'] = null;
@@ -1094,7 +1112,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
         /*companySystemID*/
-        $companySystemID = $input['companyId'];
+        $companySystemID = isset($input['companyId']) ? $input['companyId'] : 0;
         $type = $input['type']; /*value ['filter','create','getCurrency']*/
 
         switch ($type) {
@@ -1157,15 +1175,28 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType'] = $master->documentType;
-                $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+                $output['bankDropdown'] = BankAssign::where('isActive', 1)
+                                                   ->where('isAssigned', -1)
+                                                   ->where('companySystemID', $companySystemID)
+                                                   ->get();
 
                 $output['bankAccount'] = [];
                 $output['bankCurrencies'] = [];
                 if ($master->bankID != '') {
-                    $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('isAccountActive', 1)->get();
+                    $output['bankAccount'] = BankAccount::where('companySystemID', $companySystemID)
+                                                        ->where('bankmasterAutoID', $master->bankID)
+                                                        ->where('isAccountActive', 1)
+                                                        ->get();
                 }
                 if ($master->bankAccount != '') {
-                    $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
+                    $output['bankCurrencies'] = DB::table('erp_bankaccount')
+                          ->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')
+                          ->where('companySystemID', $companySystemID)
+                          ->where('bankmasterAutoID', $master->bankID)
+                          ->where('bankAccountAutoID', $master->bankAccount)
+                          ->where('isAccountActive', 1)
+                          ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')
+                          ->get();
                 }
                 break;
             case 'amendEdit':
@@ -1195,15 +1226,28 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType'] = $master->documentType;
-                $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+                $output['bankDropdown'] = BankAssign::where('isActive', 1)
+                                            ->where('isAssigned', -1)
+                                            ->where('companySystemID', $companySystemID)
+                                            ->get();
 
                 $output['bankAccount'] = [];
                 $output['bankCurrencies'] = [];
                 if ($master->bankID != '') {
-                    $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('isAccountActive', 1)->get();
+                    $output['bankAccount'] = BankAccount::where('companySystemID', $companySystemID)
+                                                        ->where('bankmasterAutoID', $master->bankID)
+                                                        ->where('isAccountActive', 1)
+                                                        ->get();
                 }
                 if ($master->bankAccount != '') {
-                    $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
+                    $output['bankCurrencies'] = DB::table('erp_bankaccount')
+                         ->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')
+                         ->where('companySystemID', $companySystemID)
+                         ->where('bankmasterAutoID', $master->bankID)
+                         ->where('bankAccountAutoID', $master->bankAccount)
+                         ->where('isAccountActive', 1)
+                         ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')
+                         ->get();
                 }
                 break;
             default:

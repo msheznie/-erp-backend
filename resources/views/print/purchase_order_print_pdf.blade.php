@@ -643,7 +643,7 @@
                         &nbsp;</td>
                     <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 11px">Tax Amount({{$podata->VATPercentage .'%'}}
+                                style="font-size: 11px">VAT Amount({{$podata->VATPercentage .'%'}}
                             )</span></td>
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
