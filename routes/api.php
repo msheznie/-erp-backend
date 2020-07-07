@@ -1759,6 +1759,12 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
 
+        Route::get('getICFilterFormData', 'FinancialReportAPIController@getICFilterFormData');
+        Route::post('validateICReport', 'FinancialReportAPIController@validateICReport');
+        Route::post('generateICReport', 'FinancialReportAPIController@generateICReport');
+        Route::post('exportICReport', 'FinancialReportAPIController@exportICReport');
+        Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1808,6 +1814,8 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
 
 
+    Route::post('validateICReport', 'FinancialReportAPIController@validateICReport');
+    Route::post('generateICReport', 'FinancialReportAPIController@generateICReport');
 });
 
 
