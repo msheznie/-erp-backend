@@ -1656,21 +1656,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $totalAmount = ($percentage / 100) * $totalAmount;
         }
 
-
-
-        $taxMaster = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$master->companyID}'");
+        $taxMaster = TaxMaster::where('taxType',2)
+                                ->where('companySystemID', $master->companySystemID)
+                                ->first();
 
         if (empty($taxMaster)) {
-            return $this->sendResponse('e', 'Tax Master not found');
-        } else {
-            $taxMaster = $taxMaster[0];
+            return $this->sendResponse('e', 'VAT Master not found');
         }
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('documentSystemID', 20)
             ->first();
+
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'Tax Detail Already exist');
+            return $this->sendResponse('e', 'VAT Detail Already exist');
         }
 
         $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalAmount);

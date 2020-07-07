@@ -65,7 +65,7 @@ class TaxMasterAPIController extends AppBaseController
         $this->taxMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxMasters = $this->taxMasterRepository->all();
 
-        return $this->sendResponse($taxMasters->toArray(), 'Tax Masters retrieved successfully');
+        return $this->sendResponse($taxMasters->toArray(), 'VAT Masters retrieved successfully');
     }
 
     /**
@@ -112,7 +112,7 @@ class TaxMasterAPIController extends AppBaseController
 
         $taxMaster = $this->taxMasterRepository->create($input);
 
-        return $this->sendResponse($taxMaster->toArray(), 'Tax Master saved successfully');
+        return $this->sendResponse($taxMaster->toArray(), 'VAT Master saved successfully');
     }
 
     /**
@@ -159,10 +159,10 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('Tax Master not found');
+            return $this->sendError('VAT Master not found');
         }
 
-        return $this->sendResponse($taxMaster->toArray(), 'Tax Master retrieved successfully');
+        return $this->sendResponse($taxMaster->toArray(), 'VAT Master retrieved successfully');
     }
 
     /**
@@ -219,7 +219,7 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('Tax Master not found');
+            return $this->sendError('VAT Master not found');
         }
 
         $taxMaster = $this->taxMasterRepository->update($input, $id);
@@ -271,11 +271,11 @@ class TaxMasterAPIController extends AppBaseController
         $taxMaster = $this->taxMasterRepository->findWithoutFail($id);
 
         if (empty($taxMaster)) {
-            return $this->sendError('Tax Master not found');
+            return $this->sendError('VAT Master not found');
         }
 
         $taxMaster->delete();
 
-        return $this->sendSuccess('Tax Master deleted successfully');
+        return $this->sendSuccess('VAT Master deleted successfully');
     }
 }

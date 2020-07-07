@@ -1055,13 +1055,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
                 }
 
-                return $this->sendResponse($purchaseOrderID, 'Total tax updated successfully');
+                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
 
             } else {
-                return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
             }
         } else {
-            return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+            return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
         }
     }
 
