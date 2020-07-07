@@ -112,7 +112,7 @@ class TaxTypeAPIController extends AppBaseController
 
         $taxType = $this->taxTypeRepository->update($input, $id);
 
-        return $this->sendResponse($taxType->toArray(), 'VATType updated successfully');
+        return $this->sendResponse($taxType->toArray(), 'VAT Type updated successfully');
     }
 
     /**

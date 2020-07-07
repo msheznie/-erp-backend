@@ -159,7 +159,7 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('VATdetail not found');
+            return $this->sendError('VAT detail not found');
         }
 
         return $this->sendResponse($taxdetail->toArray(), 'VAT detail retrieved successfully');
@@ -219,7 +219,7 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('VATdetail not found');
+            return $this->sendError('VAT detail not found');
         }
 
         $taxdetail = $this->taxdetailRepository->update($input, $id);
