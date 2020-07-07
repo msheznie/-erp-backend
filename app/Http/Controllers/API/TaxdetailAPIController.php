@@ -65,7 +65,7 @@ class TaxdetailAPIController extends AppBaseController
         $this->taxdetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxdetails = $this->taxdetailRepository->all();
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetails retrieved successfully');
+        return $this->sendResponse($taxdetails->toArray(), 'VAT details retrieved successfully');
     }
 
     /**
@@ -112,7 +112,7 @@ class TaxdetailAPIController extends AppBaseController
 
         $taxdetails = $this->taxdetailRepository->create($input);
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetail saved successfully');
+        return $this->sendResponse($taxdetails->toArray(), 'VAT detail saved successfully');
     }
 
     /**
@@ -159,10 +159,10 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+            return $this->sendError('VATdetail not found');
         }
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail retrieved successfully');
+        return $this->sendResponse($taxdetail->toArray(), 'VAT detail retrieved successfully');
     }
 
     /**
@@ -219,12 +219,12 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+            return $this->sendError('VATdetail not found');
         }
 
         $taxdetail = $this->taxdetailRepository->update($input, $id);
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail updated successfully');
+        return $this->sendResponse($taxdetail->toArray(), 'VAT detail updated successfully');
     }
 
     /**
@@ -272,7 +272,7 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('e', 'Tax detail not found');
+            return $this->sendError('e', 'VAT detail not found');
         }
 
         $master['vatOutputGLCodeSystemID'] = NULL;
@@ -286,7 +286,7 @@ class TaxdetailAPIController extends AppBaseController
 
         $taxdetail->delete();
 
-        return $this->sendResponse('s', 'Taxdetail deleted successfully');
+        return $this->sendResponse('s', 'VAT detail deleted successfully');
     }
 
     public function customerInvoiceTaxDetail(Request $request)
@@ -297,6 +297,6 @@ class TaxdetailAPIController extends AppBaseController
             ->where('documentSystemCode', $id)
             ->where('documentSystemID', $documentSystemID)
             ->get();
-        return $this->sendResponse($tax, 'Tax detail retrieved successfully');
+        return $this->sendResponse($tax, 'VAT detail retrieved successfully');
     }
 }

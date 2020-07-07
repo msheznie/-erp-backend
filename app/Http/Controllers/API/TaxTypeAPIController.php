@@ -50,7 +50,7 @@ class TaxTypeAPIController extends AppBaseController
         $this->taxTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxTypes = $this->taxTypeRepository->all();
 
-        return $this->sendResponse($taxTypes->toArray(), 'Tax Types retrieved successfully');
+        return $this->sendResponse($taxTypes->toArray(), 'VAT Types retrieved successfully');
     }
 
     /**
@@ -67,7 +67,7 @@ class TaxTypeAPIController extends AppBaseController
 
         $taxTypes = $this->taxTypeRepository->create($input);
 
-        return $this->sendResponse($taxTypes->toArray(), 'Tax Type saved successfully');
+        return $this->sendResponse($taxTypes->toArray(), 'VAT Type saved successfully');
     }
 
     /**
@@ -84,10 +84,10 @@ class TaxTypeAPIController extends AppBaseController
         $taxType = $this->taxTypeRepository->findWithoutFail($id);
 
         if (empty($taxType)) {
-            return $this->sendError('Tax Type not found');
+            return $this->sendError('VAT Type not found');
         }
 
-        return $this->sendResponse($taxType->toArray(), 'Tax Type retrieved successfully');
+        return $this->sendResponse($taxType->toArray(), 'VAT Type retrieved successfully');
     }
 
     /**
@@ -107,12 +107,12 @@ class TaxTypeAPIController extends AppBaseController
         $taxType = $this->taxTypeRepository->findWithoutFail($id);
 
         if (empty($taxType)) {
-            return $this->sendError('Tax Type not found');
+            return $this->sendError('VAT Type not found');
         }
 
         $taxType = $this->taxTypeRepository->update($input, $id);
 
-        return $this->sendResponse($taxType->toArray(), 'TaxType updated successfully');
+        return $this->sendResponse($taxType->toArray(), 'VATType updated successfully');
     }
 
     /**
@@ -129,11 +129,11 @@ class TaxTypeAPIController extends AppBaseController
         $taxType = $this->taxTypeRepository->findWithoutFail($id);
 
         if (empty($taxType)) {
-            return $this->sendError('Tax Type not found');
+            return $this->sendError('VAT Type not found');
         }
 
         $taxType->delete();
 
-        return $this->sendResponse($id, 'Tax Type deleted successfully');
+        return $this->sendResponse($id, 'VAT Type deleted successfully');
     }
 }
