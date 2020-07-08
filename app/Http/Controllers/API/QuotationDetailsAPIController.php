@@ -140,7 +140,7 @@ class QuotationDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Added item all ready exist');
+            return $this->sendError('Added item already exist');
         }
 
         if (empty($item)) {

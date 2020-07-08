@@ -152,7 +152,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Selected item all ready exist', 500);
+            return $this->sendError('Selected item already exist', 500);
         }
 
         if (empty($item)) {

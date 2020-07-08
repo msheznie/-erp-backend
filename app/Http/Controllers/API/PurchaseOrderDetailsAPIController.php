@@ -233,7 +233,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Added Item All Ready Exist');
+            return $this->sendError('Added item already exist');
         }
 
         if (empty($item)) {
@@ -405,7 +405,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if (!empty($prDetailExist)) {
                     foreach ($prDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " all ready exist";
+                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
