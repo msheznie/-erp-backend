@@ -670,21 +670,30 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Matching Type Found', 500);
         }
-        $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
+        $companyFinancePeriods = CompanyFinancePeriod::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
             ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
             ->where('departmentSystemID', $department)
             ->where('isActive', -1)
-            ->where('isCurrent', -1)
-            ->first();
+//            ->where('isCurrent', -1)
+            ->get();
 
-        if(empty($companyFinancePeriod)){
+        if(!count((array)$companyFinancePeriods) >0){
             return $this->sendError('No Active Finance Period Found', 500);
         }
 
-        $FYPeriodDateFrom = $companyFinancePeriod->dateFrom;
-        $FYPeriodDateTo = $companyFinancePeriod->dateTo;
+        $isInFinancePeriod = false;
+        foreach ($companyFinancePeriods as $period) {
 
-        if (!(($input['matchingDocdate'] >= $FYPeriodDateFrom) && ($input['matchingDocdate'] <= $FYPeriodDateTo))) {
+            $FYPeriodDateFrom = $period->dateFrom;
+            $FYPeriodDateTo = $period->dateTo;
+
+            if($input['matchingDocdate'] >= $FYPeriodDateFrom && $input['matchingDocdate'] <= $FYPeriodDateTo){
+                $isInFinancePeriod = true;
+                break;
+            }
+        }
+
+        if(!$isInFinancePeriod){
             return $this->sendError('Document date should be between financial period start date and end date',500, array('type' => 'already_confirmed'));
         }
         // end of check date within financial period
