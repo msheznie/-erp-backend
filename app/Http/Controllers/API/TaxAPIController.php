@@ -53,7 +53,7 @@ class TaxAPIController extends AppBaseController
         $this->taxRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxes = $this->taxRepository->all();
 
-        return $this->sendResponse($taxes->toArray(), 'Taxes retrieved successfully');
+        return $this->sendResponse($taxes->toArray(), 'VATes retrieved successfully');
     }
 
     /**
@@ -80,7 +80,7 @@ class TaxAPIController extends AppBaseController
 
         $taxes = $this->taxRepository->create($input);
 
-        return $this->sendResponse($taxes->toArray(), 'Tax saved successfully');
+        return $this->sendResponse($taxes->toArray(), 'VAT saved successfully');
     }
 
     /**
@@ -97,10 +97,10 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('Tax not found');
+            return $this->sendError('VAT not found');
         }
 
-        return $this->sendResponse($tax->toArray(), 'Tax retrieved successfully');
+        return $this->sendResponse($tax->toArray(), 'VAT retrieved successfully');
     }
 
     /**
@@ -127,12 +127,12 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('Tax not found');
+            return $this->sendError('VAT not found');
         }
 
         $tax = $this->taxRepository->update($input, $id);
 
-        return $this->sendResponse($tax->toArray(), 'Tax updated successfully');
+        return $this->sendResponse($tax->toArray(), 'VAT updated successfully');
     }
 
     /**
@@ -149,12 +149,12 @@ class TaxAPIController extends AppBaseController
         $tax = $this->taxRepository->findWithoutFail($id);
 
         if (empty($tax)) {
-            return $this->sendError('Tax not found');
+            return $this->sendError('VAT not found');
         }
 
         $tax->delete();
 
-        return $this->sendResponse($id, 'Tax deleted successfully');
+        return $this->sendResponse($id, 'VAT deleted successfully');
     }
 
 

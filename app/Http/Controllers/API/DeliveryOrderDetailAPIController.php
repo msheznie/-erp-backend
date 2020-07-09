@@ -721,7 +721,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                 if (!empty($QuoDetailExist)) {
                     foreach ($QuoDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " all ready exist";
+                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }

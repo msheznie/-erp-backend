@@ -233,7 +233,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Added Item All Ready Exist');
+            return $this->sendError('Added item already exist');
         }
 
         if (empty($item)) {
@@ -405,7 +405,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if (!empty($prDetailExist)) {
                     foreach ($prDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " all ready exist";
+                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -1055,13 +1055,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
                 }
 
-                return $this->sendResponse($purchaseOrderID, 'Total tax updated successfully');
+                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
 
             } else {
-                return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+                return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
             }
         } else {
-            return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+            return $this->sendResponse($purchaseOrderID, 'Total VAT updated successfully');
         }
     }
 

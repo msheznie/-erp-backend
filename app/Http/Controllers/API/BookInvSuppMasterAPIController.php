@@ -61,6 +61,7 @@ use App\Models\Company;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
+use App\Models\TaxMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -1452,7 +1453,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         if ($input['percentage'] == 0) {
-            return $this->sendError('Tax percentage cannot be 0');
+            return $this->sendError('VAT percentage cannot be 0');
         }
 
 
@@ -1487,12 +1488,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $totalAmount = ($percentage / 100) * $totalAmount;
 
-        $taxMaster = \DB::select('SELECT * FROM erp_taxmaster WHERE taxType=2 AND companySystemID = ' . $bookInvSuppMaster->companySystemID . '');
+        $taxMaster = TaxMaster::where('taxType',2)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->first();
 
         if (empty($taxMaster)) {
-            return $this->sendResponse('e', 'Tax Master not found');
-        } else {
-            $taxMaster = $taxMaster[0];
+            return $this->sendResponse('e', 'VAT Master not found');
         }
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
@@ -1500,7 +1501,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($Taxdetail)) {
-            return $this->sendResponse('e', 'Tax detail already exist');
+            return $this->sendResponse('e', 'VAT detail already exist');
         }
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;

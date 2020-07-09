@@ -491,7 +491,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyID'] = $currency->currencyID;
                     $myCurr = $currency->currencyID;
 
-                    $companyCurrency = \Helper::companyCurrency($currency->currencyID);
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
                     $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
@@ -540,7 +540,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError('Invoice details exist. You can not change the currency.', 500);
                 } else {
                     $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
                     $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
