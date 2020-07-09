@@ -1578,8 +1578,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
                 $item->inhand = ErpItemLedger::where('itemSystemCode',$item->itemCode)
                                           ->where('companySystemID',$item->companySystemID)
-                                          ->whereDate('transactionDate','<',new Carbon($date))
                                           ->sum('inOutQty');
+
                 $dt          = new Carbon($date);
                 $from        = $dt->subMonths(3);  ;
                 $to          = new Carbon($date);

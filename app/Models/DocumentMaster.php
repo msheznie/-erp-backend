@@ -32,6 +32,7 @@ class DocumentMaster extends Model
     public $fillable = [
         'documentID',
         'documentDescription',
+        'departmentSystemID',
         'departmentID',
         'timeStamp'
     ];
@@ -45,6 +46,7 @@ class DocumentMaster extends Model
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'documentDescription' => 'string',
+        'departmentSystemID' => 'integer',
         'departmentID' => 'string'
     ];
 
@@ -57,5 +59,7 @@ class DocumentMaster extends Model
         
     ];
 
-    
+    public function approval_levels(){
+        return $this->hasMany('App\Models\ApprovalLevel','documentSystemID','documentSystemID');
+    }
 }
