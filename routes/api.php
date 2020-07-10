@@ -1771,6 +1771,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportICReport', 'FinancialReportAPIController@exportICReport');
         Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData');
 
+        Route::resource('mobile_no_pools', 'MobileNoPoolAPIController');
+        Route::post('getAllMobileNo', 'MobileNoPoolAPIController@getAllMobileNo');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1826,3 +1829,8 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+
+
+Route::resource('mobile_masters', 'MobileMasterAPIController');
