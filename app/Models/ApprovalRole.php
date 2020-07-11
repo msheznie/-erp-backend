@@ -109,4 +109,8 @@ class ApprovalRole extends Model
     public function serviceline(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
+
+    public function approval_group(){
+        return $this->hasOne('App\Models\ApprovalGroups','rightsGroupId','approvalGroupID');
+    }
 }

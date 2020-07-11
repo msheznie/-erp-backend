@@ -132,4 +132,8 @@ class DepartmentMaster extends Model
     public function employees(){
         return $this->hasMany('App\Models\EmployeesDepartment','departmentSystemID','departmentSystemID');
     }
+
+    public function documents(){
+        return $this->hasMany('App\Models\DocumentMaster','departmentSystemID','departmentSystemID');
+    }
 }
