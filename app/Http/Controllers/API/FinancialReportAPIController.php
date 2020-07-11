@@ -28,6 +28,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
+use App\Models\ExpenseClaimType;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
@@ -4442,12 +4443,15 @@ GROUP BY
             ->orderBy('year', 'DESC')
             ->get();
 
+        $expenseClaimTypes = ExpenseClaimType::all();
+
         $months = Months::all();
 
         $output = array(
             'years' => $years,
             'months' => $months,
-            'companies' => $companies
+            'companies' => $companies,
+            'expenseClaimTypes' => $expenseClaimTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -4476,6 +4480,7 @@ GROUP BY
                 $validator = \Validator::make($request->all(), [
                     'reportID' => 'required',
                     'companies' => 'required|array',
+                    'transferType' => 'required|array',
                     'fromDate' => 'required_if:dateType,1|nullable|date',
                     'toDate' => 'required_if:dateType,1|nullable|date|after_or_equal:fromDate',
                 ]);
@@ -4492,60 +4497,113 @@ GROUP BY
     {
         $reportTypeID = $request->reportTypeID;
         $company = Company::find($request->companySystemID);
+
+        $output = $this->getICReportQuery($request);
+
+        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+
+        $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+        $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
+
+        $total = array();
+
         switch ($reportTypeID) {
             case 'ICR': // Inter Company Report
 
-                $output = $this->getICReport($request);
-
-                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
-
-                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
-                $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
-
-                $total = array();
                 $total['poTotalComRptCurrency'] = array_sum(collect($output)->pluck('poTotalComRptCurrency')->toArray());
                 $total['GRVAmount'] = array_sum(collect($output)->pluck('GRVAmount')->toArray());
                 $total['APAmount'] = array_sum(collect($output)->pluck('APAmount')->toArray());
                 $total['bookingAmountRpt'] = array_sum(collect($output)->pluck('bookingAmountRpt')->toArray());
                 $total['receiveAmountRpt'] = array_sum(collect($output)->pluck('receiveAmountRpt')->toArray());
 
-                return \DataTables::of($output)
-                    ->addIndexColumn()
-                    ->with('total', $total)
-                    ->with('companyName', $company->CompanyName)
-                    ->with('decimalPlaceRpt', $decimalPlaceRpt)
-                    ->with('currencyCodeRpt', $currencyCodeRpt)
-                    ->addIndexColumn()
-                    ->make(true);
+            case 'ICST':
+
+                $total['bookingAmountRpt'] = array_sum(collect($output)->pluck('bookingAmountRpt')->toArray());
+                $total['supplierAmountRpt'] = array_sum(collect($output)->pluck('supplierAmountRpt')->toArray());
+
+            case 'ICAT':
+
+                $total['bookingAmountRpt'] = array_sum(collect($output)->pluck('bookingAmountRpt')->toArray());
+                $total['GrvAmount'] = array_sum(collect($output)->pluck('GrvAmount')->toArray());
+
                 break;
 
+            case 'ICFT':
+
+                $total['payAmountCompRpt'] = array_sum(collect($output)->pluck('payAmountCompRpt')->toArray());
+                $total['companyRptAmount'] = array_sum(collect($output)->pluck('companyRptAmount')->toArray());
+
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
+
+        return \DataTables::of($output)
+            ->addIndexColumn()
+            ->with('total', $total)
+            ->with('companyName', $company->CompanyName)
+            ->with('decimalPlaceRpt', $decimalPlaceRpt)
+            ->with('currencyCodeRpt', $currencyCodeRpt)
+            ->addIndexColumn()
+            ->make(true);
     }
 
-    public function getICReport($request)
+    public function getICReportQuery($request)
     {
+        $reportTypeID = $request->reportTypeID;
+
         $where = '';
-        $companies = (array)$request->companies;
-        $companyIDs = array_filter(collect($companies)->pluck('companySystemID')->toArray());
-        if(count($companyIDs)){
-            $where .= 'AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyIDs) . ')';
+        $companyIDs = [];
+        $yearIDs = [];
+        $monthsIDs = [];
+        $transferTypes = [];
+        $fromDate = null;
+        $toDate = null;
+        if(isset($request->companies)){
+            $companies = (array)$request->companies;
+            $companyIDs = array_filter(collect($companies)->pluck('companySystemID')->toArray());
         }
 
-        $years = (array)$request->years;
-        $yearIDs = array_filter(collect($years)->pluck('year')->toArray());
-        if(count($yearIDs)){
-            $where .= 'AND YEAR(det.grvDate) IN (' . join(',', $yearIDs) . ')';
+        if(isset($request->years)){
+            $years = (array)$request->years;
+            $yearIDs = array_filter(collect($years)->pluck('year')->toArray());
         }
 
-        $months = (array)$request->months;
-        $monthsIDs = array_filter(collect($months)->pluck('monthID')->toArray());
-        if(count($monthsIDs)){
-            $where .= 'AND MONTH(det.grvDate) IN (' . join(',', $monthsIDs) . ')';
+        if(isset($request->months)){
+            $months = (array)$request->months;
+            $monthsIDs = array_filter(collect($months)->pluck('monthID')->toArray());
         }
 
-        $query = 'SELECT
+        if(isset($request->transferType)){
+            $transferType = (array)$request->transferType;
+            $transferTypes = array_filter(collect($transferType)->pluck('monthID')->toArray());
+        }
+
+        if(isset($request->fromDate)){
+            $fromDate = new Carbon($request->fromDate);
+            $fromDate = $fromDate->format('Y-m-d');
+        }
+
+        if(isset($request->toDate)){
+            $toDate = new Carbon($request->toDate);
+            $toDate = $toDate->format('Y-m-d');
+        }
+
+        switch ($reportTypeID){
+
+            case 'ICR':
+
+                if(count($companyIDs)){
+                    $where .= 'AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyIDs) . ')';
+                }
+                if(count($yearIDs)){
+                    $where .= 'AND YEAR(det.grvDate) IN (' . join(',', $yearIDs) . ')';
+                }
+                if(count($monthsIDs)){
+                    $where .= 'AND MONTH(det.grvDate) IN (' . join(',', $monthsIDs) . ')';
+                }
+
+                $query = 'SELECT
                         erp_purchaseordermaster.purchaseOrderID,
                         erp_purchaseordermaster.companyID,
                         erp_purchaseordermaster.companySystemID,
@@ -4665,6 +4723,220 @@ GROUP BY
                     GROUP BY
                         erp_purchaseordermaster.purchaseOrderID
                     ORDER BY erp_purchaseordermaster.companyID,erp_purchaseordermaster.purchaseOrderID ASC';
+                break;
+
+            case 'ICST':
+
+                if(count($companyIDs)){
+                    $where .= 'AND erp_stocktransfer.companyFromSystemID IN (' . join(',', $companyIDs) . ')';
+                }
+                if(count($yearIDs)){
+                    $where .= 'AND YEAR(erp_stocktransfer.tranferDate) IN (' . join(',', $yearIDs) . ')';
+                }
+                if(count($monthsIDs)){
+                    $where .= 'AND MONTH(erp_stocktransfer.tranferDate) IN (' . join(',', $monthsIDs) . ')';
+                }
+
+                $query = "SELECT
+                                erp_stocktransfer.stockTransferAutoID,
+                                erp_stocktransfer.companyFrom,
+                                erp_stocktransfer.companyTo,
+                                erp_stocktransfer.stockTransferCode,
+                                DATE( erp_stocktransfer.tranferDate ) AS tranferDate,
+                                erp_custinvoicedirect.bookingInvCode,
+                                DATE( erp_custinvoicedirect.bookingDate ) AS bookingDate,
+                                erp_custinvoicedirect.bookingAmountRpt,
+                                str.stockReceiveCode,
+                                str.receivedDate,
+                                str.Approved,
+                                str.bookingInvCode AS supplierInvCode,
+                                DATE( str.bookingDate ) AS supplierInvDate,
+                                str.bookingAmountRpt AS supplierAmountRpt,
+                                erp_custinvoicedirect.companyReportingCurrencyID,
+                                erp_custinvoicedirectdet.glCode as invGLCode,
+					            erp_custinvoicedirectdet.glCodeDes as invGLCodeDes,
+					            invService.ServiceLineDes as invDepartment,
+					            str.ServiceLineDes as strDepartment,
+					            str.AccountCode as strGLCode,
+					            str.AccountDescription as strGLCodeDes
+                            FROM
+                                ( erp_stocktransfer 
+                                LEFT JOIN erp_custinvoicedirect ON erp_stocktransfer.stockTransferCode = erp_custinvoicedirect.customerInvoiceNo )
+                                LEFT JOIN
+                                erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                                LEFT JOIN
+                                serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
+                                LEFT JOIN (
+                            SELECT
+                                erp_stockreceive.stockReceiveCode,
+                                erp_stockreceive.receivedDate,
+                            IF
+                                ( erp_stockreceive.approved =- 1, 'Yes', 'No' ) AS Approved,
+                                erp_bookinvsuppmaster.bookingInvCode,
+                                erp_bookinvsuppmaster.bookingDate,
+                                erp_stockreceive.refNo,
+                                erp_bookinvsuppmaster.supplierInvoiceNo,
+                                erp_bookinvsuppmaster.bookingAmountRpt,
+                                erp_bookinvsuppmaster.companyReportingCurrencyID as companyReportingCurrencyID,
+                                serviceline.ServiceLineDes,
+                                chartofaccounts.AccountCode as AccountCode,
+                                chartofaccounts.AccountDescription as AccountDescription
+                            FROM
+                                erp_stockreceive
+                                LEFT JOIN 
+                                erp_bookinvsuppmaster ON erp_stockreceive.refNo = erp_bookinvsuppmaster.supplierInvoiceNo
+                                LEFT JOIN
+                                erp_stockreceivedetails ON erp_stockreceive.stockReceiveAutoID = erp_stockreceivedetails.stockReceiveAutoID
+                                LEFT JOIN
+                                chartofaccounts ON erp_stockreceivedetails.financeGLcodebBSSystemID = chartofaccounts.chartOfAccountSystemID
+                                LEFT JOIN
+                                serviceline ON erp_stockreceive.serviceLineSystemID = serviceline.serviceLineSystemID 
+                            WHERE
+                                 erp_stockreceive.interCompanyTransferYN =- 1   
+                                ) AS str ON erp_custinvoicedirect.bookingInvCode = str.refNo 
+                            WHERE erp_stocktransfer.interCompanyTransferYN  =- 1  AND erp_stocktransfer.approved =- 1 ".$where."
+                            ORDER BY erp_stocktransfer.companyFrom,stockTransferCode ASC";
+                break;
+
+            case 'ICAT':
+
+                if(count($companyIDs)){
+                    $where .= 'AND erp_fa_asset_disposalmaster.companySystemID IN (' . join(',', $companyIDs) . ')';
+                }
+                if(count($yearIDs)){
+                    $where .= 'AND YEAR(erp_fa_asset_disposalmaster.disposalDocumentDate) IN (' . join(',', $yearIDs) . ')';
+                }
+                if(count($monthsIDs)){
+                    $where .= 'AND MONTH(erp_fa_asset_disposalmaster.disposalDocumentDate) IN (' . join(',', $monthsIDs) . ')';
+                }
+
+                $query = "SELECT
+                            erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,
+                            erp_fa_asset_disposalmaster.companyID AS Company,
+                            erp_fa_asset_disposalmaster.toCompanyID AS toCompanyID,
+                            erp_fa_asset_disposalmaster.disposalDocumentCode,
+                            DATE(erp_fa_asset_disposalmaster.disposalDocumentDate) as disposalDocumentDate,
+                            erp_custinvoicedirect.bookingInvCode,
+                            DATE(erp_custinvoicedirect.bookingDate) as bookingDate,
+                            erp_custinvoicedirect.bookingAmountRpt,
+                            erp_custinvoicedirect.companyReportingCurrencyID,
+                            erp_grvmaster.grvPrimaryCode,
+                            DATE(erp_grvmaster.grvDate) AS grvDate,
+                            erp_grvmaster.interCompanyTransferYN,
+                            IF (
+                                erp_grvmaster.approved =- 1,
+                                'Yes',
+                                'No'
+                            ) AS Approved,
+                            dtl.GrvAmount
+                        FROM
+                            erp_fa_asset_disposalmaster
+                            INNER JOIN erp_custinvoicedirect
+                            ON erp_fa_asset_disposalmaster.disposalDocumentCode = erp_custinvoicedirect.customerInvoiceNo
+                            INNER JOIN erp_grvmaster
+                            ON erp_custinvoicedirect.bookingInvCode = erp_grvmaster.grvDoRefNo
+                            LEFT JOIN (
+                            select
+                                grvAutoID,
+                                SUM(GRVcostPerUnitComRptCur*noQty) as GrvAmount
+                            FROM
+                                erp_grvdetails
+                                GROUP BY grvAutoID
+                        ) AS dtl ON erp_grvmaster.grvAutoID = dtl.grvAutoID
+                        WHERE 
+                            erp_fa_asset_disposalmaster.disposalType=1 AND erp_grvmaster.interCompanyTransferYN=-1 ".$where;
+                break;
+
+            case 'ICFT':
+                $whereCompany2 = '';
+                $whereDate = '';
+                if(count($companyIDs)){
+                    $where .= 'AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyIDs) . ')';
+                    $whereCompany2 .= 'AND erp_jvmaster.companySystemID IN (' . join(',', $companyIDs) . ')';
+                }
+                if(count($transferTypes)){
+                    $where .= 'AND erp_paysupplierinvoicemaster.expenseClaimOrPettyCash IN (' . join(',', $transferTypes) . ')';
+                }
+                if($fromDate != null && $toDate != null){
+                    $where .= ' AND DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+                    $whereDate .= 'DATE(erp_jvmaster.JVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+                }
+
+                $query = "SELECT
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.companyID,
+                                erp_paysupplierinvoicemaster.companySystemID as companySystemID,
+                                erp_expenseclaimtype.expenseClaimTypeDescription,
+                                erp_paysupplierinvoicemaster.BPVcode,
+                                DATE(erp_paysupplierinvoicemaster.BPVdate) as BPVdate,
+                                erp_paysupplierinvoicemaster.payAmountCompRpt,
+                                erp_customerreceivepayment.companyID as companyIdTo,
+                                erp_customerreceivepayment.custPaymentReceiveCode,
+                                DATE(erp_customerreceivepayment.custPaymentReceiveDate) as custPaymentReceiveDate,
+                                erp_customerreceivepayment.companyRptAmount,
+                                IF (
+                                    erp_customerreceivepayment.approved =- 1,
+                                    'Yes',
+                                    'No'
+                                ) AS Approved,
+                                erp_paysupplierinvoicemaster.companyRptCurrencyID as companyRptCurrencyID 
+                            FROM
+                                (
+                                    erp_paysupplierinvoicemaster
+                                    LEFT JOIN erp_expenseclaimtype ON erp_paysupplierinvoicemaster.expenseClaimOrPettyCash = erp_expenseclaimtype.expenseClaimTypeID
+                                )
+                            INNER JOIN erp_customerreceivepayment ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_customerreceivepayment.intercompanyPaymentID
+                            WHERE
+                            erp_paysupplierinvoicemaster.approved =- 1 ".$where."
+                            UNION
+                            
+                            SELECT
+                                erp_jvmaster.jvMasterAutoId as PayMasterAutoId,
+                                erp_jvmaster.companyID as companyID,
+                                erp_jvmaster.companySystemID as companySystemID,
+                                erp_jvmaster.JVNarration as expenseClaimTypeDescription,
+                                erp_jvmaster.JVcode as BPVcode,
+                                DATE(erp_jvmaster.JVdate) as BPVdate,
+                                '0' AS payAmountCompRpt,
+                                CONCAT(erp_jvdetail.glAccountDescription,' ',erp_jvdetail.glAccount) as companyIdTo,
+                                '-' as custPaymentReceiveCode,
+                                '-' as custPaymentReceiveDate,
+                                if(Sum(erp_jvdetail.debitAmount) > 0,Sum(erp_jvdetail.debitAmount),Sum(erp_jvdetail.creditAmount)*-1) AS companyRptAmount,
+                                IF (
+                                    erp_jvmaster.approved =- 1,
+                                    'Yes',
+                                    'No'
+                                ) AS Approved,
+                                erp_jvmaster.rptCurrencyID as companyRptCurrencyID 
+                            FROM ((companymaster
+                                    INNER JOIN erp_jvmaster
+                                    ON companymaster.companySystemID = erp_jvmaster.companySystemID)
+                                    INNER JOIN erp_jvdetail
+                                    ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId)
+                                    INNER JOIN chartofaccounts
+                                    ON erp_jvdetail.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                            GROUP BY
+                                erp_jvmaster.companySystemID,
+                                erp_jvmaster.JVcode,
+                                erp_jvmaster.JVNarration,
+                                erp_jvmaster.JVdate,
+                                erp_jvdetail.glAccount,
+                                erp_jvdetail.glAccountDescription,
+                                erp_jvmaster.confirmedByEmpID,
+                                erp_jvmaster.confirmedByName,
+                                companymaster.masterComapanyIDReporting,
+                                erp_jvmaster.approved,
+                                chartofaccounts.relatedPartyYN
+                            
+                            HAVING (".$whereDate.")
+                                AND erp_jvmaster.approved = - 1
+                                AND chartofaccounts.relatedPartyYN = 1 ".$whereCompany2;
+                break;
+            default:
+                return '';
+
+        }
+
 
         return  \DB::select($query);
 
@@ -4700,25 +4972,41 @@ GROUP BY
                     erp_custinvoicedirect.companyID AS customer,
                     erp_custinvoicedirect.bookingInvCode,
                     DATE(erp_custinvoicedirect.bookingDate) AS BookingDate,
-                    erp_custinvoicedirect.bookingAmountRpt
+                    erp_custinvoicedirect.bookingAmountRpt,
+					erp_custinvoicedirectdet.glCode as invGLCode,
+					erp_custinvoicedirectdet.glCodeDes as invGLCodeDes,
+					invService.ServiceLineDes as invDepartment,
+					det.AccountCode as grvGLCode,
+					det.AccountDescription as grvGLCodeDes,
+					grvService.ServiceLineDes as grvDepartment
                 FROM
                     erp_grvmaster
+                    LEFT JOIN
+                        (SELECT
+                            grvAutoID,
+                                grvDetailsID,
+                                purchaseOrderMastertID,
+                                companyID,
+                                SUM((erp_grvdetails.netAmount / erp_grvdetails.companyReportingER)) AS GRVAmount,
+                                chartofaccounts.AccountCode as AccountCode,
+                                chartofaccounts.AccountDescription as AccountDescription
+                        FROM
+                            erp_grvdetails
                         LEFT JOIN
-                    (SELECT
-                        grvAutoID,
-                            grvDetailsID,
-                            purchaseOrderMastertID,
-                            companyID,
-                            SUM((erp_grvdetails.netAmount / erp_grvdetails.companyReportingER)) AS GRVAmount
-                    FROM
-                        erp_grvdetails
-                    GROUP BY erp_grvdetails.grvAutoID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
-                        LEFT JOIN
-                    erp_custinvoicedirect ON erp_grvmaster.grvAutoID = erp_custinvoicedirect.customerGRVAutoID
-                        INNER JOIN
-                    supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
+                        chartofaccounts ON erp_grvdetails.financeGLcodePLSystemID = chartofaccounts.chartOfAccountSystemID
+                        GROUP BY erp_grvdetails.grvAutoID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
+                    LEFT JOIN
+                        erp_custinvoicedirect ON erp_grvmaster.grvAutoID = erp_custinvoicedirect.customerGRVAutoID
+                    LEFT JOIN
+                        erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
+					LEFT JOIN
+                        serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
+                    LEFT JOIN
+                        serviceline grvService ON erp_grvmaster.serviceLineSystemID = grvService.serviceLineSystemID 
+                    INNER JOIN
+                        supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
                         AND erp_grvmaster.companySystemID = supplierassigned.companySystemID
-                WHERE  supplierassigned.liabilityAccount = 9999963 '.$where;
+                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where;
 
         return  \DB::select($query);
 
@@ -4728,21 +5016,22 @@ GROUP BY
     {
         $reportTypeID = $request->reportTypeID;
 
+        $output = $this->getICReportQuery($request);
+
+        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+
+        $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+        $type = $request->type;
+        
         switch ($reportTypeID) {
 
             case 'ICR':
 
                 $reportSD = $request->reportSD;
-                $type = $request->type;
 
-                $decimalPlaceRpt = 2;
 
                 if ($reportSD == "report") {
-                    $output = $this->getICReport($request);
-
-                    $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
-
-                    $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
                     if (!empty($output)) {
                         $x = 0;
@@ -4802,13 +5091,19 @@ GROUP BY
 
                                 $data[$x]['GRV Company'] = $val->grvCompany;
                                 $data[$x]['GRV Code'] = $val->grvCode;
-                                $data[$x]['GRV Amount'] = $val->GRVAmount;
-                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
-                                $data[$x]['Customer'] = $val->customer;
                                 $data[$x]['GRV Amount'] = round($val->GRVAmount,$decimalPlaceRpt);
+                                $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
+                                $data[$x]['GL Code'] = $val->grvGLCode;
+                                $data[$x]['GL Description'] = $val->grvGLCodeDes;
+                                $data[$x]['Department'] = $val->grvDepartment;
+
+                                $data[$x]['Customer'] = $val->customer;
                                 $data[$x]['Booking Invoice Code'] = $val->bookingInvCode;
                                 $data[$x]['Booking Date'] = Helper::dateFormat($val->BookingDate);
                                 $data[$x]['Booking Amount Rpt'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+                                $data[$x]['INV GL Code'] = $val->invGLCode;
+                                $data[$x]['INV GL Description'] = $val->invGLCodeDes;
+                                $data[$x]['INV Department'] = $val->invDepartment;
 
                                 $subTotalGRVAmount += $val->GRVAmount;
                                 $subTotalBookingAmount += $val->bookingAmountRpt;
@@ -4820,11 +5115,16 @@ GROUP BY
                             $data[$x]['GRV Code'] = '';
                             $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
                             $data[$x]['GRV Date'] = '';
+                            $data[$x]['GL Code'] = '';
+                            $data[$x]['GL Description'] = '';
+                            $data[$x]['Department'] = '';
                             $data[$x]['Customer'] = '';
-                            $data[$x]['GRV Amount'] = '';
                             $data[$x]['Booking Invoice Code'] = '';
                             $data[$x]['Booking Date'] = '';
                             $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
+                            $data[$x]['INV GL Code'] = '';
+                            $data[$x]['INV GL Description'] = '';
+                            $data[$x]['INV Department'] = '';
                         }
                     }
                 }
@@ -4842,6 +5142,185 @@ GROUP BY
                 return $this->sendResponse(array(), 'successfully export');
                 break;
 
+            case 'ICST':
+
+                if (!empty($output)) {
+                    $x = 0;
+
+                    $subTotalBookingAmountRpt = 0;
+                    $subTotalSupplierAmountRpt = 0;
+
+                    foreach ($output as $val) {
+                        $x++;
+
+                        $data[$x]['Company From'] = $val->companyFrom;
+                        $data[$x]['Stock Transfer Code'] = $val->stockTransferCode;
+                        $data[$x]['Stock Transfer Date'] = Helper::dateFormat($val->tranferDate);
+                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
+                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
+                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+
+                        $data[$x]['INV GL Code'] = $val->invGLCode;
+                        $data[$x]['INV GL Description'] = $val->invGLCodeDes;
+                        $data[$x]['INV Department'] = $val->invDepartment;
+
+                        $data[$x]['Company To'] = $val->companyTo;
+                        $data[$x]['Stock Receive Code'] = $val->stockReceiveCode;
+                        $data[$x]['Approved'] = $val->Approved;
+                        $data[$x]['Supplier Invoice Code'] = $val->supplierInvCode;
+                        $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvDate);
+                        $data[$x]['Supplier Invoice Amount'] = round($val->supplierAmountRpt,$decimalPlaceRpt);
+
+                        $data[$x]['GL Code'] = $val->strGLCode;
+                        $data[$x]['GL Description'] = $val->strGLCodeDes;
+                        $data[$x]['Department'] = $val->strDepartment;
+
+                        $subTotalBookingAmountRpt += $val->bookingAmountRpt;
+                        $subTotalSupplierAmountRpt += $val->supplierAmountRpt;
+                    }
+
+                    $x++;
+                    $data[$x]['Company From'] = '';
+                    $data[$x]['Stock Transfer Code'] ='';
+                    $data[$x]['Stock Transfer Date'] = '';
+                    $data[$x]['Customer INV Code'] = '';
+                    $data[$x]['Customer INV Date'] = 'Total';
+                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['INV GL Code'] = '';
+                    $data[$x]['INV GL Description'] = '';
+                    $data[$x]['INV Department'] = '';
+                    $data[$x]['Company To'] = '';
+                    $data[$x]['Stock Receive Code'] = '';
+                    $data[$x]['Approved'] = '';
+                    $data[$x]['Supplier Invoice Code'] = '';
+                    $data[$x]['Supplier Invoice Date'] = '';
+                    $data[$x]['Supplier Invoice Amount'] = round($subTotalSupplierAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['GL Code'] = '';
+                    $data[$x]['GL Description'] = '';
+                    $data[$x]['Department'] = '';
+
+                }
+
+                \Excel::create('inter_company_stock_transfer', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+
+            case 'ICAT':
+
+                if (!empty($output)) {
+                    $x = 0;
+
+                    $subTotalBookingAmountRpt = 0;
+                    $subTotalGrvAmount = 0;
+
+                    foreach ($output as $val) {
+                        $x++;
+
+                        $data[$x]['Company From'] = $val->Company;
+                        $data[$x]['Disposal Document'] = $val->disposalDocumentCode;
+                        $data[$x]['Disposal Date'] = Helper::dateFormat($val->disposalDocumentDate);
+                        $data[$x]['Customer INV Code'] = $val->bookingInvCode;
+                        $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
+                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+                        $data[$x]['Company To'] = $val->toCompanyID;
+                        $data[$x]['Direct GRV Code'] = $val->grvPrimaryCode;
+                        $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
+                        $data[$x]['Direct GRV Approved'] = $val->Approved;
+                        $data[$x]['GRV Amount'] = round($val->GrvAmount,$decimalPlaceRpt);
+
+                        $subTotalBookingAmountRpt += $val->bookingAmountRpt;
+                        $subTotalGrvAmount += $val->GrvAmount;
+                    }
+
+                    $x++;
+                    $data[$x]['Company From'] = '';
+                    $data[$x]['Disposal Document'] ='';
+                    $data[$x]['Disposal Date'] = '';
+                    $data[$x]['Customer INV Code'] = '';
+                    $data[$x]['Customer INV Date'] = 'Total';
+                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['Company To'] = '';
+                    $data[$x]['Direct GRV Code'] = '';
+                    $data[$x]['GRV Date'] = '';
+                    $data[$x]['Direct GRV Approved'] = '';
+                    $data[$x]['GRV Amount'] = round($subTotalGrvAmount,$decimalPlaceRpt);
+
+                }
+
+                \Excel::create('inter_company_Asset_transfer', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+
+            case 'ICFT':
+
+                if (!empty($output)) {
+                    $x = 0;
+
+                    $subTotalPayAmountCompRpt = 0;
+                    $subTotalCompanyRptAmount = 0;
+
+                    foreach ($output as $val) {
+                        $x++;
+
+                        $data[$x]['Company From'] = $val->companyID;
+                        $data[$x]['Transfer Type'] = $val->expenseClaimTypeDescription;
+                        $data[$x]['PV Code'] = $val->BPVcode;
+                        $data[$x]['PV Date'] = Helper::dateFormat($val->BPVdate);
+                        $data[$x]['PV Amount'] = round($val->payAmountCompRpt,$decimalPlaceRpt);
+                        $data[$x]['Company To'] = $val->companyIdTo;
+                        $data[$x]['Receipt Code'] = $val->custPaymentReceiveCode;
+                        $data[$x]['Receipt Date'] = Helper::dateFormat($val->custPaymentReceiveDate);
+                        $data[$x]['Receipt Approved'] = $val->Approved;
+                        $data[$x]['Receipt Amount'] = round($val->companyRptAmount,$decimalPlaceRpt);
+
+                        $subTotalPayAmountCompRpt += $val->payAmountCompRpt;
+                        $subTotalCompanyRptAmount += $val->companyRptAmount;
+                    }
+
+                    $x++;
+                    $data[$x]['Company From'] = '';
+                    $data[$x]['Transfer Type'] ='';
+                    $data[$x]['PV Code'] = '';
+                    $data[$x]['PV Date'] = 'Total';
+                    $data[$x]['PV Amount'] = round($subTotalPayAmountCompRpt,$decimalPlaceRpt);
+                    $data[$x]['Company To'] = '';
+                    $data[$x]['Receipt Code'] = '';
+                    $data[$x]['Receipt Date'] = '';
+                    $data[$x]['Receipt Approved'] = '';
+                    $data[$x]['Receipt Amount'] = round($subTotalCompanyRptAmount,$decimalPlaceRpt);
+
+                }
+
+                \Excel::create('inter_company_Fund_transfer', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
         }

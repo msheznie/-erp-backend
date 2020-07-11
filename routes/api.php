@@ -337,6 +337,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
         Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
         Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
+        Route::post('approval/matrix', 'EmployeesDepartmentAPIController@approvalMatrixReport');
+        Route::post('approval/matrix/export', 'EmployeesDepartmentAPIController@exportApprovalMatrixReport');
 
         Route::post('approveItem', 'ItemMasterAPIController@approveItem');
         Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
@@ -1769,6 +1771,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportICReport', 'FinancialReportAPIController@exportICReport');
         Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData');
 
+        Route::resource('mobile_no_pools', 'MobileNoPoolAPIController');
+        Route::post('getAllMobileNo', 'MobileNoPoolAPIController@getAllMobileNo');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1824,3 +1829,8 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+
+
+Route::resource('mobile_masters', 'MobileMasterAPIController');

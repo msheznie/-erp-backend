@@ -91,5 +91,7 @@ class ApprovalGroups extends Model
         return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
     }
 
-    
+    public function employee_department(){
+        return $this->hasMany('App\Models\EmployeesDepartment','employeeGroupID','rightsGroupId');
+    }
 }
