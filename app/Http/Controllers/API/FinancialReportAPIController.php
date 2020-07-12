@@ -4576,7 +4576,7 @@ GROUP BY
 
         if(isset($request->transferType)){
             $transferType = (array)$request->transferType;
-            $transferTypes = array_filter(collect($transferType)->pluck('monthID')->toArray());
+            $transferTypes = array_filter(collect($transferType)->pluck('expenseClaimTypeID')->toArray());
         }
 
         if(isset($request->fromDate)){
