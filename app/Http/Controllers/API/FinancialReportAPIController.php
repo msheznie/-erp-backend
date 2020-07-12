@@ -5005,13 +5005,14 @@ GROUP BY
                     LEFT JOIN
                         erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
 					LEFT JOIN
-                        serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
+                        serviceline invService ON erp_custinvoicedirectdet.serviceLineSystemID = invService.serviceLineSystemID
                     LEFT JOIN
                         serviceline grvService ON erp_grvmaster.serviceLineSystemID = grvService.serviceLineSystemID 
                     INNER JOIN
                         supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
                         AND erp_grvmaster.companySystemID = supplierassigned.companySystemID
-                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where;
+                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where.' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID
+                    ORDER BY erp_grvmaster.grvAutoID DESC';
 
         return  \DB::select($query);
 
