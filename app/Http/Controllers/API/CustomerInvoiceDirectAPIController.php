@@ -2224,12 +2224,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
             $customerInvoice->profomaDetailData = $proformaBreifData;
+        } else if ($printTemplate['printTemplateID'] == 4 && $master->isPerforma == 1) {
+            $proformaBreifData = $this->getProformaInvoiceDetailDataForProductServiceContract($id, $master->companyID);
+            $customerInvoice->profomaDetailData = $proformaBreifData;
         }
 
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
-
         if ($printTemplate['printTemplateID'] == 2) {
 
             $html = view('print.customer_invoice_tue', $array);
@@ -2253,7 +2255,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 4 ) {
+            $html = view('print.customer_invoice_tue_product_service', $array);
+            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
+
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
         }
+    }
+
+    public function getProformaInvoiceDetailDataForProductServiceContract($id, $companyID)
+    {
+        $invoiceDetails = DB::select("SELECT ClientRef, OurRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.pl3, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $id GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
+
+        return $invoiceDetails;
     }
 
     public function getProformaInvoiceDetailDataForPrintInvoice($id)
