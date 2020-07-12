@@ -4746,6 +4746,8 @@ GROUP BY
                                 erp_custinvoicedirect.bookingInvCode,
                                 DATE( erp_custinvoicedirect.bookingDate ) AS bookingDate,
                                 erp_custinvoicedirect.bookingAmountRpt,
+                                str.stockReceiveAutoID,
+                                str.bookingSuppMasInvAutoID,
                                 str.stockReceiveCode,
                                 str.receivedDate,
                                 str.Approved,
@@ -4768,6 +4770,8 @@ GROUP BY
                                 serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
                                 LEFT JOIN (
                             SELECT
+                                erp_stockreceive.stockReceiveAutoID,
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
                                 erp_stockreceive.stockReceiveCode,
                                 erp_stockreceive.receivedDate,
                             IF
@@ -4795,6 +4799,7 @@ GROUP BY
                                  erp_stockreceive.interCompanyTransferYN =- 1   
                                 ) AS str ON erp_custinvoicedirect.bookingInvCode = str.refNo 
                             WHERE erp_stocktransfer.interCompanyTransferYN  =- 1  AND erp_stocktransfer.approved =- 1 ".$where."
+                            GROUP BY erp_stocktransfer.stockTransferAutoID,str.stockReceiveAutoID,str.bookingSuppMasInvAutoID
                             ORDER BY erp_stocktransfer.companyFrom,stockTransferCode ASC";
                 break;
 
