@@ -158,15 +158,14 @@ class DocumentApprovedAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $documentType = $input['documentType'];
-        $companies = $input['companies'];
+        $documentType = isset($input['documentType']) ? $input['documentType'] : array();
+        $companies    = isset($input['companies']) ? $input['documentType'] : array();
 
 
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
 
 
         if (!empty($documentType)) {
-
             $filter = " AND erp_documentapproved.documentSystemID IN (" . implode(',', $documentType) . ")";
         }
 
@@ -604,8 +603,6 @@ WHERE
 
 
         $request->request->remove('search.value');
-        $col[0] = $input['order'][0]['column'];
-        $col[1] = $input['order'][0]['dir'];
         $request->request->remove('order');
         $data['order'] = [];
         /*  $data['order'][0]['column'] = '';
