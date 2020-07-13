@@ -1774,6 +1774,10 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('mobile_no_pools', 'MobileNoPoolAPIController');
         Route::post('getAllMobileNo', 'MobileNoPoolAPIController@getAllMobileNo');
 
+        Route::resource('mobile_masters', 'MobileMasterAPIController');
+        Route::post('getAllMobileMaster', 'MobileMasterAPIController@getAllMobileMaster');
+        Route::get('getMobileMasterFormData', 'MobileMasterAPIController@getMobileMasterFormData');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1833,4 +1837,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-Route::resource('mobile_masters', 'MobileMasterAPIController');

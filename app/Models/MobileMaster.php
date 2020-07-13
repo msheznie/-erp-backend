@@ -1,5 +1,13 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : MobileMaster.php
+ * -- Project Name : ERP
+ * -- Module Name : MobileMaster
+ * -- Author : Mohamed Rilwan
+ * -- Create date : 09- July 2020
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -221,5 +229,10 @@ class MobileMaster extends Model
     public function mobile_no()
     {
         return $this->belongsTo('App\Models\MobileNoPool', 'mobileNoPoolID','mobilenopoolID');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employeeSystemID', 'employeeSystemID');
     }
 }
