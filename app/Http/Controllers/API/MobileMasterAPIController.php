@@ -1,14 +1,30 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : MobileMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  MobileMaster
+ * -- Author : Mohamed Rilwan
+ * -- Create date : 09 - July 2020
+ * -- Description : This file contains the all CRUD for MobileMaster
+ * -- REVISION HISTORY
+ * -- Date: 09 - July 2020 By: Rilwan Description: Added new functions named as getAllMobileNo()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMobileMasterAPIRequest;
 use App\Http\Requests\API\UpdateMobileMasterAPIRequest;
+use App\Models\Employee;
 use App\Models\MobileMaster;
+use App\Models\MobileNoPool;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MobileMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Mpdf\Tag\P;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -109,8 +125,53 @@ class MobileMasterAPIController extends AppBaseController
     public function store(CreateMobileMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('employeeSystemID','mobileNoPoolID','isActive'));
+        $input = array_except($input,['employee']);
+        $validator = \Validator::make($input, [
+            'employeeSystemID' => 'required',
+            'mobileNoPoolID' => 'required',
+            'creditlimit' => 'required',
+            'isActive' => 'required'
+        ]);
 
-        $mobileMaster = $this->mobileMasterRepository->create($input);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $isEmployeeExist = MobileMaster::where('isActive',-1)->where('employeeSystemID',$input['employeeSystemID'])
+            ->when((isset($input['mobilemasterID']) && $input['mobilemasterID']), function ($q) use($input){
+                $q->where('mobilemasterID','!=',$input['mobilemasterID']);
+            })
+            ->exists();
+        if($isEmployeeExist){
+            return $this->sendError("Employee has already assigned for a mobile no", 500);
+        }
+        $isMobileExist = MobileMaster::where('isActive',-1)->where('mobileNoPoolID',$input['mobileNoPoolID'])
+            ->when((isset($input['mobilemasterID']) && $input['mobilemasterID']), function ($q) use($input){
+                $q->where('mobilemasterID','!=',$input['mobilemasterID']);
+            })
+            ->exists();
+        if($isMobileExist){
+            return $this->sendError("Mobile No has already assigned for a employee", 500);
+        }
+
+        $mobile = MobileNoPool::find($input['mobileNoPoolID']);
+        $input['mobileNo'] = $mobile->mobileNo;
+
+        if(isset($input['mobilemasterID']) && $input['mobilemasterID']){
+
+            $mobileMaster = $this->mobileMasterRepository->findWithoutFail($input['mobilemasterID']);
+            if (empty($mobileMaster)) {
+                return $this->sendError('Mobile Master not found');
+            }
+            $mobileMaster = $this->mobileMasterRepository->update($input, $input['mobilemasterID']);
+
+        }else{
+
+            $mobileMaster = $this->mobileMasterRepository->create($input);
+        }
+
+
 
         return $this->sendResponse($mobileMaster->toArray(), 'Mobile Master saved successfully');
     }
@@ -276,6 +337,65 @@ class MobileMasterAPIController extends AppBaseController
 
         $mobileMaster->delete();
 
-        return $this->sendSuccess('Mobile Master deleted successfully');
+        return $this->sendResponse($mobileMaster->toArray(), 'Mobile Master deleted successfully');
+    }
+
+    public function getAllMobileMaster(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $mobileMaster = MobileMaster::whereNotNUll('mobileNoPoolID')
+            ->with(['employee']);
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $mobileMaster = $mobileMaster->where(function ($query) use ($search) {
+                $query->where('mobileNo', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->orWhereHas('employee', function ($query) use($search){
+                    $query->where('empID','LIKE', "%{$search}%")
+                        ->orWhere('empName','LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::eloquent($mobileMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('mobilemasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getMobileMasterFormData(){
+        $employees = Employee::where('discharegedYN','!=',-1)
+//                    ->whereNotIn('employeeSystemID', DB::table('hrms_mobilemaster')->where('isActive',-1)->whereNotNull('employeeSystemID')->pluck('employeeSystemID'))
+                    ->select('employeeSystemID','empName')
+                    ->get();
+
+        $mobiles = MobileNoPool::select(DB::raw('mobilenopoolID,CAST(mobileNo AS CHAR) AS mobileNumber'))
+//                    ->whereNotIn('mobilenopoolID',DB::table('hrms_mobilemaster')->where('isActive',-1)->whereNotNull('mobilenopoolID')->pluck('mobileNoPoolID'))
+                    ->get();
+
+        $yesNoSelection = YesNoSelectionForMinus::all();
+
+        $output = array(
+            'employees' => $employees,
+            'yesNoSelection' => $yesNoSelection,
+            'mobiles' => $mobiles
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
     }
 }

@@ -4576,7 +4576,7 @@ GROUP BY
 
         if(isset($request->transferType)){
             $transferType = (array)$request->transferType;
-            $transferTypes = array_filter(collect($transferType)->pluck('monthID')->toArray());
+            $transferTypes = array_filter(collect($transferType)->pluck('expenseClaimTypeID')->toArray());
         }
 
         if(isset($request->fromDate)){
@@ -4746,6 +4746,8 @@ GROUP BY
                                 erp_custinvoicedirect.bookingInvCode,
                                 DATE( erp_custinvoicedirect.bookingDate ) AS bookingDate,
                                 erp_custinvoicedirect.bookingAmountRpt,
+                                str.stockReceiveAutoID,
+                                str.bookingSuppMasInvAutoID,
                                 str.stockReceiveCode,
                                 str.receivedDate,
                                 str.Approved,
@@ -4768,6 +4770,8 @@ GROUP BY
                                 serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
                                 LEFT JOIN (
                             SELECT
+                                erp_stockreceive.stockReceiveAutoID,
+                                erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
                                 erp_stockreceive.stockReceiveCode,
                                 erp_stockreceive.receivedDate,
                             IF
@@ -4795,6 +4799,7 @@ GROUP BY
                                  erp_stockreceive.interCompanyTransferYN =- 1   
                                 ) AS str ON erp_custinvoicedirect.bookingInvCode = str.refNo 
                             WHERE erp_stocktransfer.interCompanyTransferYN  =- 1  AND erp_stocktransfer.approved =- 1 ".$where."
+                            GROUP BY erp_stocktransfer.stockTransferAutoID,str.stockReceiveAutoID,str.bookingSuppMasInvAutoID
                             ORDER BY erp_stocktransfer.companyFrom,stockTransferCode ASC";
                 break;
 
@@ -4994,19 +4999,20 @@ GROUP BY
                             erp_grvdetails
                         LEFT JOIN
                         chartofaccounts ON erp_grvdetails.financeGLcodePLSystemID = chartofaccounts.chartOfAccountSystemID
-                        GROUP BY erp_grvdetails.grvAutoID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
+                        GROUP BY erp_grvdetails.grvAutoID,erp_grvdetails.financeGLcodePLSystemID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
                     LEFT JOIN
                         erp_custinvoicedirect ON erp_grvmaster.grvAutoID = erp_custinvoicedirect.customerGRVAutoID
                     LEFT JOIN
                         erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
 					LEFT JOIN
-                        serviceline invService ON erp_custinvoicedirect.serviceLineSystemID = invService.serviceLineSystemID
+                        serviceline invService ON erp_custinvoicedirectdet.serviceLineSystemID = invService.serviceLineSystemID
                     LEFT JOIN
                         serviceline grvService ON erp_grvmaster.serviceLineSystemID = grvService.serviceLineSystemID 
                     INNER JOIN
                         supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
                         AND erp_grvmaster.companySystemID = supplierassigned.companySystemID
-                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where;
+                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where.' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID,erp_custinvoicedirectdet.glCode
+                    ORDER BY erp_grvmaster.grvAutoID DESC';
 
         return  \DB::select($query);
 
@@ -5111,20 +5117,20 @@ GROUP BY
 
                             $x++;
 
-                            $data[$x]['GRV Company'] = '';
-                            $data[$x]['GRV Code'] = '';
-                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
-                            $data[$x]['GRV Date'] = '';
-                            $data[$x]['GL Code'] = '';
-                            $data[$x]['GL Description'] = '';
-                            $data[$x]['Department'] = '';
-                            $data[$x]['Customer'] = '';
-                            $data[$x]['Booking Invoice Code'] = '';
-                            $data[$x]['Booking Date'] = '';
-                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
-                            $data[$x]['INV GL Code'] = '';
-                            $data[$x]['INV GL Description'] = '';
-                            $data[$x]['INV Department'] = '';
+//                            $data[$x]['GRV Company'] = '';
+//                            $data[$x]['GRV Code'] = '';
+//                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
+//                            $data[$x]['GRV Date'] = '';
+//                            $data[$x]['GL Code'] = '';
+//                            $data[$x]['GL Description'] = '';
+//                            $data[$x]['Department'] = '';
+//                            $data[$x]['Customer'] = '';
+//                            $data[$x]['Booking Invoice Code'] = '';
+//                            $data[$x]['Booking Date'] = '';
+//                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
+//                            $data[$x]['INV GL Code'] = '';
+//                            $data[$x]['INV GL Description'] = '';
+//                            $data[$x]['INV Department'] = '';
                         }
                     }
                 }
