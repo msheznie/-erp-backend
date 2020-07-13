@@ -320,13 +320,14 @@
                 <th class="text-center vertical-align"  style="width: 4%">Quantity Back Load</th>
                 <th class="text-center vertical-align"  style="width: 5%">{{$entity->companyID}} Item Code</th>
                 <th class="text-center vertical-align"  style="width: 5%">Manufacture Part No</th>
-                <th class="text-center vertical-align"  style="width: 5%">PDO Item SAP Number</th>
-                <th class="text-center vertical-align"  style="width: 18%">Item Description</th>
-                <th class="text-center vertical-align"   colspan="2" style="width: 7%">"Material PO no(enter 13 digits) including PO line
+                <th class="text-center vertical-align"  style="width: 5%">Client Product Code</th>
+                <th class="text-center vertical-align"  style="width: 14%">Item Description</th>
+                <th class="text-center vertical-align"   colspan="2" style="width: 5%">"Material PO no(enter 13 digits) including PO line
                     Item"
                 </th>
                 <th class="text-center vertical-align"  style="width: 4%">Work Order Number</th>
-                <th class="text-center vertical-align"  style="width: 7%">Batch / Serial Number</th>
+                <th class="text-center vertical-align"  style="width: 6%">Batch / Serial Number</th>
+                <th class="text-center vertical-align"  style="width: 7%">Comments</th>
             </tr>
             {{--<tr class="theme-tr-head">
                 <th class="text-center" style="width: 1%"></th>
@@ -370,6 +371,9 @@
                     </td>
                     <td>
                         {{$item->grvDocumentNO}}
+                    </td>
+                    <td>
+                        {{$item->deliveryComments}}
                     </td>
                 </tr>
             @endforeach

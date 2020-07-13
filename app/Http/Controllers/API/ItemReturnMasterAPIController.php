@@ -989,7 +989,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         if (array_key_exists('wareHouseLocation', $input)) {
-            if ($input['wareHouseFrom'] && !is_null($input['wareHouseLocation'])) {
+            if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
                 $itemReturnMaster->where('erp_itemreturnmaster.wareHouseLocation', $input['wareHouseLocation']);
             }
         }

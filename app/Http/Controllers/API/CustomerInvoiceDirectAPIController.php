@@ -200,16 +200,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         $bank = BankAssign::select('bankmasterAutoID')
-                           ->where('companySystemID', $input['companyID'])
-                           ->where('isDefault', -1)
-                           ->first();
+            ->where('companySystemID', $input['companyID'])
+            ->where('isDefault', -1)
+            ->first();
         if ($bank) {
             $input['bankID'] = $bank->bankmasterAutoID;
             $bankAccount = BankAccount::where('companySystemID', $input['companyID'])
-                                       ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                                       ->where('isDefault', 1)
-                                       ->where('accountCurrencyID', $myCurr)
-                                       ->first();
+                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                ->where('isDefault', 1)
+                ->where('accountCurrencyID', $myCurr)
+                ->first();
             if ($bankAccount) {
                 $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
             }
@@ -222,7 +222,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return $this->sendError('Please select a Service Line', 500);
             }
             $segment = SegmentMaster::find($input['serviceLineSystemID']);
-            $input['serviceLineCode'] = isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
+            $input['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
         }
 
         $lastSerial = CustomerInvoiceDirect::where('companySystemID', $input['companyID'])
@@ -397,7 +397,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID','wareHouseSystemCode','serviceLineSystemID'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID'));
             if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3)) {
                 $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
 
@@ -413,7 +413,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
                 $segment = SegmentMaster::find($input['serviceLineSystemID']);
                 $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
-                $_post['serviceLineCode'] =  isset($segment->ServiceLineCode)?$segment->ServiceLineCode:null;
+                $_post['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
             }
 
 
@@ -509,7 +509,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['secondaryLogo'] = NULL;
             }
 
-        }else {
+        } else {
             $_post['secondaryLogoCompID'] = NULL;
             $_post['secondaryLogo'] = NULL;
         }
@@ -558,17 +558,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')
-                                     ->where('companySystemID', $customerInvoiceDirect->companySystemID)
-                                     ->where('isDefault', -1)
-                                     ->first();
+                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                    ->where('isDefault', -1)
+                    ->first();
 
                 if ($bank) {
                     $_post['bankID'] = $bank->bankmasterAutoID;
                     $bankAccount = BankAccount::where('companySystemID', $customerInvoiceDirect->companySystemID)
-                                                ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                                                ->where('isDefault', 1)
-                                                ->where('accountCurrencyID', $currency->currencyID)
-                                                ->first();
+                        ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                        ->where('isDefault', 1)
+                        ->where('accountCurrencyID', $currency->currencyID)
+                        ->first();
 
                     if ($bankAccount) {
                         $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
@@ -625,9 +625,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-        if($isPerforma==2 || $isPerforma == 3){
-            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"),DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
-        }else{
+        if ($isPerforma == 2 || $isPerforma == 3) {
+            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+        } else {
             $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
         }
 
@@ -685,7 +685,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         'custTransactionCurrencyID.required' => 'Currency is required.',
                         'bankID.required' => 'Bank is required.',
                         'bankAccountID.required' => 'Bank account is required.',
-                        
+
                         'customerInvoiceNo.required' => 'Customer invoice no is required.',
                         'customerInvoiceDate.required' => 'Customer invoice date is required.',
                         'PONumber.required' => 'Po number is required.',
@@ -755,12 +755,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
 
-                            if(!($item->financeGLcodebBSSystemID > 0)){
-                                return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
-                            }elseif (!($item->financeGLcodePLSystemID > 0)){
-                                return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
-                            }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
-                                return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                            if (!($item->financeGLcodebBSSystemID > 0)) {
+                                return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                            } elseif (!($item->financeGLcodePLSystemID > 0)) {
+                                return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                            } elseif (!($item->financeGLcodeRevenueSystemID > 0)) {
+                                return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             }
 
                             $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
@@ -776,33 +776,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                             $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
 
-                            if($isPerforma == 2){
-                                $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$updateItem->issueCostRpt);
+                            if ($isPerforma == 2) {
+                                $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->companyReportingCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $updateItem->issueCostRpt);
                                 $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
                             }
 
                             /*margin calculation*/
-                            if($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null){
-                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost*$updateItem->marginPercentage/100);
-                            }else{
+                            if ($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null) {
+                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
+                            } else {
                                 $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
                             }
 
-                            if($updateItem->sellingCurrencyID != $updateItem->localCurrencyID){
-                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->localCurrencyID,$updateItem->sellingCostAfterMargin);
-                                if(!empty($currencyConversion)){
+                            if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);
+                                if (!empty($currencyConversion)) {
                                     $updateItem->sellingCostAfterMarginLocal = $currencyConversion['documentAmount'];
                                 }
-                            }else{
+                            } else {
                                 $updateItem->sellingCostAfterMarginLocal = $updateItem->sellingCostAfterMargin;
                             }
 
-                            if($updateItem->sellingCurrencyID != $updateItem->reportingCurrencyID){
-                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID,$updateItem->sellingCurrencyID,$updateItem->reportingCurrencyID,$updateItem->sellingCostAfterMargin);
-                                if(!empty($currencyConversion)){
+                            if ($updateItem->sellingCurrencyID != $updateItem->reportingCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->reportingCurrencyID, $updateItem->sellingCostAfterMargin);
+                                if (!empty($currencyConversion)) {
                                     $updateItem->sellingCostAfterMarginRpt = $currencyConversion['documentAmount'];
                                 }
-                            }else{
+                            } else {
                                 $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
                             }
 
@@ -822,7 +822,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             $updateItem->save();
 
-                            if($isPerforma == 2){// only item sales invoice. we won't get from from delivery note type.
+                            if ($isPerforma == 2) {// only item sales invoice. we won't get from from delivery note type.
                                 if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
                                     return $this->sendError('Item must not have zero cost', 500);
                                 }
@@ -830,17 +830,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     return $this->sendError('Item must not have negative cost', 500);
                                 }
                                 if ($updateItem->currentWareHouseStockQty <= 0) {
-                                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                                    return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
                                 }
                                 if ($updateItem->currentStockQty <= 0) {
-                                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                                    return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
                                 }
                                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
+                                    return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
                                 }
 
                                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
+                                    return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
                                 }
                             }
 
@@ -1062,8 +1062,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     }]);
                 }]);
             },
-            'issue_item_details' => function($query){
-            $query->with(['uom_default','uom_issuing']);
+            'issue_item_details' => function ($query) {
+                $query->with(['uom_default', 'uom_issuing']);
             }
 
         ])->findWithoutFail($id);
@@ -1260,7 +1260,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID','isPerforma')
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID', 'isPerforma')
                 ->where('custInvoiceDirectAutoID', $id)->first();
         }
 
@@ -1280,31 +1280,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')
-                                          ->where('companySystemID','!=',$companyId)
-                                          ->get();
+            ->where('companySystemID', '!=', $companyId)
+            ->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
-        $companySystemID = (isset($output['company']) &&  $output['company']) ? $output['company']['companySystemID'] : 0;
-        $output['tax'] =  TaxMaster::where('taxType',2)
-                                    ->where('companySystemID', $companySystemID)
-                                    ->get();
+        $companySystemID = (isset($output['company']) && $output['company']) ? $output['company']['companySystemID'] : 0;
+        $output['tax'] = TaxMaster::where('taxType', 2)
+            ->where('companySystemID', $companySystemID)
+            ->get();
         $output['collectionType'] = CustomerInvoiceStatusType::all();
         $output['segment'] = [];
         if ($id) {
             if ($master->customerID != '') {
                 $output['currencies'] = DB::table('customercurrency')
-                                     ->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
-                                     ->where('customerCodeSystem', $master->customerID)
-                                     ->where('isAssigned', -1)
-                                     ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')
-                                     ->get();
+                    ->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')
+                    ->where('customerCodeSystem', $master->customerID)
+                    ->where('isAssigned', -1)
+                    ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')
+                    ->get();
             } else {
                 $output['currencies'] = [];
             }
             $output['bankDropdown'] = BankAssign::where('isActive', 1)
-                                                ->where('isAssigned', -1)
-                                                ->where('companySystemID', $companySystemID)
-                                                ->get();
+                ->where('isAssigned', -1)
+                ->where('companySystemID', $companySystemID)
+                ->get();
 
             $output['bankAccount'] = [];
             if ($bankID != '' && $master->custTransactionCurrencyID != '') {
@@ -1318,14 +1318,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
-            $output['uom']     = Unit::select('UnitID', 'UnitShortCode')->get();
+            $output['uom'] = Unit::select('UnitID', 'UnitShortCode')->get();
 
         }
 
         // check policy 24 is on for CI
         $output['isPolicyOn'] = 0;
         $output['wareHouses'] = [];
-        if($id){
+        if ($id) {
             $output['isPerforma'] = $master->isPerforma;
         }
 
@@ -1353,9 +1353,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }
 
-        if($id){
+        if ($id) {
             $customer = CustomerMaster::find($master->customerID);
-            if(!empty($customer)){
+            if (!empty($customer)) {
                 $output['isCustomerCatalogPolicyOn'] = CompanyPolicyMaster::where('companySystemID', $customer->primaryCompanySystemID)
                     ->where('companyPolicyCategoryID', 39)
                     ->where('isYesNO', 1)
@@ -1419,26 +1419,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         /*selectedPerformaMaster*/
         $performa = PerformaMaster::with(['ticket' => function ($query) {
             $query->with(['rig']);
-        }])->where('companySystemID', $master->companySystemID)->where('customerSystemID', $master->customerID)->where('performaStatus', 0)->where('PerformaOpConfirmed', 1)->where('PerformaInvoiceNo', $performaMasterID)->first();
+        }])->where('companySystemID', $master->companySystemID)
+            ->where('customerSystemID', $master->customerID)
+            ->where('performaStatus', 0)
+            ->where('PerformaOpConfirmed', 1)
+            ->where('PerformaInvoiceNo', $performaMasterID)
+            ->first();
+
         if (empty($performa)) {
             return $this->sendResponse('e', 'Already pulled');
         }
-
-
-        /*if bookinvoice not available create header*/
-        /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
-                 dd($master->bookingInvCode);
-                 exit;
-                 $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
-                 $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
-                 $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-
-
-                 $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
-                 $upMaster['serialNo'] = $serialNo->serialNo;
-                 $upMaster['bookingInvCode'] = $bookingInvCode;
-                 $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($upMaster, $custInvoiceDirectAutoID);
-             }*/
 
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
@@ -1454,17 +1444,38 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
            }*/
 
-        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
+        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')
+            ->where('CompanyID', $master->companyID)
+            ->where('ContractNumber', $performa->contractID)
+            ->first();
+
+        if (empty($contract)) {
+            return $this->sendError('e', 'Contract not exist', 500);
+        }
 
 
-        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate', 'ticketNo', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
+        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate', 'ticketNo', 'rentalEndDate')
+            ->where('companyID', $master->companyID)
+            ->where('PerformaInvoiceNo', $performaMasterID)
+            ->first();
 
-        $ticket = TicketMaster::select('Timedatejobstra', 'Timedatejobend')->where('ticketidAtuto', $getRentalDetailFromFreeBilling->ticketNo)->first();
+        if (empty($getRentalDetailFromFreeBilling)) {
+            return $this->sendError( 'Free Billing Master Performa not found', 500);
+        }
+
+        $ticket = TicketMaster::select('Timedatejobstra', 'Timedatejobend')
+            ->where('ticketidAtuto', $getRentalDetailFromFreeBilling->ticketNo)
+            ->first();
+
+        if (empty($ticket)) {
+            return $this->sendError( 'Ticket Master not found', 500);
+        }
 
         $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $master->companySystemID)
             ->where('documentSystemID', $master->documentSystemiD)
             ->first();
+
         if (!empty($tax)) {
             return $this->sendResponse('e', 'Please delete tax details to continue');
         }
@@ -1476,7 +1487,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /*isRequiredStamp*/
             if ($contract->isRequiredStamp == -1) {
                 if ($performa->clientAppPerformaType == 2 || $performa->clientAppPerformaType == 3) {
-
                 } else {
                     return $this->sendResponse('e', 'Stamp / OT release not done in proforma');
                 }
@@ -1629,9 +1639,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        if($master->isPerforma == 2 || $master->isPerforma == 3){
+        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
             $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        }else{
+        } else {
             $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
         }
 
@@ -1642,13 +1652,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        if($master->isPerforma == 2 || $master->isPerforma == 3){
+        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
             $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
             if (!empty($totalDetail)) {
                 $totalAmount = $totalDetail->amount;
             }
             $totalAmount = ($percentage / 100) * $totalAmount;
-        }else{
+        } else {
             $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
             if (!empty($totalDetail)) {
                 $totalAmount = $totalDetail->amount;
@@ -1656,9 +1666,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $totalAmount = ($percentage / 100) * $totalAmount;
         }
 
-        $taxMaster = TaxMaster::where('taxType',2)
-                                ->where('companySystemID', $master->companySystemID)
-                                ->first();
+        $taxMaster = TaxMaster::where('taxType', 2)
+            ->where('companySystemID', $master->companySystemID)
+            ->first();
 
         if (empty($taxMaster)) {
             return $this->sendResponse('e', 'VAT Master not found');
@@ -1812,9 +1822,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
-        if($master->isPerforma == 2){
+        if ($master->isPerforma == 2) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
-        }else{
+        } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
         }
 
@@ -1823,7 +1833,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-            } else if($master->isPerforma == 2) {
+            } else if ($master->isPerforma == 2) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
@@ -2013,11 +2023,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_performaCode = true;
                         $line_paymentTerms = true;
                         $line_rentalPeriod = true;
-                        if(isset($customerInvoice->invoicedetail->contract->contractType) && $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED){
+                        if (isset($customerInvoice->invoicedetail->contract->contractType) && $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED) {
                             $line_rentalPeriod = false;
                             $line_po_detail = true;
-                            $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master,'C000071');
-                        }else{
+                            $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master, 'C000071');
+                        } else {
                             $line_rentalPeriod = false;
                             $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
                         }
@@ -2163,7 +2173,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $directTraSubTotal = 0;
-        if($master->isPerforma == 2){
+        if ($master->isPerforma == 2) {
             $customerInvoice->item_invoice = true;
             foreach ($customerInvoice->issue_item_details as $key => $item) {
                 $directTraSubTotal += $item->sellingTotal;
@@ -2172,7 +2182,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if ($customerInvoice->tax) {
                 $directTraSubTotal += $customerInvoice->tax->amount;
             }
-        }else{
+        } else {
             $customerInvoice->item_invoice = false;
             foreach ($customerInvoice->invoicedetails as $key => $item) {
                 $directTraSubTotal += $item->invoiceAmount;
@@ -2205,13 +2215,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
         $contractID = 0;
-        if($master->isPerforma == 1) {
+        if ($master->isPerforma == 1) {
             $contractID = isset($detail->contractID) ? $detail->contractID : 0;
         }
 
-        if($contractID>0){
+        if ($contractID > 0) {
             $printTemplate = $printTemplate->where('contractUID', $contractID);
-        }else{
+        } else {
             $printTemplate = $printTemplate->whereNull('contractUID');
         }
 
@@ -2249,13 +2259,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
-        } else if ($printTemplate['printTemplateID'] == 3 ) {
+        } else if ($printTemplate['printTemplateID'] == 3) {
             $html = view('print.customer_invoice_with_po_detail', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
-        } else if ($printTemplate['printTemplateID'] == 4 ) {
+        } else if ($printTemplate['printTemplateID'] == 4) {
             $html = view('print.customer_invoice_tue_product_service', $array);
             $htmlFooter = view('print.customer_invoice_tue_footer', $array);
             $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
@@ -3075,7 +3085,8 @@ WHERE
         }
     }
 
-    public function getPerformaPDOInvoiceDetail($master,$customerCode){
+    public function getPerformaPDOInvoiceDetail($master, $customerCode)
+    {
 
         $output = DB::select("
                             SELECT
@@ -3097,7 +3108,7 @@ FROM
 				amount
 			FROM
 			erp_custinvoicedirect 
-			JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID=erp_custinvoicedirectdet.custInvoiceDirectID  AND custInvoiceDirectAutoID=".$master->custInvoiceDirectAutoID."  AND erp_custinvoicedirectdet.customerID=".$master->customerID." 
+			JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID=erp_custinvoicedirectdet.custInvoiceDirectID  AND custInvoiceDirectAutoID=" . $master->custInvoiceDirectAutoID . "  AND erp_custinvoicedirectdet.customerID=" . $master->customerID . " 
 				JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
 
 				JOIN (
@@ -3109,7 +3120,7 @@ FROM
 									mubbadrahop.productdetails.TotalCharges AS amount 
 								FROM
 									mubbadrahop.productdetails 
-									WHERE mubbadrahop.productdetails.companyID = '".$master->companyID."' AND mubbadrahop.productdetails.CustomerID='".$customerCode."'
+									WHERE mubbadrahop.productdetails.companyID = '" . $master->companyID . "' AND mubbadrahop.productdetails.CustomerID='" . $customerCode . "'
 									
 									UNION
 									
@@ -3121,11 +3132,11 @@ FROM
 									mubbadrahop.servicedetails.TotalCharges AS amount 
 								FROM 
 									mubbadrahop.servicedetails 
-									WHERE mubbadrahop.servicedetails .companyID = '".$master->companyID."' AND mubbadrahop.servicedetails.CustomerID='".$customerCode."'
+									WHERE mubbadrahop.servicedetails .companyID = '" . $master->companyID . "' AND mubbadrahop.servicedetails.CustomerID='" . $customerCode . "'
 									
 				) as prod_serv ON performatemp.TicketNo=prod_serv.TicketNo 
 				JOIN contractdetails ON prod_serv.contractDetailID=contractdetails.ContractDetailID
-				WHERE contractdetails.CompanyID='".$master->companyID."' AND contractdetails.CustomerID='".$customerCode."'
+				WHERE contractdetails.CompanyID='" . $master->companyID . "' AND contractdetails.CustomerID='" . $customerCode . "'
 				GROUP BY contractdetails.ContractDetailID
 	) AS temp
                             ");

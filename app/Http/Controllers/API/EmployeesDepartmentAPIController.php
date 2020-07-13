@@ -582,11 +582,10 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        return \DataTables::eloquent($approvalMatrix)
+        return \DataTables::of($approvalMatrix)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        // $query->orderBy('DepartmentDescription', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -595,6 +594,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
     }
+
 
     public function approvalMatrixData($input)
     {
@@ -610,20 +610,21 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $selectedSegments = (isset($input['selectedSegments']) && !empty($input['selectedSegments'])) ? collect($input['selectedSegments'])->pluck('serviceLineSystemID')->toArray() : [];
 
         $statusID = (isset($input['statusID']) && is_array($input['statusID'])) ? $input['statusID'][0] : $input['statusID'];
+        $levelStatusID = (isset($input['levelStatusID']) && is_array($input['levelStatusID'])) ? $input['levelStatusID'][0] : $input['levelStatusID'];
 
-        return DepartmentMaster::select('DepartmentDescription', 'departmentSystemID')
-            ->with(['documents' => function ($query1) use ($companySystemID, $selectedDocuments, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID) {
+        $approvalMatrixData = DepartmentMaster::select('DepartmentDescription', 'departmentSystemID')
+            ->with(['documents' => function ($query1) use ($companySystemID, $selectedDocuments, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
                 $query1->select('documentDescription', 'documentSystemID', 'departmentSystemID')
-                    ->with(['approval_levels' => function ($query3) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID) {
-                        $query3->select('levelDescription', 'approvalLevelID', 'documentSystemID', 'valueWise', 'valueFrom', 'valueTo', 'categoryID', 'serviceLineSystemID')
+                    ->with(['approval_levels' => function ($query3) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
+                        $query3->select('levelDescription', 'approvalLevelID', 'documentSystemID', 'valueWise', 'valueFrom', 'valueTo', 'categoryID', 'serviceLineSystemID', 'isActive')
                             ->with(['approvalrole' => function ($query5) use ($companySystemID, $selectedEmployees, $statusID) {
-                                $query5->select('rollLevel', 'approvalLevelID', 'approvalGroupID')
+                                $query5
                                     ->with(['approval_group' => function ($query6) use ($companySystemID, $selectedEmployees, $statusID) {
                                         $query6->with(['employee_department' => function ($query7) use ($companySystemID, $selectedEmployees, $statusID) {
-                                            $query7->select('employeeGroupID', 'employeeSystemID', 'isActive', 'removedYN')
+                                            $query7->select('employeeGroupID', 'employeeSystemID', 'isActive', 'removedYN', 'employeesDepartmentsID', 'ServiceLineSystemID')
                                                 ->with(['employee' => function ($query) {
                                                     $query->select('employeeSystemID', 'empName');
-                                                }])
+                                                }, 'serviceline'])
                                                 ->when(!empty($selectedEmployees), function ($query) use ($selectedEmployees) {
                                                     $query->whereIN('employeeSystemID', $selectedEmployees);
                                                 })
@@ -686,6 +687,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
                             ->when(!empty($selectedCategories), function ($query) use ($selectedCategories) {
                                 $query->whereIN('categoryID', $selectedCategories);
                             })
+                            ->when($levelStatusID == 1, function ($query) {
+                                $query->where('isActive', -1);
+                            })
+                            ->when($levelStatusID == 2, function ($query) {
+                                $query->where('isActive', 0);
+                            })
                             ->whereHas('approvalrole', function ($query8) use ($companySystemID, $selectedEmployees, $statusID) {
                                 $query8->where('companySystemID', $companySystemID)
                                     ->when(!empty($selectedEmployees), function ($query) use ($selectedEmployees, $companySystemID, $statusID) {
@@ -710,7 +717,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                             });
                     }])
                     ->whereIN('documentSystemID', $selectedDocuments)
-                    ->whereHas('approval_levels', function ($q1) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID) {
+                    ->whereHas('approval_levels', function ($q1) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
                         $q1->where('companySystemID', $companySystemID)
                             ->whereHas('approvalrole', function ($query8) use ($companySystemID, $selectedEmployees, $statusID) {
                                 $query8->where('companySystemID', $companySystemID)
@@ -734,6 +741,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                         });
                                     });
                             })
+                            ->when($levelStatusID == 1, function ($query) {
+                                $query->where('isActive', -1);
+                            })
+                            ->when($levelStatusID == 2, function ($query) {
+                                $query->where('isActive', 0);
+                            })
                             ->when(!empty($selectedSegments), function ($query) use ($selectedSegments) {
                                 $query->whereIN('serviceLineSystemID', $selectedSegments);
                             })
@@ -743,8 +756,8 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     });
             }])
             ->whereIN('departmentSystemID', $selectedDepartments)
-            ->whereHas('documents', function ($query2) use ($companySystemID, $selectedDocuments, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID) {
-                $query2->whereHas('approval_levels', function ($query4) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID) {
+            ->whereHas('documents', function ($query2) use ($companySystemID, $selectedDocuments, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
+                $query2->whereHas('approval_levels', function ($query4) use ($companySystemID, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
                     $query4->whereHas('approvalrole', function ($query9) use ($companySystemID, $selectedEmployees, $statusID) {
                         $query9->where('companySystemID', $companySystemID)
                             ->when(!empty($selectedEmployees), function ($query) use ($selectedEmployees, $companySystemID, $statusID) {
@@ -768,6 +781,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
                             });
                     })
                         ->where('companySystemID', $companySystemID)
+                        ->when($levelStatusID == 1, function ($query) {
+                            $query->where('isActive', -1);
+                        })
+                        ->when($levelStatusID == 2, function ($query) {
+                            $query->where('isActive', 0);
+                        })
                         ->when(!empty($selectedSegments), function ($query) use ($selectedSegments) {
                             $query->whereIN('serviceLineSystemID', $selectedSegments);
                         })
@@ -776,35 +795,80 @@ class EmployeesDepartmentAPIController extends AppBaseController
                         });
                 })
                     ->whereIN('documentSystemID', $selectedDocuments);
-            });
+            })->get();
+
+        if (!empty($approvalMatrixData)) {
+            $approvalMatrixData = $approvalMatrixData->toArray();
+        }
+
+       
+        foreach ($approvalMatrixData as $key => $department) {
+            foreach ($department['documents'] as $key1 => $document) {
+                foreach ($document['approval_levels'] as $key2 => $approval_level) {
+                    foreach ($approval_level['approvalrole'] as $key3 => $approvalrole) {
+                        if (!is_null($approvalrole['approval_group'])) {
+                            foreach ($approvalrole['approval_group']['employee_department'] as $key4 => $employee_department) {
+                                if (!is_null($approval_level['serviceLineSystemID']) && !is_null($employee_department['ServiceLineSystemID'])) {
+                                    if ($approval_level['serviceLineSystemID'] != $employee_department['ServiceLineSystemID']) {
+                                        unset($approvalMatrixData[$key]['documents'][$key1]['approval_levels'][$key2]['approvalrole'][$key3]['approval_group']['employee_department'][$key4]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach ($approvalMatrixData as $key => $department) {
+            foreach ($department['documents'] as $key1 => $document) {
+                foreach ($document['approval_levels'] as $key2 => $approval_level) {
+                    foreach ($approval_level['approvalrole'] as $key3 => $approvalrole) {
+                        if (!is_null($approvalrole['approval_group'])) {
+                            if (!empty($approvalrole['approval_group']['employee_department'])) {
+                                foreach ($approvalrole['approval_group']['employee_department'] as $key4 => $value4) {
+                                    $approvalMatrixData[$key]['documents'][$key1]['approval_levels'][$key2]['approvalrole'][$key3]['approval_group']['employee_department_data'][] = $value4;
+                                }
+                            } else {
+                                $approvalMatrixData[$key]['documents'][$key1]['approval_levels'][$key2]['approvalrole'][$key3]['approval_group']['employee_department_data'] = [];
+                            }
+                        } else {
+                            $approvalMatrixData[$key]['documents'][$key1]['approval_levels'][$key2]['approvalrole'][$key3]['approval_group']['employee_department_data'] = [];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $approvalMatrixData;
     }
 
     public function exportApprovalMatrixReport(Request $request)
     {
         $input = $request->all();
 
-        $output = $this->approvalMatrixData($input)->get();
+        $output = $this->approvalMatrixData($input);
         $type = $request->type;
         $data = [];
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $key => $value) {
-                $data[$x]['Department'] = $value->DepartmentDescription;
+                $data[$x]['Department'] = $value['DepartmentDescription'];
 
-                if (!empty($value->documents)) {
+                if (!empty($value['documents'])) {
                     $documentCount = 0;
-                    foreach ($value->documents as $key1 => $document) {
+                    foreach ($value['documents'] as $key1 => $document) {
 
                         if ($documentCount != 0) {
                             $x++;
                             $data[$x]['Department'] = '';
                         }
 
-                        $data[$x]['Document Type'] = $document->documentDescription;
+                        $data[$x]['Document Type'] = $document['documentDescription'];
 
-                        if (!empty($document->approval_levels)) {
+                        if (!empty($document['approval_levels'])) {
                             $approvalLevelCount = 0;
-                            foreach ($document->approval_levels as $key2 => $approval_level) {
+                            foreach ($document['approval_levels'] as $key2 => $approval_level) {
 
                                 if ($approvalLevelCount != 0) {
                                     $x++;
@@ -812,15 +876,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                     $data[$x]['Document Type'] = '';
                                 }
 
-                                $data[$x]['Segment'] = (is_null($approval_level->serviceline)) ? "" : $approval_level->serviceline->ServiceLineDes;
-                                $data[$x]['Limit'] = ($approval_level->valueWise == 1) ? $approval_level->valueFrom . '-' . $approval_level->valueTo : "";
-                                $data[$x]['Category'] = (is_null($approval_level->category)) ? "" : $approval_level->category->categoryDescription;
+                                $data[$x]['Segment'] = (is_null($approval_level['serviceline'])) ? "" : $approval_level['serviceline']['ServiceLineDes'];
+                                $data[$x]['Limit'] = ($approval_level['valueWise'] == 1) ? $approval_level['valueFrom'] . '-' . $approval_level['valueTo'] : "";
+                                $data[$x]['Category'] = (is_null($approval_level['category'])) ? "" : $approval_level['category']['categoryDescription'];
 
-                                $data[$x]['Level Description'] = $approval_level->levelDescription;
+                                $data[$x]['Level Description'] = $approval_level['levelDescription'];
+                                $data[$x]['Level Status'] = ($approval_level['isActive'] == -1) ? 'Active' : 'In Active';
 
-                                if (!empty($approval_level->approvalrole)) {
+                                if (!empty($approval_level['approvalrole'])) {
                                     $approvalRoleCount = 0;
-                                    foreach ($approval_level->approvalrole as $key3 => $approvalrole) {
+                                    foreach ($approval_level['approvalrole'] as $key3 => $approvalrole) {
 
                                         if ($approvalRoleCount != 0) {
                                             $x++;
@@ -830,14 +895,14 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                             $data[$x]['Limit'] = '';
                                             $data[$x]['Category'] = '';
                                             $data[$x]['Level Description'] = '';
+                                            $data[$x]['Level Status'] = '';
                                         }
-                                        $data[$x]['Approval Level'] = $approvalrole->rollLevel;
+                                        $data[$x]['Approval Level'] = $approvalrole['rollLevel'];
+                                        $data[$x]['Group Description'] = (!is_null($approvalrole['approval_group']) && isset($approvalrole['approval_group']['rightsGroupDes'])) ? $approvalrole['approval_group']['rightsGroupDes'] : "";
 
-                                        $data[$x]['Group Description'] = (is_null($approvalrole->approval_group)) ? "" : $approvalrole->approval_group->rightsGroupDes;
-
-                                        if (!is_null($approvalrole->approval_group)) {
+                                        if (!is_null($approvalrole['approval_group']) && isset($approvalrole['approval_group']['employee_department_data'])) {
                                             $employeeDepCount = 0;
-                                            foreach ($approvalrole->approval_group->employee_department as $key3 => $employee_department) {
+                                            foreach ($approvalrole['approval_group']['employee_department_data'] as $key3 => $employee_department) {
 
                                                 if ($employeeDepCount != 0) {
                                                     $x++;
@@ -847,16 +912,17 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                                     $data[$x]['Limit'] = '';
                                                     $data[$x]['Category'] = '';
                                                     $data[$x]['Level Description'] = '';
+                                                    $data[$x]['Level Status'] = '';
                                                     $data[$x]['Approval Level'] = '';
                                                     $data[$x]['Group Description'] = '';
                                                 }
 
-                                                $data[$x]['Approver Name'] = $employee_department->employee->empName;
+                                                $data[$x]['Approver Name'] = $employee_department['employee']['empName'];
 
-                                                if ($employee_department->removedYN == 1) {
-                                                    $data[$x]['Status'] = 'Deleted';
+                                                if ($employee_department['removedYN'] == 1) {
+                                                    $data[$x]['Approver Status'] = 'Deleted';
                                                 } else {
-                                                    $data[$x]['Status'] = ($employee_department->isActive == 1) ? 'Active' : 'In Active';
+                                                    $data[$x]['Approver Status'] = ($employee_department['isActive'] == 1) ? 'Active' : 'In Active';
                                                 }
 
                                                 $employeeDepCount++;
@@ -864,7 +930,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                             }
                                         } else {
                                             $data[$x]['Approver Name'] = '';
-                                            $data[$x]['Status'] = '';
+                                            $data[$x]['Approver Status'] = '';
                                         }
 
                                         $approvalRoleCount++;
@@ -882,6 +948,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $x++;
             }
         }
+
 
         \Excel::create('approval_matrix', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
