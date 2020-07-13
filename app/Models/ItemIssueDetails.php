@@ -393,6 +393,7 @@ class ItemIssueDetails extends Model
         'p13',
         'pl10',
         'pl3',
+        'deliveryComments',
         'timestamp',
         'timesReferred'
     ];
@@ -457,6 +458,7 @@ class ItemIssueDetails extends Model
         'p13' => 'integer',
         'pl3' => 'integer',
         'pl10' => 'string',
+        'deliveryComments' => 'string',
         'timesReferred' => 'integer'
     ];
 

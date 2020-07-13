@@ -631,7 +631,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 if(isset($input['p1'])) {
                     $input['p1'] = intval($input['p1']);
                 }
-                $this->itemIssueDetailsRepository->update(array_only($input, ['backLoad','used','p1','pl10','pl3','grvDocumentNO']), $id);
+                $this->itemIssueDetailsRepository->update(array_only($input, ['backLoad','p1','pl10','pl3','grvDocumentNO',
+                    'clientReferenceNumber','deliveryComments']), $id);
                 return $this->sendResponse($itemIssueDetails->toArray(), $message);
             }
         }
