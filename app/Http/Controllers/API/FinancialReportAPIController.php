@@ -4999,7 +4999,7 @@ GROUP BY
                             erp_grvdetails
                         LEFT JOIN
                         chartofaccounts ON erp_grvdetails.financeGLcodePLSystemID = chartofaccounts.chartOfAccountSystemID
-                        GROUP BY erp_grvdetails.grvAutoID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
+                        GROUP BY erp_grvdetails.grvAutoID,erp_grvdetails.financeGLcodePLSystemID) det ON det.grvAutoID = erp_grvmaster.grvAutoID
                     LEFT JOIN
                         erp_custinvoicedirect ON erp_grvmaster.grvAutoID = erp_custinvoicedirect.customerGRVAutoID
                     LEFT JOIN
@@ -5011,7 +5011,7 @@ GROUP BY
                     INNER JOIN
                         supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
                         AND erp_grvmaster.companySystemID = supplierassigned.companySystemID
-                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where.' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID
+                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where.' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID,erp_custinvoicedirectdet.glCode
                     ORDER BY erp_grvmaster.grvAutoID DESC';
 
         return  \DB::select($query);
@@ -5117,20 +5117,20 @@ GROUP BY
 
                             $x++;
 
-                            $data[$x]['GRV Company'] = '';
-                            $data[$x]['GRV Code'] = '';
-                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
-                            $data[$x]['GRV Date'] = '';
-                            $data[$x]['GL Code'] = '';
-                            $data[$x]['GL Description'] = '';
-                            $data[$x]['Department'] = '';
-                            $data[$x]['Customer'] = '';
-                            $data[$x]['Booking Invoice Code'] = '';
-                            $data[$x]['Booking Date'] = '';
-                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
-                            $data[$x]['INV GL Code'] = '';
-                            $data[$x]['INV GL Description'] = '';
-                            $data[$x]['INV Department'] = '';
+//                            $data[$x]['GRV Company'] = '';
+//                            $data[$x]['GRV Code'] = '';
+//                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
+//                            $data[$x]['GRV Date'] = '';
+//                            $data[$x]['GL Code'] = '';
+//                            $data[$x]['GL Description'] = '';
+//                            $data[$x]['Department'] = '';
+//                            $data[$x]['Customer'] = '';
+//                            $data[$x]['Booking Invoice Code'] = '';
+//                            $data[$x]['Booking Date'] = '';
+//                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
+//                            $data[$x]['INV GL Code'] = '';
+//                            $data[$x]['INV GL Description'] = '';
+//                            $data[$x]['INV Department'] = '';
                         }
                     }
                 }
