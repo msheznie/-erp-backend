@@ -4115,7 +4115,7 @@ ORDER BY
                                         WHERE
                                             erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
                                         AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
-                                ) AS POPaymentDetails GROUP BY PayMasterAutoId');
+                                ) AS POPaymentDetails');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
