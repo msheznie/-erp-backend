@@ -138,6 +138,10 @@ class MobileMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $employee = Employee::find($input['employeeSystemID']);
+        $input['empID'] = $employee->empID;
+        $input['assignDate'] = date('Y-m-d');
+
         $isEmployeeExist = MobileMaster::where('isActive',-1)->where('employeeSystemID',$input['employeeSystemID'])
             ->when((isset($input['mobilemasterID']) && $input['mobilemasterID']), function ($q) use($input){
                 $q->where('mobilemasterID','!=',$input['mobilemasterID']);
