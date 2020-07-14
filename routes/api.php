@@ -1777,6 +1777,15 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllMobileMaster', 'MobileMasterAPIController@getAllMobileMaster');
         Route::get('getMobileMasterFormData', 'MobileMasterAPIController@getMobileMasterFormData');
 
+        Route::resource('mobile_bill_masters', 'MobileBillMasterAPIController');
+        Route::post('getAllMobileBill', 'MobileBillMasterAPIController@getAllMobileBill');
+        Route::get('getMobileBillFormData', 'MobileBillMasterAPIController@getMobileBillFormData');
+
+        Route::resource('mobile_bill_summaries', 'MobileBillSummaryAPIController');
+        Route::post('importMobileBillDocument', 'MobileBillSummaryAPIController@importMobileBillDocument');
+
+        Route::resource('mobile_details', 'MobileDetailAPIController');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1827,6 +1836,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
 
 
 
