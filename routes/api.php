@@ -621,7 +621,6 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
         Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
         Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-        Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
 
 
         Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');

@@ -44,7 +44,6 @@ class ApprovalGroups extends Model
 
     protected $primaryKey = 'rightsGroupId';
 
-
     public $fillable = [
         'rightsGroupDes',
         'isFormsAssigned',

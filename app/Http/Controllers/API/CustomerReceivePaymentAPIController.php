@@ -164,11 +164,19 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID'));
 
+        $input['documentType'] = isset($input['documentType']) ? $input['documentType']: 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID']: 0;
+
         if ($input['documentType'] == 13 && $input['customerID'] == '') {
             return $this->sendError("Customer is required", 500);
         }
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        $company = Company::where('companySystemID', $input['companySystemID'])
+                           ->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {

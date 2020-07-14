@@ -134,7 +134,7 @@ class EmployeesDepartment extends Model
     public static $rules = [
         
     ];
-
+    
     public function employee(){
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
     }

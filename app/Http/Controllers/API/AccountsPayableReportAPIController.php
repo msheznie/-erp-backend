@@ -1920,7 +1920,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
-        $currency = $request->currencyID;
+        $currency = isset($request->currencyID) ? $request->currencyID : 3;
 
         if (isset($request->suppliers)) {
             $suppliers = $request->suppliers;

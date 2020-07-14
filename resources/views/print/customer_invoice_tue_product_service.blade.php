@@ -291,8 +291,8 @@
                 <thead>
                 <tr style="background-color: #6798da;">
                     <th style="width:5%;">Item<br>رقم المنتج</th>
-                    <th style="width:20%; text-align: center">Part Number<br>الوصف</th>
-                    <th style="width:20%;text-align: center">Item Code<br>رمز الصنف</th>
+                    <th style="width:20%; text-align: center">Our Reference<br>المرجع</th>
+                    <th style="width:20%;text-align: center">Client Reference<br>مرجع العميل</th>
                     <th style="width:30%;text-align: center">Item Description<br>وصف السلعة</th>
                     <th style="width:5%;text-align: center">QTY<br>الكمية</th>
                     <th style="width:10%;text-align: center">Unit Rate<br> سعر الوحده</th>
