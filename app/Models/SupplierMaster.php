@@ -320,4 +320,13 @@ class SupplierMaster extends Model
 
     }
 
+     public function liablity_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'liabilityAccountSysemID', 'chartOfAccountSystemID');
+    }
+
+     public function unbilled_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'UnbilledGRVAccountSystemID', 'chartOfAccountSystemID');
+    }
 }

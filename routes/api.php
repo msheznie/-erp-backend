@@ -1786,6 +1786,11 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('mobile_details', 'MobileDetailAPIController');
 
+        Route::resource('quotation_status_masters', 'QuotationStatusMasterAPIController');
+
+        Route::resource('quotation_statuses', 'QuotationStatusAPIController');
+        Route::get('getQuotationStatus', 'QuotationStatusAPIController@getQuotationStatus');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1836,6 +1841,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
 
 
 

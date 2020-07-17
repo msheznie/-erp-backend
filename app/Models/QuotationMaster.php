@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use App\Models\QuotationStatus;
 
 /**
  * @SWG\Definition(
@@ -383,6 +384,8 @@ class QuotationMaster extends Model
 
     protected $primaryKey = 'quotationMasterID';
 
+    protected $appends = ['quotation_last_status'];
+
     public $fillable = [
         'documentSystemID',
         'documentID',
@@ -556,6 +559,10 @@ class QuotationMaster extends Model
     public static $rules = [
         
     ];
+
+    public function getQuotationLastStatusAttribute(){
+        return QuotationStatus::getLastStatus($this->quotationMasterID);
+    }
 
     public function company()
     {
