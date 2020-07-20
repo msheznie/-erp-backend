@@ -208,6 +208,7 @@ class CustomerInvoiceDirectDetRefferedback extends Model
     public $fillable = [
         'custInvDirDetAutoID',
         'custInvoiceDirectID',
+        'companySystemID',
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -250,6 +251,7 @@ class CustomerInvoiceDirectDetRefferedback extends Model
         'custInvDirDetAutoID' => 'integer',
         'custInvoiceDirectID' => 'integer',
         'companyID' => 'string',
+        'companySystemID' => 'integer',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'customerID' => 'integer',

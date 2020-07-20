@@ -184,6 +184,7 @@ class CustomerInvoiceDirectDetail extends Model
     public $fillable = [
         'custInvoiceDirectID',
         'companyID',
+        'companySystemID',
         'serviceLineCode',
         'customerID',
         'glCode',
@@ -223,6 +224,7 @@ class CustomerInvoiceDirectDetail extends Model
     protected $casts = [
         'custInvDirDetAutoID' => 'integer',
         'custInvoiceDirectID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
         'customerID' => 'integer',
