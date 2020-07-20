@@ -128,14 +128,22 @@ class MobileMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input,array('employeeSystemID','mobileNoPoolID','isActive'));
         $input = array_except($input,['employee']);
         $validator = \Validator::make($input, [
-            'employeeSystemID' => 'required',
-            'mobileNoPoolID' => 'required',
+            'employeeSystemID' => 'required|min:1',
+            'mobileNoPoolID' => 'required|min:1',
             'creditlimit' => 'required',
             'isActive' => 'required'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        if($input['mobileNoPoolID'] == 0){
+            return $this->sendError('Mobile No not found',500);
+        }
+
+        if($input['employeeSystemID'] == 0){
+            return $this->sendError('Employee not found',500);
         }
 
         $employee = Employee::find($input['employeeSystemID']);
@@ -353,14 +361,14 @@ class MobileMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $mobileMaster = MobileMaster::whereNotNUll('mobileNoPoolID')
-            ->with(['employee']);
+        $mobileMaster = MobileMaster::with(['employee','mobile_no']);
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $mobileMaster = $mobileMaster->where(function ($query) use ($search) {
-                $query->where('mobileNo', 'LIKE', "%{$search}%")
-                ->orWhere('description', 'LIKE', "%{$search}%")
+                $query->whereHas('mobile_no', function ($query) use($search){
+                    $query->where('mobileNo','LIKE', "%{$search}%");
+                })
                 ->orWhereHas('employee', function ($query) use($search){
                     $query->where('empID','LIKE', "%{$search}%")
                         ->orWhere('empName','LIKE', "%{$search}%");
@@ -383,12 +391,9 @@ class MobileMasterAPIController extends AppBaseController
 
     public function getMobileMasterFormData(){
         $employees = Employee::where('discharegedYN','!=',-1)
-//                    ->whereNotIn('employeeSystemID', DB::table('hrms_mobilemaster')->where('isActive',-1)->whereNotNull('employeeSystemID')->pluck('employeeSystemID'))
-                    ->select('employeeSystemID','empName')
                     ->get();
 
         $mobiles = MobileNoPool::select(DB::raw('mobilenopoolID,CAST(mobileNo AS CHAR) AS mobileNumber'))
-//                    ->whereNotIn('mobilenopoolID',DB::table('hrms_mobilemaster')->where('isActive',-1)->whereNotNull('mobilenopoolID')->pluck('mobileNoPoolID'))
                     ->get();
 
         $yesNoSelection = YesNoSelectionForMinus::all();
