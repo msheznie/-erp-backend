@@ -49,7 +49,8 @@ use App\Models\YesNoSelection;
 use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\ChartOfAccount;
-use App\Models\customercurrency;
+use App\Models\CustomerCurrency;
+use App\Models\QuotationStatusMaster;
 use App\Repositories\QuotationMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -249,7 +250,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         }
 
-        $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
+        $customerCurrency = CustomerCurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
         if ($customerCurrency) {
 
             $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
@@ -664,6 +665,8 @@ class QuotationMasterAPIController extends AppBaseController
 
         $month = Months::all();
 
+        $quotationStatuses = QuotationStatusMaster::where('isAdmin', 0)->get();
+
         $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
 
         $output = array(
@@ -672,6 +675,7 @@ class QuotationMasterAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'currencies' => $currencies,
+            'quotationStatuses' => $quotationStatuses,
             'customer' => $customer,
             'salespersons' => $salespersons,
             'segments' => $segments
@@ -1118,7 +1122,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $quotationMasterArray = $quotationMasterData->toArray();
-
+        unset($quotationMasterArray['quotation_last_status']);
         $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
 
         $fetchQuotationDetails = QuotationDetails::where('quotationMasterID', $quotationMasterID)
@@ -1282,6 +1286,4 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
     }
-
-
 }

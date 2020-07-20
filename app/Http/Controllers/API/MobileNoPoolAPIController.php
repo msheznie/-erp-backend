@@ -133,9 +133,13 @@ class MobileNoPoolAPIController extends AppBaseController
         }
 
         if(isset($input['mobilenopoolID']) && $input['mobilenopoolID']){
+            $messages = [
+                'mobileNo.unique' => 'The mobile number is already taken.'
+            ];
+
             $validator = \Validator::make($input, [
                 'mobileNo' => ['required', Rule::unique('hrms_mobilenopool')->ignore($input['mobilenopoolID'], 'mobilenopoolID')]
-            ]);
+            ], $messages);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
@@ -149,9 +153,14 @@ class MobileNoPoolAPIController extends AppBaseController
 
         }else{
 
+            $messages = [
+                'mobileNo.unique' => 'The mobile number is already taken.'
+            ];
+
             $validator = \Validator::make($input, [
                 'mobileNo' => 'required|unique:hrms_mobilenopool'
-            ]);
+            ], $messages);
+            //
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);

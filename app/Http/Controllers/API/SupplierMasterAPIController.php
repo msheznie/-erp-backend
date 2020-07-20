@@ -182,6 +182,8 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['ICV Category'] = ($val->supplierICVCategories!=null && isset($val->supplierICVCategories->categoryDescription))?$val->supplierICVCategories->categoryDescription:'';
             $data[$x]['ICV Sub Category'] = ($val->supplierICVSubCategories!=null && isset($val->supplierICVSubCategories->categoryDescription))?$val->supplierICVSubCategories->categoryDescription:'';
             $data[$x]['Critical Status'] = isset($val->critical->description)?$val->critical->description:'';
+            $data[$x]['Liability Account'] = isset($val->liablity_account) ? $val->liablity_account->AccountCode. '-'. $val->liablity_account->AccountDescription : '';
+            $data[$x]['Un-billed Account'] = isset($val->unbilled_account) ? $val->unbilled_account->AccountCode. '-'. $val->unbilled_account->AccountDescription : '';
             $data[$x]['LCC'] = ($val->isLCCYN==1)?'Yes':'No';
             $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
         }
@@ -249,13 +251,13 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if ($request['type'] == 'all') {
-            $supplierMasters = SupplierMaster::with(['categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierMaster::with(['liablity_account', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }]);
         } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
@@ -265,6 +267,12 @@ class SupplierMasterAPIController extends AppBaseController
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
                 $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+            }
+        }
+
+        if (array_key_exists('liabilityAccountSysemID', $input)) {
+            if ($input['liabilityAccountSysemID'] && !is_null($input['liabilityAccountSysemID'])) {
+                $supplierMasters->where('liabilityAccountSysemID', '=', $input['liabilityAccountSysemID']);
             }
         }
 
