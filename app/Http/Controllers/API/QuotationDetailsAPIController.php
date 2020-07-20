@@ -159,6 +159,11 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['itemReferenceNo'] = $item->secondaryItemCode;
         $input['unitOfMeasureID'] = $item->itemUnitOfMeasure;
         $input['wacValueLocal'] = $item->wacValueLocal;
+
+        if ($quotationMasterData->documentSystemID == 68) {
+            $input['unittransactionAmount'] = round(\Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
+        }
+
         $input['wacValueReporting'] = $item->wacValueReporting;
 
         $unitMasterData = Unit::find($item->itemUnitOfMeasure);

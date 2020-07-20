@@ -782,6 +782,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
                 }
 
+                if ($row['noQty'] > $currentStockQty) {
+                    return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
+                }
+
+                if ($row['noQty'] > $currentWareHouseStockQty) {
+                    return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
+                }
+
 
                 /*pending approval checking*/
                 // check the item pending pending for approval in other delivery orders

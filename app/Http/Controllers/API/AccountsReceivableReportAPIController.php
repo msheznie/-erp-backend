@@ -299,7 +299,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
                     $checkIsGroup = Company::find($request->companySystemID);
+
+                    if (empty($checkIsGroup)) {
+                        return $this->sendError('Company not found');
+                    }
+
                     $customerName = CustomerMaster::find($request->singleCustomer);
+
+                    if (empty($customerName)) {
+                        return $this->sendError('Customer not found');
+                    }
 
                     $output = $this->getCustomerStatementAccountQRY($request);
 
@@ -1622,17 +1631,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $companyLogo = $checkIsGroup->companyLogo;
 
-                    /*$fromDate = new Carbon("2016-03-25T12:00:00Z");
-                    $fromDate = $fromDate->addDays(1);
-                    $request->fromDate = $fromDate->format('Y-m-d');
-
-                    $toDate = new Carbon("2018-03-25T12:00:00Z");
-                    $toDate = $toDate->addDays(1);
-                    $request->toDate = $toDate->format('Y-m-d');*/
-
-                    /*$request->fromDate = date('Y-m-d',strtotime($request->fromDate));
-                    $request->toDate =  date('Y-m-d',strtotime($request->toDate));*/
-
                     $output = $this->getCustomerStatementAccountQRY($request);
 
                     $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -1680,7 +1678,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
                     $companyLogo = $checkIsGroup->companyLogo;
-                    //dd(DB::getQueryLog());
+
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
                     $grandTotal = array_sum($grandTotal);
@@ -1928,14 +1926,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($request['reportID'] == 'CR') {
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->WhereNotNull('customerCodeSystem')->get();
         } else {
-            // $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
-            //     ->select('customerID')
-            //     ->groupBy('customerID')
-            //     ->pluck('customerID');
-
-            // $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
-            // ->whereIN('customerCodeSystem', $filterCustomers)
-            // ->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->get();
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
             ->groupBy('customerCodeSystem')
             ->orderBy('CustomerName', 'ASC')
@@ -1961,11 +1951,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
     function getCustomerStatementAccountQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -2004,8 +1992,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentRptCurrency AS documentCurrency";
         }
-        //DB::enableQueryLog();
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
 	MainQuery.companyID,
 	MainQuery.CompanyName,
 	MainQuery.documentCode,
@@ -2148,8 +2135,6 @@ GROUP BY
 	bookingInvCode 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
-        //dd(DB::getQueryLog());
-        return $output;
     }
 
     function getCustomerBalanceStatementQRY($request)
@@ -2438,7 +2423,6 @@ WHERE
 	) AS final 
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC;');
-        //dd(DB::getQueryLog());
         return $output;
     }
 
@@ -3189,7 +3173,7 @@ WHERE
 	) AS final 
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem,companyID ORDER BY CustomerName');
-        //dd(DB::getQueryLog());
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3197,11 +3181,9 @@ WHERE
     function getCustomerCollectionQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -3355,8 +3337,7 @@ GROUP BY
             $balanceAmountQry = "IFNULL(round( final.balanceRpt, final.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
-        $currencyID = $request->currencyID;
-        $output = \DB::select('SELECT
+        return  \DB::select('SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -3611,8 +3592,6 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
  ORDER BY PostedDate ASC;');
-        //dd(DB::getQueryLog());
-        return $output;
     }
 
     function getCustomerLedgerTemplate2QRY($request)
@@ -3766,7 +3745,7 @@ WHERE
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.supplierCodeSystem) AS CustomerBalanceSummary_Detail ORDER BY CustomerBalanceSummary_Detail.documentDate ASC');
-        //dd(DB::getQueryLog());
+
         return $output;
     }
 
@@ -3787,9 +3766,7 @@ WHERE
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
 
-        $currency = $request->currencyID;
-        // DB::enableQueryLog();
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
                     CustomerBalanceSummary_Detail.companySystemID,
                     CustomerBalanceSummary_Detail.companyID,
                     CustomerBalanceSummary_Detail.CompanyName,
@@ -3838,9 +3815,6 @@ WHERE
                     AS CustomerBalanceSummary_Detail
                     GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem
                     ORDER BY CustomerBalanceSummary_Detail.documentDate ASC;');
-
-        //dd(DB::getQueryLog());
-        return $output;
     }
 
     function getCustomerRevenueMonthlySummary($request)
@@ -4026,7 +4000,6 @@ WHERE
     function getCustomerCollectionMonthlyQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $fromYear = $request->year;
@@ -4044,7 +4017,6 @@ WHERE
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
         $serviceLineSystemID = collect($servicelines)->pluck('serviceLineSystemID')->toArray();
 
-        // array_push($serviceLineSystemID, 24);
 
         $currency = $request->currencyID;
 
@@ -4204,11 +4176,9 @@ GROUP BY
     function getCustomerCollectionCNExcelQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -4298,7 +4268,6 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -4391,11 +4360,9 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
     function getRevenueByCustomer($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -4530,11 +4497,9 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
     function getCustomerSalesRegisterQRY($request, $search = "")
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -4746,7 +4711,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                 bookingInvCode 
                 ) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
                 AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
-        //dd(DB::getQueryLog());
+
         return $output;
     }
 
@@ -5098,7 +5063,6 @@ GROUP BY
     function getCustomerSummaryOutstandingQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -5479,11 +5443,7 @@ GROUP BY
 ORDER BY
 	final.companyID ASC;';
 
-        //echo $query;
-        //exit();
-        $output = \DB::select($query);
-        //dd(DB::getQueryLog());
-        return $output;
+        return \DB::select($query);
     }
 
     function getCustomerSummaryOutstandingUpdatedQRY($request)
@@ -5513,7 +5473,7 @@ ORDER BY
             $currencyClm = "CustomerBalanceSummary_Detail.documentRptAmount";
         }
 
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
 	CustomerBalanceSummary_Summary.companySystemID,
 	CustomerBalanceSummary_Summary.companyID,
 	CustomerBalanceSummary_Summary.CompanyName,
@@ -5673,8 +5633,6 @@ FROM
 GROUP BY
 	CustomerBalanceSummary_Summary.companySystemID,
 	CustomerBalanceSummary_Summary.chartOfAccountSystemID');
-
-        return $output;
     }
 
 
@@ -5705,7 +5663,7 @@ GROUP BY
             $currencyClm = "MyRptAmount";
         }
 
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
 	revenueDataSummary.companyID,
 	revenueDataSummary.CompanyName,
 	revenueDataSummary.DocYEAR,
@@ -5877,19 +5835,15 @@ GROUP BY
 	revenueDataSummary.serviceLineSystemID
 ORDER BY
 	    Total DESC');
-
-        return $output;
     }
 
     // Credit Note Register
     function getCreditNoteRegisterQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -5993,12 +5947,7 @@ AND erp_generalledger.documentSystemID = custReciptMaster.addedDocumentSystemID
 WHERE erp_generalledger.documentSystemID = 19 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
 
-        //echo $qry;
-        //exit();
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return \DB::select($qry);
     }
 
     public function getInvoiceTrackerReportFilterData(Request $request){
@@ -6368,8 +6317,6 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 ) AS AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker ON AR_SubLedger_InvoicesMatchedSum_2_InvoiceTracker.bookingInvCodeSystem = qry_ProformaClientApproval_CustomerInvoices.custInvoiceDirectAutoID 
                 ) AS final".$whereStatus;
 
-        $result = DB::select($sql);
-
-        return $result;
+        return DB::select($sql);
     }
 }

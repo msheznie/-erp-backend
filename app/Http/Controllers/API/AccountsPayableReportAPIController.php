@@ -710,12 +710,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APPSY':
-                $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-
                 $output = $this->getPaymentSuppliersByYear($request);
                 $decimalPlace = 0;
                 $data = array();
@@ -768,7 +764,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $x++;
                             }
                         }
-                    } else if ($reportTypeID == 'APDPY') {
+                    }
+                    else if ($reportTypeID == 'APDPY') {
 
                         if ($reportSD == 'detail') {
                             $x = 0;
@@ -812,10 +809,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $x++;
                             }
                         }
-                    } else if ($reportTypeID == 'APAPY') {
+                    }
+                    else if ($reportTypeID == 'APAPY') {
 
-                        if ($reportSD == 'detail') {
-                        } else {
+                        if ($reportSD != 'detail') {
                             $x = 0;
                             foreach ($output as $val) {
                                 $data[$x]['Company ID'] = $val->companyID;
@@ -838,10 +835,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $x++;
                             }
                         }
-                    } else if ($reportTypeID == 'APLWS') {
-
-                        if ($reportSD == 'detail') {
-                        } else {
+                    }
+                    else if ($reportTypeID == 'APLWS' && $reportSD != 'detail') {
                             $x = 0;
                             foreach ($output as $val) {
 
@@ -883,8 +878,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
                     }
-
-                }
                \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -1379,7 +1372,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'APITP':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $checkIsGroup = Company::find($request->companySystemID);
+
                 $output = $this->getInvoiceToPaymentQry($request);
                 $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $decimalPlaces = 2;
@@ -1466,7 +1459,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
-        $currencyID = $request->currencyID;
 
         $query = 'SELECT
                     finalAgingDetail.companySystemID,
@@ -1671,8 +1663,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
-        $currencyID = $request->currencyID;
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
@@ -1905,8 +1896,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
-        //dd(DB::getQueryLog());
-        return $output;
     }
 
     function getPaymentSuppliersByYear($request)
@@ -2629,8 +2618,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_generalledger.companySystemID,
                         erp_generalledger.supplierCodeSystem;';
 
-        $output = \DB::select($query);
-        return $output;
+        return \DB::select($query);
     }
 
     function getSupplierAgingDetailQRY($request)
@@ -3595,7 +3583,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal;');
-        //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3928,15 +3915,12 @@ class AccountsPayableReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
-        $currency = $request->currencyID;
         $year = $request->year;
         $companyWise = '';
 
         $reportTypeID = $request->reportTypeID;
         if ($reportTypeID == 'TSCW') {
             $companyWise = 'erp_purchaseordermaster.companySystemID,';
-        } else if ($reportTypeID == 'TSC') {
-
         }
 
         $countries = (array)$request->countries;
@@ -3968,10 +3952,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     GROUP BY
                         ' . $companyWise . '
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return \DB::select($qry);
     }
 
     function getUnbilledDetailQRY($request)
@@ -4174,10 +4155,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return \DB::select($qry);
     }
 
     function getUnbilledLogisticsDetailQRY($request)
@@ -4246,10 +4224,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_unbilledgrvgroupby.unbilledgrvAutoID,
                 erp_grvmaster.grvAutoID,
                 erp_grvmaster.companySystemID;';
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return  \DB::select($qry);
     }
 
 
@@ -4265,7 +4240,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
         $localOrForeign = $request->localOrForeign;
-        $reportTypeID = $request->reportTypeID;
         $currencyID = $request->currencyID;
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->format('Y-m-d');
@@ -4458,10 +4432,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup . ') as agingFinal';
-        $output = \DB::select($qry);
-
-        return $output;
-
+        return \DB::select($qry);
     }
 
 
@@ -5074,7 +5045,7 @@ ORDER BY
         }
 
 
-        $output = \DB::select('SELECT
+        return \DB::select('SELECT
 	erp_generalledger.documentCode,
 	suppliermaster.supplierName,
 	erp_bookinvsuppmaster.supplierInvoiceNo,
@@ -5117,40 +5088,38 @@ WHERE
 	AND erp_paysupplierinvoicemaster.cancelYN = 0 
 	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
 	AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
-GROUP BY
-	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicemaster.PayMasterAutoId 
-	UNION ALL
-SELECT
-	erp_matchdocumentmaster.matchDocumentMasterAutoID,
-	erp_matchdocumentmaster.matchingDocCode,
-	erp_paysupplierinvoicedetail.addedDocumentSystemID,
-	erp_paysupplierinvoicedetail.bookingInvSystemCode,
-	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS paidLocalAmount,
-	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS paidRPTAmount 
-FROM
-	erp_paysupplierinvoicedetail
-	INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID 
-WHERE
-	erp_paysupplierinvoicedetail.matchingDocID > 0 
-	AND erp_matchdocumentmaster.matchingConfirmedYN = 1 
-	AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
-	AND erp_matchdocumentmaster.companySystemID IN (' . join(',', $companyID) . ')
-	AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
-GROUP BY
-	erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_matchdocumentmaster.matchDocumentMasterAutoID 
-	) AS paymentinfor ON paymentinfor.addedDocumentSystemID = erp_generalledger.documentSystemID 
-	AND paymentinfor.bookingInvSystemCode = erp_generalledger.documentSystemCode
-	LEFT JOIN erp_paysupplierinvoicemaster ON paymentinfor.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
-	LEFT JOIN erp_bankledger ON erp_bankledger.documentSystemID = erp_paysupplierinvoicemaster.documentSystemID 
-	AND erp_bankledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId 
-WHERE
-	erp_generalledger.documentSystemID = 11 
-	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
-	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-ORDER BY
-	erp_generalledger.documentDate ASC');
-        return $output;
-
+                            GROUP BY
+                                erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_paysupplierinvoicemaster.PayMasterAutoId 
+                                UNION ALL
+                            SELECT
+                                erp_matchdocumentmaster.matchDocumentMasterAutoID,
+                                erp_matchdocumentmaster.matchingDocCode,
+                                erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                                erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                                sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS paidLocalAmount,
+                                sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS paidRPTAmount 
+                            FROM
+                                erp_paysupplierinvoicedetail
+                                INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID 
+                            WHERE
+                                erp_paysupplierinvoicedetail.matchingDocID > 0 
+                                AND erp_matchdocumentmaster.matchingConfirmedYN = 1 
+                                AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 
+                                AND erp_matchdocumentmaster.companySystemID IN (' . join(',', $companyID) . ')
+                                AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+                            GROUP BY
+                                erp_paysupplierinvoicedetail.bookingInvSystemCode,erp_matchdocumentmaster.matchDocumentMasterAutoID 
+                                ) AS paymentinfor ON paymentinfor.addedDocumentSystemID = erp_generalledger.documentSystemID 
+                                AND paymentinfor.bookingInvSystemCode = erp_generalledger.documentSystemCode
+                                LEFT JOIN erp_paysupplierinvoicemaster ON paymentinfor.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+                                LEFT JOIN erp_bankledger ON erp_bankledger.documentSystemID = erp_paysupplierinvoicemaster.documentSystemID 
+                                AND erp_bankledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId 
+                            WHERE
+                                erp_generalledger.documentSystemID = 11 
+                                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+                            ORDER BY
+                                erp_generalledger.documentDate ASC');
     }
 }
