@@ -406,4 +406,44 @@ class MobileBillSummaryAPIController extends AppBaseController
 
         return $this->sendError('Unable to upload', 500);
     }
+
+    public function getAllMobileBillSummaries(Request $request){
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $mobileMaster = MobileBillSummary::where('mobileMasterID',$id)->with(['mobile_pool.mobile_master.employee']);
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $mobileMaster = $mobileMaster->where(function ($query) use ($search) {
+                $query->where('mobileNumber', 'LIKE', "%{$search}%")
+                    ->orWhereHas('mobile_pool', function ($query) use ($search){
+                        $query->whereHas('mobile_master', function ($q) use ($search){
+                            $q->whereHas('employee', function ($q1) use ($search){
+                                $q1->where('empID', 'LIKE', "%{$search}%")
+                                    ->orWhere('empName', 'LIKE', "%{$search}%");
+                            });
+                        });
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($mobileMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('mobileBillSummaryID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }

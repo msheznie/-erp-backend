@@ -1,5 +1,13 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : MobileDetail.php
+ * -- Project Name : ERP
+ * -- Module Name : Mobile Bill Management
+ * -- Author : Mohamed Rilwan
+ * -- Create date : 12- July 2020
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -180,7 +188,7 @@ class MobileDetail extends Model
 
     public $table = 'hrms_mobiledetail';
     
-    const CREATED_AT = 'timestamp';
+    const CREATED_AT = 'createDate';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey  = 'mobileDetailID';
