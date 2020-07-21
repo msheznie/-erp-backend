@@ -269,6 +269,10 @@ class MaterielRequestAPIController extends AppBaseController
             $materielRequests = [];
         }
 
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+
         return \DataTables::of($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
