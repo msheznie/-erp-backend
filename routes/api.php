@@ -1790,6 +1790,17 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('quotation_statuses', 'QuotationStatusAPIController');
         Route::get('getQuotationStatus', 'QuotationStatusAPIController@getQuotationStatus');
+        Route::post('mobileSummaryDetailDelete', 'MobileBillMasterAPIController@mobileSummaryDetailDelete');
+
+        Route::resource('employee_mobile_bill_masters', 'EmployeeMobileBillMasterAPIController');
+        Route::post('generateEmployeeBill', 'EmployeeMobileBillMasterAPIController@generateEmployeeBill');
+
+        Route::post('getAllMobileBillSummaries', 'MobileBillSummaryAPIController@getAllMobileBillSummaries');
+        Route::post('getAllMobileBillDetail', 'MobileDetailAPIController@getAllMobileBillDetail');
+        Route::post('getAllEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@getAllEmployeeMobileBill');
+
+        Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+        Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
 
     });
 
@@ -1812,8 +1823,6 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
     Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
-    Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
-    Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
     Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
@@ -1833,8 +1842,6 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
 
 
-    Route::post('validateICReport', 'FinancialReportAPIController@validateICReport');
-    Route::post('generateICReport', 'FinancialReportAPIController@generateICReport');
 });
 
 

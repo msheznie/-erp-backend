@@ -144,6 +144,6 @@ class MobileNoPool extends Model
 
     public function mobile_master()
     {
-        return $this->hasOne('App\Models\MobileMaster', 'mobileNoPoolID','mobilenopoolID');
+        return $this->hasOne('App\Models\MobileMaster', 'mobileNo','mobileNo');
     }
 }

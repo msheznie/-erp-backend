@@ -13,14 +13,20 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateMobileBillMasterAPIRequest;
 use App\Http\Requests\API\UpdateMobileBillMasterAPIRequest;
+use App\Models\EmployeeMobileBillMaster;
 use App\Models\MobileBillMaster;
+use App\Models\MobileBillSummary;
+use App\Models\MobileDetail;
 use App\Models\PeriodMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\MobileBillMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -122,10 +128,15 @@ class MobileBillMasterAPIController extends AppBaseController
     public function store(CreateMobileBillMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        $messages = [
+            'billPeriod.unique' => 'The Bill period is already taken.'
+        ];
+
         $validator = \Validator::make($input, [
-            'billPeriod' => 'required',
+            'billPeriod' => 'required|unique:hrms_mobilebillmaster',
             'Description' => 'required'
-        ]);
+        ], $messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -143,6 +154,11 @@ class MobileBillMasterAPIController extends AppBaseController
         $input['mobilebillmasterCode'] = ('HR/' .$input['documentID']. str_pad($lastSerialNumber, 5, '0', STR_PAD_LEFT));
 
         $input['serialNo'] = $lastSerialNumber;
+
+        $employee = Helper::getEmployeeInfo();
+        $input['createUserID'] = $employee->empID;
+        $input['createPCID'] = gethostname();
+
         $mobileBillMaster = $this->mobileBillMasterRepository->create($input);
 
         return $this->sendResponse($mobileBillMaster->toArray(), 'Mobile Bill Master saved successfully');
@@ -189,9 +205,14 @@ class MobileBillMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var MobileBillMaster $mobileBillMaster */
-        $mobileBillMaster = $this->mobileBillMasterRepository->with(['confirmed_by','approved_by','summary'=> function($query){
+
+        $mobileBillMaster = $this->mobileBillMasterRepository->with(['confirmed_by','approved_by','summary' => function($query){
             $query->with(['mobile_pool.mobile_master.employee']);
-        },'detail'])->findWithoutFail($id);
+        },'detail' => function($query){
+            $query->with(['mobile_pool.mobile_master.employee']);
+        },'employee_mobile' => function($query){
+            $query->with(['mobile_pool.mobile_master.employee']);
+        }])->findWithoutFail($id);
 
         if (empty($mobileBillMaster)) {
             return $this->sendError('Mobile Bill Master not found');
@@ -249,13 +270,57 @@ class MobileBillMasterAPIController extends AppBaseController
     public function update($id, UpdateMobileBillMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input,['detail','employee_mobile','summary','confirmed_by']);
+        $input = $this->convertArrayToValue($input);
+        $messages = [
+            'billPeriod.unique' => 'The Bill period is already taken.'
+        ];
 
+        $validator = \Validator::make($input, [
+            'billPeriod' => ['required', Rule::unique('hrms_mobilebillmaster')->ignore($id, 'mobilebillMasterID')],
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+        $employee = Helper::getEmployeeInfo();
         /** @var MobileBillMaster $mobileBillMaster */
         $mobileBillMaster = $this->mobileBillMasterRepository->findWithoutFail($id);
 
         if (empty($mobileBillMaster)) {
             return $this->sendError('Mobile Bill Master not found');
         }
+
+        if(isset($input['confirmedYN']) && $input['confirmedYN'] == 1){
+
+            // check mobile summary exists
+            $isSummaryExists = MobileBillSummary::where('mobileMasterID',$id)->exists();
+            if(!$isSummaryExists){
+                return $this->sendError('You cannot confirm this Mobile bill. Mobile bill summary not found');
+            }
+
+            // check mobile detail exists
+            $isDetailExists = MobileDetail::where('mobilebillMasterID',$id)->exists();
+            if(!$isDetailExists){
+                return $this->sendError('You cannot confirm this Mobile bill. Mobile bill details not found');
+            }
+
+            // check employee mobile bill exists
+            $isEmpBillExists = EmployeeMobileBillMaster::where('mobilebillMasterID',$id)->exists();
+            if(!$isEmpBillExists){
+                return $this->sendError('You cannot confirm this Mobile bill. Employee mobile bill is not generated');
+            }
+
+            $input['confirmedDate'] = Carbon::now();
+            $input['confirmedByEmployeeSystemID'] = $employee->employeeSystemID;
+            $input['confirmedby'] = $employee->empID;
+        }
+
+        $input['modifiedpc'] = gethostname();
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $input['modifiedUser'] = $employee->empID;
 
         $mobileBillMaster = $this->mobileBillMasterRepository->update($input, $id);
 
@@ -359,5 +424,39 @@ class MobileBillMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
 
     }
+
+    public function mobileSummaryDetailDelete(Request $request){
+        $input = $request->all();
+
+        if(!(isset($input['mobilebillMasterID']) && $input['mobilebillMasterID']>0)){
+            return $this->sendError('Mobile Bill Master ID not found');
+        }
+
+        $isExists = EmployeeMobileBillMaster::where('mobilebillMasterID',$input['mobilebillMasterID'])->exists();
+
+        if($input['type'] == 'summary'){
+
+            if($isExists){
+                return $this->sendError('You cannot delete. Employee mobile bill is already generated');
+            }
+
+            $isDelete = MobileBillSummary::where('mobileMasterID',$input['mobilebillMasterID'])->delete();
+        }elseif ($input['type'] == 'detail'){
+            if($isExists){
+                return $this->sendError('You cannot delete. Employee mobile bill is already generated');
+            }
+            $isDelete = MobileDetail::where('mobilebillMasterID',$input['mobilebillMasterID'])->delete();
+        }else{
+            $isDelete = EmployeeMobileBillMaster::where('mobilebillMasterID',$input['mobilebillMasterID'])->delete();
+        }
+
+        if($isDelete) {
+            return $this->sendResponse([],'Successfully Deleted');
+        }else{
+            return $this->sendError('Error Occur',500);
+        }
+    }
+
+
 
 }
