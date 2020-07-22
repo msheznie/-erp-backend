@@ -4414,7 +4414,7 @@ GROUP BY
                                       ->where('companySystemID', $input['companySystemID'])
                                       ->whereDate('documentDate','<=', $toDate)
                                       ->groupBy('companySystemID', 'documentSystemCode')
-                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0')
+                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
                                       ->get();
 
         $respondData = [
