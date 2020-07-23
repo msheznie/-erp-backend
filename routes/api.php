@@ -1805,6 +1805,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('validateMobileReport', 'MobileBillMasterAPIController@validateMobileReport');
         Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
         Route::post('exportMobileReport', 'MobileBillMasterAPIController@exportMobileReport');
+        Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView');
 
     });
 
