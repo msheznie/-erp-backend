@@ -126,7 +126,7 @@ class MobileMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input,array('employeeSystemID','mobileNoPoolID','isActive'));
-        $input = array_except($input,['employee']);
+        $input = array_except($input,['employee','mobile_no']);
         $validator = \Validator::make($input, [
             'employeeSystemID' => 'required|min:1',
             'mobileNoPoolID' => 'required|min:1',

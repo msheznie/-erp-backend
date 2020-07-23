@@ -26,6 +26,7 @@ use App\Repositories\MobileBillMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -456,6 +457,175 @@ class MobileBillMasterAPIController extends AppBaseController
             return $this->sendError('Error Occur',500);
         }
     }
+
+    public function validateMobileReport(Request $request){
+        $input = $request->all();
+        $masterIDs = [];
+        $periodIDs = [];
+
+        if (array_key_exists('billMaster', $input)) {
+            $masterID = (array)$input['billMaster'];
+            $masterIDs = collect($masterID)->pluck('mobilebillMasterID');
+
+            $periodIDs = MobileBillMaster::select('billPeriod')->whereIn('mobilebillMasterID',$masterIDs)->get()->pluck('billPeriod');
+
+        }else{
+            return $this->sendError('Please select at least one bill',500);
+        }
+
+
+        if(count($periodIDs)){
+
+            $periods = PeriodMaster::whereIn('periodMasterID',$periodIDs)->orderBy('periodMasterID')->get();
+            $years = array_unique(collect($periods)->pluck('periodYear')->toArray());
+            if(count($years)>1){
+                return $this->sendError('Different years of bills found',500);
+            }
+
+        }
+
+        return $this->sendResponse([],'success');
+
+    }
+
+    public function getMobileBillReport(Request $request){
+        $input = $request->all();
+
+        $result = $this->getMobileBillReportQuery($input);
+
+        return \DataTables::of($result['output'])
+            ->addIndexColumn()
+            ->with('period',$result['period'])
+            ->make(true);
+    }
+
+    public function getMobileReportFormData(Request $request) {
+
+        $output['billMasters'] = MobileBillMaster::where('confirmedYN',1)
+            ->join('hrms_periodmaster','hrms_mobilebillmaster.billPeriod','=','hrms_periodmaster.periodMasterID')
+            ->select(DB::raw("mobilebillMasterID,CONCAT(mobilebillmasterCode,' - ',periodMonth,' - ',periodYear) as label,billPeriod"))
+            ->orderBy('mobilebillMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($output,'Successfully Retrieved');
+    }
+
+    public function exportMobileReport(Request $request){
+        $input = $request->all();
+        $type = isset($input['type'])?$input['type']:'csv';
+        $result = $this->getMobileBillReportQuery($input);
+
+        if (!empty($result['output'])) {
+            $x = 0;
+            $data = [];
+            foreach ($result['output'] as $val) {
+                $x++;
+
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Employee'] = $val->empID.' - '.isset($val->employee->empName)?$val->employee->empName:'';
+                $data[$x]['Employee Email'] = isset($val->employee->empEmail)?$val->employee->empEmail:'';
+                $data[$x]['Department Description'] = isset($val->employee->details->hrmsDepartmentMaster->DepartmentDescription)?$val->employee->details->hrmsDepartmentMaster->DepartmentDescription:'';
+                $data[$x]['Segment Code'] = isset($val->employee->details->hrmsDepartmentMaster->ServiceLineCode)?$val->employee->details->hrmsDepartmentMaster->ServiceLineCode:'';
+                $data[$x]['Mobile No'] = $val->mobileNo;
+                $data[$x]['Credit Limit'] = round($val->climit,3);
+                $data[$x]['Total Amount'] = round($val->totalAmount,3);
+                $data[$x]['Exceeded Amount'] = round($val->exceededAmount,3);
+                $data[$x]['Deduction Amount'] = round($val->deductionAmount,3);
+                $data[$x]['Official Amount'] = round($val->officialAmount,3);
+                $data[$x]['GPRS PayG'] = round($val->GPRSPayG,3);
+                $data[$x]['GPRS PKG'] = round($val->GPRSPKG,3);
+                $data[$x]['Final Deduction Amount'] = round($val->FinalDeductionAmount,3);
+
+            }
+
+            \Excel::create('mobile_report', function ($excel) use ($data) {
+                $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    $sheet->fromArray($data, null, 'A1', true);
+                    $sheet->setAutoSize(true);
+                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                });
+                $lastrow = $excel->getActiveSheet()->getHighestRow();
+                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
+            })->download($type);
+
+            return $this->sendResponse(array(), 'successfully export');
+        }
+        return $this->sendError( 'No Records Found');
+    }
+
+    private function getMobileBillReportQuery($input){
+
+        $masterIDs = [];
+        $periodIDs = [];
+        $str = '';
+        if (array_key_exists('billMasters', $input)) {
+            $masterID = (array)$input['billMasters'];
+            $masterIDs = collect($masterID)->pluck('mobilebillMasterID');
+
+            $periodIDs = MobileBillMaster::select('billPeriod')->whereIn('mobilebillMasterID',$masterIDs)->get()->pluck('billPeriod');
+
+        }
+
+
+        if(count($periodIDs)){
+
+            $periods = PeriodMaster::whereIn('periodMasterID',$periodIDs)->orderBy('periodMasterID')->get();
+            $years = array_unique(collect($periods)->pluck('periodYear')->toArray());
+
+            $periodArray = [];
+            if(!empty($periods)){
+                foreach ($periods as $row){
+                    $periodArray[$row->periodYear][] = $row->periodMonth;
+                }
+            }
+
+            $stringArray = [];
+            foreach ($years as $year){
+                $stringArray[]= $year. ' ['. implode(', ', $periodArray[$year]).' ]';
+
+            }
+
+            if(count($stringArray)){
+                $str .= implode(', ', $stringArray);
+            }
+
+        }
+
+
+        $result['period'] = $str;
+        $result['output'] = EmployeeMobileBillMaster::whereIn('mobilebillMasterID',$masterIDs)
+            ->join('hrms_mobilebillsummary', function ($join){
+                $join->on('hrms_employeemobilebillmaster.mobileNo','=','hrms_mobilebillsummary.mobileNumber')
+                    ->on('hrms_employeemobilebillmaster.mobilebillMasterID', '=', 'hrms_mobilebillsummary.mobileMasterID');
+            })
+//            ->select(DB::raw('mobilebillMasterID,employeeSystemID,mobileNo,companyID,empID, sum(totalAmount) as totalAmount, sum(deductionAmount) as deductionAmount,sum(exceededAmount) as exceededAmount,sum(officialAmount) as officialAmount,creditLimit * 3 AS crLimit, sum(creditLimit) as sumCreditLimit, sum(GPRSPayG) as GPRSPayG, sum(GPRSPKG) as GPRSPKG, sum(totalCurrentCharges) as totalCurrentCharges, IF(totalAmount < creditLimit,0, IF(officialAmount = 0 AND creditLimit > totalAmount,0,IF(officialAmount = 0 AND creditLimit < totalAmount,totalAmount - creditLimit,IF(officialAmount > deductionAmount,0,IF(deductionAmount > officialAmount,deductionAmount - officialAmount, 0))))) AS FinalDeductionAmount'))
+            ->select(DB::raw('mobilebillMasterID,employeeSystemID,mobileNo,companyID,empID, sum(totalAmount) as totalAmount, sum(deductionAmount) as deductionAmount,sum(exceededAmount) as exceededAmount,sum(officialAmount) as officialAmount, creditLimit * 3 as climit, sum(creditLimit) as sumCreditLimit, sum(GPRSPayG) as GPRSPayG, sum(GPRSPKG) as GPRSPKG, sum(totalCurrentCharges) as totalCurrentCharges, IF(sum(totalAmount) < (creditLimit * 3),0, IF(sum(officialAmount) = 0 AND (creditLimit * 3) > sum(totalAmount),0,IF(sum(officialAmount) = 0 AND (creditLimit * 3) < sum(totalAmount),sum(totalAmount) - (creditLimit * 3),IF(sum(officialAmount) > sum(deductionAmount),0,IF(sum(deductionAmount) > sum(officialAmount),sum(deductionAmount) - sum(officialAmount), 0))))) AS FinalDeductionAmount'))
+            ->whereHas('mobile_pool', function ($query){
+                $query->whereHas('mobile_master', function ($q){
+                    $q->where('isInternetSim',0);
+                });
+            })
+            ->whereHas('employee', function ($query){
+                $query->whereHas('details', function ($q1){
+                    $q1->where('employeestatus','!=',2);
+                });
+            })
+            ->with(['employee'=> function($query){
+                $query->select('employeeSystemID','empName','empEmail')
+                    ->with(['details'=> function($q1){
+                        $q1->select('employeeSystemID','departmentID')
+                            ->with(['hrmsDepartmentMaster'=> function($q2){
+                                $q2->select('DepartmentID','DepartmentDescription','ServiceLineCode');
+                            }]);
+                    }]);
+            }])
+            ->groupBy('companyID','employeeSystemID','mobileNo')
+            ->orderBy('FinalDeductionAmount','DESC')
+            ->get();
+
+        return $result;
+    }
+
 
 
 

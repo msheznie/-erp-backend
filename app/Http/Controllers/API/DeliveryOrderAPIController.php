@@ -1276,5 +1276,26 @@ WHERE
         return $this->sendResponse($doData->toArray(), 'Delivery Order Amend successfully');
     }
 
+    public function getInvoiceDetailsForDeliveryOrderPrintView(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        /** @var CustomerInvoiceDirect $customerInvoiceDirect */
+        $customerInvoiceDirect = CustomerInvoiceDirect::with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','report_currency', 'local_currency', 'approved_by' => function ($query) {
+            $query->with('employee.details.designation')
+                ->where('documentSystemID', 20);
+        },
+            'issue_item_details' => function ($query) {
+                $query->with(['uom_default', 'uom_issuing']);
+            }
+        ])->find($id);
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        } else {
+            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
+        }
+    }
+
 
 }
