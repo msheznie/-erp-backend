@@ -1801,6 +1801,11 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
         Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
+        Route::post('getMobileBillReport', 'MobileBillMasterAPIController@getMobileBillReport');
+        Route::post('validateMobileReport', 'MobileBillMasterAPIController@validateMobileReport');
+        Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
+        Route::post('exportMobileReport', 'MobileBillMasterAPIController@exportMobileReport');
+        Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView');
 
         Route::resource('custom_report_types', 'CustomReportTypeAPIController');
         Route::resource('custom_report_masters', 'CustomReportMasterAPIController');
