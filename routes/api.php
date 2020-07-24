@@ -1812,6 +1812,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('custom_report_columns', 'CustomReportColumnsAPIController');
         Route::resource('custom_user_reports', 'CustomUserReportsAPIController');
         Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
+        Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
         Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
     });
 
