@@ -25,48 +25,59 @@ class AuthAPIController extends PassportAccessTokenController
         $user = User::where('email',$request2->username)->first();
         if($user){
             $employees = Employee::find($user->employee_id);
+
+            if(empty($employees)){
+                return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+            }
+
+            if($employees->discharegedYN){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+            }
+
+            if(!$employees->ActivationFlag){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+            }
+
             if($employees->isLock == 4){
                 return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
             }
         }
         try {
-            /*//check if user has reached the max number of login attempts
-            if ($this->hasTooManyLoginAttempts($request2))
-            {
-                $this->fireLockoutEvent($request2);
-                return "To many attempts...";
-            }
-            //verify user credentials
-            $credentials = ['email' => $request2->username, 'password' => $request2->password];
-            if (Auth::attempt($credentials)) {
-                //reset failed login attemps
-                $this->clearLoginAttempts($request2);
-            }*/
-
             $response = $this->server->respondToAccessTokenRequest($request, new Psr7Response);
             if($response){
                 $user = User::where('email',$request2->username)->first();
                 if($user){
-                    $employees = Employee::find($user->employee_id)->update(['isLock' => 0]);
+                    Employee::find($user->employee_id)->update(['isLock' => 0]);
                 }
             }
             return $response;
         } catch (OAuthServerException $exception) {
-            //$this->incrementLoginAttempts($request2);
             $user = User::where('email',$request2->username)->first();
             if($user){
-                $employees = Employee::find($user->employee_id)->increment('isLock');
+                $employees = Employee::find($user->employee_id);
+
+                if(empty($employees)){
+                    return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+                }
+
+                if($employees->discharegedYN){
+                    return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+                }
+
+                if(!$employees->ActivationFlag){
+                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                }
+
+                 Employee::find($user->employee_id)->increment('isLock');
             }
             return $this->withErrorHandling(function () use($exception,$user) {
 
                 if($user) {
                     $employees = Employee::find($user->employee_id);
                     $totalAttempt = 4 - $employees->isLock;
-                    //throw $exception;
                     if ($totalAttempt == 0) {
                         return Response::json(ResponseUtil::makeError('Your account is blocked', array('type' => '')), 401);
                     } else {
-                        //throw new OAuthServerException('Invalid username or password. You have ' . $totalAttempt . ' more attempt', 6, 'error', 401);
                         return response(["message" => 'Invalid username or password. You have ' . $totalAttempt . ' more attempt'], 401);
                     }
                 }else{
@@ -95,14 +106,27 @@ class AuthAPIController extends PassportAccessTokenController
 
         if($user){
             $employees = Employee::find($user->employee_id);
-            if(!empty($employees) && $employees->isLock == 4){
+
+            if(empty($employees)){
+                return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+            }
+
+            if($employees->discharegedYN){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+            }
+
+            if(!$employees->ActivationFlag){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+            }
+
+            if($employees->isLock == 4){
                 return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
             }
         }
         try {
             $user->login_token = null;
             $user->save();
-            return $token = $user->createToken('personal');
+            return  $user->createToken('personal');
         } catch (OAuthServerException $exception) {
             return $this->withErrorHandling(function () use($exception) {
                 return response(["message" => 'Error'], 401);
