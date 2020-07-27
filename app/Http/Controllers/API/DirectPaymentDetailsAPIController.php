@@ -689,9 +689,6 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $conversion = $conversion->conversion;
 
             $bankAmount = 0;
-            /*if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
-                $bankAmount = $directPaymentDetails->DPAmount;*/
-
             if ($request->toBankCurrencyID == $directPaymentDetails->localCurrency) {
                 $bankAmount = $directPaymentDetails->localAmount;
             } else if($request->toBankCurrencyID == $directPaymentDetails->comRptCurrency){

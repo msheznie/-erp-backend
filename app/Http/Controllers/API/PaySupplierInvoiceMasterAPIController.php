@@ -804,6 +804,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $finalError = array(
                         'required_serviceLine' => array(),
                         'active_serviceLine' => array(),
+                        'to_bank_amount_zero' => array(),
                     );
 
                     $error_count = 0;
@@ -832,6 +833,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $chartofAccount = ChartOfAccount::where('interCompanySystemID', $paySupplierInvoiceMaster->companySystemID)->get();
                             if (count($chartofAccount) == 0) {
                                 return $this->sendError("There is no inter company GL code created for " . $paySupplierInvoiceMaster->companyID, 500, ['type' => 'confirm']);
+                            }
+
+                            if(!$item->toBankAmount){
+                                array_push($finalError['to_bank_amount_zero'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
                             }
                         }
                     }
@@ -1247,7 +1253,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
     public function getPaymentVoucherFormData(Request $request)
     {
-        $companyId = $request['companyId'];
+        $companyId = isset($request['companyId']) ? $request['companyId'] : 0;
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -1257,69 +1263,78 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $subCompanies = [$companyId];
         }
 
-        $supplier = SupplierAssigned::whereIn("companySystemID", $subCompanies);
-        if (isset($request['type']) && $request['type'] != 'filter') {
-            $supplier = $supplier->where('isActive', 1);
-        }
-        $supplier = $supplier->get();
-
-        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
-        /** Yes and No Selection */
-        $yesNoSelection = YesNoSelection::all();
-
-        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
-
-        $month = Months::all();
         $currency = CurrencyMaster::all();
+        $bank     = BankAssign::where('companySystemID', $companyId)
+                              ->where('isActive', 1)
+                              ->where('isAssigned', -1)
+                              ->get();
 
-        $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
-            ->whereNotNull('createdDateTime')
-            ->groupby('year')
-            ->orderby('year', 'desc')
-            ->get();
+        if(isset($request['type']) && $request['type'] == 'account_details') {
+            $output = array(
+                'bank' => $bank,
+                'currency' => $currency);
+        }else{
+            $supplier = SupplierAssigned::whereIn("companySystemID", $subCompanies);
+            if (isset($request['type']) && $request['type'] != 'filter') {
+                $supplier = $supplier->where('isActive', 1);
+            }
+            $supplier = $supplier->get();
 
-        $bank = BankAssign::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->get();
+            $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+                array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
+            $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
+            /** Yes and No Selection */
+            $yesNoSelection = YesNoSelection::all();
 
-        $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
+            $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $expenseClaimType = ExpenseClaimType::all();
+            $month = Months::all();
 
-        $interCompanyTo = Company::where('isGroup', 0)->get();
+            $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+                                            ->whereNotNull('createdDateTime')
+                                            ->groupby('year')
+                                            ->orderby('year', 'desc')
+                                            ->get();
 
-        $companyCurrency = \Helper::companyCurrency($companyId);
+            $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
 
-        // check policy
-        $policyOn = 0;
-        $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
-            ->where('companyPolicyCategoryID', 16)
-            ->where('isYesNO', 1)
-            ->first();
-        if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO == 1) {
-            $policyOn = 1;
+            $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
+
+            $expenseClaimType = ExpenseClaimType::all();
+
+            $interCompanyTo = Company::where('isGroup', 0)->get();
+
+            $companyCurrency = \Helper::companyCurrency($companyId);
+
+            // check policy
+            $policyOn = 0;
+            $UPECSLPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                ->where('companyPolicyCategoryID', 16)
+                ->where('isYesNO', 1)
+                ->first();
+            if (isset($UPECSLPolicy->isYesNO) && $UPECSLPolicy->isYesNO == 1) {
+                $policyOn = 1;
+            }
+
+            $output = array(
+                'financialYears' => $financialYears,
+                'companyFinanceYear' => $companyFinanceYear,
+                'yesNoSelection' => $yesNoSelection,
+                'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+                'month' => $month,
+                'years' => $years,
+                'supplier' => $supplier,
+                'payee' => $payee,
+                'bank' => $bank,
+                'currency' => $currency,
+                'segments' => $segment,
+                'expenseClaimType' => $expenseClaimType,
+                'interCompany' => $interCompanyTo,
+                'companyCurrency' => $companyCurrency,
+                'isPolicyOn' => $policyOn,
+            );
         }
-
-        $output = array(
-            'financialYears' => $financialYears,
-            'companyFinanceYear' => $companyFinanceYear,
-            'yesNoSelection' => $yesNoSelection,
-            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
-            'month' => $month,
-            'years' => $years,
-            'supplier' => $supplier,
-            'payee' => $payee,
-            'bank' => $bank,
-            'currency' => $currency,
-            'segments' => $segment,
-            'expenseClaimType' => $expenseClaimType,
-            'interCompany' => $interCompanyTo,
-            'companyCurrency' => $companyCurrency,
-            'isPolicyOn' => $policyOn,
-        );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
