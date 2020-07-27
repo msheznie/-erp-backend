@@ -728,18 +728,14 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
                 if ($updatedQuoQty == 0) {
                     $fullyOrdered = 0;
-                    $invoiceStatus = 0;
-                    $isInDO = 0;
                 } else {
                     $fullyOrdered = 1;
-                    $invoiceStatus = 1;
-                    $isInDO = 2;
                 }
 
                 QuotationDetails::where('quotationDetailsID', $customerInvoiceItemDetails->quotationDetailsID)
                     ->update([ 'fullyOrdered' => $fullyOrdered, 'doQuantity' => $updatedQuoQty]);
-                QuotationMaster::where('quotationMasterID', $customerInvoiceItemDetails->quotationMasterID)
-                    ->update(['isInDOorCI'=>$isInDO,'invoiceStatus'=>$invoiceStatus]);
+
+                $this->updateSalesQuotationInvoicedStatus($customerInvoiceItemDetails->quotationMasterID);
             }
 
         }
@@ -1468,7 +1464,6 @@ WHERE
 
                             QuotationDetails::where('quotationDetailsID', $new['quotationDetailsID'])
                                 ->update(['fullyOrdered' => $fullyOrdered, 'doQuantity' => $totalAddedQty]);
-                            QuotationMaster::find($new['quotationMasterID'])->update(['isInDOorCI' => 2,'invoiceStatus'=>$fullyOrdered]);
                         }
 
                     }
@@ -1493,6 +1488,8 @@ WHERE
                         ]);
                 }
 
+                $this->updateSalesQuotationInvoicedStatus($new['quotationMasterID']);
+
             }
 
             DB::commit();
@@ -1504,9 +1501,10 @@ WHERE
 
     }
 
-    /*private function updateSalesQuotationInvoicedStatus($quotationMasterID){
+    private function updateSalesQuotationInvoicedStatus($quotationMasterID){
 
         $status = 0;
+        $isInDO = 0;
         $invQty = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
 
         if($invQty!=0) {
@@ -1516,10 +1514,15 @@ WHERE
             }else{
                 $status = 1;    // partially invoiced
             }
+            $isInDO = 2;
         }
-        return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['invoiceStatus'=>$status]);
+        return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['invoiceStatus'=>$status,'isInDOorCI'=>$isInDO]);
 
-    }*/
+    }
+
+
+
+
 
 
 }

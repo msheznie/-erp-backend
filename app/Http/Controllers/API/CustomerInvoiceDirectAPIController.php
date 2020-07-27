@@ -1676,7 +1676,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4|| $master->isPerforma == 5) {
             $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         } else {
             $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
@@ -1689,7 +1689,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3|| $master->isPerforma == 4|| $master->isPerforma == 5) {
             $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
             if (!empty($totalDetail)) {
                 $totalAmount = $totalDetail->amount;

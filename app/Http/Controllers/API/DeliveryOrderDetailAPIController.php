@@ -614,12 +614,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     } else {
                         $fullyOrdered = 1;
                     }
-                    $isInDO = $fullyOrdered;
 
-                    $updateDetail = QuotationDetails::where('quotationDetailsID', $deliveryOrderDetail->quotationDetailsID)
+                    QuotationDetails::where('quotationDetailsID', $deliveryOrderDetail->quotationDetailsID)
                         ->update([ 'fullyOrdered' => $fullyOrdered, 'doQuantity' => $updatedQuoQty]);
 
-                    QuotationMaster::where('quotationMasterID', $deliveryOrderDetail->quotationMasterID)->update(['isInDOorCI'=>$isInDO, 'deliveryStatus'=>$fullyOrdered]);
+                    $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
                 }
 
@@ -1033,7 +1032,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             QuotationDetails::where('quotationDetailsID', $new['quotationDetailsID'])
                                 ->update(['fullyOrdered' => $fullyOrdered, 'doQuantity' => $totalAddedQty]);
-                            QuotationMaster::find($new['quotationMasterID'])->update(['isInDOorCI' => 1, 'deliveryStatus'=>$fullyOrdered]);
+
                         }
 
                     }
@@ -1058,6 +1057,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         ]);
                 }
 
+                $this->updateSalesQuotationDeliveryStatus($new['quotationMasterID']);
+
             }
 
             DB::commit();
@@ -1067,9 +1068,24 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
+    }
 
+    private function updateSalesQuotationDeliveryStatus($quotationMasterID){
 
+        $status = 0;
+        $isInDO = 0;
+        $invQty = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
 
+        if($invQty!=0) {
+            $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');
+            if($invQty == $quotationQty){
+                $status = 2;    // fully invoiced
+            }else{
+                $status = 1;    // partially invoiced
+            }
+            $isInDO = 1;
+        }
+        return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['deliveryStatus'=>$status,'isInDOorCI'=>$isInDO]);
 
     }
 
