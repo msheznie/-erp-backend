@@ -834,6 +834,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
+            ->where('isInDOorCI', '!=',2)
             ->where('closedYN',0)
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
@@ -860,7 +861,7 @@ FROM
 	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY deliveryOrderDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
-	AND fullyOrdered != 2 ');
+	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2');
 
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }
@@ -1295,6 +1296,21 @@ WHERE
         } else {
             return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
         }
+    }
+
+    function getDeliveryDetailsForSQ(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detail = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)
+            ->with(['sales_quotation_detail','uom_issuing',
+                'master'=> function($query){
+                    $query->with(['transaction_currency']);
+                }])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 
 
