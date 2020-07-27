@@ -1859,7 +1859,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
-        if ($master->isPerforma == 2) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
@@ -1870,7 +1870,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-            } else if ($master->isPerforma == 2) {
+            } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
@@ -2210,7 +2210,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $directTraSubTotal = 0;
-        if ($master->isPerforma == 2) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $customerInvoice->item_invoice = true;
             foreach ($customerInvoice->issue_item_details as $key => $item) {
                 $directTraSubTotal += $item->sellingTotal;
