@@ -8,6 +8,7 @@ use App\Models\MobileDetail;
 use App\Repositories\MobileDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -320,5 +321,15 @@ class MobileDetailAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function downloadDetailTemplate(Request $request)
+    {
+        $input = $request->all();
+        if (Storage::disk('local_public')->exists('mobile_bill_templates/detail_template.xlsx')) {
+            return Storage::disk('local_public')->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
+        } else {
+            return $this->sendError('Summary template not found', 500);
+        }
     }
 }

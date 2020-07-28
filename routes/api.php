@@ -1821,6 +1821,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
         Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
 
+        Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');
+        Route::get('downloadDetailTemplate', 'MobileDetailAPIController@downloadDetailTemplate');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

@@ -446,4 +446,15 @@ class MobileBillSummaryAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+
+    public function downloadSummaryTemplate(Request $request)
+    {
+        $input = $request->all();
+        if (Storage::disk('local_public')->exists('mobile_bill_templates/summary_template.xlsx')) {
+            return Storage::disk('local_public')->download('mobile_bill_templates/summary_template.xlsx', 'summary_template.xlsx');
+        } else {
+            return $this->sendError('Summary template not found', 500);
+        }
+    }
 }
