@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\Company;
@@ -269,6 +270,20 @@ class CompanyAPIController extends AppBaseController
         $company->delete();
 
         return $this->sendResponse($id, 'Company deleted successfully');
+    }
+
+    public function getCompaniesByGroup(){
+        $employee_id = Helper::getEmployeeSystemID();
+        $company = [];
+        if ($employee_id) {
+            $company = Company::select(DB::raw("companySystemID,CONCAT(CompanyID,' - ',CompanyName) as label"))
+                ->whereHas('employee_departments' , function($q) use($employee_id){
+                    $q->where('employeeSystemID',$employee_id);
+                })
+                ->where('isGroup',0)
+                ->get();
+        }
+        return $this->sendResponse($company, 'Company retrieved successfully');
     }
 
 

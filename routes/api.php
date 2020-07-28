@@ -1823,6 +1823,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');
         Route::get('downloadDetailTemplate', 'MobileDetailAPIController@downloadDetailTemplate');
+        Route::post('getCompaniesByGroup', 'CompanyAPIController@getCompaniesByGroup');
+        Route::post('getBillMastersByCompany', 'MobileBillMasterAPIController@getBillMastersByCompany');
 
     });
 

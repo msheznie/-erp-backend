@@ -16,11 +16,13 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateMobileBillMasterAPIRequest;
 use App\Http\Requests\API\UpdateMobileBillMasterAPIRequest;
+use App\Models\Company;
 use App\Models\EmployeeMobileBillMaster;
 use App\Models\MobileBillMaster;
 use App\Models\MobileBillSummary;
 use App\Models\MobileDetail;
 use App\Models\PeriodMaster;
+use App\Models\SegmentRights;
 use App\Models\YesNoSelection;
 use App\Repositories\MobileBillMasterRepository;
 use Carbon\Carbon;
@@ -501,13 +503,48 @@ class MobileBillMasterAPIController extends AppBaseController
 
     public function getMobileReportFormData(Request $request) {
 
-        $output['billMasters'] = MobileBillMaster::where('confirmedYN',1)
-            ->join('hrms_periodmaster','hrms_mobilebillmaster.billPeriod','=','hrms_periodmaster.periodMasterID')
-            ->select(DB::raw("mobilebillMasterID,CONCAT(mobilebillmasterCode,' - ',periodMonth,' - ',periodYear) as label,billPeriod"))
-            ->orderBy('mobilebillMasterID','DESC')
+        $employee_id = Helper::getEmployeeSystemID();
+        $segment = SegmentRights::select('companySystemID')
+            ->where('employeeSystemID', $employee_id)
+            ->groupby('companySystemID')
             ->get();
+        $output['company'] = [];
+        if (count($segment) > 0) {
+            $companiesByGroup = array_pluck($segment, 'companySystemID');
+            $company = Company::select('masterCompanySystemIDReorting')
+                ->whereIn('companySystemID', $companiesByGroup)
+                ->get();
+
+            $masterCompany = array_pluck($company, 'masterCompanySystemIDReorting');
+            $output['company'] = Company::select(DB::raw("companySystemID,CONCAT(CompanyID,' - ',CompanyName) as label"))
+                ->whereIn('companySystemID', $masterCompany)
+                ->get();
+        }
 
         return $this->sendResponse($output,'Successfully Retrieved');
+    }
+
+    public function getBillMastersByCompany(Request $request){
+        $input = $request->all();
+
+        $companyID = 0;
+        if (array_key_exists('company', $input)) {
+            $companies = (array)$input['company'];
+            $companyID = collect($companies)->pluck('companySystemID');
+        }
+
+        $billMaster = [];
+        if ($companyID) {
+            $billMaster =  MobileBillMaster::where('confirmedYN',1)
+                ->join('hrms_periodmaster','hrms_mobilebillmaster.billPeriod','=','hrms_periodmaster.periodMasterID')
+                ->whereHas('employee_mobile',function ($query) use($companyID){
+                    $query->whereIn('companySysID',$companyID);
+                })
+                ->select(DB::raw("mobilebillMasterID,CONCAT(mobilebillmasterCode,' - ',periodMonth,' - ',periodYear) as label,billPeriod"))
+                ->orderBy('mobilebillMasterID','DESC')
+                ->get();
+        }
+        return $this->sendResponse($billMaster, 'Bill Master retrieved successfully');
     }
 
     public function exportMobileReport(Request $request){
@@ -557,6 +594,7 @@ class MobileBillMasterAPIController extends AppBaseController
 
         $masterIDs = [];
         $periodIDs = [];
+        $companyIDs = [];
         $str = '';
         if (array_key_exists('billMasters', $input)) {
             $masterID = (array)$input['billMasters'];
@@ -564,6 +602,11 @@ class MobileBillMasterAPIController extends AppBaseController
 
             $periodIDs = MobileBillMaster::select('billPeriod')->whereIn('mobilebillMasterID',$masterIDs)->get()->pluck('billPeriod');
 
+        }
+
+        if (array_key_exists('companyID', $input)) {
+            $companyID = (array)$input['companyID'];
+            $companyIDs = collect($companyID)->pluck('companySystemID');
         }
 
 
@@ -594,6 +637,7 @@ class MobileBillMasterAPIController extends AppBaseController
 
         $result['period'] = $str;
         $result['output'] = EmployeeMobileBillMaster::whereIn('mobilebillMasterID',$masterIDs)
+            ->whereIn('companySysID',$companyIDs)
             ->join('hrms_mobilebillsummary', function ($join){
                 $join->on('hrms_employeemobilebillmaster.mobileNo','=','hrms_mobilebillsummary.mobileNumber')
                     ->on('hrms_employeemobilebillmaster.mobilebillMasterID', '=', 'hrms_mobilebillsummary.mobileMasterID');
