@@ -205,10 +205,10 @@ class CustomUserReportsAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomUserReports $customUserReports */
-        $customUserReports = $this->customUserReportsRepository->with(['columns' => function($q){
-            $q->orderBy('sort_order','asc');
-        }, 'default_columns' => function($q){
-            $q->orderBy('sort_order','asc');
+        $customUserReports = $this->customUserReportsRepository->with(['columns' => function ($q) {
+            $q->orderBy('sort_order', 'asc');
+        }, 'default_columns' => function ($q) {
+            $q->orderBy('sort_order', 'asc');
         }])->find($id);
 
         if (empty($customUserReports)) {
@@ -285,7 +285,7 @@ class CustomUserReportsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             if (isset($input['columns']) && is_array($input['columns'])) {
-                $this->customUserReportColumnsRepository->where('user_report_id',$id)->delete();
+                $this->customUserReportColumnsRepository->where('user_report_id', $id)->delete();
                 foreach ($input['columns'] as $col) {
                     $col['user_report_id'] = $id;
                     $this->customUserReportColumnsRepository->create($col);
@@ -372,10 +372,8 @@ class CustomUserReportsAPIController extends AppBaseController
         $reports = CustomUserReports::where('user_id', $userId)
             ->with('created_by');
 
-        if (array_key_exists('is_private', $input)) {
-            if (($input['is_private'] == 0 || $input['is_private'] == 1) && !is_null($input['is_private'])) {
+        if (array_key_exists('is_private', $input) && ($input['is_private'] == 0 || $input['is_private'] == 1) && !is_null($input['is_private'])) {
                 $reports = $reports->where('is_private', $input['is_private']);
-            }
         }
 
         $search = $request->input('search.value');
@@ -388,10 +386,8 @@ class CustomUserReportsAPIController extends AppBaseController
 
         return \DataTables::of($reports)
             ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
+                if (request()->has('order') && $input['order'][0]['column'] == 0) {
                         $query->orderBy('id', $input['order'][0]['dir']);
-                    }
                 }
             })
             ->addIndexColumn()
@@ -399,33 +395,55 @@ class CustomUserReportsAPIController extends AppBaseController
             ->make(true);
     }
 
-    private function geReportColumns($columns){
+    private function geReportColumns($columns)
+    {
         $result = [];
-        foreach ($columns as $column){
-            if(isset($column['column']) && isset($column['column']['column'])){
-                array_push($result,$column['column']['column']);
+        foreach ($columns as $column) {
+            if (isset($column['column']) && isset($column['column']['column'])) {
+                array_push($result, $column['column']['column']);
             }
         }
 
         return array_unique($result);
     }
 
-    private function getReportRelationship($columns){
+    private function getReportRelationship($columns)
+    {
         $result = [];
-        foreach ($columns as $column){
-            if(isset($column['column']) && $column['column']['is_relationship']){
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['is_relationship']) {
                 $temp = array(
                     'relationship' => $column['column']['relationship'],
                     'columns' => $column['column']['relationship_columns']
                 );
-                array_push($result,$temp);
+                array_push($result, $temp);
             }
         }
 
         return $result;
     }
 
-    public function customReportView(Request $request){
+    private function getSortByColumns($columns)
+    {
+        $result = [];
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['is_sortabel']) {
+
+                if ($column['is_sort']) {
+                    $temp = array(
+                        'column' => $column['column']['column'],
+                        'by' => $column['sort_by']
+                    );
+                    array_push($result, $temp);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function customReportView(Request $request)
+    {
 
         $input = $request->all();
         $validator = Validator::make($request->all(), [
@@ -436,8 +454,9 @@ class CustomUserReportsAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $report = $this->customUserReportsRepository->with(['columns' => function($q){
-            $q->with(['column'])->orderBy('sort_order','asc');
+        $limit = isset($input['limit']) ? $input['limit'] : 10;
+        $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
+            $q->with(['column'])->orderBy('sort_order', 'asc');
         }])->find($input['id']);
 
         if (empty($report)) {
@@ -459,7 +478,6 @@ class CustomUserReportsAPIController extends AppBaseController
             case 1:
                 $primaryKey = 'expenseClaimMasterAutoID';
                 $data = ExpenseClaim::whereIn('companySystemID', $subCompanies);
-                    //->with('created_by')
                 break;
             case 2:
                 break;
@@ -473,19 +491,38 @@ class CustomUserReportsAPIController extends AppBaseController
         }
 
 
-        if($data && $report['columns']){
+        if ($data && $report['columns']) {
+
+            // select columns
             $columns = $this->geReportColumns($report['columns']);
-            array_push($columns,$primaryKey);
+            array_push($columns, $primaryKey);
             $data = $data->select($columns);
+
+            // relation data select
             $relationships = $this->getReportRelationship($report['columns']);
-            if($relationships){
-                foreach ($relationships as $relation){
-                    $data = $data->with([$relation['relationship'] => function ($q) use($relation){
-                         $q->select(array_unique(explode(',',$relation['columns'])));
+            if ($relationships) {
+                foreach ($relationships as $relation) {
+                    $data = $data->with([$relation['relationship'] => function ($q) use ($relation) {
+                        $q->select(array_unique(explode(',', $relation['columns'])));
                     }]);
                 }
             }
-            $data = $data->paginate(10);
+
+            // filter
+
+            // sort by
+            $sortByColumns = $this->getSortByColumns($report['columns']);
+            if ($sortByColumns) {
+                foreach ($sortByColumns as $column) {
+                    $data = $data->orderBy($column['column'], $column['by']);
+                }
+            }
+
+            // group by
+
+
+            // paginate
+            $data = $data->paginate($limit);
         }
 
         $output = array(
@@ -493,7 +530,7 @@ class CustomUserReportsAPIController extends AppBaseController
             'report' => $report
         );
 
-        return $this->sendResponse($output , 'Custom Report retrieved successfully');
+        return $this->sendResponse($output, 'Custom Report retrieved successfully');
 
     }
 }
