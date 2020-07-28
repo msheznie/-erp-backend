@@ -1814,6 +1814,13 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
         Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
         Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
+        Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
+        Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice');
+        Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
+        Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
+        Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
+        Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

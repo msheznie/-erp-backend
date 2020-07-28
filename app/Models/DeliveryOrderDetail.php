@@ -327,4 +327,8 @@ class DeliveryOrderDetail extends Model
     public function quotation(){
         return $this->belongsTo('App\Models\QuotationMaster','quotationMasterID','quotationMasterID');
     }
+
+    public function sales_quotation_detail(){
+        return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
+    }
 }

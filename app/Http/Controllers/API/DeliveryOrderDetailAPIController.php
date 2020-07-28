@@ -615,8 +615,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $fullyOrdered = 1;
                     }
 
-                    $updateDetail = QuotationDetails::where('quotationDetailsID', $deliveryOrderDetail->quotationDetailsID)
+                    QuotationDetails::where('quotationDetailsID', $deliveryOrderDetail->quotationDetailsID)
                         ->update([ 'fullyOrdered' => $fullyOrdered, 'doQuantity' => $updatedQuoQty]);
+
+                    $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
+
                 }
 
                 //calculate tax amount according to the percantage for tax update
@@ -683,7 +686,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $DODetail_arr = array();
-        $validator = array();
         $deliveryOrderID = $input['deliveryOrderID'];
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
@@ -736,17 +738,17 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         //check PO segment is correct with PR pull segment
 
-        foreach ($input['detailTable'] as $itemExist) {
+        /*foreach ($input['detailTable'] as $itemExist) {
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
 
                 $qoMaster = QuotationMaster::find($itemExist['quotationMasterID']);
 
                 if($deliveryOrder->serviceLineSystemID != $qoMaster->serviceLineSystemID){
-//                    return $this->sendError("Segment is different from order");
+                    return $this->sendError("Segment is different from order");
                 }
             }
-        }
+        }*/
 
         //check stock and wac for selected item
 
@@ -927,12 +929,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                         if ($new['requestedQty'] == $totalAddedQty) {
                             $fullyOrdered = 2;
-                            $closedYN = -1;
-                            $selectedForDeliveryOrder = -1;
                         } else {
                             $fullyOrdered = 1;
-                            $closedYN = 0;
-                            $selectedForDeliveryOrder = 0;
                         }
 
 
@@ -1002,13 +1000,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $DODetail_arr['companyReportingCurrencyID'] = $deliveryOrder->companyReportingCurrencyID;
                             $DODetail_arr['companyReportingCurrencyER'] = $deliveryOrder->companyReportingCurrencyER;
 
-//                        $DODetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
-//                        $DODetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-//                        $DODetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
-//                        $DODetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
-//                        $DODetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
-//                        $DODetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
-
                             $DODetail_arr['itemUnitOfMeasure'] = $new['unitOfMeasureID'];
                             $DODetail_arr['unitOfMeasureIssued'] = $new['unitOfMeasureID'];
                             $DODetail_arr['qtyIssued'] = $new['noQty'];
@@ -1037,29 +1028,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $DODetail_arr['companyLocalAmount'] = Helper::roundValue($DODetail_arr['companyLocalAmount']);
                             $DODetail_arr['companyReportingAmount'] = Helper::roundValue($DODetail_arr['companyReportingAmount']);
 
-                            $item = $this->deliveryOrderDetailRepository->create($DODetail_arr);
+                            $this->deliveryOrderDetailRepository->create($DODetail_arr);
 
-                            $update = QuotationDetails::where('quotationDetailsID', $new['quotationDetailsID'])
+                            QuotationDetails::where('quotationDetailsID', $new['quotationDetailsID'])
                                 ->update(['fullyOrdered' => $fullyOrdered, 'doQuantity' => $totalAddedQty]);
+
                         }
 
-                        // fetching the total count records from purchase Request Details table
-                        $quoDetailTotalcount = QuotationDetails::select(DB::raw('count(quotationDetailsID) as detailCount'))
-                            ->where('quotationMasterID', $new['quotationMasterID'])
-                            ->first();
-
-                        // fetching the total count records from purchase Request Details table where fullyOrdered = 2
-                        $quoDetailExist = QuotationDetails::select(DB::raw('count(quotationDetailsID) as count'))
-                            ->where('quotationMasterID', $new['quotationMasterID'])
-                            ->where('fullyOrdered', 2)
-//                        ->where('selectedForPO', -1)
-                            ->first();
-
-                        // Updating PR Master Table After All Detail Table records updated
-                        if ($quoDetailTotalcount['detailCount'] == $quoDetailExist['count']) {
-                            $updateQuo = QuotationMaster::find($new['quotationMasterID'])
-                                ->update(['selectedForDeliveryOrder' => -1, 'closedYN' => -1]);
-                        }
                     }
                 }
 
@@ -1082,30 +1057,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         ]);
                 }
 
+                $this->updateSalesQuotationDeliveryStatus($new['quotationMasterID']);
+
             }
-
-
-            //calculate tax amount according to the percantage for tax update
-
-            //getting total sum of PO detail Amount
-//        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'),'budgetYear')
-//            ->where('quotationMasterID', $deliveryOrderID)
-//            ->first();
-//        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
-//        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
-//            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
-//
-//            $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
-//
-//            $updatePOMaster = ProcumentOrder::find($deliveryOrderID)
-//                ->update([
-//                    'VATAmount' => $calculatVatAmount,
-//                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-//                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
-//                ]);
-//        }
-//
-//        ProcumentOrder::find($deliveryOrderID)->update(['budgetYear' => $poMasterSum['budgetYear']]);
 
             DB::commit();
             return $this->sendResponse([], 'Delivery Order Details saved successfully');
@@ -1114,9 +1068,24 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
+    }
 
+    private function updateSalesQuotationDeliveryStatus($quotationMasterID){
 
+        $status = 0;
+        $isInDO = 0;
+        $invQty = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
 
+        if($invQty!=0) {
+            $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');
+            if($invQty == $quotationQty){
+                $status = 2;    // fully invoiced
+            }else{
+                $status = 1;    // partially invoiced
+            }
+            $isInDO = 1;
+        }
+        return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['deliveryStatus'=>$status,'isInDOorCI'=>$isInDO]);
 
     }
 

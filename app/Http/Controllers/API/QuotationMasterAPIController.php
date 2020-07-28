@@ -30,6 +30,8 @@ use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -1285,5 +1287,65 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
+    }
+
+    public function salesQuotationForCustomerInvoice(Request $request){
+        $input = $request->all();
+        $invoice = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
+
+        $documentSystemID = 0;
+        if($invoice->isPerforma == 4){ //Sales Order
+            $documentSystemID = 68;
+        } elseif ($invoice->isPerforma==5){ ////Quotation
+            $documentSystemID = 67;
+        }
+
+        $master = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->where('approvedYN', -1)
+            ->where('selectedForDeliveryOrder', 0)
+            ->where('isInDOorCI', '!=',1)
+            ->where('closedYN',0)
+            ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
+            ->where('customerSystemCode', $invoice->customerID)
+            ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+    }
+
+    public function getSalesQuotationRecord(Request $request){
+
+        $input = $request->all();
+        /*$id = $input['deliveryOrderID'];
+        $companySystemID = $input['companySystemID'];
+        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+            $query->with(['quotation','uom_default','uom_issuing']);
+        },'approved_by' => function($query) use($companySystemID){
+            $query->where('companySystemID',$companySystemID)
+                ->where('documentSystemID',71)
+                ->with(['employee']);
+        }])->find($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');*/
+    }
+
+    function getInvoiceDetailsForSQ(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detail = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)
+            ->with(['master'=> function($query){
+                $query->with(['currency']);
+            },'sales_quotation_detail','uom_issuing'])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 }
