@@ -724,8 +724,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 $input['modifiedPc'] = gethostname();
                 $input['modifiedUser'] = $user->employee['empID'];
+                $updateMarkupBy = isset($input['updateMarkupBy'])?$input['updateMarkupBy']:'';
 
-                $markupArray = $this->setMarkupPercentage($input['netAmount'],$purchaseOrder,$input['markupPercentage']);
+                $markupArray = $this->setMarkupPercentage($input['netAmount'],$purchaseOrder,$input['markupPercentage'],$input['markupTransactionAmount'],$updateMarkupBy);
                 $input['markupPercentage'] = $markupArray['markupPercentage'];
                 $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
                 $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -1083,7 +1084,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     }
 
-    public function setMarkupPercentage($netAmount, $poData , $markupPercentage=0){
+    public function setMarkupPercentage($netAmount, $poData , $markupPercentage=0,$markupTransAmount=0, $by = ''){
+
         $output['markupPercentage'] = 0;
         $output['markupTransactionAmount'] = 0;
         $output['markupLocalAmount'] = 0;
@@ -1103,36 +1105,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->where('isYesNO',1)
                     ->exists();
 
-                $percentage = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
+                if($hasEEOSSPolicy){
 
-                if($hasEEOSSPolicy && $percentage != 0){
-                    $output['markupPercentage'] = $percentage;
-
-                    if($netAmount>0){
-                        $output['markupTransactionAmount'] = $percentage*$netAmount/100;
-
-
-                        if($poData->supplierTransactionCurrencyID != $poData->localCurrencyID){
-                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->localCurrencyID,$output['markupTransactionAmount']);
-                            if(!empty($currencyConversion)){
-                                $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
-                            }
-                        }else{
-                            $output['markupLocalAmount'] = $output['markupTransactionAmount'];
+                    if($by == 'amount'){
+                        $output['markupTransactionAmount'] = $markupTransAmount;
+                        if($netAmount > 0 && $markupTransAmount > 0){
+                            $output['markupPercentage'] = $markupTransAmount*100/$netAmount;
                         }
-
-                        if($poData->supplierTransactionCurrencyID != $poData->companyReportingCurrencyID){
-                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->companyReportingCurrencyID,$output['markupTransactionAmount']);
-                            if(!empty($currencyConversion)){
-                                $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                    } else {
+                        $percentage = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
+                        if($percentage != 0){
+                            $output['markupPercentage'] = $percentage;
+                            if($netAmount>0){
+                                $output['markupTransactionAmount'] = $percentage*$netAmount/100;
                             }
-                        }else{
-                            $output['markupReportingAmount'] =$output['markupTransactionAmount'];
                         }
+                    }
 
+                    if($poData->supplierTransactionCurrencyID != $poData->localCurrencyID){
+                        $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->localCurrencyID,$output['markupTransactionAmount']);
+                        if(!empty($currencyConversion)){
+                            $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                        }
+                    }else{
+                        $output['markupLocalAmount'] = $output['markupTransactionAmount'];
+                    }
+
+                    if($poData->supplierTransactionCurrencyID != $poData->companyReportingCurrencyID){
+                        $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                        if(!empty($currencyConversion)){
+                            $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                        }
+                    }else{
+                        $output['markupReportingAmount'] =$output['markupTransactionAmount'];
                     }
 
                 }
+
             }
 
         }
