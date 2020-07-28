@@ -630,12 +630,21 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = [
-            'not_in' => 'The :attribute field is required.',
+            'toBankID.not_in' => 'To Bank field is required.',
+            'toBankAccountID.not_in' => 'To Bank account field is required.',
+            'toBankCurrencyID.not_in' => 'To Bank currency field is required.',
+            'toBankID.required' => 'To Bank field is required.',
+            'toBankAmount.required' => 'To Bank amount field is required.',
+            'toBankAccountID.required' => 'To Bank account field is required.',
+            'toBankCurrencyID.required' => 'To Bank currency field is required.',
         ];
 
         $validator = \Validator::make($input, [
             'toBankID' => 'required|not_in:0',
             'toBankAccountID' => 'required|not_in:0',
+            'toBankCurrencyID' => 'required|not_in:0',
+            'companySystemID' => 'required|not_in:0',
+            'toBankAmount' => 'required',
         ], $messages);
 
         if ($validator->fails()) {
@@ -652,8 +661,20 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['toBankCurrencyID'], $input['toBankCurrencyID'], $input['toBankAmount']);
 
         $company = Company::find($input['companySystemID']);
+        if(empty($company)){
+            return $this->sendError('Company not found');
+        }
         $bankAccount = BankAccount::find($input['toBankAccountID']);
+
+        if(empty($bankAccount)){
+            return $this->sendError('Bank not found');
+        }
+
         $chartofaccount = ChartOfAccount::find($bankAccount->chartOfAccountSystemID);
+
+        if(empty($chartofaccount)){
+            return $this->sendError('Bank account GL code not found');
+        }
 
         $input['toCompanyLocalCurrencyID'] = $company->localCurrencyID;
         $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
