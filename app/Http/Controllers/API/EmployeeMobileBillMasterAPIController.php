@@ -389,4 +389,44 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function exportEmployeeMobileBill(Request $request){
+
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+        $type = isset($input['type'])?$input['type']:'csv';
+        $mobileMaster = EmployeeMobileBillMaster::where('mobilebillMasterID',$id)->with(['employee'])->orderBy('EmployeemobilebillmasterID','DESC')->get();
+
+        if (!empty($mobileMaster) && count((array)$mobileMaster)>0) {
+            $x = 0;
+            $data = [];
+            foreach ($mobileMaster as $val) {
+                $x++;
+                $empName = isset($val->employee->empName)?$val->employee->empName:'';
+
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Employee'] = $val->empID.' - '.$empName;
+                $data[$x]['Mobile No'] = $val->mobileNo;
+                $data[$x]['Credit Limit'] = round($val->creditLimit,3);
+                $data[$x]['Exceeded Amount'] = round($val->exceededAmount,3);
+                $data[$x]['Deduction Amount'] = round($val->deductionAmount,3);
+                $data[$x]['Official Amount'] = round($val->officialAmount,3);
+                $data[$x]['Personal Amount'] = round($val->personalAmount,3);
+            }
+
+            \Excel::create('employee_mobile_bill_report', function ($excel) use ($data) {
+                $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    $sheet->fromArray($data, null, 'A1', true);
+                    $sheet->setAutoSize(true);
+                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                });
+                $lastrow = $excel->getActiveSheet()->getHighestRow();
+                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
+            })->download($type);
+
+            return $this->sendResponse(array(), 'successfully export');
+        }
+        return $this->sendError( 'No Records Found');
+
+    }
 }
