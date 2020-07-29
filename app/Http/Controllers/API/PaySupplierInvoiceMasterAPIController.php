@@ -804,7 +804,19 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $finalError = array(
                         'required_serviceLine' => array(),
                         'active_serviceLine' => array(),
-                        'to_bank_amount_zero' => array(),
+                        'bank_not_updated' => array(),
+                        'bank_account_not_updated' => array(),
+                        'bank_account_currency_not_updated' => array(),
+                        'bank_account_currency_er_not_updated' => array(),
+                        'bank_amount_not_updated' => array(),
+                        'bank_account_gl__account_not_updated' => array(),
+                        'bank_account_local_currency_not_updated' => array(),
+                        'bank_account_local_currency_er_not_updated' => array(),
+                        'bank_account_local_currency_amount_not_updated' => array(),
+                        'bank_account_reporting_currency_not_updated' => array(),
+                        'bank_account_reporting_currency_er_not_updated' => array(),
+                        'bank_account_reporting_currency_amount_not_updated' => array(),
+                        'inter_company_gl_code_not_created' => array(),
                     );
 
                     $error_count = 0;
@@ -826,22 +838,63 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         }
 
                         if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
-                            if (empty($item->toBankID) && empty($item->toBankAccountID)) {
-                                return $this->sendError("Bank and Bank account is not selected for " . $paySupplierInvoiceMaster->interCompanyToID, 500, ['type' => 'confirm']);
+
+                            if (!$item->toBankID) {
+                                array_push($finalError['bank_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toBankAccountID) {
+                                array_push($finalError['bank_account_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toBankCurrencyID) {
+                                array_push($finalError['bank_account_currency_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toBankCurrencyER) {
+                                array_push($finalError['bank_account_currency_er_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toBankAmount) {
+                                array_push($finalError['bank_amount_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toBankGlCodeSystemID) {
+                                array_push($finalError['bank_account_gl__account_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyLocalCurrencyID) {
+                                array_push($finalError['bank_account_local_currency_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyLocalCurrencyER) {
+                                array_push($finalError['bank_account_local_currency_er_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyLocalCurrencyAmount) {
+                                array_push($finalError['bank_account_local_currency_amount_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyRptCurrencyID) {
+                                array_push($finalError['bank_account_reporting_currency_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyRptCurrencyER) {
+                                array_push($finalError['bank_account_reporting_currency_er_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                            if (!$item->toCompanyRptCurrencyAmount) {
+                                array_push($finalError['bank_account_reporting_currency_amount_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
                             }
 
                             $chartofAccount = ChartOfAccount::where('interCompanySystemID', $paySupplierInvoiceMaster->companySystemID)->get();
                             if (count($chartofAccount) == 0) {
-                                return $this->sendError("There is no inter company GL code created for " . $paySupplierInvoiceMaster->companyID, 500, ['type' => 'confirm']);
+                                array_push($finalError['inter_company_gl_code_not_created'], $item->glCode . ' | ' . $item->glCodeDes);
                             }
 
-                            if(!$item->toBankAmount){
-                                array_push($finalError['to_bank_amount_zero'], $item->glCode . ' | ' . $item->glCodeDes);
-                                $error_count++;
-                            }
                         }
                     }
-
                     $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                     if ($error_count > 0) {
                         return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
@@ -1264,16 +1317,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
 
         $currency = CurrencyMaster::all();
-        $bank     = BankAssign::where('companySystemID', $companyId)
-                              ->where('isActive', 1)
-                              ->where('isAssigned', -1)
-                              ->get();
+        $bank = BankAssign::where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
 
-        if(isset($request['type']) && $request['type'] == 'account_details') {
+        if (isset($request['type']) && $request['type'] == 'account_details') {
             $output = array(
                 'bank' => $bank,
                 'currency' => $currency);
-        }else{
+        } else {
             $supplier = SupplierAssigned::whereIn("companySystemID", $subCompanies);
             if (isset($request['type']) && $request['type'] != 'filter') {
                 $supplier = $supplier->where('isActive', 1);
@@ -1292,10 +1345,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $month = Months::all();
 
             $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
-                                            ->whereNotNull('createdDateTime')
-                                            ->groupby('year')
-                                            ->orderby('year', 'desc')
-                                            ->get();
+                ->whereNotNull('createdDateTime')
+                ->groupby('year')
+                ->orderby('year', 'desc')
+                ->get();
 
             $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
 
