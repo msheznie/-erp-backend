@@ -159,7 +159,7 @@ class GRVDetailsAPIController extends AppBaseController
 
             $markupUpdatedBy=isset($input['by'])?$input['by']:'';
 
-            $markupArray = $this->setMarkupPercentage($input['netAmount'],$grvMaster,$input['markupPercentage'],$markupUpdatedBy);
+            $markupArray = $this->setMarkupPercentage($input['unitCost'],$grvMaster,$input['markupPercentage'],$input['markupTransactionAmount'],$markupUpdatedBy);
 
             $input['markupPercentage'] = $markupArray['markupPercentage'];
             $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
@@ -548,7 +548,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                         $mp = isset($new['markupPercentage'])?$new['markupPercentage']:0;
-                        $markupArray = $this->setMarkupPercentage($GRVDetail_arr['netAmount'],$GRVMaster,$mp);
+                        $markupArray = $this->setMarkupPercentage($GRVDetail_arr['unitCost'],$GRVMaster,$mp);
 
                         $GRVDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
                         $GRVDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
@@ -884,7 +884,7 @@ class GRVDetailsAPIController extends AppBaseController
         return $this->sendResponse($grvAutoID, 'GRV details deleted successfully');
     }
 
-    public function setMarkupPercentage($netAmount, $grvData , $markupPercentage=0, $markupTransAmount=0, $by = ''){
+    public function setMarkupPercentage($unitCost, $grvData , $markupPercentage=0, $markupTransAmount=0, $by = ''){
         $output['markupPercentage'] = 0;
         $output['markupTransactionAmount'] = 0;
         $output['markupLocalAmount'] = 0;
@@ -908,8 +908,8 @@ class GRVDetailsAPIController extends AppBaseController
 
                     if($by == 'amount'){
                         $output['markupTransactionAmount'] = $markupTransAmount;
-                        if($netAmount > 0 && $markupTransAmount > 0){
-                            $output['markupPercentage'] = $markupTransAmount*100/$netAmount;
+                        if($unitCost > 0 && $markupTransAmount > 0){
+                            $output['markupPercentage'] = $markupTransAmount*100/$unitCost;
                         }
                     }else{
                         $percentage = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
@@ -919,28 +919,38 @@ class GRVDetailsAPIController extends AppBaseController
                         }
                         if($percentage != 0){
                             $output['markupPercentage'] = $percentage;
-                            if($netAmount>0){
-                                $output['markupTransactionAmount'] = $percentage*$netAmount/100;
+                            if($unitCost>0){
+
+                                $output['markupTransactionAmount'] = $percentage*$unitCost/100;
                             }
                         }
                     }
 
-                    if($grvData->supplierDefaultCurrencyID != $grvData->localCurrencyID){
-                        $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->localCurrencyID,$output['markupTransactionAmount']);
-                        if(!empty($currencyConversion)){
-                            $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
-                        }
-                    }else{
-                        $output['markupLocalAmount'] = $output['markupTransactionAmount'];
-                    }
+                    if($output['markupTransactionAmount']>0){
 
-                    if($grvData->supplierDefaultCurrencyID != $grvData->companyReportingCurrencyID){
-                        $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->companyReportingCurrencyID,$output['markupTransactionAmount']);
-                        if(!empty($currencyConversion)){
-                            $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                        if($grvData->supplierDefaultCurrencyID != $grvData->localCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->localCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupLocalAmount'] = $output['markupTransactionAmount'];
                         }
-                    }else{
-                        $output['markupReportingAmount'] =$output['markupTransactionAmount'];
+
+                        if($grvData->supplierDefaultCurrencyID != $grvData->companyReportingCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupReportingAmount'] =$output['markupTransactionAmount'];
+                        }
+
+                        /*round to 7 decimals*/
+                        $output['markupTransactionAmount'] = Helper::roundValue($output['markupTransactionAmount']);
+                        $output['markupLocalAmount'] = Helper::roundValue($output['markupLocalAmount']);
+                        $output['markupReportingAmount'] = Helper::roundValue($output['markupReportingAmount']);
+
                     }
 
                 }
@@ -963,8 +973,11 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
+        if(!$markupAmendRestrictionPolicy){
+            return $this->sendError('Document already confirmed. You cannot update.');
+        }
 
-        $markupArray = $this->setMarkupPercentage($input['netAmount'],$grvMaster,$input['markupPercentage'],$input['markupTransactionAmount'],$markupUpdatedBy);
+        $markupArray = $this->setMarkupPercentage($input['unitCost'],$grvMaster,$input['markupPercentage'],$input['markupTransactionAmount'],$markupUpdatedBy);
         $GRVDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
         $GRVDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
         $GRVDetail_arr['markupLocalAmount'] = $markupArray['markupLocalAmount'];
