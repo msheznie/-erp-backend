@@ -503,6 +503,10 @@ class QuotationMasterVersion extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
+        'selectedForDeliveryOrder',
+        'isInDOorCI',
+        'invoiceStatus',
+        'deliveryStatus',
         'timestamp'
     ];
 
@@ -584,7 +588,11 @@ class QuotationMasterVersion extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'selectedForDeliveryOrder' => 'integer',
+        'isInDOorCI' => 'integer',
+        'invoiceStatus' => 'integer',
+        'deliveryStatus' => 'integer'
     ];
 
     /**

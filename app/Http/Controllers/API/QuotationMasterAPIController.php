@@ -33,6 +33,7 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
+use App\Models\DeliveryOrderDetail;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -1121,6 +1122,19 @@ class QuotationMasterAPIController extends AppBaseController
 
         if (empty($quotationMasterData)) {
             return $this->sendError('Quotation master not found');
+        }
+
+        /*check order is already added to invoice or delivery order*/
+        $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
+        $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
+        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
+
+        if($existsinCI || $quotationMasterData->isInDOorCI == 2){
+            return $this->sendError($quotOrSales.' is added to a customer invoice',500);
+        }
+
+        if($existsinDO || $quotationMasterData->isInDOorCI == 1){
+            return $this->sendError($quotOrSales.' is added to a delivery order',500);
         }
 
         $quotationMasterArray = $quotationMasterData->toArray();
