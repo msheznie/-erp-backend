@@ -326,7 +326,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-        $markupArray = $this->setMarkupPercentage(0,$purchaseOrder);
+        $markupArray = $this->setMarkupPercentage($input['unitCost'],$purchaseOrder);
         $input['markupPercentage'] = $markupArray['markupPercentage'];
         $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
         $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -558,7 +558,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
                         }
 
-                        $markupArray = $this->setMarkupPercentage($prDetail_arr['netAmount'],$purchaseOrder);
+                        $markupArray = $this->setMarkupPercentage($prDetail_arr['unitCost'],$purchaseOrder);
                         $prDetail_arr['markupPercentage'] = $markupArray['markupPercentage'];
                         $prDetail_arr['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
                         $prDetail_arr['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -726,7 +726,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $input['modifiedUser'] = $user->employee['empID'];
                 $updateMarkupBy = isset($input['updateMarkupBy'])?$input['updateMarkupBy']:'';
 
-                $markupArray = $this->setMarkupPercentage($input['netAmount'],$purchaseOrder,$input['markupPercentage'],$input['markupTransactionAmount'],$updateMarkupBy);
+                $markupArray = $this->setMarkupPercentage($discountedUnitPrice,$purchaseOrder,$input['markupPercentage'],$input['markupTransactionAmount'],$updateMarkupBy);
                 $input['markupPercentage'] = $markupArray['markupPercentage'];
                 $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
                 $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
@@ -1084,7 +1084,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     }
 
-    public function setMarkupPercentage($netAmount, $poData , $markupPercentage=0,$markupTransAmount=0, $by = ''){
+    public function setMarkupPercentage($unitCost, $poData , $markupPercentage=0,$markupTransAmount=0, $by = ''){
 
         $output['markupPercentage'] = 0;
         $output['markupTransactionAmount'] = 0;
@@ -1109,36 +1109,45 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                     if($by == 'amount'){
                         $output['markupTransactionAmount'] = $markupTransAmount;
-                        if($netAmount > 0 && $markupTransAmount > 0){
-                            $output['markupPercentage'] = $markupTransAmount*100/$netAmount;
+                        if($unitCost > 0 && $markupTransAmount > 0){
+                            $output['markupPercentage'] = $markupTransAmount*100/$unitCost;
                         }
                     } else {
                         $percentage = ($markupPercentage != 0)? $markupPercentage:$supplier->markupPercentage;
                         if($percentage != 0){
                             $output['markupPercentage'] = $percentage;
-                            if($netAmount>0){
-                                $output['markupTransactionAmount'] = $percentage*$netAmount/100;
+                            if($unitCost>0){
+                                $output['markupTransactionAmount'] = $percentage*$unitCost/100;
                             }
                         }
                     }
 
-                    if($poData->supplierTransactionCurrencyID != $poData->localCurrencyID){
-                        $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->localCurrencyID,$output['markupTransactionAmount']);
-                        if(!empty($currencyConversion)){
-                            $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                    if($output['markupTransactionAmount'] > 0){
+                        if($poData->supplierTransactionCurrencyID != $poData->localCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->localCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupLocalAmount'] = $output['markupTransactionAmount'];
                         }
-                    }else{
-                        $output['markupLocalAmount'] = $output['markupTransactionAmount'];
+
+                        if($poData->supplierTransactionCurrencyID != $poData->companyReportingCurrencyID){
+                            $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                            if(!empty($currencyConversion)){
+                                $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }else{
+                            $output['markupReportingAmount'] =$output['markupTransactionAmount'];
+                        }
+
+                        /*round to 7 decimals*/
+                        $output['markupTransactionAmount'] = Helper::roundValue($output['markupTransactionAmount']);
+                        $output['markupLocalAmount'] = Helper::roundValue($output['markupLocalAmount']);
+                        $output['markupReportingAmount'] = Helper::roundValue($output['markupReportingAmount']);
+
                     }
 
-                    if($poData->supplierTransactionCurrencyID != $poData->companyReportingCurrencyID){
-                        $currencyConversion = Helper::currencyConversion($poData->companySystemID,$poData->supplierTransactionCurrencyID,$poData->companyReportingCurrencyID,$output['markupTransactionAmount']);
-                        if(!empty($currencyConversion)){
-                            $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
-                        }
-                    }else{
-                        $output['markupReportingAmount'] =$output['markupTransactionAmount'];
-                    }
 
                 }
 
