@@ -399,8 +399,12 @@ class CustomUserReportsAPIController extends AppBaseController
     {
         $result = [];
         foreach ($columns as $column) {
-            if (isset($column['column']) && isset($column['column']['column'])) {
-                array_push($result, $column['column']['column']);
+            if (isset($column['column']) && isset($column['column']['column']) && $column['column']['column_type'] != 5) {
+                $tmpColumn = $column['column']['table'].'.'.$column['column']['column'];
+                if($column['column']['column_type'] == 4){
+                    $tmpColumn = 'SUM('.$tmpColumn.') as '.$column['column']['column'];
+                }
+                array_push($result, $tmpColumn);
             }
         }
 
@@ -427,20 +431,33 @@ class CustomUserReportsAPIController extends AppBaseController
     {
         $result = [];
         foreach ($columns as $column) {
-            if (isset($column['column']) && $column['column']['is_sortabel']) {
-
-                if ($column['is_sort']) {
+            if (isset($column['column']) && $column['column']['is_sortabel'] &&  $column['column']['column_type'] != 5  && $column['is_sort']) {
                     $temp = array(
-                        'column' => $column['column']['column'],
+                        'column' => $column['column']['table'].'.'.$column['column']['column'],
                         'by' => $column['sort_by']
                     );
                     array_push($result, $temp);
-                }
             }
         }
 
         return $result;
     }
+
+    private function getGroupByColumns($columns)
+    {
+        $result = [];
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['is_group_by'] && $column['is_group_by']) {
+                    $tmpColumn = $column['column']['table'].'.'.$column['column']['column'];
+                    if($column['column']['column_type'] == 5){
+                        $tmpColumn = $column['column']['filter_column'];
+                    }
+                    array_push($result, $tmpColumn );
+            }
+        }
+        return $result;
+    }
+
 
     public function customReportView(Request $request)
     {
@@ -473,30 +490,40 @@ class CustomUserReportsAPIController extends AppBaseController
         }
 
         $primaryKey = '';
+        $detailPrimaryKey = '';
         $data = [];
-        switch ($report->report_master_id) {
-            case 1:
-                $primaryKey = 'expenseClaimMasterAutoID';
-                $data = ExpenseClaim::whereIn('companySystemID', $subCompanies);
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                $data = [];
-                break;
-        }
+        DB::enableQueryLog();
 
-
-        if ($data && $report['columns']) {
+        if ($report['columns']) {
 
             // select columns
             $columns = $this->geReportColumns($report['columns']);
-            array_push($columns, $primaryKey);
-            $data = $data->select($columns);
+            switch ($report->report_master_id) {
+                case 1:
+                    $primaryKey = 'erp_expenseclaimmaster.expenseClaimMasterAutoID';
+                    $detailPrimaryKey = 'erp_expenseclaimdetails.expenseClaimDetailsID';
+                    array_push($columns, $primaryKey);
+                    array_push($columns, $detailPrimaryKey);
+                    $data = ExpenseClaim::selectRaw(implode(",",$columns))
+                                ->employeeJoin('created_by','createdUserSystemID','empName')
+                                ->detailJoin()
+                                ->currencyJoin('currency','currencyID','currencyCode')
+                                ->currencyJoin('currency_local','localCurrency','localCurrencyCode')
+                                ->currencyJoin('currency_reporting','comRptCurrency','rptCurrencyCode')
+                                ->departmentJoin('department','serviceLineSystemID','ServiceLineDes')
+                                ->categoryJoin('category','expenseClaimCategoriesAutoID','claimcategoriesDescription');
+                                //->whereIn('erp_expenseclaimmaster.companySystemID', $subCompanies);
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                default:
+                    $data = [];
+                    break;
+            }
 
             // relation data select
             $relationships = $this->getReportRelationship($report['columns']);
@@ -512,18 +539,25 @@ class CustomUserReportsAPIController extends AppBaseController
 
             // sort by
             $sortByColumns = $this->getSortByColumns($report['columns']);
-            if ($sortByColumns) {
-                foreach ($sortByColumns as $column) {
-                    $data = $data->orderBy($column['column'], $column['by']);
-                }
+            if (!$sortByColumns) {
+                array_push($sortByColumns,array('column' => $detailPrimaryKey , 'by' => 'desc'));
             }
 
+            foreach ($sortByColumns as $column) {
+                $data = $data->orderBy($column['column'], $column['by']);
+            }
             // group by
+            $groupByColumns = $this->getGroupByColumns($report['columns']);
 
+            if(!$groupByColumns){
+                array_push($groupByColumns, $detailPrimaryKey);
+            }
 
+            $data = $data->groupBy($groupByColumns);
             // paginate
             $data = $data->paginate($limit);
         }
+        //dd(DB::getQueryLog());
 
         $output = array(
             'data' => $data,

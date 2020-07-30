@@ -269,4 +269,29 @@ class ExpenseClaim extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_expenseclaimmaster.'.$column);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_expenseclaimdetails','erp_expenseclaimdetails.expenseClaimMasterAutoID','erp_expenseclaimmaster.expenseClaimMasterAutoID');
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'cu', $column = 'currencyID' , $columnAs = 'currencyCode')
+    {
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','erp_expenseclaimdetails.'.$column)
+                ->addSelect($as.".DecimalPlaces as ".$columnAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
+    }
+
+    public function scopeDepartmentJoin($q,$as = 'department', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_expenseclaimdetails.'.$column);
+    }
+
+    public function scopeCategoryJoin($q,$as = 'category', $column = 'expenseClaimCategoriesAutoID' , $columnAs = 'claimcategoriesDescription')
+    {
+        return $q->leftJoin('erp_expenseclaimcategories as '.$as,$as.'.expenseClaimCategoriesAutoID','erp_expenseclaimdetails.'.$column);
+    }
 }
