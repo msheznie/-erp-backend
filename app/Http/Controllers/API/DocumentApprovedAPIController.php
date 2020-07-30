@@ -561,7 +561,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	customermaster.CustomerName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_customerreceivepayment.receivedAmount AS DocumentValue,
+	ABS(erp_customerreceivepayment.receivedAmount) AS DocumentValue,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_customerreceivepayment.documentType AS documentType
