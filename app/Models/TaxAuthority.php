@@ -71,6 +71,7 @@ class TaxAuthority extends Model
         'taxPayableGLAutoID',
         'companySystemID',
         'companyID',
+        'isActive',
         'createdUserGroup',
         'createdPCID',
         'createdUserID',
@@ -102,6 +103,7 @@ class TaxAuthority extends Model
         'taxPayableGLAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
+        'isActive' => 'integer',
         'createdUserGroup' => 'integer',
         'createdPCID' => 'string',
         'createdUserID' => 'string',
@@ -119,6 +121,11 @@ class TaxAuthority extends Model
     public static $rules = [
 
     ];
+
+    public function tax()
+    {
+        return $this->hasMany('App\Models\Tax', 'authorityAutoID', 'taxAuthourityMasterID');
+    }
 
 
 }
