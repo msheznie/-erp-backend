@@ -271,7 +271,8 @@ class ExpenseClaim extends Model
     }
 
     public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
-        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_expenseclaimmaster.'.$column);
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_expenseclaimmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
     }
 
     public function scopeDetailJoin($q)
@@ -279,10 +280,10 @@ class ExpenseClaim extends Model
         return $q->join('erp_expenseclaimdetails','erp_expenseclaimdetails.expenseClaimMasterAutoID','erp_expenseclaimmaster.expenseClaimMasterAutoID');
     }
 
-    public function scopeCurrencyJoin($q,$as = 'cu', $column = 'currencyID' , $columnAs = 'currencyCode')
+    public function scopeCurrencyJoin($q,$as = 'cu', $column = 'currencyID' , $columnAs = 'currencyCode', $decimalPlaceAs = 'amount')
     {
         return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','erp_expenseclaimdetails.'.$column)
-                ->addSelect($as.".DecimalPlaces as ".$columnAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
+                ->addSelect($as.".DecimalPlaces as ".$decimalPlaceAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
     }
 
     public function scopeDepartmentJoin($q,$as = 'department', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
@@ -293,5 +294,10 @@ class ExpenseClaim extends Model
     public function scopeCategoryJoin($q,$as = 'category', $column = 'expenseClaimCategoriesAutoID' , $columnAs = 'claimcategoriesDescription')
     {
         return $q->leftJoin('erp_expenseclaimcategories as '.$as,$as.'.expenseClaimCategoriesAutoID','erp_expenseclaimdetails.'.$column);
+    }
+
+    public function scopeChartOfAccountJoin($q,$as = 'chartOfAccount', $column = 'chartOfAccountSystemID' , $columnAs = 'AccountCode')
+    {
+        return $q->leftJoin('chartofaccounts as '.$as,$as.'.chartOfAccountSystemID','erp_expenseclaimdetails.'.$column);
     }
 }
