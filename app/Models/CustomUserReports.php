@@ -104,5 +104,9 @@ class CustomUserReports extends Model
     {
         return $this->hasMany(CustomReportColumns::class, 'report_master_id','report_master_id');
     }
-    
+
+    public function filter_columns()
+    {
+        return $this->hasMany(CustomFiltersColumn::class, 'user_report_id');
+    }
 }
