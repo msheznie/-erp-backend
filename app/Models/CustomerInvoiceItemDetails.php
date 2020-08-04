@@ -286,6 +286,8 @@ class CustomerInvoiceItemDetails extends Model
         'customerCatalogMasterID',
         'deliveryOrderDetailID',
         'deliveryOrderID',
+        'quotationMasterID',
+        'quotationDetailsID',
         'timestamp'
     ];
 
@@ -338,6 +340,8 @@ class CustomerInvoiceItemDetails extends Model
         'customerCatalogMasterID'=> 'integer',
         'deliveryOrderDetailID'=> 'integer',
         'deliveryOrderID'=> 'integer',
+        'quotationMasterID'=> 'integer',
+        'quotationDetailsID'=> 'integer',
         'timestamp' => 'datetime'
     ];
 
@@ -372,6 +376,14 @@ class CustomerInvoiceItemDetails extends Model
 
     public function master(){
         return $this->belongsTo('App\Models\CustomerInvoiceDirect','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
+    }
+
+    public function sales_quotation(){
+        return $this->belongsTo('App\Models\QuotationMaster','quotationMasterID','quotationMasterID');
+    }
+
+    public function sales_quotation_detail(){
+        return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
     }
 
     

@@ -403,6 +403,10 @@ class ItemMasterAPIController extends AppBaseController
             $itemMasters = [];
         }
 
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+
         return \DataTables::of($itemMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

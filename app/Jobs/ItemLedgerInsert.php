@@ -400,7 +400,7 @@ class ItemLedgerInsert implements ShouldQueue
                                     if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){ // stock adjustment, cost adjustment
                                         $data[$i][$column] = (($detail['wacAdjLocal'])-($detail['currentWaclocal']))*$detail['currenctStockQty'];
 
-                                    }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
+                                    }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
                                         $data[$i][$column] = $detail['issueCostLocal'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];
@@ -409,7 +409,7 @@ class ItemLedgerInsert implements ShouldQueue
                                     if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2) { // stock adjustment, cost adjustment
                                         $data[$i][$column] = (($detail['wacAdjRpt'])-($detail['currentWacRpt']))*$detail['currenctStockQty'];
 
-                                    }elseif ($masterModel["documentSystemID"] == 20 && $masterRec["isPerforma"] == 2){
+                                    }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
                                         $data[$i][$column] = $data[$i][$column] = $detail['issueCostRpt'];
                                     }else{
                                         $data[$i][$column] = $detail[$value];

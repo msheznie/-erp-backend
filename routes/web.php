@@ -9,3 +9,5 @@ Route::resource('mobileBillMasters', 'MobileBillMasterController');
 Route::resource('mobileBillSummaries', 'MobileBillSummaryController');
 
 Route::resource('mobileDetails', 'MobileDetailController');
+
+Route::resource('employeeMobileBillMasters', 'EmployeeMobileBillMasterController');

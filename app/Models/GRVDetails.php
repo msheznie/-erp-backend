@@ -208,7 +208,7 @@ class GRVDetails extends Model
         'markupPercentage' => 'float',
         'markupTransactionAmount' => 'float',
         'markupLocalAmount' => 'float',
-        'markupReportingAmount',
+        'markupReportingAmount'=> 'float',
         'comment' => 'string',
         'supplierDefaultCurrencyID' => 'integer',
         'supplierDefaultER' => 'float',

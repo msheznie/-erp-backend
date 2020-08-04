@@ -881,6 +881,26 @@ class GRVMasterAPIController extends AppBaseController
                 ->get();
         }
 
+        $hasEEOSSPolicy = false;
+        if($grvAutoID){
+            $grvMaster = GRVMaster::find($grvAutoID);
+            $supplierAssigned= SupplierAssigned::where('supplierCodeSytem',$grvMaster->supplierID)
+                ->where('companySystemID',$grvMaster->companySystemID)
+                ->where('isActive', 1)
+                ->where('isAssigned', -1)
+                ->first();
+
+            if(!empty($supplierAssigned) && $supplierAssigned->isMarkupPercentage){
+                $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $supplierAssigned->companySystemID)
+                    ->where('companyPolicyCategoryID', 41)
+                    ->where('isYesNO',1)
+                    ->exists();
+            }
+
+        }
+
+        $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -895,7 +915,9 @@ class GRVMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'companyPolicy' => $allowPartialGRVPolicy,
             'warehouseBinLocationPolicy' => $warehouseBinLocationPolicy,
-            'wareHouseBinLocations' => $wareHouseBinLocations
+            'wareHouseBinLocations' => $wareHouseBinLocations,
+            'isEEOSSPolicy' => $hasEEOSSPolicy,
+            'markupAmendRestrictionPolicy' => $markupAmendRestrictionPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

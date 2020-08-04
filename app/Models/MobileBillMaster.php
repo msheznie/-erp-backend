@@ -239,7 +239,11 @@ class MobileBillMaster extends Model
     }
 
     public function detail(){
-        return $this->hasMany('App\Models\MobileDetail', 'mobileMasterID','mobilebillMasterID');
+        return $this->hasMany('App\Models\MobileDetail', 'mobilebillMasterID','mobilebillMasterID');
+    }
+
+    public function employee_mobile(){
+        return $this->hasMany('App\Models\EmployeeMobileBillMaster', 'mobilebillMasterID','mobilebillMasterID');
     }
 
 
