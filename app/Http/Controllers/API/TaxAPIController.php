@@ -69,6 +69,84 @@ class TaxAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
+        $taxCategory = isset($input['taxCategory'])?$input['taxCategory']:0;
+
+        if($taxCategory==0){
+            return $this->sendError('Tax Category is required');
+        }
+        if($taxCategory == 2) {
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
+                'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
+                'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1',
+                'inputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'outputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'inputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
+                'taxReferenceNo' => 'required'
+
+            ], $messages);
+        }elseif ($taxCategory == 3){
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'inputVatGLAccountAutoID.required' => 'WHT Expense GL Account field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1',
+                'inputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'taxReferenceNo' => 'required'
+
+            ], $messages);
+        }else{
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1'
+            ], $messages);
+        }
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if($taxCategory == 2 || $taxCategory == 3){
+            $input['isDefault'] = 1;
+            $alreadyTaxDefined = Tax::where('taxCategory',2)->where('isActive',1)->exists();
+            if($alreadyTaxDefined){
+                return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
+            }
+
+            $alreadyWHTDefined = Tax::where('taxCategory',3)->where('isActive',1)->exists();
+            if($alreadyWHTDefined){
+                return $this->sendError('WHT is already defined. You cannot create more than one active WHT', 500);
+            }
+        }
+
         $company = Company::find($input["companySystemID"]);
         $input['companyID'] = $company->CompanyID;
 
@@ -76,6 +154,26 @@ class TaxAPIController extends AppBaseController
             if ($input['effectiveFrom']) {
                 $input['effectiveFrom'] = new Carbon($input['effectiveFrom']);
             }
+        }
+
+        if(isset($input['GLAutoID']) && $input['GLAutoID']>0){
+            $glAuth = ChartOfAccount::find($input['GLAutoID']);
+            $input['GLAccount'] = $glAuth->AccountCode;
+        }
+
+        if(isset($input['inputVatGLAccountAutoID']) && $input['inputVatGLAccountAutoID']>0){
+            $glinput = ChartOfAccount::find($input['inputVatGLAccountAutoID']);
+            $input['inputVatGLAccount'] = $glinput->AccountCode;
+        }
+
+        if(isset($input['outputVatGLAccountAutoID']) && $input['outputVatGLAccountAutoID']>0){
+            $gloutput = ChartOfAccount::find($input['outputVatGLAccountAutoID']);
+            $input['outputVatGLAccount'] = $gloutput->AccountCode;
+        }
+
+        if(isset($input['inputVatTransferGLAccountAutoID']) && $input['inputVatTransferGLAccountAutoID']>0){
+            $gltrans = ChartOfAccount::find($input['inputVatTransferGLAccountAutoID']);
+            $input['inputVatTransferGLAccount'] = $gltrans->AccountCode;
         }
 
         $taxes = $this->taxRepository->create($input);
@@ -116,6 +214,93 @@ class TaxAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
+
+        /** @var Tax $tax */
+        $tax = $this->taxRepository->findWithoutFail($id);
+
+        if (empty($tax)) {
+            return $this->sendError('tax master not found');
+        }
+
+        $taxCategory = isset($input['taxCategory'])?$input['taxCategory']:0;
+
+        if($taxCategory==0){
+            return $this->sendError('Tax Category is required');
+        }
+        if($taxCategory == 2) {
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
+                'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
+                'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1',
+                'inputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'outputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'inputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
+                'taxReferenceNo' => 'required'
+
+            ], $messages);
+        }elseif ($taxCategory == 3){
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'inputVatGLAccountAutoID.required' => 'WHT Expense GL Account field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1',
+                'inputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'currencyID' => 'required|numeric|min:1',
+                'taxReferenceNo' => 'required'
+
+            ], $messages);
+        }else{
+            $messages = [
+                'companySystemID.required' => 'Company field is required.',
+                'authorityAutoID.required' => 'Authority field is required.',
+                'GLAutoID.required' => 'Liability Account field is required.',
+                'currencyID.required' => 'Currency field is required.',
+            ];
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required|numeric|min:1',
+                'taxDescription' => 'required',
+                'taxShortCode' => 'required',
+                'taxType' => 'required',
+                'authorityAutoID' => 'required|numeric|min:1',
+                'GLAutoID' => 'required|numeric|min:1'
+            ], $messages);
+        }
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if($taxCategory == 2 || $taxCategory == 3){
+            $input['isDefault'] = 1;
+            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)->where('isActive',1)->where('taxMasterAutoID','!=',$id)->exists();
+            if($alreadyTaxDefined){
+                if($taxCategory == 2){
+                    return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
+                }else{
+                    return $this->sendError('WHT is already defined. You cannot create more than one active WHT', 500);
+                }
+            }
+
+        }
+
         $company = Company::find($input["companySystemID"]);
         $input['companyID'] = $company->CompanyID;
         if (isset($input['effectiveFrom'])) {
@@ -123,16 +308,31 @@ class TaxAPIController extends AppBaseController
                 $input['effectiveFrom'] = new Carbon($input['effectiveFrom']);
             }
         }
-        /** @var Tax $tax */
-        $tax = $this->taxRepository->findWithoutFail($id);
 
-        if (empty($tax)) {
-            return $this->sendError('VAT not found');
+        if(isset($input['GLAutoID']) && $input['GLAutoID']>0 && $tax->GLAutoID != $input['GLAutoID']){
+            $glAuth = ChartOfAccount::find($input['GLAutoID']);
+            $input['GLAccount'] = $glAuth->AccountCode;
         }
+
+        if(isset($input['inputVatGLAccountAutoID']) && $input['inputVatGLAccountAutoID']>0  && $tax->inputVatGLAccountAutoID != $input['inputVatGLAccountAutoID']){
+            $glinput = ChartOfAccount::find($input['inputVatGLAccountAutoID']);
+            $input['inputVatGLAccount'] = $glinput->AccountCode;
+        }
+
+        if(isset($input['outputVatGLAccountAutoID']) && $input['outputVatGLAccountAutoID']>0  && $tax->outputVatGLAccountAutoID != $input['outputVatGLAccountAutoID']){
+            $gloutput = ChartOfAccount::find($input['outputVatGLAccountAutoID']);
+            $input['outputVatGLAccount'] = $gloutput->AccountCode;
+        }
+
+        if(isset($input['inputVatTransferGLAccountAutoID']) && $input['inputVatTransferGLAccountAutoID']>0 && $tax->inputVatTransferGLAccountAutoID != $input['inputVatTransferGLAccountAutoID']){
+            $gltrans = ChartOfAccount::find($input['inputVatTransferGLAccountAutoID']);
+            $input['inputVatTransferGLAccount'] = $gltrans->AccountCode;
+        }
+
 
         $tax = $this->taxRepository->update($input, $id);
 
-        return $this->sendResponse($tax->toArray(), 'VAT updated successfully');
+        return $this->sendResponse($tax->toArray(), 'TAX updated successfully');
     }
 
     /**
@@ -150,6 +350,12 @@ class TaxAPIController extends AppBaseController
 
         if (empty($tax)) {
             return $this->sendError('VAT not found');
+        }
+
+        $isAssigned = Tax::where('taxMasterAutoID',$id)->whereHas('formula_detail')->exists();
+
+        if($isAssigned){
+            return $this->sendError('Cannot delete. Tax master is added to a tax formula.');
         }
 
         $tax->delete();
@@ -205,10 +411,13 @@ class TaxAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)->get();
 
         $taxType = TaxType::all();
+        $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
 
-        $output = array('companies' => $companiesByGroup,
+        $output = array(
+            'companies' => $companiesByGroup,
             'taxType' => $taxType,
-            'chartOfAccount' => $chartOfAccount
+            'chartOfAccount' => $chartOfAccount,
+            'taxCategory' => $taxCategory
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

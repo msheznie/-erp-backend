@@ -66,9 +66,18 @@ class Tax extends Model
         'isActive',
         'authorityAutoID',
         'GLAutoID',
+        'GLAccount',
+        'inputVatGLAccountAutoID',
+        'inputVatGLAccount',
+        'outputVatGLAccountAutoID',
+        'outputVatGLAccount',
+        'inputVatTransferGLAccountAutoID',
+        'inputVatTransferGLAccount',
         'currencyID',
         'effectiveFrom',
         'taxReferenceNo',
+        'taxCategory',
+        'isDefault',
         'createdUserGroup',
         'createdPCID',
         'createdUserID',
@@ -92,13 +101,22 @@ class Tax extends Model
         'companyID' => 'string',
         'taxDescription' => 'string',
         'taxShortCode' => 'string',
-        'taxType' => 'boolean',
+        'taxType' => 'integer',
         'isActive' => 'boolean',
         'authorityAutoID' => 'integer',
         'GLAutoID' => 'integer',
+        'GLAccount' => 'string',
+        'inputVatGLAccountAutoID' => 'integer',
+        'inputVatGLAccount' => 'string',
+        'outputVatGLAccountAutoID' => 'integer',
+        'outputVatGLAccount' => 'string',
+        'inputVatTransferGLAccountAutoID' => 'integer',
+        'inputVatTransferGLAccount' => 'string',
         'currencyID' => 'integer',
         'effectiveFrom' => 'date',
         'taxReferenceNo' => 'string',
+        'taxCategory' => 'integer',
+        'isDefault' => 'integer',
         'createdUserGroup' => 'integer',
         'createdPCID' => 'string',
         'createdUserID' => 'string',
@@ -127,6 +145,21 @@ class Tax extends Model
     {
         /** one tax can have only one tax type */
         return $this->hasOne('App\Models\TaxType', 'taxTypeID', 'taxType');
+    }
+
+    public function formula_detail()
+    {
+        return $this->hasMany('App\Models\TaxFormulaDetail', 'taxMasterAutoID', 'taxMasterAutoID');
+    }
+
+    public function vat_categories()
+    {
+        return $this->hasMany('App\Models\TaxVatCategories', 'taxMasterAutoID', 'taxMasterAutoID');
+    }
+
+    public function vat_main_categories()
+    {
+        return $this->hasMany('App\Models\TaxVatMainCategories', 'taxMasterAutoID', 'taxMasterAutoID');
     }
 
     

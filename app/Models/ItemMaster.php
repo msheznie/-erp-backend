@@ -114,7 +114,8 @@ class ItemMaster extends Model
         'modifiedUserSystemID',
         'refferedBackYN',
         'timesReferred',
-        'isPOSItem'
+        'isPOSItem',
+        'vatSubCategory'
     ];
 
     /**
@@ -163,7 +164,8 @@ class ItemMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
-        'isPOSItem' => 'integer'
+        'isPOSItem' => 'integer',
+        'vatSubCategory'=>'integer'
     ];
 
     /**
@@ -218,5 +220,10 @@ class ItemMaster extends Model
 
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
+    }
+
+    public function vat_sub_category()
+    {
+        return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategory', 'taxVatSubCategoriesAutoID');
     }
 }
