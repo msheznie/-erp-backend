@@ -9,6 +9,7 @@ use App\Models\CustomReportColumns;
 use App\Models\CustomReportMaster;
 use App\Models\CustomUserReports;
 use App\Models\ExpenseClaim;
+use App\Repositories\CustomFiltersColumnRepository;
 use App\Repositories\CustomUserReportColumnsRepository;
 use App\Repositories\CustomUserReportsRepository;
 use Illuminate\Http\Request;
@@ -28,11 +29,15 @@ class CustomUserReportsAPIController extends AppBaseController
     /** @var  CustomUserReportsRepository */
     private $customUserReportsRepository;
     private $customUserReportColumnsRepository;
+    private $customFiltersColumnRepository;
 
-    public function __construct(CustomUserReportsRepository $customUserReportsRepo, CustomUserReportColumnsRepository $customUserReportColumnsRepo)
+    public function __construct(CustomUserReportsRepository $customUserReportsRepo,
+                                CustomUserReportColumnsRepository $customUserReportColumnsRepo,
+                                CustomFiltersColumnRepository $customFiltersColumnRepo)
     {
         $this->customUserReportsRepository = $customUserReportsRepo;
         $this->customUserReportColumnsRepository = $customUserReportColumnsRepo;
+        $this->customFiltersColumnRepository = $customFiltersColumnRepo;
     }
 
     /**
@@ -209,7 +214,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $q->orderBy('sort_order', 'asc');
         }, 'default_columns' => function ($q) {
             $q->orderBy('sort_order', 'asc');
-        }])->find($id);
+        },'filter_columns'])->find($id);
 
         if (empty($customUserReports)) {
             return $this->sendError('Custom User Reports not found');
@@ -289,6 +294,15 @@ class CustomUserReportsAPIController extends AppBaseController
                 foreach ($input['columns'] as $col) {
                     $col['user_report_id'] = $id;
                     $this->customUserReportColumnsRepository->create($col);
+                }
+            }
+
+            if (isset($input['filterColumns']) && is_array($input['filterColumns'])) {
+                $this->customFiltersColumnRepository->where('user_report_id', $id)->delete();
+                foreach ($input['filterColumns'] as $col) {
+                    $col= $this->convertArrayToSelectedValue($col,['operator']);
+                    $col['user_report_id'] = $id;
+                    $this->customFiltersColumnRepository->create($col);
                 }
             }
 
@@ -373,7 +387,7 @@ class CustomUserReportsAPIController extends AppBaseController
             ->with('created_by');
 
         if (array_key_exists('is_private', $input) && ($input['is_private'] == 0 || $input['is_private'] == 1) && !is_null($input['is_private'])) {
-                $reports = $reports->where('is_private', $input['is_private']);
+            $reports = $reports->where('is_private', $input['is_private']);
         }
 
         $search = $request->input('search.value');
@@ -387,7 +401,7 @@ class CustomUserReportsAPIController extends AppBaseController
         return \DataTables::of($reports)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') && $input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+                    $query->orderBy('id', $input['order'][0]['dir']);
                 }
             })
             ->addIndexColumn()
@@ -399,8 +413,12 @@ class CustomUserReportsAPIController extends AppBaseController
     {
         $result = [];
         foreach ($columns as $column) {
-            if (isset($column['column']) && isset($column['column']['column'])) {
-                array_push($result, $column['column']['column']);
+            if (isset($column['column']) && isset($column['column']['column']) && $column['column']['column_type'] != 5) {
+                $tmpColumn = $column['column']['table'] . '.' . $column['column']['column'];
+                if ($column['column']['column_type'] == 4) {
+                    $tmpColumn = 'SUM(' . $tmpColumn . ') as ' . $column['column']['column'];
+                }
+                array_push($result, $tmpColumn);
             }
         }
 
@@ -427,19 +445,41 @@ class CustomUserReportsAPIController extends AppBaseController
     {
         $result = [];
         foreach ($columns as $column) {
-            if (isset($column['column']) && $column['column']['is_sortabel']) {
-
-                if ($column['is_sort']) {
-                    $temp = array(
-                        'column' => $column['column']['column'],
-                        'by' => $column['sort_by']
-                    );
-                    array_push($result, $temp);
-                }
+            if (isset($column['column']) && $column['column']['is_sortabel'] && $column['column']['column_type'] != 5 && $column['is_sort']) {
+                $temp = array(
+                    'column' => $column['column']['table'] . '.' . $column['column']['column'],
+                    'by' => $column['sort_by']
+                );
+                array_push($result, $temp);
             }
         }
 
         return $result;
+    }
+
+    private function getGroupByColumns($columns)
+    {
+        $result = [];
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['is_group_by'] && $column['is_group_by']) {
+                $tmpColumn = $column['column']['table'] . '.' . $column['column']['column'];
+                if ($column['column']['column_type'] == 5) {
+                    $tmpColumn = $column['column']['filter_column'];
+                }
+                array_push($result, $tmpColumn);
+            }
+        }
+        return $result;
+    }
+
+    private function checkMasterColumn($columns, $value, $columnName)
+    {
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column'][$columnName] == $value) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function customReportView(Request $request)
@@ -457,7 +497,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $limit = isset($input['limit']) ? $input['limit'] : 10;
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
-        }])->find($input['id']);
+        },'filter_columns'])->find($input['id']);
 
         if (empty($report)) {
             return $this->sendError('Report not found');
@@ -472,58 +512,142 @@ class CustomUserReportsAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        /* column_type
+         * 1 - Text
+         * 2 - Date
+         * 3 -
+         * 4 - Amount
+         * 5 - Get Column as name, and for multiple column with same table join
+         */
+
         $primaryKey = '';
+        $detailPrimaryKey = '';
+
+        // sort by columns
+        $sortByColumns = $this->getSortByColumns($report['columns']);
+
+        // group by columns
+        $groupByColumns = $this->getGroupByColumns($report['columns']);
+
+        $isMasterExist = $this->checkMasterColumn($report['columns'], 1, 'is_master'); // 1 - master, 0 - details
+        $isDetailExist = $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
+
         $data = [];
-        switch ($report->report_master_id) {
-            case 1:
-                $primaryKey = 'expenseClaimMasterAutoID';
-                $data = ExpenseClaim::whereIn('companySystemID', $subCompanies);
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                $data = [];
-                break;
-        }
+        DB::enableQueryLog();
 
+        if (isset($report['columns']) && count($report['columns']) > 0) {
 
-        if ($data && $report['columns']) {
 
             // select columns
             $columns = $this->geReportColumns($report['columns']);
-            array_push($columns, $primaryKey);
-            $data = $data->select($columns);
+            switch ($report->report_master_id) {
+                case 1:
+                    $masterTable = 'erp_expenseclaimmaster';
+                    $detailTable = 'erp_expenseclaimdetails';
+                    $primaryKey = $masterTable . '.expenseClaimMasterAutoID';
+                    $detailPrimaryKey = $detailTable . '.expenseClaimDetailsID';
+                    $tables = ['created_by', 'confirmed_by', 'currency', 'currency_local', 'currency_reporting', 'department', 'category', 'chartOfAccount'];
+                    $statusColumns = ['confirmedYN', 'approved', 'documentSystemID', 'companySystemID'];
 
-            // relation data select
-            $relationships = $this->getReportRelationship($report['columns']);
-            if ($relationships) {
-                foreach ($relationships as $relation) {
-                    $data = $data->with([$relation['relationship'] => function ($q) use ($relation) {
-                        $q->select(array_unique(explode(',', $relation['columns'])));
-                    }]);
-                }
+                    if ($this->checkMasterColumn($report['columns'], 6, 'column_type')) {
+                        foreach ($statusColumns as $column) {
+                            array_push($columns, $masterTable . '.' . $column);
+                        }
+                    }
+
+                    if ($isMasterExist) {
+                        array_push($columns, $primaryKey . ' as masterId');
+                    }
+
+                    if ($isDetailExist) {
+                        array_push($columns, $detailPrimaryKey . ' as detailId');
+                    }
+
+                    $data = ExpenseClaim::selectRaw(implode(",", $columns));
+
+                    // details table
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                    }
+
+                    foreach ($tables as $table) {
+                        if ($this->checkMasterColumn($report['columns'], $table, 'table')) {
+                            if ($table == 'created_by') {
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                            } else if ($table == 'confirmed_by') {
+                                $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'confirmedByName');
+                            } else if ($table == 'currency') {
+                                $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
+                            } else if ($table == 'currency_local') {
+                                $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
+                            } else if ($table == 'currency_reporting') {
+                                $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
+                            } else if ($table == 'department') {
+                                $data->departmentJoin('department', 'serviceLineSystemID', 'ServiceLineDes');
+                            } else if ($table == 'category') {
+                                $data->categoryJoin('category', 'expenseClaimCategoriesAutoID', 'claimcategoriesDescription');
+                            } else if ($table == 'chartOfAccount') {
+                                $data->chartOfAccountJoin('chartOfAccount', 'chartOfAccountSystemID', 'AccountCode');
+                            }
+                        }
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency', 'table') && $this->checkMasterColumn($report['columns'], 'amount', 'column')) {
+                         $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_local', 'table') && $this->checkMasterColumn($report['columns'], 'localAmount', 'column')) {
+                         $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_reporting', 'table') && $this->checkMasterColumn($report['columns'], 'comRptAmount', 'column')) {
+                         $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
+                    }
+
+                    $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+
+                    if(isset($report['filter_columns']) && count($report['filter_columns']) > 0){
+                        //
+                    }
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                default:
+                    $data = [];
+                    break;
+            }
+
+
+            $uniqueId = $detailPrimaryKey;
+            if (!$isDetailExist) {
+                $uniqueId = $primaryKey;
             }
 
             // filter
 
             // sort by
-            $sortByColumns = $this->getSortByColumns($report['columns']);
-            if ($sortByColumns) {
-                foreach ($sortByColumns as $column) {
-                    $data = $data->orderBy($column['column'], $column['by']);
-                }
+            if (!$sortByColumns) {
+                array_push($sortByColumns, array('column' => $uniqueId, 'by' => 'desc'));
+            }
+
+            foreach ($sortByColumns as $column) {
+                $data = $data->orderBy($column['column'], $column['by']);
             }
 
             // group by
+            if (!$groupByColumns) {
+                array_push($groupByColumns, $uniqueId);
+            }
 
-
+            $data = $data->groupBy($groupByColumns);
             // paginate
             $data = $data->paginate($limit);
         }
+        //dd(DB::getQueryLog());
 
         $output = array(
             'data' => $data,

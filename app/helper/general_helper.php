@@ -2563,7 +2563,7 @@ class Helper
             $date = self::dateOnlyFormat($date);
             return new Carbon($date. ' ' .date("h:i:sa"));
         } else {
-            return '';
+            return null;
         }
     }
 
