@@ -300,7 +300,8 @@ class ItemMasterRefferedBack extends Model
         'timestamp',
         'createdUserSystemID',
         'modifiedUserSystemID',
-        'isPOSItem'
+        'isPOSItem',
+        'vatSubCategory'
     ];
 
     /**
@@ -350,7 +351,8 @@ class ItemMasterRefferedBack extends Model
         'modifiedUser' => 'string',
         'createdUserSystemID' => 'integer',
         'modifiedUserSystemID' => 'integer',
-        'isPOSItem' => 'integer'
+        'isPOSItem' => 'integer',
+        'vatSubCategory'=>'integer'
     ];
 
     /**

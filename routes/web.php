@@ -11,3 +11,7 @@ Route::resource('mobileBillSummaries', 'MobileBillSummaryController');
 Route::resource('mobileDetails', 'MobileDetailController');
 
 Route::resource('employeeMobileBillMasters', 'EmployeeMobileBillMasterController');
+
+Route::resource('taxVatCategories', 'TaxVatCategoriesController');
+
+Route::resource('taxVatMainCategories', 'TaxVatMainCategoriesController');

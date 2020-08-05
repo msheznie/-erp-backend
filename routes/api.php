@@ -1828,6 +1828,12 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@exportEmployeeMobileBill');
         Route::post('grvMarkupUpdate', 'GRVDetailsAPIController@grvMarkupUpdate');
 
+        Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+        Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
+        Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+
+        Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1874,6 +1880,11 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+
+
+
 
 
 

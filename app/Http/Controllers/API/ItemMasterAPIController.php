@@ -37,6 +37,7 @@ use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMasterRefferedBack;
 use App\Models\SupplierCatalogMaster;
+use App\Models\TaxVatCategories;
 use App\Models\Unit;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
@@ -444,6 +445,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
+
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
@@ -495,6 +497,23 @@ class ItemMasterAPIController extends AppBaseController
                 ->get();
         }
 
+        $id = isset($input['id'])?$input['id']:0;
+        $isVatRegisteredYN = false;
+        $vatSubCategory = [];
+        if($id > 0){
+            $itemMaster = ItemMaster::find($id);
+            if($itemMaster){
+                $primaryCompany = Company::find($itemMaster->primaryCompanySystemID);
+                if($primaryCompany->vatRegisteredYN == 1){
+                    $isVatRegisteredYN = true;
+                    $vatSubCategory = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID,CONCAT(erp_tax_vat_main_categories.mainCategoryDescription, " - " ,erp_tax_vat_sub_categories.subCategoryDescription) as label')
+                        ->join('erp_tax_vat_main_categories','erp_tax_vat_sub_categories.mainCategory','=','erp_tax_vat_main_categories.taxVatMainCategoriesAutoID')
+                        ->groupBy('taxVatSubCategoriesAutoID')
+                        ->get();
+                }
+            }
+        }
+
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'allCompanies' => $allCompanies,
@@ -502,7 +521,9 @@ class ItemMasterAPIController extends AppBaseController
             'financeItemCategorySub' => $itemCategorySubArray,
             'yesNoSelection' => $yesNoSelection,
             'units' => $units,
-            'wareHouseBinLocations' => $wareHouseBinLocations
+            'isVatRegisteredYN' => $isVatRegisteredYN,
+            'wareHouseBinLocations' => $wareHouseBinLocations,
+            'vatSubCategory' => $vatSubCategory
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
