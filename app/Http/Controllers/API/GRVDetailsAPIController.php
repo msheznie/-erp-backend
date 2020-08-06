@@ -890,7 +890,9 @@ class GRVDetailsAPIController extends AppBaseController
         $output['markupLocalAmount'] = 0;
         $output['markupReportingAmount'] = 0;
 
-        if(isset($grvData->supplierID) && $grvData->supplierID){
+        $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($grvData->companySystemID,6);
+
+        if(isset($grvData->supplierID) && $grvData->supplierID && $markupAmendRestrictionPolicy){
 
             $supplier= SupplierAssigned::where('supplierCodeSytem',$grvData->supplierID)
                 ->where('companySystemID',$grvData->companySystemID)
