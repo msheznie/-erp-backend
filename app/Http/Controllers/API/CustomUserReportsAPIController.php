@@ -457,20 +457,40 @@ class CustomUserReportsAPIController extends AppBaseController
         return $result;
     }
 
-    private function getGroupByColumns($columns)
+    private function getGroupByColumns($columns,$m,$d)
     {
         $result = [];
         foreach ($columns as $column) {
             if (isset($column['column']) && $column['column']['is_group_by'] && $column['is_group_by']) {
-                $tmpColumn = $column['column']['table'] . '.' . $column['column']['column'];
-                if ($column['column']['column_type'] == 5) {
-                    $tmpColumn = $column['column']['filter_column'];
+                $table = $m;
+                if(!$column['column']['is_master']){
+                    $table = $d;
                 }
+                $tmpColumn = $table.'.'.$column['column']['group_by_column'];
                 array_push($result, $tmpColumn);
             }
         }
         return $result;
     }
+
+    private function getFilterColumns($columns)
+    {
+        $result = [];
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['is_filter']) {
+                $tmpColumn =   $column['column']['table'] . '.' .$column['column']['filter_column'];
+                if ($column['column']['column_type'] == 51) {
+                    $tmpColumn = $column['column']['filter_column'];
+                }
+
+                $column['columnName'] = $tmpColumn;
+                $column['column_type'] = $column['column']['column_type'];
+                array_push($result, $column);
+            }
+        }
+        return $result;
+    }
+
 
     private function checkMasterColumn($columns, $value, $columnName)
     {
@@ -497,7 +517,10 @@ class CustomUserReportsAPIController extends AppBaseController
         $limit = isset($input['limit']) ? $input['limit'] : 10;
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
-        },'filter_columns'])->find($input['id']);
+        },'filter_columns' => function($q){
+            $q->with(['column'])
+                ->wherehas('column');
+        }])->find($input['id']);
 
         if (empty($report)) {
             return $this->sendError('Report not found');
@@ -522,12 +545,14 @@ class CustomUserReportsAPIController extends AppBaseController
 
         $primaryKey = '';
         $detailPrimaryKey = '';
+        $masterTable = '';
+        $detailTable = '';
+
 
         // sort by columns
         $sortByColumns = $this->getSortByColumns($report['columns']);
 
-        // group by columns
-        $groupByColumns = $this->getGroupByColumns($report['columns']);
+
 
         $isMasterExist = $this->checkMasterColumn($report['columns'], 1, 'is_master'); // 1 - master, 0 - details
         $isDetailExist = $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
@@ -605,10 +630,6 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
 
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
-
-                    if(isset($report['filter_columns']) && count($report['filter_columns']) > 0){
-                        //
-                    }
                     break;
                 case 2:
                     break;
@@ -627,7 +648,79 @@ class CustomUserReportsAPIController extends AppBaseController
                 $uniqueId = $primaryKey;
             }
 
+            $search = isset($input['search']) ? $input['search']: '';
             // filter
+            /*  1 : 'equals',
+                2 : 'not equals',
+                3 : 'less than',
+                4 : 'greater than',
+                5 : 'less or equal',
+                6 : 'greater or equal',
+                7 : 'contain',
+                8 : 'does not contain',
+                9 : 'start with'
+            */
+
+            if(isset($report['filter_columns']) && count($report['filter_columns']) > 0){
+                $filterColumns = $this->getFilterColumns($report['filter_columns']);
+                foreach ($filterColumns as $column){
+                    $operator = $column['operator'];
+
+                    if($column['column_type'] == 5 ) {
+                            //
+                    }else{
+                        switch ($operator) {
+                            case 1:
+                                $data->where($column['columnName'], $column['value']);
+                                break;
+                            case 2:
+                                $data->where($column['columnName'], '!=', $column['value']);
+                                break;
+                            case 3:
+                                $data->where($column['columnName'], '<', $column['value']);
+                                break;
+                            case 4:
+                                $data->where($column['columnName'], '>', $column['value']);
+                                break;
+                            case 5:
+                                $data->where($column['columnName'], '<=', $column['value']);
+                                break;
+                            case 6:
+                                $data->where($column['columnName'], '>=', $column['value']);
+                                break;
+                            case 7:
+                                $data->where($column['columnName'], 'like', "%{$column['value']}%");
+                                break;
+                            case 8:
+                                $data->where($column['columnName'], 'not like', "%{$column['value']}%");
+                                break;
+                            case 9:
+                                $data->where($column['columnName'], 'like', "{$column['value']}%");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            $searchColumns = $this->getFilterColumns($report['columns']);
+            //search
+            if($search){
+                $data->where(function ($q) use($searchColumns,$search){
+                    foreach ($searchColumns as $key => $column) {
+                        if ($column['column_type'] == 5) {
+                            //
+                        } else {
+                            if($key == 0){
+                                $q->where($column['columnName'], 'like', "%{$search}%");
+                            }else{
+                                $q->orWhere($column['columnName'], 'like', "%{$search}%");
+                            }
+                        }
+                    }
+                });
+            }
 
             // sort by
             if (!$sortByColumns) {
@@ -638,6 +731,9 @@ class CustomUserReportsAPIController extends AppBaseController
                 $data = $data->orderBy($column['column'], $column['by']);
             }
 
+            // group by columns
+            $groupByColumns = $this->getGroupByColumns($report['columns'],$masterTable,$detailTable);
+
             // group by
             if (!$groupByColumns) {
                 array_push($groupByColumns, $uniqueId);
@@ -647,7 +743,7 @@ class CustomUserReportsAPIController extends AppBaseController
             // paginate
             $data = $data->paginate($limit);
         }
-        //dd(DB::getQueryLog());
+        // dd(DB::getQueryLog());
 
         $output = array(
             'data' => $data,

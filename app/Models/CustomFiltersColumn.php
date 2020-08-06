@@ -84,5 +84,8 @@ class CustomFiltersColumn extends Model
         
     ];
 
-    
+    public function column()
+    {
+        return $this->belongsTo(CustomReportColumns::class, 'column_id');
+    }
 }
