@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxVatMainCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatMainCategoriesAPIRequest;
+use App\Models\TaxVatCategories;
 use App\Models\TaxVatMainCategories;
 use App\Repositories\TaxVatMainCategoriesRepository;
 use Illuminate\Http\Request;
@@ -227,7 +228,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
     public function update($id, UpdateTaxVatMainCategoriesAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input,['tax']);
         /** @var TaxVatMainCategories $taxVatMainCategories */
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->findWithoutFail($id);
 
@@ -295,8 +296,53 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
             return $this->sendError('Tax Vat Main Categories not found');
         }
 
+        $isExists = TaxVatCategories::where('mainCategory',$id)->exists();
+        if ($isExists) {
+            return $this->sendError('You cannot delete. This main category has assigned sub categories');
+        }
+
         $taxVatMainCategories->delete();
 
-        return $this->sendSuccess('Tax Vat Main Categories deleted successfully');
+        return $this->sendResponse([],'Tax Vat Main Categories deleted successfully');
+    }
+
+    public function getAllVatMainCategories(Request $request){
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $taxMasterAutoID = $request['taxMasterAutoID'];
+
+        $vatMainCategories = TaxVatMainCategories::where('taxMasterAutoID', $taxMasterAutoID)
+            ->with(['tax']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $vatMainCategories = $vatMainCategories->where(function ($query) use ($search) {
+                $query->whereHas('tax', function($q)use ($search){
+                    $q->where('taxShortCode','LIKE', "%{$search}%")
+                        ->orWhere('taxDescription','LIKE', "%{$search}%");
+                })
+                    ->orWhere('mainCategoryDescription','LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($vatMainCategories)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('taxVatMainCategoriesAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

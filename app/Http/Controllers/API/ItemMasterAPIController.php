@@ -508,6 +508,7 @@ class ItemMasterAPIController extends AppBaseController
                     $isVatRegisteredYN = true;
                     $vatSubCategory = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID,CONCAT(erp_tax_vat_main_categories.mainCategoryDescription, " - " ,erp_tax_vat_sub_categories.subCategoryDescription) as label')
                         ->join('erp_tax_vat_main_categories','erp_tax_vat_sub_categories.mainCategory','=','erp_tax_vat_main_categories.taxVatMainCategoriesAutoID')
+                        ->where('erp_tax_vat_sub_categories.isActive',1)
                         ->groupBy('taxVatSubCategoriesAutoID')
                         ->get();
                 }
