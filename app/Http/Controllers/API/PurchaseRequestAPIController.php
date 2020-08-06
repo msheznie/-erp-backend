@@ -59,6 +59,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\UserRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1579,6 +1580,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->cancelledDate = now();
         $purchaseRequest->save();
 
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$input['purchaseRequestID'],$input['cancelledComments'],'cancelled');
+
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
@@ -1712,6 +1715,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->approvedByUserSystemID = NULL;
         $purchaseRequest->RollLevForApp_curr = 1;
         $purchaseRequest->save();
+
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$input['purchaseRequestID'],$input['ammendComments'],'returned back to amend');
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
@@ -1857,6 +1862,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$input['purchaseRequestID'],$input['manuallyClosedComment'],'manually closed');
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
@@ -2376,6 +2382,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $this->purchaseRequestRepository->update(['checkBudgetYN' => 0],$purchaseRequestId);
+
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$input['purchaseRequestID'],'','removed budget check');
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Request budget check removed successfully');
     }

@@ -48,6 +48,7 @@ class TaxVatMainCategories extends Model
     public $fillable = [
         'taxMasterAutoID',
         'mainCategoryDescription',
+        'isActive',
         'timestamp'
     ];
 
@@ -60,6 +61,7 @@ class TaxVatMainCategories extends Model
         'taxVatMainCategoriesAutoID' => 'integer',
         'taxMasterAutoID' => 'integer',
         'mainCategoryDescription' => 'string',
+        'isActive' => 'integer',
         'timestamp' => 'datetime'
     ];
 

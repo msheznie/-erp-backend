@@ -60,6 +60,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\UserRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1569,6 +1570,8 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                     GeneralLedger::create($temp->toArray());
                 }
             }
+
+            AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvCancelledComment'],'cancelled');
 
             DB::commit();
         } catch (\Exception $e) {

@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\ItemMaster;
 use App\Models\TaxVatCategories;
 use App\Models\TaxVatMainCategories;
 use App\Models\YesNoSelection;
@@ -345,9 +346,14 @@ class TaxVatCategoriesAPIController extends AppBaseController
             return $this->sendError('Tax Vat Categories not found');
         }
 
+        $isExists = ItemMaster::where('vatSubCategory',$id)->exists();
+        if ($isExists) {
+            return $this->sendError('You cannot delete. this sub category has assigned to item master');
+        }
+
         $taxVatCategories->delete();
 
-        return $this->sendSuccess('Tax Vat Categories deleted successfully');
+        return $this->sendResponse([],'Tax Vat Categories deleted successfully');
     }
 
     public function getAllVatCategories(Request $request)
@@ -376,7 +382,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                 })
                 ->orWhereHas('main',function($q)use ($search){
                     $q->where('mainCategoryDescription','LIKE', "%{$search}%");
-                });
+                })->orWhere('subCategoryDescription','LIKE', "%{$search}%");
             });
         }
 
@@ -397,7 +403,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function getVatCategoriesFormData(Request $request){
 
         $input = $request->all();
-        $main = TaxVatMainCategories::where('taxMasterAutoID',$input['taxMasterAutoID'])->get();
+        $main = TaxVatMainCategories::where('taxMasterAutoID',$input['taxMasterAutoID'])->where('isActive',1)->get();
         $applicable = array(array('value' => 1, 'label' => 'Gross Amount'), array('value' => 2, 'label' => 'Net Amount'));
         $output = array(
             'mainCategories' => $main,

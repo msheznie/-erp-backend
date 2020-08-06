@@ -66,6 +66,7 @@ use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1937,6 +1938,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMasterData->postedDate = null;
             $bookInvSuppMasterData->save();
 
+            AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($bookInvSuppMasterData->toArray(), 'Supplier Invoice amend saved successfully');
