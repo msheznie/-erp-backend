@@ -19,7 +19,6 @@ $factory->define(CustomReportColumns::class, function (Faker $faker) {
         'is_default_sort' => $faker->word,
         'is_default_group_by' => $faker->word,
         'is_filter' => $faker->word,
-        'filter_type' => $faker->randomDigitNotNull,
         'created_at' => $faker->date('Y-m-d H:i:s'),
         'updated_at' => $faker->date('Y-m-d H:i:s')
     ];

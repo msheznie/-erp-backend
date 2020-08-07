@@ -429,22 +429,6 @@ class CustomUserReportsAPIController extends AppBaseController
         return array_unique($result);
     }
 
-    private function getReportRelationship($columns)
-    {
-        $result = [];
-        foreach ($columns as $column) {
-            if (isset($column['column']) && $column['column']['is_relationship']) {
-                $temp = array(
-                    'relationship' => $column['column']['relationship'],
-                    'columns' => $column['column']['relationship_columns']
-                );
-                array_push($result, $temp);
-            }
-        }
-
-        return $result;
-    }
-
     private function getSortByColumns($columns)
     {
         $result = [];
