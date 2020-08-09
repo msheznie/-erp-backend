@@ -134,6 +134,16 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 17: // JV
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                $docInforArr["documentCodeColumnName"] = 'JVcode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
 
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -146,7 +156,7 @@ trait AuditTrial
             $employee = Helper::getEmployeeInfo();
             $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
             if($comment != ''){
-                $description .= " due to below reason. ".$comment;
+                $description .= ". due to below reason. ".$comment;
             }
             $insertArray = [
                 'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
