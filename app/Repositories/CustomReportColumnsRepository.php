@@ -30,8 +30,7 @@ class CustomReportColumnsRepository extends BaseRepository
         'is_group_by',
         'is_default_sort',
         'is_default_group_by',
-        'is_filter',
-        'filter_type'
+        'is_filter'
     ];
 
     /**

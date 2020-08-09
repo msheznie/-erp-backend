@@ -12,6 +12,7 @@ use App\Models\ExpenseClaim;
 use App\Repositories\CustomFiltersColumnRepository;
 use App\Repositories\CustomUserReportColumnsRepository;
 use App\Repositories\CustomUserReportsRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -300,7 +301,10 @@ class CustomUserReportsAPIController extends AppBaseController
             if (isset($input['filterColumns']) && is_array($input['filterColumns'])) {
                 $this->customFiltersColumnRepository->where('user_report_id', $id)->delete();
                 foreach ($input['filterColumns'] as $col) {
-                    $col= $this->convertArrayToSelectedValue($col,['operator']);
+                    $col = $this->convertArrayToSelectedValue($col,['operator']);
+                    if(is_array($col['value'])){
+                        $col = $this->convertArrayToSelectedValue($col,['value']);
+                    }
                     $col['user_report_id'] = $id;
                     $this->customFiltersColumnRepository->create($col);
                 }
@@ -425,22 +429,6 @@ class CustomUserReportsAPIController extends AppBaseController
         return array_unique($result);
     }
 
-    private function getReportRelationship($columns)
-    {
-        $result = [];
-        foreach ($columns as $column) {
-            if (isset($column['column']) && $column['column']['is_relationship']) {
-                $temp = array(
-                    'relationship' => $column['column']['relationship'],
-                    'columns' => $column['column']['relationship_columns']
-                );
-                array_push($result, $temp);
-            }
-        }
-
-        return $result;
-    }
-
     private function getSortByColumns($columns)
     {
         $result = [];
@@ -479,10 +467,6 @@ class CustomUserReportsAPIController extends AppBaseController
         foreach ($columns as $column) {
             if (isset($column['column']) && $column['column']['is_filter']) {
                 $tmpColumn =   $column['column']['table'] . '.' .$column['column']['filter_column'];
-                if ($column['column']['column_type'] == 51) {
-                    $tmpColumn = $column['column']['filter_column'];
-                }
-
                 $column['columnName'] = $tmpColumn;
                 $column['column_type'] = $column['column']['column_type'];
                 array_push($result, $column);
@@ -541,6 +525,7 @@ class CustomUserReportsAPIController extends AppBaseController
          * 3 -
          * 4 - Amount
          * 5 - Get Column as name, and for multiple column with same table join
+         * 6 - Status
          */
 
         $primaryKey = '';
@@ -558,6 +543,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $isDetailExist = $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
 
         $data = [];
+        $templateData = array();
         DB::enableQueryLog();
 
         if (isset($report['columns']) && count($report['columns']) > 0) {
@@ -567,6 +553,14 @@ class CustomUserReportsAPIController extends AppBaseController
             $columns = $this->geReportColumns($report['columns']);
             switch ($report->report_master_id) {
                 case 1:
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['canceledColumn']  = '';
+                    $templateData['canceledValue']   = 0;
+                    $templateData['timesReferredColumn'] = '';
+                    $templateData['timesReferredValue'] = 0;
                     $masterTable = 'erp_expenseclaimmaster';
                     $detailTable = 'erp_expenseclaimdetails';
                     $primaryKey = $masterTable . '.expenseClaimMasterAutoID';
@@ -649,7 +643,7 @@ class CustomUserReportsAPIController extends AppBaseController
             }
 
             $search = isset($input['search']) ? $input['search']: '';
-            // filter
+
             /*  1 : 'equals',
                 2 : 'not equals',
                 3 : 'less than',
@@ -661,13 +655,136 @@ class CustomUserReportsAPIController extends AppBaseController
                 9 : 'start with'
             */
 
+            // filter
             if(isset($report['filter_columns']) && count($report['filter_columns']) > 0){
                 $filterColumns = $this->getFilterColumns($report['filter_columns']);
                 foreach ($filterColumns as $column){
                     $operator = $column['operator'];
 
-                    if($column['column_type'] == 5 ) {
-                            //
+                    if($column['column_type'] == 2 && $column['value']) { // date columns
+                        $date = Carbon::parse($column['value'])->format('Y-m-d');
+                        $dateTo = isset($column['value_to']) ?  Carbon::parse($column['value_to'])->format('Y-m-d') : Carbon::parse(now())->format('Y-m-d');
+                        switch ($operator) {
+                            case 1:
+                                $data->whereDate($column['columnName'], $date);
+                                break;
+                            case 2:
+                                $data->whereDate($column['columnName'], '!=', $date);
+                                break;
+                            case 3:
+                                $data->whereDate($column['columnName'], '<', $date);
+                                break;
+                            case 4:
+                                $data->whereDate($column['columnName'], '>', $date);
+                                break;
+                            case 5:
+                                $data->whereDate($column['columnName'], '<=', $date);
+                                break;
+                            case 6:
+                                $data->whereDate($column['columnName'], '>=', $date);
+                                break;
+                            /*case 7:
+                                $data->whereDate($column['columnName'], 'like', "%{$date}%");
+                                break;
+                            case 8:
+                                $data->whereDate($column['columnName'], 'not like', "%{$date}%");
+                                break;
+                            case 9:
+                                $data->whereDate($column['columnName'], 'like', "{$date}%");
+                                break;*/
+                            case 10:
+
+                                if($date && $dateTo){
+                                    $data->whereBetween($column['columnName'], [$date,$dateTo]);
+                                }
+                                break;
+                            case 11:
+                                if($date && $dateTo){
+                                    $data->whereNotBetween($column['columnName'], [$date,$dateTo]);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+
+                    }else if ($column['column_type'] == 6) { // status
+                        /*
+                         * 1 = 'Not Confirmed'
+                         * 2 = 'Pending Approval'
+                         * 3 = 'Fully Approved'
+                         * 4 = 'Referred Back'
+                         * 5 = 'Cancelled'
+                         */
+                        switch ($operator) {
+                            case 1:
+                                if (intval($column['value']) == 1) { //Not Confirmed
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], 0)
+                                        ->where($masterTable . '.' . $templateData['approvedColumn'], 0);
+                                } else if (intval($column['value']) == 2) { // Pending Approval
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], $templateData['confirmedValue'])
+                                        ->where($masterTable . '.' . $templateData['approvedColumn'], 0);
+                                } else if (intval($column['value']) == 3) { // Fully Approved
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], $templateData['confirmedValue'])
+                                        ->where($masterTable . '.' . $templateData['approvedColumn'], $templateData['approvedValue']);
+
+                                    if ($templateData['timesReferredColumn']) {
+                                        $data->where($masterTable . '.' . $templateData['timesReferredColumn'], 0);
+                                    }
+
+                                } else if (intval($column['value']) == 4) { //Referred Back
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], $templateData['confirmedValue'])
+                                        ->where($masterTable . '.' . $templateData['approvedColumn'], $templateData['approvedValue']);
+                                    if ($templateData['timesReferredColumn']) {
+                                        $data->where($masterTable . '.' . $templateData['timesReferredColumn'], -1);
+                                    }
+                                } else if (intval($column['value']) == 5) { //Cancelled
+                                    if ($templateData['canceledColumn']) {
+                                        $data->where($masterTable . '.' . $templateData['canceledColumn'], $templateData['canceledValue']);
+                                    }
+                                }
+                                break;
+                            case 2:
+                                if (intval($column['value']) == 1) { //Not Confirmed
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'],'!=', 0);
+                                } else if (intval($column['value']) == 2) { // Pending Approval
+                                    $data->where(function ($q) use($masterTable,$templateData) {
+                                        $q->where($masterTable . '.' . $templateData['confirmedColumn'], 0)
+                                           ->orWhere($masterTable . '.' . $templateData['approvedColumn'],'!=', 0);
+                                    });
+                                } else if (intval($column['value']) == 3) { // Fully Approved
+                                    $data->where($masterTable . '.' . $templateData['approvedColumn'], 0);
+                                } else if (intval($column['value']) == 4) { //Referred Back
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], $templateData['confirmedValue'])
+                                        ->where($masterTable . '.' . $templateData['approvedColumn'], $templateData['approvedValue']);
+                                    if ($templateData['timesReferredColumn']) {
+                                        $data->where($masterTable . '.' . $templateData['timesReferredColumn'], -1);
+                                    }
+                                } else if (intval($column['value']) == 5) { //Cancelled
+                                    if ($templateData['canceledColumn']) {
+                                        $data->where($masterTable . '.' . $templateData['canceledColumn'], $templateData['canceledValue']);
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+                        /*if (this.ca == -1) {
+                            status = "Cancelled";
+                        } else if (this.co == 0 && this.ap == 0) {
+                            status = " Not Confirmed";
+                        }
+                        else if (this.co == 1 && this.ap == 0 && this.tr == 0) {
+                            status = "Pending Approval";
+                        } else if (this.co == 1 && this.ap == 0 && this.tr == -1) {
+                            status = "Referred Back";
+                        }
+                        else if (this.co == 1 && (this.ap == -1 || this.ap == 1 )) {
+                            status = "Fully Approved";
+                        }*/
+
+
                     }else{
                         switch ($operator) {
                             case 1:
@@ -709,9 +826,11 @@ class CustomUserReportsAPIController extends AppBaseController
             if($search){
                 $data->where(function ($q) use($searchColumns,$search){
                     foreach ($searchColumns as $key => $column) {
-                        if ($column['column_type'] == 5) {
+                        if ($column['column_type'] == 2) { // date field
                             //
-                        } else {
+                        } else if ($column['column_type'] == 6) { // status
+                            //
+                        }else {
                             if($key == 0){
                                 $q->where($column['columnName'], 'like', "%{$search}%");
                             }else{

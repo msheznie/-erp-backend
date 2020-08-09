@@ -59,7 +59,8 @@ class CustomFiltersColumn extends Model
         'user_report_id',
         'column_id',
         'operator',
-        'value'
+        'value',
+        'value_to'
     ];
 
     /**
@@ -72,7 +73,8 @@ class CustomFiltersColumn extends Model
         'id' => 'integer',
         'column_id' => 'integer',
         'operator' => 'string',
-        'value' => 'string'
+        'value' => 'string',
+        'value_to' => 'string'
     ];
 
     /**
