@@ -45,6 +45,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
 use App\Repositories\FixedAssetMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1897,6 +1898,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');

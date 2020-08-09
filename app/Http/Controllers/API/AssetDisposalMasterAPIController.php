@@ -36,6 +36,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetDisposalMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1125,6 +1126,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $masterData->approvedByUserID = null;
             $masterData->approvedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Asset disposal amend saved successfully');

@@ -144,6 +144,37 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 22: // FA
+                $docInforArr["modelName"] = 'FixedAssetMaster';
+                $docInforArr["primarykey"] = 'faID';
+                $docInforArr["documentCodeColumnName"] = 'faCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
+            case 23: // FAD
+                $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
+                $docInforArr["primarykey"] = 'depMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'depCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 41: // FADS
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
 
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -156,7 +187,7 @@ trait AuditTrial
             $employee = Helper::getEmployeeInfo();
             $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
             if($comment != ''){
-                $description .= ". due to below reason. ".$comment;
+                $description .= ". due to below reason: ".$comment;
             }
             $insertArray = [
                 'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
