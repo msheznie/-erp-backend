@@ -32,6 +32,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MonthlyAdditionDetailRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -740,6 +741,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             $masterData->approvedDate = null;
 
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');

@@ -60,6 +60,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -2454,6 +2455,8 @@ HAVING
             $paymentVoucherData->BPVchequeNo = 0;
             $paymentVoucherData->chequePrintedYN = 0;
             $paymentVoucherData->save();
+
+            AuditTrial::createAuditTrial($paymentVoucherData->documentSystemID,$PayMasterAutoId,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($paymentVoucherData->toArray(), 'Payment voucher return back to amend successfully');

@@ -79,6 +79,39 @@ trait AuditTrial
                 $docInforArr["documentSystemID"] = 'documentSystemID';
                 $docInforArr["documentID"] = 'documentID';
                 break;
+
+            case 4: // PaySupplierInvoiceMaster
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                $docInforArr["documentCodeColumnName"] = 'BPVcode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 6: //Expense Claim
+                $docInforArr["modelName"] = 'ExpenseClaim';
+                $docInforArr["primarykey"] = 'expenseClaimMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'expenseClaimCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'departmentSystemID';
+                $docInforArr["serviceLineCode"] = 'departmentID';
+                break;
+
+            case 28: //Monthly Addition
+                $docInforArr["modelName"] = 'MonthlyAdditionsMaster';
+                $docInforArr["primarykey"] = 'monthlyAdditionsMasterID';
+                $docInforArr["documentCodeColumnName"] = 'monthlyAdditionsCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'CompanyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
             case 19: // credit note
                 $docInforArr["modelName"] = 'CreditNote';
                 $docInforArr["primarykey"] = 'creditNoteAutoID';
@@ -98,6 +131,70 @@ trait AuditTrial
         if(!empty($masterRec)){
             $employee = Helper::getEmployeeInfo();
             $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
+            if($comment != ''){
+                $description .= " due to below reason. ".$comment;
+            }
+            $insertArray = [
+                'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
+                'companyID' => $masterRec[$docInforArr["companyID"]],
+                'serviceLineSystemID' => isset($masterRec[$docInforArr["serviceLineSystemID"]])?$masterRec[$docInforArr["serviceLineSystemID"]]:null,
+                'serviceLineCode' => isset($masterRec[$docInforArr["serviceLineCode"]])?$masterRec[$docInforArr["serviceLineCode"]]:null,
+                'documentSystemID' => $masterRec[$docInforArr["documentSystemID"]],
+                'documentID' => $masterRec[$docInforArr["documentID"]],
+                'documentSystemCode' => $masterRec[$docInforArr["primarykey"]],
+                'valueFrom' => 0,
+                'valueTo' => 0,
+                'valueFromSystemID' => null,
+                'valueFromText' => null,
+                'valueToSystemID' => null,
+                'valueToText' => null,
+                'description' => $description,
+                'modifiedUserSystemID' => $employee->employeeSystemID,
+                'modifiedUserID' => $employee->empID,
+                'modifiedDate' => Carbon::now()
+            ];
+            AuditTrail::create($insertArray);
+        }
+
+
+    }
+
+
+    public static function insertAuditTrial($modelName, $documentSystemCode, $comment, $process = 'returned back')
+    {
+        $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
+
+        switch ($modelName) {
+            case 'MatchDocumentMaster':
+                $docInforArr["modelName"] = 'MatchDocumentMaster';
+                $docInforArr["primarykey"] = 'matchDocumentMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'matchingDocCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterRec = $namespacedModel::find($documentSystemCode);
+
+        if(!empty($masterRec)){
+            $employee = Helper::getEmployeeInfo();
+
+            if($masterRec->documentSystemID == 19  || $masterRec->documentSystemID == 21){
+                $documentName = 'Receipt Matching';
+            }else if($masterRec->documentSystemID == 4  || $masterRec->documentSystemID == 15){
+                $documentName = 'Payment Voucher Matching';
+            }else{
+                $documentName = $masterRec[$docInforArr["documentID"]];
+            }
+
+            $description = $documentName." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
             if($comment != ''){
                 $description .= " due to below reason. ".$comment;
             }
