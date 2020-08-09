@@ -40,6 +40,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\SegmentMaster;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use App\Models\CustomerCurrency;
 use App\Repositories\CreditNoteRepository;
@@ -1362,6 +1363,8 @@ WHERE
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemiD,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Credit Note amend saved successfully');

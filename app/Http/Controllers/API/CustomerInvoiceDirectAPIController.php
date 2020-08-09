@@ -68,6 +68,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
 use App\Models\SecondaryCompany;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -3113,6 +3114,8 @@ WHERE
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemiD,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Customer Invoice amend saved successfully');

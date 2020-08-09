@@ -112,6 +112,18 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 20: // CI
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemiD';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
             case 19: // credit note
                 $docInforArr["modelName"] = 'CreditNote';
                 $docInforArr["primarykey"] = 'creditNoteAutoID';
@@ -121,6 +133,8 @@ trait AuditTrial
                 $docInforArr["documentSystemID"] = 'documentSystemiD';
                 $docInforArr["documentID"] = 'documentID';
                 break;
+
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -175,6 +189,16 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 'CustomerReceivePayment':
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentCodeColumnName"] = 'custPaymentReceiveCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
 
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -185,13 +209,15 @@ trait AuditTrial
 
         if(!empty($masterRec)){
             $employee = Helper::getEmployeeInfo();
-
-            if($masterRec->documentSystemID == 19  || $masterRec->documentSystemID == 21){
-                $documentName = 'Receipt Matching';
-            }else if($masterRec->documentSystemID == 4  || $masterRec->documentSystemID == 15){
-                $documentName = 'Payment Voucher Matching';
-            }else{
-                $documentName = $masterRec[$docInforArr["documentID"]];
+            $documentName = $masterRec[$docInforArr["documentID"]];
+            if($modelName == 'MatchDocumentMaster'){
+                if($masterRec->documentSystemID == 19  || $masterRec->documentSystemID == 21){
+                    $documentName = 'Receipt Matching';
+                }else if($masterRec->documentSystemID == 4  || $masterRec->documentSystemID == 15){
+                    $documentName = 'Payment Voucher Matching';
+                }
+            }elseif ($modelName == 'CustomerReceivePayment'){
+                $documentName = 'Receipt Voucher';
             }
 
             $description = $documentName." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
