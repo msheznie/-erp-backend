@@ -5677,9 +5677,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $detail = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->get();
                     foreach ($detail as $row){
 
-                        if($row->netAmount>0 && $supAssigned->markupPercentage > 0){
+                        $discountedUnitPrice = $row->unitCost - $row->discountAmount;
 
-                            $markupTransactionAmount = $supAssigned->markupPercentage*$row->netAmount/100;
+                        if($discountedUnitPrice>0 && $supAssigned->markupPercentage > 0){
+
+                            $markupTransactionAmount = $supAssigned->markupPercentage*$discountedUnitPrice/100;
                             $markupLocalAmount = 0;
                             $markupReportingAmount = 0;
 
@@ -5701,6 +5703,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $markupReportingAmount = $markupTransactionAmount;
                             }
 
+                            /*round to 7 decimals*/
+                            $markupTransactionAmount = Helper::roundValue($markupTransactionAmount);
+                            $markupLocalAmount = Helper::roundValue($markupLocalAmount);
+                            $markupReportingAmount = Helper::roundValue($markupReportingAmount);
 
                             $updateArray = [
                                 'markupPercentage' =>$supAssigned->markupPercentage,

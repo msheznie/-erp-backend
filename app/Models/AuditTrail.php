@@ -178,5 +178,9 @@ class AuditTrail extends Model
         
     ];
 
+    public function modified_by(){
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
     
 }
