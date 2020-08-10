@@ -15,7 +15,7 @@ trait AuditTrial
      * @param string $companySystemID
      * @return array
      */
-    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = 'returned back')
+    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '')
     {
         $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
 
@@ -185,7 +185,7 @@ trait AuditTrial
 
         if(!empty($masterRec)){
             $employee = Helper::getEmployeeInfo();
-            $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
+            $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process;
             if($comment != ''){
                 $description .= ". due to below reason: ".$comment;
             }
@@ -202,7 +202,7 @@ trait AuditTrial
                 'valueFromSystemID' => null,
                 'valueFromText' => null,
                 'valueToSystemID' => null,
-                'valueToText' => null,
+                'valueToText' => ucfirst($process),
                 'description' => $description,
                 'modifiedUserSystemID' => $employee->employeeSystemID,
                 'modifiedUserID' => $employee->empID,
@@ -215,7 +215,7 @@ trait AuditTrial
     }
 
 
-    public static function insertAuditTrial($modelName, $documentSystemCode, $comment, $process = 'returned back')
+    public static function insertAuditTrial($modelName, $documentSystemCode, $comment, $process = '')
     {
         $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
 
@@ -261,7 +261,7 @@ trait AuditTrial
                 $documentName = 'Receipt Voucher';
             }
 
-            $description = $documentName." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process." by ".$employee->empName;
+            $description = $documentName." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process;
             if($comment != ''){
                 $description .= " due to below reason. ".$comment;
             }
@@ -278,7 +278,7 @@ trait AuditTrial
                 'valueFromSystemID' => null,
                 'valueFromText' => null,
                 'valueToSystemID' => null,
-                'valueToText' => null,
+                'valueToText' => ucfirst($process),
                 'description' => $description,
                 'modifiedUserSystemID' => $employee->employeeSystemID,
                 'modifiedUserID' => $employee->empID,

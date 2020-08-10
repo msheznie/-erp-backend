@@ -3966,7 +3966,7 @@ WHERE
             'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by','amend_by','approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [2, 5, 52]);
-            }])->findWithoutFail($id);
+            },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');

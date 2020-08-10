@@ -512,4 +512,9 @@ class BookInvSuppMaster extends Model
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'bookingSuppMasInvAutoID')->where('documentSystemID',11);
+    }
+
 }

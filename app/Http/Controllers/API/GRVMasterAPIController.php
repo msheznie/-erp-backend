@@ -974,7 +974,7 @@ class GRVMasterAPIController extends AppBaseController
                     ->where('documentSystemID', 3);
             }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
-            }, 'location_by'])->findWithoutFail($id);
+            }, 'location_by', 'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');

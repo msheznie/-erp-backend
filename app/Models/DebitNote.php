@@ -479,4 +479,9 @@ class DebitNote extends Model
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'debitNoteAutoID')->where('documentSystemID',15);
+    }
 }

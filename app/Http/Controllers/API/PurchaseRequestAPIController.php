@@ -1336,7 +1336,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'cancelled_by', 'manually_closed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [1, 50, 51]);
-            }])->findWithoutFail($id);
+            },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');

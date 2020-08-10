@@ -358,4 +358,9 @@ class GRVMaster extends Model
     {
         $this->attributes['grvDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'grvAutoID')->where('documentSystemID',3);
+    }
 }
