@@ -1435,11 +1435,13 @@ WHERE
                             $invDetail_arr['qtyIssuedDefaultMeasure'] = $new['noQty'];
 
                             $invDetail_arr['marginPercentage'] = 0;
-                            if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
+                            /*if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
                                 $invDetail_arr['sellingCost'] = ($new['unittransactionAmount']) - ($new['unittransactionAmount']*$new['discountPercentage']/100);
                             }else{
                                 $invDetail_arr['sellingCost'] = $new['unittransactionAmount'];
-                            }
+                            }*/
+
+                            $invDetail_arr['sellingCost'] = ($new['unittransactionAmount'] - $new['discountAmount']);
                             $invDetail_arr['sellingCostAfterMargin'] = $invDetail_arr['sellingCost'];
 
                             $costs = $this->updateCostBySellingCost($invDetail_arr,$customerInvoioce);
