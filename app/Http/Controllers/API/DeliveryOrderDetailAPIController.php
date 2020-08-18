@@ -347,6 +347,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
 
+        // update maser table amount field
+        $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
+
         return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail saved successfully');
     }
 
@@ -537,6 +540,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
 
+        // update maser table amount field
+        $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
+
         return $this->sendResponse($deliveryOrderDetail->toArray(), 'DeliveryOrderDetail updated successfully');
     }
 
@@ -592,6 +598,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
             $deliveryOrderDetail->delete();
+
+            // update maser table amount field
+            $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
+
             if($deliveryOrder->orderType == 2 || $deliveryOrder->orderType == 3){
 
                 if (!empty($deliveryOrderDetail->deliveryOrderDetailID) && !empty($deliveryOrderDetail->deliveryOrderID)) {
@@ -620,7 +630,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
+
                 }
+
 
                 //calculate tax amount according to the percantage for tax update
 
@@ -1058,6 +1070,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
 
                 $this->updateSalesQuotationDeliveryStatus($new['quotationMasterID']);
+
+                // update maser table amount field
+                $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
             }
 

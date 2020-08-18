@@ -2,7 +2,10 @@
 
 namespace App\Repositories;
 
+use App\helper\Helper;
+use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -57,5 +60,35 @@ class DeliveryOrderDetailRepository extends BaseRepository
     public function model()
     {
         return DeliveryOrderDetail::class;
+    }
+
+    public function updateMasterTableTransactionAmount($id){
+
+        $detailAmount = DeliveryOrderDetail::
+        select(DB::raw("
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (unitTransactionAmount-(unitTransactionAmount*discountPercentage/100))),0) as transAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-(companyLocalAmount*discountPercentage/100))),0) as localAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))),0) as reportAmount"))
+            ->where('deliveryOrderID', $id)
+            ->first();
+
+        if(!empty($detailAmount)){
+            $array['transactionAmount'] = $detailAmount->transAmount;
+            $array['companyLocalAmount'] = $detailAmount->localAmount;
+            $array['companyReportingAmount'] = $detailAmount->reportAmount;
+
+            $array['transactionAmount'] = Helper::roundValue($array['transactionAmount']);
+            $array['companyLocalAmount'] = Helper::roundValue($array['companyLocalAmount']);
+            $array['companyReportingAmount'] = Helper::roundValue($array['companyReportingAmount']);
+
+            DeliveryOrder::where('deliveryOrderID',$id)->update(
+                [
+                    'transactionAmount'=> Helper::roundValue($array['transactionAmount']),
+                    'companyLocalAmount'=> Helper::roundValue($array['companyLocalAmount']),
+                    'companyReportingAmount'=> Helper::roundValue($array['companyReportingAmount'])
+                ]
+            );
+        }
+
     }
 }
