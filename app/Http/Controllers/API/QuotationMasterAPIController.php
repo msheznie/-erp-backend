@@ -933,6 +933,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('customerName', 'LIKE', "%{$search}%");
             });
         }
+        $grvMasters = $grvMasters->groupBy('quotationMasterID');
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
