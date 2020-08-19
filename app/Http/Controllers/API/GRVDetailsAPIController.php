@@ -974,6 +974,10 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError('GRV not found');
         }
 
+        if ($grvMaster->isMarkupUpdated==1) {
+            return $this->sendError('GRV markup update process restricted',500);
+        }
+
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
         if(!$markupAmendRestrictionPolicy){
             return $this->sendError('Document already confirmed. You cannot update.');
