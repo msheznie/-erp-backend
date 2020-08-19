@@ -1581,5 +1581,20 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
     }
 
+    public function grvMarkupfinalyze(Request $request){
+        $input = $request->all();
+        $grvMaster = GRVMaster::find($input['grvAutoID']);
+
+        if (empty($grvMaster)) {
+            return $this->sendError('GRV not found');
+        }
+        if ($grvMaster->isMarkupUpdated==1) {
+            return $this->sendError('GRV markup update process restricted',500);
+        }
+        $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
+
+        return $this->sendResponse($grv, 'GRV markup updated successfully');
+    }
+
 
 }

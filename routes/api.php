@@ -1838,6 +1838,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
 
         Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
+        Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
     });
 
