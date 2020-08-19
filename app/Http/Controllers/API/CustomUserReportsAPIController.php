@@ -499,6 +499,36 @@ class CustomUserReportsAPIController extends AppBaseController
         }
 
         $limit = isset($input['limit']) ? $input['limit'] : 10;
+
+        $result = $this->getCustomReportQry($request);
+
+
+        if(!$result['success']){
+            return $this->sendError($result['message'],500);
+        }
+
+        $data = $result['data'];
+        $data = $data->paginate($limit);
+
+        $output = array(
+            'data' => $data,
+            'report' => $result['report']
+        );
+
+        return $this->sendResponse($output, 'Custom Report retrieved successfully');
+
+    }
+
+    private function getCustomReportQry(Request $request){
+
+        $output = array(
+            'success' => false,
+            'message' => '',
+            'data' => [],
+            'report' => []
+        );
+
+        $input = $request->all();
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
         },'filter_columns' => function($q){
@@ -507,7 +537,8 @@ class CustomUserReportsAPIController extends AppBaseController
         }])->find($input['id']);
 
         if (empty($report)) {
-            return $this->sendError('Report not found');
+            $output['message'] = 'Report not found';
+            return $output;
         }
 
         $selectedCompanyId = $request['companyId'];
@@ -612,15 +643,15 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
 
                     if (!$this->checkMasterColumn($report['columns'], 'currency', 'table') && $this->checkMasterColumn($report['columns'], 'amount', 'column')) {
-                         $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
+                        $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
                     }
 
                     if (!$this->checkMasterColumn($report['columns'], 'currency_local', 'table') && $this->checkMasterColumn($report['columns'], 'localAmount', 'column')) {
-                         $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
+                        $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
                     }
 
                     if (!$this->checkMasterColumn($report['columns'], 'currency_reporting', 'table') && $this->checkMasterColumn($report['columns'], 'comRptAmount', 'column')) {
-                         $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
+                        $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
                     }
 
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
@@ -750,7 +781,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 } else if (intval($column['value']) == 2) { // Pending Approval
                                     $data->where(function ($q) use($masterTable,$templateData) {
                                         $q->where($masterTable . '.' . $templateData['confirmedColumn'], 0)
-                                           ->orWhere($masterTable . '.' . $templateData['approvedColumn'],'!=', 0);
+                                            ->orWhere($masterTable . '.' . $templateData['approvedColumn'],'!=', 0);
                                     });
                                 } else if (intval($column['value']) == 3) { // Fully Approved
                                     $data->where($masterTable . '.' . $templateData['approvedColumn'], 0);
@@ -860,16 +891,69 @@ class CustomUserReportsAPIController extends AppBaseController
 
             $data = $data->groupBy($groupByColumns);
             // paginate
-            $data = $data->paginate($limit);
         }
         // dd(DB::getQueryLog());
 
-        $output = array(
-            'data' => $data,
-            'report' => $report
-        );
+        $output['data'] = $data;
+        $output['report'] = $report;
+        $output['success'] = true;
+        return $output;
 
-        return $this->sendResponse($output, 'Custom Report retrieved successfully');
+    }
 
+    public function exportCustomReport(Request $request){
+
+        $input  = $request->all();
+        $type   = isset($input['type'])?$input['type']:'csv';
+        $result = $this->getCustomReportQry($request);
+
+        $dataRows = $result['data'];
+        $dataRows = $dataRows->get();
+        $report = $result['report'];
+
+        if (!empty($report) && !empty($dataRows)) {
+            $x = 0;
+            $data = [];
+            foreach ($dataRows as $val) {
+                $x++;
+
+                foreach ($report['columns'] as $column){
+                    if($column['column']['column_type'] == 1 || $column['column']['column_type'] == 5){
+                        $data[$x][$column['label']] = $val[$column['column']['column']];
+                    }else if($column['column']['column_type'] == 2){
+                        $data[$x][$column['label']] = Helper::dateFormat($val[$column['column']['column']]);
+                    }else if($column['column']['column_type'] == 4){
+                        $data[$x][$column['label']] = round($val[$column['column']['column']],$val[$column['column']['column'].'DecimalPlaces']);
+                    }else if($column['column']['column_type'] == 6){
+
+                        if ($val['canceledYN'] == -1) {
+                            $data[$x][$column['label']] = "Cancelled";
+                        } else if ($val['confirmedYN'] == 0 && $val['approved'] == 0) {
+                            $data[$x][$column['label']] = " Not Confirmed";
+                        } else if ($val['confirmedYN'] == 1 && $val['approved'] == 0 && $val['timesReferred'] == 0) {
+                            $data[$x][$column['label']] = "Pending Approval";
+                        } else if ($val['confirmedYN'] == 1 && $val['approved'] == 0 && $val['timesReferred'] == -1) {
+                            $data[$x][$column['label']] = "Referred Back";
+                        } else if ($val['confirmedYN'] == 1 && ($val['approved'] == -1 || $val['approved'] == 1 )) {
+                            $data[$x][$column['label']] = "Fully Approved";
+                        }else{
+                            $data[$x][$column['label']] = '';
+                        }
+
+                    }
+                }
+            }
+
+            \Excel::create('custom_report', function ($excel) use ($data) {
+                $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    $sheet->fromArray($data, null, 'A1', true);
+                    $sheet->setAutoSize(true);
+                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                });
+                $lastrow = $excel->getActiveSheet()->getHighestRow();
+                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
+            })->download($type);
+        }
+        return $this->sendError( 'No Records Found',500);
     }
 }
