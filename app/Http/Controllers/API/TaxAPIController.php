@@ -87,7 +87,6 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
@@ -107,7 +106,6 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
@@ -136,12 +134,12 @@ class TaxAPIController extends AppBaseController
 
         if($taxCategory == 2 || $taxCategory == 3){
             $input['isDefault'] = 1;
-            $alreadyTaxDefined = Tax::where('taxCategory',2)->where('isActive',1)->exists();
+            $alreadyTaxDefined = Tax::where('taxCategory',2)->exists();
             if($alreadyTaxDefined){
                 return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
             }
 
-            $alreadyWHTDefined = Tax::where('taxCategory',3)->where('isActive',1)->exists();
+            $alreadyWHTDefined = Tax::where('taxCategory',3)->exists();
             if($alreadyWHTDefined){
                 return $this->sendError('WHT is already defined. You cannot create more than one active WHT', 500);
             }
@@ -240,7 +238,6 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
@@ -260,11 +257,9 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
-                'currencyID' => 'required|numeric|min:1',
                 'taxReferenceNo' => 'required'
 
             ], $messages);
@@ -290,7 +285,7 @@ class TaxAPIController extends AppBaseController
 
         if($taxCategory == 2 || $taxCategory == 3){
             $input['isDefault'] = 1;
-            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)->where('isActive',1)->where('taxMasterAutoID','!=',$id)->exists();
+            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)->where('taxMasterAutoID','!=',$id)->exists();
             if($alreadyTaxDefined){
                 if($taxCategory == 2){
                     return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
@@ -408,7 +403,7 @@ class TaxAPIController extends AppBaseController
             $companies = [$selectedCompanyId];
         }
         $companiesByGroup = Company::whereIn('companySystemID',$companies)->get();
-        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)->get();
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->whereIn('controlAccountsSystemID', [3,4])->get();
 
         $taxType = TaxType::all();
         $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
@@ -420,6 +415,6 @@ class TaxAPIController extends AppBaseController
             'taxCategory' => $taxCategory
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+            return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
