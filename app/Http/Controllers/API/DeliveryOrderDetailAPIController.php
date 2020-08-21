@@ -13,6 +13,7 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
+use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\StockTransfer;
@@ -247,6 +248,31 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if (!empty($checkWhetherInvoice)) {
             return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
+
+        /*Check in purchase return*/
+        $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation',
+                'erp_purchasereturnmaster.purchaseReturnCode',
+            ])
+            ->groupBy(
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation'
+            )
+            ->whereHas('details', function ($query) use ($input) {
+                $query->where('itemCode', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+
+        if (!empty($checkWhetherPR)) {
+            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /* approved=0*/
 
         $input['itemCodeSystem'] = $item->itemCodeSystem;
         $input['itemPrimaryCode'] = $item->primaryCode;
@@ -910,7 +936,28 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
                 }
 
+                /*Check in purchase return*/
+                $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
+                    ->select([
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation',
+                        'erp_purchasereturnmaster.purchaseReturnCode',
+                    ])
+                    ->groupBy(
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation'
+                    )
+                    ->whereHas('details', function ($query) use ($row) {
+                        $query->where('itemCode', $row['itemAutoID']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
 
+                if (!empty($checkWhetherPR)) {
+                    return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
 
             }
         }
