@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use App\helper\Helper;
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CustomUserReports",
+ *      definition="CustomReportEmployees",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -28,16 +27,6 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="name",
- *          description="name",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="is_private",
- *          description="is_private",
- *          type="boolean"
- *      ),
- *      @SWG\Property(
  *          property="created_at",
  *          description="created_at",
  *          type="string",
@@ -51,22 +40,20 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CustomUserReports extends Model
+class CustomReportEmployees extends Model
 {
 
-    public $table = 'erp_custom_user_reports';
+    public $table = 'erp_custom_report_employees';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-    protected $appends = ['is_edit_access'];
+
 
 
 
     public $fillable = [
         'user_id',
-        'report_master_id',
-        'name',
-        'is_private'
+        'user_report_id'
     ];
 
     /**
@@ -77,10 +64,7 @@ class CustomUserReports extends Model
     protected $casts = [
         'id' => 'integer',
         'user_id' => 'integer',
-        'report_master_id' => 'integer',
-        'name' => 'string',
-        'is_private' => 'boolean',
-        'is_edit_access' => 'boolean'
+        'user_report_id' => 'integer'
     ];
 
     /**
@@ -92,38 +76,9 @@ class CustomUserReports extends Model
         
     ];
 
-    public function getIsEditAccessAttribute()
-    {
-        $userId = Helper::getEmployeeSystemID();
-        if($this->user_id === $userId){
-          return  true;
-        }
-        return false;
-    }
-
-    public function created_by()
+    public function employee_by()
     {
         return $this->belongsTo('App\Models\Employee', 'user_id', 'employeeSystemID');
     }
-
-    public function columns()
-    {
-        return $this->hasMany(CustomUserReportColumns::class, 'user_report_id');
-    }
-
-    public function default_columns()
-    {
-        return $this->hasMany(CustomReportColumns::class, 'report_master_id','report_master_id');
-    }
-
-    public function filter_columns()
-    {
-        return $this->hasMany(CustomFiltersColumn::class, 'user_report_id');
-    }
-
-    public function assigned_employees()
-    {
-        return $this->hasMany('App\Models\CustomReportEmployees','user_report_id');
-    }
-
+    
 }

@@ -10,6 +10,7 @@ use App\Models\CustomReportMaster;
 use App\Models\CustomUserReports;
 use App\Models\ExpenseClaim;
 use App\Repositories\CustomFiltersColumnRepository;
+use App\Repositories\CustomReportEmployeesRepository;
 use App\Repositories\CustomUserReportColumnsRepository;
 use App\Repositories\CustomUserReportsRepository;
 use Carbon\Carbon;
@@ -31,14 +32,17 @@ class CustomUserReportsAPIController extends AppBaseController
     private $customUserReportsRepository;
     private $customUserReportColumnsRepository;
     private $customFiltersColumnRepository;
+    private $customReportEmployeesRepository;
 
     public function __construct(CustomUserReportsRepository $customUserReportsRepo,
                                 CustomUserReportColumnsRepository $customUserReportColumnsRepo,
-                                CustomFiltersColumnRepository $customFiltersColumnRepo)
+                                CustomFiltersColumnRepository $customFiltersColumnRepo,
+                                CustomReportEmployeesRepository $customReportEmployeesRepo)
     {
         $this->customUserReportsRepository = $customUserReportsRepo;
         $this->customUserReportColumnsRepository = $customUserReportColumnsRepo;
         $this->customFiltersColumnRepository = $customFiltersColumnRepo;
+        $this->customReportEmployeesRepository = $customReportEmployeesRepo;
     }
 
     /**
@@ -215,7 +219,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $q->orderBy('sort_order', 'asc');
         }, 'default_columns' => function ($q) {
             $q->orderBy('sort_order', 'asc');
-        },'filter_columns'])->find($id);
+        }, 'filter_columns'])->find($id);
 
         if (empty($customUserReports)) {
             return $this->sendError('Custom User Reports not found');
@@ -301,9 +305,9 @@ class CustomUserReportsAPIController extends AppBaseController
             if (isset($input['filterColumns']) && is_array($input['filterColumns'])) {
                 $this->customFiltersColumnRepository->where('user_report_id', $id)->delete();
                 foreach ($input['filterColumns'] as $col) {
-                    $col = $this->convertArrayToSelectedValue($col,['operator']);
-                    if(is_array($col['value'])){
-                        $col = $this->convertArrayToSelectedValue($col,['value']);
+                    $col = $this->convertArrayToSelectedValue($col, ['operator']);
+                    if (is_array($col['value'])) {
+                        $col = $this->convertArrayToSelectedValue($col, ['value']);
                     }
                     $col['user_report_id'] = $id;
                     $this->customFiltersColumnRepository->create($col);
@@ -364,12 +368,20 @@ class CustomUserReportsAPIController extends AppBaseController
         $customUserReports = $this->customUserReportsRepository->findWithoutFail($id);
 
         if (empty($customUserReports)) {
-            return $this->sendError('Custom User Reports not found');
+            return $this->sendError('Reports not found');
         }
-
-        $customUserReports->delete();
-
-        return $this->sendSuccess('Custom User Reports deleted successfully');
+        DB::beginTransaction();
+        try{
+            $this->customUserReportColumnsRepository->where('user_report_id',$id)->delete();
+            $this->customFiltersColumnRepository->where('user_report_id',$id)->delete();
+            $this->customReportEmployeesRepository->where('user_report_id',$id)->delete();
+            $customUserReports->delete();
+            DB::commit();
+            return $this->sendResponse($id,'Report deleted successfully');
+        }catch(\Exception $e){
+            DB::rollBack();
+            return $this->sendError($e->getMessage(), 500);
+        }
     }
 
     public function getCustomReportsByUser(Request $request)
@@ -387,8 +399,16 @@ class CustomUserReportsAPIController extends AppBaseController
 
         $userId = Helper::getEmployeeSystemID();
 
-        $reports = CustomUserReports::where('user_id', $userId)
-            ->with('created_by');
+        $reports = CustomUserReports::with('created_by')
+            ->where(function ($q) use ($userId) {
+                $q->where(function ($q1) use ($userId) {
+                    $q1->where('is_private', 1)
+                        ->where('user_id', $userId)
+                        ->orWhereHas('assigned_employees');
+                })->orWhere(function ($q1) use ($userId) {
+                    $q1->where('is_private', 0);
+                });
+            });
 
         if (array_key_exists('is_private', $input) && ($input['is_private'] == 0 || $input['is_private'] == 1) && !is_null($input['is_private'])) {
             $reports = $reports->where('is_private', $input['is_private']);
@@ -445,16 +465,16 @@ class CustomUserReportsAPIController extends AppBaseController
         return $result;
     }
 
-    private function getGroupByColumns($columns,$m,$d)
+    private function getGroupByColumns($columns, $m, $d)
     {
         $result = [];
         foreach ($columns as $column) {
             if (isset($column['column']) && $column['column']['is_group_by'] && $column['is_group_by']) {
                 $table = $m;
-                if(!$column['column']['is_master']){
+                if (!$column['column']['is_master']) {
                     $table = $d;
                 }
-                $tmpColumn = $table.'.'.$column['column']['group_by_column'];
+                $tmpColumn = $table . '.' . $column['column']['group_by_column'];
                 array_push($result, $tmpColumn);
             }
         }
@@ -466,7 +486,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $result = [];
         foreach ($columns as $column) {
             if (isset($column['column']) && $column['column']['is_filter']) {
-                $tmpColumn =   $column['column']['table'] . '.' .$column['column']['filter_column'];
+                $tmpColumn = $column['column']['table'] . '.' . $column['column']['filter_column'];
                 $column['columnName'] = $tmpColumn;
                 $column['column_type'] = $column['column']['column_type'];
                 array_push($result, $column);
@@ -499,17 +519,20 @@ class CustomUserReportsAPIController extends AppBaseController
         }
 
         $limit = isset($input['limit']) ? $input['limit'] : 10;
-
+        // return date("Y");
+        DB::enableQueryLog();
         $result = $this->getCustomReportQry($request);
 
 
-        if(!$result['success']){
-            return $this->sendError($result['message'],500);
+        if (!$result['success']) {
+            return $this->sendError($result['message'], 500);
         }
 
         $data = $result['data'];
-        $data = $data->paginate($limit);
-
+        if($data){
+            $data = $data->paginate($limit);
+        }
+        //dd(DB::getQueryLog());
         $output = array(
             'data' => $data,
             'report' => $result['report']
@@ -519,7 +542,8 @@ class CustomUserReportsAPIController extends AppBaseController
 
     }
 
-    private function getCustomReportQry(Request $request){
+    private function getCustomReportQry(Request $request)
+    {
 
         $output = array(
             'success' => false,
@@ -531,7 +555,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $input = $request->all();
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
-        },'filter_columns' => function($q){
+        }, 'filter_columns' => function ($q) {
             $q->with(['column'])
                 ->wherehas('column');
         }])->find($input['id']);
@@ -569,13 +593,15 @@ class CustomUserReportsAPIController extends AppBaseController
         $sortByColumns = $this->getSortByColumns($report['columns']);
 
 
-
         $isMasterExist = $this->checkMasterColumn($report['columns'], 1, 'is_master'); // 1 - master, 0 - details
-        $isDetailExist = $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
+        $isDetailExist = false ; // $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
+
+        if($this->checkMasterColumn($report['columns'], 0, 'is_master') || $this->checkMasterColumn($report['filter_columns'], 0, 'is_master')){
+            $isDetailExist = true;
+        }
 
         $data = [];
         $templateData = array();
-        DB::enableQueryLog();
 
         if (isset($report['columns']) && count($report['columns']) > 0) {
 
@@ -585,11 +611,11 @@ class CustomUserReportsAPIController extends AppBaseController
             switch ($report->report_master_id) {
                 case 1:
                     $templateData['confirmedColumn'] = 'confirmedYN';
-                    $templateData['confirmedValue']  = 1;
-                    $templateData['approvedColumn']  = 'approved';
-                    $templateData['approvedValue']   = -1;
-                    $templateData['canceledColumn']  = '';
-                    $templateData['canceledValue']   = 0;
+                    $templateData['confirmedValue'] = 1;
+                    $templateData['approvedColumn'] = 'approved';
+                    $templateData['approvedValue'] = -1;
+                    $templateData['canceledColumn'] = '';
+                    $templateData['canceledValue'] = 0;
                     $templateData['timesReferredColumn'] = '';
                     $templateData['timesReferredValue'] = 0;
                     $masterTable = 'erp_expenseclaimmaster';
@@ -621,7 +647,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
 
                     foreach ($tables as $table) {
-                        if ($this->checkMasterColumn($report['columns'], $table, 'table')) {
+                        if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
                             if ($table == 'created_by') {
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                             } else if ($table == 'confirmed_by') {
@@ -642,15 +668,15 @@ class CustomUserReportsAPIController extends AppBaseController
                         }
                     }
 
-                    if (!$this->checkMasterColumn($report['columns'], 'currency', 'table') && $this->checkMasterColumn($report['columns'], 'amount', 'column')) {
+                    if (!$this->checkMasterColumn($report['columns'], 'currency', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency', 'table') && ($this->checkMasterColumn($report['columns'], 'amount', 'column'))) {
                         $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
                     }
 
-                    if (!$this->checkMasterColumn($report['columns'], 'currency_local', 'table') && $this->checkMasterColumn($report['columns'], 'localAmount', 'column')) {
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_local', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency_local', 'table') && $this->checkMasterColumn($report['columns'], 'localAmount', 'column')) {
                         $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
                     }
 
-                    if (!$this->checkMasterColumn($report['columns'], 'currency_reporting', 'table') && $this->checkMasterColumn($report['columns'], 'comRptAmount', 'column')) {
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_reporting', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency_reporting', 'table') && $this->checkMasterColumn($report['columns'], 'comRptAmount', 'column')) {
                         $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
                     }
 
@@ -673,7 +699,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 $uniqueId = $primaryKey;
             }
 
-            $search = isset($input['search']) ? $input['search']: '';
+            $search = isset($input['search']) ? $input['search'] : '';
 
             /*  1 : 'equals',
                 2 : 'not equals',
@@ -687,14 +713,14 @@ class CustomUserReportsAPIController extends AppBaseController
             */
 
             // filter
-            if(isset($report['filter_columns']) && count($report['filter_columns']) > 0){
+            if (isset($report['filter_columns']) && count($report['filter_columns']) > 0) {
                 $filterColumns = $this->getFilterColumns($report['filter_columns']);
-                foreach ($filterColumns as $column){
+                foreach ($filterColumns as $column) {
                     $operator = $column['operator'];
 
-                    if($column['column_type'] == 2 && $column['value']) { // date columns
+                    if ($column['column_type'] == 2 && $column['value']) { // date columns
                         $date = Carbon::parse($column['value'])->format('Y-m-d');
-                        $dateTo = isset($column['value_to']) ?  Carbon::parse($column['value_to'])->format('Y-m-d') : Carbon::parse(now())->format('Y-m-d');
+                        $dateTo = isset($column['value_to']) ? Carbon::parse($column['value_to'])->format('Y-m-d') : Carbon::parse(now())->format('Y-m-d');
                         switch ($operator) {
                             case 1:
                                 $data->whereDate($column['columnName'], $date);
@@ -725,21 +751,29 @@ class CustomUserReportsAPIController extends AppBaseController
                                 break;*/
                             case 10:
 
-                                if($date && $dateTo){
-                                    $data->whereBetween($column['columnName'], [$date,$dateTo]);
+                                if ($date && $dateTo) {
+                                    $data->whereBetween($column['columnName'], [$date, $dateTo]);
                                 }
                                 break;
                             case 11:
-                                if($date && $dateTo){
-                                    $data->whereNotBetween($column['columnName'], [$date,$dateTo]);
+                                if ($date && $dateTo) {
+                                    $data->whereNotBetween($column['columnName'], [$date, $dateTo]);
                                 }
+                                break;
+                            case 12:
+                                $currentYear = date("Y");
+                                $data->whereYear($column['columnName'],'=', $currentYear);
+                                break;
+                            case 13:
+                                $currentMont = date('m');
+                                $data->whereMonth($column['columnName'],'=', $currentMont);
                                 break;
                             default:
                                 break;
                         }
 
 
-                    }else if ($column['column_type'] == 6) { // status
+                    } else if ($column['column_type'] == 6) { // status
                         /*
                          * 1 = 'Not Confirmed'
                          * 2 = 'Pending Approval'
@@ -777,46 +811,28 @@ class CustomUserReportsAPIController extends AppBaseController
                                 break;
                             case 2:
                                 if (intval($column['value']) == 1) { //Not Confirmed
-                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'],'!=', 0);
+                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], '!=', 0);
                                 } else if (intval($column['value']) == 2) { // Pending Approval
-                                    $data->where(function ($q) use($masterTable,$templateData) {
+                                    $data->where(function ($q) use ($masterTable, $templateData) {
                                         $q->where($masterTable . '.' . $templateData['confirmedColumn'], 0)
-                                            ->orWhere($masterTable . '.' . $templateData['approvedColumn'],'!=', 0);
+                                            ->orWhere($masterTable . '.' . $templateData['approvedColumn'], '!=', 0);
                                     });
                                 } else if (intval($column['value']) == 3) { // Fully Approved
                                     $data->where($masterTable . '.' . $templateData['approvedColumn'], 0);
                                 } else if (intval($column['value']) == 4) { //Referred Back
-                                    $data->where($masterTable . '.' . $templateData['confirmedColumn'], $templateData['confirmedValue'])
-                                        ->where($masterTable . '.' . $templateData['approvedColumn'], $templateData['approvedValue']);
                                     if ($templateData['timesReferredColumn']) {
-                                        $data->where($masterTable . '.' . $templateData['timesReferredColumn'], -1);
+                                        $data->where($masterTable . '.' . $templateData['timesReferredColumn'], 0);
                                     }
                                 } else if (intval($column['value']) == 5) { //Cancelled
                                     if ($templateData['canceledColumn']) {
-                                        $data->where($masterTable . '.' . $templateData['canceledColumn'], $templateData['canceledValue']);
+                                        $data->where($masterTable . '.' . $templateData['canceledColumn'], 0);
                                     }
                                 }
                                 break;
                             default:
                                 break;
                         }
-
-                        /*if (this.ca == -1) {
-                            status = "Cancelled";
-                        } else if (this.co == 0 && this.ap == 0) {
-                            status = " Not Confirmed";
-                        }
-                        else if (this.co == 1 && this.ap == 0 && this.tr == 0) {
-                            status = "Pending Approval";
-                        } else if (this.co == 1 && this.ap == 0 && this.tr == -1) {
-                            status = "Referred Back";
-                        }
-                        else if (this.co == 1 && (this.ap == -1 || this.ap == 1 )) {
-                            status = "Fully Approved";
-                        }*/
-
-
-                    }else{
+                    } else {
                         switch ($operator) {
                             case 1:
                                 $data->where($column['columnName'], $column['value']);
@@ -854,17 +870,17 @@ class CustomUserReportsAPIController extends AppBaseController
 
             $searchColumns = $this->getFilterColumns($report['columns']);
             //search
-            if($search){
-                $data->where(function ($q) use($searchColumns,$search){
+            if ($search) {
+                $data->where(function ($q) use ($searchColumns, $search) {
                     foreach ($searchColumns as $key => $column) {
                         if ($column['column_type'] == 2) { // date field
                             //
                         } else if ($column['column_type'] == 6) { // status
                             //
-                        }else {
-                            if($key == 0){
+                        } else {
+                            if ($key == 0) {
                                 $q->where($column['columnName'], 'like', "%{$search}%");
-                            }else{
+                            } else {
                                 $q->orWhere($column['columnName'], 'like', "%{$search}%");
                             }
                         }
@@ -882,7 +898,7 @@ class CustomUserReportsAPIController extends AppBaseController
             }
 
             // group by columns
-            $groupByColumns = $this->getGroupByColumns($report['columns'],$masterTable,$detailTable);
+            $groupByColumns = $this->getGroupByColumns($report['columns'], $masterTable, $detailTable);
 
             // group by
             if (!$groupByColumns) {
@@ -892,7 +908,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $data = $data->groupBy($groupByColumns);
             // paginate
         }
-        // dd(DB::getQueryLog());
+
 
         $output['data'] = $data;
         $output['report'] = $report;
@@ -901,14 +917,17 @@ class CustomUserReportsAPIController extends AppBaseController
 
     }
 
-    public function exportCustomReport(Request $request){
+    public function exportCustomReport(Request $request)
+    {
 
-        $input  = $request->all();
-        $type   = isset($input['type'])?$input['type']:'csv';
+        $input = $request->all();
+        $type = isset($input['type']) ? $input['type'] : 'csv';
         $result = $this->getCustomReportQry($request);
 
         $dataRows = $result['data'];
-        $dataRows = $dataRows->get();
+        if($dataRows) {
+            $dataRows = $dataRows->get();
+        }
         $report = $result['report'];
 
         if (!empty($report) && !empty($dataRows)) {
@@ -917,14 +936,14 @@ class CustomUserReportsAPIController extends AppBaseController
             foreach ($dataRows as $val) {
                 $x++;
 
-                foreach ($report['columns'] as $column){
-                    if($column['column']['column_type'] == 1 || $column['column']['column_type'] == 5){
+                foreach ($report['columns'] as $column) {
+                    if ($column['column']['column_type'] == 1 || $column['column']['column_type'] == 5) {
                         $data[$x][$column['label']] = $val[$column['column']['column']];
-                    }else if($column['column']['column_type'] == 2){
+                    } else if ($column['column']['column_type'] == 2) {
                         $data[$x][$column['label']] = Helper::dateFormat($val[$column['column']['column']]);
-                    }else if($column['column']['column_type'] == 4){
-                        $data[$x][$column['label']] = round($val[$column['column']['column']],$val[$column['column']['column'].'DecimalPlaces']);
-                    }else if($column['column']['column_type'] == 6){
+                    } else if ($column['column']['column_type'] == 4) {
+                        $data[$x][$column['label']] = round($val[$column['column']['column']], $val[$column['column']['column'] . 'DecimalPlaces']);
+                    } else if ($column['column']['column_type'] == 6) {
 
                         if ($val['canceledYN'] == -1) {
                             $data[$x][$column['label']] = "Cancelled";
@@ -934,9 +953,9 @@ class CustomUserReportsAPIController extends AppBaseController
                             $data[$x][$column['label']] = "Pending Approval";
                         } else if ($val['confirmedYN'] == 1 && $val['approved'] == 0 && $val['timesReferred'] == -1) {
                             $data[$x][$column['label']] = "Referred Back";
-                        } else if ($val['confirmedYN'] == 1 && ($val['approved'] == -1 || $val['approved'] == 1 )) {
+                        } else if ($val['confirmedYN'] == 1 && ($val['approved'] == -1 || $val['approved'] == 1)) {
                             $data[$x][$column['label']] = "Fully Approved";
-                        }else{
+                        } else {
                             $data[$x][$column['label']] = '';
                         }
 
@@ -954,6 +973,6 @@ class CustomUserReportsAPIController extends AppBaseController
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
         }
-        return $this->sendError( 'No Records Found',500);
+        return $this->sendError('No Records Found', 500);
     }
 }
