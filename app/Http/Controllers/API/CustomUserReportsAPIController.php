@@ -718,7 +718,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 foreach ($filterColumns as $column) {
                     $operator = $column['operator'];
 
-                    if ($column['column_type'] == 2 && $column['value']) { // date columns
+                    if ($column['column_type'] == 2) { // date columns
                         $date = Carbon::parse($column['value'])->format('Y-m-d');
                         $dateTo = isset($column['value_to']) ? Carbon::parse($column['value_to'])->format('Y-m-d') : Carbon::parse(now())->format('Y-m-d');
                         switch ($operator) {
