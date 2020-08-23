@@ -1302,6 +1302,7 @@ class GRVMasterAPIController extends AppBaseController
             $grvMasterData->grvConfirmedByName = null;
             $grvMasterData->grvConfirmedDate = null;
             $grvMasterData->RollLevForApp_curr = 1;
+            $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->save();
 
             $employee = \Helper::getEmployeeInfo();
@@ -1507,6 +1508,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         if ($deleteApproval) {
             $grvMasterData->refferedBackYN = 0;
+            $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->grvConfirmedYN = 0;
             $grvMasterData->grvConfirmedByEmpSystemID = null;
             $grvMasterData->grvConfirmedByEmpID = null;
