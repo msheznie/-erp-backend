@@ -1841,6 +1841,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
         Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
+        Route::post('getCompanies', 'CompanyAPIController@getCompanies');
+        Route::post('getCompanyFormData', 'CompanyAPIController@getCompanyFormData');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
