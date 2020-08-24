@@ -226,11 +226,17 @@ class BankAssignAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $bankMasters =   $bankMasters->where('bankShortCode','LIKE',"%{$search}%")
-                                         ->orWhere('bankName', 'LIKE', "%{$search}%");
+            $bankMasters =   $bankMasters->where(function ($q) use($search){
+                $q->where('bankShortCode','LIKE',"%{$search}%")
+                    ->orWhere('bankName', 'LIKE', "%{$search}%");
+            });
         }
 
         $bankMasters =   $bankMasters->groupBy('bankmasterAutoID');
+
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
 
         return \DataTables::eloquent($bankMasters)
             ->order(function ($query) use ($input) {
