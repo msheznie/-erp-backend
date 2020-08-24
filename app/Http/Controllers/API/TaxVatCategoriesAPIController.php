@@ -122,13 +122,15 @@ class TaxVatCategoriesAPIController extends AppBaseController
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
             'percentage.required' => 'Percentage is required.',
+            'percentage.min' => 'You cannot enter negative values for percentage',
+            'percentage.numeric' => 'You can only enter numbers',
             'applicableOn.required' => 'Applicable On is required.',
 
         ];
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
             'subCategoryDescription' => 'required',
-            'percentage' => 'required',
+            'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
 
         ], $messages);
@@ -269,13 +271,15 @@ class TaxVatCategoriesAPIController extends AppBaseController
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
             'percentage.required' => 'Percentage is required.',
+            'percentage.min' => 'You cannot enter negative values for percentage',
+            'percentage.numeric' => 'You can only enter numbers',
             'applicableOn.required' => 'Applicable On is required.',
 
         ];
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
             'subCategoryDescription' => 'required',
-            'percentage' => 'required',
+            'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
 
         ], $messages);
