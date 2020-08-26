@@ -46,6 +46,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DebitNoteRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1365,6 +1366,7 @@ UNION ALL
             $debitNoteMasterData->postedDate = null;
             $debitNoteMasterData->save();
 
+            AuditTrial::createAuditTrial($debitNoteMasterData->documentSystemID,$debitNoteAutoID,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend saved successfully');

@@ -17,6 +17,7 @@ use App\Models\ItemAssigned;
 use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
+use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\StockTransfer;
@@ -389,6 +390,30 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         if (!empty($checkWhetherDeliveryOrder)) {
             return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /*Check in purchase return*/
+        $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation',
+                'erp_purchasereturnmaster.purchaseReturnCode',
+            ])
+            ->groupBy(
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation'
+            )
+            ->whereHas('details', function ($query) use ($input) {
+                $query->where('itemCode', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherPR)) {
+            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->create($input);
@@ -1305,6 +1330,30 @@ WHERE
                     return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
                 }
 
+                /*Check in purchase return*/
+                $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
+                    ->select([
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation',
+                        'erp_purchasereturnmaster.purchaseReturnCode',
+                    ])
+                    ->groupBy(
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation'
+                    )
+                    ->whereHas('details', function ($query) use ($row) {
+                        $query->where('itemCode', $row['itemAutoID']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
+                /* approved=0*/
+
+                if (!empty($checkWhetherPR)) {
+                    return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+
                 $checkWhetherInvoice = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $customerInvoioce->custInvoiceDirectAutoID)
                     ->where('companySystemID', $row['companySystemID'])
                     ->select([
@@ -1435,11 +1484,13 @@ WHERE
                             $invDetail_arr['qtyIssuedDefaultMeasure'] = $new['noQty'];
 
                             $invDetail_arr['marginPercentage'] = 0;
-                            if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
+                            /*if (isset($new['discountPercentage']) && $new['discountPercentage'] != 0){
                                 $invDetail_arr['sellingCost'] = ($new['unittransactionAmount']) - ($new['unittransactionAmount']*$new['discountPercentage']/100);
                             }else{
                                 $invDetail_arr['sellingCost'] = $new['unittransactionAmount'];
-                            }
+                            }*/
+
+                            $invDetail_arr['sellingCost'] = ($new['unittransactionAmount'] - $new['discountAmount']);
                             $invDetail_arr['sellingCostAfterMargin'] = $invDetail_arr['sellingCost'];
 
                             $costs = $this->updateCostBySellingCost($invDetail_arr,$customerInvoioce);

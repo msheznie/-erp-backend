@@ -60,6 +60,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\UserRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -973,7 +974,7 @@ class GRVMasterAPIController extends AppBaseController
                     ->where('documentSystemID', 3);
             }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
-            }, 'location_by'])->findWithoutFail($id);
+            }, 'location_by', 'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -1301,6 +1302,7 @@ class GRVMasterAPIController extends AppBaseController
             $grvMasterData->grvConfirmedByName = null;
             $grvMasterData->grvConfirmedDate = null;
             $grvMasterData->RollLevForApp_curr = 1;
+            $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->save();
 
             $employee = \Helper::getEmployeeInfo();
@@ -1506,6 +1508,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         if ($deleteApproval) {
             $grvMasterData->refferedBackYN = 0;
+            $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->grvConfirmedYN = 0;
             $grvMasterData->grvConfirmedByEmpSystemID = null;
             $grvMasterData->grvConfirmedByEmpID = null;
@@ -1570,12 +1573,29 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                 }
             }
 
+            AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvCancelledComment'],'cancelled');
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
         }
 
+    }
+
+    public function grvMarkupfinalyze(Request $request){
+        $input = $request->all();
+        $grvMaster = GRVMaster::find($input['grvAutoID']);
+
+        if (empty($grvMaster)) {
+            return $this->sendError('GRV not found');
+        }
+        if ($grvMaster->isMarkupUpdated==1) {
+            return $this->sendError('GRV markup update process restricted',500);
+        }
+        $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
+
+        return $this->sendResponse($grv, 'GRV markup updated successfully');
     }
 
 

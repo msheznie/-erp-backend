@@ -105,6 +105,7 @@ use App\Models\Year;
 use App\Models\SecondaryCompany;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\ProcumentOrderRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
@@ -2022,6 +2023,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         }
 
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID,$purchaseOrderID,$input['cancelComments'],'cancelled');
+
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
@@ -2157,6 +2160,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 BudgetConsumedData::destroy($idsDeleted);
             }
         }
+
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID,$purchaseOrderID,$input['returnComment'],'returned back to amend');
 
         $sendEmail = \Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
@@ -2790,6 +2795,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 }
             }
         }
+
+        AuditTrial::createAuditTrial($procumentOrder->documentSystemID,$input['purchaseOrderID'],$input['manuallyClosedComment'],'manually closed');
 
         $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
@@ -3513,6 +3520,8 @@ WHERE
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
 
+        AuditTrial::createAuditTrial($procurementOrder->documentSystemID,$input['purchaseOrderID'],'','amend');
+
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
     }
 
@@ -3957,7 +3966,7 @@ WHERE
             'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by','amend_by','approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [2, 5, 52]);
-            }])->findWithoutFail($id);
+            },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -5456,6 +5465,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrderMasterData->expectedDeliveryDate = $input['deliveryDate'];
         $purchaseOrderMasterData->save();
 
+        AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID,$input['purchaseOrderID'],'','expected delivery date amend to '.$input['deliveryDate']);
+
         return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
     }
 
@@ -5612,7 +5623,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
 
-            $message = "Logistic ".$array['text']." successfully";
+            $message = "Logistic ".$array['text'];
             $update_array = array(
                 'logisticsAvailable' => $array['value']
             );
@@ -5620,7 +5631,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }else if($input['type'] == 2) { //grv
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
-            $message = "Partially GRV Allowed ".$array['text']." successfully";
+            $message = "Partially GRV Allowed ".$array['text'];
             $update_array = array(
                 'partiallyGRVAllowed' => $array['value']
             );
@@ -5637,7 +5648,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if($update_array != null){
             $is_update = $this->procumentOrderRepository->update($update_array,$input['purchaseOrderID']);
-            return $this->sendResponse($is_update,$message);
+            AuditTrial::createAuditTrial($procumentOrder->documentSystemID,$input['purchaseOrderID'],'',$message);
+            return $this->sendResponse($is_update,$message." successfully");
         }
 
     }
@@ -5665,9 +5677,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $detail = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->get();
                     foreach ($detail as $row){
 
-                        if($row->netAmount>0 && $supAssigned->markupPercentage > 0){
+                        $discountedUnitPrice = $row->unitCost - $row->discountAmount;
 
-                            $markupTransactionAmount = $supAssigned->markupPercentage*$row->netAmount/100;
+                        if($discountedUnitPrice>0 && $supAssigned->markupPercentage > 0){
+
+                            $markupTransactionAmount = $supAssigned->markupPercentage*$discountedUnitPrice/100;
                             $markupLocalAmount = 0;
                             $markupReportingAmount = 0;
 
@@ -5689,6 +5703,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $markupReportingAmount = $markupTransactionAmount;
                             }
 
+                            /*round to 7 decimals*/
+                            $markupTransactionAmount = Helper::roundValue($markupTransactionAmount);
+                            $markupLocalAmount = Helper::roundValue($markupLocalAmount);
+                            $markupReportingAmount = Helper::roundValue($markupReportingAmount);
 
                             $updateArray = [
                                 'markupPercentage' =>$supAssigned->markupPercentage,

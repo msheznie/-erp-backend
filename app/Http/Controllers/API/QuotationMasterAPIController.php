@@ -773,6 +773,7 @@ class QuotationMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $companySystemID = $input['companySystemID'];
+        $fromSalesQuotation = isset($input['fromSalesQuotation'])?$input['fromSalesQuotation']:0;
 
         $items = ItemAssigned::where('companySystemID', $companySystemID)
             ->where('isActive', 1)
@@ -783,6 +784,10 @@ class QuotationMasterAPIController extends AppBaseController
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
+        }
+
+        if($fromSalesQuotation == 1){
+            $items = $items->whereIn('financeCategoryMaster',[1,2,4]);
         }
         $items = $items
             ->take(20)
@@ -855,6 +860,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('customerName', 'LIKE', "%{$search}%");
             });
         }
+        $grvMasters = $grvMasters->groupBy('quotationMasterID');
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
@@ -913,7 +919,6 @@ class QuotationMasterAPIController extends AppBaseController
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
-            ->where('erp_documentapproved.documentSystemID', 67)
             ->where('erp_documentapproved.companySystemID', $companyID)
             ->where('erp_documentapproved.documentSystemID', $documentSystemID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
@@ -928,6 +933,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('customerName', 'LIKE', "%{$search}%");
             });
         }
+        $grvMasters = $grvMasters->groupBy('quotationMasterID');
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
@@ -1236,6 +1242,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
+        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 

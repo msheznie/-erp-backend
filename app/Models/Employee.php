@@ -303,4 +303,8 @@ class Employee extends Model
         // return $this->hasMany('App\Models\HRMSPersonalDocuments','employeeSystemID','employeeSystemID');  // change insert and update function and use employeeSystemID
     }
 
+    public function custom_reports()
+    {
+        return $this->hasMany('App\Models\CustomReportEmployees','user_id','employeeSystemID');
+    }
 }

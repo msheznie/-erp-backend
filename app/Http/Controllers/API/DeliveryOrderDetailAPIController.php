@@ -13,6 +13,7 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
+use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\StockTransfer;
@@ -248,6 +249,31 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
+        /*Check in purchase return*/
+        $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation',
+                'erp_purchasereturnmaster.purchaseReturnCode',
+            ])
+            ->groupBy(
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation'
+            )
+            ->whereHas('details', function ($query) use ($input) {
+                $query->where('itemCode', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+
+        if (!empty($checkWhetherPR)) {
+            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /* approved=0*/
+
         $input['itemCodeSystem'] = $item->itemCodeSystem;
         $input['itemPrimaryCode'] = $item->primaryCode;
         $input['itemDescription'] = $item->itemDescription;
@@ -346,6 +372,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['transactionAmount'] = 0;
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
+
+        // update maser table amount field
+        $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
         return $this->sendResponse($deliveryOrderDetail->toArray(), 'Delivery Order Detail saved successfully');
     }
@@ -537,6 +566,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
 
+        // update maser table amount field
+        $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
+
         return $this->sendResponse($deliveryOrderDetail->toArray(), 'DeliveryOrderDetail updated successfully');
     }
 
@@ -592,6 +624,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
             $deliveryOrderDetail->delete();
+
+            // update maser table amount field
+            $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
+
             if($deliveryOrder->orderType == 2 || $deliveryOrder->orderType == 3){
 
                 if (!empty($deliveryOrderDetail->deliveryOrderDetailID) && !empty($deliveryOrderDetail->deliveryOrderID)) {
@@ -620,7 +656,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
+
                 }
+
 
                 //calculate tax amount according to the percantage for tax update
 
@@ -898,7 +936,28 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
                 }
 
+                /*Check in purchase return*/
+                $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
+                    ->select([
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation',
+                        'erp_purchasereturnmaster.purchaseReturnCode',
+                    ])
+                    ->groupBy(
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation'
+                    )
+                    ->whereHas('details', function ($query) use ($row) {
+                        $query->where('itemCode', $row['itemAutoID']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
 
+                if (!empty($checkWhetherPR)) {
+                    return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
 
             }
         }
@@ -1058,6 +1117,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
 
                 $this->updateSalesQuotationDeliveryStatus($new['quotationMasterID']);
+
+                // update maser table amount field
+                $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
             }
 

@@ -45,6 +45,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
 use App\Repositories\FixedAssetMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -598,8 +599,8 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function update($id, UpdateFixedAssetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $itemImgaeArr = $input['itemImage'];
-        $itemPicture = $input['itemPicture'];
+        $itemImgaeArr = isset($input['itemImage']) ? $input['itemImage'] : array();
+        $itemPicture  = isset($input['itemPicture']) ? $input['itemPicture'] : '';
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
@@ -627,8 +628,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > 31457280) {
+            if (isset($input['itemPicture']) && $input['itemPicture']) {
+                if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > 31457280) {
                     return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
                 }
             }
@@ -1897,6 +1898,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');

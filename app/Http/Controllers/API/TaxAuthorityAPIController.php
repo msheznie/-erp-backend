@@ -148,6 +148,12 @@ class TaxAuthorityAPIController extends AppBaseController
             return $this->sendError('Tax Authority not found');
         }
 
+        $isAssigned = TaxAuthority::where('taxAuthourityMasterID',$id)->whereHas('tax')->exists();
+
+        if($isAssigned){
+            return $this->sendError('Cannot delete. Tax authority is assigned to a tax.');
+        }
+
         $taxAuthority->delete();
 
         return $this->sendResponse($id, 'Tax Authority deleted successfully');

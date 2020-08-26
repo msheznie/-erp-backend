@@ -316,40 +316,41 @@ class MobileBillSummaryAPIController extends AppBaseController
 
         $file = $request->request->get('file');
         $decodeFile = base64_decode($file);
-        $path = time(). $extension;
+        $path = time().'.'.$extension;
         Storage::disk('local')->put($path, $decodeFile);
-
         $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $path), function ($reader) {})->get();
         $insert_data = [];
+
         if($record->count() > 0){
 
             if($input['type'] == 'summary') {
                 $tableName = 'hrms_mobilebillsummary';
-                foreach($record->toArray() as $key => $value){
-                    if($value['mobilenumber'] == null || $value['mobilenumber'] == ''){
-                        break;
+                foreach($record as $value){
+
+                    if (!$value->filter()->isEmpty()) {
+                        // do something
+                        $insert_data[] = array(// set summary array
+                            'mobileMasterID' => $input['mobilebillMasterID'],
+                            'mobileNumber' => isset($value['mobilenumber'])?$value['mobilenumber']:'',
+                            'rental' => isset($value['rental'])?$value['rental']:'',
+                            'setUpFee' => isset($value['setupfee'])?$value['setupfee']:'',
+                            'localCharges' => isset($value['localcharges'])?$value['localcharges']:'',
+                            'internationalCallCharges' => isset($value['internationalcallcharges'])?$value['internationalcallcharges']:'',
+                            'domesticSMS' => isset($value['domesticsms'])?$value['domesticsms']:'',
+                            'internationalSMS' => isset($value['internationalsms'])?$value['internationalsms']:'',
+                            'domesticMMS' => isset($value['domesticmms'])?$value['domesticmms']:'',
+                            'internationalMMS' => isset($value['internationalmms'])?$value['internationalmms']:'',
+                            'discounts' => isset($value['discounts'])?$value['discounts']:'',
+                            'otherCharges' => isset($value['othercharges'])?$value['othercharges']:'',
+                            'blackberryCharges' => isset($value['blackberrycharges'])?$value['blackberrycharges']:'',
+                            'roamingCharges' => isset($value['roamingcharges'])?$value['roamingcharges']:'',
+                            'GPRSPayG' => isset($value['gprspayg'])?$value['gprspayg']:'',
+                            'GPRSPKG' => isset($value['gprspkg'])?$value['gprspkg']:'',
+                            'totalCurrentCharges' => isset($value['totalcurrentcharges'])?$value['totalcurrentcharges']:'',
+                            'billDate' => isset($value['billdate'])?$value['billdate']:'',
+                            'timestamp' => Carbon::now()
+                        );
                     }
-                    $insert_data[] = array(// set summary array
-                        'mobileMasterID'  => $input['mobilebillMasterID'],
-                        'mobileNumber'  => $value['mobilenumber'],
-                        'rental'  => $value['rental'],
-                        'setUpFee'  => $value['setupfee'],
-                        'localCharges'  => $value['localcharges'],
-                        'internationalCallCharges'  => $value['internationalcallcharges'],
-                        'domesticSMS'  => $value['domesticsms'],
-                        'internationalSMS'  => $value['internationalsms'],
-                        'domesticMMS'  => $value['domesticmms'],
-                        'internationalMMS'  => $value['internationalmms'],
-                        'discounts'  => $value['discounts'],
-                        'otherCharges'  => $value['othercharges'],
-                        'blackberryCharges'  => $value['blackberrycharges'],
-                        'roamingCharges'  => $value['roamingcharges'],
-                        'GPRSPayG'  => $value['gprspayg'],
-                        'GPRSPKG'  => $value['gprspkg'],
-                        'totalCurrentCharges'  => $value['totalcurrentcharges'],
-                        'billDate'  => (\DateTime::createFromFormat('Y-m-d H:i:s', $value['billdate']) !== FALSE)? Carbon::parse($value['billdate'])->format('Y-m-d'):null,
-                        'timestamp'  => Carbon::now()
-                    );
 
                 }
             }elseif ($input['type'] == 'detail') {
@@ -358,42 +359,40 @@ class MobileBillSummaryAPIController extends AppBaseController
                 $employee = Helper::getEmployeeInfo();
                 $mobileMaster = MobileBillMaster::find($input['mobilebillMasterID']);
                 $period = PeriodMaster::find($mobileMaster->billPeriod);
-                foreach($record->toArray() as $key => $value){
+                foreach($record as $value){
 
-                    if($value['mynumber'] == null || $value['mynumber'] == ''){
-                        break;
+                    if (!$value->filter()->isEmpty()) {
+                        $insert_data[] = array(// set detail array
+                            'mobilebillMasterID' => $input['mobilebillMasterID'],
+                            'billPeriod' => isset($mobileMaster->billPeriod)?$mobileMaster->billPeriod:'',
+                            'startDate' => isset($period->startDate)?$period->startDate:'',
+                            'EndDate' => isset($period->endDate)?$period->endDate:'',
+                            'myNumber' => isset($value['mynumber'])?$value['mynumber']:'',
+                            'DestCountry' => isset($value['destcountry'])?$value['destcountry']:'',
+                            'DestNumber' => isset($value['destnumber'])?$value['destnumber']:'',
+                            'duration' => isset($value['duration']) ? $value['duration'] : '',
+                            'callDate' => isset($value['calldate'])?$value['calldate']:'',
+                            'cost' => isset($value['cost'])?$value['cost']:'',
+                            'currency' => isset($value['currency'])?$value['currency']:'',
+                            'Narration' => isset($value['narration'])?$value['narration']:'',
+                            'localCurrencyID' => isset($value['localcurrencyid'])?$value['localcurrencyid']:'',
+                            'localCurrencyER' => isset($value['localcurrencyer'])?$value['localcurrencyer']:'',
+                            'localAmount' => isset($value['localamount'])?$value['localamount']:'',
+                            'rptCurrencyID' => isset($value['rptcurrencyid'])?$value['rptcurrencyid']:'',
+                            'rptCurrencyER' => isset($value['rptcurrencyer'])?$value['rptcurrencyer']:'',
+                            'rptAmount' => isset($value['rptamount'])?$value['rptamount']:'',
+                            'isOfficial' => isset($value['isofficial'])?$value['isofficial']:'',
+                            'isIDD' => isset($value['isidd'])?$value['isidd']:'',
+                            'type' => isset($value['type'])?$value['type']:'',
+                            'userComments' => isset($value['usercomments'])?$value['usercomments']:'',
+                            'createDate' => Carbon::now(),
+                            'createUserID' => $employee->empID,
+                            'createPCID' => gethostname(),
+                            'modifiedpc' => gethostname(),
+                            'modifiedUser' => $employee->empID,
+                            'timestamp' => now()
+                        );
                     }
-
-                    $insert_data[] = array(// set detail array
-                        'mobilebillMasterID' => $input['mobilebillMasterID'],
-                        'billPeriod' => $mobileMaster->billPeriod,
-                        'startDate' => $period->startDate,
-                        'EndDate' => $period->endDate,
-                        'myNumber' => $value['mynumber'],
-                        'DestCountry' => $value['destcountry'],
-                        'DestNumber' => $value['destnumber'],
-                        'duration' => $value['duration'],
-                        'callDate' => $value['calldate'],
-                        'cost' => $value['cost'],
-                        'currency' => $value['currency'],
-                        'Narration' => $value['narration'],
-                        'localCurrencyID' => $value['localcurrencyid'],
-                        'localCurrencyER' => $value['localcurrencyer'],
-                        'localAmount' => $value['localamount'],
-                        'rptCurrencyID' => $value['rptcurrencyid'],
-                        'rptCurrencyER' => $value['rptcurrencyer'],
-                        'rptAmount' => $value['rptamount'],
-                        'isOfficial' => $value['isofficial'],
-                        'isIDD' => $value['isidd'],
-                        'type' => $value['type'],
-                        'userComments' => $value['usercomments'],
-                        'createDate' => Carbon::now(),
-                        'createUserID' => $employee->empID,
-                        'createPCID' => gethostname(),
-                        'modifiedpc' => gethostname(),
-                        'modifiedUser' => $employee->empID,
-                        'timestamp' => now()
-                    );
                 }
             }
 

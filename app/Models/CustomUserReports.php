@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\Helper;
 use Eloquent as Model;
 
 /**
@@ -57,7 +58,7 @@ class CustomUserReports extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $appends = ['is_edit_access'];
 
 
 
@@ -78,7 +79,8 @@ class CustomUserReports extends Model
         'user_id' => 'integer',
         'report_master_id' => 'integer',
         'name' => 'string',
-        'is_private' => 'boolean'
+        'is_private' => 'boolean',
+        'is_edit_access' => 'boolean'
     ];
 
     /**
@@ -89,6 +91,15 @@ class CustomUserReports extends Model
     public static $rules = [
         
     ];
+
+    public function getIsEditAccessAttribute()
+    {
+        $userId = Helper::getEmployeeSystemID();
+        if($this->user_id === $userId){
+          return  true;
+        }
+        return false;
+    }
 
     public function created_by()
     {
@@ -104,5 +115,15 @@ class CustomUserReports extends Model
     {
         return $this->hasMany(CustomReportColumns::class, 'report_master_id','report_master_id');
     }
-    
+
+    public function filter_columns()
+    {
+        return $this->hasMany(CustomFiltersColumn::class, 'user_report_id');
+    }
+
+    public function assigned_employees()
+    {
+        return $this->hasMany('App\Models\CustomReportEmployees','user_report_id');
+    }
+
 }

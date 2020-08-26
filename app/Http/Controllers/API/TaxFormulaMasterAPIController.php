@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateTaxFormulaMasterAPIRequest;
 use App\Http\Requests\API\UpdateTaxFormulaMasterAPIRequest;
 use App\Models\Company;
+use App\Models\TaxFormulaDetail;
 use App\Models\TaxFormulaMaster;
 use App\Repositories\TaxFormulaMasterRepository;
 use Illuminate\Http\Request;
@@ -138,6 +139,11 @@ class TaxFormulaMasterAPIController extends AppBaseController
 
         if (empty($taxFormulaMaster)) {
             return $this->sendError('Tax Formula Master not found');
+        }
+
+        $isExistDetail = TaxFormulaDetail::where('taxCalculationformulaID',$taxFormulaMaster->taxCalculationformulaID)->exists();
+        if ($isExistDetail) {
+            return $this->sendError('You cannot delete. This tax formula master has assigned tax formula details');
         }
 
         $taxFormulaMaster->delete();

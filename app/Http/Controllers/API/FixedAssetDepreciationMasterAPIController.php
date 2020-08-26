@@ -33,6 +33,7 @@ use App\Models\GeneralLedger;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -935,6 +936,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $masterData->approvedByUserID = null;
             $masterData->approvedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');

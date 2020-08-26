@@ -849,7 +849,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             }
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                       ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                       ->where('documentSystemID',20)
+                                                       ->get();
+
                             $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {

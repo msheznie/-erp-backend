@@ -16,9 +16,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseReturnDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnDetailsAPIRequest;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\DeliveryOrder;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueMaster;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
+use App\Models\StockTransfer;
 use App\Repositories\PurchaseReturnDetailsRepository;
 use App\Repositories\PurchaseReturnRepository;
 use Illuminate\Http\Request;
@@ -430,6 +434,133 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                     array_push($finalError['more_then_grv_qty'], $new['itemPrimaryCode']);
                     $error_count++;
                 }
+
+                /*Pending Approval Check in purchase return*/
+                $checkWhether = PurchaseReturn::where('purhaseReturnAutoID', '!=', $input['purhaseReturnAutoID'])
+                    ->where('companySystemID', $purchaseReturn->companySystemID)
+                    ->select([
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation',
+                        'erp_purchasereturnmaster.purchaseReturnCode',
+                    ])
+                    ->groupBy(
+                        'erp_purchasereturnmaster.purhaseReturnAutoID',
+                        'erp_purchasereturnmaster.companySystemID',
+                        'erp_purchasereturnmaster.purchaseReturnLocation'
+                    )
+                    ->whereHas('details', function ($query) use ($new) {
+                        $query->where('itemCode', $new['itemCode']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
+                /* approved=0*/
+
+                if (!empty($checkWhether)) {
+                    return $this->sendError("There is a Purchase Return (" . $checkWhether->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+                /*check item Stock Transfer*/
+                $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $purchaseReturn->companySystemID)
+                    ->where('locationFrom', $purchaseReturn->purchaseReturnLocation)
+                    ->select([
+                        'erp_stocktransfer.stockTransferAutoID',
+                        'erp_stocktransfer.companySystemID',
+                        'erp_stocktransfer.locationFrom',
+                        'erp_stocktransfer.stockTransferCode',
+                        'erp_stocktransfer.approved'
+                    ])
+                    ->groupBy(
+                        'erp_stocktransfer.stockTransferAutoID',
+                        'erp_stocktransfer.companySystemID',
+                        'erp_stocktransfer.locationFrom',
+                        'erp_stocktransfer.stockTransferCode',
+                        'erp_stocktransfer.approved'
+                    )
+                    ->whereHas('details', function ($query) use ($new) {
+                        $query->where('itemCodeSystem', $new['itemCode']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
+                /* approved=0*/
+
+                if (!empty($checkWhetherStockTransfer)) {
+                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+
+                /*check item sales invoice*/
+                $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $purchaseReturn->companySystemID)
+                    ->select([
+                        'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                        'erp_custinvoicedirect.bookingInvCode',
+                        'erp_custinvoicedirect.wareHouseSystemCode',
+                        'erp_custinvoicedirect.approved'
+                    ])
+                    ->groupBy(
+                        'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                        'erp_custinvoicedirect.companySystemID',
+                        'erp_custinvoicedirect.bookingInvCode',
+                        'erp_custinvoicedirect.wareHouseSystemCode',
+                        'erp_custinvoicedirect.approved'
+                    )
+                    ->whereHas('issue_item_details', function ($query) use ($new) {
+                        $query->where('itemCodeSystem', $new['itemCode']);
+                    })
+                    ->where('approved', 0)
+                    ->where('canceledYN', 0)
+                    ->first();
+                /* approved=0*/
+
+                if (!empty($checkWhetherInvoice)) {
+                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+
+                // check in delivery order
+                $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $purchaseReturn->companySystemID)
+                    ->select([
+                        'erp_delivery_order.deliveryOrderID',
+                        'erp_delivery_order.deliveryOrderCode'
+                    ])
+                    ->groupBy(
+                        'erp_delivery_order.deliveryOrderID',
+                        'erp_delivery_order.companySystemID'
+                    )
+                    ->whereHas('detail', function ($query) use ($new) {
+                        $query->where('itemCodeSystem', $new['itemCode']);
+                    })
+                    ->where('approvedYN', 0)
+                    ->first();
+
+                if (!empty($checkWhetherDeliveryOrder)) {
+                    return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+
+                // check in Material Issue
+                $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $purchaseReturn->companySystemID)
+                    ->select([
+                        'erp_itemissuemaster.itemIssueAutoID',
+                        'erp_itemissuemaster.companySystemID',
+                        'erp_itemissuemaster.wareHouseFromCode',
+                        'erp_itemissuemaster.itemIssueCode',
+                        'erp_itemissuemaster.approved'
+                    ])
+                    ->groupBy(
+                        'erp_itemissuemaster.itemIssueAutoID',
+                        'erp_itemissuemaster.companySystemID',
+                        'erp_itemissuemaster.wareHouseFromCode',
+                        'erp_itemissuemaster.itemIssueCode',
+                        'erp_itemissuemaster.approved'
+                    )
+                    ->whereHas('details', function ($query) use ($new) {
+                        $query->where('itemCodeSystem', $new['itemCode']);
+                    })
+                    ->where('approved', 0)
+                    ->first();
+                /* approved=0*/
+
+                if (!empty($checkWhetherItemIssueMaster)) {
+                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+
 
                 $item = array();
 

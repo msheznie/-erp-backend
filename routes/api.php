@@ -1813,7 +1813,14 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('custom_user_reports', 'CustomUserReportsAPIController');
         Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
         Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
+        Route::post('exportCustomReport', 'CustomUserReportsAPIController@exportCustomReport');
         Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
+        Route::resource('custom_filters_columns', 'CustomFiltersColumnAPIController');
+        Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController');
+        Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee');
+        Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees');
+
+
         Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
         Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice');
         Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
@@ -1827,6 +1834,18 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getBillMastersByCompany', 'MobileBillMasterAPIController@getBillMastersByCompany');
         Route::post('exportEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@exportEmployeeMobileBill');
         Route::post('grvMarkupUpdate', 'GRVDetailsAPIController@grvMarkupUpdate');
+
+        Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+        Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
+        Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+
+        Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+
+        Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
+        Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
+
+        Route::post('getCompanies', 'CompanyAPIController@getCompanies');
+        Route::post('getCompanyFormData', 'CompanyAPIController@getCompanyFormData');
 
     });
 
@@ -1874,6 +1893,10 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+
+
 
 
 

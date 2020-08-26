@@ -890,7 +890,9 @@ class GRVDetailsAPIController extends AppBaseController
         $output['markupLocalAmount'] = 0;
         $output['markupReportingAmount'] = 0;
 
-        if(isset($grvData->supplierID) && $grvData->supplierID){
+        $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($grvData->companySystemID,6);
+
+        if(isset($grvData->supplierID) && $grvData->supplierID && $markupAmendRestrictionPolicy){
 
             $supplier= SupplierAssigned::where('supplierCodeSytem',$grvData->supplierID)
                 ->where('companySystemID',$grvData->companySystemID)
@@ -970,6 +972,10 @@ class GRVDetailsAPIController extends AppBaseController
 
         if (empty($grvMaster)) {
             return $this->sendError('GRV not found');
+        }
+
+        if ($grvMaster->isMarkupUpdated==1) {
+            return $this->sendError('GRV markup update process restricted',500);
         }
 
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);

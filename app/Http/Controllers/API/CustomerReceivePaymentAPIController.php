@@ -57,6 +57,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -2024,6 +2025,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::insertAuditTrial('CustomerReceivePayment',$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Receipt Voucher return back to amend successfully');

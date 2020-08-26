@@ -73,12 +73,6 @@ use Eloquent as Model;
  *          type="boolean"
  *      ),
  *      @SWG\Property(
- *          property="filter_type",
- *          description="filter_type",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
  *          property="created_at",
  *          description="created_at",
  *          type="string",
@@ -109,6 +103,7 @@ class CustomReportColumns extends Model
         'table',
         'is_master',
         'column',
+        'group_by_column',
         'filter_column',
         'column_type',
         'sort_order',
@@ -117,11 +112,7 @@ class CustomReportColumns extends Model
         'is_group_by',
         'is_default_sort',
         'is_default_group_by',
-        'is_filter',
-        'filter_type',
-        'is_relationship',
-        'relationship',
-        'relationship_columns'
+        'is_filter'
     ];
 
     /**
@@ -136,6 +127,7 @@ class CustomReportColumns extends Model
         'table' => 'string',
         'is_master' => 'boolean',
         'column' => 'string',
+        'group_by_column' => 'string',
         'filter_column' => 'string',
         'column_type' => 'integer',
         'sort_order' => 'integer',
@@ -144,11 +136,7 @@ class CustomReportColumns extends Model
         'is_group_by' => 'boolean',
         'is_default_sort' => 'boolean',
         'is_default_group_by' => 'boolean',
-        'is_filter' => 'boolean',
-        'filter_type' => 'integer',
-        'is_relationship' => 'boolean',
-        'relationship'  => 'string',
-        'relationship_columns'  => 'string'
+        'is_filter' => 'boolean'
     ];
 
     /**

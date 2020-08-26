@@ -314,4 +314,8 @@ class Company extends Model
         return $this->hasMany('App\Models\EmployeesDepartment', 'companySystemID','companySystemID');
     }
 
+    public function exchange_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'exchangeGainLossGLCodeSystemID','chartOfAccountSystemID');
+    }
+
 }
