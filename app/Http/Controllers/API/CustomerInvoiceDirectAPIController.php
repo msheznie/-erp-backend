@@ -68,6 +68,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
 use App\Models\SecondaryCompany;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -216,7 +217,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-        if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
+        if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
             $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
             if (!$serviceLine) {
                 return $this->sendError('Please select a Service Line', 500);
@@ -387,7 +388,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
-        if ($isPerforma == 2 || $isPerforma == 3) {
+        if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
@@ -398,7 +399,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID'));
-            if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3)) {
+            if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3|| $input['isPerforma'] == 4|| $input['isPerforma'] == 5)) {
                 $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
 
                 if (!$wareHouse) {
@@ -625,7 +626,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-        if ($isPerforma == 2 || $isPerforma == 3) {
+        if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {
             $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
         } else {
             $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
@@ -737,7 +738,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
                 } else {
 
-                    if ($isPerforma == 2 || $isPerforma == 3) {   // item sales invoice || From Delivery Note
+                    if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {   // item sales invoice || From Delivery Note|| From Sales Order|| From Quotation
 
                         $checkQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->where(function ($q) {
@@ -822,7 +823,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             $updateItem->save();
 
-                            if ($isPerforma == 2) {// only item sales invoice. we won't get from from delivery note type.
+                            if ($isPerforma == 2 || $isPerforma == 4 || $isPerforma == 5) {// only item sales invoice. we won't get from delivery note type.
                                 if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
                                     return $this->sendError('Item must not have zero cost', 500);
                                 }
@@ -951,7 +952,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             }
         } else {
-            $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+            $this->customerInvoiceDirectRepository->update($_post, $id);
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
     }
@@ -1122,6 +1123,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->where('isYesNO', 1)
             ->exists();
 
+        // check policy 43 is on for CI
+        $isESOINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 43)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        // check policy 44 is on for CI
+        $isEQOINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 44)
+            ->where('isYesNO', 1)
+            ->exists();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1129,7 +1142,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'years' => $years,
             'customer' => $customer,
             'isAICINVPolicyOn' => $isAICINVPolicyOn,
-            'isEDOINVPolicyOn' => $isEDOINVPolicyOn
+            'isEDOINVPolicyOn' => $isEDOINVPolicyOn,
+            'isESOINVPolicyOn' => $isESOINVPolicyOn,
+            'isEQOINVPolicyOn' => $isEQOINVPolicyOn
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1349,6 +1364,29 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($EDOINV) {
             $output['isEDOINVPolicyOn'] = 1;
             $output['invoiceType'][] = array('value' => 3, 'label' => 'From Delivery Note');
+        }
+
+        $ESOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 43)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        if ($ESOINV) {
+            $output['isESOINVPolicyOn'] = 1;
+            $output['invoiceType'][] = array('value' => 4, 'label' => 'From Sales Order');
+        }
+
+        $EQOINV = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 44)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        if ($EQOINV) {
+            $output['isEQOINVPolicyOn'] = 1;
+            $output['invoiceType'][] = array('value' => 5, 'label' => 'From Quotation');
+        }
+
+        if($EDOINV || $ESOINV || $EQOINV) {
             $output['wareHouses'] = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
         }
@@ -1639,7 +1677,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4|| $master->isPerforma == 5) {
             $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         } else {
             $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
@@ -1652,7 +1690,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        if ($master->isPerforma == 2 || $master->isPerforma == 3) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3|| $master->isPerforma == 4|| $master->isPerforma == 5) {
             $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
             if (!empty($totalDetail)) {
                 $totalAmount = $totalDetail->amount;
@@ -1822,7 +1860,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
-        if ($master->isPerforma == 2) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
@@ -1833,7 +1871,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-            } else if ($master->isPerforma == 2) {
+            } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
             } else {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
@@ -2173,7 +2211,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $directTraSubTotal = 0;
-        if ($master->isPerforma == 2) {
+        if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $customerInvoice->item_invoice = true;
             foreach ($customerInvoice->issue_item_details as $key => $item) {
                 $directTraSubTotal += $item->sellingTotal;
@@ -2447,6 +2485,7 @@ FROM
         billingusagecharges.billProcessNo,
         billingusagecharges.companyID,
         mubbadrahop.usagetypes.usageTypeDes,
+        billingusagecharges.usageRateTypeId,
         sum( billingusagecharges.usageRate ) AS totalRate 
     FROM
         billingusagecharges
@@ -2460,7 +2499,8 @@ WHERE
     erp_custinvoicedirectdet.custInvoiceDirectID = $id  
 GROUP BY
     erp_custinvoicedirectdet.custInvoiceDirectID,
-    erp_custinvoicedirectdet.performaMasterID");
+    erp_custinvoicedirectdet.performaMasterID,
+    billingusagecharges.usageRateTypeId");
 
         return $output;
     }
@@ -3076,6 +3116,8 @@ WHERE
             $masterData->approvedDate = null;
             $masterData->postedDate = null;
             $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemiD,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Customer Invoice amend saved successfully');

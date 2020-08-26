@@ -4413,8 +4413,8 @@ GROUP BY
         $unmatchedData = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
                                       ->where('companySystemID', $input['companySystemID'])
                                       ->whereDate('documentDate','<=', $toDate)
-                                      ->groupBy('companySystemID', 'documentSystemCode')
-                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0')
+                                      ->groupBy('companySystemID', 'documentSystemCode','documentSystemID')
+                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
                                       ->get();
 
         $respondData = [

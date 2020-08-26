@@ -199,7 +199,8 @@ return [
         'DEPGLCODESystemID' => 'Depreciation Account',
         'DISPOGLCODESystemID' => 'Disposal Account',
         'financeCatDescription' => 'Category Description',
-        'catDescription' => 'Category Description'
+        'catDescription' => 'Category Description',
+        'report_master_id' => 'Report Master'
     ],
 
 ];

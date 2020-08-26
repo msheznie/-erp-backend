@@ -8,6 +8,7 @@ use App\Models\MobileDetail;
 use App\Repositories\MobileDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -277,5 +278,58 @@ class MobileDetailAPIController extends AppBaseController
         $mobileDetail->delete();
 
         return $this->sendSuccess('Mobile Detail deleted successfully');
+    }
+
+    public function getAllMobileBillDetail(Request $request){
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $mobileMaster = MobileDetail::where('mobilebillMasterID',$id)->with(['mobile_pool.mobile_master.employee']);
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $mobileMaster = $mobileMaster->where(function ($query) use ($search) {
+                $query->where('myNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('DestCountry', 'LIKE', "%{$search}%")
+                    ->orWhere('DestNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('Narration', 'LIKE', "%{$search}%")
+                    ->orWhereHas('mobile_pool', function ($query) use ($search){
+                        $query->whereHas('mobile_master', function ($q) use ($search){
+                            $q->whereHas('employee', function ($q1) use ($search){
+                                $q1->where('empID', 'LIKE', "%{$search}%")
+                                    ->orWhere('empName', 'LIKE', "%{$search}%");
+                            });
+                        });
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($mobileMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('mobileDetailID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function downloadDetailTemplate(Request $request)
+    {
+        $input = $request->all();
+        if (Storage::disk('local_public')->exists('mobile_bill_templates/detail_template.xlsx')) {
+            return Storage::disk('local_public')->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
+        } else {
+            return $this->sendError('Summary template not found', 500);
+        }
     }
 }

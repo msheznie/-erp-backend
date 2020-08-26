@@ -1910,6 +1910,10 @@ class Helper
                                 //$jobPV = CreateReceiptVoucher::dispatch($sourceModel);
                                 if ($sourceModel->invoiceType == 3) {
                                     $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
+                                    if (!$jobPV["success"]) {
+                                        return ['success' => false, 'message' => $jobPV["message"]];
+                                    }
+
                                 } else {
                                     $bankLedger = BankLedgerInsert::dispatch($masterData);
                                 }
@@ -2559,7 +2563,7 @@ class Helper
             $date = self::dateOnlyFormat($date);
             return new Carbon($date. ' ' .date("h:i:sa"));
         } else {
-            return '';
+            return null;
         }
     }
 
@@ -3431,13 +3435,23 @@ class Helper
                     $documentYear = $documentDate->format('Y');
                     $documentYearMonth = $documentDate->format('Y-m');
 
-                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)
+                        ->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])
+                        ->first();
 
+                    if(empty($companyFinanceYear)){
+                        return ['success' => false, 'message' => "Inter company financial year not found"];
+                    }
                     $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                     $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                     $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
+                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)
+                        ->where('departmentSystemID', 4)
+                        ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                        ->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])
+                        ->first();
+
                     if ($companyFinancePeriod) {
                         $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                         $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
@@ -3550,9 +3564,15 @@ class Helper
 
                             $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
 
+                            if(empty($companyFinanceYear)){
+                                return ['success' => false, 'message' => "Financial year not found"];
+                            }
+
                             $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
                             $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
                             $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+
+
 
                             $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [$documentYearMonth])->first();
                             if ($companyFinancePeriod) {
@@ -3569,7 +3589,13 @@ class Helper
                             $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
                             $receivePayment['custTransactionCurrencyER'] = 1;
 
-                            $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
+                            $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)
+                                                            ->where('companySystemID', $pvMaster->companySystemID)
+                                                            ->first();
+
+                            if(empty($account)){
+                                return ['success' => false, 'message' => "Bank account not found"];
+                            }
 
                             $receivePayment['bankID'] = $account->bankmasterAutoID;
                             $receivePayment['bankAccount'] = $account->bankAccountAutoID;
@@ -3609,6 +3635,7 @@ class Helper
             $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
             $jobPV = BankLedgerInsert::dispatch($masterData);
         }
+        return ['success' => true, 'message' => "Customer receive voucher created successfully"];
     }
 
 

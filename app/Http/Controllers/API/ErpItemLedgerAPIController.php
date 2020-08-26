@@ -981,6 +981,7 @@ WHERE
 
         $input = $request->all();
         $warehouse=[];
+        $data = [];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');

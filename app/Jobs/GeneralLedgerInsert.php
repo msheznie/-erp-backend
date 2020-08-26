@@ -709,7 +709,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         /*customer Invoice*/
                         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
                         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
-                        if($masterData->isPerforma == 2){   // item sales invoice
+                        if($masterData->isPerforma == 2 ||$masterData->isPerforma == 4 || $masterData->isPerforma == 5){   // item sales invoice || from sales order || from sales quotation
                             $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
                             $masterDocumentDate = Carbon::now();
 //                            if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
@@ -849,7 +849,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             }
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                       ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                       ->where('documentSystemID',20)
+                                                       ->get();
+
                             $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {
@@ -869,7 +873,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['documentTransCurrencyID'] = $tax->currency;
                                     $data['documentTransCurrencyER'] = $tax->currencyER;
-                                    $data['documentTransAmount'] = $tax->amount * -1;
+                                    $data['documentTransAmount'] = 0;
                                     $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
                                     $data['documentLocalAmount'] = $tax->localAmount * -1;
@@ -924,7 +928,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;;
+                                $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -981,7 +985,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = ABS($masterData->bookingAmountTrans) * -1;;
+                                $data['documentTransAmount'] = ABS($masterData->bookingAmountTrans) * -1;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -1023,7 +1027,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['documentTransCurrencyID'] = $tax->currency;
                                     $data['documentTransCurrencyER'] = $tax->currencyER;
-                                    $data['documentTransAmount'] = $tax->amount * -1;;
+                                    $data['documentTransAmount'] = $tax->amount * -1;
                                     $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
                                     $data['documentLocalAmount'] = $tax->localAmount * -1;

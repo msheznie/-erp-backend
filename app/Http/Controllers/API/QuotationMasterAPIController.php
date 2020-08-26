@@ -30,7 +30,10 @@ use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
+use App\Models\DeliveryOrderDetail;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -770,6 +773,7 @@ class QuotationMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $companySystemID = $input['companySystemID'];
+        $fromSalesQuotation = isset($input['fromSalesQuotation'])?$input['fromSalesQuotation']:0;
 
         $items = ItemAssigned::where('companySystemID', $companySystemID)
             ->where('isActive', 1)
@@ -780,6 +784,10 @@ class QuotationMasterAPIController extends AppBaseController
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
+        }
+
+        if($fromSalesQuotation == 1){
+            $items = $items->whereIn('financeCategoryMaster',[1,2,4]);
         }
         $items = $items
             ->take(20)
@@ -852,6 +860,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('customerName', 'LIKE', "%{$search}%");
             });
         }
+        $grvMasters = $grvMasters->groupBy('quotationMasterID');
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
@@ -910,7 +919,6 @@ class QuotationMasterAPIController extends AppBaseController
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
-            ->where('erp_documentapproved.documentSystemID', 67)
             ->where('erp_documentapproved.companySystemID', $companyID)
             ->where('erp_documentapproved.documentSystemID', $documentSystemID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
@@ -925,6 +933,7 @@ class QuotationMasterAPIController extends AppBaseController
                     ->orWhere('customerName', 'LIKE', "%{$search}%");
             });
         }
+        $grvMasters = $grvMasters->groupBy('quotationMasterID');
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
@@ -1121,6 +1130,19 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError('Quotation master not found');
         }
 
+        /*check order is already added to invoice or delivery order*/
+        $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
+        $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
+        $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
+
+        if($existsinCI || $quotationMasterData->isInDOorCI == 2){
+            return $this->sendError($quotOrSales.' is added to a customer invoice',500);
+        }
+
+        if($existsinDO || $quotationMasterData->isInDOorCI == 1){
+            return $this->sendError($quotOrSales.' is added to a delivery order',500);
+        }
+
         $quotationMasterArray = $quotationMasterData->toArray();
         unset($quotationMasterArray['quotation_last_status']);
         $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
@@ -1220,6 +1242,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
+        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 
@@ -1285,5 +1308,65 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($quotationMasterdata->toArray(), 'Sales quotation retrieved successfully');
+    }
+
+    public function salesQuotationForCustomerInvoice(Request $request){
+        $input = $request->all();
+        $invoice = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
+
+        $documentSystemID = 0;
+        if($invoice->isPerforma == 4){ //Sales Order
+            $documentSystemID = 68;
+        } elseif ($invoice->isPerforma==5){ ////Quotation
+            $documentSystemID = 67;
+        }
+
+        $master = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->where('approvedYN', -1)
+            ->where('selectedForDeliveryOrder', 0)
+            ->where('isInDOorCI', '!=',1)
+            ->where('closedYN',0)
+            ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
+            ->where('customerSystemCode', $invoice->customerID)
+            ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+    }
+
+    public function getSalesQuotationRecord(Request $request){
+
+        $input = $request->all();
+        /*$id = $input['deliveryOrderID'];
+        $companySystemID = $input['companySystemID'];
+        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+            $query->with(['quotation','uom_default','uom_issuing']);
+        },'approved_by' => function($query) use($companySystemID){
+            $query->where('companySystemID',$companySystemID)
+                ->where('documentSystemID',71)
+                ->with(['employee']);
+        }])->find($id);
+
+        if (empty($deliveryOrder)) {
+            return $this->sendError('Delivery Order not found');
+        }
+
+        return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order retrieved successfully');*/
+    }
+
+    function getInvoiceDetailsForSQ(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detail = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)
+            ->with(['master'=> function($query){
+                $query->with(['currency']);
+            },'sales_quotation_detail','uom_issuing'])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 }

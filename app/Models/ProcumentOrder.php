@@ -611,4 +611,9 @@ class ProcumentOrder extends Model
         return $value;
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purchaseOrderID')->whereIn('documentSystemID',[2,5,52]);
+    }
+
 }

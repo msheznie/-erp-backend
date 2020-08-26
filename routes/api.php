@@ -1790,6 +1790,62 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('quotation_statuses', 'QuotationStatusAPIController');
         Route::get('getQuotationStatus', 'QuotationStatusAPIController@getQuotationStatus');
+        Route::post('mobileSummaryDetailDelete', 'MobileBillMasterAPIController@mobileSummaryDetailDelete');
+
+        Route::resource('employee_mobile_bill_masters', 'EmployeeMobileBillMasterAPIController');
+        Route::post('generateEmployeeBill', 'EmployeeMobileBillMasterAPIController@generateEmployeeBill');
+
+        Route::post('getAllMobileBillSummaries', 'MobileBillSummaryAPIController@getAllMobileBillSummaries');
+        Route::post('getAllMobileBillDetail', 'MobileDetailAPIController@getAllMobileBillDetail');
+        Route::post('getAllEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@getAllEmployeeMobileBill');
+
+        Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+        Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
+        Route::post('getMobileBillReport', 'MobileBillMasterAPIController@getMobileBillReport');
+        Route::post('validateMobileReport', 'MobileBillMasterAPIController@validateMobileReport');
+        Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
+        Route::post('exportMobileReport', 'MobileBillMasterAPIController@exportMobileReport');
+        Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView');
+
+        Route::resource('custom_report_types', 'CustomReportTypeAPIController');
+        Route::resource('custom_report_masters', 'CustomReportMasterAPIController');
+        Route::resource('custom_report_columns', 'CustomReportColumnsAPIController');
+        Route::resource('custom_user_reports', 'CustomUserReportsAPIController');
+        Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
+        Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
+        Route::post('exportCustomReport', 'CustomUserReportsAPIController@exportCustomReport');
+        Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
+        Route::resource('custom_filters_columns', 'CustomFiltersColumnAPIController');
+        Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController');
+        Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee');
+        Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees');
+
+
+        Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
+        Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice');
+        Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
+        Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
+        Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
+        Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
+
+        Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');
+        Route::get('downloadDetailTemplate', 'MobileDetailAPIController@downloadDetailTemplate');
+        Route::post('getCompaniesByGroup', 'CompanyAPIController@getCompaniesByGroup');
+        Route::post('getBillMastersByCompany', 'MobileBillMasterAPIController@getBillMastersByCompany');
+        Route::post('exportEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@exportEmployeeMobileBill');
+        Route::post('grvMarkupUpdate', 'GRVDetailsAPIController@grvMarkupUpdate');
+
+        Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+        Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
+        Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+
+        Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+
+        Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
+        Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
+
+        Route::post('getCompanies', 'CompanyAPIController@getCompanies');
+        Route::post('getCompanyFormData', 'CompanyAPIController@getCompanyFormData');
 
     });
 
@@ -1812,8 +1868,6 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
     Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
-    Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
-    Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
     Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
@@ -1833,14 +1887,18 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
 
 
-    Route::post('validateICReport', 'FinancialReportAPIController@validateICReport');
-    Route::post('generateICReport', 'FinancialReportAPIController@generateICReport');
 });
 
 
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+
+
+
+
 
 
 

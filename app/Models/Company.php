@@ -310,4 +310,12 @@ class Company extends Model
         return $this->hasOne('App\Models\CountryMaster', 'countryID', 'companyCountry');
     }
 
+    public function employee_departments(){
+        return $this->hasMany('App\Models\EmployeesDepartment', 'companySystemID','companySystemID');
+    }
+
+    public function exchange_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'exchangeGainLossGLCodeSystemID','chartOfAccountSystemID');
+    }
+
 }

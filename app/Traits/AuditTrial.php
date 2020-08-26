@@ -1,0 +1,293 @@
+<?php
+
+namespace App\Traits;
+use App\helper\Helper;
+use App\Models\AuditTrail;
+use Carbon\Carbon;
+
+trait AuditTrial
+{
+
+    /**
+     * @param int $documentSystemID
+     * @param int $documentSystemCode
+     * @param int $rollLevelOrder
+     * @param string $companySystemID
+     * @return array
+     */
+    public static function createAuditTrial($documentSystemID, $documentSystemCode, $comment, $process = '')
+    {
+        $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
+
+        switch ($documentSystemID) {
+            case 3: //GRV
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["primarykey"] = 'grvAutoID';
+                $docInforArr["documentCodeColumnName"] = 'grvPrimaryCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 2:
+            case 5:
+            case 52:
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["documentCodeColumnName"] = 'purchaseOrderCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLine';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 11: // supplier invoice
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 15: // debit note
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 4: // PaySupplierInvoiceMaster
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                $docInforArr["documentCodeColumnName"] = 'BPVcode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 6: //Expense Claim
+                $docInforArr["modelName"] = 'ExpenseClaim';
+                $docInforArr["primarykey"] = 'expenseClaimMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'expenseClaimCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'departmentSystemID';
+                $docInforArr["serviceLineCode"] = 'departmentID';
+                break;
+
+            case 28: //Monthly Addition
+                $docInforArr["modelName"] = 'MonthlyAdditionsMaster';
+                $docInforArr["primarykey"] = 'monthlyAdditionsMasterID';
+                $docInforArr["documentCodeColumnName"] = 'monthlyAdditionsCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'CompanyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 20: // CI
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemiD';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
+            case 19: // credit note
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemiD';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 17: // JV
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                $docInforArr["documentCodeColumnName"] = 'JVcode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 22: // FA
+                $docInforArr["modelName"] = 'FixedAssetMaster';
+                $docInforArr["primarykey"] = 'faID';
+                $docInforArr["documentCodeColumnName"] = 'faCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
+            case 23: // FAD
+                $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
+                $docInforArr["primarykey"] = 'depMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'depCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 41: // FADS
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterRec = $namespacedModel::find($documentSystemCode);
+
+        if(!empty($masterRec)){
+            $employee = Helper::getEmployeeInfo();
+            $description = $masterRec[$docInforArr["documentID"]]." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process;
+            if($comment != ''){
+                $description .= ". due to below reason: ".$comment;
+            }
+            $insertArray = [
+                'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
+                'companyID' => $masterRec[$docInforArr["companyID"]],
+                'serviceLineSystemID' => isset($masterRec[$docInforArr["serviceLineSystemID"]])?$masterRec[$docInforArr["serviceLineSystemID"]]:null,
+                'serviceLineCode' => isset($masterRec[$docInforArr["serviceLineCode"]])?$masterRec[$docInforArr["serviceLineCode"]]:null,
+                'documentSystemID' => $masterRec[$docInforArr["documentSystemID"]],
+                'documentID' => $masterRec[$docInforArr["documentID"]],
+                'documentSystemCode' => $masterRec[$docInforArr["primarykey"]],
+                'valueFrom' => 0,
+                'valueTo' => 0,
+                'valueFromSystemID' => null,
+                'valueFromText' => null,
+                'valueToSystemID' => null,
+                'valueToText' => ucfirst($process),
+                'description' => $description,
+                'modifiedUserSystemID' => $employee->employeeSystemID,
+                'modifiedUserID' => $employee->empID,
+                'modifiedDate' => Carbon::now()
+            ];
+            AuditTrail::create($insertArray);
+        }
+
+
+    }
+
+
+    public static function insertAuditTrial($modelName, $documentSystemCode, $comment, $process = '')
+    {
+        $docInforArr = array('modelName' => '', 'primarykey' => '', 'documentCodeColumnName' =>'','companySystemID' => '', 'companyID' => '', 'serviceLineSystemID' =>'','serviceLineCode' => '', 'documentID' => '', 'documentSystemCode' =>'' );
+
+        switch ($modelName) {
+            case 'MatchDocumentMaster':
+                $docInforArr["modelName"] = 'MatchDocumentMaster';
+                $docInforArr["primarykey"] = 'matchDocumentMasterAutoID';
+                $docInforArr["documentCodeColumnName"] = 'matchingDocCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 'CustomerReceivePayment':
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                $docInforArr["documentCodeColumnName"] = 'custPaymentReceiveCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterRec = $namespacedModel::find($documentSystemCode);
+
+        if(!empty($masterRec)){
+            $employee = Helper::getEmployeeInfo();
+            $documentName = $masterRec[$docInforArr["documentID"]];
+            if($modelName == 'MatchDocumentMaster'){
+                if($masterRec->documentSystemID == 19  || $masterRec->documentSystemID == 21){
+                    $documentName = 'Receipt Matching';
+                }else if($masterRec->documentSystemID == 4  || $masterRec->documentSystemID == 15){
+                    $documentName = 'Payment Voucher Matching';
+                }
+            }elseif ($modelName == 'CustomerReceivePayment'){
+                $documentName = 'Receipt Voucher';
+            }
+
+            $description = $documentName." ".$masterRec[$docInforArr["documentCodeColumnName"]]." is ".$process;
+            if($comment != ''){
+                $description .= " due to below reason. ".$comment;
+            }
+            $insertArray = [
+                'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
+                'companyID' => $masterRec[$docInforArr["companyID"]],
+                'serviceLineSystemID' => isset($masterRec[$docInforArr["serviceLineSystemID"]])?$masterRec[$docInforArr["serviceLineSystemID"]]:null,
+                'serviceLineCode' => isset($masterRec[$docInforArr["serviceLineCode"]])?$masterRec[$docInforArr["serviceLineCode"]]:null,
+                'documentSystemID' => $masterRec[$docInforArr["documentSystemID"]],
+                'documentID' => $masterRec[$docInforArr["documentID"]],
+                'documentSystemCode' => $masterRec[$docInforArr["primarykey"]],
+                'valueFrom' => 0,
+                'valueTo' => 0,
+                'valueFromSystemID' => null,
+                'valueFromText' => null,
+                'valueToSystemID' => null,
+                'valueToText' => ucfirst($process),
+                'description' => $description,
+                'modifiedUserSystemID' => $employee->employeeSystemID,
+                'modifiedUserID' => $employee->empID,
+                'modifiedDate' => Carbon::now()
+            ];
+            AuditTrail::create($insertArray);
+        }
+
+
+    }
+
+}

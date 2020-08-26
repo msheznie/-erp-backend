@@ -175,6 +175,7 @@ class GRVMaster extends Model
         'FromCompanySystemID',
         'FromCompanyID',
         'capitalizedYN',
+        'isMarkupUpdated',
         'createdUserGroup',
         'createdPcID',
         'createdUserSystemID',
@@ -258,6 +259,7 @@ class GRVMaster extends Model
         'FromCompanySystemID' => 'integer',
         'FromCompanyID' => 'string',
         'capitalizedYN' => 'integer',
+        'isMarkupUpdated' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserSystemID' => 'integer',
@@ -357,5 +359,10 @@ class GRVMaster extends Model
     public function setGrvDateAttribute($value)
     {
         $this->attributes['grvDate'] = Helper::dateAddTime($value);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'grvAutoID')->where('documentSystemID',3);
     }
 }

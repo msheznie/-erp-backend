@@ -53,6 +53,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\UserRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1889,6 +1890,7 @@ HAVING
             $jvMaster->postedDate = null;
             $jvMaster->save();
 
+            AuditTrial::createAuditTrial($jvMaster->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($jvMaster->toArray(), 'Journal voucher amend saved successfully');
@@ -1960,6 +1962,9 @@ HAVING
                 BudgetConsumedData::insert($tem);
                 //$this->budgetConsumedDataRepository->create($tem);
             }
+
+            AuditTrial::createAuditTrial($jvMaster->documentSystemID,$id,'','budget uploaded');
+
             DB::commit();
             return $this->sendResponse($glData->toArray(), 'Journal voucher uploaded to budget successfully');
         } catch (\Exception $exception) {

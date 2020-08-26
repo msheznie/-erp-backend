@@ -52,6 +52,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\Company;
 use App\Repositories\MatchDocumentMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -2402,6 +2403,8 @@ ORDER BY
             $masterData->matchingConfirmedByName = null;
             $masterData->matchingConfirmedDate = null;
             $masterData->save();
+
+            AuditTrial::insertAuditTrial('MatchDocumentMaster',$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), $documentName.' Document amend saved successfully');

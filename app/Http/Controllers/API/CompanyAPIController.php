@@ -13,8 +13,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyPolicyMaster;
@@ -269,6 +271,107 @@ class CompanyAPIController extends AppBaseController
         $company->delete();
 
         return $this->sendResponse($id, 'Company deleted successfully');
+    }
+
+    public function getCompaniesByGroup(){
+        $employee_id = Helper::getEmployeeSystemID();
+        $company = [];
+        if ($employee_id) {
+            $company = Company::select(DB::raw("companySystemID,CONCAT(CompanyID,' - ',CompanyName) as label"))
+                ->whereHas('employee_departments' , function($q) use($employee_id){
+                    $q->where('employeeSystemID',$employee_id);
+                })
+                ->where('isGroup',0)
+                ->get();
+        }
+        return $this->sendResponse($company, 'Company retrieved successfully');
+    }
+
+    public function getCompanies(Request $request){
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companySystemID);
+        } else {
+            $childCompanies = [$companySystemID];
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companies = Company::whereIn('companySystemID',$childCompanies)->with(['reportingcurrency','localcurrency','exchange_gl','country']);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $companies = $companies->where(function ($query) use ($search) {
+                $query->where('CompanyID', 'LIKE', "%{$search}%")
+                    ->orWhere('CompanyName','LIKE', "%{$search}%")
+                    ->orWhere('sortOrder','LIKE', "%{$search}%")
+                    ->orWhere('CompanyAddress','LIKE', "%{$search}%")
+                    ->orWhere('companyCountry','LIKE', "%{$search}%")
+                    ->orWhere('CompanyTelephone','LIKE', "%{$search}%")
+                    ->orWhere('CompanyFax','LIKE', "%{$search}%")
+                    ->orWhere('CompanyEmail','LIKE', "%{$search}%")
+                    ->orWhere('CompanyURL','LIKE', "%{$search}%")
+                    ->orWhere('registrationNumber','LIKE', "%{$search}%")
+                    ->orWhere('qhseApiKey','LIKE', "%{$search}%")
+                    ->orWhere('companyShortCode','LIKE', "%{$search}%")
+                    ->orWhereHas('exchange_gl', function ($q) use($search){
+                        $q->where('AccountCode','LIKE', "%{$search}%")
+                        ->orWhere('AccountDescription','LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($companies)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('companySystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getCompanyFormData(Request $request){
+        $input = $request->all();
+        $selectedCompanyId = $input['companySystemID'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companies = [$selectedCompanyId];
+        }
+        $chartOfAccount = ChartOfAccountsAssigned::where('isApproved', 1)->whereIn('companySystemID', $companies)->groupBy('chartOfAccountSystemID')->get();
+        $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
+            ->get();
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /**Country Drop Down */
+        $country = CountryMaster::orderBy('countryName', 'asc')
+            ->get();
+
+        $output = array(
+            'country' => $country,
+            'currencyMaster' => $currencyMaster,
+            'yesNoSelection' => $yesNoSelection,
+            'chartOfAccount' => $chartOfAccount
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
 

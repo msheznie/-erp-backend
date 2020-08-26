@@ -23,6 +23,7 @@ use App\Models\Company;
 use App\Repositories\QuotationDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
@@ -407,6 +408,27 @@ class QuotationDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($quotationMasterID, 'Quotation details deleted successfully');
+    }
+
+    public function getSalesQuotationDetailForInvoice(Request $request){
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+
+        $detail = DB::select('SELECT
+	quotationdetails.*,
+	erp_quotationmaster.serviceLineSystemID,
+	"" AS isChecked,
+	"" AS noQty,
+	IFNULL(dodetails.invTakenQty,0) as invTakenQty 
+FROM
+	erp_quotationdetails quotationdetails
+	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,quotationDetailsID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY customerItemDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+WHERE
+	quotationdetails.quotationMasterID = ' . $id . ' 
+	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 ');
+
+        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }
 
 

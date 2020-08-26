@@ -466,6 +466,9 @@ class QuotationMaster extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'selectedForDeliveryOrder',
+        'isInDOorCI',
+        'invoiceStatus',
+        'deliveryStatus',
         'timestamp'
     ];
 
@@ -548,7 +551,10 @@ class QuotationMaster extends Model
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string',
-        'selectedForDeliveryOrder' => 'integer'
+        'selectedForDeliveryOrder' => 'integer',
+        'isInDOorCI' => 'integer',
+        'invoiceStatus' => 'integer',
+        'deliveryStatus' => 'integer'
     ];
 
     /**

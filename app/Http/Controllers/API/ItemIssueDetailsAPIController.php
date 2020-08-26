@@ -27,6 +27,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\PurchaseReturn;
 use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
 use App\Models\Unit;
@@ -458,6 +459,30 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if (!empty($checkWhetherDeliveryOrder)) {
             return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /*Check in purchase return*/
+        $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation',
+                'erp_purchasereturnmaster.purchaseReturnCode',
+            ])
+            ->groupBy(
+                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                'erp_purchasereturnmaster.companySystemID',
+                'erp_purchasereturnmaster.purchaseReturnLocation'
+            )
+            ->whereHas('details', function ($query) use ($input) {
+                $query->where('itemCode', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherPR)) {
+            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
 
