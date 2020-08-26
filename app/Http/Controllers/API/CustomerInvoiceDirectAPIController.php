@@ -2485,6 +2485,7 @@ FROM
         billingusagecharges.billProcessNo,
         billingusagecharges.companyID,
         mubbadrahop.usagetypes.usageTypeDes,
+        billingusagecharges.usageRateTypeId,
         sum( billingusagecharges.usageRate ) AS totalRate 
     FROM
         billingusagecharges
@@ -2498,7 +2499,8 @@ WHERE
     erp_custinvoicedirectdet.custInvoiceDirectID = $id  
 GROUP BY
     erp_custinvoicedirectdet.custInvoiceDirectID,
-    erp_custinvoicedirectdet.performaMasterID");
+    erp_custinvoicedirectdet.performaMasterID,
+    billingusagecharges.usageRateTypeId");
 
         return $output;
     }
