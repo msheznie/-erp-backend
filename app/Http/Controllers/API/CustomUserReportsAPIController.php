@@ -13,6 +13,7 @@ use App\Repositories\CustomFiltersColumnRepository;
 use App\Repositories\CustomReportEmployeesRepository;
 use App\Repositories\CustomUserReportColumnsRepository;
 use App\Repositories\CustomUserReportsRepository;
+use App\Repositories\CustomUserReportSummarizeRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -33,16 +34,19 @@ class CustomUserReportsAPIController extends AppBaseController
     private $customUserReportColumnsRepository;
     private $customFiltersColumnRepository;
     private $customReportEmployeesRepository;
+    private $customUserReportSummarizeRepository;
 
     public function __construct(CustomUserReportsRepository $customUserReportsRepo,
                                 CustomUserReportColumnsRepository $customUserReportColumnsRepo,
                                 CustomFiltersColumnRepository $customFiltersColumnRepo,
-                                CustomReportEmployeesRepository $customReportEmployeesRepo)
+                                CustomReportEmployeesRepository $customReportEmployeesRepo,
+                                CustomUserReportSummarizeRepository $customUserReportSummarizeRepo)
     {
         $this->customUserReportsRepository = $customUserReportsRepo;
         $this->customUserReportColumnsRepository = $customUserReportColumnsRepo;
         $this->customFiltersColumnRepository = $customFiltersColumnRepo;
         $this->customReportEmployeesRepository = $customReportEmployeesRepo;
+        $this->customUserReportSummarizeRepository = $customUserReportSummarizeRepo;
     }
 
     /**
@@ -219,7 +223,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $q->orderBy('sort_order', 'asc');
         }, 'default_columns' => function ($q) {
             $q->orderBy('sort_order', 'asc');
-        }, 'filter_columns'])->find($id);
+        }, 'filter_columns','summarize'])->find($id);
 
         if (empty($customUserReports)) {
             return $this->sendError('Custom User Reports not found');
@@ -296,9 +300,23 @@ class CustomUserReportsAPIController extends AppBaseController
         try {
             if (isset($input['columns']) && is_array($input['columns'])) {
                 $this->customUserReportColumnsRepository->where('user_report_id', $id)->delete();
+                $this->customUserReportSummarizeRepository->where('user_report_id', $id)->delete();
                 foreach ($input['columns'] as $col) {
                     $col['user_report_id'] = $id;
                     $this->customUserReportColumnsRepository->create($col);
+
+                    if(isset($col['new_summarize']) && count($col['new_summarize']) > 0){
+                        foreach ($col['new_summarize'] as $summarize){
+                            if(isset($summarize['isChecked']) && $summarize['isChecked']){
+                                $tem = array(
+                                    'user_report_id' => $id,
+                                    'column_id' => $col['column_id'],
+                                    'type_id' => $summarize['value']
+                                );
+                                $this->customUserReportSummarizeRepository->create($tem);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -375,6 +393,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $this->customUserReportColumnsRepository->where('user_report_id',$id)->delete();
             $this->customFiltersColumnRepository->where('user_report_id',$id)->delete();
             $this->customReportEmployeesRepository->where('user_report_id',$id)->delete();
+            $this->customUserReportSummarizeRepository->where('user_report_id', $id)->delete();
             $customUserReports->delete();
             DB::commit();
             return $this->sendResponse($id,'Report deleted successfully');
@@ -495,6 +514,21 @@ class CustomUserReportsAPIController extends AppBaseController
         return $result;
     }
 
+    private function getSummarizeColumns($columns)
+    {
+        $result = [];
+        foreach ($columns as $column) {
+            if (isset($column['column']) && $column['column']['column_type'] == 4) {
+                $tmpColumn = $column['column']['table'] . '.' . $column['column']['filter_column'];
+                $column['columnName'] = $tmpColumn;
+                $column['column_as'] =  $column['column']['column'];
+                $column['column_type'] = $column['column']['column_type'];
+                array_push($result, $column);
+            }
+        }
+        return $result;
+    }
+
 
     private function checkMasterColumn($columns, $value, $columnName)
     {
@@ -532,10 +566,29 @@ class CustomUserReportsAPIController extends AppBaseController
         if($data){
             $data = $data->paginate($limit);
         }
+
+        if(isset($result['summarize']) && $result['summarize']){
+            foreach ($result['summarize'] as $key => $summarize){
+
+                $itemsTransformed = $data
+                    ->getCollection()
+                    ->toArray();
+                 $decimalPlace = collect($itemsTransformed)->pluck($summarize['column'].'DecimalPlaces')->toArray();
+                 $decimalPlace = array_unique($decimalPlace);
+                 if(count($decimalPlace) == 1){
+                     $decimalPlace = $decimalPlace[0];
+                 }else{
+                     $decimalPlace = 0;
+                 }
+                $result['summarize'][$key]['decimalPlaces'] = $decimalPlace;
+            }
+        }
+
         //dd(DB::getQueryLog());
         $output = array(
             'data' => $data,
-            'report' => $result['report']
+            'report' => $result['report'],
+            'summarize' => $result['summarize']
         );
 
         return $this->sendResponse($output, 'Custom Report retrieved successfully');
@@ -558,7 +611,7 @@ class CustomUserReportsAPIController extends AppBaseController
         }, 'filter_columns' => function ($q) {
             $q->with(['column'])
                 ->wherehas('column');
-        }])->find($input['id']);
+        },'summarize.column'])->find($input['id']);
 
         if (empty($report)) {
             $output['message'] = 'Report not found';
@@ -587,7 +640,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $detailPrimaryKey = '';
         $masterTable = '';
         $detailTable = '';
-
+        $summarize = [];
 
         // sort by columns
         $sortByColumns = $this->getSortByColumns($report['columns']);
@@ -905,14 +958,62 @@ class CustomUserReportsAPIController extends AppBaseController
                 array_push($groupByColumns, $uniqueId);
             }
 
+            $summarizeColumns = $this->getSummarizeColumns($report['summarize']);
+
+            if(count($summarizeColumns) > 0 && $data){
+                foreach ($summarizeColumns as $key => $summarizeColumn){
+                    $tem = array(
+                        'id' => $key + 1,
+                        'column_id' => $summarizeColumn['column_id'],
+                        'column' => $summarizeColumn['column_as'],
+                        'label' => '',
+                        'value' => 0,
+                        'decimalPlaces' => 2
+                    );
+                    switch ($summarizeColumn['type_id']) {
+                        case 1:
+                            $tem['label'] = 'Sum';
+                            $tem['value'] =  $data->sum($summarizeColumn['columnName']);
+                            break;
+                        case 2:
+                            $tem['label'] = 'Avg';
+                            $tem['value'] = $data->avg($summarizeColumn['columnName']);
+                            break;
+                        case 3:
+                            $tem['label'] = 'Max';
+                            $tem['value'] =  $data->max($summarizeColumn['columnName']);
+                            break;
+                        case 4:
+                            $tem['label'] = 'Min';
+                            $tem['value'] =  $data->min($summarizeColumn['columnName']);
+                            break;
+                        default:
+                            break;
+
+                    }
+
+                    array_push($summarize, $tem);
+
+                }
+            }
+
             $data = $data->groupBy($groupByColumns);
             // paginate
         }
 
 
-        $output['data'] = $data;
-        $output['report'] = $report;
-        $output['success'] = true;
+        // summarize
+        /*  1 = 'Sum'
+            2 = 'Average'
+            3 = 'Max'
+            4 = 'Min'
+        */
+
+
+        $output['data']      = $data;
+        $output['report']    = $report;
+        $output['summarize'] = $summarize;
+        $output['success']   = true;
         return $output;
 
     }
