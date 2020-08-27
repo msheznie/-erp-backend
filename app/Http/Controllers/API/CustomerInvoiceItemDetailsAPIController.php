@@ -828,6 +828,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             ->where('wareHouseSystemCode', $invoice->wareHouseSystemCode)
             ->where('customerID', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->whereDate("postedDate", '<=', $invoice->bookingDate)
             ->orderBy('deliveryOrderID','DESC')
             ->get();
 
