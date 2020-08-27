@@ -2977,6 +2977,15 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                                 break;
 
+                            case 71: // Delivery Order
+                                $documentUpdateData = DeliveryOrder::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+
                             default:
                                 Log::warning('Posted date document id not found ' . date('H:i:s'));
                         }
