@@ -3033,6 +3033,14 @@ WHERE
             return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
         }
 
+        if($masterData->isPerforma == 2){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice');
+        }elseif ($masterData->isPerforma == 4){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
+        }elseif ($masterData->isPerforma == 5){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
+        }
+
         // checking document matched in machmaster
         $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
             ->where('companySystemID', $masterData->companySystemID)
