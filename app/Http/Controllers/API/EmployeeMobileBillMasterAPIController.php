@@ -308,24 +308,23 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
 
             foreach ($summary as $row){
 
-                $mobile = isset($row->mobile_pool->mobile_master)?$row->mobile_pool->mobile_master:[];
-                $employee = isset($row->mobile_pool->mobile_master->employee)?$row->mobile_pool->mobile_master->employee:[];
-
                 $input['mobileNo'] = $row->mobileNumber;
                 $input['totalAmount'] = $row->totalCurrentCharges;
 
-                if($employee){
-
+                if(isset($row->mobile_pool->mobile_master->employee)){
+                    $employee = $row->mobile_pool->mobile_master->employee;
                     $input['companyID'] = $employee->empCompanyID;
                     $input['companySysID'] = $employee->empCompanySystemID;
                     $input['employeeSystemID'] = $employee->employeeSystemID;
                     $input['empID'] = $employee->empID;
-
+                }else{
+                    $input['companyID'] = '';
+                    $input['companySysID'] = 0;
+                    $input['employeeSystemID'] = 0;
+                    $input['empID'] = 0;
                 }
 
-                if($mobile){
-                    $input['creditLimit'] = $mobile->creditlimit;
-                }
+                $input['creditLimit'] = isset($row->mobile_pool->mobile_master->creditlimit)?$row->mobile_pool->mobile_master->creditlimit:0;
 
                 if(isset($input['creditLimit']) && ($input['creditLimit'] < $input['totalAmount'])){
                     $input['exceededAmount'] = number_format(($input['totalAmount'] - $input['creditLimit']),3);
