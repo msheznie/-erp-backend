@@ -1488,7 +1488,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->first();
 
         if (empty($contract)) {
-            return $this->sendError('e', 'Contract not exist', 500);
+            return $this->sendError( 'Contract not exist', 500);
         }
 
 
@@ -1804,7 +1804,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('s', 'Successfully Added');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('e', 'Error Occurred');
+            return $this->sendError('Error Occurred',500);
         }
     }
 
