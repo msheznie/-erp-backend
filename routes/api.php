@@ -1912,3 +1912,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
