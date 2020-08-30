@@ -2550,7 +2550,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     LEFT JOIN currencymaster currLocal ON erp_paysupplierinvoicemaster.localCurrencyID = currLocal.currencyID
                     LEFT JOIN currencymaster currRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currRpt.currencyID
                     		WHERE 	erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
-                    		AND  erp_paysupplierinvoicemaster.BPVdate BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_paysupplierinvoicemaster.confirmedYN=1';
+                    		AND  DATE_FORMAT(erp_paysupplierinvoicemaster.BPVdate,"%Y-%m-%d") BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
+                    		AND erp_paysupplierinvoicemaster.confirmedYN=1';
             $output = \DB::select($qry);
         } else {
             $output = array();

@@ -123,7 +123,10 @@ class CustomUserReports extends Model
 
     public function assigned_employees()
     {
-        return $this->hasMany('App\Models\CustomReportEmployees','user_report_id');
+        return $this->hasMany(CustomReportEmployees::class,'user_report_id');
     }
 
+    public function summarize(){
+        return $this->hasMany(CustomUserReportSummarize::class,'user_report_id');
+    }
 }
