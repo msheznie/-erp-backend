@@ -1488,7 +1488,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->first();
 
         if (empty($contract)) {
-            return $this->sendError('e', 'Contract not exist', 500);
+            return $this->sendError( 'Contract not exist', 500);
         }
 
 
@@ -1804,7 +1804,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('s', 'Successfully Added');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('e', 'Error Occurred');
+            return $this->sendError('Error Occurred',500);
         }
     }
 
@@ -3031,6 +3031,14 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this Customer Invoice, it is not confirmed');
+        }
+
+        if($masterData->isPerforma == 2){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice');
+        }elseif ($masterData->isPerforma == 4){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
+        }elseif ($masterData->isPerforma == 5){
+            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Quotation');
         }
 
         // checking document matched in machmaster
