@@ -847,6 +847,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Doc.Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
                                 $data[$x]['Payee Name'] = $val->PayeeName;
                                 $data[$x]['Credit Period'] = $val->creditPeriod;
+                                $data[$x]['Bank'] = $val->bankName;
+                                $data[$x]['Bank Account No'] = $val->AccountNo;
                                 $data[$x]['Cheque No'] = $val->BPVchequeNo;
                                 $data[$x]['Cheque Date'] = \Helper::dateFormat($val->ChequeDate);
                                 $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
@@ -2530,6 +2532,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     erp_paysupplierinvoicemaster.confirmedDate,
                     If(suppliermaster.primarySupplierCode Is Null,erp_paysupplierinvoicemaster.directPaymentPayee,suppliermaster.supplierName) as PayeeName,
                     suppliermaster.creditPeriod,
+                    bank.bankName,
+	                bankAct.AccountNo,
                     erp_paysupplierinvoicemaster.BPVchequeNo,
                     If(BPVchequeDate Is Null,Null,BPVchequeDate) as ChequeDate,
                     erp_paysupplierinvoicemaster.chequePrintedByEmpName,
@@ -2549,6 +2553,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     LEFT JOIN currencymaster currTrans ON erp_paysupplierinvoicemaster.supplierTransCurrencyID = currTrans.currencyID
                     LEFT JOIN currencymaster currLocal ON erp_paysupplierinvoicemaster.localCurrencyID = currLocal.currencyID
                     LEFT JOIN currencymaster currRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currRpt.currencyID
+                    LEFT JOIN erp_bankmaster bank ON erp_paysupplierinvoicemaster.BPVbank = bank.bankmasterAutoID 
+	                LEFT JOIN erp_bankaccount bankAct ON erp_paysupplierinvoicemaster.BPVAccount = bankAct.bankAccountAutoID
                     		WHERE 	erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                     		AND  DATE_FORMAT(erp_paysupplierinvoicemaster.BPVdate,"%Y-%m-%d") BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
                     		AND erp_paysupplierinvoicemaster.confirmedYN=1';
