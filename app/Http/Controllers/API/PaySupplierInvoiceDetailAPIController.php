@@ -851,7 +851,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $input['matchingDocID'])
             ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
             ->sum('supplierPaymentAmount');
-
+        $input['supplierPaymentAmount'] = isset($input['supplierPaymentAmount']) ?  \Helper::stringToFloat($input['supplierPaymentAmount']) : 0;
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
         if (($existTotal - $matchDocumentMasterData->matchBalanceAmount) > 0.00001) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
