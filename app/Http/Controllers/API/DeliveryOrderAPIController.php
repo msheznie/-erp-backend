@@ -384,8 +384,8 @@ class DeliveryOrderAPIController extends AppBaseController
         $detailAmount = DeliveryOrderDetail::
         select(DB::raw("
         IFNULL(SUM(qtyIssuedDefaultMeasure * (unitTransactionAmount-discountAmount)),0) as transAmount,
-        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-discountAmount)),0) as localAmount,
-        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-discountAmount)),0) as reportAmount"))
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-(companyLocalAmount*discountPercentage/100))),0) as localAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))),0) as reportAmount"))
             ->where('deliveryOrderID', $id)
             ->first();
 
@@ -559,17 +559,17 @@ class DeliveryOrderAPIController extends AppBaseController
                     return $this->sendError('Item must not have negative cost', 500);
                 }
                 if ($updateItem->currentWareHouseStockQty <= 0) {
-                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
                 }
                 if ($updateItem->currentStockQty <= 0) {
-                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemDescription, 500);
+                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
                 }
                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemDescription, 500);
+                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
                 }
 
                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemDescription, 500);
+                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
                 }
 
             }
