@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateDebitNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteDetailsAPIRequest;
 use App\Models\ChartOfAccount;
@@ -352,6 +353,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
             $input['serviceLineCode'] = null;
         }
 
+        $input['debitAmount'] = isset($input['debitAmount']) ?  \Helper::stringToFloat($input['debitAmount']) : 0;
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
 
         $input['localAmount'] = $companyCurrencyConversion['localAmount'];

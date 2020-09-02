@@ -34,6 +34,7 @@ use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -200,6 +201,35 @@ class CompanyAPIController extends AppBaseController
     public function store(CreateCompanyAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $messages = [
+            'CompanyID.required' => 'CompanyID is required.',
+            'localCurrencyID.required' => 'Local Currency ID is required.',
+            'reportingCurrency.required' => 'Reporting Currency ID is required.',
+            'exchangeGainLossGLCodeSystemID.required' => 'Exchange Gain/Loss GL is required.',
+        ];
+        $validator = \Validator::make($input, [
+            'CompanyID' => 'required|unique:companymaster',
+            'CompanyName' => 'required|unique:companymaster',
+            'companyShortCode' => 'required|unique:companymaster',
+            'companyCountry' => 'required|numeric|min:1',
+            'CompanyTelephone' => 'required',
+            'CompanyFax' => 'required',
+            'CompanyEmail' => 'required',
+            'registrationNumber' => 'required',
+            'localCurrencyID' => 'required|numeric|min:1',
+            'reportingCurrency' => 'required|numeric|min:1',
+            'exchangeGainLossGLCodeSystemID' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        // TODO add master company ID
+
+        $input['isActive'] = (isset($input['isActive']) && $input['isActive'] == -1)?1:0;
 
         $companies = $this->companyRepository->create($input);
 
@@ -238,13 +268,39 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         /** @var Company $company */
         $company = $this->companyRepository->findWithoutFail($id);
 
         if (empty($company)) {
             return $this->sendError('Company not found');
         }
+
+        $messages = [
+            'CompanyID.required' => 'CompanyID is required.',
+            'localCurrencyID.required' => 'Local Currency ID is required.',
+            'reportingCurrency.required' => 'Reporting Currency ID is required.',
+            'exchangeGainLossGLCodeSystemID.required' => 'Exchange Gain/Loss GL is required.',
+        ];
+        $validator = \Validator::make($input, [
+            'CompanyID' => ['required',Rule::unique('companymaster')->ignore($id, 'companySystemID')],
+            'CompanyName' => ['required',Rule::unique('companymaster')->ignore($id, 'companySystemID')],
+            'companyShortCode' => 'required',
+            'companyCountry' => 'required|numeric|min:1',
+            'CompanyTelephone' => 'required',
+            'CompanyFax' => 'required',
+            'CompanyEmail' => 'required',
+            'registrationNumber' => 'required',
+            'localCurrencyID' => 'required|numeric|min:1',
+            'reportingCurrency' => 'required|numeric|min:1',
+            'exchangeGainLossGLCodeSystemID' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['isActive'] = (isset($input['isActive']) && $input['isActive'] == -1)?1:0;
 
         $company = $this->companyRepository->update($input, $id);
 
@@ -344,9 +400,10 @@ class CompanyAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getCompanyFormData(Request $request){
+    public function getCompanySettingFormData(Request $request){
         $input = $request->all();
         $selectedCompanyId = $input['companySystemID'];
+        $type = $input['type'];
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
@@ -354,7 +411,8 @@ class CompanyAPIController extends AppBaseController
         } else {
             $companies = [$selectedCompanyId];
         }
-        $chartOfAccount = ChartOfAccountsAssigned::where('isApproved', 1)->whereIn('companySystemID', $companies)->groupBy('chartOfAccountSystemID')->get();
+
+        $chartOfAccount = ChartOfAccountsAssigned::where('isActive', 1)->whereIn('companySystemID', $companies)->groupBy('chartOfAccountSystemID')->get();
         $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
             ->get();
 
