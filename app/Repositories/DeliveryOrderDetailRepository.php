@@ -67,8 +67,8 @@ class DeliveryOrderDetailRepository extends BaseRepository
         $detailAmount = DeliveryOrderDetail::
         select(DB::raw("
         IFNULL(SUM(qtyIssuedDefaultMeasure * (unitTransactionAmount-discountAmount)),0) as transAmount,
-        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-discountAmount)),0) as localAmount,
-        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-discountAmount)),0) as reportAmount"))
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyLocalAmount-(companyLocalAmount*discountPercentage/100))),0) as localAmount,
+        IFNULL(SUM(qtyIssuedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))),0) as reportAmount"))
             ->where('deliveryOrderID', $id)
             ->first();
 

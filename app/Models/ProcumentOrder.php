@@ -616,4 +616,23 @@ class ProcumentOrder extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purchaseOrderID')->whereIn('documentSystemID',[2,5,52]);
     }
 
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_purchaseordermaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeDepartmentJoin($q,$as = 'department', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_purchaseordermaster.'.$column);
+    }
+
+    public function scopeCategoryJoin($q,$as = 'category', $column = 'financeCategory' , $columnAs = 'categoryDescription')
+    {
+        return $q->leftJoin('financeitemcategorymaster as '.$as,$as.'.itemCategoryID','erp_purchaseordermaster.'.$column);
+    }
+
+    public function scopeSupplierJoin($q,$as = 'supplier', $column = 'supplierID' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_purchaseordermaster.'.$column);
+    }
 }

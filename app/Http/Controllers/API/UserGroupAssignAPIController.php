@@ -237,30 +237,38 @@ class UserGroupAssignAPIController extends AppBaseController
     public function checkUserGroupAccessRights(Request $request)
     {
         $id = Auth::id();
+        $userGroup = '';
+        $accessRights = []; // array('R' => false,'c' => false, 'E' => false, 'D' => false, 'P' => false);
+        $companyID = isset($request['companyID']) ? $request['companyID'] : 0;
+        $navigationMenuID = isset($request['navigationMenuID']) ? $request['navigationMenuID'] : 0;
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        if(empty($user)){
+            return $this->sendError('No access right found',401);
+        }
         $empId = $user->employee['employeeSystemID'];
 
-        $userGroup = '';
-        if($request['companyID'] != 'null') {
+
+        if($companyID) {
             $userGroup = EmployeeNavigation::where('employeeSystemID', $empId)
-                ->where('companyID', $request['companyID'])
-                ->first();
+                                            ->where('companyID', $companyID)
+                                            ->first();
+            if(empty($userGroup)){
+                return $this->sendError('No access right found',401);
+            }
         }else{
             return $this->sendError('Company ID not found');
         }
 
 
-        $userGroupID = $userGroup->userGroupID;
-        $companyID = $request['companyID'];
-        $navigationMenuID = $request['navigationMenuID'];
+        $userGroupID = isset($userGroup->userGroupID) ? $userGroup->userGroupID : 0;
 
-        $accessRights = [];
-        //DB::enableQueryLog();
-        $userGroupAssign = UserGroupAssign::where('companyID',$companyID)->where('navigationMenuID',$navigationMenuID)->where('userGroupID',$userGroupID)->first();
-        //dd(DB::getQueryLog());
+        $userGroupAssign = UserGroupAssign::where('companyID',$companyID)
+                                            ->where('navigationMenuID',$navigationMenuID)
+                                            ->where('userGroupID',$userGroupID)
+                                            ->first();
         if (empty($userGroupAssign)) {
             return $this->sendError('No access right found',401);
-           // $accessRights = array('R' => false,'c' => false, 'E' => false, 'D' => false, 'P' => false);
         } else {
             $accessRights = array('R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
         }
