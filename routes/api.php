@@ -79,8 +79,6 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('supplier_importances', 'SupplierImportanceAPIController');
 
-        Route::resource('supplier_importances', 'SupplierImportanceAPIController');
-
         Route::resource('suppliernatures', 'suppliernatureAPIController');
 
         Route::resource('supplier_types', 'SupplierTypeAPIController');
@@ -1846,7 +1844,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
-        Route::post('getCompanyFormData', 'CompanyAPIController@getCompanyFormData');
+        Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
 
     });
 
