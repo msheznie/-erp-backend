@@ -1817,6 +1817,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController');
         Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee');
         Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees');
+        Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
 
 
         Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
@@ -1912,4 +1913,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
