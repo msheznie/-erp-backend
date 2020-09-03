@@ -6,11 +6,13 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\TaxVatCategories;
 use App\Models\TaxVatMainCategories;
 use App\Models\YesNoSelection;
 use App\Repositories\TaxVatCategoriesRepository;
+use function foo\func;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -415,5 +417,88 @@ class TaxVatCategoriesAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getVatSubCategoryItemAssignFromData(Request $request){
+        $input = $request->all();
+        $companySystemID = $input['companyId'];
+        $output['items'] = ItemAssigned::select('itemCodeSystem','itemPrimaryCode','itemDescription')
+            ->where('companySystemID',$companySystemID)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1)
+            ->whereHas('item_master', function ($query){
+                $query->where('vatSubCategory',0);
+            })
+            ->groupBy('itemCodeSystem')
+            ->get();
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAllVatSubCategoryItemAssign(Request $request){
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $vatSubID = $request['id'];
+        $companyId = $request['companyId'];
+
+        $output = ItemAssigned::select('itemCodeSystem','itemPrimaryCode','itemDescription')
+            ->where('companySystemID',$companyId)
+            ->whereHas('item_master', function($query) use($vatSubID){
+                $query->where('vatSubCategory',$vatSubID);
+            });
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $output = $output->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode','LIKE', "%{$search}%")
+                    ->orWhere('itemDescription','LIKE', "%{$search}%");
+            });
+        }
+        $output = $output->groupBy('itemCodeSystem');
+        return \DataTables::eloquent($output)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function assignVatSubCategoryToItem(Request $request){
+        $input = $request->all();
+        $selected = isset($input['selectedItems'])?$input['selectedItems']:[];
+
+        $id = isset($input['id'])?$input['id']:[];
+        if(count($selected)>0 && $id){
+            foreach ($selected as $row){
+                ItemMaster::where('itemCodeSystem',$row['id'])->update(['vatSubCategory'=>$id]);
+            }
+            return $this->sendResponse([], 'Successfully assigned');
+        }
+        return $this->sendError('Error Occured',500);
+    }
+
+    public function removeAssignedItemFromVATSubCategory(Request $request){
+        $input = $request->all();
+        $id = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
+        if($id>0){
+            $isUpdate = ItemMaster::where('itemCodeSystem',$id)->update(['vatSubCategory'=>0]);
+            if($isUpdate){
+                return $this->sendResponse($isUpdate, 'Successfully removed');
+            }
+        }
+        return $this->sendError('Error Occured',500);
     }
 }
