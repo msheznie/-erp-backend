@@ -6,8 +6,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CustomerInvoiceItemDetails",
+ *      definition="CustomerInvoiceItemDetailsRefferedback",
  *      required={""},
+ *      @SWG\Property(
+ *          property="customerItemDetailRefferedBackID",
+ *          description="customerItemDetailRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="customerItemDetailID",
  *          description="customerItemDetailID",
@@ -51,38 +57,38 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="convertionMeasureVal",
  *          description="convertionMeasureVal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="qtyIssued",
  *          description="qtyIssued",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="qtyIssuedDefaultMeasure",
  *          description="qtyIssuedDefaultMeasure",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="currentStockQty",
  *          description="currentStockQty",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="currentWareHouseStockQty",
  *          description="currentWareHouseStockQty",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="currentStockQtyInDamageReturn",
  *          description="currentStockQtyInDamageReturn",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="comments",
@@ -124,6 +130,17 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="financeGLcodeRevenueSystemID",
+ *          description="financeGLcodeRevenueSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodeRevenue",
+ *          description="financeGLcodeRevenue",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="includePLForGRVYN",
  *          description="includePLForGRVYN",
  *          type="integer",
@@ -138,20 +155,20 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="localCurrencyER",
  *          description="localCurrencyER",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="issueCostLocal",
  *          description="issueCostLocal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="issueCostLocalTotal",
  *          description="issueCostLocalTotal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="reportingCurrencyID",
@@ -162,26 +179,26 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="reportingCurrencyER",
  *          description="reportingCurrencyER",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="issueCostRpt",
  *          description="issueCostRpt",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="issueCostRptTotal",
  *          description="issueCostRptTotal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="marginPercentage",
  *          description="marginPercentage",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingCurrencyID",
@@ -192,38 +209,80 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="sellingCurrencyER",
  *          description="sellingCurrencyER",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingCost",
  *          description="sellingCost",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingCostAfterMargin",
  *          description="sellingCostAfterMargin",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingTotal",
  *          description="sellingTotal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingCostAfterMarginLocal",
  *          description="sellingCostAfterMarginLocal",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="sellingCostAfterMarginRpt",
  *          description="sellingCostAfterMarginRpt",
- *          type="float",
- *          format="float"
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCatalogDetailID",
+ *          description="customerCatalogDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCatalogMasterID",
+ *          description="customerCatalogMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="deliveryOrderDetailID",
+ *          description="deliveryOrderDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="deliveryOrderID",
+ *          description="deliveryOrderID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="quotationMasterID",
+ *          description="quotationMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="quotationDetailsID",
+ *          description="quotationDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="timestamp",
@@ -233,17 +292,19 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CustomerInvoiceItemDetails extends Model
+class CustomerInvoiceItemDetailsRefferedback extends Model
 {
 
-    public $table = 'erp_customerinvoiceitemdetails';
-    protected $primaryKey = 'customerItemDetailID';
+    public $table = 'erp_customerinvoiceitemdetailsrefferedback';
+    
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
+    protected $primaryKey = 'customerItemDetailRefferedBackID';
 
 
     public $fillable = [
+        'customerItemDetailID',
         'custInvoiceDirectAutoID',
         'itemCodeSystem',
         'itemPrimaryCode',
@@ -298,6 +359,7 @@ class CustomerInvoiceItemDetails extends Model
      * @var array
      */
     protected $casts = [
+        'customerItemDetailRefferedBackID' => 'integer',
         'customerItemDetailID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
         'itemCodeSystem' => 'integer',
@@ -337,12 +399,12 @@ class CustomerInvoiceItemDetails extends Model
         'sellingTotal' => 'float',
         'sellingCostAfterMarginLocal' => 'float',
         'sellingCostAfterMarginRpt' => 'float',
-        'customerCatalogDetailID'=> 'integer',
-        'customerCatalogMasterID'=> 'integer',
-        'deliveryOrderDetailID'=> 'integer',
-        'deliveryOrderID'=> 'integer',
-        'quotationMasterID'=> 'integer',
-        'quotationDetailsID'=> 'integer',
+        'customerCatalogDetailID' => 'integer',
+        'customerCatalogMasterID' => 'integer',
+        'deliveryOrderDetailID' => 'integer',
+        'deliveryOrderID' => 'integer',
+        'quotationMasterID' => 'integer',
+        'quotationDetailsID' => 'integer',
         'timesReferred' => 'integer',
         'timestamp' => 'datetime'
     ];
@@ -353,7 +415,7 @@ class CustomerInvoiceItemDetails extends Model
      * @var array
      */
     public static $rules = [
-//        'customerItemDetailID' => 'required'
+        
     ];
 
     public function uom_default(){
@@ -362,10 +424,6 @@ class CustomerInvoiceItemDetails extends Model
 
     public function uom_issuing(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasureIssued','UnitID');
-    }
-
-    public function item_by(){
-        return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
     }
 
     public function delivery_order(){
@@ -387,6 +445,4 @@ class CustomerInvoiceItemDetails extends Model
     public function sales_quotation_detail(){
         return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
     }
-
-    
 }

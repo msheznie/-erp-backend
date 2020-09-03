@@ -45,6 +45,7 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
 use App\Models\CustomerInvoiceDirectRefferedback;
 use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerInvoiceItemDetailsRefferedback;
 use App\Models\CustomerInvoiceStatusType;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
@@ -2910,10 +2911,15 @@ WHERE
 
         $customerInvoiceArray = $customerInvoiceDirectData->toArray();
 
-        $storeSCustomerInvoiceHistory = CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
+        CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
 
-        $fetchCustomerInvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
-            ->get();
+        if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
+            $fetchCustomerInvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
+                ->get();
+        }else{
+            $fetchCustomerInvoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                ->get();
+        }
 
         if (!empty($fetchCustomerInvoiceDetails)) {
             foreach ($fetchCustomerInvoiceDetails as $bookDetail) {
@@ -2922,8 +2928,11 @@ WHERE
         }
 
         $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
-
-        $storeCustomerInvoiceDetailHistory = CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
+        if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
+            CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
+        }else{
+            CustomerInvoiceItemDetailsRefferedback::insert($customerInvoiceDetailArray);
+        }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
@@ -2938,7 +2947,7 @@ WHERE
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
-        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+        DocumentReferedHistory::insert($DocumentApprovedArray);
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
@@ -2957,7 +2966,7 @@ WHERE
         }
 
         // delete tax details
-        $checkTaxExist = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+        /*$checkTaxExist = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
             ->where('documentSystemID', 20)
             ->first();
@@ -2967,7 +2976,7 @@ WHERE
                 ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
                 ->where('documentSystemID', 20)
                 ->delete();
-        }
+        }*/
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer Invoice Amend successfully');
     }

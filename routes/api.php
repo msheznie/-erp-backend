@@ -1846,6 +1846,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
 
+        Route::resource('customer_invoice_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1892,24 +1894,5 @@ Route::group(['middleware' => 'tenant'], function () {
 
 Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
