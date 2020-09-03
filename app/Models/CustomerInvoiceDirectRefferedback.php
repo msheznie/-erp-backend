@@ -661,9 +661,9 @@ class CustomerInvoiceDirectRefferedback extends Model
 
     public function tax()
     {
-        return $this->belongsTo('App\Models\TaxDetail', 'custInvoiceDirectAutoID', 'documentSystemCode');
+        return $this->belongsTo('App\Models\Taxdetail', 'custInvoiceDirectAutoID', 'documentSystemCode')
+            ->where('documentSystemID', 20);
     }
-
     public function createduser()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -718,6 +718,22 @@ class CustomerInvoiceDirectRefferedback extends Model
         return $this->belongsTo('App\Models\GRVMaster', 'customerGRVAutoID', 'grvAutoID');
     }
 
+    public function serviceline(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
 
+    public function warehouse(){
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
+
+    public function report_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
 
 }
