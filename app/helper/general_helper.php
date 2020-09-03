@@ -826,6 +826,7 @@ class Helper
         $trasToRptER = 0;
         $transToBankER = 0;
         $transToDocER = 0;
+        $transactionAmount = self::stringToFloat($transactionAmount);
 
         // get company local and reporting currency conversion
         if ($companySystemID && $transactionCurrencyID) {
@@ -4558,5 +4559,9 @@ class Helper
             return (string)$request->getUri();
         }
         return '';
+    }
+
+    public static function stringToFloat($str){
+        return floatval(preg_replace('/[^0-9.]/', '', $str));
     }
 }

@@ -523,6 +523,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($currencyConversionDefaultMaster) {
                     $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                 }
+            }else{
+                $input['BPVbankCurrency'] = 0;
+                $input['BPVbankCurrencyER'] = 0;
             }
 
             $companyCurrency = \Helper::companyCurrency($companySystemID);
