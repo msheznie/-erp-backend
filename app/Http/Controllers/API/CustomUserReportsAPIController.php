@@ -690,7 +690,8 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['canceledValue']   =  -1;
                     $templateData['timesReferredColumn'] = 'refferedBackYN';
                     $templateData['timesReferredValue'] = -1;
-                    $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier'];
+                    $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                        'currency','currency_local', 'currency_reporting','unit'];
                     $templateData['statusColumns'] = ['poConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','poCancelledYN as canceledYN','refferedBackYN'];
                     $templateData['model'] = 'ProcumentOrder';
@@ -730,7 +731,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                             } else if ($table == 'confirmed_by') {
                                 $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'confirmedByName');
-                            } else if ($table == 'currency') {
+                            }else if ($table == 'currency') {
                                 $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
                             } else if ($table == 'currency_local') {
                                 $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
@@ -761,27 +762,34 @@ class CustomUserReportsAPIController extends AppBaseController
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                     break;
                 case 10:
-
+                    // details table
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                    }
                     foreach ($templateData['tables'] as $table) {
                         if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
                             if ($table == 'created_by') {
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                             } else if ($table == 'confirmed_by') {
                                 $data->employeeJoin('confirmed_by', 'poConfirmedByEmpSystemID', 'confirmedByName');
-                            } else if ($table == 'currency') {
-                                $data->currencyJoin('currency', 'currencyID', 'currencyCode', 'amount');
-                            } else if ($table == 'currency_local') {
-                                $data->currencyJoin('currency_local', 'localCurrency', 'localCurrencyCode', 'localAmount');
-                            } else if ($table == 'currency_reporting') {
-                                $data->currencyJoin('currency_reporting', 'comRptCurrency', 'rptCurrencyCode', 'comRptAmount');
+                            } else if ($table == 'canceled_by') {
+                                $data->employeeJoin('canceled_by', 'poCancelledBySystemID', 'canceledByName');
+                            } else if ($table == 'manually_closed_by') {
+                                $data->employeeJoin('manually_closed_by', 'manuallyClosedByEmpSystemID', 'manuallyClosedByName');
                             } else if ($table == 'department') {
                                 $data->departmentJoin('department', 'serviceLineSystemID', 'ServiceLineDes');
                             } else if ($table == 'category') {
                                 $data->categoryJoin('category', 'financeCategory', 'claimcategoriesDescription');
-                            } else if ($table == 'chartOfAccount') {
-                                $data->chartOfAccountJoin('chartOfAccount', 'chartOfAccountSystemID', 'AccountCode');
-                            } else if($table == 'supplier'){
+                            }else if($table == 'supplier'){
                                 $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                            } else if ($table == 'unit') {
+                                $data->unitJoin('unit', 'unitOfMeasure', 'UnitShortCode');
+                            }else if ($table == 'currency') {
+                                $data->currencyJoin('currency', 'supplierTransactionCurrencyID', 'currencyCode', 'poTotalSupplierTransactionCurrency');
+                            } else if ($table == 'currency_local') {
+                                $data->currencyJoin('currency_local', 'localCurrencyID', 'localCurrencyCode', 'poTotalLocalCurrency');
+                            } else if ($table == 'currency_reporting') {
+                                $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', 'poTotalComRptCurrency');
                             }
                         }
                     }
