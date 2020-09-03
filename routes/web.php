@@ -15,3 +15,5 @@ Route::resource('employeeMobileBillMasters', 'EmployeeMobileBillMasterController
 Route::resource('taxVatCategories', 'TaxVatCategoriesController');
 
 Route::resource('taxVatMainCategories', 'TaxVatMainCategoriesController');
+
+Route::resource('customerInvoiceItemDetailsRefferedbacks', 'CustomerInvoiceItemDetailsRefferedbackController');

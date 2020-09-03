@@ -1008,7 +1008,7 @@ class Helper
 
                         // today date for item sales invoice
                         if($input["documentSystemID"] == 20){
-                            if(isset($masterRec->isPerforma) && $masterRec->isPerforma == 2){
+                            if(isset($masterRec->isPerforma) && ($masterRec->isPerforma == 2 || $masterRec->isPerforma == 4 || $masterRec->isPerforma == 5)){
                                 $masterDocumentDate = date('Y-m-d H:i:s');
                             }
                         }
