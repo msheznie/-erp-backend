@@ -16,6 +16,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectDetRefferedbackAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectDetRefferedbackAPIRequest;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
+use App\Models\CustomerInvoiceDirectRefferedback;
+use App\Models\CustomerInvoiceItemDetailsRefferedback;
 use App\Repositories\CustomerInvoiceDirectDetRefferedbackRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -296,10 +298,20 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
         $custInvoiceDirectID = $input['custInvoiceDirectAutoID'];
         $timesReferred = $input['timesReferred'];
 
-        $items = CustomerInvoiceDirectDetRefferedback::where('custInvoiceDirectID', $custInvoiceDirectID)
-            ->where('timesReferred', $timesReferred)
-            ->with(['department', 'contract', 'unit'])
-            ->get();
+        $master = CustomerInvoiceDirectRefferedback::where('custInvoiceDirectAutoID',$custInvoiceDirectID)->where('timesReferred', $timesReferred)->first();
+        if(!empty($master) && $master->isPerforma != 0 && $master->isPerforma != 1){
+            $items = CustomerInvoiceItemDetailsRefferedback::where('custInvoiceDirectAutoID', $custInvoiceDirectID)
+                ->where('timesReferred', $timesReferred)
+                ->with(['uom_default', 'uom_issuing','delivery_order','sales_quotation'])
+                ->get();
+        }else{
+            $items = CustomerInvoiceDirectDetRefferedback::where('custInvoiceDirectID', $custInvoiceDirectID)
+                ->where('timesReferred', $timesReferred)
+                ->with(['department', 'contract', 'unit'])
+                ->get();
+        }
+
+
 
         return $this->sendResponse($items->toArray(), 'Customer Invoice Details Reffered History retrieved successfully');
     }

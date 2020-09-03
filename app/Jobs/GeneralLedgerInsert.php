@@ -712,9 +712,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         if($masterData->isPerforma == 2 ||$masterData->isPerforma == 4 || $masterData->isPerforma == 5){   // item sales invoice || from sales order || from sales quotation
                             $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
                             $masterDocumentDate = Carbon::now();
-//                            if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
-//                                $masterDocumentDate = $masterData->bookingDate;
-//                            }
+
                             $time = Carbon::now();
 
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -724,7 +722,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentSystemID'] = $masterData->documentSystemiD;
                             $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                             $data['documentCode'] = $masterData->bookingInvCode;
-                            //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
+
                             $data['documentDate'] = $masterDocumentDate;
                             $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
                             $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);

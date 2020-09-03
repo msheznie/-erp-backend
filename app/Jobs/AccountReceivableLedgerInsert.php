@@ -123,7 +123,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                         if ($masterData) {
                             $masterDocumentDate = date('Y-m-d H:i:s');
-                            if ($masterData->isPerforma == 1) {
+                            if ($masterData->isPerforma == 1 || $masterData->isPerforma == 2 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) {
                                 $masterDocumentDate = date('Y-m-d H:i:s');
                             } else {
                                 if ($masterData->finance_period_by->isActive == -1) {
