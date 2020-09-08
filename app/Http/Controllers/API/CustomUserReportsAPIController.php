@@ -697,6 +697,9 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['statusColumns'] = ['poConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','poCancelledYN as canceledYN','refferedBackYN'];
                     $templateData['model'] = 'ProcumentOrder';
+                    $templateData['localCurrency'] = ['poTotalLocalCurrency','GRVcostPerUnitLocalCur'];
+                    $templateData['rptCurrency'] = ['poTotalComRptCurrency','GRVcostPerUnitComRptCur'];
+                    $templateData['transCurrency'] = ['poTotalSupplierTransactionCurrency','GRVcostPerUnitSupTransCur'];
                     break;
                 default;
                     break;
@@ -769,6 +772,7 @@ class CustomUserReportsAPIController extends AppBaseController
                         $data->detailJoin();
                     }
 
+
                     if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
                         ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
                             $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
@@ -794,17 +798,32 @@ class CustomUserReportsAPIController extends AppBaseController
                             } else if ($table == 'unit') {
                                 $data->unitJoin('unit', 'unitOfMeasure', 'UnitShortCode');
                             }else if ($table == 'currency') {
-                                $data->currencyJoin('currency', 'supplierTransactionCurrencyID', 'currencyCode', 'poTotalSupplierTransactionCurrency');
+                                $data->currencyJoin('currency', 'supplierTransactionCurrencyID', 'currencyCode', $templateData['transCurrency']);
                             } else if ($table == 'currency_local') {
-                                $data->currencyJoin('currency_local', 'localCurrencyID', 'localCurrencyCode', 'poTotalLocalCurrency');
+                                $data->currencyJoin('currency_local', 'localCurrencyID', 'localCurrencyCode', $templateData['localCurrency']);
                             } else if ($table == 'currency_reporting') {
-                                $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', 'poTotalComRptCurrency');
+                                $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', $templateData['rptCurrency']);
                             } else if ($table == 'supplier_currency') {
                                 $data->supplierCurrencyJoin('supplier_currency', 'currency', 'supplierCurrency,', 'poTotalComRptCurrency');
                             } else if ($table == 'supplier_country') {
                                 $data->supplierCountryJoin('supplier_country', 'countryID', 'countryName');
                             }
                         }
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency', 'table') && ($this->checkMasterColumn($report['columns'], 'poTotalSupplierTransactionCurrency', 'column')
+                            || $this->checkMasterColumn($report['columns'], 'GRVcostPerUnitSupTransCur', 'column'))) {
+                        $data->currencyJoin('currency', 'supplierTransactionCurrencyID', 'currencyCode', $templateData['transCurrency']);
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_local', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency_local', 'table') && ($this->checkMasterColumn($report['columns'], 'poTotalLocalCurrency', 'column')
+                        || $this->checkMasterColumn($report['columns'], 'GRVcostPerUnitLocalCur', 'column'))) {
+                        $data->currencyJoin('currency_local', 'localCurrencyID', 'localCurrencyCode', $templateData['localCurrency']);
+                    }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'currency_reporting', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'currency_reporting', 'table') && ($this->checkMasterColumn($report['columns'], 'poTotalComRptCurrency', 'column')
+                        || $this->checkMasterColumn($report['columns'], 'GRVcostPerUnitComRptCur', 'column'))) {
+                        $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', $templateData['rptCurrency']);
                     }
 
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
