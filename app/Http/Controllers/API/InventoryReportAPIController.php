@@ -232,6 +232,9 @@ class InventoryReportAPIController extends AppBaseController
                         ->where('itemassigned.financeCategoryMaster', 1)
                         ->orderBy('erp_itemledger.transactionDate', 'ASC');
 
+                    $data['order'] = [];
+                    $data['search']['value'] = '';
+                    $request->merge($data);
 
                     return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
@@ -244,7 +247,8 @@ class InventoryReportAPIController extends AppBaseController
                         ->addIndexColumn()
                         /*  ->with('orderCondition', $sort)*/
                         ->make(true);
-                } else if ($reportTypeID == 'SA') {
+                }
+                else if ($reportTypeID == 'SA') {
                     $input = $request->all();
                     if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
                         $sort = 'asc';
@@ -839,7 +843,7 @@ FROM
                 if ($reportTypeID == 'ST') { //Stock Transaction Report
                     $type = $request->type;
                     $input = $request->all();
-
+                    $data = array();
                     $startDate = new Carbon($request->fromDate);
                     $startDate = $startDate->format('Y-m-d');
 
