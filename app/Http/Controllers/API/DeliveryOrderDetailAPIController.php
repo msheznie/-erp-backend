@@ -756,7 +756,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $QuoDetailExist = DeliveryOrderDetail::select(DB::raw('quotationDetailsID,itemPrimaryCode'))
                     ->where('deliveryOrderID', $deliveryOrderID)
-                    ->where('quotationDetailsID', $itemExist['quotationDetailsID'])
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
                 if (!empty($QuoDetailExist)) {
