@@ -34,7 +34,7 @@ class CountryMaster extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $primaryKey = 'countryID';
 
     protected $dates = ['deleted_at'];
 

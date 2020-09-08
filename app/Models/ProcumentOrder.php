@@ -651,4 +651,15 @@ class ProcumentOrder extends Model
     {
         return $q->leftJoin('units as '.$as,$as.'.UnitID','erp_purchaseorderdetails.'.$column);
     }
+
+    public function scopeSupplierCurrencyJoin($q,$as = 'cu', $column = 'supplierTransactionCurrencyID' , $columnAs = 'currencyCode', $decimalPlaceAs = 'poTotalSupplierTransactionCurrency')
+    {
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','supplier.'.$column)
+            ->addSelect($as.".DecimalPlaces as ".$decimalPlaceAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
+    }
+
+    public function scopeSupplierCountryJoin($q,$as = 'supplier_country', $column = 'countryID' , $columnAs = 'countryID')
+    {
+        return $q->leftJoin('countrymaster as '.$as,$as.'.countryID','supplier.'.$column);
+    }
 }
