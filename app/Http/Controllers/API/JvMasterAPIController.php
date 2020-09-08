@@ -1559,6 +1559,12 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     $contract = Contract::where('ContractNumber', $val['client_contract'])->where('companySystemID', $jvMasterData->companySystemID)->first();
                     if ($contract) {
                         $contractUID = $contract->contractUID;
+                    }else if(strtolower($val['client_contract']) == 'x'){
+                        $contractUID =  159;
+                        $val['client_contract'] = strtoupper($val['client_contract']);
+                    }else{
+                        $contractUID =  159;
+                        $val['client_contract'] = 'X';
                     }
                     if ($val['debit_amount'] != '') {
                         $debitAmount = $val['debit_amount'];
