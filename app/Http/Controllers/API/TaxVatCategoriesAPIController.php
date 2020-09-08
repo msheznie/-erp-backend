@@ -15,6 +15,7 @@ use App\Repositories\TaxVatCategoriesRepository;
 use function foo\func;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -421,16 +422,14 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
     public function getVatSubCategoryItemAssignFromData(Request $request){
         $input = $request->all();
-        $companySystemID = $input['companyId'];
-        $output['items'] = ItemAssigned::select('itemCodeSystem','itemPrimaryCode','itemDescription')
-            ->where('companySystemID',$companySystemID)
-            ->where('isAssigned', -1)
-            ->where('isActive', 1)
-            ->whereHas('item_master', function ($query){
-                $query->where('vatSubCategory',0);
-            })
-            ->groupBy('itemCodeSystem')
-            ->get();
+        $seachText = isset($input['seachText'])?$input['seachText']:'';
+        $output['items'] = ItemMaster::select(DB::Raw("itemCodeSystem,primaryCode,itemDescription,CONCAT(primaryCode, ' | ' ,itemDescription) as label"));
+        if($seachText != ''){
+            $output['items'] = $output['items']->where(function ($query) use ($seachText) {
+                $query->where('primaryCode','LIKE', "%{$seachText}%");
+            });
+        }
+        $output['items'] = $output['items']->take(50)->get();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -446,22 +445,17 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $vatSubID = $request['id'];
         $companyId = $request['companyId'];
 
-        $output = ItemAssigned::select('itemCodeSystem','itemPrimaryCode','itemDescription')
-            ->where('companySystemID',$companyId)
-            ->whereHas('item_master', function($query) use($vatSubID){
-                $query->where('vatSubCategory',$vatSubID);
-            });
+        $output = ItemMaster::where('vatSubCategory',$vatSubID)->with(['unit_by']);
 
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $output = $output->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode','LIKE', "%{$search}%")
+                $query->where('primaryCode','LIKE', "%{$search}%")
                     ->orWhere('itemDescription','LIKE', "%{$search}%");
             });
         }
-        $output = $output->groupBy('itemCodeSystem');
         return \DataTables::eloquent($output)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -483,17 +477,30 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $id = isset($input['id'])?$input['id']:[];
         if(count($selected)>0 && $id){
             foreach ($selected as $row){
-                ItemMaster::where('itemCodeSystem',$row['id'])->update(['vatSubCategory'=>$id]);
+                ItemMaster::where('itemCodeSystem',$row['itemCodeSystem'])->update(['vatSubCategory'=>$id]);
             }
             return $this->sendResponse([], 'Successfully assigned');
         }
-        return $this->sendError('Error Occured',500);
+        return $this->sendError('Error Occurred',500);
     }
 
     public function removeAssignedItemFromVATSubCategory(Request $request){
         $input = $request->all();
         $id = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
+
         if($id>0){
+
+
+            $itemMaster = ItemMaster::find($id);
+            if(empty($itemMaster)){
+                return $this->sendError('Item Master Not found');
+            }
+
+            //If the item is in Fully Approved status do not allow to remove.
+            if($itemMaster->itemApprovedYN == 1){
+                return $this->sendError('Item is fully approved. You cannot remove');
+            }
+
             $isUpdate = ItemMaster::where('itemCodeSystem',$id)->update(['vatSubCategory'=>0]);
             if($isUpdate){
                 return $this->sendResponse($isUpdate, 'Successfully removed');
@@ -501,4 +508,5 @@ class TaxVatCategoriesAPIController extends AppBaseController
         }
         return $this->sendError('Error Occured',500);
     }
+
 }
