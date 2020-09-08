@@ -458,7 +458,9 @@ class CustomUserReportsAPIController extends AppBaseController
             if (isset($column['column']) && isset($column['column']['column']) && $column['column']['column_type'] != 5) {
                 $tmpColumn = $column['column']['table'] . '.' . $column['column']['column'];
                 if ($column['column']['column_type'] == 4) {
-                    $tmpColumn = 'SUM(' . $tmpColumn . ') as ' . $column['column']['column'];
+                    $tmpColumn = 'SUM(' . $tmpColumn . ') as ' . $column['column']['column_as'];
+                }else{
+                    $tmpColumn = $tmpColumn. ' as '. $column['column']['column_as'];
                 }
                 array_push($result, $tmpColumn);
             }
@@ -691,7 +693,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['timesReferredColumn'] = 'refferedBackYN';
                     $templateData['timesReferredValue'] = -1;
                     $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
-                        'currency','currency_local', 'currency_reporting','unit'];
+                        'currency','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
                     $templateData['statusColumns'] = ['poConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','poCancelledYN as canceledYN','refferedBackYN'];
                     $templateData['model'] = 'ProcumentOrder';
@@ -766,6 +768,13 @@ class CustomUserReportsAPIController extends AppBaseController
                     if ($isDetailExist) {
                         $data->detailJoin();
                     }
+
+                    if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                    }
+
                     foreach ($templateData['tables'] as $table) {
                         if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
                             if ($table == 'created_by') {
@@ -790,6 +799,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->currencyJoin('currency_local', 'localCurrencyID', 'localCurrencyCode', 'poTotalLocalCurrency');
                             } else if ($table == 'currency_reporting') {
                                 $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', 'poTotalComRptCurrency');
+                            } else if ($table == 'supplier_currency') {
+                                $data->supplierCurrencyJoin('supplier_currency', 'currency', 'supplierCurrency,', 'poTotalComRptCurrency');
+                            } else if ($table == 'supplier_country') {
+                                $data->supplierCountryJoin('supplier_country', 'countryID', 'countryName');
                             }
                         }
                     }
@@ -1099,11 +1112,11 @@ class CustomUserReportsAPIController extends AppBaseController
 
                 foreach ($report['columns'] as $column) {
                     if ($column['column']['column_type'] == 1 || $column['column']['column_type'] == 5) {
-                        $data[$x][$column['label']] = $val[$column['column']['column']];
+                        $data[$x][$column['label']] = $val[$column['column']['column_as']];
                     } else if ($column['column']['column_type'] == 2) {
-                        $data[$x][$column['label']] = Helper::dateFormat($val[$column['column']['column']]);
+                        $data[$x][$column['label']] = Helper::dateFormat($val[$column['column']['column_as']]);
                     } else if ($column['column']['column_type'] == 4) {
-                        $data[$x][$column['label']] = round($val[$column['column']['column']], $val[$column['column']['column'] . 'DecimalPlaces']);
+                        $data[$x][$column['label']] = round($val[$column['column']['column_as']], $val[$column['column']['column'] . 'DecimalPlaces']);
                     } else if ($column['column']['column_type'] == 6) {
 
                         if ($val['canceledYN'] == -1) {
@@ -1120,6 +1133,13 @@ class CustomUserReportsAPIController extends AppBaseController
                             $data[$x][$column['label']] = '';
                         }
 
+                    }else if($column['column']['column_type'] == 3 || $column['column']['column_type'] == 7){
+
+                        if(!$val[$column['column']['column_as']]){
+                            $data[$x][$column['label']] = 'NO';
+                        }else{
+                            $data[$x][$column['label']] = 'YES';
+                        }
                     }
                 }
             }
