@@ -507,7 +507,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['interCompanyToSystemID'] = null;
                     $input['interCompanyToID'] = null;
                 }
-            } else {
+            }
+            else {
                 $input['interCompanyToSystemID'] = null;
                 $input['interCompanyToID'] = null;
             }
@@ -617,6 +618,40 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
+                $validator = \Validator::make($input, [
+                    'companyFinancePeriodID' => 'required|numeric|min:1',
+                    'companyFinanceYearID' => 'required|numeric|min:1',
+                    'BPVdate' => 'required|date',
+                    'BPVchequeDate' => 'required|date',
+                    'invoiceType' => 'required|numeric|min:1',
+                    'BPVbank' => 'required|numeric|min:1',
+                    'BPVAccount' => 'required|numeric|min:1',
+                    'supplierTransCurrencyID' => 'required|numeric|min:1',
+                    'BPVNarration' => 'required'
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422, ['type' => 'confirm']);
+                }
+
+                if(isset($input['payeeType'])){
+                    if($input['payeeType'] == 1){
+                        $validator = \Validator::make($input, [
+                            'BPVsupplierID' => 'required|numeric|min:1'
+                        ]);
+                    }else if($input['payeeType'] == 2){
+                        $validator = \Validator::make($input, [
+                            'directPaymentPayeeEmpID' => 'required|numeric|min:1'
+                        ]);
+                    }else if($input['payeeType'] == 3){
+                        $validator = \Validator::make($input, [
+                            'directPaymentPayee' => 'required'
+                        ]);
+                    }
+                }
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422, ['type' => 'confirm']);
+                }
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];
