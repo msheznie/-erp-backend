@@ -203,16 +203,17 @@ class ReportAPIController extends AppBaseController
                     podet.*')
                         ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID);
 
-                    /*$search = $request->input('search.value');
-                    if ($search) {
-                        $search = str_replace("\\", "\\\\", $search);
-                        $output = $output->where(function ($query) use ($search) {
-                            $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
-                                ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
-                                ->orWhere('supplierName', 'LIKE', "%{$search}%")
-                                ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                    $globalSearch = $request->input('search.value');
+                    if ($globalSearch) {
+                        $globalSearch = str_replace("\\", "\\\\", $globalSearch);
+                        $output = $output->where(function ($query) use ($globalSearch) {
+                            $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('supplierPrimaryCode', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('purchaseOrderCode', 'LIKE', "%{$globalSearch}%");
                         });
-                    }*/
+                    }
 
                     if (isset($request->searchText)) {
                         if (!empty($request->searchText)) {
@@ -234,6 +235,10 @@ class ReportAPIController extends AppBaseController
 
                     $output->orderBy('podet.approvedDate', 'ASC');
 
+                    $data['order'] = [];
+                    $data['search']['value'] = '';
+                    $request->merge($data);
+
                     return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -246,7 +251,8 @@ class ReportAPIController extends AppBaseController
                         ->with('orderCondition', $sort)
                         ->make(true);
 
-                } else if ($request->reportType == 2) {  //PO Wise Analysis Report
+                }
+                else if ($request->reportType == 2) {  //PO Wise Analysis Report
                     //DB::enableQueryLog();
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
@@ -397,11 +403,13 @@ class ReportAPIController extends AppBaseController
                         ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
-                    $search = str_replace("\\", "\\\\", $search);
                     if ($search) {
-                        $output = $output->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
-                            ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")
-                            ->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($q) use($search){
+                           $q->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
+                               ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")
+                               ->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
+                        });
                     }
                     $output->orderBy('erp_purchaseordermaster.approvedDate', 'ASC');
                     $outputSUM = $output->get();
@@ -447,6 +455,10 @@ class ReportAPIController extends AppBaseController
                     $balanceToBePaid = collect($outputSUM)->pluck('balanceToBePaid')->toArray();
                     $balanceToBePaid = array_sum($balanceToBePaid);
 
+                    $data['order'] = [];
+                    $data['search']['value'] = '';
+                    $request->merge($data);
+
                     $dataRec = \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -475,7 +487,8 @@ class ReportAPIController extends AppBaseController
                         ->make(true);
 
                     return $dataRec;
-                } else if ($request->reportType == 3) { //PO Wise Analysis Company wise Report
+                }
+                else if ($request->reportType == 3) { //PO Wise Analysis Company wise Report
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('
                             companymaster.CompanyID,                      
@@ -562,6 +575,9 @@ class ReportAPIController extends AppBaseController
                     $opexBalance = collect($outputSUM)->pluck('opexBalance')->toArray();
                     $opexBalance = array_sum($opexBalance);
 
+                    $data['order'] = [];
+                    $data['search']['value'] = '';
+                    $request->merge($data);
 
                     $dataRec = \DataTables::of($output)
                         ->order(function ($query) use ($input) {
@@ -586,7 +602,8 @@ class ReportAPIController extends AppBaseController
                         ->make(true);
 
                     return $dataRec;
-                } else if ($request->reportType == 4) { //PO Wise Analysis Supplier wise Report
+                }
+                else if ($request->reportType == 4) { //PO Wise Analysis Supplier wise Report
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('
                             companymaster.CompanyID,                      
@@ -646,9 +663,13 @@ class ReportAPIController extends AppBaseController
                         ->groupBy('supplierID');
 
                     $search = $request->input('search.value');
-                    $search = str_replace("\\", "\\\\", $search);
                     if ($search) {
-                        $output = $output->where('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($q) use($search){
+                            $q->where('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%");
+                        });
+
                     }
                     $output->orderBy('supplierPrimaryCode', 'ASC');
                     $outputSUM = $output->get();
@@ -678,7 +699,9 @@ class ReportAPIController extends AppBaseController
 
                     $opexBalance = collect($outputSUM)->pluck('opexBalance')->toArray();
                     $opexBalance = array_sum($opexBalance);
-
+                    $data['order'] = [];
+                    $data['search']['value'] = '';
+                    $request->merge($data);
 
                     $dataRec = \DataTables::of($output)
                         ->order(function ($query) use ($input) {
@@ -867,6 +890,18 @@ WHERE
                         }
                     }
 
+                    $globalSearch = $request->input('search.value');
+                    if ($globalSearch) {
+                        $globalSearch = str_replace("\\", "\\\\", $globalSearch);
+                        $output = $output->where(function ($query) use ($globalSearch) {
+                            $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('supplierPrimaryCode', 'LIKE', "%{$globalSearch}%")
+                                ->orWhere('purchaseOrderCode', 'LIKE', "%{$globalSearch}%");
+                        });
+                    }
+
                     if (isset($request->searchText)) {
                         if (!empty($request->searchText)) {
                             $search = str_replace("\\", "\\\\", $request->searchText);
@@ -939,7 +974,8 @@ WHERE
                     })->download($type);
 
                     return $this->sendResponse(array(), 'Successfully export');
-                } else if ($request->reportType == 2) { //PO Wise Analysis Report
+                }
+                else if ($request->reportType == 2) { //PO Wise Analysis Report
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
@@ -1085,9 +1121,21 @@ WHERE
                         ->where('erp_purchaseordermaster.approved', '=', -1)
                         ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
                         ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
-                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))
-                        ->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')
-                        ->get();
+                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate));
+
+
+                    $search = $request->input('search.value');
+                    if ($search) {
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($q) use($search){
+                            $q->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
+                        });
+                    }
+
+                    $output = $output->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')
+                                     ->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -1135,7 +1183,8 @@ WHERE
                     })->download($type);
 
                     return $this->sendResponse(array(), 'successfully export');
-                } else if ($request->reportType == 3) {
+                }
+                else if ($request->reportType == 3) {
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('
                             companymaster.CompanyID,                      
@@ -1179,7 +1228,24 @@ WHERE
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->leftJoin('suppliermaster', 'erp_purchaseordermaster.supplierID', '=', 'suppliermaster.supplierCodeSystem')
                         ->whereIN('liabilityAccountSysemID', $controlAccountsSystemID)
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('poCancelledYN', 0)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID')->orderBy('CompanyName', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)
+                        ->where('poCancelledYN', 0)
+                        ->where('erp_purchaseordermaster.poType_N', '<>', 5)
+                        ->where('erp_purchaseordermaster.approved', '=', -1)
+                        ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
+                        ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
+                        ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))
+                        ->groupBy('erp_purchaseordermaster.companySystemID');
+
+
+                    $search = $request->input('search.value');
+                    $search = str_replace("\\", "\\\\", $search);
+                    if ($search) {
+                        $output = $output->where('companymaster.CompanyName', 'LIKE', "%{$search}%");
+                    }
+
+                    $output = $output->orderBy('CompanyName', 'ASC')
+                                     ->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -1265,9 +1331,21 @@ WHERE
                         ->where('erp_purchaseordermaster.poCancelledYN', '=', 0)
                         ->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))
                         ->whereBetween(DB::raw("DATE(erp_purchaseordermaster.approvedDate)"), array($startDate, $endDate))
-                        ->groupBy('supplierID')
-                        ->orderBy('supplierPrimaryCode', 'ASC')
-                        ->get();
+                        ->groupBy('supplierID');
+
+
+                    $search = $request->input('search.value');
+                    if ($search) {
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($q) use($search){
+                            $q->where('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%");
+                        });
+
+                    }
+
+                    $output = $output->orderBy('supplierPrimaryCode', 'ASC')
+                                     ->get();
 
                     foreach ($output as $val) {
                         $data[] = array(

@@ -635,4 +635,38 @@ class ProcumentOrder extends Model
     {
         return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_purchaseordermaster.'.$column);
     }
+
+    public function scopeCurrencyJoin($q,$as = 'cu', $column = 'supplierTransactionCurrencyID' , $columnAs = 'currencyCode', $decimalPlaceAs = ['poTotalSupplierTransactionCurrency'])
+    {
+        $selectedColumns = [];
+        foreach ($decimalPlaceAs as $d){
+            $dColumn = $as.".DecimalPlaces as ".$d."DecimalPlaces";
+            array_push($selectedColumns,$dColumn);
+        }
+        $code = $as.".currencyCode as ".$columnAs;
+        array_push($selectedColumns,$code);
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','erp_purchaseordermaster.'.$column)
+            ->addSelect($selectedColumns);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_purchaseorderdetails','erp_purchaseorderdetails.purchaseOrderMasterID','erp_purchaseordermaster.purchaseOrderID');
+    }
+
+    public function scopeUnitJoin($q,$as = 'unit', $column = 'unitOfMeasure' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('units as '.$as,$as.'.UnitID','erp_purchaseorderdetails.'.$column);
+    }
+
+    public function scopeSupplierCurrencyJoin($q,$as = 'cu', $column = 'supplierTransactionCurrencyID' , $columnAs = 'currencyCode', $decimalPlaceAs = 'poTotalSupplierTransactionCurrency')
+    {
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','supplier.'.$column)
+            ->addSelect($as.".DecimalPlaces as ".$decimalPlaceAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
+    }
+
+    public function scopeSupplierCountryJoin($q,$as = 'supplier_country', $column = 'countryID' , $columnAs = 'countryID')
+    {
+        return $q->leftJoin('countrymaster as '.$as,$as.'.countryID','supplier.'.$column);
+    }
 }

@@ -199,4 +199,8 @@ class ItemAssigned extends Model
     public function grv_detail(){
         return $this->hasMany('App\Models\GRVDetails','itemCode','itemCodeSystem');
     }
+
+    public function item_master(){
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
+    }
 }

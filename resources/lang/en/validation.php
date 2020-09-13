@@ -200,7 +200,18 @@ return [
         'DISPOGLCODESystemID' => 'Disposal Account',
         'financeCatDescription' => 'Category Description',
         'catDescription' => 'Category Description',
-        'report_master_id' => 'Report Master'
+        'report_master_id' => 'Report Master',
+        'BPVchequeDate' => 'Cheque Date',
+        'BPVdate' => 'Pay Invoice Date',
+        'invoiceType' => 'Payment Type',
+        'BPVNarration' => 'Narration',
+        'BPVbank' => 'Bank',
+        'BPVAccount' => 'Bank Account',
+        'BPVbankCurrency' => 'Currency',
+        'supplierTransCurrencyID' => 'Currency',
+        'BPVsupplierID' => 'Supplier',
+        'directPaymentPayeeEmpID' => 'Payee',
+        'directPaymentPayee' => 'Other'
     ],
 
 ];

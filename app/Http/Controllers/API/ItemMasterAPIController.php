@@ -504,7 +504,7 @@ class ItemMasterAPIController extends AppBaseController
             $itemMaster = ItemMaster::find($id);
             if($itemMaster){
                 $primaryCompany = Company::find($itemMaster->primaryCompanySystemID);
-                if($primaryCompany->vatRegisteredYN == 1){
+                if($primaryCompany && $primaryCompany->vatRegisteredYN == 1){
                     $isVatRegisteredYN = true;
                     $vatSubCategory = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID,CONCAT(erp_tax_vat_main_categories.mainCategoryDescription, " - " ,erp_tax_vat_sub_categories.subCategoryDescription) as label')
                         ->join('erp_tax_vat_main_categories','erp_tax_vat_sub_categories.mainCategory','=','erp_tax_vat_main_categories.taxVatMainCategoriesAutoID')
