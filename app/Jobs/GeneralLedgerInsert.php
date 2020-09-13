@@ -2278,7 +2278,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                                 $data['documentNarration'] = $item->comments;
 
-                                if ($item->clientContractID) {
+                                if ($item->clientContractID && $item->contractUID) {
                                     $data['clientContractID'] = $item->clientContractID;
                                     $data['contractUID'] = $item->contractUID;
                                 } else {
@@ -2784,9 +2784,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $data['documentType'] = 11;
 
-                        $data['createdUserSystemID'] = $empID->empID;
+                        $data['createdUserSystemID'] = $empID->employeeSystemID;
                         $data['createdDateTime'] = $time;
-                        $data['createdUserID'] = $empID->employeeSystemID;
+                        $data['createdUserID'] = $empID->empID;
                         $data['createdUserPC'] = getenv('COMPUTERNAME');
                         $data['timestamp'] = $time;
                         array_push($finalData, $data);
