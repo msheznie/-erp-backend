@@ -1293,7 +1293,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
         $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
-        $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId, 1);
+        $output['companyFinanceYear'] = Helper::companyFinanceYear($companyId, 1);
         $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')
             ->where('companySystemID', '!=', $companyId)
