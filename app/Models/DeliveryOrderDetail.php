@@ -331,4 +331,8 @@ class DeliveryOrderDetail extends Model
     public function sales_quotation_detail(){
         return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
     }
+
+    public function invoice_detail() {
+        return $this->hasMany('App\Models\CustomerInvoiceItemDetails','deliveryOrderDetailID','deliveryOrderDetailID');
+    }
 }
