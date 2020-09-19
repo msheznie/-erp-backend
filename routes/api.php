@@ -1853,6 +1853,11 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem');
         Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory');
 
+        Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
+        Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
+        Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
+        Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

@@ -168,7 +168,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $input['deliveryOrderDate'] = new Carbon($input['deliveryOrderDate']);
 
-        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','companyFinancePeriodID','companyFinanceYearID'));
 
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
@@ -699,22 +699,8 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-//        $companyFinanceYear = Helper::companyFinanceYear($companyId, 1);
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate"))
-            ->where('companySystemID', '=', $companyId)
-            ->where('isActive', -1)
-            ->where('isCurrent', -1)
-            ->first();
-        $companyFinancePeriod = array();
-        if(!empty($companyFinanceYear)){
-            $companyFinancePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
-                ->where('companySystemID', '=', $companyId)
-                ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-                ->where('departmentSystemID', 11)
-                ->where('isActive', -1)
-                ->where('isCurrent', -1)
-                ->first();
-        }
+        $companyFinanceYear = Helper::companyFinanceYear($companyId, 1);
+
         $orderType = array(array('value' => 1, 'label' => 'Direct Order'), array('value' => 2, 'label' => 'Quotation Based'),array('value' => 3, 'label' => 'Sales Order Based'));
         $wareHouses = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
         $output = array(
@@ -729,7 +715,6 @@ class DeliveryOrderAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'orderType' => $orderType,
             'companyFinanceYear'=>$companyFinanceYear,
-            'companyFinancePeriod'=>$companyFinancePeriod,
             'wareHouses'=>$wareHouses
         );
 

@@ -596,10 +596,11 @@ class MobileBillMasterAPIController extends AppBaseController
         $periodIDs = [];
         $companyIDs = [];
         $str = '';
+        $billCount = 0;
         if (array_key_exists('billMasters', $input)) {
             $masterID = (array)$input['billMasters'];
             $masterIDs = collect($masterID)->pluck('mobilebillMasterID');
-
+            $billCount = collect($masterID)->count();
             $periodIDs = MobileBillMaster::select('billPeriod')->whereIn('mobilebillMasterID',$masterIDs)->get()->pluck('billPeriod');
 
         }
@@ -643,7 +644,7 @@ class MobileBillMasterAPIController extends AppBaseController
                     ->on('hrms_employeemobilebillmaster.mobilebillMasterID', '=', 'hrms_mobilebillsummary.mobileMasterID');
             })
 //            ->select(DB::raw('mobilebillMasterID,employeeSystemID,mobileNo,companyID,empID, sum(totalAmount) as totalAmount, sum(deductionAmount) as deductionAmount,sum(exceededAmount) as exceededAmount,sum(officialAmount) as officialAmount,creditLimit * 3 AS crLimit, sum(creditLimit) as sumCreditLimit, sum(GPRSPayG) as GPRSPayG, sum(GPRSPKG) as GPRSPKG, sum(totalCurrentCharges) as totalCurrentCharges, IF(totalAmount < creditLimit,0, IF(officialAmount = 0 AND creditLimit > totalAmount,0,IF(officialAmount = 0 AND creditLimit < totalAmount,totalAmount - creditLimit,IF(officialAmount > deductionAmount,0,IF(deductionAmount > officialAmount,deductionAmount - officialAmount, 0))))) AS FinalDeductionAmount'))
-            ->select(DB::raw('mobilebillMasterID,employeeSystemID,mobileNo,companyID,empID, sum(totalAmount) as totalAmount, sum(deductionAmount) as deductionAmount,sum(exceededAmount) as exceededAmount,sum(officialAmount) as officialAmount, creditLimit * 3 as climit, sum(creditLimit) as sumCreditLimit, sum(GPRSPayG) as GPRSPayG, sum(GPRSPKG) as GPRSPKG, sum(totalCurrentCharges) as totalCurrentCharges, IF(sum(totalAmount) < (creditLimit * 3),0, IF(sum(officialAmount) = 0 AND (creditLimit * 3) > sum(totalAmount),0,IF(sum(officialAmount) = 0 AND (creditLimit * 3) < sum(totalAmount),sum(totalAmount) - (creditLimit * 3),IF(sum(officialAmount) > sum(deductionAmount),0,IF(sum(deductionAmount) > sum(officialAmount),sum(deductionAmount) - sum(officialAmount), 0))))) AS FinalDeductionAmount'))
+            ->select(DB::raw('mobilebillMasterID,employeeSystemID,mobileNo,companyID,empID, sum(totalAmount) as totalAmount, sum(deductionAmount) as deductionAmount,sum(exceededAmount) as exceededAmount,sum(officialAmount) as officialAmount, creditLimit * '.$billCount.' as climit, sum(creditLimit) as sumCreditLimit, sum(GPRSPayG) as GPRSPayG, sum(GPRSPKG) as GPRSPKG, sum(totalCurrentCharges) as totalCurrentCharges, IF(sum(totalAmount) < (creditLimit * '.$billCount.'),0, IF(sum(officialAmount) = 0 AND (creditLimit * '.$billCount.') > sum(totalAmount),0,IF(sum(officialAmount) = 0 AND (creditLimit * '.$billCount.') < sum(totalAmount),sum(totalAmount) - (creditLimit * '.$billCount.'),IF(sum(officialAmount) > sum(deductionAmount),0,IF(sum(deductionAmount) > sum(officialAmount),sum(deductionAmount) - sum(officialAmount), 0))))) AS FinalDeductionAmount'))
             ->whereHas('mobile_pool', function ($query){
                 $query->whereHas('mobile_master', function ($q){
                     $q->where('isInternetSim',0);

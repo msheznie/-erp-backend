@@ -301,5 +301,12 @@ class QuotationDetails extends Model
         
     ];
 
+    public function invoice_detail() {
+        return $this->hasMany('App\Models\CustomerInvoiceItemDetails','quotationDetailsID','quotationDetailsID');
+    }
+
+    public function delivery_order_detail(){
+        return $this->hasMany('App\Models\DeliveryOrderDetail','quotationDetailsID','quotationDetailsID');
+    }
     
 }
