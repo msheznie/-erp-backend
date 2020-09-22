@@ -1180,7 +1180,7 @@ WHERE
                 }
 
                 if($newValidation['noQty'] == 0){
-                    return $this->sendError('Invoice Quantity should be greater than zero', 422);
+                    return $this->sendError('Invoice Quantity should be greater than zero', 500);
                 }
             }
         }
