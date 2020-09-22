@@ -882,7 +882,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                        }elseif ($masterData->isPerforma == 3){ // From Deivery Note
+                        }
+                        elseif ($masterData->isPerforma == 3){ // From Deivery Note
                             $customer = CustomerMaster::find($masterData->customerID);
                             $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
                             $unbilledhartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $customer->custUnbilledAccountSystemID)->first();
@@ -1005,7 +1006,10 @@ class GeneralLedgerInsert implements ShouldQueue
 
 
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                      ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                      ->where('documentSystemID',20)
+                                                      ->get();
                             $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {
@@ -1036,7 +1040,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                        }else{
+                        }
+                        else{
                             $detOne = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"])->first();
                             $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
                             $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
@@ -1151,7 +1156,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                        ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                        ->where('documentSystemID',20)
+                                                        ->get();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {
 
