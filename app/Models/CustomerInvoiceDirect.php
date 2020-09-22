@@ -722,4 +722,9 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->hasMany('App\Models\CustomerInvoiceItemDetails', 'custInvoiceDirectAutoID', 'custInvoiceDirectAutoID');
     }
+
+    public function receipt_detail()
+    {
+        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'bookingInvCodeSystem', 'custInvoiceDirectAutoID');
+    }
 }
