@@ -882,12 +882,17 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                        }elseif ($masterData->isPerforma == 3){ // From Deivery Note
+                        }
+                        elseif ($masterData->isPerforma == 3){ // From Deivery Note
                             $customer = CustomerMaster::find($masterData->customerID);
                             $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
                             $unbilledhartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $customer->custUnbilledAccountSystemID)->first();
+
                             $masterDocumentDate = Carbon::now();
                             $time = Carbon::now();
+                            if ($masterData->finance_period_by->isActive == -1) {
+                                $masterDocumentDate = $masterData->bookingDate;
+                            }
 
                             if($chartOfAccount){
                                 $data['companySystemID'] = $masterData->companySystemID;
@@ -897,7 +902,6 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentSystemID'] = $masterData->documentSystemiD;
                                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                                 $data['documentCode'] = $masterData->bookingInvCode;
-                                //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
                                 $data['documentDate'] = $masterDocumentDate;
                                 $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
                                 $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
@@ -1005,7 +1009,10 @@ class GeneralLedgerInsert implements ShouldQueue
 
 
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                      ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                      ->where('documentSystemID',20)
+                                                      ->get();
                             $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','catogaryBLorPLID','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {
@@ -1036,7 +1043,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                        }else{
+                        }
+                        else{
                             $detOne = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"])->first();
                             $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
                             $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
@@ -1151,7 +1159,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                        ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+                                                        ->where('documentSystemID',20)
+                                                        ->get();
                             if (!empty($erp_taxdetail)) {
                                 foreach ($erp_taxdetail as $tax) {
 
