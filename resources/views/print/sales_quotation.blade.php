@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Sales Quotation</title>
+    <title>Quotation</title>
     <style>
         @page {
             margin-left: 30px;
@@ -146,7 +146,7 @@
         }
 
         .content {
-            margin-bottom: 45px;
+            margin-bottom: 100px;
         }
 
         .border-top-remov {
@@ -236,7 +236,7 @@
                 <div>
                     <span style="font-size: 18px">
                         @if($masterdata->documentSystemID == 67)
-                            Sales Quotation
+                            Quotation
                         @endif
                         @if($masterdata->documentSystemID == 68)
                             Sales Order
@@ -258,7 +258,8 @@
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            <span>{{$masterdata->quotationCode}}</span>
+                            <span>{{$masterdata->quotationCode}}@if($masterdata->versionNo)\V{{$masterdata->versionNo}}@endif
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -411,7 +412,9 @@
                 <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                     <td>{{$loop->iteration}}</td>
                     <td>{{$item->itemSystemCode}}</td>
-                    <td>{{$item->itemDescription}}</td>
+                    <td>{{$item->itemDescription}}
+                         <div style="font-size: 10px !important;">{{$item->comment}}</div>
+                    </td>
                     <td>{{$item->itemReferenceNo}}</td>
                     <td>{{$item->unitOfMeasure}}</td>
                     <td class="text-right">{{$item->requestedQty}}</td>
@@ -428,14 +431,16 @@
         </table>
     </div>
     <hr style="color: #d3d9df">
-    <div class="row">
-        <table style="width:100%">
+    <div class="row" style="font-size: 11.5px !important;">
+        <div><span class="font-weight-bold">Notes :</span></div>
+        <div>{!! nl2br($masterdata->Note) !!}</div>
+        {{--<table style="width:100%">
             <tr>
                 <td style="width:11%;vertical-align: top;"><span class="font-weight-bold">Notes :</span></td>
             </tr>
             <tr>
                 <td style="width:88%;vertical-align: top;">{!! nl2br($masterdata->Note) !!}</td>
             </tr>
-        </table>
+        </table>--}}
     </div>
 </div>
