@@ -569,6 +569,9 @@
                 <th style="text-align: center">Qty</th>
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
+                @if ($podata->isVatEligible)
+                  <th style="text-align: center">VAT. Per Unit</th>
+                @endif
                 <th style="text-align: center">Net Cost Per Unit</th>
                 <th style="text-align: center">Net Amount</th>
             </tr>
@@ -576,10 +579,11 @@
             <tbody style="width: 100%">
             {{ $subTotal = 0 }}
             {{ $x = 1 }}
+            {{ $subColspan = $podata->isVatEligible ? 1 : 0}}
             @foreach ($podata->detail as $det)
                 {{ $netUnitCost = 0 }}
                 {{ $subTotal += $det->netAmount }}
-                {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
+                {{ $netUnitCost = $det->unitCost - $det->discountAmount + $det->VATAmount }}
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
@@ -589,6 +593,9 @@
                     <td class="text-right">{{$det->noQty}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
+                    @if ($podata->isVatEligible)
+                        <td class="text-right">{{number_format($det->VATAmount, $numberFormatting)}}</td>
+                    @endif
                     <td class="text-right">{{number_format($netUnitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->netAmount, $numberFormatting)}}</td>
                 </tr>
@@ -599,7 +606,7 @@
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td colspan="2"></td>
                     <td>{{$met->category->costCatDes}}</td>
-                    <td colspan="6"></td>
+                    <td colspan="{{6 + $subColspan}}"></td>
                     <td class="text-right">{{number_format($met->amount, $numberFormatting)}}</td>
                 </tr>
             @endforeach
@@ -637,7 +644,7 @@
                 </span>
                 </td>
             </tr>
-            @if ($podata->supplierVATEligible)
+            @if ($podata->supplierVATEligible && false)
                 <tr>
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;</td>
@@ -662,7 +669,7 @@
                     style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
-                        {{number_format($subTotal - $podata->poDiscountAmount + $podata->VATAmount, $numberFormatting)}}
+                        {{number_format($subTotal - $podata->poDiscountAmount, $numberFormatting)}}
                     @endif
                 </span>
                 </td>

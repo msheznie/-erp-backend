@@ -36,6 +36,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
+use App\Models\SupplierAssigned;
 use App\Models\User;
 use App\Models\FcmToken;
 use App\Traits\ApproveRejectTransaction;

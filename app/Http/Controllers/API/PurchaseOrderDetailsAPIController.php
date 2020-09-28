@@ -19,6 +19,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
 use App\Models\ProcumentOrderDetail;
@@ -288,12 +289,30 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $input['supplierDefaultCurrencyID'] = $purchaseOrder->supplierDefaultCurrencyID;
         $input['supplierDefaultER'] = $purchaseOrder->supplierDefaultER;
+        $input['VATAmount'] = 0;
+        if($purchaseOrder->isVatEligible){
+            $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID,$input['itemCode'],$purchaseOrder->supplierID);
+            $input['VATPercentage']   = $vatDetails['percentage'];
+            $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['VATAmount'] = 0;
+            if($input['unitCost'] > 0){
+                $input['VATAmount'] = (($input['unitCost']/100) * $vatDetails['percentage']);
+            }
+            $prDetail_arr['netAmount'] = ($input['unitCost'] + $input['VATAmount']) * $input['noQty'];
+            $currencyConversionVAT          = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount']);
 
-        if ($input['unitCost'] > 0) {
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['unitCost']);
+            $prDetail_arr['VATAmountLocal'] =  \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $prDetail_arr['VATAmountRpt']   =  \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+        }
+
+        $grvCost = $input['unitCost'] + $input['VATAmount'];
+
+        if ($grvCost > 0) {
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost);
 
             $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
-            $input['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $input['GRVcostPerUnitSupTransCur'] = $grvCost;
             $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
 
             $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
@@ -302,8 +321,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         // adding supplier Default CurrencyID base currency conversion
-        if ($input['unitCost'] > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
+        if ($grvCost > 0) {
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost);
 
             $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
             $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
@@ -367,7 +386,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $prDetail_arr = array();
         $validator = array();
         $purchaseOrderID = $input['purchaseOrderID'];
-
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -418,6 +436,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
+
+        if(empty($purchaseOrder)){
+            return $this->sendError("Request department is different from order");
+        }
 
         //check PO segment is correct with PR pull segment
 
@@ -523,6 +545,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                         $prDetail_arr['unitCost'] = $new['poUnitAmount'];
                         $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
+                        // Get VAT percentage for item
+                        if($purchaseOrder->isVatEligible){
+                            $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID,$new['itemCode'],$purchaseOrder->supplierID);
+                            $prDetail_arr['VATPercentage']   = $vatDetails['percentage'];
+                            $prDetail_arr['VATApplicableOn'] = $vatDetails['applicableOn'];
+                            $prDetail_arr['VATAmount'] = 0;
+                            if($prDetail_arr['unitCost'] > 0){
+                                $prDetail_arr['VATAmount'] = (($prDetail_arr['unitCost']/100) * $vatDetails['percentage']);
+                            }
+                            $prDetail_arr['netAmount'] = ($prDetail_arr['unitCost'] + $prDetail_arr['VATAmount']) * $new['poQty'];
+                            $currencyConversionVAT          = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $prDetail_arr['VATAmount']);
+
+                            $prDetail_arr['VATAmountLocal'] =  \Helper::roundValue($currencyConversionVAT['localAmount']);
+                            $prDetail_arr['VATAmountRpt']   =  \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+                        }
 
                         $prDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                         $prDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
@@ -591,6 +629,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 }
             }
 
+            if($purchaseOrder->isVatEligible){
+                    TaxService::updatePOVAT($purchaseOrderID);
+            }
+
             //check all details fullyOrdered in PR Master
             $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $new['purchaseRequestID'])
                 ->whereIn('fullyOrdered', [1, 0])
@@ -620,24 +662,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'),'budgetYear')
-            ->where('purchaseOrderMasterID', $purchaseOrderID)
-            ->first();
-        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
-        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
-            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
 
-            $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
-
-            $updatePOMaster = ProcumentOrder::find($purchaseOrderID)
-                ->update([
-                    'VATAmount' => $calculatVatAmount,
-                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
-                ]);
+        $poUpdate = TaxService::updatePOVAT($purchaseOrderID);
+        if(!$poUpdate){
+            return $this->sendError("PO VAT update error",500);
         }
-
-        ProcumentOrder::find($purchaseOrderID)->update(['budgetYear' => $poMasterSum['budgetYear']]);
         return $this->sendResponse('', 'Purchase Order Details saved successfully');
     }
 
@@ -701,26 +730,38 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
         DB::beginTransaction();
             try{
-                $discountedUnitPrice = $input['unitCost'] - $input['discountAmount'];
+                $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
+                $discountedUnitPrice = $input['unitCost'] + $input['VATAmount'] - $input['discountAmount'];
 
                 if ($discountedUnitPrice > 0) {
                     $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
-                    $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+                    $input['GRVcostPerUnitLocalCur'] =  \Helper::roundValue($currencyConversion['localAmount']);
                     $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
-                    $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
+                    $input['GRVcostPerUnitComRptCur'] =  \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                    $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+                    $input['purchaseRetcostPerUnitLocalCur'] =  \Helper::roundValue($currencyConversion['localAmount']);
                     $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
-                    $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
+                    $input['purchaseRetcostPerUnitRptCur'] =  \Helper::roundValue($currencyConversion['reportingAmount']);
+                }
+
+                if(isset($input['VATAmount'] ) && $input['VATAmount'] > 0){
+                    $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount'] );
+
+                    $input['VATAmountLocal'] =  \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $input['VATAmountRpt'] =  \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                }else{
+                    $input['VATAmount'] = 0;
+                    $input['VATAmountLocal'] = 0;
+                    $input['VATAmountRpt'] = 0;
                 }
 
                 // adding supplier Default CurrencyID base currency conversion
                 if ($discountedUnitPrice > 0) {
                     $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $discountedUnitPrice);
 
-                    $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
-                    $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
+                    $input['GRVcostPerUnitSupDefaultCur'] =  \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                    $input['purchaseRetcostPerUniSupDefaultCur'] =  \Helper::roundValue($currencyConversionDefault['documentAmount']);
                 }
 
                 $input['modifiedPc'] = gethostname();
@@ -734,7 +775,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
 
                 $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
-
+                TaxService::updatePOVAT($input['purchaseOrderMasterID']);
                 //calculate tax amount according to the percantage for tax update
 
                 //getting total sum of PO detail Amount
@@ -975,14 +1016,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $purchaseOrderID = $input['purchaseOrderID'];
-
+        $purchaseOrderID = isset($input['purchaseOrderID'])? $input['purchaseOrderID'] : 0;
+        $discountAmount = isset($input['discount']) ? $input['discount'] : 0;
+        $poDiscountPercentage = isset($input['poDiscountPercentage']) ? $input['poDiscountPercentage'] : 0;
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
+
+        $purchaseOrder->update(
+            [
+                'poDiscountAmount' => $discountAmount,
+                'poDiscountPercentage' => $poDiscountPercentage
+            ]
+        );
 
         $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();

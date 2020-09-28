@@ -170,7 +170,8 @@ class ProcumentOrderDetail extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'VATApplicableOn'
     ];
 
     /**
@@ -249,7 +250,8 @@ class ProcumentOrderDetail extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**
