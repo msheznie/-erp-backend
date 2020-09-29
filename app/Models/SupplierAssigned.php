@@ -157,7 +157,11 @@ class SupplierAssigned extends Model
         'supCategorySubICVID' => 'integer',
         'isLCCYN' => 'integer',
         'isMarkupPercentage' => 'integer',
-        'markupPercentage' => 'float'
+        'markupPercentage' => 'float',
+        'jsrsNo' => 'string',
+        'jsrsExpiry' => 'string',
+        'jsrsNo',
+        'jsrsExpiry'
     ];
 
     /**
