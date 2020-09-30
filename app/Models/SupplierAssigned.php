@@ -109,7 +109,9 @@ class SupplierAssigned extends Model
         'supCategorySubICVID',
         'isLCCYN',
         'isMarkupPercentage',
-        'markupPercentage'
+        'markupPercentage',
+        'jsrsNo',
+        'jsrsExpiry'
     ];
 
     /**
@@ -159,9 +161,7 @@ class SupplierAssigned extends Model
         'isMarkupPercentage' => 'integer',
         'markupPercentage' => 'float',
         'jsrsNo' => 'string',
-        'jsrsExpiry' => 'string',
-        'jsrsNo',
-        'jsrsExpiry'
+        'jsrsExpiry' => 'string'
     ];
 
     /**
