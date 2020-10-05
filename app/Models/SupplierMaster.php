@@ -153,7 +153,9 @@ class SupplierMaster extends Model
         'isMarkupPercentage',
         'markupPercentage',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'jsrsNo',
+        'jsrsExpiry'
     ];
 
     /**
@@ -226,7 +228,9 @@ class SupplierMaster extends Model
         'isMarkupPercentage' => 'integer',
         'markupPercentage' => 'float',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'jsrsNo' => 'string',
+        'jsrsExpiry' => 'string'
     ];
 
     /**
