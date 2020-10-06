@@ -318,7 +318,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             foreach ($poAdvancePaymentType as $advance) {
 
                 //calculation advance amount
-                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount) + $vatAmount);
+                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount));
                 $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
 
                 //update payment terms table

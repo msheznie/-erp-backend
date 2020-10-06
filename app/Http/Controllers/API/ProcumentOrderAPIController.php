@@ -639,9 +639,18 @@ class ProcumentOrderAPIController extends AppBaseController
                 foreach ($updateDetailDiscount as $itemDiscont) {
                     $calculateItemDiscount = 0;
                     if ($input['poDiscountAmount'] > 0 && $poMasterSumRounded > 0 && $itemDiscont['noQty']) {
-                        $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $poMasterSumRounded) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                        if($input['vatRegisteredYN'] == 0){
+                            $calculateItemDiscount = ((($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $poMasterSumRounded) * $itemDiscont['netAmount'])) - ($itemDiscont['VATAmount'] * $itemDiscont['noQty']) ) / $itemDiscont['noQty']);
+                        }else{
+                            $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $poMasterSumRounded) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                        }
+
                     } else {
-                        $calculateItemDiscount =  $itemDiscont['unitCost'] + $itemDiscont['VATAmount'] - $itemDiscont['discountAmount'];
+                        if($input['vatRegisteredYN'] == 0){
+                            $calculateItemDiscount =  $itemDiscont['unitCost']  - $itemDiscont['discountAmount'];
+                        }else{
+                            $calculateItemDiscount =  $itemDiscont['unitCost'] + $itemDiscont['VATAmount'] - $itemDiscont['discountAmount'];
+                        }
                     }
                     // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
                     $vatLineAmount = $itemDiscont['VATAmount']; //($calculateItemTax - $calculateItemDiscount);
@@ -928,7 +937,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']) + $input['VATAmount']);
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']));
 
                     if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
 
@@ -3786,9 +3795,14 @@ WHERE
                 $purchaseOrderDetail->VATAmountRpt   =  \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                 $calculateItemDiscount = 0;
                 if ($purchaseOrder->poDiscountAmount > 0 && $poMasterSumRounded > 0 && $purchaseOrderDetail->noQty > 0) {
-                    $calculateItemDiscount = (($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $poMasterSumRounded) * $purchaseOrderDetail->netAmount)) / $purchaseOrderDetail->noQty);
+                    $calculateItemDiscount = ((($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $poMasterSumRounded) * $purchaseOrderDetail->netAmount)) - ($purchaseOrderDetail->VATAmount * $purchaseOrderDetail->noQty) ) / $purchaseOrderDetail->noQty);
                 } else {
-                    $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount + $purchaseOrderDetail->VATAmount;
+
+                    if($purchaseOrder->vatRegisteredYN == 0){
+                        $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
+                    }else{
+                        $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount + $purchaseOrderDetail->VATAmount;
+                    }
                 }
                 $calculateItemTax = $calculateItemDiscount;
 
