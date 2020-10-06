@@ -1052,11 +1052,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $detail['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                     $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemDiscount;
                     $detail['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                    $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
                 }
 
                 //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
 
-                $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
+
             }
 
             return $this->sendResponse($purchaseOrderID, 'Total discount updated successfully');
