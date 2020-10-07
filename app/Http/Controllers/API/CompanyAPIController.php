@@ -34,6 +34,7 @@ use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -201,8 +202,6 @@ class CompanyAPIController extends AppBaseController
     public function store(CreateCompanyAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToValue($input);
-
         $messages = [
             'CompanyID.required' => 'CompanyID is required.',
             'localCurrencyID.required' => 'Local Currency ID is required.',
@@ -227,9 +226,52 @@ class CompanyAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        // TODO add master company ID
+        if(isset($input['masterCompanySystemIDReorting']) && $input['masterCompanySystemIDReorting'] > 0){
+            $masterCompany = Company::find($input['masterCompanySystemIDReorting']);
+            if($masterCompany){
+                $input['masterComapanyIDReporting'] = $masterCompany->CompanyID;
+            }
+        }
 
-        $input['isActive'] = (isset($input['isActive']) && $input['isActive'] == -1)?1:0;
+        if(isset($input['exchangeGainLossGLCodeSystemID']) && $input['exchangeGainLossGLCodeSystemID'] > 0){
+            $gl = ChartOfAccount::find($input['exchangeGainLossGLCodeSystemID']);
+            if($gl){
+                $input['exchangeGainLossGLCode'] = $gl->AccountCode;
+            }
+        }
+
+        /*image upload*/
+        $attachment = $input['nextAttachment'];
+        if(!empty($attachment) && isset($attachment['file'])){
+            $extension = $attachment['fileType'];
+            $allowExtensions = ['png','jpg','jpeg'];
+
+            if (!in_array($extension, $allowExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.',500);
+            }
+
+            if(isset($attachment['size'])){
+                if ($attachment['size'] > 2097152) {
+                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                }
+            }
+
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+
+            $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
+
+            $path = 'logos/' . $input['companyLogo'];
+
+            Storage::disk('local_public')->put($path, $decodeFile);
+        }
+
+
+
+        $employee = Helper::getEmployeeInfo();
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
 
         $companies = $this->companyRepository->create($input);
 
@@ -268,7 +310,8 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToValue($input);
+//        $input = $this->convertArrayToValue($input);
+        $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency']);
         /** @var Company $company */
         $company = $this->companyRepository->findWithoutFail($id);
 
@@ -300,7 +343,43 @@ class CompanyAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $input['isActive'] = (isset($input['isActive']) && $input['isActive'] == -1)?1:0;
+        if(isset($input['exchangeGainLossGLCodeSystemID']) && $input['exchangeGainLossGLCodeSystemID'] > 0){
+            $gl = ChartOfAccount::find($input['exchangeGainLossGLCodeSystemID']);
+            if($gl){
+                $input['exchangeGainLossGLCode'] = $gl->AccountCode;
+            }
+        }
+
+        /*image upload*/
+        $attachment = $input['nextAttachment'];
+        if(!empty($attachment) && isset($attachment['file'])){
+            $extension = $attachment['fileType'];
+            $allowExtensions = ['png','jpg','jpeg'];
+
+            if (!in_array($extension, $allowExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.',500);
+            }
+
+            if(isset($attachment['size'])){
+                if ($attachment['size'] > 2097152) {
+                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                }
+            }
+
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+
+            $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
+
+            $path = 'logos/' . $input['companyLogo'];
+
+            Storage::disk('local_public')->put($path, $decodeFile);
+        }
+
+        $employee = Helper::getEmployeeInfo();
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
 
         $company = $this->companyRepository->update($input, $id);
 
@@ -427,9 +506,50 @@ class CompanyAPIController extends AppBaseController
             'country' => $country,
             'currencyMaster' => $currencyMaster,
             'yesNoSelection' => $yesNoSelection,
-            'chartOfAccount' => $chartOfAccount
+            'chartOfAccount' => $chartOfAccount,
+            'isGroup' => $isGroup
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function uploadCompanyLogo(Request $request) {
+        $input = $request->all();
+        $extension = $input['fileType'];
+        $allowExtensions = ['png','jpg','jpeg'];
+
+        if (!in_array($extension, $allowExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.',500);
+        }
+
+
+        if(isset($input['size'])){
+            if ($input['size'] > 2097152) {
+                return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+            }
+        }
+
+        if (isset($input['companySystemID'])) {
+
+            $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
+
+            if ($companyMaster) {
+
+                $file = $request->request->get('file');
+                $decodeFile = base64_decode($file);
+
+                $myFileName = $companyMaster->CompanyID.'_logo.' . $extension;
+
+                $path = 'logos/' . $myFileName;
+
+                Storage::disk('local_public')->put($path, $decodeFile);
+
+                $this->companyRepository->update(['companyLogo'=>$myFileName],$input['companySystemID']);
+
+                return $this->sendResponse([], 'Company Logo uploaded successfully');
+
+            }
+        }
     }
 
 
