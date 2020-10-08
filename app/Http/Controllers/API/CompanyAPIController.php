@@ -214,7 +214,6 @@ class CompanyAPIController extends AppBaseController
             'companyShortCode' => 'required|unique:companymaster',
             'companyCountry' => 'required|numeric|min:1',
             'CompanyTelephone' => 'required',
-            'CompanyFax' => 'required',
             'CompanyEmail' => 'required',
             'registrationNumber' => 'required',
             'localCurrencyID' => 'required|numeric|min:1',
@@ -311,7 +310,7 @@ class CompanyAPIController extends AppBaseController
     {
         $input = $request->all();
 //        $input = $this->convertArrayToValue($input);
-        $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency']);
+        $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
         /** @var Company $company */
         $company = $this->companyRepository->findWithoutFail($id);
 
@@ -331,7 +330,6 @@ class CompanyAPIController extends AppBaseController
             'companyShortCode' => 'required',
             'companyCountry' => 'required|numeric|min:1',
             'CompanyTelephone' => 'required',
-            'CompanyFax' => 'required',
             'CompanyEmail' => 'required',
             'registrationNumber' => 'required',
             'localCurrencyID' => 'required|numeric|min:1',
@@ -373,6 +371,10 @@ class CompanyAPIController extends AppBaseController
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
             $path = 'logos/' . $input['companyLogo'];
+
+            if ($exists = Storage::disk('local_public')->exists($path)) {
+                Storage::disk('local_public')->delete($path);
+            }
 
             Storage::disk('local_public')->put($path, $decodeFile);
         }
@@ -440,7 +442,7 @@ class CompanyAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companies = Company::whereIn('companySystemID',$childCompanies)->with(['reportingcurrency','localcurrency','exchange_gl','country']);
+        $companies = Company::whereIn('companySystemID',$childCompanies)->with(['reportingcurrency','localcurrency','exchange_gl','country','vat_input_gl','vat_output_gl']);
 
         $search = $request->input('search.value');
         if ($search) {

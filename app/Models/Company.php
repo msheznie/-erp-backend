@@ -176,6 +176,8 @@ class Company extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'vatRegisteredYN',
+        'vatRegistratonNumber',
         'qhseApiKey',
         'timeStamp'
     ];
@@ -255,6 +257,8 @@ class Company extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
+        'vatRegisteredYN' => 'integer',
+        'vatRegistratonNumber' => 'string',
         'qhseApiKey' => 'string'
     ];
 
@@ -320,6 +324,14 @@ class Company extends Model
 
     public function exchange_gl(){
         return $this->belongsTo('App\Models\ChartOfAccount', 'exchangeGainLossGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function vat_input_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'vatInputGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function vat_output_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'vatOutputGLCodeSystemID','chartOfAccountSystemID');
     }
 
 }
