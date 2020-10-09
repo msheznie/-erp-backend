@@ -572,7 +572,7 @@ class SupplierMasterAPIController extends AppBaseController
                     foreach ($old_array as $key => $old){
                         if($old != $modified_array[$key]){
                             $description = $employee->empName." Updated supplier (".$supplierMaster->supplierCodeSystem.") from ".$old." To ".$modified_array[$key]."";
-                            UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$supplierMaster->documentSystemID,$supplierMaster->supplierCodeSystem,$description,$modified_array[$key],$old);
+                            UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$supplierMaster->documentSystemID,$supplierMaster->primaryCompanySystemID,$supplierMaster->supplierCodeSystem,$description,$modified_array[$key],$old,$key);
                         }
                     }
                 }

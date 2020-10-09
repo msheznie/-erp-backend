@@ -398,7 +398,7 @@ class CustomerMasterAPIController extends AppBaseController
                         foreach ($old_array as $key => $old){
                             if($old != $modified_array[$key]){
                                 $description = $employee->empName." Updated customer (".$customerMasters->CutomerCode.") from ".$old." To ".$modified_array[$key]."";
-                               // UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$customerMasters->documentSystemID,$customerMasters->supplierCodeSystem,$description,$modified_array[$key],$old);
+                               // UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$customerMasters->documentSystemID,$customerMasters->primaryCompanySystemID,$customerMasters->supplierCodeSystem,$description,$modified_array[$key],$old,$key);
                             }
                         }
                     }

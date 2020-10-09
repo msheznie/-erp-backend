@@ -176,6 +176,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
         Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
         Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
+        Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
 
         /** Approval Level*/
         Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
@@ -1857,6 +1858,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
         Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+
+        Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog');
 
     });
 

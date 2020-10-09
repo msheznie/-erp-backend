@@ -141,347 +141,81 @@ class SalesMarketingReportAPIController extends AppBaseController
 
     public function exportReport(Request $request)
     {
+
+        $input = $request->all();
         $reportID = $request->reportID;
+        $type = $request->type;
         switch ($reportID) {
-            case 'CS': //Customer Statement Report
-                $reportTypeID = $request->reportTypeID;
-                $data = array();
-                $type = $request->type;
-                if ($reportTypeID == 'CBS') {
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerBalanceStatementQRY($request);
+            case 'qso':
 
-                    $outputArr = array();
-                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
-                    $grandTotal = array_sum($grandTotal);
+                $convertedRequest = (object)$this->convertArrayToSelectedValue($request->all(), array('approved_status','invoice_status','delivery_status'));
+                $checkIsGroup = Company::find($convertedRequest->companySystemID);
+                $output = $this->getQSOQRY($convertedRequest);
 
-                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                    $decimalPlace = array_unique($decimalPlace);
-                    $decimalPlace = !empty($decimalPlace) ? $decimalPlace[0] : 2;
+                $outputArr = array();
+                $invoiceAmount = collect($output)->pluck('invoice_amount')->toArray();
+                $invoiceAmount = array_sum($invoiceAmount);
 
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $data[] = array(
-                                'Company ID' => $val->companyID,
-                                'Company Name' => $val->CompanyName,
-                                'Customer Name' => $val->customerName,
-                                'Document Code' => $val->DocumentCode,
-                                'Posted Date' => $val->PostedDate,
-                                'Narration' => $val->DocumentNarration,
-                                'Contract' => $val->Contract,
-                                'PO Number' => $val->PONumber,
-                                'Invoice Number' => $val->invoiceNumber,
-                                'Invoice Date' => \Helper::dateFormat($val->InvoiceDate),
-                                'Currency' => $val->documentCurrency,
-                                'Balance Amount' => round($val->balanceAmount, $val->balanceDecimalPlaces)
-                            );
-                        }
-                    }
-                } else if ($request->reportTypeID == 'CSA') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerStatementAccountQRY($request);
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $x++;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->customerName;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Posted Date'] = $val->postedDate;
-                            $data[$x]['Contract'] = $val->clientContractID;
-                            $data[$x]['PO Number'] = $val->PONumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                            $data[$x]['Narration'] = $val->documentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = round($val->invoiceAmount, $val->balanceDecimalPlaces);
-                            $data[$x]['Receipt/CN Code'] = $val->ReceiptCode;
-                            $data[$x]['Receipt/CN Date'] = \Helper::dateFormat($val->ReceiptDate);
-                            $data[$x]['Receipt Amount'] = round($val->receiptAmount, $val->balanceDecimalPlaces);
-                            $data[$x]['Balance Amount'] = round($val->balanceAmount, $val->balanceDecimalPlaces);
-                        }
-                    }
-                }
+                $paidAmount = collect($output)->pluck('paid_amount')->toArray();
+                $paidAmount = array_sum($paidAmount);
 
-                 \Excel::create('customer_balance_statement', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $document_amount = collect($output)->pluck('document_amount')->toArray();
+                $document_amount = array_sum($document_amount);
 
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            case 'CA': //Customer Aging
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-                if ($reportTypeID == 'CAD') { //customer aging detail
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerAgingDetailQRY($request);
-
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->PostedDate);
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->customerName2;
-                            $data[$x]['Credit Days'] = $val->creditDays;
-                            $data[$x]['Department'] = $val->serviceLineName;
-                            $data[$x]['Contract ID'] = $val->Contract;
-                            $data[$x]['PO Number'] = $val->PONumber;
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Invoice Due Date'] = \Helper::dateFormat($val->invoiceDueDate);
-                            $data[$x]['Document Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                            foreach ($output['aging'] as $val2) {
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Outstanding'] = $lineTotal;
-                            $data[$x]['Age Days'] = $val->age;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                            }
-                            $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
-                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
-                            $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
-                            $data[$x]['Collection Tracker Status'] = $val->commentAndStatus;
-                            $x++;
-                        }
-                    }
-                } else {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerAgingSummaryQRY($request);
-
-                    if ($output['data']) {
-                        $x = 0;
-                        foreach ($output['data'] as $val) {
-                            $lineTotal = 0;
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Credit Days'] = $val->creditDays;
-                            $data[$x]['Cust. Code'] = $val->CustomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            foreach ($output['aging'] as $val2) {
-                                $lineTotal += $val->$val2;
-                            }
-                            $data[$x]['Amount'] = $lineTotal;
-                            foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val->$val2;
-                            }
-                            $x++;
-                        }
-                    }
-                }
-
-                 \Excel::create('customer_aging', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            case 'CL': //Customer Ledger
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-                if ($reportTypeID == 'CLT1') { //customer ledger template 1
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerLedgerTemplate1QRY($request);
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Contract'] = $val->Contract;
-                            $data[$x]['Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                            $data[$x]['Paid Amount'] = $val->paidAmount;
-                            $data[$x]['Balance Amount'] = $val->balanceAmount;
-                            $data[$x]['Age Days'] = $val->ageDays;
-                            $x++;
-                        }
-                    }
-
-                } else {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerLedgerTemplate2QRY($request); //customer ledger template 2
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            if ($val->PostedDate == '1970-01-01') {
-                                $data[$x]['Posted Date'] = '';
-                            } else {
-                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                            }
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Document Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Amount'] = $val->invoiceAmount;
-                            $x++;
-                        }
-                    }
-                }
-
-                 \Excel::create('customer_ledger', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            case 'CBSUM': //Customer Balance Summery
-                $reportTypeID = $request->reportTypeID;
-                if ($reportTypeID == 'CBSUM') { //customer ledger template 1
-
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    $output = $this->getCustomerBalanceSummery($request);
-
-                    $localAmount = collect($output)->pluck('localAmount')->toArray();
-                    $localAmountTotal = array_sum($localAmount);
-
-                    $rptAmount = collect($output)->pluck('RptAmount')->toArray();
-                    $rptAmountTotal = array_sum($rptAmount);
-
-                    $decimalPlaceLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                    $decimalPlaceL = array_unique($decimalPlaceLocal);
-
-                    $decimalPlaceRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                    $decimalPlaceR = array_unique($decimalPlaceRpt);
-
-                    $localCurrencyId = 2;
-                    $rptCurrencyId = 2;
-
-                    if (!empty($decimalPlaceL)) {
-                        $localCurrencyId = $decimalPlaceL[0];
-                    }
-
-                    if (!empty($decimalPlaceR)) {
-                        $rptCurrencyId = $decimalPlaceR[0];
-                    }
-
-
-                    $localCurrency = CurrencyMaster::where('currencyID', $localCurrencyId)->first();
-                    $rptCurrency = CurrencyMaster::where('currencyID', $rptCurrencyId)->first();
-
-                    $currencyID = $request->currencyID;
-                    $type = $request->type;
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Cust. Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-
-                            $decimalPlace = 2;
-                            if ($currencyID == '2') {
-                                $decimalPlace = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
-                            } else if ($currencyID == '3') {
-                                $decimalPlace = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentRptCurrency;
-                                $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
-                            } else {
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = $val->localAmount;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
-                            }
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-
-                     \Excel::create('customer_balance_summary', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-
-                    return $this->sendResponse(array(), 'successfully export');
-                }
-                break;
-            case 'CSR': //Customer Sales Register
-                $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $output = $this->getCustomerSalesRegisterQRY($request);
+                $decimalPlace = collect($output)->pluck('dp')->toArray();
+                $decimalPlace = array_unique($decimalPlace);
 
                 if ($output) {
-                    $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Invoice Type'] = $val->invoiceType;
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Customer Code'] = $val->CutomerCode;
-                        $data[$x]['Customer Name'] = $val->CustomerName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                        $data[$x]['Service Line'] = $val->serviceLineCode;
-                        $data[$x]['Contract'] = $val->clientContractID;
-                        $data[$x]['PO Number'] = $val->PONumber;
-                        $data[$x]['SE No'] = $val->wanNO;
-                        $data[$x]['Rig No'] = $val->rigNo;
-                        $data[$x]['Service Period'] = $val->servicePeriod;
-                        $data[$x]['Start Date'] = \Helper::dateFormat($val->serviceStartDate);
-                        $data[$x]['End Date'] = \Helper::dateFormat($val->serviceEndDate);
-                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Narration'] = $val->documentNarration;
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                        $data[$x]['Receipt Code'] = $val->ReceiptCode;
-                        $data[$x]['Receipt Date'] = \Helper::dateFormat($val->ReceiptDate);
-                        $data[$x]['Amount Matched'] = $val->receiptAmount;
-                        $data[$x]['Balance'] = $val->balanceAmount;
-                        $x++;
+                        // doc status
+                        $doc_status = '';
+                         if ($val['confirmedYN'] == 0 && $val['approvedYN'] == 0) {
+                             $doc_status = "Not Confirmed";
+                        }
+                        else if ($val['confirmedYN'] == 1 && $val['approvedYN'] == 0 && $val['refferedBackYN'] == 0) {
+                            $doc_status = "Pending Approval";
+                        } else if ($val['confirmedYN'] == 1 && $val['approvedYN'] == 0 && $val['refferedBackYN'] == -1) {
+                            $doc_status = "Referred Back";
+                        }
+                        else if ($val['confirmedYN'] == 1 && ($val['approvedYN'] == -1 || $val['refferedBackYN'] == 1 )) {
+                            $doc_status = "Fully Approved";
+                        }
+
+                        //deliveryStatus
+                        $delivery_status = '';
+                        if ($val['deliveryStatus'] == 0) {
+                            $delivery_status = 'Not Delivered';
+                        } else if ($val['deliveryStatus'] == 1) {
+                            $delivery_status = 'Partially Delivered';
+                        } else if ($val['deliveryStatus'] == 2) {
+                            $delivery_status = 'Fully Delivered';
+                        }
+
+                        $dp = (isset($val['dp']) && $val['dp'])?$val['dp']:3;
+
+
+                        $data[] = array(
+                            'Document Code' => $val['quotationCode'],
+                            'Document Date' => Helper::dateFormat($val['documentDate']),
+                            'Segment' => $val['serviceLine'],
+                            'Ref No' => $val['referenceNo'],
+                            'Customer' => $val['customer'],
+                            'Currency' => $val['currency'],
+                            'Expire Date' => Helper::dateFormat($val['documentExpDate']),
+                            'Document Status' => $doc_status,
+                            'Customer Status' => $val['customer_status'],
+                            'Document Amount' => round($val['document_amount'], $dp),
+                            'Delivery Status' => $delivery_status,
+                            'Invoice Amount' => round($val['invoice_amount'], $dp),
+                            'Paid Amount' => round($val['paid_amount'], $dp)
+                        );
                     }
+
+
                 }
 
-                 \Excel::create('customer_sales_register', function ($excel) use ($data) {
+                \Excel::create('quotation_so_report', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -492,376 +226,12 @@ class SalesMarketingReportAPIController extends AppBaseController
                 })->download($type);
 
                 return $this->sendResponse(array(), 'successfully export');
-                break;
 
-            case 'CC': //Customer Collection
-                $reportTypeID = $request->reportTypeID;
-                $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                if ($companyCurrency) {
-                    if ($request->currencyID == 2) {
-                        $selectedCurrency = $companyCurrency->localcurrency->CurrencyCode;
-                    } else if ($request->currencyID == 3) {
-                        $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
-                    }
-                }
-                $data = [];
-                if ($reportTypeID == 'CCR') { //customer aging detail
-
-                    if ($request->excelForm == 'bankReport') {
-
-                        $output = $this->getCustomerCollectionBRVExcelQRY($request);
-
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Customer Code'] = $val->CutomerCode;
-                                $data[$x]['Customer Short Code'] = $val->customerShortCode;
-                                $data[$x]['Customer Name'] = $val->CustomerName;
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Bank Name'] = $val->bankName;
-                                $data[$x]['Account No'] = $val->AccountNo;
-                                $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
-                                $data[$x]['Document Narration'] = $val->documentNarration;
-                                $data[$x]['Currency Code'] = $selectedCurrency;
-                                $data[$x]['BRV Document Amount'] = $val->BRVDocumentAmount;
-                                $x++;
-                            }
-                        }
-
-                    } else if ($request->excelForm == 'creditNoteReport') {
-
-                        $output = $this->getCustomerCollectionCNExcelQRY($request);
-
-                        if ($output) {
-                            $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Customer Code'] = $val->CutomerCode;
-                                $data[$x]['Customer Short Code'] = $val->customerShortCode;
-                                $data[$x]['Customer Name'] = $val->CustomerName;
-                                $data[$x]['Document Code'] = $val->documentCode;
-                                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                                $data[$x]['Document Narration'] = $val->documentNarration;
-                                $data[$x]['Currency Code'] = $selectedCurrency;
-                                $data[$x]['CN Document Amount'] = $val->CNDocumentAmount;
-                                $x++;
-                            }
-                        }
-                    }
-
-                } else {
-                    $output = $this->getCustomerCollectionMonthlyQRY($request);
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyCode;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Jan'] = $val->Jan;
-                            $data[$x]['Feb'] = $val->Feb;
-                            $data[$x]['March'] = $val->March;
-                            $data[$x]['April'] = $val->April;
-                            $data[$x]['May'] = $val->May;
-                            $data[$x]['Jun'] = $val->June;
-                            $data[$x]['July'] = $val->July;
-                            $data[$x]['Aug'] = $val->Aug;
-                            $data[$x]['Sept'] = $val->Sept;
-                            $data[$x]['Oct'] = $val->Oct;
-                            $data[$x]['Nov'] = $val->Nov;
-                            $data[$x]['Dec'] = $val->Dece;
-                            $data[$x]['Tot'] = ($val->Jan + $val->Feb + $val->March + $val->April + $val->May + $val->June + $val->July + $val->Aug + $val->Sept + $val->Oct + $val->Nov + $val->Dece);
-                            $x++;
-                        }
-                    }
-                }
-
-                 \Excel::create('customer_collection', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            case 'CR': //Customer Revenue
-                $reportTypeID = $request->reportTypeID;
-
-                if ($reportTypeID == 'RC') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    $output = $this->getRevenueByCustomer($request);
-
-                    $decimalPlaceLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                    $decimalPlaceL = array_unique($decimalPlaceLocal);
-
-                    $decimalPlaceRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                    $decimalPlaceR = array_unique($decimalPlaceRpt);
-
-                    $localCurrencyId = 2;
-                    $rptCurrencyId = 2;
-
-                    if (!empty($decimalPlaceL)) {
-                        $localCurrencyId = $decimalPlaceL[0];
-                    }
-
-                    if (!empty($decimalPlaceR)) {
-                        $rptCurrencyId = $decimalPlaceR[0];
-                    }
-
-                    $localCurrency = CurrencyMaster::where('currencyID', $localCurrencyId)->first();
-                    $rptCurrency = CurrencyMaster::where('currencyID', $rptCurrencyId)->first();
-
-                    $currencyID = $request->currencyID;
-                    $type = $request->type;
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Contract No'] = $val->ContractNumber;
-                            $data[$x]['Contract Description'] = $val->contractDescription;
-                            $data[$x]['Contract/PO'] = $val->CONTRACT_PO;
-                            $data[$x]['Contract End Date'] = \Helper::dateFormat($val->ContEndDate);
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['GL Desc'] = $val->AccountDescription;
-                            $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Posting Month'] = Carbon::parse($val->documentDate)->shortEnglishMonth;
-                            $data[$x]['Posting Year'] = $val->PostingYear;
-                            $data[$x]['Narration'] = $val->documentNarration;
-
-                            $decimalPlace = 0;
-                            if ($currencyID == '2') {
-                                $decimalPlace = 0; //!empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
-                            } else if ($currencyID == '3') {
-                                $decimalPlace = 0; //!empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
-                                $data[$x]['Currency'] = $val->documentRptCurrency;
-                                $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
-                            } else {
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = $val->localAmount;
-                                $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
-                            }
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-
-                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-
-
-                } elseif ($reportTypeID == 'RMS') {
-
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    $output = $this->getCustomerRevenueMonthlySummary($request);
-                    $type = $request->type;
-
-                    $currency = $request->currencyID;
-                    $currencyId = 2;
-
-                    if ($currency == 2) {
-                        $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
-                    } else {
-                        $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
-                    }
-
-                    if (!empty($decimalPlaceUnique)) {
-                        $currencyId = $decimalPlaceUnique[0];
-                    }
-
-                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
-
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Currency'] = $requestCurrency->CurrencyCode;
-                            $data[$x]['Jan'] = $val->Jan;
-                            $data[$x]['Feb'] = $val->Feb;
-                            $data[$x]['March'] = $val->March;
-                            $data[$x]['April'] = $val->April;
-                            $data[$x]['May'] = $val->May;
-                            $data[$x]['June'] = $val->June;
-                            $data[$x]['July'] = $val->July;
-                            $data[$x]['Aug'] = $val->Aug;
-                            $data[$x]['Sept'] = $val->Sept;
-                            $data[$x]['Oct'] = $val->Oct;
-                            $data[$x]['Nov'] = $val->Nov;
-                            $data[$x]['Dec'] = $val->Dece;
-                            $data[$x]['Total'] = $val->Total;
-                            $x++;
-                        }
-                    } else {
-                        $data = array();
-                    }
-
-                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-                }
-                break;
-            case 'CNR': //Credit Note Register
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $output = $this->getCreditNoteRegisterQRY($request);
-                $type = $request->type;
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $x++;
-                        $matchingDocdate = '';
-                        $matchingDocCode = '';
-                        if ($val->custReceiptDate == null && $val->matchingDocdate == null) {
-                            $matchingDocCode = $val->matchingDocCode;
-                        } else if ($val->custReceiptDate != null && $val->matchingDocdate == null) {
-                            $matchingDocCode = $val->custReceiptCode;
-                        } else if ($val->custReceiptDate == null && $val->matchingDocdate != null) {
-                            $matchingDocCode = $val->matchingDocCode;
-                        } else if ($val->custReceiptDate > $val->matchingDocdate) {
-                            $matchingDocCode = $val->custReceiptCode;
-                        } else if ($val->matchingDocdate > $val->custReceiptDate) {
-                            $matchingDocCode = $val->matchingDocCode;
-                        }
-                        if ($val->custReceiptDate == null && $val->matchingDocdate == null) {
-                            $matchingDocdate = $val->matchingDocdate;
-                        } else if ($val->custReceiptDate != null && $val->matchingDocdate == null) {
-                            $matchingDocdate = $val->custReceiptDate;
-                        } else if ($val->custReceiptDate == null && $val->matchingDocdate != null) {
-                            $matchingDocdate = $val->matchingDocdate;
-                        } else if ($val->custReceiptDate > $val->matchingDocdate) {
-                            $matchingDocdate = $val->custReceiptDate;
-                        } else if ($val->matchingDocdate > $val->custReceiptDate) {
-                            $matchingDocdate = $val->matchingDocdate;
-                        }
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Customer Short Code'] = $val->CutomerCode;
-                        $data[$x]['Customer Name'] = $val->CustomerName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
-                        $data[$x]['Comments'] = $val->documentNarration;
-                        $data[$x]['Department'] = $val->ServiceLineDes;
-                        $data[$x]['Client Contract ID'] = $val->clientContractID;
-                        $data[$x]['GL Code'] = $val->AccountCode;
-                        $data[$x]['GL Description'] = $val->AccountDescription;
-                        $data[$x]['Currency'] = $val->CurrencyCode;
-                        $data[$x]['Credit Note Total Amount'] = round($val->documentRptAmount, $val->DecimalPlaces);
-                        $data[$x]['Receipt Matching Code'] = $matchingDocCode;
-                        $data[$x]['Receipt Matching Date'] = $matchingDocdate;
-                        $data[$x]['Receipt Amount'] = round(($val->detailSum + $val->custReceiptSum), $val->DecimalPlaces);
-                    }
-                }
-
-                 \Excel::create('customer_collection', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                return $this->sendResponse(array(), 'successfully export');
-                break;
-            case 'INVTRACK': //Customer Invoice Tracker
-                $type = 'csv';
-                $input = $request->all();
-
-                $validator = \Validator::make($input, [
-                    'customerID' => 'required',
-                    'contractID' => 'required',
-                    'yearID' => 'required',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-
-                $output = $this->getInvoiceTrackerQRY($request);
-
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $data[$x]['Rig'] = $val->RigDescription." ".$val->regNo;
-                        $data[$x]['Year'] = $val->myRentYear;
-                        $data[$x]['Month'] = $val->myRentMonth;
-                        $data[$x]['Start Date'] = \Helper::dateFormat($val->rentalStartDate);
-                        $data[$x]['End Date'] = \Helper::dateFormat($val->rentalEndDate);
-                        $data[$x]['Rental'] = $val->billingCode;
-                        $data[$x]['Amount'] = $val->performaValue;
-                        $data[$x]['Proforma'] = $val->PerformaCode;
-                        $data[$x]['Pro Date'] = \Helper::dateFormat($val->performaOpConfirmedDate);
-                        $data[$x]['Client Status'] = $val->description;
-                        $data[$x]['Client App Date'] = \Helper::dateFormat($val->myClientapprovedDate);
-                        $data[$x]['Batch No'] = $val->batchNo;
-                        $data[$x]['Submitted Date'] = \Helper::dateFormat($val->mySubmittedDate);
-                        $data[$x]['Invoice No'] = $val->bookingInvCode;
-                        $data[$x]['Invoice App Date'] = \Helper::dateFormat($val->myApprovedDate);
-                        $data[$x]['Status'] = $val->status;
-                        $data[$x]['Receipt Code'] = $val->ReceiptCode;
-                        $data[$x]['Receipt Date'] = \Helper::dateFormat($val->ReceiptDate);
-                        $data[$x]['Receipt Amount'] = $val->ReceiptAmount;
-                        $x++;
-                    }
-                } else {
-                    $data = [];
-                }
-
-                 \Excel::create('invoice_tracker_', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-
-                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
         }
+
     }
 
     public function pdfExportReport(Request $request)
@@ -1272,7 +642,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 ])
                     ->select('quotationDetailsID','quotationMasterID','transactionAmount');
             }])
-            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus')
+            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN')
             ->get()
             ->toArray();
 
