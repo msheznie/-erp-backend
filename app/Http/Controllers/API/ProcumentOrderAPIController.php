@@ -556,13 +556,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
 
-        $input['poTotalSupplierTransactionCurrency'] = $poMasterSumDeducted;
+        $input['poTotalSupplierTransactionCurrency'] =  \Helper::roundValue($poMasterSumDeducted);
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $procumentOrderUpdate->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency =  \Helper::roundValue($poMasterSumDeducted);
         $procumentOrderUpdate->companyReportingER = \Helper::roundValue($currencyConversionMaster['trasToRptER']);
         $procumentOrderUpdate->localCurrencyER = \Helper::roundValue($currencyConversionMaster['trasToLocER']);
 
@@ -3731,7 +3731,7 @@ WHERE
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $purchaseOrder->poDiscountAmount);
 
-        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $newlyUpdatedPoTotalAmount);
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
 
         // calculating total Supplier Default currency total
 
@@ -3740,7 +3740,7 @@ WHERE
         $purchaseOrder->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $purchaseOrder->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
         $purchaseOrder->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMasterDefault['documentAmount']);
-        $purchaseOrder->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $purchaseOrder->poTotalSupplierTransactionCurrency =  \Helper::roundValue($poMasterSumDeducted);
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -5538,7 +5538,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 'WO_confirmedYN' => 1,
                 'WO_confirmedDate' => now(),
                 'WO_confirmedByEmpID' => $employee->employeeSystemID,
-                'poTotalSupplierTransactionCurrency' => $poMasterSumDeducted,
+                'poTotalSupplierTransactionCurrency' =>  \Helper::roundValue($poMasterSumDeducted),
                 'poTotalSupplierDefaultCurrency' => \Helper::roundValue($currencyConversionMaster['documentAmount']),
                 'poTotalComRptCurrency' => \Helper::roundValue($currencyConversionMaster['reportingAmount']),
                 'poTotalLocalCurrency' => \Helper::roundValue($currencyConversionMaster['localAmount']),
