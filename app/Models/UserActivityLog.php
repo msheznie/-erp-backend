@@ -72,10 +72,12 @@ class UserActivityLog extends Model
     public $fillable = [
         'user_id',
         'document_id',
+        'company_id',
         'module_id',
         'description',
         'previous_value',
         'current_value',
+        'column_name',
         'activity_at',
         'user_pc'
     ];
@@ -89,13 +91,22 @@ class UserActivityLog extends Model
         'id' => 'integer',
         'user_id' => 'integer',
         'document_id' => 'integer',
+        'company_id' => 'integer',
         'module_id' => 'integer',
         'description' => 'string',
         'previous_value' => 'string',
         'current_value' => 'string',
+        'column_name' => 'string',
         'activity_at' => 'datetime',
         'user_pc' => 'string'
     ];
 
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','user_id','employeeSystemID');
+    }
+
+    public function document(){
+        return $this->belongsTo('App\Models\DocumentMaster','document_id','documentSystemID');
+    }
 
 }

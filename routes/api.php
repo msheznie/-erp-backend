@@ -1858,6 +1858,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
         Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
 
+        Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog');
+
     });
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
