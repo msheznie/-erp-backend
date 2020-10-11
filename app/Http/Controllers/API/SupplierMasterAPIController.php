@@ -171,6 +171,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             $data[$x]['Country'] = $country;
+            $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
             $data[$x]['Currency'] = $currency;
             $data[$x]['Address'] = $val->address;
             $data[$x]['Telephone'] = $val->telephone;
