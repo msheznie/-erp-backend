@@ -106,6 +106,7 @@ use App\Models\GRVMaster;
 use App\Models\Year;
 use App\Models\SecondaryCompany;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\WorkOrderGenerationLog;
 use App\Repositories\ProcumentOrderRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
@@ -1140,8 +1141,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId']);
-        $procumentOrders->where('documentSystemID', $input['documentId']);
+        $procumentOrders = ProcumentOrder::where('documentSystemID', $input['documentId']);
         if ($input['poType_N'] != 1) {
             $procumentOrders->where('poType_N', $input['poType_N']);
         }
@@ -1154,9 +1154,21 @@ class ProcumentOrderAPIController extends AppBaseController
         }, 'segment' => function ($query) {
         }]);
 
+        if (array_key_exists('companyId', $input)) {
+            if ($input['companyId'] && !is_null($input['companyId'])) {
+                $procumentOrders->where('companySystemID', $input['companyId']);
+            }
+        }
+
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('workOrderGenerateID', $input)) {
+            if (isset($input['workOrderGenerateID']) && !is_null($input['workOrderGenerateID'])) {
+                $procumentOrders->where('workOrderGenerateID', $input['workOrderGenerateID']);
             }
         }
 
@@ -1270,14 +1282,17 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-        $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
-            ->where('companySystemID', $input['companyId'])->first();
-
         $policy = 0;
+        if (isset($input['companyId'])) {
+            $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
+                ->where('companySystemID', $input['companyId'])->first();
 
-        if (!empty($historyPolicy)) {
-            $policy = $historyPolicy->isYesNO;
+
+            if (!empty($historyPolicy)) {
+                $policy = $historyPolicy->isYesNO;
+            }
         }
+
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', $policy)
@@ -5774,155 +5789,350 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         ->whereRaw('WO_NoOfAutoGenerationTimes > WO_NoOfGeneratedTimes')
                                         ->get();
 
+
+
         DB::beginTransaction();
         try {
-            foreach ($checkPOMaster as $key => $checkPOMaster) {
-
-                $myNoOfGeneratedTimes = $checkPOMaster->WO_NoOfGeneratedTimes + 1;
-                $poMasterData = [
-                    "poProcessId" => $checkPOMaster->poProcessId,
-                    "companySystemID" => $checkPOMaster->companySystemID,
-                    "companyID" => $checkPOMaster->companyID,
-                    "departmentID" => $checkPOMaster->departmentID,
-                    "serviceLineSystemID" => $checkPOMaster->serviceLineSystemID,
-                    "serviceLine" => $checkPOMaster->serviceLine,
-                    "companyAddress" => $checkPOMaster->companyAddress,
-                    "documentSystemID" => $checkPOMaster->documentSystemID,
-                    "documentID" => $checkPOMaster->documentID,
-                    // "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode & "\" & Day(dtmDate) & "_" & Month(dtmDate) & "_" & Year(dtmDate),
-                    "serialNumber" => $checkPOMaster->serialNumber,
-                    "supplierID" => $checkPOMaster->supplierID,
-                    "supplierPrimaryCode" => $checkPOMaster->supplierPrimaryCode,
-                    "supplierName" => $checkPOMaster->supplierName,
-                    "supplierAddress" => $checkPOMaster->supplierAddress,
-                    "supplierTelephone" => $checkPOMaster->supplierTelephone,
-                    "supplierFax" => $checkPOMaster->supplierFax,
-                    "supplierEmail" => $checkPOMaster->supplierEmail,
-                    "creditPeriod" => $checkPOMaster->creditPeriod,
-                    "expectedDeliveryDate" => Carbon::now(),
-                    "narration" => $checkPOMaster->narration,
-                    "poLocation" => $checkPOMaster->poLocation,
-                    "financeCategory" => $checkPOMaster->financeCategory,
-                    "referenceNumber" => $checkPOMaster->referenceNumber,
-                    "shippingAddressID" => $checkPOMaster->shippingAddressID,
-                    "shippingAddressDescriprion" => $checkPOMaster->shippingAddressDescriprion,
-                    "invoiceToAddressID" => $checkPOMaster->invoiceToAddressID,
-                    "invoiceToAddressDescription" => $checkPOMaster->invoiceToAddressDescription,
-                    "soldToAddressID" => $checkPOMaster->soldToAddressID,
-                    "soldToAddressDescriprion" => $checkPOMaster->soldToAddressDescriprion,
-                    "paymentTerms" => $checkPOMaster->paymentTerms,
-                    "deliveryTerms" => $checkPOMaster->deliveryTerms,
-                    "panaltyTerms" => $checkPOMaster->panaltyTerms,
-                    "localCurrencyID" => $checkPOMaster->localCurrencyID,
-                    "localCurrencyER" => $checkPOMaster->localCurrencyER,
-                    "companyReportingCurrencyID" => $checkPOMaster->companyReportingCurrencyID,
-                    "companyReportingER" => $checkPOMaster->companyReportingER,
-                    "supplierDefaultCurrencyID" => $checkPOMaster->supplierDefaultCurrencyID,
-                    "supplierDefaultER" => $checkPOMaster->supplierDefaultER,
-                    "supplierTransactionCurrencyID" => $checkPOMaster->supplierTransactionCurrencyID,
-                    "supplierTransactionER" => $checkPOMaster->supplierTransactionER,
-                    "poConfirmedYN" => $checkPOMaster->poConfirmedYN,
-                    "poConfirmedByEmpSystemID" => $checkPOMaster->poConfirmedByEmpSystemID,
-                    "poConfirmedByEmpID" => $checkPOMaster->poConfirmedByEmpID,
-                    "poConfirmedByName" => $checkPOMaster->poConfirmedByName,
-                    "poConfirmedDate" => $checkPOMaster->poConfirmedDate,
-                    "poCancelledYN" => $checkPOMaster->poCancelledYN,
-                    "poCancelledBy" => $checkPOMaster->poCancelledBy,
-                    "poCancelledByName" => $checkPOMaster->poCancelledByName,
-                    "poCancelledDate" => $checkPOMaster->poCancelledDate,
-                    "cancelledComments" => $checkPOMaster->cancelledComments,
-                    "poTotalComRptCurrency" => $checkPOMaster->poTotalComRptCurrency,
-                    "poTotalLocalCurrency" => $checkPOMaster->poTotalLocalCurrency,
-                    "poTotalSupplierDefaultCurrency" => $checkPOMaster->poTotalSupplierDefaultCurrency,
-                    "poTotalSupplierTransactionCurrency" => $checkPOMaster->poTotalSupplierTransactionCurrency,
-                    "poDiscountPercentage" => 0,
-                    "poDiscountAmount" => 0,
-                    "shipTocontactPersonID" => $checkPOMaster->shipTocontactPersonID,
-                    "shipTocontactPersonTelephone" => $checkPOMaster->shipTocontactPersonTelephone,
-                    "shipTocontactPersonFaxNo" => $checkPOMaster->shipTocontactPersonFaxNo,
-                    "shipTocontactPersonEmail" => $checkPOMaster->shipTocontactPersonEmail,
-                    "invoiceTocontactPersonID" => $checkPOMaster->invoiceTocontactPersonID,
-                    "invoiceTocontactPersonTelephone" => $checkPOMaster->invoiceTocontactPersonTelephone,
-                    "invoiceTocontactPersonFaxNo" => $checkPOMaster->invoiceTocontactPersonFaxNo,
-                    "invoiceTocontactPersonEmail" => $checkPOMaster->invoiceTocontactPersonEmail,
-                    "soldTocontactPersonID" => $checkPOMaster->soldTocontactPersonID,
-                    "soldTocontactPersonTelephone" => $checkPOMaster->soldTocontactPersonTelephone,
-                    "soldTocontactPersonFaxNo" => $checkPOMaster->soldTocontactPersonFaxNo,
-                    "soldTocontactPersonEmail" => $checkPOMaster->soldTocontactPersonEmail,
-                    "priority" => $checkPOMaster->priority,
-                    "approved" => $checkPOMaster->approved,
-                    "approvedDate" => $checkPOMaster->approvedDate,
-                    "addOnPercent" => $checkPOMaster->addOnPercent,
-                    "addOnDefaultPercent" => $checkPOMaster->addOnDefaultPercent,
-                    "GRVTrackingID" => $checkPOMaster->GRVTrackingID,
-                    "logisticDoneYN" => $checkPOMaster->logisticDoneYN,
-                    "poClosedYN" => $checkPOMaster->poClosedYN,
-                    "grvRecieved" => $checkPOMaster->grvRecieved,
-                    "invoicedBooked" => $checkPOMaster->invoicedBooked,
-                    "timesReferred" => $checkPOMaster->timesReferred,
-                    "poType" => "Standard",
-                    "poType_N" => 6,
-                    "docRefNo" => $checkPOMaster->docRefNo,
-                    "RollLevForApp_curr" => 1,
-                    "sentToSupplier" => $checkPOMaster->sentToSupplier,
-                    "sentToSupplierByEmpSystemID" => $checkPOMaster->sentToSupplierByEmpSystemID,
-                    "sentToSupplierByEmpID" => $checkPOMaster->sentToSupplierByEmpID,
-                    "sentToSupplierByEmpName" => $checkPOMaster->sentToSupplierByEmpName,
-                    "sentToSupplierDate" => $checkPOMaster->sentToSupplierDate,
-                    "budgetBlockYN" => $checkPOMaster->budgetBlockYN,
-                    "hidePOYN" => $checkPOMaster->hidePOYN,
-                    "hideByEmpID" => $checkPOMaster->hideByEmpID,
-                    "hideByEmpName" => $checkPOMaster->hideByEmpName,
-                    "hideDate" => $checkPOMaster->hideDate,
-                    "hideComments" => $checkPOMaster->hideComments,
-                    "WO_purchaseOrderID" => $checkPOMaster->purchaseOrderID,
-                    "WO_PeriodFrom" => $checkPOMaster->WO_PeriodFrom,
-                    "WO_PeriodTo" => $checkPOMaster->WO_PeriodTo,
-                    "WO_NoOfAutoGenerationTimes" => $checkPOMaster->WO_NoOfAutoGenerationTimes,
-                    "WO_NoOfGeneratedTimes" => $myNoOfGeneratedTimes,
-                    "WO_fullyGenerated" => $checkPOMaster->WO_fullyGenerated,
-                    "WO_confirmedYN" => 1,
-                    "WO_confirmedDate" => $checkPOMaster->WO_confirmedDate,
-                    "WO_confirmedByEmpID" => $checkPOMaster->WO_confirmedByEmpID,
-                    "partiallyGRVAllowed" => $checkPOMaster->partiallyGRVAllowed,
-                    "logisticsAvailable" => $checkPOMaster->logisticsAvailable,
-                    "createdUserGroup" => $checkPOMaster->createdUserGroup,
-                    "createdPcID" => $checkPOMaster->createdPcID,
-                    "createdUserSystemID" => $checkPOMaster->createdUserSystemID,
-                    "createdUserID" => $checkPOMaster->createdUserID,
-                    "modifiedPc" => $checkPOMaster->modifiedPc,
-                    "modifiedUserSystemID" => $checkPOMaster->modifiedUserSystemID,
-                    "modifiedUser" => $checkPOMaster->modifiedUser,
-                    "createdDateTime" => Carbon::now(),
-                    "timeStamp" => Carbon::now(),
+            if (sizeof($checkPOMasters) > 0) {
+                $logData = [
+                    'date' => $date,
+                    'createdUser' => \Helper::getEmployeeSystemID(),
+                    'companySystemID' => $input['companySystemID']
                 ];
 
-                $poMasterDataRes = ProcumentOrder::create($poMasterData);
-
-                $checkPOMaster->WO_NoOfGeneratedTimes = $myNoOfGeneratedTimes;
-
-                if ($checkPOMaster->WO_NoOfAutoGenerationTimes = $myNoOfGeneratedTimes) {
-                    $checkPOMaster->WO_fullyGenerated = -1;
-                } else {
-                    $checkPOMaster->WO_fullyGenerated = 0;
+                $workOrderLogRes = WorkOrderGenerationLog::create($logData);
+                if (!$workOrderLogRes) {
+                    return $this->sendError("Error occured while generating work order");
                 }
+            }
 
-                $checkPOMaster->timeStamp = Carbon::now();
+            foreach ($checkPOMasters as $key => $checkPOMaster) {
+                if ($checkPOMaster->WO_terminateYN == 0) {
+                    $myNoOfAutoGenerationTimes = $checkPOMaster->WO_NoOfAutoGenerationTimes;
+                    $myNoOfGeneratedTimes = $checkPOMaster->WO_NoOfGeneratedTimes + 1;
 
-                $checkPOMaster->save();
+                    $poMasterData = [
+                        "poProcessId" => $checkPOMaster->poProcessId,
+                        "workOrderGenerateID" => $workOrderLogRes->id,
+                        "companySystemID" => $checkPOMaster->companySystemID,
+                        "companyID" => $checkPOMaster->companyID,
+                        "departmentID" => $checkPOMaster->departmentID,
+                        "serviceLineSystemID" => $checkPOMaster->serviceLineSystemID,
+                        "serviceLine" => $checkPOMaster->serviceLine,
+                        "companyAddress" => $checkPOMaster->companyAddress,
+                        "documentSystemID" => $checkPOMaster->documentSystemID,
+                        "documentID" => $checkPOMaster->documentID,
+                        "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode ."\\". Carbon::now()->format('d') . "_" . Carbon::now()->format('m') . "_" . Carbon::now()->format('Y'),
+                        "serialNumber" => $checkPOMaster->serialNumber,
+                        "supplierID" => $checkPOMaster->supplierID,
+                        "supplierPrimaryCode" => $checkPOMaster->supplierPrimaryCode,
+                        "supplierName" => $checkPOMaster->supplierName,
+                        "supplierAddress" => $checkPOMaster->supplierAddress,
+                        "supplierTelephone" => $checkPOMaster->supplierTelephone,
+                        "supplierFax" => $checkPOMaster->supplierFax,
+                        "supplierEmail" => $checkPOMaster->supplierEmail,
+                        "creditPeriod" => $checkPOMaster->creditPeriod,
+                        "expectedDeliveryDate" => Carbon::now(),
+                        "narration" => $checkPOMaster->narration,
+                        "poLocation" => $checkPOMaster->poLocation,
+                        "financeCategory" => $checkPOMaster->financeCategory,
+                        "referenceNumber" => $checkPOMaster->referenceNumber,
+                        "shippingAddressID" => $checkPOMaster->shippingAddressID,
+                        "shippingAddressDescriprion" => $checkPOMaster->shippingAddressDescriprion,
+                        "invoiceToAddressID" => $checkPOMaster->invoiceToAddressID,
+                        "invoiceToAddressDescription" => $checkPOMaster->invoiceToAddressDescription,
+                        "soldToAddressID" => $checkPOMaster->soldToAddressID,
+                        "soldToAddressDescriprion" => $checkPOMaster->soldToAddressDescriprion,
+                        "paymentTerms" => $checkPOMaster->paymentTerms,
+                        "deliveryTerms" => $checkPOMaster->deliveryTerms,
+                        "panaltyTerms" => $checkPOMaster->panaltyTerms,
+                        "localCurrencyID" => $checkPOMaster->localCurrencyID,
+                        "localCurrencyER" => $checkPOMaster->localCurrencyER,
+                        "companyReportingCurrencyID" => $checkPOMaster->companyReportingCurrencyID,
+                        "companyReportingER" => $checkPOMaster->companyReportingER,
+                        "supplierDefaultCurrencyID" => $checkPOMaster->supplierDefaultCurrencyID,
+                        "supplierDefaultER" => $checkPOMaster->supplierDefaultER,
+                        "supplierTransactionCurrencyID" => $checkPOMaster->supplierTransactionCurrencyID,
+                        "supplierTransactionER" => $checkPOMaster->supplierTransactionER,
+                        "poConfirmedYN" => $checkPOMaster->poConfirmedYN,
+                        "poConfirmedByEmpSystemID" => $checkPOMaster->poConfirmedByEmpSystemID,
+                        "poConfirmedByEmpID" => $checkPOMaster->poConfirmedByEmpID,
+                        "poConfirmedByName" => $checkPOMaster->poConfirmedByName,
+                        "poConfirmedDate" => $checkPOMaster->poConfirmedDate,
+                        "poCancelledYN" => $checkPOMaster->poCancelledYN,
+                        "poCancelledBy" => $checkPOMaster->poCancelledBy,
+                        "poCancelledByName" => $checkPOMaster->poCancelledByName,
+                        "poCancelledDate" => $checkPOMaster->poCancelledDate,
+                        "cancelledComments" => $checkPOMaster->cancelledComments,
+                        "poTotalComRptCurrency" => $checkPOMaster->poTotalComRptCurrency,
+                        "poTotalLocalCurrency" => $checkPOMaster->poTotalLocalCurrency,
+                        "poTotalSupplierDefaultCurrency" => $checkPOMaster->poTotalSupplierDefaultCurrency,
+                        "poTotalSupplierTransactionCurrency" => $checkPOMaster->poTotalSupplierTransactionCurrency,
+                        "poDiscountPercentage" => 0,
+                        "poDiscountAmount" => 0,
+                        "shipTocontactPersonID" => $checkPOMaster->shipTocontactPersonID,
+                        "shipTocontactPersonTelephone" => $checkPOMaster->shipTocontactPersonTelephone,
+                        "shipTocontactPersonFaxNo" => $checkPOMaster->shipTocontactPersonFaxNo,
+                        "shipTocontactPersonEmail" => $checkPOMaster->shipTocontactPersonEmail,
+                        "invoiceTocontactPersonID" => $checkPOMaster->invoiceTocontactPersonID,
+                        "invoiceTocontactPersonTelephone" => $checkPOMaster->invoiceTocontactPersonTelephone,
+                        "invoiceTocontactPersonFaxNo" => $checkPOMaster->invoiceTocontactPersonFaxNo,
+                        "invoiceTocontactPersonEmail" => $checkPOMaster->invoiceTocontactPersonEmail,
+                        "soldTocontactPersonID" => $checkPOMaster->soldTocontactPersonID,
+                        "soldTocontactPersonTelephone" => $checkPOMaster->soldTocontactPersonTelephone,
+                        "soldTocontactPersonFaxNo" => $checkPOMaster->soldTocontactPersonFaxNo,
+                        "soldTocontactPersonEmail" => $checkPOMaster->soldTocontactPersonEmail,
+                        "priority" => $checkPOMaster->priority,
+                        "approved" => $checkPOMaster->approved,
+                        "approvedDate" => $checkPOMaster->approvedDate,
+                        "addOnPercent" => $checkPOMaster->addOnPercent,
+                        "addOnDefaultPercent" => $checkPOMaster->addOnDefaultPercent,
+                        "GRVTrackingID" => $checkPOMaster->GRVTrackingID,
+                        "logisticDoneYN" => $checkPOMaster->logisticDoneYN,
+                        "poClosedYN" => $checkPOMaster->poClosedYN,
+                        "grvRecieved" => $checkPOMaster->grvRecieved,
+                        "invoicedBooked" => $checkPOMaster->invoicedBooked,
+                        "timesReferred" => $checkPOMaster->timesReferred,
+                        "poType" => "Standard",
+                        "poType_N" => 6,
+                        "docRefNo" => $checkPOMaster->docRefNo,
+                        "RollLevForApp_curr" => 1,
+                        "sentToSupplier" => $checkPOMaster->sentToSupplier,
+                        "sentToSupplierByEmpSystemID" => $checkPOMaster->sentToSupplierByEmpSystemID,
+                        "sentToSupplierByEmpID" => $checkPOMaster->sentToSupplierByEmpID,
+                        "sentToSupplierByEmpName" => $checkPOMaster->sentToSupplierByEmpName,
+                        "sentToSupplierDate" => $checkPOMaster->sentToSupplierDate,
+                        "budgetBlockYN" => $checkPOMaster->budgetBlockYN,
+                        "hidePOYN" => $checkPOMaster->hidePOYN,
+                        "hideByEmpID" => $checkPOMaster->hideByEmpID,
+                        "hideByEmpName" => $checkPOMaster->hideByEmpName,
+                        "hideDate" => $checkPOMaster->hideDate,
+                        "hideComments" => $checkPOMaster->hideComments,
+                        "WO_purchaseOrderID" => $checkPOMaster->purchaseOrderID,
+                        "WO_PeriodFrom" => $checkPOMaster->WO_PeriodFrom,
+                        "WO_PeriodTo" => $checkPOMaster->WO_PeriodTo,
+                        "WO_NoOfAutoGenerationTimes" => $checkPOMaster->WO_NoOfAutoGenerationTimes,
+                        "WO_NoOfGeneratedTimes" => $myNoOfGeneratedTimes,
+                        "WO_fullyGenerated" => $checkPOMaster->WO_fullyGenerated,
+                        "WO_confirmedYN" => 1,
+                        "WO_confirmedDate" => $checkPOMaster->WO_confirmedDate,
+                        "WO_confirmedByEmpID" => $checkPOMaster->WO_confirmedByEmpID,
+                        "partiallyGRVAllowed" => $checkPOMaster->partiallyGRVAllowed,
+                        "logisticsAvailable" => $checkPOMaster->logisticsAvailable,
+                        "createdUserGroup" => $checkPOMaster->createdUserGroup,
+                        "createdPcID" => $checkPOMaster->createdPcID,
+                        "createdUserSystemID" => $checkPOMaster->createdUserSystemID,
+                        "createdUserID" => $checkPOMaster->createdUserID,
+                        "modifiedPc" => $checkPOMaster->modifiedPc,
+                        "modifiedUserSystemID" => $checkPOMaster->modifiedUserSystemID,
+                        "modifiedUser" => $checkPOMaster->modifiedUser,
+                        "createdDateTime" => Carbon::now(),
+                        "timeStamp" => Carbon::now(),
+                    ];
 
-                $totalTransAmount = 0;
-                $totalLocalAmount = 0;
-                $totalRptAmount = 0;
+                    $poMasterDataRes = ProcumentOrder::create($poMasterData);
 
-                
+                    $checkPOMaster->WO_NoOfGeneratedTimes = $myNoOfGeneratedTimes;
+
+                    if ($checkPOMaster->WO_NoOfAutoGenerationTimes = $myNoOfGeneratedTimes) {
+                        $checkPOMaster->WO_fullyGenerated = -1;
+                    } else {
+                        $checkPOMaster->WO_fullyGenerated = 0;
+                    }
+
+                    $checkPOMaster->timeStamp = Carbon::now();
+
+                    $checkPOMaster->save();
+
+                    $updateNewWOMasterDetails = ProcumentOrder::find($poMasterDataRes->purchaseOrderID);
+
+                    $totalTransAmount = 0;
+                    $totalLocalAmount = 0;
+                    $totalRptAmount = 0;
+
+                    foreach ($checkPOMaster->detail as $key => $checkWODetail) {
+                        $checkWOItemQty = PurchaseOrderDetails::selectRaw('companyID, WO_purchaseOrderMasterID, WP_purchaseOrderDetailsID, itemCode, SUM(noQty) as SumOfnoQty, SUM(netAmount) as SumOfnetAmount, Sum( GRVcostPerUnitLocalCur * noQty ) AS LocalCur, Sum( GRVcostPerUnitSupDefaultCur * noQty ) AS DefCur, Sum( GRVcostPerUnitSupTransCur * noQty ) AS transCur, Sum( GRVcostPerUnitComRptCur * noQty ) AS RptCur')
+                                                                     ->where('WO_purchaseOrderMasterID', $checkPOMaster->purchaseOrderID)
+                                                                     ->where('WP_purchaseOrderDetailsID', $checkWODetail->purchaseOrderDetailsID)
+                                                                     ->where('itemCode', $checkWODetail->itemCode)
+                                                                     ->where('WO_purchaseOrderMasterID','>', 0)
+                                                                     ->groupBy('companyID', 'WO_purchaseOrderMasterID', 'WP_purchaseOrderDetailsID', 'itemCode')
+                                                                     ->first();
+                        if (!$checkWOItemQty || empty($checkWOItemQty)) {
+                            $mycheckWOItemQty_noQty = 0;
+                            $mycheckWOItemQty_netAmount = 0;
+                            
+                            $WO_BalanceQty = $checkWODetail->noQty / $myNoOfAutoGenerationTimes;
+                            $BalanceUnitCost = $checkWODetail->unitCost;
+                            $BalanceNetAmount = $checkWODetail->netAmount / $myNoOfAutoGenerationTimes;
+                            $BalanceLocalCur = $checkWODetail->GRVcostPerUnitLocalCur;
+                            $BalanceDefCur = $checkWODetail->GRVcostPerUnitSupDefaultCur;
+                            $BalanceTransCur = $checkWODetail->GRVcostPerUnitSupTransCur;
+                            $BalanceRptCur = $checkWODetail->GRVcostPerUnitComRptCur;
+                        } else {
+
+                            if ($checkWOItemQty->sumOfnoQty > $checkWODetail->noQty) {
+                                $WO_BalanceQty = 0;
+                                $BalanceUnitCost = 0;
+                                $BalanceNetAmount = 0;
+                                $BalanceLocalCur = 0;
+                                $BalanceDefCur = 0;
+                                $BalanceTransCur = 0;
+                                $BalanceRptCur = 0;
+                            } else {
+                                $mycheckWOItemQty_noQty = $checkWOItemQty->sumOfnoQty;
+                                $mycheckWOItemQty_netAmount = $checkWOItemQty->sumOfnetAmount;
+                                $WO_BalanceQty = round((($checkWODetail->noQty - $mycheckWOItemQty_noQty) / (($myNoOfAutoGenerationTimes - $myNoOfGeneratedTimes) + 1)), 9);
+                                
+                                if (($checkWODetail->noQty - $mycheckWOItemQty_noQty) == 0) {
+                                    $BalanceUnitCost = 0;
+                                    $BalanceNetAmount = 0;
+                                    $BalanceLocalCur = 0;
+                                    $BalanceDefCur = 0;
+                                    $BalanceTransCur = 0;
+                                    $BalanceRptCur = 0;
+                                } else {
+                                    $BalanceUnitCost = ($checkWODetail->netAmount - $mycheckWOItemQty_netAmount) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty);
+                                    $BalanceNetAmount = (($checkWODetail->netAmount - $mycheckWOItemQty_netAmount) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty)) * $WO_BalanceQty;
+                                    $BalanceLocalCur = ((($checkWODetail->GRVcostPerUnitLocalCur * $checkWODetail->noQty) - $checkWOItemQty->LocalCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
+                                    $BalanceDefCur = ((($checkWODetail->GRVcostPerUnitSupDefaultCur * $checkWODetail->noQty) - $checkWOItemQty->DefCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
+                                    $BalanceTransCur = ((($checkWODetail->GRVcostPerUnitSupTransCur * $checkWODetail->noQty) - $checkWOItemQty->transCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
+                                    $BalanceRptCur = ((($checkWODetail->GRVcostPerUnitComRptCur * $checkWODetail->noQty) - $checkWOItemQty->RptCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
+                                }
+                            }
+                        }
+
+                        $addNewSubWorkOrderDetail = [
+                            "companySystemID" => $checkWODetail->companySystemID,
+                            "companyID" => $checkWODetail->companyID,
+                            "departmentID" => $checkWODetail->departmentID,
+                            "serviceLineSystemID" => $checkWODetail->serviceLineSystemID,
+                            "serviceLineCode" => $checkWODetail->serviceLineCode,
+                            "purchaseOrderMasterID" => $poMasterDataRes->purchaseOrderID,
+                            "POProcessMasterID" => $checkWODetail->POProcessMasterID,
+                            "WO_purchaseOrderMasterID" => $checkWODetail->purchaseOrderMasterID,
+                            "WP_purchaseOrderDetailsID" => $checkWODetail->purchaseOrderDetailsID,
+                            "purchaseProcessDetailID" => $checkWODetail->purchaseProcessDetailID,
+                            "purchaseRequestDetailsID" => $checkWODetail->purchaseRequestDetailsID,
+                            "purchaseRequestID" => $checkWODetail->purchaseRequestID,
+                            "itemCode" => $checkWODetail->itemCode,
+                            "itemPrimaryCode" => $checkWODetail->itemPrimaryCode,
+                            "itemDescription" => $checkWODetail->itemDescription,
+                            "itemFinanceCategoryID" => $checkWODetail->itemFinanceCategoryID,
+                            "itemFinanceCategorySubID" => $checkWODetail->itemFinanceCategorySubID,
+                            "financeGLcodebBSSystemID" => $checkWODetail->financeGLcodebBSSystemID,
+                            "financeGLcodebBS" => $checkWODetail->financeGLcodebBS,
+                            "financeGLcodePLSystemID" => $checkWODetail->financeGLcodePLSystemID,
+                            "financeGLcodePL" => $checkWODetail->financeGLcodePL,
+                            "includePLForGRVYN" => $checkWODetail->includePLForGRVYN,
+                            "supplierPartNumber" => $checkWODetail->supplierPartNumber,
+                            "unitOfMeasure" => $checkWODetail->unitOfMeasure,
+                            "noQty" => $WO_BalanceQty,
+                            "noOfDays" => $dhDaysInMonth,
+                            "unitCost" => $BalanceUnitCost,
+                            "discountPercentage" => 0,
+                            "discountAmount" => 0,
+                            "netAmount" => $BalanceNetAmount,
+                            "budgetYear" => $checkWODetail->budgetYear,
+                            "prBelongsYear" => $checkWODetail->prBelongsYear,
+                            "isAccrued" => $checkWODetail->isAccrued,
+                            "budjetAmtLocal" => $checkWODetail->budjetAmtLocal,
+                            "budjetAmtRpt" => $checkWODetail->budjetAmtRpt,
+                            "comment" => $checkWODetail->comment,
+                            "supplierDefaultCurrencyID" => $checkWODetail->supplierDefaultCurrencyID,
+                            "supplierDefaultER" => $checkWODetail->supplierDefaultER,
+                            "supplierItemCurrencyID" => $checkWODetail->supplierItemCurrencyID,
+                            "foreignToLocalER" => $checkWODetail->foreignToLocalER,
+                            "companyReportingCurrencyID" => $checkWODetail->companyReportingCurrencyID,
+                            "companyReportingER" => $checkWODetail->companyReportingER,
+                            "localCurrencyID" => $checkWODetail->localCurrencyID,
+                            "localCurrencyER" => $checkWODetail->localCurrencyER,
+                            "addonDistCost" => $checkWODetail->addonDistCost,
+                            "GRVcostPerUnitLocalCur" => $BalanceLocalCur,
+                            "GRVcostPerUnitSupDefaultCur" => $BalanceDefCur,
+                            "GRVcostPerUnitSupTransCur" => $BalanceTransCur,
+                            "GRVcostPerUnitComRptCur" => $BalanceRptCur,
+                            "addonPurchaseReturnCost" => $checkWODetail->addonPurchaseReturnCost,
+                            "purchaseRetcostPerUnitLocalCur" => $BalanceLocalCur,
+                            "purchaseRetcostPerUniSupDefaultCur" => $BalanceDefCur,
+                            "purchaseRetcostPerUnitTranCur" => $BalanceTransCur,
+                            "purchaseRetcostPerUnitRptCur" => $BalanceRptCur,
+                            "GRVSelectedYN" => $checkWODetail->GRVSelectedYN,
+                            "goodsRecievedYN" => $checkWODetail->goodsRecievedYN,
+                            "logisticSelectedYN" => $checkWODetail->logisticSelectedYN,
+                            "logisticRecievedYN" => $checkWODetail->logisticRecievedYN,
+                            "isAccruedYN" => $checkWODetail->isAccruedYN,
+                            "accrualJVID" => $checkWODetail->accrualJVID,
+                            "timesReferred" => $checkWODetail->timesReferred,
+                            "createdUserGroup" => $checkWODetail->createdUserGroup,
+                            "createdPcID" => $checkWODetail->createdPcID,
+                            "createdUserID" => $checkWODetail->createdUserID,
+                            "modifiedPc" => $checkWODetail->modifiedPc,
+                            "modifiedUser" => $checkWODetail->modifiedUser,
+                            "createdDateTime" => Carbon::now(),
+                            "timeStamp" => Carbon::now()
+                        ];
+
+                        $purchaseOrderDetailCreateRes = PurchaseOrderDetails::create($addNewSubWorkOrderDetail);
+
+                        $totalTransAmount = $totalTransAmount + ($WO_BalanceQty * $BalanceTransCur);
+                        $totalLocalAmount = $totalLocalAmount + ($WO_BalanceQty * $BalanceLocalCur);
+                        $totalRptAmount = $totalRptAmount + ($WO_BalanceQty * $BalanceRptCur);
+                    }
+
+                    $updateNewWOMasterDetails->poTotalComRptCurrency = $totalRptAmount;
+                    $updateNewWOMasterDetails->poTotalLocalCurrency = $totalLocalAmount;
+                    $updateNewWOMasterDetails->poTotalSupplierDefaultCurrency = $totalTransAmount;
+                    $updateNewWOMasterDetails->poTotalSupplierTransactionCurrency = $totalTransAmount;
+                    $updateNewWOMasterDetails->timeStamp = Carbon::now();
+
+                    $updateNewWOMasterDetails->save();
+                }
             }
             DB::commit();
-            // return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');
+            return $this->sendResponse([], 'Work order generated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage());
+            return $this->sendError($exception->getMessage(). $exception->getLine());
         }
 
+    }
+
+    public function workOrderLog(Request $request)
+    {
+        $input = $request->all();
+        
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $logData = WorkOrderGenerationLog::with(['generated_by']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $logData = $logData->where(function ($query) use ($search) {
+                $query->where('date', 'LIKE', "%{$search}%")
+                    ->orWhereHas('generated_by', function ($query) use ($search) {
+                        $query->where('empName', 'LIKE', "%{$search}%")
+                              ->where('empID', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($logData)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

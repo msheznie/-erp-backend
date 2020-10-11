@@ -177,6 +177,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
         Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
         Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
+        Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
         /** Approval Level*/
         Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
@@ -1909,3 +1910,6 @@ Route::resource('tenants', 'TenantAPIController');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
+
+
+Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
