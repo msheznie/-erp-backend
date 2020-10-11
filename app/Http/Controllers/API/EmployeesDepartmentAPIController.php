@@ -189,6 +189,13 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->removedByEmpSystemID = $employeeData->employeeSystemID;
         $employeesDepartment->removedDate = date("Y-m-d H:m:s");
 
+        if ($employeesDepartment->isActive == 1) {
+            $employeesDepartment->isActive = 0;
+            $employeesDepartment->activatedByEmpID = $employeeData->empID;
+            $employeesDepartment->activatedByEmpSystemID = $employeeData->employeeSystemID;
+            $employeesDepartment->activatedDate = date("Y-m-d H:m:s");
+        }
+
         $employeesDepartment->save();
 
         return $this->sendResponse($id, 'Employees Department deleted successfully');
@@ -961,5 +968,71 @@ class EmployeesDepartmentAPIController extends AppBaseController
         })->download($type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function getApprovalPersonsByRoll(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup', 'employee'])
+                                                  ->selectRaw('*,false as selected');
+
+        $search = $request->input('search.value');
+
+
+        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
+        } else {
+            $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+            $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
+        }
+        
+
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->whereHas('approvalgroup', function ($q) use ($input) {
+                    $q->where('employeeGroupID', $input['approvalGroupID']);
+                });
+            }
+        }
+
+        if ($search) {
+            $employeesDepartment = $employeesDepartment->where(function ($q) use ($search) {
+                $q->whereHas('company', function ($query) use ($search) {
+                    $query->where('CompanyID', 'LIKE', "%{$search}%");
+                })->orWhereHas('department', function ($query) use ($search) {
+                    $query->where('DepartmentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('serviceline', function ($query) use ($search) {
+                    $query->where('ServiceLineDes', 'LIKE', "%{$search}%");
+                })->orWhereHas('document', function ($query) use ($search) {
+                    $query->where('documentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('approvalgroup', function ($query) use ($search) {
+                    $query->where('rightsGroupDes', 'LIKE', "%{$search}%");
+                })->orWhereHas('employee', function ($query) use ($search) {
+                    $query->where('empName', 'LIKE', "%{$search}%")
+                          ->orWhere('empID', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::eloquent($employeesDepartment)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('employeesDepartmentsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
     }
 }
