@@ -977,7 +977,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 11);
+            $query->whereIn('documentSystemID',[67,68]);
         }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
@@ -995,7 +995,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 11);
+            $query->whereIn('documentSystemID', [67,68]);
         }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
         $netTotal = QuotationDetails::where('quotationMasterID', $id)

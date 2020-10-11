@@ -1049,7 +1049,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $id = $input['id'];
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'

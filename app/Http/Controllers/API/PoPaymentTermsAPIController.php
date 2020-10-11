@@ -279,13 +279,21 @@ class PoPaymentTermsAPIController extends AppBaseController
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
-
+        $discountAmount = isset($input['discount']) ? $input['discount'] : 0;
+        $poDiscountPercentage = isset($input['poDiscountPercentage']) ? $input['poDiscountPercentage'] : 0;
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
+
+        $purchaseOrder->update(
+            [
+                'poDiscountAmount' => $discountAmount,
+                'poDiscountPercentage' => $poDiscountPercentage
+            ]
+        );
 
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -304,14 +312,13 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $orderAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'];
         $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
-        $discountAmount = $input['discount'];
         $vatAmount = $input['vat'];
 
         if (!empty($poAdvancePaymentType)) {
             foreach ($poAdvancePaymentType as $advance) {
 
                 //calculation advance amount
-                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount) + $vatAmount);
+                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount));
                 $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
 
                 //update payment terms table

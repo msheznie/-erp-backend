@@ -319,6 +319,7 @@
             <tr class="theme-tr-head">
                 <th></th>
                 <th class="text-left">Item </th>
+                <th class="text-left">Ref No</th>
                 <th class="text-left">UOM</th>
                 <th class="text-left">QTY</th>
                 <th class="text-left">Unit Price</th>
@@ -332,7 +333,14 @@
             @foreach ($entity->detail as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td>{{$loop->iteration}}</td>
-                    <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                    <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}
+                        <div style="font-size: 10px !important;">{{$item->itemPrimaryCode}}</div>
+                    </td>
+                    <td>
+                        @if($item->quotation)
+                        {{$item->quotation->referenceNo}}
+                        @endif
+                    </td>
                     <td>
                         @if($item->uom_issuing)
                             {{$item->uom_issuing->UnitShortCode}}
@@ -343,13 +351,12 @@
                     <td class="text-right">{{number_format($item->discountAmount,$entity->currency)}}</td>
                     <td class="text-right">{{number_format(($item->unitTransactionAmount-$item->discountAmount),$entity->currency)}}</td>
                     <td class="text-right">{{number_format($item->transactionAmount,$entity->currency)}}</td>
-
                 </tr>
                 {{$directTraSubTotal+=$item->transactionAmount}}
             @endforeach
             </tbody>
             <tr>
-            <td colspan="7" style="text-align: right; border-left: none !important;"><b>Total </b></td>
+            <td colspan="8" style="text-align: right; border-left: none !important;"><b>Total </b></td>
             <td class="text-right">
                 @if ($entity->detail)
                     {{number_format($directTraSubTotal, $entity->currency)}}

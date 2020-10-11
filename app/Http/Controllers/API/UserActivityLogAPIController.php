@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateUserActivityLogAPIRequest;
 use App\Http\Requests\API\UpdateUserActivityLogAPIRequest;
 use App\Models\UserActivityLog;
@@ -277,5 +278,57 @@ class UserActivityLogAPIController extends AppBaseController
         $userActivityLog->delete();
 
         return $this->sendResponse($id, 'User Activity Log deleted successfully');
+    }
+
+    /*get All View Log*/
+
+    public function getViewLog(Request $request){
+
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $autoID = isset($input['autoID'])?$input['autoID']:0;
+
+        $isGroup = Helper::checkIsCompanyGroup($companySystemID);
+
+        if ($isGroup) {
+            $childCompanies = Helper::getGroupCompany($companySystemID);
+        } else {
+            $childCompanies = [$companySystemID];
+        }
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $log = UserActivityLog::whereIn('company_id',$childCompanies)
+            ->where('document_id',$documentSystemID)
+            ->with('employee','document');
+
+        if($autoID > 0){
+            $log = $log->where('module_id',$autoID);
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $log = $log->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($log)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

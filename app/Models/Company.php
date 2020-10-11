@@ -113,6 +113,7 @@ class Company extends Model
         'CompanyLevel',
         'masterComapanyID',
         'masterComapanyIDReporting',
+        'masterCompanySystemIDReorting',
         'companyShortCode',
         'orgListOrder',
         'orgListSordOrder',
@@ -175,6 +176,9 @@ class Company extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'vatRegisteredYN',
+        'vatRegistratonNumber',
+        'qhseApiKey',
         'timeStamp'
     ];
 
@@ -193,6 +197,7 @@ class Company extends Model
         'CompanyLevel' => 'integer',
         'masterComapanyID' => 'string',
         'masterComapanyIDReporting' => 'string',
+        'masterCompanySystemIDReorting' => 'integer',
         'companyShortCode' => 'string',
         'orgListOrder' => 'integer',
         'orgListSordOrder' => 'integer',
@@ -251,7 +256,10 @@ class Company extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'vatRegisteredYN' => 'integer',
+        'vatRegistratonNumber' => 'string',
+        'qhseApiKey' => 'string'
     ];
 
     /**
@@ -316,6 +324,14 @@ class Company extends Model
 
     public function exchange_gl(){
         return $this->belongsTo('App\Models\ChartOfAccount', 'exchangeGainLossGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function vat_input_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'vatInputGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+    public function vat_output_gl(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'vatOutputGLCodeSystemID','chartOfAccountSystemID');
     }
 
 }
