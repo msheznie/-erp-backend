@@ -485,7 +485,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                     ->where('wareHouseFrom', $input['wareHouseLocation'])
                     ->where('approved', -1)
                     ->whereHas('details', function ($q) use ($detail) {
-                        $q->where('itemCodeSystem', $detail['itemCodeSystem']);
+                        $q->having('itemCodeSystem', $detail['itemCodeSystem']);
                     })
                     ->count();
 

@@ -171,6 +171,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             $data[$x]['Country'] = $country;
+            $data[$x]['Category'] = ($val->categoryMaster!=null && isset($val->categoryMaster->categoryDescription))?$val->categoryMaster->categoryDescription:'-';
             $data[$x]['Currency'] = $currency;
             $data[$x]['Address'] = $val->address;
             $data[$x]['Telephone'] = $val->telephone;
@@ -186,6 +187,8 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['Un-billed Account'] = isset($val->unbilled_account) ? $val->unbilled_account->AccountCode. '-'. $val->unbilled_account->AccountDescription : '';
             $data[$x]['LCC'] = ($val->isLCCYN==1)?'Yes':'No';
             $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
+            $data[$x]['JSRS Number'] = $val->jsrsNo;
+            $data[$x]['JSRS Expiry'] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
         }
 
          \Excel::create('supplier_master', function ($excel) use ($data) {
@@ -559,18 +562,18 @@ class SupplierMasterAPIController extends AppBaseController
                         return $this->sendError($validator->messages(), 422);
                     }
                 }
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID']));
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){
                         if($old != $modified_array[$key]){
                             $description = $employee->empName." Updated supplier (".$supplierMaster->supplierCodeSystem.") from ".$old." To ".$modified_array[$key]."";
-                            UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$supplierMaster->documentSystemID,$supplierMaster->supplierCodeSystem,$description,$modified_array[$key],$old);
+                            UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$supplierMaster->documentSystemID,$supplierMaster->primaryCompanySystemID,$supplierMaster->supplierCodeSystem,$description,$modified_array[$key],$old,$key);
                         }
                     }
                 }

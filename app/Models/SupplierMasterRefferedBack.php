@@ -517,7 +517,11 @@ class SupplierMasterRefferedBack extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'createdUserSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'jsrsNo' => 'string',
+        'jsrsExpiry' => 'string',
+        'jsrsNo',
+        'jsrsExpiry'
     ];
 
     /**

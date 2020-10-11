@@ -997,18 +997,19 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                         array_push($finalData, $data);
 
-                        /*$exchangeGainServiceLine = SegmentMaster::where('companySystemID',$DebitNoteMasterExData->companySystemID)
+                        $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$DebitNoteMasterExData->companySystemID)
                             ->where('isPublic',1)
                             ->where('isActive',1)
                             ->first();
+
                         if(!empty($exchangeGainServiceLine)){
                             $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
                             $data['serviceLineCode']     = $exchangeGainServiceLine->ServiceLineCode;
                         }else{
-                        }*/
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                        }
 
-                        $data['serviceLineSystemID'] = 24;
-                        $data['serviceLineCode'] = 'X';
                         $data['chartOfAccountSystemID'] = $companyData->exchangeGainLossGLCodeSystemID;
                         $data['glCode'] = $companyData->exchangeGainLossGLCode;
                         $data['glAccountType'] = 'PL';
@@ -1033,7 +1034,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 }
 
-            } else if ($matchDocumentMaster->documentSystemID == 4) {
+            }
+            else if ($matchDocumentMaster->documentSystemID == 4) {
 
                 $diffLocal = 0;
                 $diffRpt = 0;

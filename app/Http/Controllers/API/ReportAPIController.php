@@ -1401,6 +1401,8 @@ WHERE
                         'Supplier Name' => $val->supplierName,
                         'LCC' => $val->supplier ? $val->supplier->isLcc : '',
                         'SME' => $val->supplier ? $val->supplier->isSme : '',
+                        'JSRS Number' => $val->supplier ? $val->supplier->jsrsNo : '',
+                        'JSRS Expiry' =>($val->supplier && $val->supplier->jsrsExpiry)  ? $val->supplier->jsrsExpiry : '',
                         'ICV Category' => $val->icv_category ? $val->icv_category->categoryDescription : '',
                         'ICV Sub Category' => $val->icv_sub_category ? $val->icv_sub_category->categoryDescription : '',
                         'Expected Delivery Date' => Helper::dateFormat($val->expectedDeliveryDate),
@@ -1461,7 +1463,7 @@ WHERE
 
         $data = ProcumentOrder::selectRaw('*')
             ->with(['created_by', 'icv_category', 'icv_sub_category', 'currency', 'segment', 'supplier' => function ($q) {
-                $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,
+                $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,jsrsExpiry,jsrsNo,
                             IF(isSMEYN = 1, "YES", "NO" ) AS isSme,supplierCodeSystem');
             }])
             ->whereIn('companySystemID', $companyID)

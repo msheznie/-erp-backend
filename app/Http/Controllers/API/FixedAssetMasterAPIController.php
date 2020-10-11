@@ -46,6 +46,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\AuditTrial;
+use App\Traits\UserActivityLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -610,8 +611,32 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError('Fixed Asset Master not found');
         }
 
+        // check already approved
+        if($fixedAssetMaster->approved == -1){
+            // check restriction policy enabled
+            $chkRestrctPolicy = Helper::checkRestrictionByPolicy($input['companySystemID'], 7);
+            if(!$chkRestrctPolicy){
+                return $this->sendError('Document already approved',500);
+            }
+
+            // check is there any depreciation
+            $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
+                $q->where('approved', -1);
+            })->exists();
+            if($depAsset){
+                // check finance grouping input is changed
+                if(isset($input['AUDITCATOGARY'])){
+                    if($input['AUDITCATOGARY'] != $fixedAssetMaster->AUDITCATOGARY){
+                        return $this->sendError('Document Already Have Depreciations. You Cannot Update Finance Grouping Details',500);
+                    }
+                }
+            }
+        }
+
+        $fixedAssetMasterOld = $fixedAssetMaster->toArray();
         DB::beginTransaction();
         try {
+
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
                 'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
@@ -624,8 +649,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
             ], $messages);
 
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
+
+            if($fixedAssetMaster->approved != -1){
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
             }
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
@@ -687,6 +715,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            if(isset($input['serviceLineSystemID']) && $input['serviceLineSystemID'] > 0 && $input['serviceLineSystemID'] != $fixedAssetMaster->serviceLineSystemID){
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                if ($segment) {
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+            }
+
+
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
@@ -705,7 +741,23 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
 
-            if ($itemPicture) {
+            /*Activity log*/
+
+            $employee = Helper::getEmployeeInfo();
+            if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
+
+                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE']);
+                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE']);
+                // update in to user log table
+                foreach ($old_array as $key => $old){
+                    if(isset($modified_array[$key]) && $old != $modified_array[$key]){
+                        $description = $employee->empName." Amend Asset Costing - ".$key." (".$fixedAssetMaster->faID.") from ".$old." To ".$modified_array[$key]."";
+                        UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMaster->documentSystemID,$fixedAssetMaster->companySystemID,$fixedAssetMaster->faID,$description,$modified_array[$key],$old,$key);
+                    }
+
+                }
+            }
+            if ($itemPicture && isset($itemImgaeArr[0]['file'])) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
                 $extension = $itemImgaeArr[0]['filetype'];
                 $data['itemPicture'] = $fixedAssetMaster->companyID . '_' . $fixedAssetMaster->documentID . '_' . $fixedAssetMaster['faID'] . '.' . $extension;
@@ -714,6 +766,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data['itemPath'] = $path;
                 Storage::disk('public')->put($path, $decodeFile);
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);
+
+                if($fixedAssetMaster->approved == -1)
+                UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMaster->documentSystemID,$fixedAssetMaster->companySystemID,$fixedAssetMaster->faID,$employee->empName." Amend Asset Costing (".$fixedAssetMaster->faID.") itemPicture",$path,$path,'itemPicture');
             }
 
             DB::commit();
@@ -721,7 +776,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage());
+            return $this->sendError($exception->getLine().$exception->getMessage());
         }
 
 

@@ -13,6 +13,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -158,7 +159,7 @@ class ProcumentOrder extends Model
     protected $primaryKey = 'purchaseOrderID';
 
     protected $dates = ['deleted_at'];
-    protected $appends = ['isWoAmendAccess'];
+    protected $appends = ['isWoAmendAccess','isVatEligible'];
 
     public $fillable = [
         'poProcessId',
@@ -299,6 +300,7 @@ class ProcumentOrder extends Model
         'isSelected',
         'timeStamp',
         'supCategoryICVMasterID',
+        'workOrderGenerateID',
         'supCategorySubICVID',
     ];
 
@@ -433,6 +435,7 @@ class ProcumentOrder extends Model
         'modifiedUser' => 'string',
         'isSelected' => 'boolean',
         'supCategoryICVMasterID' => 'integer',
+        'workOrderGenerateID' => 'integer',
         'supCategorySubICVID' => 'integer'
     ];
 
@@ -609,6 +612,11 @@ class ProcumentOrder extends Model
             $value = true;
         }
         return $value;
+    }
+
+    public function getIsVatEligibleAttribute()
+    {
+        return TaxService::checkPOVATEligible($this->supplierVATEligible,$this->vatRegisteredYN);
     }
 
     public function audit_trial()

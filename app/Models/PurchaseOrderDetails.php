@@ -342,4 +342,8 @@ class PurchaseOrderDetails extends Model
     public function closed_by(){
         return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
     }
+
+    public function scopeRequestDetailSum($q,$purchaseRequestDetailsID = 0){
+        return $q->where('purchaseRequestDetailsID', $purchaseRequestDetailsID)->sum('noQty');
+    }
 }

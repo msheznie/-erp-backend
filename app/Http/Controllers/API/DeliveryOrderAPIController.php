@@ -355,7 +355,7 @@ class DeliveryOrderAPIController extends AppBaseController
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }
-        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode'));
+        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
         $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
@@ -1164,7 +1164,7 @@ WHERE
             $query->with('employee')
                 ->where('documentSystemID', 71);
         }, 'company','customer','transaction_currency','detail'=> function($query){
-            $query->with(['uom_issuing']);
+            $query->with(['uom_issuing','quotation']);
         }])->findWithoutFail($id);
 
 

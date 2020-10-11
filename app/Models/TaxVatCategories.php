@@ -165,4 +165,9 @@ class TaxVatCategories extends Model
         return $this->belongsTo('App\Models\TaxVatMainCategories', 'mainCategory', 'taxVatMainCategoriesAutoID');
     }
 
+    public function items()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'taxVatSubCategoriesAutoID', 'vatSubCategory');
+    }
+
 }
