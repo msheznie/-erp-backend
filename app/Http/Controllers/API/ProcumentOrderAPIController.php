@@ -5772,9 +5772,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function generateWorkOrder(Request $request)
     {
         $input = $request->all();
-        // $startDate = Carbon::parse($input['workOrderGenerateDate'])->format('Y-m-d H:m:s');
-        $date = Carbon::now()->format('Y-m-d H:m:s');
-        $startDate = Carbon::now();
+        $startDate = Carbon::parse($input['workOrderGenerateDate']);
+        $date = Carbon::parse($input['workOrderGenerateDate'])->format('Y-m-d H:m:s');
         $firstDayOfMonth = $startDate->firstOfMonth()->format('Y-m-d H:m:s');
 
         $firstDayOfMonthPlusOne = $startDate->firstOfMonth()->addMonths(1)->format('Y-m-d H:m:s');
@@ -5787,9 +5786,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         ->where('WO_fullyGenerated',0)
                                         ->where('poCancelledYN',0)
                                         ->whereRaw('WO_NoOfAutoGenerationTimes > WO_NoOfGeneratedTimes')
+                                        ->whereDate('WO_PeriodFrom', '<=', $date)
+                                        ->whereDate('WO_PeriodTo', '>=', $date)
+                                        ->whereDate('approvedDate', '<=', $date)
                                         ->get();
-
-
 
         DB::beginTransaction();
         try {
@@ -5822,7 +5822,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "companyAddress" => $checkPOMaster->companyAddress,
                         "documentSystemID" => $checkPOMaster->documentSystemID,
                         "documentID" => $checkPOMaster->documentID,
-                        "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode ."\\". Carbon::now()->format('d') . "_" . Carbon::now()->format('m') . "_" . Carbon::now()->format('Y'),
+                        "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode ."\\". Carbon::parse($input['workOrderGenerateDate'])->format('d') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('m') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('Y'),
                         "serialNumber" => $checkPOMaster->serialNumber,
                         "supplierID" => $checkPOMaster->supplierID,
                         "supplierPrimaryCode" => $checkPOMaster->supplierPrimaryCode,
@@ -5934,7 +5934,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     $checkPOMaster->WO_NoOfGeneratedTimes = $myNoOfGeneratedTimes;
 
-                    if ($checkPOMaster->WO_NoOfAutoGenerationTimes = $myNoOfGeneratedTimes) {
+                    if ($checkPOMaster->WO_NoOfAutoGenerationTimes == $myNoOfGeneratedTimes) {
                         $checkPOMaster->WO_fullyGenerated = -1;
                     } else {
                         $checkPOMaster->WO_fullyGenerated = 0;
