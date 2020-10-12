@@ -1035,4 +1035,61 @@ class EmployeesDepartmentAPIController extends AppBaseController
             ->make(true);
 
     }
+
+    public function assignEmployeeToApprovalGroup(Request $request)
+    {   
+        $input = $request->all();
+        
+        $saveData = [];
+        foreach ($input['selectedEmpIds']['employeeSystemID'] as $key => $val) {
+            $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
+
+            $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
+                                                          ->where('employeeGroupID', $employeeGroupID)
+                                                          ->where('removedYN', 0)
+                                                          ->first();
+
+            if (!$checkEmployeeDepartment) {
+                $saveData[$key]['companySystemID'] = $input['rollMasterDetailData']['companySystemID'];
+                $saveData[$key]['documentSystemID'] = $input['rollMasterDetailData']['documentSystemID'];
+                $saveData[$key]['departmentSystemID'] = $input['rollMasterDetailData']['departmentSystemID'];
+                $saveData[$key]['ServiceLineSystemID'] = $input['rollMasterDetailData']['serviceLineSystemID'];
+                $saveData[$key]['employeeSystemID'] = $val['employeeSystemID'];
+                $saveData[$key]['employeeGroupID'] = $employeeGroupID;
+                $saveData[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                $saveData[$key]['createdDate'] = date("Y-m-d H:m:s");
+                if ($input['rollMasterDetailData']['companySystemID']) {
+                    $companyID = Company::find($input['rollMasterDetailData']['companySystemID']);
+                    $saveData[$key]['companyId'] = $companyID->CompanyID;
+                }
+                if ($input['rollMasterDetailData']['documentSystemID']) {
+                    $documentID = DocumentMaster::find($input['rollMasterDetailData']['documentSystemID']);
+                    $saveData[$key]['documentID'] = $documentID->documentID;
+                }
+                if ($input['rollMasterDetailData']['departmentSystemID']) {
+                    $departmentID = DepartmentMaster::find($input['rollMasterDetailData']['departmentSystemID']);
+                    $saveData[$key]['departmentID'] = $departmentID->DepartmentID;
+                }
+                if ($input['rollMasterDetailData']['serviceLineSystemID']) {
+                    $ServiceLineID = SegmentMaster::find($input['rollMasterDetailData']['serviceLineSystemID']);
+                    $inpsaveDataut[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
+                }
+               
+                $saveData[$key]['employeeID'] = $val['empID'];
+                $saveData[$key]['timeStamp'] = date("Y-m-d H:m:s");
+
+                $employeeData = \Helper::getEmployeeInfo();
+                
+                $saveData[$key]['isActive'] = 1;
+                $saveData[$key]['activatedByEmpID'] = $employeeData->empID;
+                $saveData[$key]['activatedByEmpSystemID'] = $employeeData->employeeSystemID;
+                $saveData[$key]['activatedDate'] = date("Y-m-d H:m:s");
+            }
+
+        }
+
+        $employeesDepartments = EmployeesDepartment::insert($saveData);
+
+        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
+    }
 }

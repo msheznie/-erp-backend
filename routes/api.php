@@ -340,6 +340,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
         Route::post('approval/matrix', 'EmployeesDepartmentAPIController@approvalMatrixReport');
         Route::post('approval/matrix/export', 'EmployeesDepartmentAPIController@exportApprovalMatrixReport');
+        Route::post('assignEmployeeToApprovalGroup', 'EmployeesDepartmentAPIController@assignEmployeeToApprovalGroup');
 
         Route::post('approveItem', 'ItemMasterAPIController@approveItem');
         Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
