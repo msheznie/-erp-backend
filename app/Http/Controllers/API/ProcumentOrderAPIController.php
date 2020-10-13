@@ -366,7 +366,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if ($supplierAssignedDetai) {
             $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
-            $input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
+            $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
         }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
