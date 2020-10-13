@@ -28,6 +28,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\CompanyDocumentAttachment;
 use App\Repositories\EmployeesDepartmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1046,8 +1047,20 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
             $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
                                                           ->where('employeeGroupID', $employeeGroupID)
-                                                          ->where('removedYN', 0)
-                                                          ->first();
+                                                          ->where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
+                                                          ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
+                                                          ->where('removedYN', 0);
+
+            $companyDocument = CompanyDocumentAttachment::where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
+                                                        ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
+                                                        ->first();
+            if (!empty($companyDocument)) {
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $checkEmployeeDepartment = $checkEmployeeDepartment->where('ServiceLineSystemID', $input['rollMasterDetailData']['serviceLineSystemID']);
+                }
+            }
+            
+            $checkEmployeeDepartment = $checkEmployeeDepartment->first();
 
             if (!$checkEmployeeDepartment) {
                 $saveData[$key]['companySystemID'] = $input['rollMasterDetailData']['companySystemID'];
