@@ -1105,7 +1105,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         }// closing amend if condition
 
-
+        TaxService::updatePOVAT($id);
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order updated successfully');
     }
 

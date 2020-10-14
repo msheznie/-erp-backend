@@ -70,19 +70,19 @@ class TaxService
         $poVATPercentage = 0;
         if($poMasterSum && $purchaseOrder->isVatEligible){
             // $calculateVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
-            $calculateVatAmount = ($poMasterSum['totalVAT']);
+            $calculateVatAmount = $poMasterSum['totalVAT'];
             if($poMasterSum['masterTotalSum'] > 0){
                 $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'] - $poMasterSum['totalVAT'])) * 100;
             }
 
-            $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateVatAmount);
+            $currencyConversionVatAmount = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateVatAmount);
 
             ProcumentOrder::find($id)
                 ->update([
                     'VATPercentage' => round($poVATPercentage,2),
-                    'VATAmount' => $calculateVatAmount,
-                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                    'VATAmount' =>  Helper::roundValue($calculateVatAmount),
+                    'VATAmountLocal' => Helper::roundValue($currencyConversionVatAmount['localAmount']),
+                    'VATAmountRpt' => Helper::roundValue($currencyConversionVatAmount['reportingAmount'])
                 ]);
         }else{
             ProcumentOrder::find($id)
