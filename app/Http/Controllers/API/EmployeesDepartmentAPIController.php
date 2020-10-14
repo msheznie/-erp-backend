@@ -28,6 +28,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\CompanyDocumentAttachment;
 use App\Repositories\EmployeesDepartmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -188,6 +189,13 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->removedByEmpID = $employeeData->empID;
         $employeesDepartment->removedByEmpSystemID = $employeeData->employeeSystemID;
         $employeesDepartment->removedDate = date("Y-m-d H:m:s");
+
+        if ($employeesDepartment->isActive == 1) {
+            $employeesDepartment->isActive = 0;
+            $employeesDepartment->activatedByEmpID = $employeeData->empID;
+            $employeesDepartment->activatedByEmpSystemID = $employeeData->employeeSystemID;
+            $employeesDepartment->activatedDate = date("Y-m-d H:m:s");
+        }
 
         $employeesDepartment->save();
 
@@ -961,5 +969,140 @@ class EmployeesDepartmentAPIController extends AppBaseController
         })->download($type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function getApprovalPersonsByRoll(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup', 'employee'])
+                                                  ->selectRaw('*,false as selected');
+
+        $search = $request->input('search.value');
+
+
+        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
+        } else {
+            $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+            $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
+        }
+        
+
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->whereHas('approvalgroup', function ($q) use ($input) {
+                    $q->where('employeeGroupID', $input['approvalGroupID']);
+                });
+            }
+        }
+
+        if ($search) {
+            $employeesDepartment = $employeesDepartment->where(function ($q) use ($search) {
+                $q->whereHas('company', function ($query) use ($search) {
+                    $query->where('CompanyID', 'LIKE', "%{$search}%");
+                })->orWhereHas('department', function ($query) use ($search) {
+                    $query->where('DepartmentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('serviceline', function ($query) use ($search) {
+                    $query->where('ServiceLineDes', 'LIKE', "%{$search}%");
+                })->orWhereHas('document', function ($query) use ($search) {
+                    $query->where('documentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('approvalgroup', function ($query) use ($search) {
+                    $query->where('rightsGroupDes', 'LIKE', "%{$search}%");
+                })->orWhereHas('employee', function ($query) use ($search) {
+                    $query->where('empName', 'LIKE', "%{$search}%")
+                          ->orWhere('empID', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::eloquent($employeesDepartment)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('employeesDepartmentsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
+    }
+
+    public function assignEmployeeToApprovalGroup(Request $request)
+    {   
+        $input = $request->all();
+        
+        $saveData = [];
+        foreach ($input['selectedEmpIds']['employeeSystemID'] as $key => $val) {
+            $employeeGroupID = (is_array($input['rollMasterDetailData']['approvalGroupID'])) ? $input['rollMasterDetailData']['approvalGroupID'][0] : $input['rollMasterDetailData']['approvalGroupID'];
+
+            $checkEmployeeDepartment = EmployeesDepartment::where('employeeSystemID', $val['employeeSystemID'])
+                                                          ->where('employeeGroupID', $employeeGroupID)
+                                                          ->where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
+                                                          ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
+                                                          ->where('removedYN', 0);
+
+            $companyDocument = CompanyDocumentAttachment::where('companySystemID', $input['rollMasterDetailData']['companySystemID'])
+                                                        ->where('documentSystemID', $input['rollMasterDetailData']['documentSystemID'])
+                                                        ->first();
+            if (!empty($companyDocument)) {
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $checkEmployeeDepartment = $checkEmployeeDepartment->where('ServiceLineSystemID', $input['rollMasterDetailData']['serviceLineSystemID']);
+                }
+            }
+            
+            $checkEmployeeDepartment = $checkEmployeeDepartment->first();
+
+            if (!$checkEmployeeDepartment) {
+                $saveData[$key]['companySystemID'] = $input['rollMasterDetailData']['companySystemID'];
+                $saveData[$key]['documentSystemID'] = $input['rollMasterDetailData']['documentSystemID'];
+                $saveData[$key]['departmentSystemID'] = $input['rollMasterDetailData']['departmentSystemID'];
+                $saveData[$key]['ServiceLineSystemID'] = $input['rollMasterDetailData']['serviceLineSystemID'];
+                $saveData[$key]['employeeSystemID'] = $val['employeeSystemID'];
+                $saveData[$key]['employeeGroupID'] = $employeeGroupID;
+                $saveData[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                $saveData[$key]['createdDate'] = date("Y-m-d H:m:s");
+                if ($input['rollMasterDetailData']['companySystemID']) {
+                    $companyID = Company::find($input['rollMasterDetailData']['companySystemID']);
+                    $saveData[$key]['companyId'] = $companyID->CompanyID;
+                }
+                if ($input['rollMasterDetailData']['documentSystemID']) {
+                    $documentID = DocumentMaster::find($input['rollMasterDetailData']['documentSystemID']);
+                    $saveData[$key]['documentID'] = $documentID->documentID;
+                }
+                if ($input['rollMasterDetailData']['departmentSystemID']) {
+                    $departmentID = DepartmentMaster::find($input['rollMasterDetailData']['departmentSystemID']);
+                    $saveData[$key]['departmentID'] = $departmentID->DepartmentID;
+                }
+                if ($input['rollMasterDetailData']['serviceLineSystemID']) {
+                    $ServiceLineID = SegmentMaster::find($input['rollMasterDetailData']['serviceLineSystemID']);
+                    $inpsaveDataut[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
+                }
+               
+                $saveData[$key]['employeeID'] = $val['empID'];
+                $saveData[$key]['timeStamp'] = date("Y-m-d H:m:s");
+
+                $employeeData = \Helper::getEmployeeInfo();
+                
+                $saveData[$key]['isActive'] = 1;
+                $saveData[$key]['activatedByEmpID'] = $employeeData->empID;
+                $saveData[$key]['activatedByEmpSystemID'] = $employeeData->employeeSystemID;
+                $saveData[$key]['activatedDate'] = date("Y-m-d H:m:s");
+            }
+
+        }
+
+        $employeesDepartments = EmployeesDepartment::insert($saveData);
+
+        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
     }
 }

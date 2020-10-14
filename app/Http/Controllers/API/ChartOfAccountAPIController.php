@@ -28,6 +28,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
 use App\Models\ReportTemplateLinks;
 use App\Models\YesNoSelection;
+use App\Models\GeneralLedger;
 use App\Repositories\ChartOfAccountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -38,6 +39,7 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
+use App\helper\Helper;
 
 /**
  * Class ChartOfAccountController
@@ -136,6 +138,25 @@ class ChartOfAccountAPIController extends AppBaseController
             }
 
             if ($chartOfAccount->isApproved == 1) {
+
+                //check policy 8
+                $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],8);
+                if($policy){
+                    $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
+
+                    if ($checkChartOfAccountUsed) {
+                        return $this->sendError('You cannot edit, This Chart of account already used.', 500);
+                    }
+
+                    $updateData = [
+                        'AccountDescription' => $input['AccountDescription']
+                    ];
+
+                    $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                    return $this->sendResponse([], 'Chart Of Account updated successfully');
+                }
+
                 return $this->sendError('You cannot edit, This document already confirmed and approved.', 500);
             }
 

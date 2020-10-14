@@ -740,7 +740,12 @@ class Helper
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
+                                        if (in_array($params["document"], self::documentListForClickHere())) {
+                                            $redirectUrl =  env("APPROVE_URL");
+                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
+                                        } else {
+                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
+                                        }
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " ". $documentApproved->documentCode." is pending for your approval.";
                                         foreach ($approvalList as $da) {
@@ -2124,7 +2129,15 @@ class Helper
                                         ->get();
 
                                     $pushNotificationMessage = $subjectName." is pending for your approval.";
-                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
+
+                                    if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
+                                        $redirectUrl =  env("APPROVE_URL");
+                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
+                                    } else {
+                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
+                                    }
+
+
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
                                     foreach ($approvalList as $da) {
@@ -2188,6 +2201,11 @@ class Helper
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
+    }
+
+    public static function documentListForClickHere()
+    {
+        return [2,5,52];
     }
 
 
