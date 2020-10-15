@@ -230,11 +230,9 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             foreach ($input as $key => $value) {
                 $financeItemCategorySubs->$key = $value;
             }
-
-
+            
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;
-
             $financeItemCategorySubs->save();
             $this->financeItemcategorySubAssignedRepository->where(
                 'itemCategorySubID', $input['itemCategorySubID']
