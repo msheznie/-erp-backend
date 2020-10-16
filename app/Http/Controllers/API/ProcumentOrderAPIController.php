@@ -5780,7 +5780,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $dhDaysInMonth = Carbon::parse($firstDayOfMonthPlusOne)->diffInDays(Carbon::parse($firstDayOfMonth));
 
+        $checkSubPoCode = Carbon::parse($input['workOrderGenerateDate'])->format('m') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('Y');
+
         $checkPOMasters = ProcumentOrder::with(['detail'])
+                                        ->whereDoesntHave('sub_work_orders',  function ($query) use ($checkSubPoCode){
+                                            $query->where('purchaseOrderCode', 'LIKE', "%{$checkSubPoCode}%");
+                                        })
                                         ->where('poType_N',5)
                                         ->where('approved',-1)
                                         ->where('WO_fullyGenerated',0)
@@ -5808,8 +5813,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             foreach ($checkPOMasters as $key => $checkPOMaster) {
                 if ($checkPOMaster->WO_terminateYN == 0) {
-                    $myNoOfAutoGenerationTimes = $checkPOMaster->WO_NoOfAutoGenerationTimes;
-                    $myNoOfGeneratedTimes = $checkPOMaster->WO_NoOfGeneratedTimes + 1;
+                    $noOfAutoGenerationTimes = $checkPOMaster->WO_NoOfAutoGenerationTimes;
+                    $currentGeneratedTimes = $checkPOMaster->WO_NoOfGeneratedTimes + 1;
 
                     $poMasterData = [
                         "poProcessId" => $checkPOMaster->poProcessId,
@@ -5912,7 +5917,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "WO_PeriodFrom" => $checkPOMaster->WO_PeriodFrom,
                         "WO_PeriodTo" => $checkPOMaster->WO_PeriodTo,
                         "WO_NoOfAutoGenerationTimes" => $checkPOMaster->WO_NoOfAutoGenerationTimes,
-                        "WO_NoOfGeneratedTimes" => $myNoOfGeneratedTimes,
+                        "WO_NoOfGeneratedTimes" => $currentGeneratedTimes,
                         "WO_fullyGenerated" => $checkPOMaster->WO_fullyGenerated,
                         "WO_confirmedYN" => 1,
                         "WO_confirmedDate" => $checkPOMaster->WO_confirmedDate,
@@ -5926,15 +5931,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "modifiedPc" => $checkPOMaster->modifiedPc,
                         "modifiedUserSystemID" => $checkPOMaster->modifiedUserSystemID,
                         "modifiedUser" => $checkPOMaster->modifiedUser,
+                        "supplierVATEligible" => $checkPOMaster->supplierVATEligible,
+                        "VATPercentage" => $checkPOMaster->VATPercentage,
+                        "vatRegisteredYN" => $checkPOMaster->vatRegisteredYN,
                         "createdDateTime" => Carbon::now(),
                         "timeStamp" => Carbon::now(),
                     ];
 
                     $poMasterDataRes = ProcumentOrder::create($poMasterData);
 
-                    $checkPOMaster->WO_NoOfGeneratedTimes = $myNoOfGeneratedTimes;
+                    $checkPOMaster->WO_NoOfGeneratedTimes = $currentGeneratedTimes;
 
-                    if ($checkPOMaster->WO_NoOfAutoGenerationTimes == $myNoOfGeneratedTimes) {
+                    if ($checkPOMaster->WO_NoOfAutoGenerationTimes == $currentGeneratedTimes) {
                         $checkPOMaster->WO_fullyGenerated = -1;
                     } else {
                         $checkPOMaster->WO_fullyGenerated = 0;
@@ -5950,54 +5958,56 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $totalLocalAmount = 0;
                     $totalRptAmount = 0;
 
+
                     foreach ($checkPOMaster->detail as $key => $checkWODetail) {
-                        $checkWOItemQty = PurchaseOrderDetails::selectRaw('companyID, WO_purchaseOrderMasterID, WP_purchaseOrderDetailsID, itemCode, SUM(noQty) as SumOfnoQty, SUM(netAmount) as SumOfnetAmount, Sum( GRVcostPerUnitLocalCur * noQty ) AS LocalCur, Sum( GRVcostPerUnitSupDefaultCur * noQty ) AS DefCur, Sum( GRVcostPerUnitSupTransCur * noQty ) AS transCur, Sum( GRVcostPerUnitComRptCur * noQty ) AS RptCur')
+                        $previousSubWorkOrderSummary = PurchaseOrderDetails::selectRaw('companyID, WO_purchaseOrderMasterID, WP_purchaseOrderDetailsID, itemCode, SUM(noQty) as SumOfnoQty, SUM(netAmount) as SumOfnetAmount, Sum( GRVcostPerUnitLocalCur * noQty ) AS LocalCur, Sum( GRVcostPerUnitSupDefaultCur * noQty ) AS DefCur, Sum( GRVcostPerUnitSupTransCur * noQty ) AS transCur, Sum( GRVcostPerUnitComRptCur * noQty ) AS RptCur')
                                                                      ->where('WO_purchaseOrderMasterID', $checkPOMaster->purchaseOrderID)
                                                                      ->where('WP_purchaseOrderDetailsID', $checkWODetail->purchaseOrderDetailsID)
                                                                      ->where('itemCode', $checkWODetail->itemCode)
                                                                      ->where('WO_purchaseOrderMasterID','>', 0)
                                                                      ->groupBy('companyID', 'WO_purchaseOrderMasterID', 'WP_purchaseOrderDetailsID', 'itemCode')
                                                                      ->first();
-                        if (!$checkWOItemQty || empty($checkWOItemQty)) {
-                            $mycheckWOItemQty_noQty = 0;
-                            $mycheckWOItemQty_netAmount = 0;
+                        if (!$previousSubWorkOrderSummary) {
+                            $sumOfQtyOfPreviousSubWorkOrder = 0;
+                            $sumOfNetAmountOfPreviousSubWorkOrder = 0;
                             
-                            $WO_BalanceQty = $checkWODetail->noQty / $myNoOfAutoGenerationTimes;
-                            $BalanceUnitCost = $checkWODetail->unitCost;
-                            $BalanceNetAmount = $checkWODetail->netAmount / $myNoOfAutoGenerationTimes;
-                            $BalanceLocalCur = $checkWODetail->GRVcostPerUnitLocalCur;
-                            $BalanceDefCur = $checkWODetail->GRVcostPerUnitSupDefaultCur;
-                            $BalanceTransCur = $checkWODetail->GRVcostPerUnitSupTransCur;
-                            $BalanceRptCur = $checkWODetail->GRVcostPerUnitComRptCur;
+                            $subWorkOrderQty = $checkWODetail->noQty / $noOfAutoGenerationTimes;
+                            $subWorkOrderUnitCost = $checkWODetail->unitCost;
+                            $subWordkOrderNetAmount = $checkWODetail->netAmount / $noOfAutoGenerationTimes;
+                            $subWordkOrderLocalCurrency = $checkWODetail->GRVcostPerUnitLocalCur;
+                            $subWordkOrderDefCurrency = $checkWODetail->GRVcostPerUnitSupDefaultCur;
+                            $subWordkOrderTransCurrency = $checkWODetail->GRVcostPerUnitSupTransCur;
+                            $subWordkOrderRptCurrency = $checkWODetail->GRVcostPerUnitComRptCur;
                         } else {
 
-                            if ($checkWOItemQty->sumOfnoQty > $checkWODetail->noQty) {
-                                $WO_BalanceQty = 0;
-                                $BalanceUnitCost = 0;
-                                $BalanceNetAmount = 0;
-                                $BalanceLocalCur = 0;
-                                $BalanceDefCur = 0;
-                                $BalanceTransCur = 0;
-                                $BalanceRptCur = 0;
+                            if ($previousSubWorkOrderSummary->SumOfnoQty > $checkWODetail->noQty) {
+                                $subWorkOrderQty = 0;
+                                $subWorkOrderUnitCost = 0;
+                                $subWordkOrderNetAmount = 0;
+                                $subWordkOrderLocalCurrency = 0;
+                                $subWordkOrderDefCurrency = 0;
+                                $subWordkOrderTransCurrency = 0;
+                                $subWordkOrderRptCurrency = 0;
                             } else {
-                                $mycheckWOItemQty_noQty = $checkWOItemQty->sumOfnoQty;
-                                $mycheckWOItemQty_netAmount = $checkWOItemQty->sumOfnetAmount;
-                                $WO_BalanceQty = round((($checkWODetail->noQty - $mycheckWOItemQty_noQty) / (($myNoOfAutoGenerationTimes - $myNoOfGeneratedTimes) + 1)), 9);
+                                $sumOfQtyOfPreviousSubWorkOrder = $previousSubWorkOrderSummary->SumOfnoQty;
+                                $sumOfNetAmountOfPreviousSubWorkOrder = $previousSubWorkOrderSummary->SumOfnetAmount;
+
+                                $subWorkOrderQty = round((($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder) / (($noOfAutoGenerationTimes - $currentGeneratedTimes) + 1)), 9);
                                 
-                                if (($checkWODetail->noQty - $mycheckWOItemQty_noQty) == 0) {
-                                    $BalanceUnitCost = 0;
-                                    $BalanceNetAmount = 0;
-                                    $BalanceLocalCur = 0;
-                                    $BalanceDefCur = 0;
-                                    $BalanceTransCur = 0;
-                                    $BalanceRptCur = 0;
+                                if (($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder) == 0) {
+                                    $subWorkOrderUnitCost = 0;
+                                    $subWordkOrderNetAmount = 0;
+                                    $subWordkOrderLocalCurrency = 0;
+                                    $subWordkOrderDefCurrency = 0;
+                                    $subWordkOrderTransCurrency = 0;
+                                    $subWordkOrderRptCurrency = 0;
                                 } else {
-                                    $BalanceUnitCost = ($checkWODetail->netAmount - $mycheckWOItemQty_netAmount) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty);
-                                    $BalanceNetAmount = (($checkWODetail->netAmount - $mycheckWOItemQty_netAmount) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty)) * $WO_BalanceQty;
-                                    $BalanceLocalCur = ((($checkWODetail->GRVcostPerUnitLocalCur * $checkWODetail->noQty) - $checkWOItemQty->LocalCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
-                                    $BalanceDefCur = ((($checkWODetail->GRVcostPerUnitSupDefaultCur * $checkWODetail->noQty) - $checkWOItemQty->DefCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
-                                    $BalanceTransCur = ((($checkWODetail->GRVcostPerUnitSupTransCur * $checkWODetail->noQty) - $checkWOItemQty->transCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
-                                    $BalanceRptCur = ((($checkWODetail->GRVcostPerUnitComRptCur * $checkWODetail->noQty) - $checkWOItemQty->RptCur) / ($checkWODetail->noQty - $mycheckWOItemQty_noQty));
+                                    $subWorkOrderUnitCost = ($checkWODetail->netAmount - $sumOfNetAmountOfPreviousSubWorkOrder) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder);
+                                    $subWordkOrderNetAmount = (($checkWODetail->netAmount - $sumOfNetAmountOfPreviousSubWorkOrder) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder)) * $subWorkOrderQty;
+                                    $subWordkOrderLocalCurrency = ((($checkWODetail->GRVcostPerUnitLocalCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->LocalCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
+                                    $subWordkOrderDefCurrency = ((($checkWODetail->GRVcostPerUnitSupDefaultCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->DefCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
+                                    $subWordkOrderTransCurrency = ((($checkWODetail->GRVcostPerUnitSupTransCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->transCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
+                                    $subWordkOrderRptCurrency = ((($checkWODetail->GRVcostPerUnitComRptCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->RptCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
                                 }
                             }
                         }
@@ -6027,12 +6037,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             "includePLForGRVYN" => $checkWODetail->includePLForGRVYN,
                             "supplierPartNumber" => $checkWODetail->supplierPartNumber,
                             "unitOfMeasure" => $checkWODetail->unitOfMeasure,
-                            "noQty" => $WO_BalanceQty,
+                            "noQty" => $subWorkOrderQty,
                             "noOfDays" => $dhDaysInMonth,
-                            "unitCost" => $BalanceUnitCost,
+                            "unitCost" => $subWorkOrderUnitCost,
                             "discountPercentage" => 0,
                             "discountAmount" => 0,
-                            "netAmount" => $BalanceNetAmount,
+                            "netAmount" => $subWordkOrderNetAmount,
                             "budgetYear" => $checkWODetail->budgetYear,
                             "prBelongsYear" => $checkWODetail->prBelongsYear,
                             "isAccrued" => $checkWODetail->isAccrued,
@@ -6048,15 +6058,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             "localCurrencyID" => $checkWODetail->localCurrencyID,
                             "localCurrencyER" => $checkWODetail->localCurrencyER,
                             "addonDistCost" => $checkWODetail->addonDistCost,
-                            "GRVcostPerUnitLocalCur" => $BalanceLocalCur,
-                            "GRVcostPerUnitSupDefaultCur" => $BalanceDefCur,
-                            "GRVcostPerUnitSupTransCur" => $BalanceTransCur,
-                            "GRVcostPerUnitComRptCur" => $BalanceRptCur,
+                            "GRVcostPerUnitLocalCur" => $subWordkOrderLocalCurrency,
+                            "GRVcostPerUnitSupDefaultCur" => $subWordkOrderDefCurrency,
+                            "GRVcostPerUnitSupTransCur" => $subWordkOrderTransCurrency,
+                            "GRVcostPerUnitComRptCur" => $subWordkOrderRptCurrency,
                             "addonPurchaseReturnCost" => $checkWODetail->addonPurchaseReturnCost,
-                            "purchaseRetcostPerUnitLocalCur" => $BalanceLocalCur,
-                            "purchaseRetcostPerUniSupDefaultCur" => $BalanceDefCur,
-                            "purchaseRetcostPerUnitTranCur" => $BalanceTransCur,
-                            "purchaseRetcostPerUnitRptCur" => $BalanceRptCur,
+                            "purchaseRetcostPerUnitLocalCur" => $subWordkOrderLocalCurrency,
+                            "purchaseRetcostPerUniSupDefaultCur" => $subWordkOrderDefCurrency,
+                            "purchaseRetcostPerUnitTranCur" => $subWordkOrderTransCurrency,
+                            "purchaseRetcostPerUnitRptCur" => $subWordkOrderRptCurrency,
                             "GRVSelectedYN" => $checkWODetail->GRVSelectedYN,
                             "goodsRecievedYN" => $checkWODetail->goodsRecievedYN,
                             "logisticSelectedYN" => $checkWODetail->logisticSelectedYN,
@@ -6069,21 +6079,29 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             "createdUserID" => $checkWODetail->createdUserID,
                             "modifiedPc" => $checkWODetail->modifiedPc,
                             "modifiedUser" => $checkWODetail->modifiedUser,
+                            "VATPercentage" => $checkWODetail->VATPercentage,
+                            "VATAmount" => $checkWODetail->VATAmount,
+                            "VATAmountLocal" => $checkWODetail->VATAmountLocal,
+                            "VATAmountRpt" => $checkWODetail->VATAmountRpt,
+                            "VATApplicableOn" => $checkWODetail->VATApplicableOn,
                             "createdDateTime" => Carbon::now(),
                             "timeStamp" => Carbon::now()
                         ];
 
                         $purchaseOrderDetailCreateRes = PurchaseOrderDetails::create($addNewSubWorkOrderDetail);
 
-                        $totalTransAmount = $totalTransAmount + ($WO_BalanceQty * $BalanceTransCur);
-                        $totalLocalAmount = $totalLocalAmount + ($WO_BalanceQty * $BalanceLocalCur);
-                        $totalRptAmount = $totalRptAmount + ($WO_BalanceQty * $BalanceRptCur);
+                        $totalTransAmount = $totalTransAmount + ($subWorkOrderQty * $subWordkOrderTransCurrency);
+                        $totalLocalAmount = $totalLocalAmount + ($subWorkOrderQty * $subWordkOrderLocalCurrency);
+                        $totalRptAmount = $totalRptAmount + ($subWorkOrderQty * $subWordkOrderRptCurrency);
                     }
 
-                    $updateNewWOMasterDetails->poTotalComRptCurrency = $totalRptAmount;
-                    $updateNewWOMasterDetails->poTotalLocalCurrency = $totalLocalAmount;
-                    $updateNewWOMasterDetails->poTotalSupplierDefaultCurrency = $totalTransAmount;
-                    $updateNewWOMasterDetails->poTotalSupplierTransactionCurrency = $totalTransAmount;
+                    $updateNewWOMasterDetails->poTotalComRptCurrency = $totalRptAmount + ($checkPOMaster->VATAmountRpt / $noOfAutoGenerationTimes);
+                    $updateNewWOMasterDetails->poTotalLocalCurrency = $totalLocalAmount + ($checkPOMaster->VATAmountLocal / $noOfAutoGenerationTimes);
+                    $updateNewWOMasterDetails->poTotalSupplierDefaultCurrency = $totalTransAmount + ($checkPOMaster->VATAmount / $noOfAutoGenerationTimes);
+                    $updateNewWOMasterDetails->poTotalSupplierTransactionCurrency = $totalTransAmount + ($checkPOMaster->VATAmount / $noOfAutoGenerationTimes);
+                    $updateNewWOMasterDetails->VATAmount = $checkPOMaster->VATAmount / $noOfAutoGenerationTimes;
+                    $updateNewWOMasterDetails->VATAmountLocal = $checkPOMaster->VATAmountLocal / $noOfAutoGenerationTimes;
+                    $updateNewWOMasterDetails->VATAmountRpt = $checkPOMaster->VATAmountRpt / $noOfAutoGenerationTimes;
                     $updateNewWOMasterDetails->timeStamp = Carbon::now();
 
                     $updateNewWOMasterDetails->save();
