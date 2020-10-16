@@ -6040,8 +6040,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             "noQty" => $subWorkOrderQty,
                             "noOfDays" => $dhDaysInMonth,
                             "unitCost" => $subWorkOrderUnitCost,
-                            "discountPercentage" => 0,
-                            "discountAmount" => 0,
+                            "discountPercentage" => $checkWODetail->discountPercentage,
+                            "discountAmount" => $checkWODetail->discountAmount,
                             "netAmount" => $subWordkOrderNetAmount,
                             "budgetYear" => $checkWODetail->budgetYear,
                             "prBelongsYear" => $checkWODetail->prBelongsYear,
@@ -6102,6 +6102,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $updateNewWOMasterDetails->VATAmount = $checkPOMaster->VATAmount / $noOfAutoGenerationTimes;
                     $updateNewWOMasterDetails->VATAmountLocal = $checkPOMaster->VATAmountLocal / $noOfAutoGenerationTimes;
                     $updateNewWOMasterDetails->VATAmountRpt = $checkPOMaster->VATAmountRpt / $noOfAutoGenerationTimes;
+                    $updateNewWOMasterDetails->poDiscountPercentage = $checkPOMaster->poDiscountPercentage;
+                    $updateNewWOMasterDetails->poDiscountAmount = $checkPOMaster->poDiscountAmount / $noOfAutoGenerationTimes;
                     $updateNewWOMasterDetails->timeStamp = Carbon::now();
 
                     $updateNewWOMasterDetails->save();
