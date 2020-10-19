@@ -1869,14 +1869,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice = (object)[];
 
-        if ($detail) {
-            if ($master->isPerforma == 1) {
-                $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-            } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
-                $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
-            } else {
-                $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
-            }
+        if ($master->isPerforma == 1) {
+            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+        } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
+            $customerInvoice = $this->customerInvoiceDirectRepository->getAuditItemInvoice($id);
+        } else {
+            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
         $accountIBAN = '';

@@ -553,15 +553,15 @@
                                 {{--<td><span>{{$request->rigNo}}</span></td> --}}
                                 <td>
 
-                                    <span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span>
-                                    | <span>{{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></td>
+                                    <span>{{isset($request->invoicedetail->billmaster->ticketmaster->rig->RigDescription)?$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription:''}}</span>
+                                    | <span>{{isset($request->invoicedetail->billmaster->ticketmaster->regNo)?$request->invoicedetail->billmaster->ticketmaster->regNo:''}}</span></td>
                             </tr>
                         @endif
                         @if ($request->line_jobNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Job No</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->invoicedetail->billmaster->ticketmaster->ticketNo}}
+                                <td><span>{{isset($request->invoicedetail->billmaster->ticketmaster->ticketNo)?$request->invoicedetail->billmaster->ticketmaster->ticketNo:''}}
 
 
                                     </span></td>
