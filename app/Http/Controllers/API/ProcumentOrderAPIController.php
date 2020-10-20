@@ -6002,7 +6002,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $subWordkOrderTransCurrency = 0;
                                     $subWordkOrderRptCurrency = 0;
                                 } else {
-                                    $subWorkOrderUnitCost = ($checkWODetail->netAmount - $sumOfNetAmountOfPreviousSubWorkOrder) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder);
+                                    $subWorkOrderUnitCost = $checkWODetail->unitCost; //($checkWODetail->netAmount - $sumOfNetAmountOfPreviousSubWorkOrder) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder);
                                     $subWordkOrderNetAmount = (($checkWODetail->netAmount - $sumOfNetAmountOfPreviousSubWorkOrder) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder)) * $subWorkOrderQty;
                                     $subWordkOrderLocalCurrency = ((($checkWODetail->GRVcostPerUnitLocalCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->LocalCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
                                     $subWordkOrderDefCurrency = ((($checkWODetail->GRVcostPerUnitSupDefaultCur * $checkWODetail->noQty) - $previousSubWorkOrderSummary->DefCur) / ($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder));
