@@ -30,6 +30,7 @@ use App\Models\ReportTemplateLinks;
 use App\Models\YesNoSelection;
 use App\Models\GeneralLedger;
 use App\Repositories\ChartOfAccountRepository;
+use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +115,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
-
+        $employee = \Helper::getEmployeeInfo();
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
@@ -153,6 +154,20 @@ class ChartOfAccountAPIController extends AppBaseController
                     ];
 
                     $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                    if($updateChartOfAccount){
+                        $chartOfAccountOld = $chartOfAccount->toArray();
+                        ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+                        $old_array = array_only($chartOfAccountOld,['AccountDescription']);
+                        $modified_array = array_only($input,['AccountDescription']);
+                        // update in to user log table
+                        foreach ($old_array as $key => $old){
+                            if($old != $modified_array[$key]){
+                                $description = $employee->empName." Updated chart of account (".$chartOfAccount->chartOfAccountSystemID.") from ".$old." To ".$modified_array[$key]."";
+                                UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$chartOfAccount->documentSystemID,$chartOfAccount->primaryCompanySystemID,$chartOfAccount->chartOfAccountSystemID,$description,$modified_array[$key],$old,$key);
+                            }
+                        }
+                    }
 
                     return $this->sendResponse([], 'Chart Of Account updated successfully');
                 }
