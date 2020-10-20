@@ -354,7 +354,8 @@ class GeneralLedger extends Model
         'createdUserSystemID',
         'createdUserPC',
         'timestamp',
-        'glAccountTypeID'
+        'glAccountTypeID',
+        'matchDocumentMasterAutoID'
     ];
 
     /**
@@ -415,7 +416,8 @@ class GeneralLedger extends Model
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserPC' => 'string',
-        'glAccountTypeID' => 'integer'
+        'glAccountTypeID' => 'integer',
+        'matchDocumentMasterAutoID' => 'integer'
     ];
 
     /**

@@ -870,7 +870,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $paySupplierInvoice->save();
                 }
 
-            } elseif ($matchDocumentMaster->documentSystemID == 15) {
+            }
+            elseif ($matchDocumentMaster->documentSystemID == 15) {
 
                 $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
@@ -926,6 +927,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('documentSystemID', 15)
                     ->where('companySystemID', $matchDocumentMaster->companySystemID)
                     ->first();
+
 
 
                 if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
@@ -994,6 +996,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['createdUserSystemID'] = $employee->employeeSystemID;
                         $data['createdUserPC'] = gethostname();
                         $data['timestamp'] = \Helper::currentDateTime();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
                         array_push($finalData, $data);
 
@@ -1115,6 +1118,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['createdUserSystemID'] = $employee->employeeSystemID;
                         $data['createdUserPC'] = gethostname();
                         $data['timestamp'] = \Helper::currentDateTime();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
                         array_push($finalData, $data);
 
@@ -2405,6 +2409,14 @@ ORDER BY
             $masterData->matchingConfirmedByName = null;
             $masterData->matchingConfirmedDate = null;
             $masterData->save();
+
+            if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
+                GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
+                               ->where('documentSystemCode',$masterData->PayMasterAutoId)
+                               ->where('documentSystemID',$masterData->documentSystemID)
+                               ->where('matchDocumentMasterAutoID',$masterData->matchDocumentMasterAutoID)
+                               ->delete();
+            }
 
             AuditTrial::insertAuditTrial('MatchDocumentMaster',$id,$input['returnComment'],'returned back to amend');
 
