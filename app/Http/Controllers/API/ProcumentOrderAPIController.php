@@ -647,7 +647,7 @@ class ProcumentOrderAPIController extends AppBaseController
                         }
 
                     } else {
-                        if($input['vatRegisteredYN'] == 0){
+                        if($input['vatRegisteredYN'] == 1){
                             $calculateItemDiscount =  $itemDiscont['unitCost']  - $itemDiscont['discountAmount'];
                         }else{
                             $calculateItemDiscount =  $itemDiscont['unitCost'] + $itemDiscont['VATAmount'] - $itemDiscont['discountAmount'];
@@ -3813,7 +3813,7 @@ WHERE
                     $calculateItemDiscount = ((($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $poMasterSumRounded) * $purchaseOrderDetail->netAmount)) - ($purchaseOrderDetail->VATAmount * $purchaseOrderDetail->noQty) ) / $purchaseOrderDetail->noQty);
                 } else {
 
-                    if($purchaseOrder->vatRegisteredYN == 0){
+                    if($purchaseOrder->vatRegisteredYN == 1){
                         $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
                     }else{
                         $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount + $purchaseOrderDetail->VATAmount;
