@@ -2026,20 +2026,20 @@ HAVING
        
         $jvInsertData['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
         $jvInsertData['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
-        $jvInsertData['FYBiggin'] = $companyFinancePeriod->dateFrom;
-        $jvInsertData['FYEnd'] = $companyFinancePeriod->dateTo;
+        $jvInsertData['FYBiggin'] = $companyFinanceYear->bigginingDate;
+        $jvInsertData['FYEnd'] = $companyFinanceYear->endingDate;
         $jvInsertData['JVdate'] = Carbon::now();
 
+        $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+        $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+        
         $documentDate = $jvInsertData['JVdate'];
-        $monthBegin = $jvInsertData['FYBiggin'];
-        $monthEnd = $jvInsertData['FYEnd'];
+        $monthBegin = $jvInsertData['FYPeriodDateFrom'];
+        $monthEnd = $jvInsertData['FYPeriodDateTo'];
 
         if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
             return $this->sendError('Current date is not within the financial period!, you cannot copy JV');
         } 
-
-        $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-        $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
         $jvInsertData['createdPcID'] = gethostname();
         $jvInsertData['modifiedPc'] = gethostname();
