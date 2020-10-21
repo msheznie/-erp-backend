@@ -1978,4 +1978,148 @@ HAVING
             return $this->sendError($exception->getMessage());
         }
     }
+
+    public function copyJV(Request $request)
+    {
+        $input = $request->all();
+
+        $id = isset($input['jvMasterAutoId']) ? $input['jvMasterAutoId'] : 0;
+        $jvMaster = JvMaster::find($id);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal voucher not found');
+        }
+
+        if ($jvMaster->approved != -1) {
+            return $this->sendError('You cannot copy this journal voucher, It is not approved', 500);
+        }
+
+        $formattedDate = Carbon::now()->format("Y-m-d");
+
+        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $input['companySystemID'])
+                                                ->where('isActive', -1)
+                                                ->where('isCurrent', -1)
+                                                ->first();
+
+        if (!$companyFinanceYear) {
+            return $this->sendError("Financial year not created or not active");
+        }
+
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companySystemID'])
+                                                     ->where('isActive', -1)
+                                                     ->where('isCurrent', -1)
+                                                     ->where('departmentSystemID', 5)
+                                                     ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                                                     ->first();
+
+        if (!$companyFinancePeriod) {
+            return $this->sendError("Financial period not created or not active");
+        }
+
+
+        $jvInsertData = $jvMaster->toArray();
+
+
+        $userID = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userID);
+       
+        $jvInsertData['FYBiggin'] = $companyFinancePeriod->dateFrom;
+        $jvInsertData['FYEnd'] = $companyFinancePeriod->dateTo;
+        $jvInsertData['JVdate'] = Carbon::now();
+
+        $documentDate = $jvInsertData['JVdate'];
+        $monthBegin = $jvInsertData['FYBiggin'];
+        $monthEnd = $jvInsertData['FYEnd'];
+
+        if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
+            return $this->sendError('Current date is not within the financial period!, you cannot copy JV');
+        } 
+
+        $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+        $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+
+        $jvInsertData['createdPcID'] = gethostname();
+        $jvInsertData['modifiedPc'] = gethostname();
+        $jvInsertData['createdUserID'] = $user->employee['empID'];
+        $jvInsertData['modifiedUser'] = $user->employee['empID'];
+        $jvInsertData['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        $jvInsertData['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+       
+        $lastSerial = JvMaster::where('companySystemID', $input['companySystemID'])
+                                ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
+                                ->orderBy('serialNo', 'desc')
+                                ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+      
+        $jvInsertData['serialNo'] = $lastSerialNumber;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $jvInsertData['documentSystemID'])->first();
+
+        if ($companyFinanceYear) {
+            $startYear = $companyFinanceYear->bigginingDate;
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+        } else {
+            $finYear = date("Y");
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+        $oldCode = $jvInsertData['JVcode'];
+
+        if ($documentMaster) {
+            $jvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $jvInsertData['JVcode'] = $jvCode;
+        }
+
+        $jvInsertData['approved'] = 0;
+        $jvInsertData['confirmedYN'] = 0;
+        $jvInsertData['approvedByUserID'] = null;
+        $jvInsertData['approvedByUserSystemID'] = null;
+        $jvInsertData['approvedDate'] = null;
+        $jvInsertData['confirmedByEmpID'] = null;
+        $jvInsertData['confirmedByEmpSystemID'] = null;
+        $jvInsertData['confirmedByName'] = null;
+        $jvInsertData['confirmedDate'] = null;
+        $jvInsertData['RollLevForApp_curr'] = 1;
+
+        if (isset($input['reverseFlag']) && $input['reverseFlag']) {
+            $jvInsertData['JVNarration'] = ($jvInsertData['JVNarration'] == " " || $jvInsertData['JVNarration'] == null) ? "Reversal JV for ". $oldCode : $jvInsertData['JVNarration']. " - Reversal JV for ". $oldCode;
+        }
+
+        DB::beginTransaction();
+        try {
+            $jvMasterRes = $this->jvMasterRepository->create($jvInsertData);
+
+            $fetchJVDetail = JvDetail::where('jvMasterAutoId', $id)
+                                            ->get()
+                                            ->toArray();
+
+            foreach ($fetchJVDetail as $key => $value) {
+                $value['jvMasterAutoId'] = $jvMasterRes->jvMasterAutoId;
+
+                if (isset($input['reverseFlag']) && $input['reverseFlag']) {
+                    $debitAmount = $value['debitAmount'];
+                    $creditAmount = $value['creditAmount'];
+                    $value['debitAmount'] = $creditAmount;
+                    $value['creditAmount'] = $debitAmount;
+                }
+
+                $jvDetailRes = JvDetail::create($value);
+            }
+
+            DB::commit();
+            return $this->sendResponse($jvMasterRes->jvMasterAutoId, 'JV Copied successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
 }
