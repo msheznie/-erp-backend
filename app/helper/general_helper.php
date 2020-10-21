@@ -31,6 +31,7 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
 use App\Models\Alert;
+use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
@@ -557,10 +558,19 @@ class Helper
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
 
-
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
+
+                //validate supplier blocked status
+                if (in_array($params["document"], self::documentListForValidateSupplierBlockedStatus())) {
+                    $supplierValidate = self::validateSupplierBlockedStatus($params["document"], $masterRec);
+
+                    if ($supplierValidate) {
+                        return ['success' => false, 'message' => 'Supplier is blocked, you cannot confirm this document'];
+                    }
+                }
+
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
@@ -2206,6 +2216,63 @@ class Helper
     public static function documentListForClickHere()
     {
         return [2,5,52];
+    }
+
+    public static function documentListForValidateSupplierBlockedStatus()
+    {
+        return [2,5,52, 3, 11, 4, 15];
+    }
+
+
+    public static function validateSupplierBlockedStatus($documentSystemID, $masterRecord)
+    {
+        $supplierColoumnKey = null;
+        switch ($documentSystemID) {
+            case 2:
+            case 5:
+            case 52:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 3:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 11:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 4:
+                $supplierColoumnKey = 'BPVsupplierID';
+                break;
+            case 15:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+
+        if (!is_null($supplierColoumnKey)) {
+            $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+            
+            return self::checkSupplierBlocked($supplierCodeSystem);
+        }
+
+        return true;
+    }
+
+    public static function checkSupplierBlocked($supplierCodeSystem)
+    {
+        $supplier = SupplierMaster::find($supplierCodeSystem);
+
+        if (!$supplier) {
+            return true;
+        }
+
+        if ($supplier->isBlocked == 1) {
+            return true;
+        }
+
+        return false;
     }
 
 

@@ -111,6 +111,10 @@ class SupplierAssigned extends Model
         'isMarkupPercentage',
         'markupPercentage',
         'jsrsNo',
+        'isBlocked',
+        'blockedBy',
+        'blockedDate',
+        'blockedReason',
         'jsrsExpiry'
     ];
 
@@ -159,6 +163,10 @@ class SupplierAssigned extends Model
         'supCategorySubICVID' => 'integer',
         'isLCCYN' => 'integer',
         'isMarkupPercentage' => 'integer',
+        'isBlocked' => 'integer',
+        'blockedBy' => 'integer',
+        'blockedDate' => 'datetime',
+        'blockedReason' => 'string',
         'markupPercentage' => 'float',
         'jsrsNo' => 'string',
         'jsrsExpiry' => 'string'
