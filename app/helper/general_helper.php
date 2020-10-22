@@ -2257,7 +2257,7 @@ class Helper
             return self::checkSupplierBlocked($supplierCodeSystem);
         }
 
-        return true;
+        return false;
     }
 
     public static function checkSupplierBlocked($supplierCodeSystem)
