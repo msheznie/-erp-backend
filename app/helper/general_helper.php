@@ -760,10 +760,15 @@ class Helper
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         if (in_array($params["document"], self::documentListForClickHere())) {
-                                            $redirectUrl =  env("APPROVE_URL");
+                                            if (in_array($params["document"], [1, 50, 51])) {
+                                                $redirectUrl =  env("APPROVE_URL");
+                                            } else {
+                                                $redirectUrl =  env("PR_APPROVE_URL");
+                                            }
                                             $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                         } else {
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
+                                            $redirectUrl =  env("ERP_APPROVE_URL");
+                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                         }
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " ". $documentApproved->documentCode." is pending for your approval.";
@@ -2150,10 +2155,15 @@ class Helper
                                     $pushNotificationMessage = $subjectName." is pending for your approval.";
 
                                     if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
-                                        $redirectUrl =  env("APPROVE_URL");
+                                        if (in_array($input["documentSystemID"], [1, 50, 51])) {
+                                            $redirectUrl =  env("APPROVE_URL");
+                                        } else {
+                                            $redirectUrl =  env("PR_APPROVE_URL");
+                                        }
                                         $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                     } else {
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
+                                        $redirectUrl =  env("ERP_APPROVE_URL");
+                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                     }
 
 
@@ -2224,7 +2234,7 @@ class Helper
 
     public static function documentListForClickHere()
     {
-        return [2,5,52];
+        return [2,5,52, 1, 50, 51];
     }
 
     public static function documentListForValidateSupplierBlockedStatus()
