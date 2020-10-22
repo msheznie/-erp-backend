@@ -49,6 +49,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
+use App\helper\CurrencyValidation;
 
 class Helper
 {
@@ -561,6 +562,14 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
+
+                //validate currency
+                if (in_array($params["document"], self::documentListForValidateCurrency())) {
+                    $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
+                    if (!$currencyValidate['status']) {
+                        return ['success' => false, 'message' => $currencyValidate['message']];
+                    }
+                }
 
                 //validate supplier blocked status
                 if (in_array($params["document"], self::documentListForValidateSupplierBlockedStatus())) {
@@ -2221,6 +2230,11 @@ class Helper
     public static function documentListForValidateSupplierBlockedStatus()
     {
         return [2,5,52, 3, 11, 4, 15];
+    }
+
+    public static function documentListForValidateCurrency()
+    {
+        return [4, 11, 15, 19, 20, 21];
     }
 
 

@@ -60,6 +60,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
+use App\helper\CurrencyValidation;
 
 /**
  * Class MatchDocumentMasterController
@@ -749,6 +750,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
             }
 
+            $currencyValidate = CurrencyValidation::validateCurrency("payment_matching", $matchDocumentMaster);
+            if (!$currencyValidate['status']) {
+                return $this->sendError($currencyValidate['message'], 500, ['type' => 'confirm']);
+            }
+
             $checkAmount = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->where('supplierPaymentAmount', '<=', 0)
                 ->count();
@@ -1251,6 +1257,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if (empty($pvDetailExist)) {
                 return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+            }
+
+            $currencyValidate = CurrencyValidation::validateCurrency("receipt_matching", $matchDocumentMaster);
+            if (!$currencyValidate['status']) {
+                return $this->sendError($currencyValidate['message'], 500, ['type' => 'confirm']);
             }
 
             $detailAllRecords = CustomerReceivePaymentDetail::where('matchingDocID', $id)
