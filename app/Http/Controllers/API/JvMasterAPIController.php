@@ -2024,23 +2024,28 @@ HAVING
         $userID = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userID);
        
-        $jvInsertData['FYBiggin'] = $companyFinancePeriod->dateFrom;
-        $jvInsertData['FYEnd'] = $companyFinancePeriod->dateTo;
+        $jvInsertData['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+        $jvInsertData['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+        $jvInsertData['FYBiggin'] = $companyFinanceYear->bigginingDate;
+        $jvInsertData['FYEnd'] = $companyFinanceYear->endingDate;
         $jvInsertData['JVdate'] = Carbon::now();
 
+        $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+        $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+        
         $documentDate = $jvInsertData['JVdate'];
-        $monthBegin = $jvInsertData['FYBiggin'];
-        $monthEnd = $jvInsertData['FYEnd'];
+        $monthBegin = $jvInsertData['FYPeriodDateFrom'];
+        $monthEnd = $jvInsertData['FYPeriodDateTo'];
 
         if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
             return $this->sendError('Current date is not within the financial period!, you cannot copy JV');
         } 
 
-        $jvInsertData['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-        $jvInsertData['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
-
         $jvInsertData['createdPcID'] = gethostname();
         $jvInsertData['modifiedPc'] = gethostname();
+        $jvInsertData['timestamp'] = Carbon::now();
+        $jvInsertData['createdDateTime'] = Carbon::now();
+        $jvInsertData['postedDate'] = null;
         $jvInsertData['createdUserID'] = $user->employee['empID'];
         $jvInsertData['modifiedUser'] = $user->employee['empID'];
         $jvInsertData['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -2110,6 +2115,12 @@ HAVING
                     $value['debitAmount'] = $creditAmount;
                     $value['creditAmount'] = $debitAmount;
                 }
+
+                $value['createdDateTime'] = Carbon::now();
+                $value['timeStamp'] = Carbon::now();
+                $value['createdUserID'] = $user->employee['empID'];
+                $value['createdUserSystemID'] = $user->employee['employeeSystemID'];
+                $value['createdPcID'] = gethostname();
 
                 $jvDetailRes = JvDetail::create($value);
             }
