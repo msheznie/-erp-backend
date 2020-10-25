@@ -286,6 +286,12 @@ class SupplierMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
+
+    public function blocked_by()
+    {
+        return $this->belongsTo('App\Models\Employee','blockedBy','employeeSystemID');
+    }
+    
     public function country()
     {
         return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');

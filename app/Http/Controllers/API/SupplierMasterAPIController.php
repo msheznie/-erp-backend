@@ -501,7 +501,7 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
-            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by']);
+            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -564,7 +564,7 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                 }
 
-                if ($supplierMaster->isBlocked != $input['isBlocked']) {
+                if ($supplierMaster->isBlocked != $input['isBlocked'] && $input['isBlocked'] == 1) {
                     $validorMessages = [
                         'blockedReason.required' => 'Blocked Comment is required.',
                     ];
@@ -579,6 +579,10 @@ class SupplierMasterAPIController extends AppBaseController
 
                     $input['blockedBy'] = $employee->employeeSystemID;
                     $input['blockedDate'] = Carbon::now();
+                } else if ($supplierMaster->isBlocked != $input['isBlocked'] && $input['isBlocked'] == 0) {
+                    $input['blockedBy'] = null;
+                    $input['blockedDate'] = null;
+                    $input['blockedReason'] = null;
                 }
 
                 $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']), $id);
@@ -684,7 +688,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');
