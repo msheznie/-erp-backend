@@ -761,9 +761,9 @@ class Helper
 
                                         if (in_array($params["document"], self::documentListForClickHere())) {
                                             if (in_array($params["document"], [1, 50, 51])) {
-                                                $redirectUrl =  env("APPROVE_URL");
-                                            } else {
                                                 $redirectUrl =  env("PR_APPROVE_URL");
+                                            } else {
+                                                $redirectUrl =  env("APPROVE_URL");
                                             }
                                             $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                         } else {
@@ -2156,9 +2156,9 @@ class Helper
 
                                     if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
                                         if (in_array($input["documentSystemID"], [1, 50, 51])) {
-                                            $redirectUrl =  env("APPROVE_URL");
-                                        } else {
                                             $redirectUrl =  env("PR_APPROVE_URL");
+                                        } else {
+                                            $redirectUrl =  env("APPROVE_URL");
                                         }
                                         $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                     } else {
