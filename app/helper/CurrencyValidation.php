@@ -8,14 +8,21 @@ class CurrencyValidation
 	public static function validateCurrency($documentSystemID, $masterRecord)
 	{
 		$docInforArr = self::setDocumentInfo($documentSystemID);
-		
-		$namespacedModel = 'App\Models\\' . $docInforArr["detailModelName"]; // Model name
-        $details = $namespacedModel::where($docInforArr["detailMasterColumnName"], $masterRecord[$docInforArr["masterPrimaryKey"]])
-        							 ->get();
 
-        if (sizeof($details) > 0) {
-        	$details = $details->toArray();
-        }
+		$detailValidation = [];
+		foreach ($docInforArr['detailData'] as $key => $value) {
+			
+			$namespacedModel = 'App\Models\\' . $value["detailModelName"]; // Model name
+	        $details = $namespacedModel::where($value["detailMasterColumnName"], $masterRecord[$docInforArr["masterPrimaryKey"]])
+	        							 ->get();
+
+	        if (sizeof($details) > 0) {
+	        	$details = $details->toArray();
+	        }
+
+        	$detailValidation = self::validateDetailCurrency($details, $value, $detailValidation);
+		}
+		
 
         $erroMsg = "";
         $headerValidation = self::validateHeaderCurrency($masterRecord, $docInforArr);
@@ -26,7 +33,6 @@ class CurrencyValidation
         	$erroMsg = $erroMsg.' of header data';
         }
         
-        $detailValidation = self::validateDetailCurrency($details, $docInforArr);
         if (!empty($detailValidation)) {
 
         	$detailErrMsg = implode(', ', $detailValidation);
@@ -65,10 +71,8 @@ class CurrencyValidation
 		return ['status' => true];		
 	}
 
-	public static function validateDetailCurrency($details, $docInforArr)
+	public static function validateDetailCurrency($details, $docInforArr, $erroMsg)
 	{
-		$erroMsg = [];
-
 		foreach ($details as $key => $value) {
 			if ((isset($docInforArr['detailTransactionCurrencyID']) && $docInforArr['detailTransactionCurrencyID'] != "") && (is_null($value[$docInforArr['detailTransactionCurrencyID']]) || $value[$docInforArr['detailTransactionCurrencyID']] == 0)) {
 				if (!in_array("Transaction Currency", $erroMsg)) {
@@ -114,27 +118,27 @@ class CurrencyValidation
 	public static function validateHeaderCurrency($masterRecord, $docInforArr)
 	{
 		$erroMsg = [];
-		if ((isset($docInforArr['detailTransactionCurrencyID']) && $docInforArr['detailTransactionCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterTransactionCurrencyID']]) || $masterRecord[$docInforArr['masterTransactionCurrencyID']] == 0)) {
+		if ((isset($docInforArr['masterTransactionCurrencyID']) && $docInforArr['masterTransactionCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterTransactionCurrencyID']]) || $masterRecord[$docInforArr['masterTransactionCurrencyID']] == 0)) {
 			array_push($erroMsg, "Transaction Currency");
 		}
 
-		if ((isset($docInforArr['detailTransactionER']) && $docInforArr['detailTransactionER'] != "") && (is_null($masterRecord[$docInforArr['masterTransactionER']]) || $masterRecord[$docInforArr['masterTransactionER']] == 0)) {
+		if ((isset($docInforArr['masterTransactionER']) && $docInforArr['masterTransactionER'] != "") && (is_null($masterRecord[$docInforArr['masterTransactionER']]) || $masterRecord[$docInforArr['masterTransactionER']] == 0)) {
 			array_push($erroMsg, "Transaction Currency Exchange Rate");
 		}
 
-		if ((isset($docInforArr['detailLocalCurrencyID']) && $docInforArr['detailLocalCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterLocalCurrencyID']]) || $masterRecord[$docInforArr['masterLocalCurrencyID']] == 0)) {
+		if ((isset($docInforArr['masterLocalCurrencyID']) && $docInforArr['masterLocalCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterLocalCurrencyID']]) || $masterRecord[$docInforArr['masterLocalCurrencyID']] == 0)) {
 			array_push($erroMsg, "Local Currency");
 		}
 
-		if ((isset($docInforArr['detailLocalCurrencyER']) && $docInforArr['detailLocalCurrencyER'] != "") && (is_null($masterRecord[$docInforArr['masterLocalCurrencyER']]) || $masterRecord[$docInforArr['masterLocalCurrencyER']] == 0)) {
+		if ((isset($docInforArr['masterLocalCurrencyER']) && $docInforArr['masterLocalCurrencyER'] != "") && (is_null($masterRecord[$docInforArr['masterLocalCurrencyER']]) || $masterRecord[$docInforArr['masterLocalCurrencyER']] == 0)) {
 			array_push($erroMsg, "Local Currency Exchange Rate");
 		}
 
-		if ((isset($docInforArr['detailReportingCurrencyID']) && $docInforArr['detailReportingCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterReportingCurrencyID']]) || $masterRecord[$docInforArr['masterReportingCurrencyID']] == 0)) {
+		if ((isset($docInforArr['masterReportingCurrencyID']) && $docInforArr['masterReportingCurrencyID'] != "") && (is_null($masterRecord[$docInforArr['masterReportingCurrencyID']]) || $masterRecord[$docInforArr['masterReportingCurrencyID']] == 0)) {
 			array_push($erroMsg, "Reporting Currency");
 		}
 
-		if ((isset($docInforArr['detailReportingCurrencyER']) && $docInforArr['detailReportingCurrencyER'] != "") && (is_null($masterRecord[$docInforArr['masterReportingCurrencyER']]) || $masterRecord[$docInforArr['masterReportingCurrencyER']] == 0)) {
+		if ((isset($docInforArr['masterReportingCurrencyER']) && $docInforArr['masterReportingCurrencyER'] != "") && (is_null($masterRecord[$docInforArr['masterReportingCurrencyER']]) || $masterRecord[$docInforArr['masterReportingCurrencyER']] == 0)) {
 			array_push($erroMsg, "Reporting Currency Exchange Rate");
 		}
 
@@ -145,174 +149,245 @@ class CurrencyValidation
 	public static function setDocumentInfo($documentSystemID)
 	{
 		$docInforArr = [
-			'detailModelName' => '',
 			'masterPrimaryKey' => '',
-			'detailMasterColumnName' => '', 
 			'masterTransactionCurrencyID' => '', 
 			'masterTransactionER' => '', 
 			'masterLocalCurrencyID' => '', 
 			'masterLocalCurrencyER' => '', 
 			'masterReportingCurrencyID' => '', 
-			'masterReportingCurrencyER' => '',
-			'detailTransactionCurrencyID' => '', 
-			'detailTransactionER' => '', 
-			'detailLocalCurrencyID' => '', 
-			'detailLocalCurrencyER' => '', 
-			'detailReportingCurrencyID' => '', 
-			'detailReportingCurrencyER' => ''
+			'masterReportingCurrencyER' => ''
 		];
 		switch ($documentSystemID) {
             case 11: //supplier invoice
                 $docInforArr = [
-					'detailModelName' => 'BookInvSuppDet',
 					'masterPrimaryKey' => 'bookingSuppMasInvAutoID',
-					'detailMasterColumnName' => 'bookingSuppMasInvAutoID', 
 					'masterTransactionCurrencyID' => 'supplierTransactionCurrencyID', 
 					'masterTransactionER' => 'supplierTransactionCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'masterReportingCurrencyER' => 'companyReportingER',
-					'detailTransactionCurrencyID' => 'supplierTransactionCurrencyID', 
-					'detailTransactionER' => 'supplierTransactionCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrencyID', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'detailReportingCurrencyER' => 'companyReportingER'
+					'masterReportingCurrencyER' => 'companyReportingER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'bookingSuppMasInvAutoID', 
+													'detailModelName' => 'BookInvSuppDet',
+													'detailTransactionCurrencyID' => 'supplierTransactionCurrencyID', 
+													'detailTransactionER' => 'supplierTransactionCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
+													'detailReportingCurrencyER' => 'companyReportingER'
+												];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'directInvoiceAutoID', 
+													'detailModelName' => 'DirectInvoiceDetails',
+													'detailTransactionCurrencyID' => 'DIAmountCurrency', 
+													'detailTransactionER' => 'DIAmountCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
                 break;
             case 15: //Debit Note
                 $docInforArr = [
-					'detailModelName' => 'DebitNoteDetails',
 					'masterPrimaryKey' => 'debitNoteAutoID',
-					'detailMasterColumnName' => 'debitNoteAutoID', 
 					'masterTransactionCurrencyID' => 'supplierTransactionCurrencyID', 
 					'masterTransactionER' => 'supplierTransactionCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'masterReportingCurrencyER' => 'companyReportingER',
-					'detailTransactionCurrencyID' => 'debitAmountCurrency', 
-					'detailTransactionER' => 'debitAmountCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrency', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'comRptCurrency', 
-					'detailReportingCurrencyER' => 'comRptCurrencyER'
+					'masterReportingCurrencyER' => 'companyReportingER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'debitNoteAutoID', 
+													'detailModelName' => 'DebitNoteDetails',
+													'detailTransactionCurrencyID' => 'debitAmountCurrency', 
+													'detailTransactionER' => 'debitAmountCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
                 break;
             case 4: //Payment Voucher
                 $docInforArr = [
-					'detailModelName' => 'PaySupplierInvoiceDetail',
 					'masterPrimaryKey' => 'PayMasterAutoId',
-					'detailMasterColumnName' => 'PayMasterAutoId', 
 					'masterTransactionCurrencyID' => 'supplierTransCurrencyID', 
 					'masterTransactionER' => 'supplierTransCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyRptCurrencyID', 
-					'masterReportingCurrencyER' => 'companyRptCurrencyER',
-					'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
-					'detailTransactionER' => 'supplierTransER', 
-					'detailLocalCurrencyID' => 'localCurrencyID', 
-					'detailLocalCurrencyER' => 'localER', 
-					'detailReportingCurrencyID' => 'comRptCurrencyID', 
-					'detailReportingCurrencyER' => 'comRptER'
+					'masterReportingCurrencyER' => 'companyRptCurrencyER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'PayMasterAutoId', 
+													'detailModelName' => 'PaySupplierInvoiceDetail',
+													'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
+													'detailTransactionER' => 'supplierTransER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localER', 
+													'detailReportingCurrencyID' => 'comRptCurrencyID', 
+													'detailReportingCurrencyER' => 'comRptER'
+												];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'directPaymentAutoID', 
+													'detailModelName' => 'DirectPaymentDetails',
+													'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
+													'detailTransactionER' => 'supplierTransER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'PayMasterAutoId', 
+													'detailModelName' => 'AdvancePaymentDetails',
+													'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
+													'detailTransactionER' => 'supplierTransER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localER', 
+													'detailReportingCurrencyID' => 'comRptCurrencyID', 
+													'detailReportingCurrencyER' => 'comRptER'
+												];
                 break;
             case 'payment_matching': //Payment Matching
                 $docInforArr = [
-					'detailModelName' => 'PaySupplierInvoiceDetail',
 					'masterPrimaryKey' => 'matchDocumentMasterAutoID',
-					'detailMasterColumnName' => 'matchingDocID', 
 					'masterTransactionCurrencyID' => 'supplierTransCurrencyID', 
 					'masterTransactionER' => 'supplierTransCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyRptCurrencyID', 
-					'masterReportingCurrencyER' => 'companyRptCurrencyER',
-					'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
-					'detailTransactionER' => 'supplierTransER', 
-					'detailLocalCurrencyID' => 'localCurrencyID', 
-					'detailLocalCurrencyER' => 'localER', 
-					'detailReportingCurrencyID' => 'comRptCurrencyID', 
-					'detailReportingCurrencyER' => 'comRptER'
+					'masterReportingCurrencyER' => 'companyRptCurrencyER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'matchingDocID', 
+													'detailModelName' => 'PaySupplierInvoiceDetail',
+													'detailTransactionCurrencyID' => 'supplierTransCurrencyID', 
+													'detailTransactionER' => 'supplierTransER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localER', 
+													'detailReportingCurrencyID' => 'comRptCurrencyID', 
+													'detailReportingCurrencyER' => 'comRptER'
+												];
                 break;
             case 20: //Customer Invoice
                 $docInforArr = [
-					'detailModelName' => 'CustomerInvoiceDirectDetail',
 					'masterPrimaryKey' => 'custInvoiceDirectAutoID',
-					'detailMasterColumnName' => 'custInvoiceDirectID', 
 					'masterTransactionCurrencyID' => 'custTransactionCurrencyID', 
 					'masterTransactionER' => 'custTransactionCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'masterReportingCurrencyER' => 'companyReportingER',
-					'detailTransactionCurrencyID' => 'invoiceAmountCurrency', 
-					'detailTransactionER' => 'invoiceAmountCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrency', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'comRptCurrency', 
-					'detailReportingCurrencyER' => 'comRptCurrencyER'
+					'masterReportingCurrencyER' => 'companyReportingER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'custInvoiceDirectID', 
+													'detailModelName' => 'CustomerInvoiceDirectDetail',
+													'detailTransactionCurrencyID' => 'invoiceAmountCurrency', 
+													'detailTransactionER' => 'invoiceAmountCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'custInvoiceDirectAutoID', 
+													'detailModelName' => 'CustomerInvoiceItemDetails',
+													'detailTransactionCurrencyID' => 'sellingCurrencyID', 
+													'detailTransactionER' => 'sellingCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'reportingCurrencyID', 
+													'detailReportingCurrencyER' => 'reportingCurrencyER'
+												];
                 break;
             case 19: //Credit Note
                 $docInforArr = [
-					'detailModelName' => 'CreditNoteDetails',
 					'masterPrimaryKey' => 'creditNoteAutoID',
-					'detailMasterColumnName' => 'creditNoteAutoID', 
 					'masterTransactionCurrencyID' => 'customerCurrencyID', 
 					'masterTransactionER' => 'customerCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'masterReportingCurrencyER' => 'companyReportingER',
-					'detailTransactionCurrencyID' => 'creditAmountCurrency', 
-					'detailTransactionER' => 'creditAmountCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrency', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'comRptCurrency', 
-					'detailReportingCurrencyER' => 'comRptCurrencyER'
+					'masterReportingCurrencyER' => 'companyReportingER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'creditNoteAutoID', 
+													'detailModelName' => 'CreditNoteDetails',
+													'detailTransactionCurrencyID' => 'creditAmountCurrency', 
+													'detailTransactionER' => 'creditAmountCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
                 break;
             case 21: //Customer Reciept
                 $docInforArr = [
-					'detailModelName' => 'CustomerReceivePaymentDetail',
 					'masterPrimaryKey' => 'custReceivePaymentAutoID',
-					'detailMasterColumnName' => 'custReceivePaymentAutoID', 
 					'masterTransactionCurrencyID' => 'custTransactionCurrencyID', 
 					'masterTransactionER' => 'custTransactionCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyRptCurrencyID', 
-					'masterReportingCurrencyER' => 'companyRptCurrencyER',
-					'detailTransactionCurrencyID' => 'custTransactionCurrencyID', 
-					'detailTransactionER' => 'custTransactionCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrencyID', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'detailReportingCurrencyER' => 'companyReportingER'
+					'masterReportingCurrencyER' => 'companyRptCurrencyER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'custReceivePaymentAutoID', 
+													'detailModelName' => 'CustomerReceivePaymentDetail',
+													'detailTransactionCurrencyID' => 'custTransactionCurrencyID', 
+													'detailTransactionER' => 'custTransactionCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
+													'detailReportingCurrencyER' => 'companyReportingER'
+												];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'directReceiptAutoID', 
+													'detailModelName' => 'DirectReceiptDetail',
+													'detailTransactionCurrencyID' => 'DRAmountCurrency', 
+													'detailTransactionER' => 'DDRAmountCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrency', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'comRptCurrency', 
+													'detailReportingCurrencyER' => 'comRptCurrencyER'
+												];
                 break;
             case 'receipt_matching': //Receipt Matching
                 $docInforArr = [
-					'detailModelName' => 'CustomerReceivePaymentDetail',
 					'masterPrimaryKey' => 'matchDocumentMasterAutoID',
-					'detailMasterColumnName' => 'matchingDocID', 
 					'masterTransactionCurrencyID' => 'supplierTransCurrencyID', 
 					'masterTransactionER' => 'supplierTransCurrencyER', 
 					'masterLocalCurrencyID' => 'localCurrencyID', 
 					'masterLocalCurrencyER' => 'localCurrencyER', 
 					'masterReportingCurrencyID' => 'companyRptCurrencyID', 
-					'masterReportingCurrencyER' => 'companyRptCurrencyER',
-					'detailTransactionCurrencyID' => 'custTransactionCurrencyID', 
-					'detailTransactionER' => 'custTransactionCurrencyER', 
-					'detailLocalCurrencyID' => 'localCurrencyID', 
-					'detailLocalCurrencyER' => 'localCurrencyER', 
-					'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
-					'detailReportingCurrencyER' => 'companyReportingER'
+					'masterReportingCurrencyER' => 'companyRptCurrencyER'
 				];
+
+				$docInforArr['detailData'][] = [
+													'detailMasterColumnName' => 'matchingDocID', 
+													'detailModelName' => 'CustomerReceivePaymentDetail',
+													'detailTransactionCurrencyID' => 'custTransactionCurrencyID', 
+													'detailTransactionER' => 'custTransactionCurrencyER', 
+													'detailLocalCurrencyID' => 'localCurrencyID', 
+													'detailLocalCurrencyER' => 'localCurrencyER', 
+													'detailReportingCurrencyID' => 'companyReportingCurrencyID', 
+													'detailReportingCurrencyER' => 'companyReportingER'
+												];
                 break;
 			default:
 				# code...
