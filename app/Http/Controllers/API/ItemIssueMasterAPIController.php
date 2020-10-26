@@ -934,7 +934,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
                 $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
-                    ->where('documentSystemID', 1)
+                    ->where('documentSystemID', 8)
                     ->first();
 
                 if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {

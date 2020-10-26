@@ -942,7 +942,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $empID = \Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
-            ->where('documentSystemID', 3)
+            ->where('documentSystemID', 17)
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
