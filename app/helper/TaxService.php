@@ -25,10 +25,10 @@ class TaxService
 
         $data = array('applicableOn' => 2,'percentage' => 0);
         $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
-            $q->where('companySystemID',$companySystemID)
-                ->where('isActive',1)
-                ->where('taxCategory',2);
-        })
+                $q->where('companySystemID',$companySystemID)
+                    ->where('isActive',1)
+                    ->where('taxCategory',2);
+            })
             ->whereHas('main',function ($q){
                 $q->where('isActive',1);
             })
