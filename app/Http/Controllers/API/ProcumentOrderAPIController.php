@@ -598,7 +598,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         // calculating total Supplier Default currency
 
-        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"],  $input['supplierTransactionCurrencyID'],$supplierCurrency->currencyID, $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
@@ -3729,6 +3729,7 @@ WHERE
             $purchaseOrder->VATAmount = 0;
             $purchaseOrder->VATAmountLocal = 0;
             $purchaseOrder->VATAmountRpt = 0;
+            $purchaseOrder->VATPercentage = 0;
         }
 
         //getting total sum of PO detail Amount
@@ -3758,7 +3759,7 @@ WHERE
 
         // calculating total Supplier Default currency total
 
-        $currencyConversionMasterDefault = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
+        $currencyConversionMasterDefault = \Helper::currencyConversion($input["companySystemID"],  $input['supplierTransactionCurrencyID'],$supplierCurrency->currencyID, $poMasterSumDeducted);
 
         $purchaseOrder->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $purchaseOrder->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
@@ -5556,7 +5557,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $purchaseOrder->poDiscountAmount);
-        $currencyConversionMaster = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
+        $currencyConversionMaster = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $poMasterSumDeducted);
 
         ProcumentOrder::where('purchaseOrderID', $id)
             ->update([
