@@ -273,6 +273,23 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
 
+        //update vat
+
+        if($unbilledGrvGroupByMaster->totalVATAmount > 0 && $unbilledGrvGroupByMaster->totTransactionAmount > 0){
+            $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
+            $percentage =  ($bookInvSuppDet->totTransactionAmount/$unbilledGrvGroupByMaster->totTransactionAmount);
+            $VATAmount = $unbilledGrvGroupByMaster->totalVATAmount * $percentage;
+            $currencyVat = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
+            $vatData = array(
+                'VATAmount' => \Helper::roundValue($VATAmount),
+                'VATAmountLocal' => \Helper::roundValue($currencyVat['localAmount']),
+                'VATAmountRpt' =>  \Helper::roundValue($currencyVat['reportingAmount'])
+            );
+
+            $this->bookInvSuppDetRepository->update($vatData, $id);
+        }
+
+
         // balance Amount
 
         $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)

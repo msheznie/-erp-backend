@@ -520,8 +520,10 @@ class GRVMasterAPIController extends AppBaseController
                     foreach ($fetchingGRVDetails as $der) {
                         $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
                         if ($poMaster->logisticsAvailable == -1) {
-                            $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
-                                ->where('grvAutoID', 0)->get();
+                            $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])
+                                                                        ->where('isAdvancePaymentYN', 1)
+                                                                        ->where('grvAutoID', 0)
+                                                                        ->get();
                             if (count($poAdvancePaymentdetail) > 0) {
                                 foreach ($poAdvancePaymentdetail as $advance) {
                                     if ($advance['grvAutoID'] == 0) {

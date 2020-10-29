@@ -46,6 +46,15 @@ class TaxService
                 ->first();
     }
 
+    public  static function getInputVATGLAccount($companySystemID = 0){
+
+        return Tax::where('companySystemID',$companySystemID)
+            //->where('isActive',1)
+            ->where('taxCategory',2)
+            ->whereNotNull('inputVatGLAccountAutoID')
+            ->first();
+    }
+
     public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$supplierID=0) {
 
         $data = array('applicableOn' => 2,'percentage' => 0);
