@@ -253,12 +253,13 @@ class GRVDetailsAPIController extends AppBaseController
     {
         /** @var GRVDetails $gRVDetails */
         $gRVDetails = $this->gRVDetailsRepository->findWithoutFail($id);
-        $purchaseOrderDetailsID = $gRVDetails->purchaseOrderDetailsID;
-        $purchaseOrderMastertID = $gRVDetails->purchaseOrderMastertID;
 
         if (empty($gRVDetails)) {
             return $this->sendError('GRV Details not found');
         }
+
+        $purchaseOrderDetailsID = $gRVDetails->purchaseOrderDetailsID;
+        $purchaseOrderMastertID = $gRVDetails->purchaseOrderMastertID;
 
         // check logistic item exist
         $logisticItems = PoAdvancePayment::where('grvAutoID', $gRVDetails->grvAutoID)

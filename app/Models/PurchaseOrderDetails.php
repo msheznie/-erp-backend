@@ -194,7 +194,8 @@ class PurchaseOrderDetails extends Model
         'supplierCatalogMasterID',
         'supplierCatalogDetailID',
         'timeStamp',
-        'madeLocallyYN'
+        'madeLocallyYN',
+        'VATApplicableOn'
     ];
 
     /**

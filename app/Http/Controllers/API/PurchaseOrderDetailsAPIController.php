@@ -556,7 +556,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                 if ($prDetail_arr['unitCost'] > 0) {
                                     $prDetail_arr['VATAmount'] = (($prDetail_arr['unitCost'] / 100) * $vatDetails['percentage']);
                                 }
-                                $prDetail_arr['netAmount'] = ($prDetail_arr['unitCost'] + $prDetail_arr['VATAmount']) * $new['poQty'];
+                                // $prDetail_arr['netAmount'] = ($prDetail_arr['unitCost'] + $prDetail_arr['VATAmount']) * $new['poQty'];
                                 $currencyConversionVAT = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $prDetail_arr['VATAmount']);
 
                                 $prDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);

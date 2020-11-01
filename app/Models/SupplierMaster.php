@@ -155,6 +155,10 @@ class SupplierMaster extends Model
         'refferedBackYN',
         'timesReferred',
         'jsrsNo',
+        'isBlocked',
+        'blockedBy',
+        'blockedDate',
+        'blockedReason',
         'jsrsExpiry'
     ];
 
@@ -230,6 +234,10 @@ class SupplierMaster extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'jsrsNo' => 'string',
+        'isBlocked' => 'integer',
+        'blockedBy' => 'integer',
+        'blockedDate' => 'datetime',
+        'blockedReason' => 'string',
         'jsrsExpiry' => 'string'
     ];
 
@@ -278,6 +286,12 @@ class SupplierMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
+
+    public function blocked_by()
+    {
+        return $this->belongsTo('App\Models\Employee','blockedBy','employeeSystemID');
+    }
+    
     public function country()
     {
         return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');

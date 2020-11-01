@@ -446,6 +446,10 @@ class SupplierMasterRefferedBack extends Model
         'timesReferred',
         'timestamp',
         'createdUserSystemID',
+        'isBlocked',
+        'blockedBy',
+        'blockedDate',
+        'blockedReason',
         'modifiedUserSystemID'
     ];
 
@@ -520,6 +524,10 @@ class SupplierMasterRefferedBack extends Model
         'modifiedUserSystemID' => 'integer',
         'jsrsNo' => 'string',
         'jsrsExpiry' => 'string',
+        'isBlocked' => 'integer',
+        'blockedBy' => 'integer',
+        'blockedDate' => 'datetime',
+        'blockedReason' => 'string',
         'jsrsNo',
         'jsrsExpiry'
     ];

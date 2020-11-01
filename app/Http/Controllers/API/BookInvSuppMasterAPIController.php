@@ -30,6 +30,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -844,6 +845,23 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['bookingAmountTrans'] != \Helper::roundValue($bookingAmountTrans)) {
                 return $this->sendError('Cannot confirm. Supplier Invoice Master and Detail shows a difference in total.',500);
+            }
+
+            //check tax configuration if tax added
+            if($detailTaxSumTrans > 0 && empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
+                return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+            }
+
+            if($input['documentType'] == 0){
+                $vatTotal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('VATAmount');
+                if($vatTotal > 0){
+                    if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    }else if( empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }
+                }
             }
 
             $params = array(
