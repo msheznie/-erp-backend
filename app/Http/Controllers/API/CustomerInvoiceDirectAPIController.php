@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
@@ -387,6 +388,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        }
+
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
         if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
@@ -447,10 +453,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-
-        if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
-        }
         $input['departmentSystemID'] = 4;
         /*financial Year check*/
         if ($isPerforma == 0) {
@@ -845,8 +847,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
                                 }
                             }
+                        }
 
+                        // VAT configuration validation
+                        $taxSum = Taxdetail::where('documentSystemCode', $id)
+                            ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                            ->where('documentSystemID', $customerInvoiceDirect->documentSystemiD)
+                            ->sum('amount');
 
+                        if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
                         }
 
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
@@ -928,6 +938,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
                                 return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
                             } else {
+
+                                // VAT configuration validation
+                                $taxSum = Taxdetail::where('documentSystemCode', $id)
+                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                    ->where('documentSystemID', $customerInvoiceDirect->documentSystemiD)
+                                    ->sum('amount');
+
+                                if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                                }
+
                                 $params = array('autoID' => $id,
                                     'company' => $customerInvoiceDirect->companySystemID,
                                     'document' => $customerInvoiceDirect->documentSystemiD,
