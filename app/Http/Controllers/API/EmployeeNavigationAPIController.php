@@ -154,7 +154,11 @@ class EmployeeNavigationAPIController extends AppBaseController
     public function getUserGroupEmployeesByCompanyDatatable(Request $request)
     {
         $input = $request->all();
-        $userGroup = EmployeeNavigation::with(['company', 'usergroup', 'employee']);
+        $userGroup = EmployeeNavigation::with(['company', 'usergroup', 'employee' => function ($query) use ($input) {
+                                                                            if (array_key_exists('dischargedYN', $input)) {
+                                                                                $query->where('discharegedYN', $input['dischargedYN']);
+                                                                            }
+                                                                        }]);
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
                 $userGroup->where('companyID', $input['selectedCompanyID']);
@@ -173,6 +177,12 @@ class EmployeeNavigationAPIController extends AppBaseController
 
         if (array_key_exists('employeeSystemID', $input)) {
             $userGroup->where('employeeSystemID', $input['employeeSystemID']);
+        }
+
+        if (array_key_exists('dischargedYN', $input)) {
+            $userGroup->whereHas('employee', function ($query) use ($input) {
+                            $query->where('discharegedYN', $input['dischargedYN']);
+                        });
         }
 
         return \DataTables::eloquent($userGroup)
