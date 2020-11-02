@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateFinanceItemCategorySubAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\FinanceItemCategorySub;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Repositories\FinanceItemcategorySubAssignedRepository;
 use App\Repositories\FinanceItemCategorySubRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -35,11 +36,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     /** @var  FinanceItemCategorySubRepository */
     private $financeItemCategorySubRepository;
     private $userRepository;
+    private $financeItemcategorySubAssignedRepository;
 
-    public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo,UserRepository $userRepo)
+    public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo,UserRepository $userRepo,
+                                FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
     {
         $this->financeItemCategorySubRepository = $financeItemCategorySubRepo;
         $this->userRepository = $userRepo;
+        $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
     }
 
     /**
@@ -226,12 +230,25 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             foreach ($input as $key => $value) {
                 $financeItemCategorySubs->$key = $value;
             }
-
-
+            
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;
-
             $financeItemCategorySubs->save();
+            $this->financeItemcategorySubAssignedRepository->where(
+                'itemCategorySubID', $input['itemCategorySubID']
+            )->update(
+                array(
+                    'financeGLcodePL' => $financeItemCategorySubs->financeGLcodePL,
+                    'financeGLcodePLSystemID' => $financeItemCategorySubs->financeGLcodePLSystemID,
+                    'financeGLcodeRevenue' => $financeItemCategorySubs->financeGLcodeRevenue,
+                    'financeGLcodeRevenueSystemID' => $financeItemCategorySubs->financeGLcodeRevenueSystemID,
+                    'financeGLcodebBS' => $financeItemCategorySubs->financeGLcodebBS,
+                    'financeGLcodebBSSystemID' => $financeItemCategorySubs->financeGLcodebBSSystemID,
+                    'includePLForGRVYN' => $financeItemCategorySubs->includePLForGRVYN,
+                    'categoryDescription' => $financeItemCategorySubs->categoryDescription
+                )
+            );
+
         }else{
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = $empId;
@@ -285,7 +302,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        $financeItemCategorySub = $this->financeItemCategorySubRepository->update($input, $id);
+        $this->financeItemCategorySubRepository->update($input, $id);
 
         return $this->sendResponse($financeItemCategorySub->toArray(), 'FinanceItemCategorySub updated successfully');
     }

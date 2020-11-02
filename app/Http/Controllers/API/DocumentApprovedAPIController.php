@@ -180,6 +180,31 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
+        $isApproved   = isset($input['isApproved']) ? $input['isApproved'] : 0;
+        if($isApproved){
+            $prJoinSQL = " AND erp_purchaserequest.approved = -1 ";
+            $poJoinSQL = " AND erp_purchaseordermaster.approved = -1 ";
+            $pvJoinSQL = " AND erp_paysupplierinvoicemaster.approved = -1 ";
+            $siJoinSQL = " AND erp_bookinvsuppmaster.approved = -1 ";
+            $dnJoinSQL = " AND erp_debitnote.approved = -1 ";
+            $ciJoinSQL = " AND erp_custinvoicedirect.approved = -1 ";
+            $cnJoinSQL = " AND erp_creditnote.approved = -1 ";
+            $brvJoinSQL = " AND erp_customerreceivepayment.approved = -1 ";
+            $docApprovedSQL = " erp_documentapproved.approvedYN = -1 ";
+            $orderByCoulmn = " approvedDate ";
+        }else{
+            $prJoinSQL = " AND erp_purchaserequest.approved = 0 ";
+            $poJoinSQL = " AND erp_purchaseordermaster.approved = 0 ";
+            $pvJoinSQL = " AND erp_paysupplierinvoicemaster.approved = 0 ";
+            $siJoinSQL = " AND erp_bookinvsuppmaster.approved = 0 ";
+            $dnJoinSQL = " AND erp_debitnote.approved = 0 ";
+            $ciJoinSQL = " AND erp_custinvoicedirect.approved = 0 ";
+            $cnJoinSQL = " AND erp_creditnote.approved = 0 ";
+            $brvJoinSQL = " AND erp_customerreceivepayment.approved = 0 ";
+            $docApprovedSQL = " erp_documentapproved.approvedYN = 0 ";
+            $orderByCoulmn = " docConfirmedDate ";
+        }
+
         $qry = "SELECT t.*,companymaster.*,erp_documentmaster.documentDescription FROM (SELECT
 	*
 FROM
@@ -198,6 +223,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_purchaserequest.comments,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	'' AS SupplierOrCustomer,
 	2 as DecimalPlaces ,
@@ -221,11 +247,10 @@ FROM
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_purchaserequest.PRConfirmedYN = 1 
-	AND erp_purchaserequest.approved = 0 
 	AND erp_purchaserequest.cancelledYN = 0 
-	AND erp_purchaserequest.refferedBackYN = 0 
+	AND erp_purchaserequest.refferedBackYN = 0 $prJoinSQL
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL 
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -250,6 +275,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_purchaseordermaster.narration,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	erp_purchaseordermaster.supplierName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -273,12 +299,12 @@ FROM
 	AND erp_purchaseordermaster.purchaseOrderID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaseordermaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_purchaseordermaster.poConfirmedYN = 1 
-	AND erp_purchaseordermaster.approved = 0 
+	$poJoinSQL
 	AND erp_purchaseordermaster.poCancelledYN = 0 
 	AND erp_purchaseordermaster.refferedBackYN = 0
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_purchaseordermaster.supplierTransactionCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -303,6 +329,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_paysupplierinvoicemaster.BPVNarration,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -324,12 +351,12 @@ FROM
 	AND erp_paysupplierinvoicemaster.PayMasterAutoId = erp_documentapproved.documentSystemCode 
 	AND erp_paysupplierinvoicemaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_paysupplierinvoicemaster.confirmedYN = 1 
-	AND erp_paysupplierinvoicemaster.approved = 0 
+	$pvJoinSQL 
 	AND erp_paysupplierinvoicemaster.cancelYN = 0 
 	AND erp_paysupplierinvoicemaster.ReversedYN = 0
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_paysupplierinvoicemaster.supplierTransCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL 
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -354,6 +381,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_bookinvsuppmaster.comments,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -375,12 +403,12 @@ FROM
 	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_bookinvsuppmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_bookinvsuppmaster.confirmedYN = 1 
-	AND erp_bookinvsuppmaster.approved = 0 
+	$siJoinSQL
 	AND erp_bookinvsuppmaster.cancelYN = 0
 	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_bookinvsuppmaster.supplierID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_bookinvsuppmaster.supplierTransactionCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL 
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -405,6 +433,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_debitnote.comments,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -426,11 +455,11 @@ FROM
 	AND erp_debitnote.debitNoteAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_debitnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_debitnote.confirmedYN = 1 
-	AND erp_debitnote.approved = 0
+	$dnJoinSQL
 	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -455,6 +484,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_custinvoicedirect.comments,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -476,12 +506,12 @@ FROM
 	AND erp_custinvoicedirect.custInvoiceDirectAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_custinvoicedirect.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_custinvoicedirect.confirmedYN = 1 
-	AND erp_custinvoicedirect.approved = 0 
+	$ciJoinSQL
 	AND erp_custinvoicedirect.canceledYN = 0
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_custinvoicedirect.customerID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_custinvoicedirect.custTransactionCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -506,6 +536,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_creditnote.comments,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -526,12 +557,12 @@ FROM
 	AND erp_creditnote.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_creditnote.creditNoteAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_creditnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-	AND erp_creditnote.confirmedYN = 1 
+	$cnJoinSQL 
 	AND erp_creditnote.approved = 0
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_creditnote.customerID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_creditnote.customerCurrencyID 
 WHERE
-	erp_documentapproved.approvedYN = 0 
+	$docApprovedSQL
 	AND erp_documentapproved.rejectedYN = 0 
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
@@ -557,6 +588,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentCode,
 	erp_customerreceivepayment.narration,
 	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
@@ -578,11 +610,11 @@ FROM
 	AND erp_customerreceivepayment.custReceivePaymentAutoID = erp_documentapproved.documentSystemCode
 	AND erp_customerreceivepayment.RollLevForApp_curr = erp_documentapproved.rollLevelOrder
 	AND erp_customerreceivepayment.confirmedYN = 1
-	AND erp_customerreceivepayment.approved = 0
+	$brvJoinSQL
 	LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_customerreceivepayment.customerID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_customerreceivepayment.custTransactionCurrencyID
 WHERE
-	erp_documentapproved.approvedYN = 0
+	$docApprovedSQL
 	AND erp_documentapproved.rejectedYN = 0
 	AND erp_documentapproved.approvalGroupID > 0
     $filter
@@ -592,7 +624,7 @@ WHERE
 	)t 
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 
-	$where ORDER BY docConfirmedDate $sort $limit";
+	$where ORDER BY $orderByCoulmn $sort $limit";
 
 
         $output = DB::select($qry);

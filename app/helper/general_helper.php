@@ -31,6 +31,7 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
 use App\Models\Alert;
+use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
@@ -48,6 +49,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
+use App\helper\CurrencyValidation;
 
 class Helper
 {
@@ -557,10 +559,27 @@ class Helper
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
 
-
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
+
+                //validate currency
+                if (in_array($params["document"], self::documentListForValidateCurrency())) {
+                    $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
+                    if (!$currencyValidate['status']) {
+                        return ['success' => false, 'message' => $currencyValidate['message']];
+                    }
+                }
+
+                //validate supplier blocked status
+                if (in_array($params["document"], self::documentListForValidateSupplierBlockedStatus())) {
+                    $supplierValidate = self::validateSupplierBlockedStatus($params["document"], $masterRec);
+
+                    if ($supplierValidate) {
+                        return ['success' => false, 'message' => 'Supplier is blocked, you cannot confirm this document'];
+                    }
+                }
+
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
@@ -741,10 +760,15 @@ class Helper
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         if (in_array($params["document"], self::documentListForClickHere())) {
-                                            $redirectUrl =  env("APPROVE_URL");
+                                            if (in_array($params["document"], [1, 50, 51])) {
+                                                $redirectUrl =  env("PR_APPROVE_URL");
+                                            } else {
+                                                $redirectUrl =  env("APPROVE_URL");
+                                            }
                                             $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                         } else {
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval.</p>';
+                                            $redirectUrl =  env("ERP_APPROVE_URL");
+                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                         }
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " ". $documentApproved->documentCode." is pending for your approval.";
@@ -2131,10 +2155,15 @@ class Helper
                                     $pushNotificationMessage = $subjectName." is pending for your approval.";
 
                                     if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
-                                        $redirectUrl =  env("APPROVE_URL");
+                                        if (in_array($input["documentSystemID"], [1, 50, 51])) {
+                                            $redirectUrl =  env("PR_APPROVE_URL");
+                                        } else {
+                                            $redirectUrl =  env("APPROVE_URL");
+                                        }
                                         $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                     } else {
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
+                                        $redirectUrl =  env("ERP_APPROVE_URL");
+                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="'.$redirectUrl.'">Click here to approve</a></p>';
                                     }
 
 
@@ -2205,7 +2234,69 @@ class Helper
 
     public static function documentListForClickHere()
     {
-        return [2,5,52];
+        return [2,5,52, 1, 50, 51];
+    }
+
+    public static function documentListForValidateSupplierBlockedStatus()
+    {
+        return [2,5,52, 3, 11, 4, 15];
+    }
+
+    public static function documentListForValidateCurrency()
+    {
+        return [4, 11, 15, 19, 20, 21];
+    }
+
+
+    public static function validateSupplierBlockedStatus($documentSystemID, $masterRecord)
+    {
+        $supplierColoumnKey = null;
+        switch ($documentSystemID) {
+            case 2:
+            case 5:
+            case 52:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 3:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 11:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            case 4:
+                $supplierColoumnKey = 'BPVsupplierID';
+                break;
+            case 15:
+                $supplierColoumnKey = 'supplierID';
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+
+        if (!is_null($supplierColoumnKey)) {
+            $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+            
+            return self::checkSupplierBlocked($supplierCodeSystem);
+        }
+
+        return false;
+    }
+
+    public static function checkSupplierBlocked($supplierCodeSystem)
+    {
+        $supplier = SupplierMaster::find($supplierCodeSystem);
+
+        if (!$supplier) {
+            return true;
+        }
+
+        if ($supplier->isBlocked == 1) {
+            return true;
+        }
+
+        return false;
     }
 
 

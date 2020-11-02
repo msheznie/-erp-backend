@@ -986,19 +986,61 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
+        $rollMasterDetailData = $input['rollMasterDetailData'];
 
-        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-            $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
+
+        if (array_key_exists('companySystemID', $rollMasterDetailData)) {
+            if (is_array($rollMasterDetailData['companySystemID'])) {
+                $rollMasterDetailData['companySystemID'] = $rollMasterDetailData['companySystemID'][0];
+            }
+            if ($rollMasterDetailData['companySystemID'] > 0) {
+                $employeesDepartment->whereHas('company', function ($q) use ($rollMasterDetailData) {
+                    $q->where('companySystemID', $rollMasterDetailData['companySystemID']);
+                });
+            } else {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
+                } else {
+                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
+                }
+            }
         } else {
-            $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
-            $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
+            } else {
+                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
+            }
         }
-        
 
         if (array_key_exists('approvalGroupID', $input)) {
             if ($input['approvalGroupID'] > 0) {
                 $employeesDepartment->whereHas('approvalgroup', function ($q) use ($input) {
                     $q->where('employeeGroupID', $input['approvalGroupID']);
+                });
+            }
+        }
+
+        if (array_key_exists('documentSystemID', $rollMasterDetailData)) {
+            if ($rollMasterDetailData['documentSystemID'] > 0) {
+                $employeesDepartment->whereHas('document', function ($q) use ($rollMasterDetailData) {
+                    $q->where('documentSystemID', $rollMasterDetailData['documentSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('departmentSystemID', $rollMasterDetailData)) {
+            if ($rollMasterDetailData['departmentSystemID'] > 0) {
+                $employeesDepartment->whereHas('department', function ($q) use ($rollMasterDetailData) {
+                    $q->where('departmentSystemID', $rollMasterDetailData['departmentSystemID']);
+                });
+            }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $rollMasterDetailData)) {
+            if ($rollMasterDetailData['serviceLineSystemID'] > 0) {
+                $employeesDepartment->whereHas('serviceline', function ($q) use ($rollMasterDetailData) {
+                    $q->where('servicelineSystemID', $rollMasterDetailData['serviceLineSystemID']);
                 });
             }
         }
