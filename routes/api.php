@@ -1031,6 +1031,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('jv_details', 'JvDetailAPIController');
         Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
         Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+        Route::post('copyJV', 'JvMasterAPIController@copyJV');
         Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
         Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
         Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');

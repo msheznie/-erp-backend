@@ -47,6 +47,7 @@ use App\Criteria\FilterSupplierMasterByCompanyCriteria;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 /**
  * Class SupplierMasterController
@@ -500,7 +501,7 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
-            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by']);
+            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -562,12 +563,34 @@ class SupplierMasterAPIController extends AppBaseController
                         return $this->sendError($validator->messages(), 422);
                     }
                 }
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']));
+
+                if ($supplierMaster->isBlocked != $input['isBlocked'] && $input['isBlocked'] == 1) {
+                    $validorMessages = [
+                        'blockedReason.required' => 'Blocked Comment is required.',
+                    ];
+
+                    $validator = \Validator::make($input, [
+                        'blockedReason' => 'required',
+                    ],$validorMessages);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+
+                    $input['blockedBy'] = $employee->employeeSystemID;
+                    $input['blockedDate'] = Carbon::now();
+                } else if ($supplierMaster->isBlocked != $input['isBlocked'] && $input['isBlocked'] == 0) {
+                    $input['blockedBy'] = null;
+                    $input['blockedDate'] = null;
+                    $input['blockedReason'] = null;
+                }
+
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){
@@ -665,7 +688,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');

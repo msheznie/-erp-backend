@@ -24,6 +24,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
@@ -519,8 +520,10 @@ class GRVMasterAPIController extends AppBaseController
                     foreach ($fetchingGRVDetails as $der) {
                         $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
                         if ($poMaster->logisticsAvailable == -1) {
-                            $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
-                                ->where('grvAutoID', 0)->get();
+                            $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])
+                                                                        ->where('isAdvancePaymentYN', 1)
+                                                                        ->where('grvAutoID', 0)
+                                                                        ->get();
                             if (count($poAdvancePaymentdetail) > 0) {
                                 foreach ($poAdvancePaymentdetail as $advance) {
                                     if ($advance['grvAutoID'] == 0) {
@@ -619,6 +622,14 @@ class GRVMasterAPIController extends AppBaseController
                 // same
             } else {
                 return $this->sendError('Cannot confirm. GRV Master and Detail shows a difference in total.', 500);
+            }
+
+            //check Input Vat Transfer GL Account if vat exist
+            $totalVAT = GRVDetails::where('grvAutoID',$id)->selectRaw('SUM(VATAmount*noQty) as totalVAT')->first();
+            if(TaxService::checkGRVVATEligible($gRVMaster->companySystemID,$gRVMaster->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0){
+                if(empty(TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID))){
+                    return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                }
             }
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);

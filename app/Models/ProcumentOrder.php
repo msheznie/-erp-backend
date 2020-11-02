@@ -453,6 +453,11 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
+    public function sub_work_orders()
+    {
+        return $this->hasMany('App\Models\ProcumentOrder', 'WO_purchaseOrderID', 'purchaseOrderID');
+    }
+
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'poConfirmedByEmpSystemID', 'employeeSystemID');
