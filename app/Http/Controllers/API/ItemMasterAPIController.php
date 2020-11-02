@@ -42,6 +42,7 @@ use App\Models\Unit;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
+use App\Models\UserActivityLogger;
 use App\Repositories\ItemMasterRepository;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -693,17 +694,6 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError('Item Master not found');
         }
 
-        if($itemMaster->itemApprovedYN == 1){
-            return $this->sendError('Item Master already approved. You cannot edit');
-        }
-
-        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
-
-        if ($company) {
-            $input['primaryCompanyID'] = $company->CompanyID;
-        }
-
-
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
                 if (count($input[$key]) > 0) {
@@ -712,6 +702,44 @@ class ItemMasterAPIController extends AppBaseController
                     $input[$key] = 0;
                 }
             }
+        }
+
+        if($itemMaster->itemApprovedYN == 1){
+            //check policy 9
+            $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],9);
+            if($policy){
+                $itemMaster->itemUrl = $input['itemUrl'];
+                $itemMaster->isActive = $input['isActive'];
+                $itemMaster->itemPicture = $input['itemPicture'];
+                $itemMaster->save();
+
+                $updateData = [
+                    'itemUrl' => $input['itemUrl'],
+                    'isActive' => $input['isActive']
+                ];
+
+                $itemMasterOld = $itemMaster->toArray();
+                ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
+                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture']);
+                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture']);
+                // update in to user log table
+                foreach ($old_array as $key => $old){
+                    if($old != $modified_array[$key]){
+                        $description = $employee->empName." Updated item master (".$itemMaster->itemCodeSystem.") from ".$old." To ".$modified_array[$key]."";
+                        UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$itemMaster->documentSystemID,$itemMaster->primaryCompanySystemID,$itemMaster->itemCodeSystem,$description,$modified_array[$key],$old,$key);
+                    }
+                }
+
+                return $this->sendResponse([], 'Item Master updated successfully');
+            }
+
+            return $this->sendError('Item Master already approved. You cannot edit');
+        }
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if ($company) {
+            $input['primaryCompanyID'] = $company->CompanyID;
         }
 
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
