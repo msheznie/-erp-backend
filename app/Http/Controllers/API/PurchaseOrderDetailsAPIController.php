@@ -921,7 +921,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $fullyOrdered = 1;
             }
 
-            $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+             PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
                 ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => 0]);
         }
 
@@ -938,11 +938,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
 
-            $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
+             ProcumentOrder::find($purchaseOrder->purchaseOrderID)
                 ->update([
                     'VATAmount' => $calculatVatAmount,
                     'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
                     'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                ]);
+        }
+
+        $detailsCount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
+                                             ->count();
+
+        if($detailsCount == 0){
+            ProcumentOrder::find($purchaseOrder->purchaseOrderID)
+                ->update([
+                    'poDiscountPercentage' => 0,
+                    'poDiscountAmount' => 0
                 ]);
         }
 
@@ -1005,6 +1016,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'poTotalSupplierTransactionCurrency' => 0,
                 'poTotalComRptCurrency' => 0,
                 'poDiscountAmount' => 0,
+                'poDiscountPercentage' => 0,
                 'VATAmount' => 0,
                 'VATAmountLocal' => 0,
                 'VATAmountRpt' => 0
