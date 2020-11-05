@@ -113,6 +113,7 @@ class BankAccount extends Model
         'RollLevForApp_curr',
         'documentSystemID',
         'documentID',
+        'isTempBank',
         'refferedBackYN',
         'timesReferred'
     ];
@@ -172,6 +173,7 @@ class BankAccount extends Model
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'refferedBackYN' => 'integer',
+        'isTempBank' => 'integer',
         'timesReferred' => 'integer'
 
     ];
