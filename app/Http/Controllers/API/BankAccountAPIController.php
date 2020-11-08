@@ -162,12 +162,13 @@ class BankAccountAPIController extends AppBaseController
                 return $this->sendError('Please select a active GL Code', 500);
             }
 
-
-            $checkAlreadyAssignGl = BankAccount::where('companySystemID', $input['companySystemID'])
-                ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
-                ->first();
-            if (!empty($checkAlreadyAssignGl)) {
-                return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
+            if ($input['isTempBank'] != 1) {
+                $checkAlreadyAssignGl = BankAccount::where('companySystemID', $input['companySystemID'])
+                    ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                    ->first();
+                if (!empty($checkAlreadyAssignGl)) {
+                    return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
+                }
             }
 
             $input['glCodeLinked'] = $chartOfAccount->AccountCode;
