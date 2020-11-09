@@ -1491,15 +1491,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glCode'] = $chartOfAccountData->AccountCode;
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
-                                        /*$data['supplierCodeSystem'] = $tax->payeeSystemCode;
-                                        $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
-                                        $data['documentTransCurrencyER'] = $tax->supplierTransactionER;*/
                                         $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmount));
-                                        /*$data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = $tax->localCurrencyER;*/
                                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmountLocal));
-                                        /*$data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
-                                        $data['documentRptCurrencyER'] = $tax->companyReportingER;*/
                                         $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmountRpt));
                                         array_push($finalData, $data);
 
@@ -1525,15 +1518,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glCode'] = $chartOfAccountData->AccountCode;
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
-                                        /*$data['supplierCodeSystem'] = $tax->payeeSystemCode;
-                                        $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
-                                        $data['documentTransCurrencyER'] = $tax->supplierTransactionER;*/
                                         $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmount)) * -1;
-                                        /*$data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = $tax->localCurrencyER;*/
                                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmountLocal)) * -1;
-                                        /*$data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
-                                        $data['documentRptCurrencyER'] = $tax->companyReportingER;*/
                                         $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->totalVATAmountRpt)) * -1;
                                         array_push($finalData, $data);
                                     } else {
@@ -1558,15 +1544,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glCode'] = $chartOfAccountData->AccountCode;
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
-                                        $data['supplierCodeSystem'] = $tax->payeeSystemCode;
-                                        $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
-                                        $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
                                         $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans));
-                                        $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
                                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal));
-                                        $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
-                                        $data['documentRptCurrencyER'] = $tax->companyReportingER;
                                         $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt));
                                         array_push($finalData, $data);
                                     } else {

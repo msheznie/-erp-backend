@@ -631,6 +631,19 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
             }
+
+
+            // When Changing the Serviceline/Finance Grouping, check whether there is depreciation document without Confirmation or Approval.
+            $depAssetNotApproved = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
+                $q->where('approved', 0);
+            })->exists();
+            if($depAssetNotApproved){
+                // check finance grouping input is changed
+                if((isset($input['AUDITCATOGARY']) && $input['AUDITCATOGARY'] != $fixedAssetMaster->AUDITCATOGARY) || (isset($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != $fixedAssetMaster->serviceLineSystemID)){
+                    return $this->sendError('Asset has been pulled to open depreciation document. Approve/Delete the document & try again',500);
+                }
+
+            }
         }
 
         $fixedAssetMasterOld = $fixedAssetMaster->toArray();
