@@ -36,4 +36,17 @@ class UserActivityLogRepository extends BaseRepository
     {
         return UserActivityLog::class;
     }
+
+    public function showColumnByDocumentSystemID($documentSystemID){
+
+        switch ($documentSystemID){
+            case 22:
+                $showColumn = ['departmentID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE'];
+                break;
+            default:
+                $showColumn = [];
+        }
+
+        return $showColumn;
+    }
 }
