@@ -302,6 +302,7 @@ class UserActivityLogAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+        $showColumn = $this->userActivityLogRepository->showColumnByDocumentSystemID($documentSystemID);
 
         $log = UserActivityLog::whereIn('company_id',$childCompanies)
             ->where('document_id',$documentSystemID)
@@ -309,6 +310,11 @@ class UserActivityLogAPIController extends AppBaseController
 
         if($autoID > 0){
             $log = $log->where('module_id',$autoID);
+        }
+
+
+        if(!empty($showColumn)){
+            $log = $log->whereIn('column_name',$showColumn);
         }
 
         $search = $request->input('search.value');
@@ -331,4 +337,6 @@ class UserActivityLogAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+
 }
