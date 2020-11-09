@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Storage;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
+use App\helper\BlockInvoice;
 
 class Helper
 {
@@ -562,6 +563,20 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
+                if (in_array($params["document"], [20])) {
+                    $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
+                                                                            ->where('companySystemID', $params['company'])
+                                                                            ->where('isYesNO', 1)
+                                                                            ->first();
+
+
+                    if ($invoiceBlockPolicy) {
+                        $blockResult = BlockInvoice::blockCustomerInvoiceByCreditLimit($params["document"], $masterRec);
+                        if (!$blockResult['status']) {
+                            return ['success' => false, 'message' => $blockResult['message']];
+                        }
+                    }
+                } 
 
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
@@ -2276,9 +2291,20 @@ class Helper
         }
 
         if (!is_null($supplierColoumnKey)) {
-            $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
-            
-            return self::checkSupplierBlocked($supplierCodeSystem);
+            if ($documentSystemID == 4) {
+                if ($masterRecord->invoiceType == 3) {
+                    if ($masterRecord->directPaymentpayeeYN == 0 && $masterRecord->directPaymentPayeeSelectEmp == 0 && $masterRecord->directPaymentPayeeEmpID == null) {
+                        $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                        return self::checkSupplierBlocked($supplierCodeSystem);
+                    }
+                } else {
+                    $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                    return self::checkSupplierBlocked($supplierCodeSystem);
+                }
+            } else {
+                $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                return self::checkSupplierBlocked($supplierCodeSystem);
+            }
         }
 
         return false;
@@ -2289,7 +2315,7 @@ class Helper
         $supplier = SupplierMaster::find($supplierCodeSystem);
 
         if (!$supplier) {
-            return true;
+            return false;
         }
 
         if ($supplier->isBlocked == 1) {

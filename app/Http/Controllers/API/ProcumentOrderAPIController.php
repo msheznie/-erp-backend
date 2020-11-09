@@ -4539,7 +4539,7 @@ ORDER BY
             return $this->sendError('You cannot refer Back this PO');
         }
 
-        $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess']);
+        $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess','isVatEligible']);
 
         $storePOMasterHistory = PurchaseOrderMasterRefferedHistory::insert($purchaseOrderArray);
 
