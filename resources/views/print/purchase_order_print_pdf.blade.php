@@ -619,7 +619,7 @@
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                            class="font-weight-bold" style="font-size: 11px">Sub Total</span></td>
+                            class="font-weight-bold" style="font-size: 11px">Total Order Amount</span></td>
                 <td class="text-right"
                     style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
@@ -650,8 +650,8 @@
                         &nbsp;</td>
                     <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 11px">VAT Amount{{--({{$podata->VATPercentage .'%'}}--}}
-                            )</span></td>
+                                style="font-size: 11px">VAT{{--({{$podata->VATPercentage .'%'}})--}}
+                        </span></td>
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
                                 class="font-weight-bold">{{number_format($podata->VATAmount, $numberFormatting)}}</span>

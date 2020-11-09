@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Storage;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
+use App\helper\BlockInvoice;
 
 class Helper
 {
@@ -562,6 +563,22 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
+
+
+                if (in_array($params["document"], [20])) {
+                    $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
+                                                                            ->where('companySystemID', $params['company'])
+                                                                            ->where('isYesNO', 1)
+                                                                            ->first();
+
+
+                    if ($invoiceBlockPolicy) {
+                        $blockResult = BlockInvoice::blockCustomerInvoiceByCreditLimit($params["document"], $masterRec);
+                        if (!$blockResult['status']) {
+                            return ['success' => false, 'message' => $blockResult['message']];
+                        }
+                    }
+                } 
 
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
