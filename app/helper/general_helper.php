@@ -563,8 +563,6 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
-
-
                 if (in_array($params["document"], [20])) {
                     $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
                                                                             ->where('companySystemID', $params['company'])
@@ -2293,9 +2291,20 @@ class Helper
         }
 
         if (!is_null($supplierColoumnKey)) {
-            $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
-            
-            return self::checkSupplierBlocked($supplierCodeSystem);
+            if ($documentSystemID == 4) {
+                if ($masterRecord->invoiceType == 3) {
+                    if ($masterRecord->directPaymentpayeeYN == 0 && $masterRecord->directPaymentPayeeSelectEmp == 0 && $masterRecord->directPaymentPayeeEmpID == null) {
+                        $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                        return self::checkSupplierBlocked($supplierCodeSystem);
+                    }
+                } else {
+                    $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                    return self::checkSupplierBlocked($supplierCodeSystem);
+                }
+            } else {
+                $supplierCodeSystem = $masterRecord[$supplierColoumnKey];
+                return self::checkSupplierBlocked($supplierCodeSystem);
+            }
         }
 
         return false;
@@ -2306,7 +2315,7 @@ class Helper
         $supplier = SupplierMaster::find($supplierCodeSystem);
 
         if (!$supplier) {
-            return true;
+            return false;
         }
 
         if ($supplier->isBlocked == 1) {
