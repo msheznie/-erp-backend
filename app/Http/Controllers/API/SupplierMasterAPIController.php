@@ -23,16 +23,26 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CurrencyMaster;
 use App\Models\CountryMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
+use App\Models\RegisteredSupplierCurrency;
+use App\Models\RegisteredBankMemoSupplier;
+use App\Models\RegisteredSupplierContactDetail;
+use App\Models\RegisteredSupplierAttachment;
 use App\Models\DocumentApproved;
 use App\Models\SupplierMaster;
 use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
+use App\Models\ExternalLinkHash;
+use App\Models\RegisteredSupplier;
+use App\Models\YesNoSelection;
+use App\Models\SupplierContactType;
+use App\Models\BankMemoTypes;
 use App\Models\SupplierMasterRefferedBack;
 use App\Repositories\SupplierMasterRepository;
 use App\Traits\UserActivityLogger;
@@ -48,6 +58,7 @@ use Illuminate\Support\Facades\DB;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class SupplierMasterController
@@ -921,5 +932,550 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($supplier->toArray(), 'Supplier Master Amend successfully');
+    }
+
+    public function generateSupplierExternalLink(Request $request)
+    {
+        $input = $request->all();
+        $bytes = random_bytes(20);
+        $hashKey = bin2hex($bytes);
+        $empID = \Helper::getEmployeeSystemID();
+
+        $insertData = [
+            'hashKey' => $hashKey,
+            'generatedBy' => $empID,
+            'genratedDate' => Carbon::now(),
+            'expiredIn' => Carbon::now()->addDays(2),
+            'isUsed' => 0,
+            'companySystemID' => $input['companySystemID']
+        ];
+
+        $resData = ExternalLinkHash::create($insertData);
+
+        return $this->sendResponse($hashKey, 'External link generated successfully');
+    }
+
+    public function validateSupplierRegistrationLink(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['uid'])) {
+            return $this->sendError("Hash not found");
+        }
+
+        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])
+                                     ->where('isUsed', 0)
+                                     ->first();
+
+        if (!$checkHash) {
+            return $this->sendError("Hash not found");
+        }
+
+        if (Carbon::parse($checkHash->expiredIn) < Carbon::now()) {
+             return $this->sendError("Hash expired");
+        }
+
+        return $this->sendResponse([], 'External link validated successfully');
+    }
+
+    public function getSupplierRegisterFormData(Request $request)
+    {
+        /**Country Drop Down */
+        $country = CountryMaster::orderBy('countryName', 'asc')
+            ->get();
+
+        $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
+                                          ->get();
+        $companyDefaultBankMemos = BankMemoTypes::whereIn('bankMemoTypeID', [1, 2, 3, 4, 6, 7, 9])
+                                                ->orderBy('sortOrder', 'asc')->get();
+
+        $contactTypes = SupplierContactType::all();
+        $yesNoSelection = YesNoSelection::all();
+
+        $output = [
+                'country' => $country,
+                'currencyMaster' => $currencyMaster,
+                'contactTypes' => $contactTypes,
+                'yesNoSelection' => $yesNoSelection,
+                'companyDefaultBankMemos' => $companyDefaultBankMemos
+            ];
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function registerSupplier(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['uid'])) {
+            return $this->sendError("Hash not found");
+        }
+
+        $checkHash = ExternalLinkHash::where('hashKey', $input['uid'])
+                                     ->where('isUsed', 0)
+                                     ->first();
+
+        if (!$checkHash) {
+            return $this->sendError("Hash not found");
+        }
+
+        if (Carbon::parse($checkHash->expiredIn) < Carbon::now()) {
+             return $this->sendError("Hash expired");
+        }
+
+
+        $validorMessages = [
+            'supplierName.required' => 'Name is required.',
+            'telephone.required' => 'Telephone Number is required.',
+            'supEmail.required' => 'Email is required.',
+            'supplierCountryID.required' => 'Country is required.',
+            'registrationExprity.required' => 'Registartion Expire date is required.',
+            'currency.required' => 'Currency is required.',
+            'nameOnPaymentCheque.required' => 'Name on payment cheque is required.',
+            'address.required' => 'Address is required.',
+            'registrationNumber.required' => 'Registartion Number is required.',
+        ];
+
+        $validator = \Validator::make($input, [
+            'supplierName' => 'required',
+            'telephone' => 'required',
+            'supEmail' => 'required',
+            'supplierCountryID' => 'required',
+            'registrationExprity' => 'required',
+            'currency' => 'required',
+            'nameOnPaymentCheque' => 'required',
+            'address' => 'required',
+            'registrationNumber' => 'required',
+        ], $validorMessages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $masterData = [
+            'supplierName' => $input['supplierName'],
+            'telephone' => $input['telephone'],
+            'supEmail' => $input['supEmail'],
+            'supplierCountryID' => $input['supplierCountryID'],
+            'registrationExprity' => Carbon::parse($input['registrationExprity']),
+            'currency' => $input['currency'],
+            'nameOnPaymentCheque' => $input['nameOnPaymentCheque'],
+            'address' => $input['address'],
+            'fax' => isset($input['fax']) ? $input['fax'] : null,
+            'webAddress' => isset($input['webAddress']) ? $input['webAddress'] : null,
+            'registrationNumber' => $input['registrationNumber']
+        ];
+
+        DB::beginTransaction();
+        try {
+            $resMaster = RegisteredSupplier::create($masterData);
+            if ($resMaster) {
+                $supplierCurrencyData = [
+                    'registeredSupplierID' => $resMaster->id,
+                    'currencyID' => $input['currency'],
+                    'isAssigned' => -1,
+                    'isDefault' => 0,
+                ]; 
+
+                $resSupplierCurrency = RegisteredSupplierCurrency::create($supplierCurrencyData);
+
+                if ($resSupplierCurrency) {
+                    foreach ($input['companyDefaultBankMemos'] as $key => $value) {
+                        $memoData = [
+                            'memoHeader' => $value['bankMemoHeader'],
+                            'memoDetail' => isset($value['memoDetail']) ? $value['memoDetail'] : null,
+                            'registeredSupplierID' => $resMaster->id,
+                            'supplierCurrencyID' => $resSupplierCurrency->id,
+                            'bankMemoTypeID' => $value['bankMemoTypeID']
+                        ];
+
+                        $resBankMemo = RegisteredBankMemoSupplier::create($memoData);
+                    }
+                }
+
+                foreach ($input['contactDetails'] as $key => $value) {
+                    if ($value['contractType'] != null) {
+                        $contactData = [
+                            'registeredSupplierID' => $resMaster->id,
+                            'contactTypeID' => $value['contractType'],
+                            'contactPersonName' => $value['contractPersonName'],
+                            'contactPersonTelephone' => $value['contractTelephone'],
+                            'contactPersonFax' => $value['contarctFax'],
+                            'contactPersonEmail' => $value['contractEmail'],
+                            'isDefault' => ($value['isDefault'] == 1) ? -1 : 0
+                        ];
+
+                        $resContact = RegisteredSupplierContactDetail::create($contactData);
+                    }
+                }
+            }
+
+            $checkHash->isUsed = 1;
+            $checkHash->save();
+
+            foreach ($input['attachments'] as $key => $value) {
+                if (isset($value['description']) && $value['description'] != "") {
+                    $attachemntDescription = isset($value['description']) ? $value['description'] : "";
+
+                    $fileData = $value['file'];
+
+                    $extension = $fileData['fileType'];
+
+                    $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+                        'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+                        'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+                        'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+                         'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+                          'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+                          'xbap', 'xnk','php'];
+
+                    if (in_array($extension, $blockExtensions))
+                    {
+                        DB::rollback();
+                        return $this->sendError('This type of file not allow to upload.',500);
+                    }
+
+
+                    if(isset($fileData['size'])){
+                        if ($fileData['size'] > 31457280) {
+                            DB::rollback();
+                            return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.",500);
+                        }
+                    }
+
+                    $file = $fileData['file'];
+
+                    $fileData = $this->convertArrayToValue($fileData);
+
+                    $attachmentData = [
+                        'resgisteredSupplierID' => $resMaster->id,
+                        'attachmentDescription' => $attachemntDescription,
+                        'originalFileName' => isset($fileData['originalFileName']) ? $fileData['originalFileName'] : null,
+                        'sizeInKbs' => isset($fileData['sizeInKbs']) ? $fileData['sizeInKbs'] : null,
+                    ];
+
+                    $documentAttachments = RegisteredSupplierAttachment::create($attachmentData);
+
+                    $decodeFile = base64_decode($file);
+
+                    $updateData['myFileName'] = $resMaster->id . '_' . $documentAttachments->id . '.' . $extension;
+
+                    $path = 'registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+
+                    Storage::disk('public')->put($path, $decodeFile);
+
+                    $updateData['isUploaded'] = 1;
+                    $updateData['path'] = $path;
+
+                    $updateRes = RegisteredSupplierAttachment::where('id', $documentAttachments->id)
+                                                             ->update($updateData);
+                }
+            }
+
+            $companMaster = Company::find($checkHash->companySystemID);
+
+            DB::commit();
+            return $this->sendResponse([], 'Thank you for registering with '.$companMaster->CompanyName.'. Your registration will be reviewed and notified via email');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage().$e->getLine());
+        }
+    }
+
+
+     public function notApprovedRegisteredSuppliers(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $input['approvedYN'] = 0;
+
+        $search = $request->input('search.value');
+        $supplierMasters = $this->getRegisteredSuppliersByFilterQry($input, $search);
+
+        return \DataTables::eloquent($supplierMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+     public function approvedRegisteredSuppliers(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $input['approvedYN'] = 1;
+        
+        $search = $request->input('search.value');
+        $supplierMasters = $this->getRegisteredSuppliersByFilterQry($input, $search);
+
+        return \DataTables::eloquent($supplierMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getRegisteredSuppliersByFilterQry($request, $search)
+    {
+        $input = $request;
+
+        $supplierMasters = RegisteredSupplier::with(['country']);
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == 1) && !is_null($input['approvedYN'])) {
+                $supplierMasters->where('approvedYN', '=', $input['approvedYN']);
+            }
+        }
+
+        if ($search) {
+            $supplierMasters = $supplierMasters->where(function ($query) use ($search) {
+                $query->where('supplierName', 'LIKE', "%{$search}%")
+                    ->orWhere('telephone', 'LIKE', "%{$search}%")
+                    ->orWhere('supEmail', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $supplierMasters;
+
+    }
+
+    public function getRegisteredSupplierData(Request $request)
+    {
+        $input = $request->all();
+
+        $data = RegisteredSupplier::with(['supplier_currency' => function($query) {
+                                        $query->with(['currency_master']);
+                                    }, 'supplier_contact_details' => function($query) {
+                                        $query->with(['contact_type']);
+                                    }, 'supplier_attachments', 'final_approved_by'])
+                                  ->where('id', $input['supplierID'])
+                                  ->first();     
+        
+        return $this->sendResponse($data, 'Supplier data retrived successfully');   
+    }
+
+    public function bankMemosByRegisteredSupplierCurrency(Request $request)
+    {
+        $input = $request->all();
+
+        $data = RegisteredBankMemoSupplier::where('supplierCurrencyID', $input['supplierCurrencyID'])
+                                          ->where('registeredSupplierID', $input['registeredSupplierID'])
+                                          ->get();
+
+        return $this->sendResponse($data, 'Supplier data retrived successfully');  
+    }
+
+    public function updateRegisteredSupplierAttachment(Request $request)
+    {
+        $input = $request->all();
+        $update = RegisteredSupplierAttachment::where('id', $input['id'])
+                                              ->update($input);
+
+
+        return $this->sendResponse([], 'Updated successfully');  
+    }
+
+   public function updateRegisteredSupplierCurrency(Request $request)
+    {
+        $input = $request->all();
+        unset($input['currency_master']);
+        $input['isAssigned'] = ($input['isAssigned'] == 1 || $input['isAssigned'] == -1) ? -1 : 0;
+        $input['isDefault'] = ($input['isDefault'] == 1 || $input['isDefault'] == -1) ? -1 : 0;
+
+        $update = RegisteredSupplierCurrency::where('id', $input['id'])
+                                              ->update($input);
+
+
+        return $this->sendResponse([], 'Updated successfully');  
+    }
+
+    public function updateRegisteredSupplierBankMemo(Request $request)
+    {
+        $input = $request->all();
+        $update = RegisteredBankMemoSupplier::where('id', $input['id'])
+                                              ->update($input);
+
+
+        return $this->sendResponse([], 'Updated successfully');  
+    }
+
+    public function updateRegisteredSupplierMaster(Request $request)
+    {
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        unset($input['supplier_attachments']);
+        unset($input['final_approved_by']);
+        unset($input['supplier_contact_details']);
+        unset($input['supplier_currency']);
+
+        $supplierConfirmedYN = $input['supplierConfirmedYN'];
+
+        $input = $this->convertArrayToValue($input);
+
+        DB::beginTransaction();
+        try {
+            unset($input['supplierConfirmedYN']);
+            $update = RegisteredSupplier::where('id', $input['id'])
+                                        ->update($input);
+
+            if ($supplierConfirmedYN == 1) {
+                $params = array('autoID' => $input['id'], 'company' => $companySystemID, 'document' => 85);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"]);
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Supplier updated successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage().$e->getLine());
+        }
+
+        return $this->sendResponse([], 'Updated successfully');  
+    }
+
+    public function downloadSupplierAttachmentFile(Request $request)
+    {
+
+        $input = $request->all();
+        $documentAttachments = RegisteredSupplierAttachment::find($input['id']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError('Attachments not found');
+        }
+
+        if(!is_null($documentAttachments->path)) {
+            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
+                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+        }else{
+            return $this->sendError('Attachment is not attached', 404);
+        }
+    }
+
+
+    public function getAllRegisteredSupplierApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+
+        $registeredSupplier = DB::table('erp_documentapproved')
+            ->select('registeredSupplier.*', 'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder', 'currencymaster.CurrencyCode',
+                'approvalLevelID', 'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
+                on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
+                on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                    ->where('employeesdepartments.documentSystemID', 85)
+                    ->whereIn('employeesdepartments.companySystemID', $companyID)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
+            })
+            ->join('registeredSupplier', function ($query) use ($companyID, $empID, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('registeredSupplier.approvedYN', 0)
+                    ->where('registeredSupplier.supplierConfirmedYN', 1)
+                    ->when($search != "", function ($q) use ($search) {
+                        $q->where(function ($query) use ($search) {
+                            $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                        });
+                    });
+            })
+            ->leftJoin('currencymaster', 'registeredSupplier.currency', '=', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 85)
+            ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $registeredSupplier = [];
+        }
+
+        return \DataTables::of($registeredSupplier)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
+    }
+
+    public function approveRegisteredSupplier(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectRegisteredSupplier(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
     }
 }

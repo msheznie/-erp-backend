@@ -51,6 +51,7 @@ use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
+use App\helper\SupplierRegister;
 
 class Helper
 {
@@ -213,6 +214,17 @@ class Helper
                     $docInforArr["tableName"] = 'suppliermaster';
                     $docInforArr["modelName"] = 'SupplierMaster';
                     $docInforArr["primarykey"] = 'supplierCodeSystem';
+                    break;
+                case 85:
+                    $docInforArr["documentCodeColumnName"] = 'supplierName';
+                    $docInforArr["confirmColumnName"] = 'supplierConfirmedYN';
+                    $docInforArr["confirmedBy"] = 'supplierConfirmedEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'supplierConfirmedEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'supplierConfirmedEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'supplierConfirmedDate';
+                    $docInforArr["tableName"] = 'registeredSupplier';
+                    $docInforArr["modelName"] = 'RegisteredSupplier';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 case 57:
                     $docInforArr["documentCodeColumnName"] = 'primaryCode';
@@ -816,6 +828,7 @@ class Helper
 
                                     }
                                 }
+
                                 DB::commit();
                                 return ['success' => true, 'message' => 'Successfully document confirmed'];
                             } else {
@@ -1100,6 +1113,18 @@ class Helper
                 $docInforArr["tableName"] = 'suppliermaster';
                 $docInforArr["modelName"] = 'SupplierMaster';
                 $docInforArr["primarykey"] = 'supplierCodeSystem';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedby';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "supplierConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
+                break;
+             case 85:
+                $docInforArr["tableName"] = 'registeredSupplier';
+                $docInforArr["modelName"] = 'RegisteredSupplier';
+                $docInforArr["primarykey"] = 'supplierName';
                 $docInforArr["approvedColumnName"] = 'approvedYN';
                 $docInforArr["approvedBy"] = 'approvedby';
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
@@ -1899,6 +1924,14 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supData);
                             }
 
+                            if ($input["documentSystemID"] == 85) { //insert data to supplier table
+                                $resSupplierRegister = SupplierRegister::registerSupplier($input);
+                                if (!$resSupplierRegister['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $resSupplierRegister['message']];
+                                }
+                            }
+
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
@@ -2490,6 +2523,12 @@ class Helper
                     $docInforArr["primarykey"] = 'supplierCodeSystem';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 85: // Supplier master
+                    $docInforArr["tableName"] = 'registeredSupplier';
+                    $docInforArr["modelName"] = 'RegisteredSupplier';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 case 58: // Customer master
                     $docInforArr["tableName"] = 'customermaster';
                     $docInforArr["modelName"] = 'CustomerMaster';
@@ -2542,7 +2581,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 85])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
