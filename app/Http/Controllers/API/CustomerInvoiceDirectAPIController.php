@@ -1069,8 +1069,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
 
+        $cusBasicData = CustomerInvoiceDirect::find($id);
+
+        $createdDateAndTime = ($cusBasicData) ? Carbon::parse($cusBasicData->createdDateAndTime) : null;
+
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
+                $query->whereDate('cutOffDate', '<=', $createdDateAndTime);
+        }, 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'
@@ -1924,7 +1930,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($master->createdDateAndTime))
+                                                ->first();
 
         if ($checkCompanyIsMerged) {
             $companyLogo = $checkCompanyIsMerged['logo'];
