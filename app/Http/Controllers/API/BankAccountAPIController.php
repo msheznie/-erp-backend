@@ -290,11 +290,12 @@ class BankAccountAPIController extends AppBaseController
                 }
 
                 $input['glCodeLinked'] = $chartOfAccount->AccountCode;
-            } else {
+            } 
+
+            if ($bankAccount->isTempBank != $input['isTempBank'] && $input['isTempBank'] != 1) {
                 $input['chartOfAccountSystemID'] = null;
                 $input['glCodeLinked'] = null;
             }
-
         }
 
         if ($bankAccount->confirmedYN == 0 && $input['confirmedYN'] == 1) {
