@@ -2317,6 +2317,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        }  else if ($printTemplate['printTemplateID'] == 5) {
+            $html = view('print.customer_invoice_tax', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
         } else if ($printTemplate['printTemplateID'] == 3) {
             $html = view('print.customer_invoice_with_po_detail', $array);
             $pdf = \App::make('dompdf.wrapper');
