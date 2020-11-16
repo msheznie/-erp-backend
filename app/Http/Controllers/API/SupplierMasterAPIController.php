@@ -1342,7 +1342,7 @@ class SupplierMasterAPIController extends AppBaseController
                                         ->update($input);
 
             if ($supplierConfirmedYN == 1) {
-                $params = array('autoID' => $input['id'], 'company' => $companySystemID, 'document' => 85);
+                $params = array('autoID' => $input['id'], 'company' => $companySystemID, 'document' => 86);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
@@ -1413,7 +1413,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
                 on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                    ->where('employeesdepartments.documentSystemID', 85)
+                    ->where('employeesdepartments.documentSystemID', 86)
                     ->whereIn('employeesdepartments.companySystemID', $companyID)
                     ->where('employeesdepartments.employeeSystemID', $empID)
                     ->where('employeesdepartments.isActive', 1)
@@ -1434,7 +1434,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->leftJoin('currencymaster', 'registeredSupplier.currency', '=', 'currencymaster.currencyID')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->where('erp_documentapproved.documentSystemID', 85)
+            ->where('erp_documentapproved.documentSystemID', 86)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
