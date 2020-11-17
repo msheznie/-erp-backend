@@ -19,6 +19,7 @@ class BlockInvoice
 			if ($customerData->creditLimit > 0 && $customerData->custGLAccountSystemID != null) {
 				$customerOutsanding = GeneralLedger::where('companySystemID', $masterRecord->companySystemID)
 							                        ->whereIn('documentSystemID', [20, 19, 21])
+							                        ->where('supplierCodeSystem', $masterRecord->customerID)
 							                        ->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
 							                        ->sum('documentRptAmount');
 
