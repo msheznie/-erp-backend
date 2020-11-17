@@ -288,9 +288,9 @@ class BankAccountAPIController extends AppBaseController
                 if (!empty($checkAlreadyAssignGl)) {
                     return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
                 }
-
-                $input['glCodeLinked'] = $chartOfAccount->AccountCode;
             } 
+            
+            $input['glCodeLinked'] = $chartOfAccount->AccountCode;
 
             if ($bankAccount->isTempBank != $input['isTempBank']) {
                 $input['chartOfAccountSystemID'] = null;
