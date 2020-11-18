@@ -280,7 +280,7 @@ class BankAccountAPIController extends AppBaseController
                 return $this->sendError('Please select a active GL Code', 500);
             }
 
-            if ($input['isTempBank'] != 1) {
+            if (($bankAccount->isTempBank == $input['isTempBank']) && $input['isTempBank'] != 1) {
                 $checkAlreadyAssignGl = BankAccount::where('bankAccountAutoID', '!=', $id)
                     ->where('companySystemID', $input['companySystemID'])
                     ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
