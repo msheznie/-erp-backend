@@ -4,6 +4,8 @@ namespace App\helper;
 use Carbon\Carbon;
 use App\Models\CustomerMaster;
 use App\Models\GeneralLedger;
+use App\Models\Company;
+use App\Models\CurrencyMaster;
 
 class BlockInvoice
 {
@@ -24,7 +26,20 @@ class BlockInvoice
 							                        ->sum('documentRptAmount');
 
 				if ($customerOutsanding > 0 && ($customerOutsanding > $customerData->creditLimit)) {
-					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".number_format($customerOutsanding)." USD"];
+					$reportCurrencyDecimalPlace = 2;
+					$currencyCode = "USD";
+					$comanyMasterData = Company::find($masterRecord->companySystemID);
+					if ($comanyMasterData) {
+						$currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
+						if ($currencyData) {
+							$reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
+							$currencyCode = $currencyData->CurrencyCode;
+						}
+					}
+
+					$customerOutsandingFormated = number_format($customerOutsanding, $reportCurrencyDecimalPlace);
+
+					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
 				}
 			}
 		}
