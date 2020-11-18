@@ -1007,6 +1007,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
         $segments = $segments->get();
 
+        $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -1016,7 +1018,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
-            'segments' => $segments
+            'segments' => $segments,
+            'isVATEligible' => $isVATEligible
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
