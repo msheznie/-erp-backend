@@ -248,6 +248,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
         Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
         Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
         Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
