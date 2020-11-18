@@ -52,6 +52,7 @@ use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
+use App\helper\IvmsDeliveryOrderService;
 
 class Helper
 {
@@ -819,10 +820,29 @@ class Helper
                                         $pushNotificationArray['documentCode'] = $documentApproved->documentCode;
                                         $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
 
+
+                                        if (in_array($params["document"], [71])) {
+                                            $ivmsPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 47)
+                                                                                    ->where('companySystemID', $params['company'])
+                                                                                    ->where('isYesNO', 1)
+                                                                                    ->first();
+
+
+                                            if ($ivmsPolicy) {
+                                                $ivmsResult = IvmsDeliveryOrderService::postIvmsDeliveryOrder($masterRec);
+                                                if (!$ivmsResult['status']) {
+                                                    DB::rollback();
+                                                    return ['success' => false, 'message' => $ivmsResult['message']];
+                                                }
+                                            }
+                                        } 
+
                                         $sendEmail = \Email::sendEmail($emails);
                                         if (!$sendEmail["success"]) {
                                             return ['success' => false, 'message' => $sendEmail["message"]];
                                         }
+
+
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
