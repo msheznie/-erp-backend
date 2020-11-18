@@ -1110,7 +1110,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /*   $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
                $data['data']['master'] = $customerInvoiceDirect;
                $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
-
+            $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
             return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
         }
     }
@@ -1430,7 +1430,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-
+        $output['isVATEligible'] = TaxService::checkCompanyVATEligible($companyId);
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
