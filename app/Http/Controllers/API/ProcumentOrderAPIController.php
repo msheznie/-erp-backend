@@ -1571,6 +1571,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function getProcurementOrderRecord(Request $request)
     {
+        $poBasicData = ProcumentOrder::find($request->purchaseOrderID);
+
+        $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
+
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['detail' => function ($query) {
             $query->with('unit');
         }, 'approved' => function ($query) {
@@ -1583,7 +1587,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('type');
         }, 'advance_detail' => function ($query) {
             $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
-        }, 'company', 'secondarycompany', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
+        }, 'company', 
+           'secondarycompany' => function ($query) use ($createdDateTime) {
+                $query->whereDate('cutOffDate', '<=', $createdDateTime);
+        }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
 
 
         if (!empty($output)) {
@@ -2906,7 +2913,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->get();
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrder->companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($procumentOrder->createdDateTime))
+                                                ->first();
 
         $isMergedCompany = false;
         if ($checkCompanyIsMerged) {
@@ -4422,7 +4430,8 @@ ORDER BY
             ->get();
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrderUpdate->companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($procumentOrderUpdate->createdDateTime))
+                                                ->first();
 
         $isMergedCompany = false;
         if ($checkCompanyIsMerged) {
