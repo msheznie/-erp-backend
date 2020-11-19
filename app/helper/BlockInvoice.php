@@ -11,6 +11,7 @@ class BlockInvoice
 {
 	public static function blockCustomerInvoiceByCreditLimit($documentSystemID, $masterRecord)
 	{
+		
 		if (isset($masterRecord->customerID) && $masterRecord->customerID > 0 && $masterRecord->isPerforma != 1) {
 			$customerData = CustomerMaster::find($masterRecord->customerID);
 
@@ -25,7 +26,9 @@ class BlockInvoice
 							                        ->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
 							                        ->sum('documentRptAmount');
 
-				if ($customerOutsanding > 0 && ($customerOutsanding > $customerData->creditLimit)) {
+				$customerNewOutsanding = floatval($masterRecord->bookingAmountRpt) +  $customerOutsanding;
+
+				if ($customerNewOutsanding > 0 && ($customerNewOutsanding > $customerData->creditLimit)) {
 					$reportCurrencyDecimalPlace = 2;
 					$currencyCode = "USD";
 					$comanyMasterData = Company::find($masterRecord->companySystemID);
@@ -37,7 +40,7 @@ class BlockInvoice
 						}
 					}
 
-					$customerOutsandingFormated = number_format($customerOutsanding, $reportCurrencyDecimalPlace);
+					$customerOutsandingFormated = number_format($customerNewOutsanding, $reportCurrencyDecimalPlace);
 
 					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
 				}
