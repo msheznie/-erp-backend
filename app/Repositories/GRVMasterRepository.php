@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\UnbilledGrvGroupBy;
+use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -123,6 +124,14 @@ class GRVMasterRepository extends BaseRepository
             return $array = [
                 'status' => 0,
                 'msg' => 'GRV already cancelled',
+            ];
+        }
+
+        $checkInAllocation = FixedAssetMaster::where('docOriginDocumentSystemID', 3)->where('docOriginSystemCode', $input['grvAutoID'])->first();
+        if ($checkInAllocation) {
+            return $array = [
+                'status' => 0,
+                'msg' => 'You cannot cancel the GRV. The GRV is already added to Asset Allocation',
             ];
         }
 
