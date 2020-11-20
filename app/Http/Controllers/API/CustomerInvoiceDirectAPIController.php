@@ -1069,8 +1069,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
 
+        $cusBasicData = CustomerInvoiceDirect::find($id);
+
+        $createdDateAndTime = ($cusBasicData) ? Carbon::parse($cusBasicData->createdDateAndTime) : null;
+
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
+                $query->whereDate('cutOffDate', '<=', $createdDateAndTime);
+        }, 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'
@@ -1104,7 +1110,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /*   $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
                $data['data']['master'] = $customerInvoiceDirect;
                $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
-
+            $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
             return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
         }
     }
@@ -1424,7 +1430,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-
+        $output['isVATEligible'] = TaxService::checkCompanyVATEligible($companyId);
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -1924,7 +1930,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($master->createdDateAndTime))
+                                                ->first();
 
         if ($checkCompanyIsMerged) {
             $companyLogo = $checkCompanyIsMerged['logo'];
@@ -2313,6 +2320,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $mpdf->Output($fileName, 'I');
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
             $html = view('print.customer_invoice', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        }  else if ($printTemplate['printTemplateID'] == 5) {
+            $html = view('print.customer_invoice_tax', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 

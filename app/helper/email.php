@@ -136,7 +136,7 @@ class email
                         $data['docCode'] = $supplier->primarySupplierCode;
                     }
                     break;
-                case 85:
+                case 86:
                     $supplier = RegisteredSupplier::where('id', $data['docSystemCode'])->first();
                     if (!empty($supplier)) {
                         $data['docApprovedYN'] = $supplier->approvedYN;

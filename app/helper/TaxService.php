@@ -64,6 +64,19 @@ class TaxService
             ->first();
     }
 
+    public static function checkCompanyVATEligible($companySystemID = 0) {
+
+        $vatConfig = Tax::where('companySystemID',$companySystemID)
+                            ->where('isActive',1)
+                            ->where('taxCategory',2)
+                            ->count();
+
+        if($vatConfig == 1 ){
+            return true;
+        }
+        return false;
+    }
+
     public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$supplierID=0) {
 
         $data = array('applicableOn' => 2,'percentage' => 0);

@@ -169,7 +169,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if(Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])){
+        if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
 
             $validator = \Validator::make($input, [
                 'supCategoryICVMasterID' => 'required|numeric|min:1',
@@ -378,7 +378,7 @@ class ProcumentOrderAPIController extends AppBaseController
      * Display the specified ProcumentOrder.
      * GET|HEAD /procumentOrders/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -386,9 +386,9 @@ class ProcumentOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ProcumentOrder $procumentOrder */
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','supplier' => function($query){
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment', 'supplier' => function ($query) {
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
-        },'currency'=> function($query){
+        }, 'currency' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID,CurrencyCode');
         }])->findWithoutFail($id);
 
@@ -403,7 +403,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrder->isAmendAccess = 1;
         }
 
-        $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID,$procumentOrder->companySystemID);
+        $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID, $procumentOrder->companySystemID);
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -411,7 +411,7 @@ class ProcumentOrderAPIController extends AppBaseController
      * Update the specified ProcumentOrder in storage.
      * PUT/PATCH /procumentOrders/{id}
      *
-     * @param  int $id
+     * @param int $id
      * @param UpdateProcumentOrderAPIRequest $request
      *
      * @return Response
@@ -427,7 +427,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isAmendAccess = $input['isAmendAccess'];
 
-        $input = array_except($input, ['isVatEligible','isWoAmendAccess','created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess','supplier','currency','isLocalSupplier']);
+        $input = array_except($input, ['isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -563,13 +563,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
 
-        $input['poTotalSupplierTransactionCurrency'] =  \Helper::roundValue($poMasterSumDeducted);
+        $input['poTotalSupplierTransactionCurrency'] = \Helper::roundValue($poMasterSumDeducted);
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $procumentOrderUpdate->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency =  \Helper::roundValue($poMasterSumDeducted);
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeducted);
         $procumentOrderUpdate->companyReportingER = \Helper::roundValue($currencyConversionMaster['trasToRptER']);
         $procumentOrderUpdate->localCurrencyER = \Helper::roundValue($currencyConversionMaster['trasToLocER']);
 
@@ -580,10 +580,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->WO_PeriodTo = null;
         }
 
-         //calculate total months in WO type
+        //calculate total months in WO type
         if ($input['documentSystemID'] == 5) {
             if (isset($input['WO_PeriodFrom'])) {
-                $ts1 = strtotime($input['WO_PeriodFrom'] );
+                $ts1 = strtotime($input['WO_PeriodFrom']);
                 $ts2 = strtotime($input['WO_PeriodTo']);
 
                 $year1 = date('Y', $ts1);
@@ -598,7 +598,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         // calculating total Supplier Default currency
 
-        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"],  $input['supplierTransactionCurrencyID'],$supplierCurrency->currencyID, $poMasterSumDeducted);
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
@@ -640,19 +640,19 @@ class ProcumentOrderAPIController extends AppBaseController
 
         // calculate total Tax for item if
         //$input['supplierVATEligible'] == 1 && $input['vatRegisteredYN'] == 0
-        if (TaxService::checkPOVATEligible($input['supplierVATEligible'],$input['vatRegisteredYN'])) {
+        if (TaxService::checkPOVATEligible($input['supplierVATEligible'], $input['vatRegisteredYN'])) {
 
             if (!empty($updateDetailDiscount)) {
                 foreach ($updateDetailDiscount as $itemDiscont) {
                     $calculateItemDiscount = 0;
                     if ($input['poDiscountAmount'] > 0 && $poMasterSumRounded > 0 && $itemDiscont['noQty']) {
-                            $calculateItemDiscount = ((($itemDiscont['netAmount'] - (($itemDiscont['netAmount'] / $poMasterSumRounded) * $input['poDiscountAmount']))) / $itemDiscont['noQty']);
+                        $calculateItemDiscount = ((($itemDiscont['netAmount'] - (($itemDiscont['netAmount'] / $poMasterSumRounded) * $input['poDiscountAmount']))) / $itemDiscont['noQty']);
                     } else {
-                            $calculateItemDiscount =  $itemDiscont['unitCost']  - $itemDiscont['discountAmount'];
+                        $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
                     }
 
-                    if(!$input['vatRegisteredYN']){
-                        $calculateItemDiscount =  $calculateItemDiscount + $itemDiscont['VATAmount'];
+                    if (!$input['vatRegisteredYN']) {
+                        $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
                     }
 
                     // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
@@ -790,7 +790,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        if (Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])) {
+        if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
 
             if (!empty($updateDetailDiscount)) {
                 foreach ($updateDetailDiscount as $itemDiscont) {
@@ -822,13 +822,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         //$input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1
-        if (TaxService::checkPOVATEligible($input['supplierVATEligible'],$input['vatRegisteredYN'])) {
+        if (TaxService::checkPOVATEligible($input['supplierVATEligible'], $input['vatRegisteredYN'])) {
             TaxService::updatePOVAT($id);
-           /* $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) * ($input['VATPercentage'] / 100);
-            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
-            $procumentOrderUpdate->VATAmount = $input['VATAmount'];
-            $procumentOrderUpdate->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
-            $procumentOrderUpdate->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);*/
+            /* $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) * ($input['VATPercentage'] / 100);
+             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
+             $procumentOrderUpdate->VATAmount = $input['VATAmount'];
+             $procumentOrderUpdate->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
+             $procumentOrderUpdate->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);*/
         } else {
             $procumentOrderUpdate->VATAmount = 0;
             $procumentOrderUpdate->VATAmountLocal = 0;
@@ -838,7 +838,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
 
-            if(Helper::isLocalSupplier($input['supplierID'],$input['companySystemID'])){
+            if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
 
                 $validator = \Validator::make($input, [
                     'supCategoryICVMasterID' => 'required|numeric|min:1',
@@ -875,11 +875,11 @@ class ProcumentOrderAPIController extends AppBaseController
             //check PO and PR service line
 
             $details = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
-                                           ->get();
+                ->get();
 
             foreach ($details as $detail) {
                 $PRMaster = PurchaseRequest::find($detail['purchaseRequestID']);
-                if($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID){
+                if ($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID) {
                     return $this->sendError("Added Request department is different from order");
                 }
             }
@@ -1115,7 +1115,7 @@ class ProcumentOrderAPIController extends AppBaseController
      * Remove the specified ProcumentOrder from storage.
      * DELETE /procumentOrders/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -1439,25 +1439,25 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $hasPolicy = false;
         $hasEEOSSPolicy = false;
-        if($purchaseOrderID){
+        if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
-            $sup= SupplierMaster::find($purchaseOrder->supplierID);
-            if($sup->primaryCompanySystemID){
+            $sup = SupplierMaster::find($purchaseOrder->supplierID);
+            if ($sup->primaryCompanySystemID) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
                     ->where('companyPolicyCategoryID', 38)
-                    ->where('isYesNO',1)
+                    ->where('isYesNO', 1)
                     ->exists();
             }
 
-            $supAssigned= SupplierAssigned::where('supplierCodeSytem',$purchaseOrder->supplierID)
-                ->where('companySystemID',$companyId)
+            $supAssigned = SupplierAssigned::where('supplierCodeSytem', $purchaseOrder->supplierID)
+                ->where('companySystemID', $companyId)
                 ->where('isActive', 1)
                 ->where('isAssigned', -1)
                 ->first();
-            if(!empty($supAssigned) && $supAssigned->isMarkupPercentage){
+            if (!empty($supAssigned) && $supAssigned->isMarkupPercentage) {
                 $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
                     ->where('companyPolicyCategoryID', 41)
-                    ->where('isYesNO',1)
+                    ->where('isYesNO', 1)
                     ->exists();
             }
 
@@ -1571,6 +1571,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function getProcurementOrderRecord(Request $request)
     {
+        $poBasicData = ProcumentOrder::find($request->purchaseOrderID);
+
+        $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
+
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['detail' => function ($query) {
             $query->with('unit');
         }, 'approved' => function ($query) {
@@ -1583,28 +1587,31 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('type');
         }, 'advance_detail' => function ($query) {
             $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
-        }, 'company', 'secondarycompany', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
+        }, 'company', 
+           'secondarycompany' => function ($query) use ($createdDateTime) {
+                $query->whereDate('cutOffDate', '<=', $createdDateTime);
+        }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
 
 
-        if(!empty($output)){
+        if (!empty($output)) {
 
-            foreach ($output->detail as $item){
+            foreach ($output->detail as $item) {
 
                 $date = $output->createdDateTime;
 
-                $item->inhand = ErpItemLedger::where('itemSystemCode',$item->itemCode)
-                                          ->where('companySystemID',$item->companySystemID)
-                                          ->sum('inOutQty');
+                $item->inhand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
+                    ->where('companySystemID', $item->companySystemID)
+                    ->sum('inOutQty');
 
-                $dt          = new Carbon($date);
-                $from        = $dt->subMonths(3);  ;
-                $to          = new Carbon($date);
+                $dt = new Carbon($date);
+                $from = $dt->subMonths(3);;
+                $to = new Carbon($date);
 
-                $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode',$item->itemCode)
-                                                            ->where('companySystemID',$item->companySystemID)
-                                                            ->where('documentSystemID',8)
-                                                            ->whereBetween('transactionDate',[$from, $to])
-                                                            ->sum('inOutQty') )* -1;
+                $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode', $item->itemCode)
+                        ->where('companySystemID', $item->companySystemID)
+                        ->where('documentSystemID', 8)
+                        ->whereBetween('transactionDate', [$from, $to])
+                        ->sum('inOutQty')) * -1;
 
             }
 
@@ -1974,13 +1981,13 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         // check main work order has subwork order
-        if($type != 1){
-            if($purchaseOrder->poType_N == 6){
+        if ($type != 1) {
+            if ($purchaseOrder->poType_N == 6) {
                 return $this->sendError('Sub work order Cannot revert it back to amend');
-            }elseif ($purchaseOrder->poType_N == 5){
-                $hasSubWorkOrder = ProcumentOrder::where('poType_N', 6)->where('WO_purchaseOrderID',$purchaseOrder->purchaseOrderID)
+            } elseif ($purchaseOrder->poType_N == 5) {
+                $hasSubWorkOrder = ProcumentOrder::where('poType_N', 6)->where('WO_purchaseOrderID', $purchaseOrder->purchaseOrderID)
                     ->count();
-                if($hasSubWorkOrder > 0){
+                if ($hasSubWorkOrder > 0) {
                     return $this->sendError('Cannot revert it back to amend. Sub Work Order is created for this WO');
                 }
             }
@@ -1991,7 +1998,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO',404, ['advancePaymentError' =>true]);
+            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO', 404, ['advancePaymentError' => true]);
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
@@ -2038,7 +2045,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         }
 
-        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID,$purchaseOrderID,$input['cancelComments'],'cancelled');
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $input['cancelComments'], 'cancelled');
 
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
@@ -2176,7 +2183,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }
         }
 
-        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID,$purchaseOrderID,$input['returnComment'],'returned back to amend');
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $input['returnComment'], 'returned back to amend');
 
         $sendEmail = \Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
@@ -2711,7 +2718,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -2811,7 +2818,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
-        AuditTrial::createAuditTrial($procumentOrder->documentSystemID,$input['purchaseOrderID'],$input['manuallyClosedComment'],'manually closed');
+        AuditTrial::createAuditTrial($procumentOrder->documentSystemID, $input['purchaseOrderID'], $input['manuallyClosedComment'], 'manually closed');
 
         $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
@@ -2841,7 +2848,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
      * Display the specified Procurement Order print.
      * GET|HEAD /printProcumentOrder
      *
-     * @param  int $request
+     * @param int $request
      *
      * @return Response
      */
@@ -2906,7 +2913,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->get();
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrder->companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($procumentOrder->createdDateTime))
+                                                ->first();
 
         $isMergedCompany = false;
         if ($checkCompanyIsMerged) {
@@ -3309,7 +3317,7 @@ WHERE
         }
 
 
-         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
@@ -3535,7 +3543,7 @@ WHERE
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
 
-        AuditTrial::createAuditTrial($procurementOrder->documentSystemID,$input['purchaseOrderID'],'','amend');
+        AuditTrial::createAuditTrial($procurementOrder->documentSystemID, $input['purchaseOrderID'], '', 'amend');
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
     }
@@ -3667,7 +3675,7 @@ WHERE
 
         $oldVaTEligible = $purchaseOrder->supplierVATEligible;
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($input['supplierTransactionCurrencyID']);
 
         $input['companySystemID'] = $purchaseOrder->companySystemID;
 
@@ -3737,6 +3745,17 @@ WHERE
             ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
             ->first();
 
+
+        // update decimal places
+
+        $poAddons = PoAddons::where('poId', $purchaseOrder->purchaseOrderID)
+                            ->get();
+
+        foreach ($poAddons as $addon) {
+            $addon->amount = round($addon->amount,$supplierCurrencyDecimalPlace);
+            $addon->save();
+        }
+
         //getting addon Total for PO
         $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
             ->where('poId', $purchaseOrder->purchaseOrderID)
@@ -3759,12 +3778,12 @@ WHERE
 
         // calculating total Supplier Default currency total
 
-        $currencyConversionMasterDefault = \Helper::currencyConversion($input["companySystemID"],  $input['supplierTransactionCurrencyID'],$supplierCurrency->currencyID, $poMasterSumDeducted);
+        $currencyConversionMasterDefault = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, $poMasterSumDeducted);
 
         $purchaseOrder->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $purchaseOrder->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
         $purchaseOrder->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMasterDefault['documentAmount']);
-        $purchaseOrder->poTotalSupplierTransactionCurrency =  \Helper::roundValue($poMasterSumDeducted);
+        $purchaseOrder->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeducted);
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -3772,10 +3791,10 @@ WHERE
         // check local supplier and update logistic
 
 
-        $isLocalSupplier = Helper::isLocalSupplier($purchaseOrder->supplierID,$purchaseOrder->companySystemID);
-        if($isLocalSupplier){
+        $isLocalSupplier = Helper::isLocalSupplier($purchaseOrder->supplierID, $purchaseOrder->companySystemID);
+        if ($isLocalSupplier) {
             $purchaseOrder->logisticsAvailable = 0;
-        }else{
+        } else {
             $purchaseOrder->logisticsAvailable = -1;
         }
 
@@ -3794,38 +3813,47 @@ WHERE
             $purchaseOrderDetail->companyReportingER = $purchaseOrder->companyReportingER;
             $purchaseOrderDetail->localCurrencyER = $purchaseOrder->localCurrencyER;
 
+            $purchaseOrderDetail->unitCost = round($purchaseOrderDetail->unitCost, $supplierCurrencyDecimalPlace);
 
-            if (TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible ,$purchaseOrder->vatRegisteredYN)) {
-                if(!$oldVaTEligible) {
+            if ($purchaseOrderDetail->discountPercentage > 0) {
+                $purchaseOrderDetail->discountAmount = round($purchaseOrderDetail->unitCost * ($purchaseOrderDetail->discountPercentage / 100), $supplierCurrencyDecimalPlace);
+            }
+
+
+            if (TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible, $purchaseOrder->vatRegisteredYN)) {
+
+                $netUnitAmount = 0;
+                if (!$oldVaTEligible) {
                     $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID, $item['itemCode'], $purchaseOrder->supplierID);
-                    $purchaseOrderDetail->VATPercentage   = $vatDetails['percentage'];
+                    $purchaseOrderDetail->VATPercentage = $vatDetails['percentage'];
                     $purchaseOrderDetail->VATApplicableOn = $vatDetails['applicableOn'];
                     $purchaseOrderDetail->VATAmount = 0;
-                    $netUnitAmount = 0;
-                    if ($purchaseOrderDetail->VATApplicableOn === 1) { // before discount
-                        $netUnitAmount = floatval($purchaseOrderDetail->unitCost);
-                    } else {
-                        $netUnitAmount = floatval($purchaseOrderDetail->unitCost) - floatval($purchaseOrderDetail->discountAmount);
-                    }
-
-                    if ($netUnitAmount > 0) {
-                        $purchaseOrderDetail->VATAmount = (($netUnitAmount / 100) * $vatDetails['percentage']);
-                    }
-                    $purchaseOrderDetail->netAmount = ($purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount) * $purchaseOrderDetail->noQty;
                 }
-                $currencyConversionVAT          = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrderDetail->VATAmount);
 
-                $purchaseOrderDetail->VATAmountLocal =  \Helper::roundValue($currencyConversionVAT['localAmount']);
-                $purchaseOrderDetail->VATAmountRpt   =  \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                if ($purchaseOrderDetail->VATApplicableOn === 1) { // before discount
+                    $netUnitAmount = floatval($purchaseOrderDetail->unitCost);
+                } else {
+                    $netUnitAmount = floatval($purchaseOrderDetail->unitCost) - floatval($purchaseOrderDetail->discountAmount);
+                }
+
+                if ($netUnitAmount > 0 && $purchaseOrderDetail->VATPercentage > 0) {
+                    $purchaseOrderDetail->VATAmount = round((($netUnitAmount / 100) * $purchaseOrderDetail->VATPercentage), $supplierCurrencyDecimalPlace);
+                }
+                $purchaseOrderDetail->netAmount = ($purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount) * $purchaseOrderDetail->noQty;
+
+                $currencyConversionVAT = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrderDetail->VATAmount);
+
+                $purchaseOrderDetail->VATAmountLocal = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                $purchaseOrderDetail->VATAmountRpt = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                 $calculateItemDiscount = 0;
 
                 if ($purchaseOrder->poDiscountAmount > 0 && $poMasterSumRounded > 0 && $purchaseOrderDetail->noQty > 0) {
-                        $calculateItemDiscount = ((($purchaseOrderDetail->netAmount - (($purchaseOrderDetail->netAmount / $poMasterSumRounded) * $purchaseOrder->poDiscountAmount))) / $purchaseOrderDetail->noQty);
+                    $calculateItemDiscount = ((($purchaseOrderDetail->netAmount - (($purchaseOrderDetail->netAmount / $poMasterSumRounded) * $purchaseOrder->poDiscountAmount))) / $purchaseOrderDetail->noQty);
                 } else {
-                        $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
+                    $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
                 }
 
-                if(!$purchaseOrder->vatRegisteredYN){
+                if (!$purchaseOrder->vatRegisteredYN) {
                     $calculateItemDiscount = $calculateItemDiscount + $purchaseOrderDetail->VATAmount;
                 }
                 $calculateItemTax = $calculateItemDiscount;
@@ -3900,7 +3928,7 @@ WHERE
 
                     $calculateAddonLineAmount = 0;
 
-                    if($poMasterSumRounded > 0  && $AddonDeta['noQty'] > 0){
+                    if ($poMasterSumRounded > 0 && $AddonDeta['noQty'] > 0) {
                         $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
                     }
 
@@ -3951,12 +3979,12 @@ WHERE
         $poDiscountPercentage = 0;
 
         if ($poMasterSum && $poMasterSum['masterTotalSum'] && $purchaseOrder->poDiscountAmount > 0) {
-            $poDiscountPercentage = ($purchaseOrder->poDiscountAmount/$poMasterSum['masterTotalSum']) * 100;
+            $poDiscountPercentage = ($purchaseOrder->poDiscountAmount / $poMasterSum['masterTotalSum']) * 100;
         }
 
-         ProcumentOrder::find($purchaseOrder->purchaseOrderID)
+        ProcumentOrder::find($purchaseOrder->purchaseOrderID)
             ->update([
-                'poDiscountPercentage' => round($poDiscountPercentage,2)
+                'poDiscountPercentage' => round($poDiscountPercentage, 2)
             ]);
 
         if ($purchaseOrder->isVatEligible) {
@@ -4000,10 +4028,10 @@ WHERE
         $id = $request->get('id');
 
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by',
-            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by','amend_by','approved_by' => function ($query) {
+            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by', 'amend_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [2, 5, 52]);
-            },'audit_trial.modified_by'])->findWithoutFail($id);
+            }, 'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -4341,7 +4369,7 @@ ORDER BY
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $typeID = 1 ;//$request->get('typeID');
+        $typeID = 1;//$request->get('typeID');
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -4402,7 +4430,8 @@ ORDER BY
             ->get();
 
         $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrderUpdate->companySystemID)
-            ->first();
+                                                ->whereDate('cutOffDate', '<=', Carbon::parse($procumentOrderUpdate->createdDateTime))
+                                                ->first();
 
         $isMergedCompany = false;
         if ($checkCompanyIsMerged) {
@@ -4539,7 +4568,7 @@ ORDER BY
             return $this->sendError('You cannot refer Back this PO');
         }
 
-        $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess','isVatEligible']);
+        $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess', 'isVatEligible']);
 
         $storePOMasterHistory = PurchaseOrderMasterRefferedHistory::insert($purchaseOrderArray);
 
@@ -4833,7 +4862,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data = array();
             }
         }
-         \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+        \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -5019,7 +5048,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $data = array();
         }
 
-         \Excel::create('po_master', function ($excel) use ($data) {
+        \Excel::create('po_master', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -5053,9 +5082,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->getPoLogisticTotal($row);
             })
             ->addColumn('poTotalComRptCurrency', function ($row) {
-                if($row->manuallyClosed == 1){
+                if ($row->manuallyClosed == 1) {
                     return floatval(array_sum(collect($this->getPOtoPaymentChain($row))->pluck('rptAmount')->toArray()));
-                }else{
+                } else {
                     return $row->poTotalComRptCurrency;
                 }
             })
@@ -5064,14 +5093,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $data;
     }
 
-    function getPoLogisticTotal($row){
+    function getPoLogisticTotal($row)
+    {
 
         return PoAdvancePayment::where('poID', $row->purchaseOrderID)
-                                    ->where('poTermID', 0)
-                                    ->where('confirmedYN', 1)
-                                    ->where('isAdvancePaymentYN', 1)
-                                    ->where('approvedYN', -1)
-                                    ->sum('reqAmountInPORptCur');
+            ->where('poTermID', 0)
+            ->where('confirmedYN', 1)
+            ->where('isAdvancePaymentYN', 1)
+            ->where('approvedYN', -1)
+            ->sum('reqAmountInPORptCur');
 
     }
 
@@ -5177,13 +5207,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         ->orWhere('narration', 'LIKE', "%{$search}%");
                 });
             })
-            ->with(['supplier','fcategory']);
-            /*->with(['supplier', 'detail' => function ($poDetail) {
-                $poDetail->with([
-                    'grv_details' => function ($q) {
-                        $q->with(['grv_master']);
-                    }]);
-            }]);*/
+            ->with(['supplier', 'fcategory']);
+        /*->with(['supplier', 'detail' => function ($poDetail) {
+            $poDetail->with([
+                'grv_details' => function ($q) {
+                    $q->with(['grv_master']);
+                }]);
+        }]);*/
 
         return $purchaseOrder;
     }
@@ -5198,11 +5228,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         foreach ($output as $row) {
             $row->grvMasters = $this->getPOtoPaymentChain($row);
 
-            if($row->manuallyClosed == 1){
-                 $row->poTotalComRptCurrency = floatval(array_sum(collect($row->grvMasters)->pluck('rptAmount')->toArray()));
+            if ($row->manuallyClosed == 1) {
+                $row->poTotalComRptCurrency = floatval(array_sum(collect($row->grvMasters)->pluck('rptAmount')->toArray()));
             }
 
-            $row->logisticTotal =  $this->getPoLogisticTotal($row);
+            $row->logisticTotal = $this->getPoLogisticTotal($row);
         }
 
         $type = $request->type;
@@ -5213,9 +5243,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 //$data[$x]['Company Name'] = $val->CompanyName;
                 $data[$x]['PO Number'] = $value->purchaseOrderCode;
 
-                if($value->fcategory){
+                if ($value->fcategory) {
                     $data[$x]['Category'] = $value->fcategory->categoryDescription;
-                }else{
+                } else {
                     $data[$x]['Category'] = '';
                 }
 
@@ -5365,7 +5395,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-         \Excel::create('po_to_payment', function ($excel) use ($data) {
+        \Excel::create('po_to_payment', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -5397,7 +5427,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
 
         $suppliers = $suppliers->take(15)->get(['companySystemID', 'primarySupplierCode', 'supplierName', 'supplierCodeSytem']);
-        $output = array('suppliers' => $suppliers,'categories' => $categories);
+        $output = array('suppliers' => $suppliers, 'categories' => $categories);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -5417,14 +5447,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->groupBy('supplierID')
             ->pluck('supplierID');
         $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
-        
+
         $subCategories = FinanceItemcategorySubAssigned::whereIN('companySystemID', $companyID)->groupBy('itemCategorySubID')->get();
 
         $categories = FinanceItemCategoryMaster::selectRaw('itemCategoryID as value,categoryDescription label')->get();
 
         $years = Year::orderby('year', 'desc')->get();
 
-        $output = array('suppliers' => $supplierMaster,'categories' => $categories, 'years' => $years, 'subCategories' => $subCategories);
+        $output = array('suppliers' => $supplierMaster, 'categories' => $categories, 'years' => $years, 'subCategories' => $subCategories);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -5502,7 +5532,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrderMasterData->expectedDeliveryDate = $input['deliveryDate'];
         $purchaseOrderMasterData->save();
 
-        AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID,$input['purchaseOrderID'],'','expected delivery date amend to '.$input['deliveryDate']);
+        AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID, $input['purchaseOrderID'], '', 'expected delivery date amend to ' . $input['deliveryDate']);
 
         return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
     }
@@ -5510,12 +5540,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function amendProcumentSubWorkOrder(Request $request)
     {
         $input = $request->all();
-        $id = isset($input['id'])?$input['id']:0;
+        $id = isset($input['id']) ? $input['id'] : 0;
         $employee = Helper::getEmployeeInfo();
-        $purchaseOrder = ProcumentOrder::where('documentSystemID',5)
-                                        ->where('poType_N',6)
-                                        ->where('purchaseOrderID',$id)
-                                        ->first();
+        $purchaseOrder = ProcumentOrder::where('documentSystemID', 5)
+            ->where('poType_N', 6)
+            ->where('purchaseOrderID', $id)
+            ->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
@@ -5525,26 +5555,26 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendError('You cannot amend this sub work order.');
         }
 
-        $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderMasterID',$purchaseOrder->WO_purchaseOrderID)
+        $mainWoTotal = ProcumentOrderDetail::where('purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
             ->sum('netAmount');
 
-        $subWoTotal = ProcumentOrderDetail::where('WO_purchaseOrderMasterID',$purchaseOrder->WO_purchaseOrderID)
+        $subWoTotal = ProcumentOrderDetail::where('WO_purchaseOrderMasterID', $purchaseOrder->WO_purchaseOrderID)
             ->sum('netAmount');
 
-        if($subWoTotal > $mainWoTotal){
+        if ($subWoTotal > $mainWoTotal) {
             return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.');
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-                                            ->where('purchaseOrderMasterID', $id)
-                                            ->first();
+            ->where('purchaseOrderMasterID', $id)
+            ->first();
 
         //getting addon Total for PO
         $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
-                                    ->where('poId', $id)
-                                    ->first();
+            ->where('poId', $id)
+            ->first();
 
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
@@ -5564,7 +5594,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 'WO_confirmedYN' => 1,
                 'WO_confirmedDate' => now(),
                 'WO_confirmedByEmpID' => $employee->employeeSystemID,
-                'poTotalSupplierTransactionCurrency' =>  \Helper::roundValue($poMasterSumDeducted),
+                'poTotalSupplierTransactionCurrency' => \Helper::roundValue($poMasterSumDeducted),
                 'poTotalSupplierDefaultCurrency' => \Helper::roundValue($currencyConversionMaster['documentAmount']),
                 'poTotalComRptCurrency' => \Helper::roundValue($currencyConversionMaster['reportingAmount']),
                 'poTotalLocalCurrency' => \Helper::roundValue($currencyConversionMaster['localAmount']),
@@ -5606,37 +5636,38 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
         if ($masterData->poConfirmedYN == 1 && $masterData->approved == -1 &&
-                $masterData->poCancelledYN == 0 && $masterData->grvRecieved == 0 &&
-                        $masterData->WO_amendYN == -1 && $masterData->WO_confirmedYN != 1) {
+            $masterData->poCancelledYN == 0 && $masterData->grvRecieved == 0 &&
+            $masterData->WO_amendYN == -1 && $masterData->WO_confirmedYN != 1) {
             return $this->sendError($documentName . ' is already amended. You cannot amend again.');
         }
 
         if ($masterData->poConfirmedYN != 1 || $masterData->approved != -1 ||
             $masterData->poCancelledYN != 0 || $masterData->grvRecieved != 0 ||
-            $masterData->WO_amendYN != 0 || $masterData->WO_confirmedYN !=1) {
-            return $this->sendError('You cannot amend this '.$documentName);
+            $masterData->WO_amendYN != 0 || $masterData->WO_confirmedYN != 1) {
+            return $this->sendError('You cannot amend this ' . $documentName);
         }
 
         DB::beginTransaction();
         try {
-            $masterData->WO_confirmedYN  = 0;
+            $masterData->WO_confirmedYN = 0;
             $masterData->WO_amendYN = -1;
-            $masterData->WO_amendRequestedDate  = now();
-            $masterData->WO_amendRequestedByEmpID  = $employee->empID;
-            $masterData->WO_amendRequestedByEmpSystemID  = $employee->employeeSystemID;
-            $masterData->WO_confirmedDate  = null;
-            $masterData->WO_confirmedByEmpID  = null;
+            $masterData->WO_amendRequestedDate = now();
+            $masterData->WO_amendRequestedByEmpID = $employee->empID;
+            $masterData->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
+            $masterData->WO_confirmedDate = null;
+            $masterData->WO_confirmedByEmpID = null;
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), $documentName.' amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), $documentName . ' amend saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
     }
 
-    public function updateGRVLogistic(Request $request) {
+    public function updateGRVLogistic(Request $request)
+    {
 
         $input = $request->all();
 
@@ -5650,93 +5681,94 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $procumentOrder = ProcumentOrder::find($input['purchaseOrderID']);
-        if(empty($procumentOrder)){
+        if (empty($procumentOrder)) {
             return $this->sendError('Order Detail not found');
         }
 
         $update_array = null;
         $is_update = null;
-        if($input['type'] == 1) {   // logistic
+        if ($input['type'] == 1) {   // logistic
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->logisticsAvailable);
 
-            $message = "Logistic ".$array['text'];
+            $message = "Logistic " . $array['text'];
             $update_array = array(
                 'logisticsAvailable' => $array['value']
             );
 
-        }else if($input['type'] == 2) { //grv
+        } else if ($input['type'] == 2) { //grv
 
             $array = $this->procumentOrderRepository->swapValue($procumentOrder->partiallyGRVAllowed);
-            $message = "Partially GRV Allowed ".$array['text'];
+            $message = "Partially GRV Allowed " . $array['text'];
             $update_array = array(
                 'partiallyGRVAllowed' => $array['value']
             );
-        }else{
+        } else {
             $array = [];
         }
 
         // Don't allow user to update above option, if Purchase order \ Work order \ Direct order added partially or fully in the GRV
-        if($procumentOrder->grvRecieved == 1){ // Default 0, partially received =1 and fully received 2
-            return $this->sendError("Selected order partially grv received. Cannot be ".$array['text'],500);
-        }elseif ($procumentOrder->grvRecieved == 2){
-            return $this->sendError("Selected order fully grv received. Cannot be ".$array['text'],500);
+        if ($procumentOrder->grvRecieved == 1) { // Default 0, partially received =1 and fully received 2
+            return $this->sendError("Selected order partially grv received. Cannot be " . $array['text'], 500);
+        } elseif ($procumentOrder->grvRecieved == 2) {
+            return $this->sendError("Selected order fully grv received. Cannot be " . $array['text'], 500);
         }
 
-        if($update_array != null){
-            $is_update = $this->procumentOrderRepository->update($update_array,$input['purchaseOrderID']);
-            AuditTrial::createAuditTrial($procumentOrder->documentSystemID,$input['purchaseOrderID'],'',$message);
-            return $this->sendResponse($is_update,$message." successfully");
+        if ($update_array != null) {
+            $is_update = $this->procumentOrderRepository->update($update_array, $input['purchaseOrderID']);
+            AuditTrial::createAuditTrial($procumentOrder->documentSystemID, $input['purchaseOrderID'], '', $message);
+            return $this->sendResponse($is_update, $message . " successfully");
         }
 
     }
 
-    public function checkEOSPolicyAndSupplier(Request $request){
+    public function checkEOSPolicyAndSupplier(Request $request)
+    {
         $input = $request->all();
         $companyId = $input['companySystemID'];
         $purchaseOrderID = $input['purchaseOrderID'];
         $hasEEOSSPolicy = false;
-        if($purchaseOrderID){
+        if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
-            $supAssigned= SupplierAssigned::where('supplierCodeSytem',$purchaseOrder->supplierID)
-                ->where('companySystemID',$companyId)
+            $supAssigned = SupplierAssigned::where('supplierCodeSytem', $purchaseOrder->supplierID)
+                ->where('companySystemID', $companyId)
                 ->where('isActive', 1)
                 ->where('isAssigned', -1)
                 ->first();
-            if(!empty($supAssigned) && $supAssigned->isMarkupPercentage){
+            if (!empty($supAssigned) && $supAssigned->isMarkupPercentage) {
                 $hasEEOSSPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
                     ->where('companyPolicyCategoryID', 41)
-                    ->where('isYesNO',1)
+                    ->where('isYesNO', 1)
                     ->exists();
 
                 // change markup percentage when changing supplier
-                if($hasEEOSSPolicy){
-                    $detail = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->get();
-                    foreach ($detail as $row){
+                if ($hasEEOSSPolicy) {
+                    $detail = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)->get();
+                    foreach ($detail as $row) {
 
                         $discountedUnitPrice = $row->unitCost - $row->discountAmount;
 
-                        if($discountedUnitPrice>0 && $supAssigned->markupPercentage > 0){
+                        if ($discountedUnitPrice > 0 && $supAssigned->markupPercentage > 0) {
 
-                            $markupTransactionAmount = $supAssigned->markupPercentage*$discountedUnitPrice/100;
+                            $markupTransactionAmount = $supAssigned->markupPercentage * $discountedUnitPrice / 100;
                             $markupLocalAmount = 0;
                             $markupReportingAmount = 0;
 
-                            if($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->localCurrencyID){
-                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID,$purchaseOrder->supplierTransactionCurrencyID,$purchaseOrder->localCurrencyID,$markupTransactionAmount);
-                                if(!empty($currencyConversion)){
+                            if ($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->localCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->localCurrencyID, $markupTransactionAmount);
+                                if (!empty($currencyConversion)) {
                                     $markupLocalAmount = $currencyConversion['documentAmount'];
                                 }
-                            }else{
+                            } else {
                                 $markupLocalAmount = $markupTransactionAmount;
                             }
 
-                            if($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->companyReportingCurrencyID){
-                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID,$purchaseOrder->supplierTransactionCurrencyID,$purchaseOrder->companyReportingCurrencyID,$markupTransactionAmount);
-                                if(!empty($currencyConversion)){
+                            if ($purchaseOrder->supplierTransactionCurrencyID != $purchaseOrder->companyReportingCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->companyReportingCurrencyID, $markupTransactionAmount);
+                                if (!empty($currencyConversion)) {
                                     $markupReportingAmount = $currencyConversion['documentAmount'];
                                 }
-                            }else{
+                            } else {
                                 $markupReportingAmount = $markupTransactionAmount;
                             }
 
@@ -5746,28 +5778,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $markupReportingAmount = Helper::roundValue($markupReportingAmount);
 
                             $updateArray = [
-                                'markupPercentage' =>$supAssigned->markupPercentage,
+                                'markupPercentage' => $supAssigned->markupPercentage,
                                 'markupTransactionAmount' => $markupTransactionAmount,
                                 'markupLocalAmount' => $markupLocalAmount,
                                 'markupReportingAmount' => $markupReportingAmount
                             ];
 
-                        }else{
+                        } else {
                             $updateArray = [
-                                'markupPercentage' =>$supAssigned->markupPercentage,
+                                'markupPercentage' => $supAssigned->markupPercentage,
                                 'markupTransactionAmount' => 0,
                                 'markupLocalAmount' => 0,
                                 'markupReportingAmount' => 0
                             ];
                         }
-                        PurchaseOrderDetails::where('purchaseOrderDetailsID',$row->purchaseOrderDetailsID)->update($updateArray);
+                        PurchaseOrderDetails::where('purchaseOrderDetailsID', $row->purchaseOrderDetailsID)->update($updateArray);
                     }
                 }
             }
 
-            if(!$hasEEOSSPolicy){
-                PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)->update([
-                    'markupPercentage' =>0,
+            if (!$hasEEOSSPolicy) {
+                PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)->update([
+                    'markupPercentage' => 0,
                     'markupTransactionAmount' => 0,
                     'markupLocalAmount' => 0,
                     'markupReportingAmount' => 0
@@ -5794,18 +5826,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $checkSubPoCode = Carbon::parse($input['workOrderGenerateDate'])->format('m') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('Y');
 
         $checkPOMasters = ProcumentOrder::with(['detail'])
-                                        ->whereDoesntHave('sub_work_orders',  function ($query) use ($checkSubPoCode){
-                                            $query->where('purchaseOrderCode', 'LIKE', "%{$checkSubPoCode}%");
-                                        })
-                                        ->where('poType_N',5)
-                                        ->where('approved',-1)
-                                        ->where('WO_fullyGenerated',0)
-                                        ->where('poCancelledYN',0)
-                                        ->whereRaw('WO_NoOfAutoGenerationTimes > WO_NoOfGeneratedTimes')
-                                        ->whereDate('WO_PeriodFrom', '<=', $date)
-                                        ->whereDate('WO_PeriodTo', '>=', $date)
-                                        ->whereDate('approvedDate', '<=', $date)
-                                        ->get();
+            ->whereDoesntHave('sub_work_orders', function ($query) use ($checkSubPoCode) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$checkSubPoCode}%");
+            })
+            ->where('poType_N', 5)
+            ->where('approved', -1)
+            ->where('WO_fullyGenerated', 0)
+            ->where('poCancelledYN', 0)
+            ->whereRaw('WO_NoOfAutoGenerationTimes > WO_NoOfGeneratedTimes')
+            ->whereDate('WO_PeriodFrom', '<=', $date)
+            ->whereDate('WO_PeriodTo', '>=', $date)
+            ->whereDate('approvedDate', '<=', $date)
+            ->get();
 
         DB::beginTransaction();
         try {
@@ -5838,7 +5870,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "companyAddress" => $checkPOMaster->companyAddress,
                         "documentSystemID" => $checkPOMaster->documentSystemID,
                         "documentID" => $checkPOMaster->documentID,
-                        "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode ."\\". Carbon::parse($input['workOrderGenerateDate'])->format('d') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('m') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('Y'),
+                        "purchaseOrderCode" => $checkPOMaster->purchaseOrderCode . "\\" . Carbon::parse($input['workOrderGenerateDate'])->format('d') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('m') . "_" . Carbon::parse($input['workOrderGenerateDate'])->format('Y'),
                         "serialNumber" => $checkPOMaster->serialNumber,
                         "supplierID" => $checkPOMaster->supplierID,
                         "supplierPrimaryCode" => $checkPOMaster->supplierPrimaryCode,
@@ -5972,16 +6004,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     foreach ($checkPOMaster->detail as $key => $checkWODetail) {
                         $previousSubWorkOrderSummary = PurchaseOrderDetails::selectRaw('companyID, WO_purchaseOrderMasterID, WP_purchaseOrderDetailsID, itemCode, SUM(noQty) as SumOfnoQty, SUM(netAmount) as SumOfnetAmount, Sum( GRVcostPerUnitLocalCur * noQty ) AS LocalCur, Sum( GRVcostPerUnitSupDefaultCur * noQty ) AS DefCur, Sum( GRVcostPerUnitSupTransCur * noQty ) AS transCur, Sum( GRVcostPerUnitComRptCur * noQty ) AS RptCur')
-                                                                     ->where('WO_purchaseOrderMasterID', $checkPOMaster->purchaseOrderID)
-                                                                     ->where('WP_purchaseOrderDetailsID', $checkWODetail->purchaseOrderDetailsID)
-                                                                     ->where('itemCode', $checkWODetail->itemCode)
-                                                                     ->where('WO_purchaseOrderMasterID','>', 0)
-                                                                     ->groupBy('companyID', 'WO_purchaseOrderMasterID', 'WP_purchaseOrderDetailsID', 'itemCode')
-                                                                     ->first();
+                            ->where('WO_purchaseOrderMasterID', $checkPOMaster->purchaseOrderID)
+                            ->where('WP_purchaseOrderDetailsID', $checkWODetail->purchaseOrderDetailsID)
+                            ->where('itemCode', $checkWODetail->itemCode)
+                            ->where('WO_purchaseOrderMasterID', '>', 0)
+                            ->groupBy('companyID', 'WO_purchaseOrderMasterID', 'WP_purchaseOrderDetailsID', 'itemCode')
+                            ->first();
                         if (!$previousSubWorkOrderSummary) {
                             $sumOfQtyOfPreviousSubWorkOrder = 0;
                             $sumOfNetAmountOfPreviousSubWorkOrder = 0;
-                            
+
                             $subWorkOrderQty = $checkWODetail->noQty / $noOfAutoGenerationTimes;
                             $subWorkOrderUnitCost = $checkWODetail->unitCost;
                             $subWordkOrderNetAmount = $checkWODetail->netAmount / $noOfAutoGenerationTimes;
@@ -6004,7 +6036,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 $sumOfNetAmountOfPreviousSubWorkOrder = $previousSubWorkOrderSummary->SumOfnetAmount;
 
                                 $subWorkOrderQty = round((($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder) / (($noOfAutoGenerationTimes - $currentGeneratedTimes) + 1)), 9);
-                                
+
                                 if (($checkWODetail->noQty - $sumOfQtyOfPreviousSubWorkOrder) == 0) {
                                     $subWorkOrderUnitCost = 0;
                                     $subWordkOrderNetAmount = 0;
@@ -6124,7 +6156,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             return $this->sendResponse([], 'Work order generated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage(). $exception->getLine());
+            return $this->sendError($exception->getMessage() . $exception->getLine());
         }
 
     }
@@ -6132,7 +6164,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function workOrderLog(Request $request)
     {
         $input = $request->all();
-        
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -6149,7 +6181,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $query->where('date', 'LIKE', "%{$search}%")
                     ->orWhereHas('generated_by', function ($query) use ($search) {
                         $query->where('empName', 'LIKE', "%{$search}%")
-                              ->where('empID', 'LIKE', "%{$search}%");
+                            ->where('empID', 'LIKE', "%{$search}%");
                     });
             });
         }

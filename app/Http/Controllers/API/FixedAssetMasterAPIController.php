@@ -951,19 +951,29 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $assetAllocation = GRVDetails::with(['grv_master', 'item_by', 'localcurrency', 'rptcurrency'])->whereHas('item_by', function ($q) {
-            $q->where('financeCategoryMaster', 3);
-            $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
-        })->whereHas('grv_master', function ($q) use ($search) {
-            $q->where('grvConfirmedYN', 1);
-            $q->where('approved', -1);
-            if ($search) {
-                $search = str_replace("\\", "\\\\", $search);
-                $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
-            }
-        })->whereHas('localcurrency', function ($q) {
-        })->whereHas('rptcurrency', function ($q) {
-        })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
+        $assetAllocation = GRVDetails::with(['grv_master' => function ($q) use ($search) {
+                                                $q->where('grvConfirmedYN', 1);
+                                                $q->where('approved', -1);
+                                                $q->where('grvCancelledYN', 0);
+                                                if ($search) {
+                                                    $search = str_replace("\\", "\\\\", $search);
+                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+                                                }
+                                            }, 'item_by', 'localcurrency', 'rptcurrency'])
+                                            ->whereHas('item_by', function ($q) {
+                                                $q->where('financeCategoryMaster', 3);
+                                                $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
+                                            })->whereHas('grv_master', function ($q) use ($search) {
+                                                $q->where('grvConfirmedYN', 1);
+                                                $q->where('approved', -1);
+                                                $q->where('grvCancelledYN', 0);
+                                                if ($search) {
+                                                    $search = str_replace("\\", "\\\\", $search);
+                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+                                                }
+                                            })->whereHas('localcurrency', function ($q) {
+                                            })->whereHas('rptcurrency', function ($q) {
+                                            })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
 
 
         if (array_key_exists('cancelYN', $input)) {
