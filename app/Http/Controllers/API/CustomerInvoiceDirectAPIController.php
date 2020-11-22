@@ -3234,4 +3234,22 @@ FROM
 
         return $output;
     }
+
+    public function clearCustomerInvoiceNumber(Request $request)
+    {
+        $input = $request->all();
+
+        $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
+
+        $customerInvoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+        if (empty($customerInvoice)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        // updating fields
+        $customerInvoice->customerInvoiceNo = null;
+        $customerInvoice->save();
+
+        return $this->sendResponse($customerInvoice, 'Record updated successfully');
+    }
 }
