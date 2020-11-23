@@ -45,7 +45,8 @@ class SecondaryCompany extends Model
     public $fillable = [
         'companySystemID',
         'logo',
-        'name'
+        'name',
+        'cutOffDate'
     ];
 
     /**
@@ -57,6 +58,7 @@ class SecondaryCompany extends Model
         'secondaryCompanyID' => 'integer',
         'companySystemID' => 'integer',
         'logo' => 'string',
+        'cutOffDate' => 'datetime',
         'name' => 'string'
     ];
 

@@ -33,6 +33,22 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
+        Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
+        Route::get('getRegisteredSupplierData', 'SupplierMasterAPIController@getRegisteredSupplierData');
+        Route::get('bankMemosByRegisteredSupplierCurrency', 'SupplierMasterAPIController@bankMemosByRegisteredSupplierCurrency');
+        Route::post('notApprovedRegisteredSuppliers', 'SupplierMasterAPIController@notApprovedRegisteredSuppliers');
+        Route::post('approvedRegisteredSuppliers', 'SupplierMasterAPIController@approvedRegisteredSuppliers');
+        Route::post('updateRegisteredSupplierAttachment', 'SupplierMasterAPIController@updateRegisteredSupplierAttachment');
+        Route::post('updateRegisteredSupplierCurrency', 'SupplierMasterAPIController@updateRegisteredSupplierCurrency');
+        Route::post('updateRegisteredSupplierBankMemo', 'SupplierMasterAPIController@updateRegisteredSupplierBankMemo');
+        Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster');
+        Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
+        Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
+
+        Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
+        Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
+        Route::resource('registered_supp_contact_details', 'RegisteredSupplierContactDetailAPIController');
+        Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
 
         Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
         Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
@@ -232,6 +248,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
         Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
         Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
         Route::post('customerReferBack', 'CustomerMasterAPIController@customerReferBack');
@@ -346,7 +363,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
 
         Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
+        Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier');
         Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
+        Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier');
 
         Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
         Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
@@ -837,6 +856,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack');
 
         Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
+        Route::post('clearCustomerInvoiceNumber', 'CustomerInvoiceDirectAPIController@clearCustomerInvoiceNumber');
         Route::get('getItemsOptionForGRV', 'GRVMasterAPIController@getItemsOptionForGRV');
         Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
         Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
@@ -1867,6 +1887,10 @@ Route::group(['middleware' => 'tenant'], function () {
 
     });
 
+    Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
+    Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
+    Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
+
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
     Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
@@ -1903,8 +1927,9 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
-
-
+    Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
+    Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
+    Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
 });
 
 
@@ -1915,4 +1940,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
