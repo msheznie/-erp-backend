@@ -31,6 +31,7 @@ use App\Models\CustomerMasterRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\CurrencyMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierContactType;
 use App\Models\TicketMaster;
@@ -795,4 +796,32 @@ class CustomerMasterAPIController extends AppBaseController
 
     return $this->sendResponse($customers->toArray(), 'Data retrieved successfully');
 }
+
+    public function getSelectedCompanyReportingCurrencyData(Request $request)
+    {
+        $reportingCurrency = "USD";
+        $reportCurrencyDecimalPlace = 2;
+        $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+
+        $comanyMasterData = Company::find($companySystemID);
+        if ($comanyMasterData) {
+            $currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
+            if ($currencyData) {
+                $reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
+                $reportingCurrency = $currencyData->CurrencyCode;
+            }
+        }
+
+        $resData = [
+            'reportingCurrency' => $reportingCurrency,
+            'reportCurrencyDecimalPlace' => $reportCurrencyDecimalPlace
+        ];
+
+
+        return $this->sendResponse($resData, 'Data retrieved successfully');
+    }
 }

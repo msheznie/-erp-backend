@@ -50,6 +50,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
+use App\Models\RegisteredSupplier;
 use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
@@ -133,6 +134,13 @@ class email
                     if (!empty($supplier)) {
                         $data['docApprovedYN'] = $supplier->approvedYN;
                         $data['docCode'] = $supplier->primarySupplierCode;
+                    }
+                    break;
+                case 86:
+                    $supplier = RegisteredSupplier::where('id', $data['docSystemCode'])->first();
+                    if (!empty($supplier)) {
+                        $data['docApprovedYN'] = $supplier->approvedYN;
+                        $data['docCode'] = $supplier->supplierName;
                     }
                     break;
                 case 57:

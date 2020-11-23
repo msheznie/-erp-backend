@@ -3998,18 +3998,6 @@ GROUP BY
                          erp_generalledger.documentSystemID
 					FROM
 						erp_generalledger
-                    LEFT JOIN(
-                            SELECT
-                                ' . $budgetQuery . ' 
-                            FROM
-                                erp_budjetdetails
-                            WHERE
-                                erp_budjetdetails.companySystemID IN(' . join(',
-                            ', $companyID) . '
-                        ) ' . $servicelineQryForBudget . ' ' . $budgetWhereQuery . '
-                        ) AS budget
-                    ON
-                        budget.chartOfAccountID = erp_generalledger.chartOfAccountSystemID
 					INNER JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 					LEFT JOIN serviceline ON serviceline.serviceLineSystemID = erp_generalledger.serviceLineSystemID
 					LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
