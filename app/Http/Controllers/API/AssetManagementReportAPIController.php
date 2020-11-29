@@ -1420,6 +1420,7 @@ FROM
                 LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+                    AND erp_fa_asset_master.deleted_at IS NULL
                     AND DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                 AND erp_fa_asset_master.approved = -1
                 GROUP BY
@@ -1743,6 +1744,7 @@ WHERE
 	) AS disposal ON disposal.companySystemID = erp_fa_asset_master.companySystemID AND disposal.faID = erp_fa_asset_master.faID 
 WHERE
 	erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_fa_asset_master.deleted_at IS NULL
 	AND DATE(erp_fa_asset_master.dateAQ) <= "' . $lastDayOfMonth . '" -- last date of the month which is selected in filter option
 	
 	AND erp_fa_asset_master.approved =- 1 

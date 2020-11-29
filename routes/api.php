@@ -1885,6 +1885,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog');
 
+        Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
