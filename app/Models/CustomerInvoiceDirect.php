@@ -727,4 +727,9 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'bookingInvCodeSystem', 'custInvoiceDirectAutoID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'custInvoiceDirectAutoID')->where('documentSystemID',20);
+    }
 }

@@ -1406,7 +1406,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }, 'details', 'bankledger_by' => function ($query) {
             $query->with('bankrec_by');
             $query->where('documentSystemID', 21);
-        }])->first();
+        },'audit_trial.modified_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }

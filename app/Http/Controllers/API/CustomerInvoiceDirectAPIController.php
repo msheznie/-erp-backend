@@ -2643,7 +2643,7 @@ GROUP BY
                 ->where('documentSystemID', 20);
         }, 'invoicedetails', 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
             $query->where('documentSystemID', 20);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
 
 
         if (empty($gRVMaster)) {
