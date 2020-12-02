@@ -745,7 +745,7 @@ class JvMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 17);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($jvMasterData)) {
             return $this->sendError('Jv Master not found');

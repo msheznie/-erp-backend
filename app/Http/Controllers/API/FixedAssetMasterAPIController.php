@@ -1380,7 +1380,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->with(['confirmed_by', 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 22);
-            }, 'created_by', 'modified_by'])->findWithoutFail($input['faID']);
+            }, 'created_by', 'modified_by','audit_trial.modified_by'])->findWithoutFail($input['faID']);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
