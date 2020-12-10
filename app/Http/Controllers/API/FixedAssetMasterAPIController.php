@@ -301,7 +301,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                     } else {
                         $qtyRange = range(1, $grvDetails->noQty-$grvDetails->assetAllocatedQty);
-                        $assetAllocatedQty = 0;
+                        $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
                                 $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -1026,6 +1026,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
+        $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1072,6 +1073,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             if ($input['auditCategory']) {
                 $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
+        }
+
+        // get only deleted
+        if($isDeleted==1){
+            $assetCositng->onlyTrashed();
         }
 
 
@@ -2003,29 +2009,31 @@ class FixedAssetMasterAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
 
         if($id == 0){
-            return $this->sendError('ID not found');
+            return $this->sendError('ID not found',500);
         }
 
         if($comment == '' || $comment==null){
-            return $this->sendError('Comment is required');
+            return $this->sendError('Comment is required',500);
         }
 
         /** @var FixedAssetMaster $fixedAssetMaster */
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
-            return $this->sendError('Fixed Asset Master not found');
+            return $this->sendError('Fixed Asset Master not found',500);
         }
 
         if($fixedAssetMaster->approved == -1){
-            return $this->sendError('Approved asset cannot be deleted');
+            return $this->sendError('Approved asset cannot be deleted',500);
         }
 
         if($fixedAssetMaster->confirmedYN == 1){
-            return $this->sendError('Confirmed asset cannot be deleted');
+            return $this->sendError('Confirmed asset cannot be deleted',500);
         }
         $fixedAssetMasterOld = $fixedAssetMaster;
         $fixedAssetMaster->deleteComment = $comment;
+        $fixedAssetMaster->serialNo = 0;
+        $fixedAssetMaster->faUnitSerialNo = null;
         $fixedAssetMaster->save();
 
         // soft delete
