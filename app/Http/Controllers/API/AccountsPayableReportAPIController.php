@@ -30,8 +30,10 @@ use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\CountryMaster;
+use App\Models\SegmentMaster;
 use App\Models\CurrencyMaster;
 use App\Models\GeneralLedger;
+use App\Models\FinanceItemCategoryMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Company;
@@ -94,13 +96,17 @@ class AccountsPayableReportAPIController extends AppBaseController
 
 
         $countries = CountryMaster::all();
+        $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
+        $categories = FinanceItemCategoryMaster::all();
         $output = array(
             'controlAccount' => $controlAccount,
             'suppliers' => $supplierMaster,
             'departments' => $departments,
             'years' => $years,
-            'countries' => $countries
+            'countries' => $countries,
+            'categories' => $categories,
+            'segment' => $segment
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -3932,6 +3938,25 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $countries = (array)$request->countries;
         $countrySystemID = collect($countries)->pluck('countryID')->toArray();
+        $segmentFilter = '';
+        $categoryFilter = '';
+        if (isset($request->segments)) {
+            $segments = (array)$request->segments;
+            $serviceLineSystemID = collect($segments)->pluck('serviceLineSystemID')->toArray();
+
+            if (sizeof($serviceLineSystemID) > 0) {
+                $segmentFilter = 'AND erp_purchaseordermaster.serviceLineSystemID IN (' . join(',', $serviceLineSystemID) . ')';
+            }
+        }
+
+         if (isset($request->selectedCategories)) {
+            $selectedCategories = (array)$request->selectedCategories;
+            $financeCategory = collect($selectedCategories)->pluck('id')->toArray();
+
+            if (sizeof($financeCategory) > 0) {
+                $categoryFilter = 'AND erp_purchaseordermaster.financeCategory IN (' . join(',', $financeCategory) . ')';
+            }
+        }
 
         $qry = 'SELECT
                         erp_purchaseordermaster.companySystemID,
@@ -3950,8 +3975,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         INNER JOIN companymaster ON erp_purchaseordermaster.companySystemID = companymaster.companySystemID
                     WHERE
                         erp_purchaseordermaster.approved =- 1 
-                        AND erp_purchaseordermaster.poCancelledYN = 0 
-                        AND poType_N <> 5 
+                        AND erp_purchaseordermaster.poCancelledYN = 0 ' . $categoryFilter . '
+                        AND poType_N <> 5 ' . $segmentFilter . '
                         AND YEAR ( erp_purchaseordermaster.approvedDate ) = ' . $year . ' 
                         AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
                         AND suppliermaster.supplierCountryID IN (' . join(',', $countrySystemID) . ')
