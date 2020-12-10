@@ -5344,21 +5344,26 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             if (!empty($payment['payment_master'])) {
                                                 $data[$x]['Payment Code'] = $payment['payment_master']['BPVcode'];
                                                 $data[$x]['Payment Date'] = \Helper::dateFormat($payment['payment_master']['BPVdate']);
+                                                $data[$x]['Payment Posted Date'] = \Helper::dateFormat($payment['payment_master']['postedDate']);
                                             } else {
                                                 $data[$x]['Payment Code'] = '';
                                                 $data[$x]['Payment Date'] = '';
+                                                $data[$x]['Payment Posted Date'] = '';
                                             }
                                         } else if ($payment['matchingDocID'] > 0) {
                                             if (!empty($payment['matching_master'])) {
                                                 $data[$x]['Payment Code'] = $payment['matching_master']['matchingDocCode'];
                                                 $data[$x]['Payment Date'] = \Helper::dateFormat($payment['matching_master']['matchingDocdate']);
+                                                $data[$x]['Payment Posted Date'] = '';
                                             } else {
                                                 $data[$x]['Payment Code'] = '';
                                                 $data[$x]['Payment Date'] = '';
+                                                $data[$x]['Payment Posted Date'] = '';
                                             }
                                         } else {
                                             $data[$x]['Payment Code'] = '';
                                             $data[$x]['Payment Date'] = '';
+                                            $data[$x]['Payment Posted Date'] = '';
                                         }
                                         $data[$x]['Paid Amount'] = number_format($payment['rptAmount'], 2);
                                         $paymentsCount++;
@@ -5366,6 +5371,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 } else {
                                     $data[$x]['Payment Code'] = '';
                                     $data[$x]['Payment Date'] = '';
+                                    $data[$x]['Payment Posted Date'] = '';
                                     $data[$x]['Paid Amount'] = '';
                                 }
                                 $invoicesCount++;
@@ -5376,6 +5382,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $data[$x]['Invoice Amount'] = '';
                             $data[$x]['Payment Code'] = '';
                             $data[$x]['Payment Date'] = '';
+                            $data[$x]['Payment Posted Date'] = '';
                             $data[$x]['Paid Amount'] = '';
                         }
                         $grvMasterCount++;
@@ -5389,6 +5396,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Invoice Amount'] = '';
                     $data[$x]['Payment Code'] = '';
                     $data[$x]['Payment Date'] = '';
+                    $data[$x]['Payment Posted Date'] = '';
                     $data[$x]['Paid Amount'] = '';
                 }
                 $x++;
