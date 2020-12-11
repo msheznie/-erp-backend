@@ -556,6 +556,77 @@ class BankReconciliationAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAllBankReconciliationList(Request $request)
+    {
+        $input = $request->all();
+        // $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankReconciliation = BankReconciliation::whereIn('companySystemID', $subCompanies)
+                                                ->with(['month', 'created_by', 'bank_account']);
+
+        if (isset($input['month']) && $input['month'] != null) {
+            $month = Carbon::parse($input['month'])->format('m');
+
+            $bankReconciliation = $bankReconciliation->where('month', $month);
+        }
+
+        if (isset($input['year']) && $input['year'] != null) {
+            $year = Carbon::parse($input['year'])->format('Y');
+
+            $bankReconciliation = $bankReconciliation->where('year', $year);
+        }
+
+        if (isset($input['bankAccountAutoID']) && $input['bankAccountAutoID'] > 0) {
+            $bankReconciliation = $bankReconciliation->where('bankAccountAutoID', $input['bankAccountAutoID']);
+        }
+
+        if (isset($input['bankmasterAutoID']) && $input['bankmasterAutoID'] > 0) {
+            $bankReconciliation = $bankReconciliation->whereHas('bank_account', function($query) use ($input) {
+                                                            $query->where('bankmasterAutoID', $input['bankmasterAutoID']);
+                                                    });
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {
+                $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhereHas('ledger_data', function ($query) use ($search) {
+                        $query->where('documentCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($bankReconciliation)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankRecAsOf', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
     public function getCheckBeforeCreate(Request $request)
     {
         $input = $request->all();

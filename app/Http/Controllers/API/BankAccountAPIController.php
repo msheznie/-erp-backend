@@ -840,5 +840,23 @@ class BankAccountAPIController extends AppBaseController
         return $this->sendResponse($bankAccount->toArray(), 'Bank Account Amend successfully');
     }
 
+    public function getBankAccountsByBankID(Request $request)
+    {
+        $input = $request->all();
 
+        $selectedCompanyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
+                                   ->where('bankmasterAutoID', $input['id'])
+                                   ->get();
+
+        return $this->sendResponse($bankAccounts, 'Bank Accounts retrived  successfully');
+    }
 }
