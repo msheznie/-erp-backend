@@ -1095,6 +1095,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
         Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
         Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
+        Route::post('getAllBankTransferList', 'PaymentBankTransferAPIController@getAllBankTransferList');
         Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
         Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
         Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
