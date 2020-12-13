@@ -300,4 +300,9 @@ class ExpenseClaim extends Model
     {
         return $q->leftJoin('chartofaccounts as '.$as,$as.'.chartOfAccountSystemID','erp_expenseclaimdetails.'.$column);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'expenseClaimMasterAutoID')->where('documentSystemID',6);
+    }
 }

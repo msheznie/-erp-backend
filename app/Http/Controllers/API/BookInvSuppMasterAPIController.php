@@ -351,7 +351,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
+            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         },'direct_customer_invoice' => function($query) {
@@ -1469,7 +1469,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if (!isset($input['taxMasterAutoID'])) {
-            return $this->sendError('Please Select a tax');
+            $input['taxMasterAutoID'] = 0;
+            // return $this->sendError('Please Select a tax');
         }
 
         $taxMasterAutoID = $input['taxMasterAutoID'];
@@ -1505,18 +1506,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         } else {
             $totalAmount = $amount;
-
         }
 
         $totalAmount = ($percentage / 100) * $totalAmount;
 
-        $taxMaster = TaxMaster::where('taxType',2)
+        /*$taxMaster = TaxMaster::where('taxType',2)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
             ->first();
 
         if (empty($taxMaster)) {
             return $this->sendResponse('e', 'VAT Master not found');
-        }
+        }*/
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('documentSystemID', 11)
@@ -1533,10 +1533,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $_post['documentID'] = 'SI';
         $_post['documentSystemCode'] = $bookingSuppMasInvAutoID;
         $_post['documentCode'] = $bookInvSuppMaster->bookingInvCode;
-        $_post['taxShortCode'] = $taxMaster->taxShortCode;
-        $_post['taxDescription'] = $taxMaster->taxDescription;
-        $_post['taxPercent'] = $taxMaster->taxPercent;
-        $_post['payeeSystemCode'] = $taxMaster->payeeSystemCode;
+        $_post['taxShortCode'] = ''; // $taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage;
+        $_post['payeeSystemCode'] = $bookInvSuppMaster->supplierID ; //$taxMaster->payeeSystemCode;
         $_post['currency'] = $bookInvSuppMaster->supplierTransactionCurrencyID;
         $_post['currencyER'] = $bookInvSuppMaster->supplierTransactionCurrencyER;
         $_post['amount'] = round($totalAmount, $decimal);

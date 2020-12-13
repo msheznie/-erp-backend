@@ -15,6 +15,7 @@ namespace App\Models;
 use App\helper\Helper;
 use App\Traits\ApproveTrait;
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @SWG\Definition(
@@ -433,7 +434,7 @@ use Eloquent as Model;
  */
 class FixedAssetMaster extends Model
 {
-    //use ApproveTrait;
+    use SoftDeletes;
 
     public $table = 'erp_fa_asset_master';
     
@@ -442,7 +443,7 @@ class FixedAssetMaster extends Model
 
     protected $primaryKey = 'faID';
 
-
+    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'departmentSystemID',
@@ -544,6 +545,7 @@ class FixedAssetMaster extends Model
         'postToGLYN',
         'postToGLCodeSystemID',
         'postToGLCode',
+        'deleteComment',
         'timestamp'
     ];
 
@@ -643,6 +645,7 @@ class FixedAssetMaster extends Model
         'selectedforJobYN' => 'integer',
         'postToGLYN' => 'integer',
         'postToGLCodeSystemID' => 'integer',
+        'deleteComment' => 'string',
         'postToGLCode' => 'integer',
     ];
 
@@ -857,6 +860,11 @@ class FixedAssetMaster extends Model
     public function setPostedDateAttribute($value)
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'faID')->where('documentSystemID',22);
     }
 
 }

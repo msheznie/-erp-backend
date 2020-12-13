@@ -671,4 +671,9 @@ class CustomerReceivePayment extends Model
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'custReceivePaymentAutoID')->where('documentSystemID',21);
+    }
 }

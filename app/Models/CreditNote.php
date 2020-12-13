@@ -474,4 +474,9 @@ class CreditNote extends Model
     {
         return $this->belongsTo('App\Models\DebitNote', 'debitNoteAutoID', 'debitNoteAutoID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'creditNoteAutoID')->where('documentSystemID',19);
+    }
 }

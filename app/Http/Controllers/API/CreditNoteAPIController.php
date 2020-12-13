@@ -882,7 +882,7 @@ class CreditNoteAPIController extends AppBaseController
                 ->where('documentSystemID', 19);
         }, 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
             $query->where('documentSystemID', 19);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
 
 
         if (empty($creditNote)) {

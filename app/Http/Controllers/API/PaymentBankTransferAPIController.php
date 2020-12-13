@@ -527,6 +527,78 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAllBankTransferList(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankTransfer = PaymentBankTransfer::whereIn('companySystemID', $subCompanies)
+                                           ->with(['created_by', 'bank_account']);
+
+        if (isset($input['month']) && $input['month'] != null) {
+            $month = Carbon::parse($input['month'])->format('m');
+
+            $bankTransfer = $bankTransfer->whereMonth('documentDate', $month);
+        }
+
+        if (isset($input['year']) && $input['year'] != null) {
+            $year = Carbon::parse($input['year'])->format('Y');
+
+            $bankTransfer = $bankTransfer->whereYear('documentDate', $year);
+        }
+
+        if (isset($input['bankAccountAutoID']) && $input['bankAccountAutoID'] > 0) {
+            $bankTransfer = $bankTransfer->where('bankAccountAutoID', $input['bankAccountAutoID']);
+        }
+
+        if (isset($input['bankmasterAutoID']) && $input['bankmasterAutoID'] > 0) {
+            $bankTransfer = $bankTransfer->whereHas('bank_account', function($query) use ($input) {
+                                                            $query->where('bankmasterAutoID', $input['bankmasterAutoID']);
+                                                    });
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
+                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhereHas('ledger_data', function ($query) use ($search) {
+                        $query->where('documentCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
     public function getBankTransferApprovalByUser(Request $request)
     {
 

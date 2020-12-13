@@ -48,6 +48,7 @@ use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\AuditTrial;
 use App\Traits\UserActivityLogger;
 use Carbon\Carbon;
+use Dompdf\Positioner\Fixed;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -293,9 +294,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $cost['localAmount'] = $grvDetails->landingCost_LocalCur * $grvDetails->noQty;
                         $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                         $cost['rptAmount'] = $grvDetails->landingCost_RptCur * $grvDetails->noQty;
-                        $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
+                        $this->fixedAssetCostRepository->create($cost);
+
+                        // maintain assetAllocatedQty
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty]);
+
                     } else {
-                        $qtyRange = range(1, $grvDetails->noQty);
+                        $qtyRange = range(1, $grvDetails->noQty-$grvDetails->assetAllocatedQty);
+                        $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
                                 $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -353,11 +359,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $cost['localAmount'] = $grvDetails->landingCost_LocalCur;
                                 $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                                 $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
-                                $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
+                                $this->fixedAssetCostRepository->create($cost);
+                                $assetAllocatedQty++;
                             }
                         }
                     }
-                    $assetAllocated = GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1]);
+                    GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$assetAllocatedQty]);
                     DB::commit();
                 }
             }
@@ -1019,6 +1026,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
+        $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1065,6 +1073,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             if ($input['auditCategory']) {
                 $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
+        }
+
+        // get only deleted
+        if($isDeleted==1){
+            $assetCositng->onlyTrashed();
         }
 
 
@@ -1259,7 +1272,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_fa_asset_master.companySystemID', $companyId)
                     ->where('erp_fa_asset_master.approved', 0)
-                    ->where('erp_fa_asset_master.confirmedYN', 1);
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->whereNull('erp_fa_asset_master.deleted_at');
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
@@ -1328,7 +1342,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
                     ->where('erp_fa_asset_master.companySystemID', $companyId)
-                    ->where('erp_fa_asset_master.confirmedYN', 1);
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->whereNull('erp_fa_asset_master.deleted_at');
             })
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
@@ -1371,7 +1386,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->with(['confirmed_by', 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 22);
-            }, 'created_by', 'modified_by'])->findWithoutFail($input['faID']);
+            }, 'created_by', 'modified_by','audit_trial.modified_by'])->findWithoutFail($input['faID']);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1985,6 +2000,60 @@ class FixedAssetMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function assetCostingRemove(Request $request){
+        $input = $request->all();
+        $id = isset($input['id'])?$input['id']:0;
+        $comment = isset($input['comment'])?$input['comment']:0;
+        $employee = Helper::getEmployeeInfo();
+
+        if($id == 0){
+            return $this->sendError('ID not found',500);
+        }
+
+        if($comment == '' || $comment==null){
+            return $this->sendError('Comment is required',500);
+        }
+
+        /** @var FixedAssetMaster $fixedAssetMaster */
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
+
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found',500);
+        }
+
+        if($fixedAssetMaster->approved == -1){
+            return $this->sendError('Approved asset cannot be deleted',500);
+        }
+
+        if($fixedAssetMaster->confirmedYN == 1){
+            return $this->sendError('Confirmed asset cannot be deleted',500);
+        }
+        $fixedAssetMasterOld = $fixedAssetMaster;
+        $fixedAssetMaster->deleteComment = $comment;
+        $fixedAssetMaster->serialNo = 0;
+        $fixedAssetMaster->faUnitSerialNo = null;
+        $fixedAssetMaster->save();
+
+        // soft delete
+        $fixedAssetMaster->delete();
+
+        // update grv details assetAllocationDoneYN,assetAllocatedQty
+        if($fixedAssetMasterOld->docOriginDetailID){
+            $grvDetails = GRVDetails::find($fixedAssetMasterOld->docOriginDetailID);
+            $grvDetails->assetAllocatedQty = $grvDetails->assetAllocatedQty-1;
+            $grvDetails->assetAllocationDoneYN = 0;
+            $grvDetails->save();
+        }
+
+        //Should be removed from asset cost
+        FixedAssetCost::where('faID',$fixedAssetMasterOld->faID)->delete();
+
+        // add to user activity log
+        UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$fixedAssetMasterOld->documentSystemID,$fixedAssetMasterOld->companySystemID,$fixedAssetMasterOld->faID,$employee->empName." Delete Asset Costing (".$fixedAssetMasterOld->faID.")",'','','itemPicture');
+
+        return $this->sendResponse($id, 'Fixed Asset Master deleted successfully');
     }
 
 }

@@ -253,5 +253,10 @@ class PaymentBankTransfer extends Model
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','paymentBankTransferID');
     }
+
+     public function ledger_data()
+    {
+        return $this->hasMany('App\Models\BankLedger', 'paymentBankTransferID', 'paymentBankTransferID');
+    }
     
 }
