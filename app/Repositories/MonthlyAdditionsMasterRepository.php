@@ -68,6 +68,6 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
                 $q->with(['details.designation']);
             }])
                 ->where('documentSystemID', 28);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 }

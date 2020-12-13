@@ -1333,6 +1333,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->get();
         $output['collectionType'] = CustomerInvoiceStatusType::all();
         $output['segment'] = [];
+        $output['customerVATPercentage'] = 0;
         if ($id) {
             if ($master->customerID != '') {
                 $output['currencies'] = DB::table('customercurrency')
@@ -1341,9 +1342,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->where('isAssigned', -1)
                     ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')
                     ->get();
+                $customerAssign = CustomerAssigned::where('customerCodeSystem',$master->customerID)
+                                                    ->where('companySystemID',$companySystemID)
+                                                    ->first();
+                if(!empty($customerAssign)) {
+                    $output['customerVATPercentage'] = $customerAssign->vatPercentage;
+                }else{
+                    $customer = CustomerMaster::find($master->customerID);
+                    if(!empty($customer) && $output['customerVATPercentage'] == 0){
+                        $output['customerVATPercentage'] = $customer->vatPercentage;
+                    }
+                }
             } else {
                 $output['currencies'] = [];
             }
+
+
+
             $output['bankDropdown'] = BankAssign::where('isActive', 1)
                 ->where('isAssigned', -1)
                 ->where('companySystemID', $companySystemID)
@@ -1695,16 +1710,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function savecustomerInvoiceTaxDetails(Request $request)
     {
         $input = $request->all();
-        $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
-        $percentage = $input['percentage'];
+        $custInvoiceDirectAutoID = isset($input['custInvoiceDirectAutoID'])?$input['custInvoiceDirectAutoID']:0;
+        $percentage = isset($input['percentage'])?$input['percentage']:0;
 
         if (empty($input['taxMasterAutoID'])) {
-            return $this->sendResponse('e', 'Please select a tax.');
+            $input['taxMasterAutoID'] = 0;
+            //return $this->sendResponse('e', 'Please select a tax.');
         }
 
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+
+        if (empty($master)) {
+            return $this->sendResponse('e', 'Customer Invoice not found.');
+        }
+
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4|| $master->isPerforma == 5) {
             $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         } else {
@@ -1732,13 +1753,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $totalAmount = ($percentage / 100) * $totalAmount;
         }
 
-        $taxMaster = TaxMaster::where('taxType', 2)
+        /*$taxMaster = TaxMaster::where('taxType', 2)
             ->where('companySystemID', $master->companySystemID)
             ->first();
 
         if (empty($taxMaster)) {
             return $this->sendResponse('e', 'VAT Master not found');
-        }
+        }*/
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('documentSystemID', 20)
@@ -1758,10 +1779,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['documentSystemID'] = $master->documentSystemiD;
         $_post['documentSystemCode'] = $custInvoiceDirectAutoID;
         $_post['documentCode'] = $master->bookingInvCode;
-        $_post['taxShortCode'] = $taxMaster->taxShortCode;
-        $_post['taxDescription'] = $taxMaster->taxDescription;
-        $_post['taxPercent'] = $taxMaster->taxPercent;
-        $_post['payeeSystemCode'] = $taxMaster->payeeSystemCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
         $_post['currency'] = $master->custTransactionCurrencyID;
         $_post['currencyER'] = $master->custTransactionCurrencyER;
         $_post['amount'] = round($totalAmount, $decimal);
@@ -2643,7 +2664,7 @@ GROUP BY
                 ->where('documentSystemID', 20);
         }, 'invoicedetails', 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
             $query->where('documentSystemID', 20);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
 
 
         if (empty($gRVMaster)) {

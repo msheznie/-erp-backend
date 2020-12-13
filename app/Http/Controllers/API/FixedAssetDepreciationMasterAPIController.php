@@ -540,7 +540,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 23);
-        }, 'confirmed_by', 'created_by'])->findWithoutFail($request['depMasterAutoID']);
+        }, 'confirmed_by', 'created_by','audit_trial.modified_by'])->findWithoutFail($request['depMasterAutoID']);
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError('Fixed Asset Depreciation Master not found');
         }

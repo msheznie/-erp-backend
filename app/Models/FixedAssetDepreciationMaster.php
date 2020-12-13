@@ -252,4 +252,9 @@ class FixedAssetDepreciationMaster extends Model
     {
         $this->attributes['depDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'depMasterAutoID')->where('documentSystemID',23);
+    }
 }

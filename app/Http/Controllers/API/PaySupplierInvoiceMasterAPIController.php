@@ -1221,7 +1221,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'bankledger_by' => function ($query) {
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
-                }])->first();
+                },'audit_trial.modified_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

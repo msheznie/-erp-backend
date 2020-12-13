@@ -280,4 +280,9 @@ class AssetDisposalMaster extends Model
         $this->attributes['disposalDocumentDate'] = Helper::dateAddTime($value);
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'assetdisposalMasterAutoID')->where('documentSystemID',41);
+    }
+
 }

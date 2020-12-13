@@ -880,4 +880,9 @@ class PaySupplierInvoiceMaster extends Model
     {
         return $this->hasMany('App\Models\BankMemoPayee', 'documentSystemCode', 'PayMasterAutoId');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'PayMasterAutoId')->where('documentSystemID',4);
+    }
 }

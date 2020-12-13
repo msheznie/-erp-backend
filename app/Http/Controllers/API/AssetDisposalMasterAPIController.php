@@ -287,7 +287,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 41);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
