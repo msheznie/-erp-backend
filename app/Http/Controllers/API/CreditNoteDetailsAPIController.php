@@ -6,7 +6,7 @@ use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNote;
-use App\Models\chartOfAccount;
+use App\Models\ChartOfAccount;
 use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Repositories\CreditNoteDetailsRepository;
@@ -314,7 +314,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $x = 0;
 
 
-        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
 
 
         $inputData['creditNoteAutoID'] = $creditNoteAutoID;

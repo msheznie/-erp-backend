@@ -856,7 +856,7 @@ GROUP BY
         foreach ($input['detailTable'] as $new) {
 
             if (isset($new['isChecked']) && $new['isChecked']) {
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
+                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
 
                 $testAmount = 1;
                 $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
