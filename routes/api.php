@@ -327,6 +327,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('bank_accounts', 'BankAccountAPIController');
         Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
+        Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
         Route::resource('g_r_v_masters', 'GRVMasterAPIController');
@@ -1008,6 +1009,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
         Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
+        Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
         Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
         Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
@@ -1093,6 +1095,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
         Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
         Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
+        Route::post('getAllBankTransferList', 'PaymentBankTransferAPIController@getAllBankTransferList');
         Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
         Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
         Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');

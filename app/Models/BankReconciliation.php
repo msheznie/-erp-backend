@@ -287,4 +287,9 @@ class BankReconciliation extends Model
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankRecAutoID');
     }
+
+     public function ledger_data()
+    {
+        return $this->hasMany('App\Models\BankLedger', 'bankRecAutoID', 'bankRecAutoID');
+    }
 }
