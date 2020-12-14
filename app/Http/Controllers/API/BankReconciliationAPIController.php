@@ -1241,4 +1241,104 @@ class BankReconciliationAPIController extends AppBaseController
 
         return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation Amend successfully');
     }
+
+    public function amendBankReconciliationReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['bankRecAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = BankReconciliation::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+
+        $checkBankReconcileGenerated = BankReconciliation::where('bankAccountAutoID', $masterData->bankAccountAutoID)
+                                                         ->whereDate('bankRecAsOf', '>=', Carbon::parse($masterData->bankRecAsOf))
+                                                         ->where('companySystemID', $masterData->companySystemID)
+                                                         ->where('bankRecAutoID', '!=',$id)
+                                                         ->first();
+
+        if ($checkBankReconcileGenerated) {
+            return $this->sendError("You cannot return back to amend this bank reconciliation, upcoming month's bank reconciliation is already created");
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this bank reconciliation, it is not confirmed');
+        }
+
+
+        $emailBody = '<p>' . $masterData->bankRecPrimaryCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankRecPrimaryCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->bankRecPrimaryCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemiD,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->bankRecPrimaryCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approvedYN = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Bank reconciliation amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }
