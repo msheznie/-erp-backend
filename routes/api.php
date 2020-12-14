@@ -1010,6 +1010,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
         Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
         Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
+        Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
         Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
         Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
@@ -1102,6 +1103,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
         Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
         Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+        Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview');
+        Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm');
 
         Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
         Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
