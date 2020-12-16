@@ -2983,6 +2983,8 @@ class Helper
 
     public static function companyFinanceYearCheck($input)
     {
+        $input['companyFinanceYearID'] = isset($input['companyFinanceYearID']) ? $input['companyFinanceYearID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         if ($companyFinanceYear) {
             if ($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1) {
@@ -3002,6 +3004,8 @@ class Helper
 
     public static function companyFinancePeriodCheck($input)
     {
+        $input['companyFinancePeriodID'] = isset($input['companyFinancePeriodID']) ? $input['companyFinancePeriodID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         if ($companyFinancePeriod) {
             if ($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1) {

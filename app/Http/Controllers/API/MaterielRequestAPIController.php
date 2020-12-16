@@ -348,7 +348,7 @@ class MaterielRequestAPIController extends AppBaseController
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
         }
-
+        $request->request->remove('search.value');
         return \DataTables::of($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {

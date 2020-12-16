@@ -391,7 +391,6 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
-//        $chartOfAccount->select('chartofaccounts.*');
 
         $search = $request->input('search.value');
         if($search){
@@ -400,7 +399,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
             });
         }
-
+        $request->request->remove('search.value');
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
