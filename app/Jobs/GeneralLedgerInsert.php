@@ -1567,7 +1567,13 @@ class GeneralLedgerInsert implements ShouldQueue
                         }, 'finance_period_by'])->find($masterModel["autoID"]);
 
                         //all account
-                        $allAcc = DebitNoteDetails::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(debitAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,debitAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,comments,chartOfAccountSystemID")->WHERE('debitNoteAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')->get();
+                        $allAcc = DebitNoteDetails::with(['chartofaccount'])
+                            ->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,debitAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,comments,chartOfAccountSystemID")
+                            ->where('debitNoteAutoID', $masterModel["autoID"])
+                            ->whereNotNull('serviceLineSystemID')
+                            ->whereNotNull('chartOfAccountSystemID')
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')
+                            ->get();
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
                         if ($masterData->finance_period_by->isActive == -1) {
@@ -1622,6 +1628,49 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
+
+                            $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                ->WHERE('documentSystemCode', $masterModel["autoID"])
+                                ->WHERE('documentSystemID', $masterModel["documentSystemID"])
+                                ->groupBy('documentSystemCode')
+                                ->first();
+
+                            $taxLocal = 0;
+                            $taxRpt = 0;
+                            $taxTrans = 0;
+                            if ($tax) {
+                                $taxLocal = $tax->localAmount;
+                                $taxRpt = $tax->rptAmount;
+                                $taxTrans = $tax->transAmount;
+                            }
+
+                            if ($tax) {
+                                $taxConfigData = TaxService::getInputVATGLAccount($masterModel["companySystemID"]);
+                                if (!empty($taxConfigData)) {
+                                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->inputVatGLAccountAutoID)
+                                        ->where('companySystemID', $masterData->companySystemID)
+                                        ->first();
+
+                                    if (!empty($chartOfAccountData)) {
+                                        $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                        $data['glCode'] = $chartOfAccountData->AccountCode;
+                                        $data['glAccountType'] = $chartOfAccountData->controlAccounts;
+                                        $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans)) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
+                                        array_push($finalData, $data);
+                                    } else {
+                                        Log::info('Debit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
+                                    }
+                                } else {
+                                    Log::info('Debit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Input Vat GL Account not configured' . date('H:i:s'));
+                                }
+                            }
+
+
                             if ($allAcc) {
                                 foreach ($allAcc as $val) {
                                     $data['serviceLineSystemID'] = $val->serviceLineSystemID;

@@ -115,7 +115,10 @@ class SupplierAssigned extends Model
         'blockedBy',
         'blockedDate',
         'blockedReason',
-        'jsrsExpiry'
+        'jsrsExpiry',
+        'vatEligible',
+        'vatNumber',
+        'vatPercentage',
     ];
 
     /**
@@ -169,7 +172,10 @@ class SupplierAssigned extends Model
         'blockedReason' => 'string',
         'markupPercentage' => 'float',
         'jsrsNo' => 'string',
-        'jsrsExpiry' => 'string'
+        'jsrsExpiry' => 'string',
+        'vatEligible' => 'integer',
+        'vatNumber' => 'string',
+        'vatPercentage' => 'integer',
     ];
 
     /**

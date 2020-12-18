@@ -332,7 +332,15 @@ class DebitNote extends Model
         'createdDateTime',
         'createdDateAndTime',
         'timestamp',
-        'invoiceNumber'
+        'invoiceNumber',
+        'isVATApplicable',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -394,7 +402,15 @@ class DebitNote extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
-        'invoiceNumber' => 'string'
+        'invoiceNumber' => 'string',
+        'isVATApplicable' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**
