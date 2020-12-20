@@ -388,6 +388,7 @@ class QuotationMaster extends Model
 
     public $fillable = [
         'documentSystemID',
+        'quotationType',
         'documentID',
         'quotationCode',
         'serialNumber',
@@ -466,9 +467,12 @@ class QuotationMaster extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'selectedForDeliveryOrder',
+        'selectedForSalesOrder',
         'isInDOorCI',
+        'isInSO',
         'invoiceStatus',
         'deliveryStatus',
+        'orderStatus',
         'timestamp'
     ];
 
@@ -480,6 +484,7 @@ class QuotationMaster extends Model
     protected $casts = [
         'quotationMasterID' => 'integer',
         'documentSystemID' => 'string',
+        'quotationType' => 'string',
         'documentID' => 'string',
         'quotationCode' => 'string',
         'serialNumber' => 'integer',
@@ -552,9 +557,12 @@ class QuotationMaster extends Model
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string',
         'selectedForDeliveryOrder' => 'integer',
+        'selectedForSalesOrder' => 'integer',
         'isInDOorCI' => 'integer',
+        'isInSO' => 'integer',
         'invoiceStatus' => 'integer',
-        'deliveryStatus' => 'integer'
+        'deliveryStatus' => 'integer',
+        'orderStatus' => 'integer'
     ];
 
     /**
@@ -608,6 +616,11 @@ class QuotationMaster extends Model
     public function segment()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function transaction_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'transactionCurrencyID', 'currencyID');
     }
 
     

@@ -263,6 +263,10 @@ class QuotationDetailsRefferedback extends Model
         'timesReferred',
         'fullyOrdered',
         'doQuantity',
+        'soQuotationDetailID',
+        'soQuantity',
+        'qtyIssuedDefaultMeasure',
+        'soQuotationMasterID',
         'timestamp'
     ];
 
@@ -311,7 +315,11 @@ class QuotationDetailsRefferedback extends Model
         'modifiedUserName' => 'string',
         'timesReferred' => 'integer',
         'fullyOrdered' => 'integer',
-        'doQuantity' => 'float'
+        'doQuantity' => 'float',
+        'soQuotationDetailID' => 'integer', 
+        'soQuantity' => 'float', 
+        'qtyIssuedDefaultMeasure' => 'float', 
+        'soQuotationMasterID' => 'integer', 
     ];
 
     /**

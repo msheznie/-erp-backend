@@ -507,6 +507,9 @@ class QuotationMasterRefferedback extends Model
         'isInDOorCI',
         'invoiceStatus',
         'deliveryStatus',
+        'quotationType',
+        'selectedForSalesOrder',
+        'isInSO',
         'timestamp'
     ];
 
@@ -518,6 +521,9 @@ class QuotationMasterRefferedback extends Model
     protected $casts = [
         'quotationMasterRefferedBackID' => 'integer',
         'quotationMasterID' => 'integer',
+        'isInSO' => 'integer',
+        'selectedForSalesOrder' => 'integer',
+        'quotationType' => 'integer',
         'documentSystemID' => 'string',
         'documentID' => 'string',
         'quotationCode' => 'string',

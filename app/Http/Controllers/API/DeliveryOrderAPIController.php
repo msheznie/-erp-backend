@@ -819,7 +819,9 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
+            ->where('selectedForSalesOrder', 0)
             ->where('isInDOorCI', '!=',2)
+            ->where('isInSO', '!=',1)
             ->where('closedYN',0)
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
@@ -846,7 +848,7 @@ FROM
 	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY deliveryOrderDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
-	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2');
+	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInSO != 1');
 
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }

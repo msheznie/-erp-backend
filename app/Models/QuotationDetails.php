@@ -210,6 +210,7 @@ class QuotationDetails extends Model
         'itemDescription',
         'itemCategory',
         'defaultUOMID',
+        'soQuotationDetailID',
         'itemReferenceNo',
         'defaultUOM',
         'unitOfMeasureID',
@@ -243,6 +244,9 @@ class QuotationDetails extends Model
         'timesReferred',
         'fullyOrdered',
         'doQuantity',
+        'qtyIssuedDefaultMeasure',
+        'soQuantity',
+        'soQuotationMasterID',
         'timestamp'
     ];
 
@@ -254,6 +258,7 @@ class QuotationDetails extends Model
     protected $casts = [
         'quotationDetailsID' => 'integer',
         'quotationMasterID' => 'integer',
+        'soQuotationDetailID' => 'integer',
         'itemAutoID' => 'integer',
         'itemSystemCode' => 'string',
         'itemDescription' => 'string',
@@ -289,7 +294,10 @@ class QuotationDetails extends Model
         'modifiedUserName' => 'string',
         'timesReferred' => 'integer',
         'fullyOrdered' => 'integer',
-        'doQuantity' => 'float'
+        'soQuotationMasterID' => 'integer',
+        'doQuantity' => 'float',
+        'qtyIssuedDefaultMeasure' => 'float',
+        'soQuantity' => 'float'
     ];
 
     /**
@@ -307,6 +315,19 @@ class QuotationDetails extends Model
 
     public function delivery_order_detail(){
         return $this->hasMany('App\Models\DeliveryOrderDetail','quotationDetailsID','quotationDetailsID');
+    }
+
+    public function sales_order_detail(){
+        return $this->belongsTo('App\Models\QuotationDetails','soQuotationDetailID','quotationDetailsID');
+    }
+
+
+     public function uom_issuing(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasureID','UnitID');
+    }
+    
+    public function master(){
+        return $this->belongsTo('App\Models\QuotationMaster','quotationMasterID','quotationMasterID');
     }
     
 }
