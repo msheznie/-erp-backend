@@ -24,6 +24,7 @@ pool:
   
 steps:
   - checkout: self
+    clean: fales
 
   - task: CmdLine@2
     displayName: install composer 
