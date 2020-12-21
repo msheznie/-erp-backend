@@ -436,7 +436,16 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input["comRptAmount"] = $currency['reportingAmount'];
         $input["localAmount"] = $currency['localAmount'];
 
-        $x = CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
+        // vat amount
+        $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $input['VATAmount']);
+        $input["VATAmountRpt"] = $currencyVAT['reportingAmount'];
+        $input["VATAmountLocal"] = $currencyVAT['localAmount'];
+        // net amount
+        $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $input['netAmount']);
+        $input["netAmountRpt"] = $currencyNet['reportingAmount'];
+        $input["netAmountLocal"] = $currencyNet['localAmount'];
+
+        CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
 
         return $this->sendResponse('s', 'Credit note detail updated successfully');
 

@@ -334,7 +334,15 @@ class CreditNote extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'createdDateAndTime'
+        'createdDateAndTime',
+        'isVATApplicable',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -393,7 +401,15 @@ class CreditNote extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
-        'createdDateAndTime' => 'integer'
+        'createdDateAndTime' => 'integer',
+        'isVATApplicable' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

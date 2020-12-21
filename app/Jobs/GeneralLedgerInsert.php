@@ -1697,13 +1697,21 @@ class GeneralLedgerInsert implements ShouldQueue
                         break;
                     case 19: // CN - Credit Note
                         $masterData = CreditNote::with(['details' => function ($query) {
-                            $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,creditNoteAutoID,serviceLineSystemID,serviceLineCode,clientContractID,contractUID');
+                            $query->selectRaw('SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,creditNoteAutoID,serviceLineSystemID,serviceLineCode,clientContractID,contractUID');
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = CreditNoteDetails::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")->WHERE('creditNoteAutoID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')->get();
+                        $allAc = CreditNoteDetails::with(['chartofaccount'])
+                            ->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
+                            ->WHERE('creditNoteAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')
+                            ->get();
 
-                        $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->groupBy('documentSystemCode')->first();
+                        $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")
+                            ->WHERE('documentSystemCode', $masterModel["autoID"])
+                            ->WHERE('documentSystemID', $masterModel["documentSystemID"])
+                            ->groupBy('documentSystemCode')
+                            ->first();
 
                         $taxGLCode = Company::find($masterModel["companySystemID"]);
 
@@ -1822,16 +1830,33 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($tax) {
+
+                                $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
+
+                                if (!empty($taxConfigData)) {
+                                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                                        ->where('companySystemID', $masterData->companySystemID)
+                                        ->first();
+
+                                    if (!empty($chartOfAccountData)) {
+                                        $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                        $data['glCode'] = $chartOfAccountData->AccountCode;
+                                        $data['glAccountType'] = $chartOfAccountData->controlAccounts;
+                                        $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
+                                    } else {
+                                        Log::info('Credit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                    }
+                                } else {
+                                    Log::info('Credit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                                }
+
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
-
                                 $data['clientContractID'] = 'X';
                                 $data['contractUID'] = 159;
 
-                                $data['chartOfAccountSystemID'] = $taxGLCode->vatOutputGLCodeSystemID;
-                                $data['glCode'] = $taxGLCode->vatOutputGLCode;
-                                $data['glAccountType'] = 'BS';
-                                $data['glAccountTypeID'] = 1;
                                 $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
                                 $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans));
