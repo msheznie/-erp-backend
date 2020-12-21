@@ -23,10 +23,10 @@ pool:
    - agent.name -equals PBS-UAT-APP
   
 steps:
-  - checkout: self
-    clean: fales
+- checkout: self
+  clean: fales
 
-  - script: sudo composer install
-    displayName: 'Composer Install'
+- script: sudo composer install
+  displayName: 'Composer Install'
 
 ...
