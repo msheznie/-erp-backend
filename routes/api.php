@@ -343,6 +343,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
         Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+        Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts');
 
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
         Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
