@@ -236,7 +236,11 @@
                 <div>
                     <span style="font-size: 18px">
                         @if($masterdata->documentSystemID == 67)
-                            Quotation
+                            @if($masterdata->quotationType == 1)
+                                Rental Quotation
+                            @else
+                                Sales Quotation
+                            @endif
                         @endif
                         @if($masterdata->documentSystemID == 68)
                             Sales Order
@@ -402,7 +406,7 @@
                 <th>Part No</th>
                 <th>UOM</th>
                 <th>Qty</th>
-                <th>Sale Price</th>
+                <th>Unit Rate</th>
                 <th>Discount</th>
                 <th>Net Amount</th>
             </tr>
