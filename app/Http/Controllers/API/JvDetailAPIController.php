@@ -428,17 +428,25 @@ class JvDetailAPIController extends AppBaseController
     public function getJournalVoucherContracts(Request $request)
     {
         $input = $request->all();
-        $jvDetailAutoID = $input['jvDetailAutoID'];
+        $jvDetailAutoID = isset($input['jvDetailAutoID']) ? $input['jvDetailAutoID']:0;
+        $contract = [];
+
         $detail = JvDetail::where('jvDetailAutoID', $jvDetailAutoID)->first();
-        $master = JvMaster::where('jvMasterAutoId', $detail->jvMasterAutoId)->first();
 
-        $contractID = 0;
-        if ($detail->contractUID != '' && $detail->contractUID != 0) {
-            $contractID = $detail->contractUID;
+        if(!empty($detail)){
+            $master = JvMaster::where('jvMasterAutoId', $detail->jvMasterAutoId)->first();
+
+            $contractID = 0;
+            if ($detail->contractUID != '' && $detail->contractUID != 0) {
+                $contractID = $detail->contractUID;
+            }
+
+            if(!empty($master)){
+                $contract = Contract::select('contractUID', 'ContractNumber')
+                                     ->where('companySystemID',$master->companySystemID)
+                                     ->get();
+            }
         }
-
-        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE  companySystemID = $master->companySystemID";
-        $contract = DB::select($qry);
 
         return $this->sendResponse($contract, 'Record retrived successfully');
     }
@@ -856,7 +864,7 @@ GROUP BY
         foreach ($input['detailTable'] as $new) {
 
             if (isset($new['isChecked']) && $new['isChecked']) {
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
+                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
 
                 $testAmount = 1;
                 $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;

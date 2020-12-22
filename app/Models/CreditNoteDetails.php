@@ -165,7 +165,13 @@ class CreditNoteDetails extends Model
         'comRptAmount',
         'budgetYear',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -197,7 +203,13 @@ class CreditNoteDetails extends Model
         'comRptCurrencyER' => 'float',
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

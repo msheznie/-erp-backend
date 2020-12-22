@@ -343,6 +343,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
         Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+        Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts');
 
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
         Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
@@ -1010,6 +1011,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
         Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
         Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
+        Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
         Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
         Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
@@ -1102,6 +1104,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
         Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
         Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+        Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview');
+        Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm');
 
         Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
         Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
@@ -1463,6 +1467,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
         Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
         Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+        Route::post('storeSalesOrderFromSalesQuotation', 'QuotationDetailsAPIController@storeSalesOrderFromSalesQuotation');
+        Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
         Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
         Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
         Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
@@ -1853,6 +1859,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
         Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
         Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
+        Route::get('salesQuotationForSO', 'QuotationMasterAPIController@salesQuotationForSO');
+        Route::get('getSalesQuoatationDetailForSO', 'QuotationMasterAPIController@getSalesQuoatationDetailForSO');
         Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
 
         Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');

@@ -391,7 +391,6 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
-//        $chartOfAccount->select('chartofaccounts.*');
 
         $search = $request->input('search.value');
         if($search){
@@ -400,7 +399,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
             });
         }
-
+        $request->request->remove('search.value');
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
@@ -642,5 +641,76 @@ class ChartOfAccountAPIController extends AppBaseController
         $items = $items->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+
+    public function exportChartOfAccounts(Request $request)
+    {
+        $input = $request->all();
+        $type = $input['type'];
+        $companyId = $input['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+        if ($request['type'] == 'all') {
+            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType','allocation']);
+        }else{
+            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType','allocation'])
+                ->whereIn('CompanySystemID', $childCompanies)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        }
+
+        $chartOfAccount = $chartOfAccount->get();
+
+        if ($chartOfAccount) {
+            $x = 0;
+            $data = array();
+            foreach ($chartOfAccount as $val) {
+                if ($val->confirmedYN == 1 && $val->isApproved == 0 && $val->refferedBackYN == -1) {
+                    $status = "Referred Back";
+                }else if($val->isActive == 0){
+                    $status= "Not Active";
+                }
+                else if(($val->isActive == 1 ||  $val->isActive == -1) && $val->confirmedYN == 0 && $val->isApproved == 0){
+                    $status= "Active Only";
+                }
+                else if(($val->isActive == 1 ||  $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && $val->isApproved == 0){
+                    $status= "Not Approved";
+                }
+                else if(($val->isActive == 1 ||  $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && ($val->isApproved == 1 || $val->isApproved == -1)){
+                    $status= "Fully Approved";
+                }
+
+                $data[$x]['Account Code'] = $val->AccountCode;
+                $data[$x]['Account Description'] = $val->AccountDescription;
+                $data[$x]['Master Account'] = $val->masterAccount;
+                $data[$x]['Control Account'] = isset($val->controlAccount->description) ? $val->controlAccount->description : '';
+                $data[$x]['Category BL or PL'] = isset($val->accountType->description) ? $val->accountType->description : '';
+                $data[$x]['isBank'] = ($val->isBank) ? "Yes" : 'No';
+                $data[$x]['Allocation'] = isset($val->allocation->Desciption) ? $val->allocation->Desciption : '';
+                $data[$x]['Status'] = $status;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+         \Excel::create('chart_of_accounts_', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:H' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('csv');
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 }

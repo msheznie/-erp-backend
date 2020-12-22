@@ -292,6 +292,19 @@
                             <span>{{$entity->comments}}</span>
                         </td>
                     </tr>
+                    @if($entity->isVATApplicable)
+                    <tr>
+                        <td width="70px">
+                            <span class="font-weight-bold">VAT Percentage (%) </span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{$entity->VATPercentage}}</span>
+                        </td>
+                    </tr>
+                    @endif
                 </table>
             </td>
             <td style="width: 20%" valign="bottom" class="text-right">
@@ -312,14 +325,18 @@
                 <th class="text-center">GL Code Description</th>
                 <th class="text-center">Service Line</th>
                 <th class="text-center">Amount</th>
-                <th class="text-center">Local Amt (
+                @if($entity->isVATApplicable)
+                    <th class="text-center">VAT Amount</th>
+                    <th class="text-center">Net Amount</th>
+                @endif
+                {{--<th class="text-center">Local Amt (
                     @if($entity->localcurrency)
                         {{$entity->localcurrency->CurrencyCode}}
                     @endif
                     )</th>
                 <th class="text-center">Rpt Amt (@if($entity->rptcurrency)
                         {{$entity->rptcurrency->CurrencyCode}}
-                    @endif)</th>
+                    @endif)</th>--}}
             </tr>
             </thead>
             <tbody>
@@ -334,15 +351,23 @@
                         @endif
                     </td>
                     <td class="text-right">{{round($item->debitAmount,$entity->transDecimal)}}</td>
-                    <td class="text-right">{{round($item->localAmount,$entity->localDecimal)}}</td>
-                    <td class="text-right">{{round($item->comRptAmount,$entity->rptDecimal)}}</td>
+                    @if($entity->isVATApplicable)
+                        <td class="text-right">{{round($item->VATAmount,$entity->transDecimal)}}</td>
+                        <td class="text-right">{{round($item->netAmount,$entity->transDecimal)}}</td>
+                    @endif
+                    {{--<td class="text-right">{{round($item->localAmount,$entity->localDecimal)}}</td>
+                    <td class="text-right">{{round($item->comRptAmount,$entity->rptDecimal)}}</td>--}}
                 </tr>
             @endforeach
             <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                 <td colspan="4" class="text-right">Total Payment</td>
                 <td class="text-right">{{round($entity->totalAmount,$entity->transDecimal)}}</td>
-                <td class="text-right border-bottom-remov"></td>
-                <td class="text-right border-bottom-remov"></td>
+                @if($entity->isVATApplicable)
+                    <td class="text-right">{{round($entity->totalVATAmount,$entity->transDecimal)}}</td>
+                    <td class="text-right">{{round($entity->totalNetAmount,$entity->transDecimal)}}</td>
+                @endif
+               {{-- <td class="text-right border-bottom-remov"></td>
+                <td class="text-right border-bottom-remov"></td>--}}
             </tr>
             </tbody>
         </table>

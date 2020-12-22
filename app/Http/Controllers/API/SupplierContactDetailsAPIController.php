@@ -90,6 +90,8 @@ class SupplierContactDetailsAPIController extends AppBaseController
                 $input[$key] = $input[$key][0];
         }
 
+        $input['isDefault'] = isset($input['isDefault']) ? $input['isDefault'] : false;
+
         if($input['isDefault'] == true || $input['isDefault'] == -1){
             $supplierAllContacts = SupplierContactDetails::where('supplierID',$input['supplierID'])->get();
             foreach ($supplierAllContacts as $sc)

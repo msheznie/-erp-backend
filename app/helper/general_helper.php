@@ -2975,9 +2975,16 @@ class Helper
         return round($value, 7);
     }
 
+    public static function roundFloatValue($value)
+    {
+        return number_format((float) $value, 7, '.', '');
+    }
+
 
     public static function companyFinanceYearCheck($input)
     {
+        $input['companyFinanceYearID'] = isset($input['companyFinanceYearID']) ? $input['companyFinanceYearID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         if ($companyFinanceYear) {
             if ($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1) {
@@ -2997,6 +3004,8 @@ class Helper
 
     public static function companyFinancePeriodCheck($input)
     {
+        $input['companyFinancePeriodID'] = isset($input['companyFinancePeriodID']) ? $input['companyFinancePeriodID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         if ($companyFinancePeriod) {
             if ($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1) {
@@ -4329,7 +4338,7 @@ class Helper
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
 
-                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                                $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                                 if ($chartOfAccount->catogaryBLorPLID == 2) {
                                     $budgetConsumeData[] = array(
@@ -4368,7 +4377,7 @@ class Helper
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
 
-                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                                $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                                 if ($chartOfAccount->catogaryBLorPLID == 2) {
                                     $budgetConsumeData[] = array(
@@ -4406,7 +4415,7 @@ class Helper
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {
 
-                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                            $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                             if ($chartOfAccount->catogaryBLorPLID == 2) {
                                 $budgetConsumeData[] = array(
@@ -4443,7 +4452,7 @@ class Helper
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {
 
-                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                            $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                             if ($chartOfAccount->catogaryBLorPLID == 2) {
                                 $budgetConsumeData[] = array(

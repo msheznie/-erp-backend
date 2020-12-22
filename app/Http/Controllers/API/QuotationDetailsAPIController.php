@@ -369,7 +369,41 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Details not found');
         }
 
-        $quotationDetails->delete();
+        $quotationMaster = QuotationMaster::find($quotationDetails->quotationMasterID);
+        if(!empty($quotationMaster)){
+            $quotationDetails->delete();
+
+            if($quotationMaster->quotationType == 2 && $quotationMaster->documentSystemID == 68){
+
+                if (!empty($quotationDetails->quotationDetailsID) && !empty($quotationDetails->quotationMasterID)) {
+                    $updateQuotationMaster = QuotationMaster::find($quotationDetails->soQuotationMasterID)
+                                                            ->update([
+                                                                'selectedForSalesOrder' => 0,
+                                                                'closedYN' => 0
+                                                            ]);
+
+
+                    //checking the fullyOrdered or partial in po
+                    $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
+                        ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
+                        ->first();
+
+                    $updatedQuoQty = $detailSum['totalQty'];
+
+                    if ($updatedQuoQty == 0) {
+                        $fullyOrdered = 0;
+                    } else {
+                        $fullyOrdered = 1;
+                    }
+
+                    QuotationDetails::where('quotationDetailsID', $quotationDetails->soQuotationDetailID)
+                        ->update([ 'fullyOrdered' => $fullyOrdered, 'soQuantity' => $updatedQuoQty]);
+
+                    $this->updateSalesQuotationOrderStatus($quotationDetails->soQuotationMasterID);
+
+                }
+            }
+        }
 
         return $this->sendResponse($id, 'Quotation Details deleted successfully');
     }
@@ -402,8 +436,41 @@ class QuotationDetailsAPIController extends AppBaseController
 
             foreach ($detailExistAll as $cvDeatil) {
 
-                $deleteDetails = QuotationDetails::where('quotationDetailsID', $cvDeatil['quotationDetailsID'])->delete();
+                 $quotationMaster = QuotationMaster::find($cvDeatil['quotationMasterID']);
+                if(!empty($quotationMaster)){
+                    $deleteDetails = QuotationDetails::where('quotationDetailsID', $cvDeatil['quotationDetailsID'])->delete();
 
+                    if($quotationMaster->quotationType == 2 && $quotationMaster->documentSystemID == 68){
+
+                        if (!empty($cvDeatil['quotationDetailsID']) && !empty($cvDeatil['quotationMasterID'])) {
+                            $updateQuotationMaster = QuotationMaster::find($cvDeatil['soQuotationMasterID'])
+                                                                    ->update([
+                                                                        'selectedForSalesOrder' => 0,
+                                                                        'closedYN' => 0
+                                                                    ]);
+
+
+                            //checking the fullyOrdered or partial in po
+                            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
+                                ->where('soQuotationDetailID', $cvDeatil['soQuotationDetailID'])
+                                ->first();
+
+                            $updatedQuoQty = $detailSum['totalQty'];
+
+                            if ($updatedQuoQty == 0) {
+                                $fullyOrdered = 0;
+                            } else {
+                                $fullyOrdered = 1;
+                            }
+
+                            QuotationDetails::where('quotationDetailsID', $cvDeatil['soQuotationDetailID'])
+                                ->update([ 'fullyOrdered' => $fullyOrdered, 'soQuantity' => $updatedQuoQty]);
+
+                            $this->updateSalesQuotationOrderStatus($cvDeatil['soQuotationMasterID']);
+
+                        }
+                    }
+                }
             }
         }
 
@@ -426,10 +493,199 @@ FROM
 	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,quotationDetailsID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY customerItemDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
-	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 ');
+	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
 
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
     }
 
 
+    public function storeSalesOrderFromSalesQuotation(Request $request)
+    {
+        $input = $request->all();
+        $DODetail_arr = array();
+        $salesOrderID = $input['salesOrderID'];
+
+        $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
+        if (!in_array(true, $isCheckArr)) {
+            return $this->sendError("No items selected to add.");
+        }
+
+        foreach ($input['detailTable'] as $newValidation) {
+            if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
+
+                $messages = [
+                    'required' => 'SO quantity field is required.',
+                ];
+
+                $validator = \Validator::make($newValidation, [
+                    'noQty' => 'required',
+                    'isChecked' => 'required',
+                ], $messages);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+            }
+        }
+
+        $itemExistArray = array();
+        //check added item exist
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
+                $QuoDetailExist = QuotationDetails::select(DB::raw('soQuotationDetailID,itemSystemCode'))
+                    ->where('quotationMasterID', $salesOrderID)
+                    ->where('itemAutoID', $itemExist['itemAutoID'])
+                    ->get();
+
+                if (!empty($QuoDetailExist)) {
+                    foreach ($QuoDetailExist as $row) {
+                        $itemDrt = $row['itemSystemCode'] . " already exist";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                }
+            }
+        }
+
+        if (!empty($itemExistArray)) {
+            return $this->sendError($itemExistArray, 422);
+        }
+
+        $salesOrder = QuotationMaster::where('quotationMasterID', $salesOrderID)->first();
+        $employee = \Helper::getEmployeeInfo();
+
+        DB::beginTransaction();
+        try {
+
+            foreach ($input['detailTable'] as $new) {
+
+                $qoMaster = QuotationMaster::find($new['quotationMasterID']);
+
+                $qoDetailExist = QuotationDetails::select(DB::raw('quotationDetailsID'))
+                    ->where('quotationMasterID', $salesOrderID)
+                    ->where('soQuotationDetailID', $new['quotationDetailsID'])
+                    ->first();
+
+                if (empty($qoDetailExist)) {
+                    $soQuotationMasterID = $new['quotationMasterID'];
+                    if ($new['isChecked'] && $new['noQty'] > 0) {
+
+                        //checking the fullyOrdered or partial in po
+                        $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
+                            ->where('soQuotationDetailID', $new['quotationDetailsID'])
+                            ->first();
+
+                        $totalAddedQty = $new['noQty'] + $detailSum['totalNoQty'];
+
+                        if ($new['requestedQty'] == $totalAddedQty) {
+                            $fullyOrdered = 2;
+                        } else {
+                            $fullyOrdered = 1;
+                        }
+
+
+                        // checking the qty request is matching with sum total
+                        if ($new['requestedQty'] >= $new['noQty']) {
+                            $item = ItemAssigned::where('itemCodeSystem', $new['itemAutoID'])
+                                                ->where('companySystemID', $salesOrder->companySystemID)
+                                                ->first();
+
+                            if (empty($item)) {
+                                return $this->sendError('Added item not found in item master');
+                            }
+
+                            $new['qtyIssuedDefaultMeasure'] = $new['noQty'];
+                            $new['requestedQty'] = $new['noQty'];
+                            $new['soQuotationMasterID'] = $new['quotationMasterID'];
+                            $new['quotationMasterID'] = $salesOrderID;
+
+                            $totalNetcost = ($new['unittransactionAmount'] - $new['discountAmount']) * $new['noQty'];
+
+                            $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
+
+
+                             // updating transaction amount for local and reporting
+                            $currencyConversion = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['transactionAmount']);
+
+                            $new['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
+                            $new['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+
+                            // adding customer default currencyID base currency conversion
+                            $currencyConversionDefault = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->customerCurrencyID, $salesOrder->customerCurrencyID, $new['transactionAmount']);
+
+                            $new['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+
+                            unset($new['isChecked']);
+                            unset($new['modifiedDateTime']);
+                            unset($new['modifiedPCID']);
+                            unset($new['modifiedUserID']);
+                            unset($new['modifiedUserName']);
+                            unset($new['noQty']);
+                            unset($new['soTakenQty']);
+                            $new['soQuotationDetailID'] = $new['quotationDetailsID'];
+                            
+                            $new['createdPCID'] = gethostname();
+                            $new['createdUserID'] = $employee->empID;
+                            $new['createdUserName'] = $employee->empName;
+                           
+                            $this->quotationDetailsRepository->create($new);
+
+                            QuotationDetails::where('quotationDetailsID', $new['quotationDetailsID'])
+                                ->update(['fullyOrdered' => $fullyOrdered, 'soQuantity' => $totalAddedQty]);
+
+                        }
+
+                    }
+                }
+
+                //check all details fullyOrdered in PR Master
+                $quoMasterfullyOrdered = QuotationDetails::where('quotationMasterID', $soQuotationMasterID)
+                    ->whereIn('fullyOrdered', [1, 0])
+                    ->get()->toArray();
+
+                if (empty($quoMasterfullyOrdered)) {
+                    $updateQuotation = QuotationMaster::find($soQuotationMasterID)
+                        ->update([
+                            'selectedForSalesOrder' => -1,
+                            'closedYN' => -1,
+                        ]);
+                } else {
+                    $updateQuotation = QuotationMaster::find($soQuotationMasterID)
+                        ->update([
+                            'selectedForSalesOrder' => 0,
+                            'closedYN' => 0,
+                        ]);
+                }
+
+                $this->updateSalesQuotationOrderStatus($soQuotationMasterID);
+
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Sales Order Details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+        }
+
+    }
+
+    private function updateSalesQuotationOrderStatus($quotationMasterID){
+
+        $status = 0;
+        $isInDO = 0;
+        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
+
+        if($invQty!=0) {
+            $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');
+            if($invQty == $quotationQty){
+                $status = 2;    // fully invoiced
+            }else{
+                $status = 1;    // partially invoiced
+            }
+            $isInDO = 1;
+        }
+        return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['orderStatus' => $status,'isInSO'=>$isInDO]);
+
+    }
 }

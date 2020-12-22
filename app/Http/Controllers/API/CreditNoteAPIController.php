@@ -13,8 +13,10 @@
  * -- Date: 23-January 2019 By: Nazir Store function, update function issues fixed and modified,
  * -- Date: 13-June 2019 By: Fayas Description: Added new function amendCreditNoteReview(),
  */
+
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\AccountsReceivableLedger;
@@ -27,6 +29,7 @@ use App\Models\DebitNote;
 use App\Models\DocumentReferedHistory;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
+use App\Models\Taxdetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -153,7 +156,7 @@ class CreditNoteAPIController extends AppBaseController
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         /**/
 
-        if(isset($input['debitNoteAutoID'])){
+        if (isset($input['debitNoteAutoID'])) {
             $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
                 ->first();
 
@@ -283,8 +286,8 @@ class CreditNoteAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        }, 'debitNote' =>function($query){
-            $query->select('debitNoteAutoID','debitNoteCode');
+        }, 'debitNote' => function ($query) {
+            $query->select('debitNoteAutoID', 'debitNoteCode');
         }])->findWithoutFail($id);
 
         if (empty($creditNote)) {
@@ -354,7 +357,7 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError('Credit note not found', 500);
         }
 
-        if(isset($input['debitNoteAutoID'])){
+        if (isset($input['debitNoteAutoID'])) {
             $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
                 ->where('creditNoteAutoID', '<>', $id)
                 ->first();
@@ -403,11 +406,33 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         // updating header amounts
-        $totalAmount = CreditNoteDetails::selectRaw("COALESCE(SUM(creditAmount),0) as creditAmountTrans, COALESCE(SUM(localAmount),0) as creditAmountLocal, COALESCE(SUM(comRptAmount),0) as creditAmountRpt")->where('creditNoteAutoID', $id)->first();
+        $totalAmount = CreditNoteDetails::selectRaw("COALESCE(SUM(creditAmount),0) as creditAmountTrans, 
+                                                    COALESCE(SUM(localAmount),0) as creditAmountLocal, 
+                                                    COALESCE(SUM(comRptAmount),0) as creditAmountRpt,
+                                                    COALESCE(SUM(VATAmount),0) as VATAmount,
+                                                    COALESCE(SUM(VATAmountLocal),0) as VATAmountLocal, 
+                                                    COALESCE(SUM(VATAmountRpt),0) as VATAmountRpt,
+                                                    COALESCE(SUM(netAmount),0) as netAmount,
+                                                    COALESCE(SUM(netAmountLocal),0) as netAmountLocal, 
+                                                    COALESCE(SUM(netAmountRpt),0) as netAmountRpt
+                                                    ")
+                                            ->where('creditNoteAutoID', $id)
+                                            ->first();
 
         $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
         $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
         $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+
+
+        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+
+
+        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+
         $input['customerCurrencyER'] = 1;
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
@@ -490,6 +515,50 @@ class CreditNoteAPIController extends AppBaseController
                 }
             } else {
                 return $this->sendError('Credit note details not found.', 500);
+            }
+
+            Taxdetail::where('documentSystemCode', $id)
+                ->where('documentSystemID', $input["documentSystemiD"])
+                ->delete();
+
+            // if VAT Applicable
+            if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
+
+                if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                }
+
+                $taxDetail['companyID'] = $input['companyID'];
+                $taxDetail['companySystemID'] = $input['companySystemID'];
+                $taxDetail['documentID'] = $input['documentID'];
+                $taxDetail['documentSystemID'] = $input['documentSystemiD'];
+                $taxDetail['documentSystemCode'] = $id;
+                $taxDetail['documentCode'] = $creditNote->creditNoteCode;
+                $taxDetail['taxShortCode'] = '';
+                $taxDetail['taxDescription'] = '';
+                $taxDetail['taxPercent'] = $input['VATPercentage'];
+                $taxDetail['payeeSystemCode'] = $input['customerID'];
+
+                if(!empty($customer)) {
+                    $taxDetail['payeeCode'] = $customer->CutomerCode;
+                    $taxDetail['payeeName'] = $customer->CustomerName;
+                }
+
+                $taxDetail['amount'] = $input['VATAmount'];
+                $taxDetail['localCurrencyER']  = $input['localCurrencyER'];
+                $taxDetail['rptCurrencyER'] = $input['companyReportingER'];
+                $taxDetail['localAmount'] = $input['VATAmountLocal'];
+                $taxDetail['rptAmount'] = $input['VATAmountRpt'];
+                $taxDetail['currency'] =  $input['customerCurrencyID'];
+                $taxDetail['currencyER'] =  1;
+
+                $taxDetail['localCurrencyID'] =  $creditNote->localCurrencyID;
+                $taxDetail['rptCurrencyID'] =  $creditNote->companyReportingCurrencyID;
+                $taxDetail['payeeDefaultCurrencyID'] =  $input['customerCurrencyID'];
+                $taxDetail['payeeDefaultCurrencyER'] =  1;
+                $taxDetail['payeeDefaultAmount'] =  $input['VATAmount'];
+
+                Taxdetail::create($taxDetail);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -599,7 +668,11 @@ class CreditNoteAPIController extends AppBaseController
         switch ($type) {
             case 'filter':
                 $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['customer'] = CustomerAssigned::select('*')
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isAssigned', '-1')
+                    ->where('isActive', '1')
+                    ->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['month'] = Months::all();
                 $output['years'] = CreditNote::select(DB::raw("YEAR(creditNoteDate) as year"))
@@ -611,7 +684,7 @@ class CreditNoteAPIController extends AppBaseController
                 break;
             case 'create':
 
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -638,7 +711,7 @@ class CreditNoteAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -663,7 +736,7 @@ class CreditNoteAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -882,7 +955,7 @@ class CreditNoteAPIController extends AppBaseController
                 ->where('documentSystemID', 19);
         }, 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
             $query->where('documentSystemID', 19);
-        },'audit_trial.modified_by'])->findWithoutFail($id);
+        }, 'audit_trial.modified_by'])->findWithoutFail($id);
 
 
         if (empty($creditNote)) {
@@ -1282,9 +1355,9 @@ WHERE
 
         // checking document matched in erp_matchdocumentmaster
         $checkDetailExistMatch = MatchDocumentMaster::where('PayMasterAutoId', $id)
-                                                    ->where('companySystemID', $masterData->companySystemID)
-                                                    ->where('documentSystemID', $masterData->documentSystemiD)
-                                                    ->first();
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->first();
 
         if ($checkDetailExistMatch) {
             return $this->sendError('Cannot return back to amend. credit note is added to matching');
@@ -1364,7 +1437,7 @@ WHERE
             $masterData->postedDate = null;
             $masterData->save();
 
-            AuditTrial::createAuditTrial($masterData->documentSystemiD,$id,$input['returnComment'],'returned back to amend');
+            AuditTrial::createAuditTrial($masterData->documentSystemiD, $id, $input['returnComment'], 'returned back to amend');
 
             DB::commit();
             return $this->sendResponse($masterData->toArray(), 'Credit Note amend saved successfully');
@@ -1384,7 +1457,7 @@ WHERE
             ->where('refferedBackYN', 0)
             ->where('debitNoteCode', 'LIKE', "%{$seachText}%")
             ->whereHas('company', function ($query) {
-                $query->where('masterCompanySystemIDReorting','<>',35);
+                $query->where('masterCompanySystemIDReorting', '<>', 35);
             })
             ->orderBy('debitNoteAutoID', 'desc')
             ->take(30)

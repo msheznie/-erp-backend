@@ -59,6 +59,7 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\SendEmail;
 
 /**
  * Class SupplierMasterController
@@ -1172,6 +1173,16 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             $companMaster = Company::find($checkHash->companySystemID);
+
+
+            $emails = [
+                        'companySystemID' => $checkHash->companySystemID,
+                        'alertMessage' => "Supplier Registartion",
+                        'empEmail' => $input['supEmail'],
+                        'emailAlertMessage' => 'Thank you for registering with '.$companMaster->CompanyName.'. Your registration will be reviewed and notified'
+                      ];
+
+            $sendEmail = \Email::sendEmailErp($emails);
 
             DB::commit();
             return $this->sendResponse([], 'Thank you for registering with '.$companMaster->CompanyName.'. Your registration will be reviewed and notified via email');

@@ -747,6 +747,13 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
+
+        if (array_key_exists('quotationType', $input)) {
+            if ($input['quotationType'] && !is_null($input['quotationType'])) {
+                $quotationMaster->where('quotationType', $input['quotationType']);
+            }
+        }
+
         $search = $request->input('search.value');
         if ($search) {
             $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
@@ -1133,6 +1140,7 @@ class QuotationMasterAPIController extends AppBaseController
         /*check order is already added to invoice or delivery order*/
         $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
+        $existsinSO = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->exists();
         $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
 
         if($existsinCI || $quotationMasterData->isInDOorCI == 2){
@@ -1141,6 +1149,10 @@ class QuotationMasterAPIController extends AppBaseController
 
         if($existsinDO || $quotationMasterData->isInDOorCI == 1){
             return $this->sendError($quotOrSales.' is added to a delivery order',500);
+        }
+
+        if($existsinSO || $quotationMasterData->isInSO == 1){
+            return $this->sendError($quotOrSales.' is added to a sales order',500);
         }
 
         $quotationMasterArray = $quotationMasterData->toArray();
@@ -1325,7 +1337,9 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
+            ->where('selectedForSalesOrder', 0)
             ->where('isInDOorCI', '!=',1)
+            ->where('isInSO', '!=',1)
             ->where('closedYN',0)
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
@@ -1366,6 +1380,67 @@ class QuotationMasterAPIController extends AppBaseController
             ->with(['master'=> function($query){
                 $query->with(['currency']);
             },'sales_quotation_detail','uom_issuing'])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+
+     public function salesQuotationForSO(Request $request){
+        $input = $request->all();
+        $documentSystemID = 67;
+      
+        $salesOrderData = QuotationMaster::find($input['salesOrderID']);
+
+        $master = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->where('approvedYN', -1)
+            ->where('selectedForDeliveryOrder', 0)
+            ->where('selectedForSalesOrder', 0)
+            ->where('isInDOorCI', '!=',2)
+            ->where('isInDOorCI', '!=',1)
+            ->where('closedYN',0)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+    }
+
+    public function getSalesQuoatationDetailForSO(Request $request){
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+
+        $detail = DB::select('SELECT
+                                quotationdetails.*,
+                                erp_quotationmaster.serviceLineSystemID,
+                                "" AS isChecked,
+                                "" AS noQty,
+                                IFNULL(sodetails.soTakenQty,0) as soTakenQty 
+                            FROM
+                                erp_quotationdetails quotationdetails
+                                INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY quotationDetailsID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
+                            WHERE
+                                quotationdetails.quotationMasterID = ' . $id . ' 
+                                AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInDOorCI != 1');
+
+        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+    }
+
+
+    function getOrderDetailsForSQ(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detail = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)
+            ->with(['sales_order_detail','uom_issuing',
+                'master'=> function($query){
+                    $query->with(['transaction_currency']);
+                }])
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
