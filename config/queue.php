@@ -41,6 +41,14 @@ return [
             'retry_after' => 60,
         ],
 
+        'database_main' => [
+            'driver' => 'database',
+            'connection' => 'main_db',
+            'table' => 'jobs',
+            'queue' => 'default',
+            'retry_after' => 60,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => 'localhost',
