@@ -1948,6 +1948,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
 
 Route::resource('tenants', 'TenantAPIController');
+Route::get('test', 'TenantAPIController@test');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
