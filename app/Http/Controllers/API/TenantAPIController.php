@@ -278,4 +278,11 @@ class TenantAPIController extends AppBaseController
 
         return $this->sendSuccess('Tenant deleted successfully');
     }
+
+
+    public function test()
+    {
+        $data = env('IS_MULTI_TENANCY');
+        return $this->sendResponse($data, 'retrieved successfully');
+    }
 }
