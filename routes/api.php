@@ -1898,6 +1898,25 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
+
+        Route::resource('sales_returns', 'SalesReturnAPIController');
+        Route::post('getAllSalesReturn', 'SalesReturnAPIController@getAllSalesReturn');
+        Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO');
+        Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR');
+        Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail');
+        Route::get('getSalesReturnRecord', 'SalesReturnAPIController@getSalesReturnRecord');
+        Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit');
+        Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
+
+        Route::post('getSalesReturnApprovals', 'SalesReturnAPIController@getSalesReturnApprovals');
+        Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen');
+        Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend');
+        Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
+        Route::post('rejectSalesReturn', 'SalesReturnAPIController@rejectSalesReturn');
+        Route::post('getSalesReturnDetailsForDO', 'SalesReturnAPIController@getSalesReturnDetailsForDO');
+        Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
+        Route::post('getApprovedSalesReturnForUser', 'SalesReturnAPIController@getApprovedSalesReturnForUser');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -1940,6 +1959,7 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
@@ -1953,3 +1973,10 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+
+
+Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
+
+Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');

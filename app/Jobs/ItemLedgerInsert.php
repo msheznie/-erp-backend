@@ -355,6 +355,34 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
                             'wacRpt' => 'wacValueReporting');
                         break;
+                    case 87: //sales return
+                        $docInforArr["approvedColumnName"] = 'approvedYN';
+                        $docInforArr["modelName"] = 'SalesReturn';
+                        $docInforArr["childRelation"] = 'detail';
+                        $docInforArr["autoID"] = 'id';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'wareHouseSystemCode' => 'wareHouseSystemCode',
+                            'documentCode' => 'salesReturnCode',
+                            'referenceNumber' => 'referenceNo');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCodeSystem',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'itemUnitOfMeasure',
+                            'inOutQty' => 'qtyReturnedDefaultMeasure',
+                            'wacLocalCurrencyID' => 'companyLocalCurrencyID',
+                            'wacLocal' => 'wacValueLocal',
+                            'wacRptCurrencyID' => 'companyReportingCurrencyID',
+                            'wacRpt' => 'wacValueReporting');
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;
@@ -382,7 +410,7 @@ class ItemLedgerInsert implements ShouldQueue
 
                             foreach ($detailColumnArray as $column => $value) {
                                 if($column == 'inOutQty') {
-                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 ) {
+                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus

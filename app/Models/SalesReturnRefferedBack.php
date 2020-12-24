@@ -6,35 +6,58 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DeliveryOrder",
+ *      definition="SalesReturnRefferedBack",
  *      required={""},
  *      @SWG\Property(
- *          property="deliveryOrderID",
- *          description="deliveryOrderID",
+ *          property="salesReturnRefferedBackID",
+ *          description="salesReturnRefferedBackID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="orderType",
- *          description="orderType",
- *          type="boolean"
+ *          property="salesReturnID",
+ *          description="salesReturnID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="deliveryOrderCode",
- *          description="deliveryOrderCode",
+ *          property="returnType",
+ *          description="returnType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="salesReturnCode",
+ *          description="salesReturnCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="companySystemId",
- *          description="companySystemId",
+ *          property="serialNo",
+ *          description="serialNo",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="documentSystemId",
- *          description="documentSystemId",
+ *          property="companySystemID",
+ *          description="companySystemID",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="companyFinanceYearID",
@@ -73,8 +96,8 @@ use Eloquent as Model;
  *          format="date-time"
  *      ),
  *      @SWG\Property(
- *          property="deliveryOrderDate",
- *          description="deliveryOrderDate",
+ *          property="salesReturnDate",
+ *          description="salesReturnDate",
  *          type="string",
  *          format="date-time"
  *      ),
@@ -91,6 +114,11 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="referenceNo",
  *          description="referenceNo",
  *          type="string"
@@ -100,6 +128,28 @@ use Eloquent as Model;
  *          description="customerID",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="custGLAccountSystemID",
+ *          description="custGLAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="custGLAccountCode",
+ *          description="custGLAccountCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="custUnbilledAccountSystemID",
+ *          description="custUnbilledAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="custUnbilledAccountCode",
+ *          description="custUnbilledAccountCode",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="salesPersonID",
@@ -256,23 +306,6 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="closedYN",
- *          description="closedYN",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="closedDate",
- *          description="closedDate",
- *          type="string",
- *          format="date-time"
- *      ),
- *      @SWG\Property(
- *          property="closedReason",
- *          description="closedReason",
- *          type="string"
- *      ),
- *      @SWG\Property(
  *          property="createdUserSystemID",
  *          description="createdUserSystemID",
  *          type="integer",
@@ -334,6 +367,12 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="postedDate",
+ *          description="postedDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
  *          property="timestamp",
  *          description="timestamp",
  *          type="string",
@@ -341,20 +380,21 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DeliveryOrder extends Model
+class SalesReturnRefferedBack extends Model
 {
 
-    public $table = 'erp_delivery_order';
+    public $table = 'salesreturn_refferedback';
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'deliveryOrderID';
+
 
 
     public $fillable = [
-        'orderType',
-        'deliveryOrderCode',
+        'salesReturnID',
+        'returnType',
+        'salesReturnCode',
         'serialNo',
         'companySystemID',
         'companyID',
@@ -366,7 +406,7 @@ class DeliveryOrder extends Model
         'companyFinancePeriodID',
         'FYPeriodDateFrom',
         'FYPeriodDateTo',
-        'deliveryOrderDate',
+        'salesReturnDate',
         'wareHouseSystemCode',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -395,7 +435,6 @@ class DeliveryOrder extends Model
         'confirmedByEmpID',
         'confirmedByName',
         'confirmedDate',
-        'postedDate',
         'approvedYN',
         'approvedDate',
         'approvedEmpSystemID',
@@ -404,10 +443,6 @@ class DeliveryOrder extends Model
         'refferedBackYN',
         'timesReferred',
         'RollLevForApp_curr',
-        'invoiceStatus',
-        'closedYN',
-        'closedDate',
-        'closedReason',
         'createdUserSystemID',
         'createdUserGroup',
         'createdPCID',
@@ -419,9 +454,7 @@ class DeliveryOrder extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'selectedForCustomerInvoice',
-        'selectedForSalesReturn',
-        'returnStatus',
+        'postedDate',
         'timestamp'
     ];
 
@@ -431,10 +464,10 @@ class DeliveryOrder extends Model
      * @var array
      */
     protected $casts = [
-        'deliveryOrderID' => 'integer',
-        'returnStatus' => 'integer',
-        'orderType' => 'integer',
-        'deliveryOrderCode' => 'string',
+        'salesReturnRefferedBackID' => 'integer',
+        'salesReturnID' => 'integer',
+        'returnType' => 'integer',
+        'salesReturnCode' => 'string',
         'serialNo' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -446,7 +479,7 @@ class DeliveryOrder extends Model
         'companyFinancePeriodID' => 'integer',
         'FYPeriodDateFrom' => 'datetime',
         'FYPeriodDateTo' => 'datetime',
-        'deliveryOrderDate' => 'datetime',
+        'salesReturnDate' => 'datetime',
         'wareHouseSystemCode' => 'integer',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
@@ -475,7 +508,6 @@ class DeliveryOrder extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'confirmedDate' => 'datetime',
-        'postedDate' => 'datetime',
         'approvedYN' => 'integer',
         'approvedDate' => 'datetime',
         'approvedEmpSystemID' => 'integer',
@@ -484,10 +516,6 @@ class DeliveryOrder extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
-        'invoiceStatus' => 'integer',
-        'closedYN' => 'integer',
-        'closedDate' => 'datetime',
-        'closedReason' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserGroup' => 'integer',
         'createdPCID' => 'string',
@@ -499,8 +527,7 @@ class DeliveryOrder extends Model
         'modifiedUserID' => 'integer',
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
-        'selectedForCustomerInvoice' => 'integer',
-        'selectedForSalesReturn' => 'integer',
+        'postedDate' => 'datetime',
         'timestamp' => 'datetime'
     ];
 
@@ -513,72 +540,5 @@ class DeliveryOrder extends Model
         
     ];
 
-    public function detail()
-    {
-        return $this->hasMany('App\Models\DeliveryOrderDetail', 'deliveryOrderID', 'deliveryOrderID');
-    }
-
-    public function company()
-    {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function created_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
-    }
-
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-
-    public function modified_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'deliveryOrderID');
-    }
-
-    public function sales_person()
-    {
-        return $this->belongsTo('App\Models\SalesPersonMaster', 'salesPersonID', 'salesPersonID');
-    }
-
-    public function segment()
-    {
-        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
-    }
-
-    public function customer()
-    {
-        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
-    }
-
-    public function transaction_currency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'transactionCurrencyID', 'currencyID');
-    }
-
-    public function local_currency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'companyLocalCurrencyID', 'currencyID');
-    }
-
-    public function reporting_currency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
-    }
-
-    public function finance_year_by(){
-        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
-    }
-
-    public function finance_period_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
-    }
+    
 }

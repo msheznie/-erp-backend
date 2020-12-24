@@ -29,6 +29,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
+use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
@@ -373,6 +374,13 @@ class email
                     if (!empty($deliveryOrder)) {
                         $data['docApprovedYN'] = $deliveryOrder->approvedYN;
                         $data['docCode'] = $deliveryOrder->deliveryOrderCode;
+                    }
+                    break;
+                case 87:
+                    $salesReturn = SalesReturn::find($data['docSystemCode']);
+                    if (!empty($salesReturn)) {
+                        $data['docApprovedYN'] = $salesReturn->approvedYN;
+                        $data['docCode'] = $salesReturn->salesReturnCode;
                     }
                     break;
                 default:
