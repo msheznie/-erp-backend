@@ -585,6 +585,12 @@ class BankReconciliationAPIController extends AppBaseController
             $bankReconciliation = $bankReconciliation->where('month', $month);
         }
 
+
+        if (isset($input['forReview']) && $input['forReview']) {
+            $bankReconciliation = $bankReconciliation->where('confirmedYN', 1);
+        }
+
+
         if (isset($input['year']) && $input['year'] != null) {
             $year = Carbon::parse($input['year'])->format('Y');
 
@@ -1292,15 +1298,15 @@ class BankReconciliationAPIController extends AppBaseController
             }
 
             $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemCode', $id)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->get();
+                                                ->where('documentSystemCode', $id)
+                                                ->where('documentSystemID', $masterData->documentSystemID)
+                                                ->get();
 
             foreach ($documentApproval as $da) {
                 if ($da->approvedYN == -1) {
                     $emails[] = array('empSystemID' => $da->employeeSystemID,
                         'companySystemID' => $masterData->companySystemID,
-                        'docSystemID' => $masterData->documentSystemiD,
+                        'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
                         'emailAlertMessage' => $emailBody,
                         'docSystemCode' => $id,
@@ -1316,9 +1322,9 @@ class BankReconciliationAPIController extends AppBaseController
 
             //deleting from approval table
             $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+                                            ->where('companySystemID', $masterData->companySystemID)
+                                            ->where('documentSystemID', $masterData->documentSystemID)
+                                            ->delete();
 
             // updating fields
             $masterData->confirmedYN = 0;
