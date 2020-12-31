@@ -729,6 +729,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+        Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
