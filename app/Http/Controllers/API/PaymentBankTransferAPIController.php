@@ -556,6 +556,10 @@ class PaymentBankTransferAPIController extends AppBaseController
             $bankTransfer = $bankTransfer->whereMonth('documentDate', $month);
         }
 
+        if (isset($input['forReview']) && $input['forReview']) {
+            $bankTransfer = $bankTransfer->where('confirmedYN', 1);
+        }
+
         if (isset($input['year']) && $input['year'] != null) {
             $year = Carbon::parse($input['year'])->format('Y');
 

@@ -1979,14 +1979,14 @@ class BankLedgerAPIController extends AppBaseController
 
             $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemCode', $id)
-                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->get();
 
             foreach ($documentApproval as $da) {
                 if ($da->approvedYN == -1) {
                     $emails[] = array('empSystemID' => $da->employeeSystemID,
                         'companySystemID' => $masterData->companySystemID,
-                        'docSystemID' => $masterData->documentSystemiD,
+                        'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
                         'emailAlertMessage' => $emailBody,
                         'docSystemCode' => $id,
@@ -2003,7 +2003,7 @@ class BankLedgerAPIController extends AppBaseController
             //deleting from approval table
             $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             // updating fields
@@ -2015,6 +2015,7 @@ class BankLedgerAPIController extends AppBaseController
             $masterData->RollLevForApp_curr = 1;
 
             $masterData->approvedYN = 0;
+            $masterData->exportedYN = 0;
             $masterData->approvedByUserSystemID = null;
             $masterData->approvedByUserID = null;
             $masterData->approvedDate = null;
