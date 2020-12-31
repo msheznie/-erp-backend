@@ -516,6 +516,8 @@ class CustomerInvoiceDirect extends Model
         'timestamp',
         'createdDateAndTime',
         'approvedByUserSystemID',
+        'returnStatus',
+        'selectedForSalesReturn',
         'approvedByUserID'
     ];
 
@@ -600,6 +602,8 @@ class CustomerInvoiceDirect extends Model
         'createdDateTime' => 'string',
         'createdDateAndTime' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'selectedForSalesReturn' => 'integer',
+        'returnStatus' => 'integer',
         'approvedByUserID' => 'integer'
     ];
 

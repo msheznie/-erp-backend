@@ -1275,7 +1275,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma', 'returnStatus');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {

@@ -569,6 +569,17 @@ class Helper
                     $docInforArr["modelName"] = 'DeliveryOrder';
                     $docInforArr["primarykey"] = 'deliveryOrderID';
                     break;
+                 case 87: // Sales Return
+                    $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'salesreturn';
+                    $docInforArr["modelName"] = 'SalesReturn';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1530,6 +1541,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 87: // Delivery Order
+                $docInforArr["tableName"] = 'salesreturn';
+                $docInforArr["modelName"] = 'SalesReturn';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedbyEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1922,7 +1945,7 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71])) { // already GL entry passed Check
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) { // already GL entry passed Check
                                 $outputGL = Models\GeneralLedger::where('documentSystemCode',$input["documentSystemCode"])->where('documentSystemID',$input["documentSystemID"])->first();
                                 if($outputGL){
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
@@ -1975,7 +1998,7 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87])) {
 
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
@@ -2586,6 +2609,12 @@ class Helper
                     $docInforArr["primarykey"] = 'deliveryOrderID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 87:// Delivery Order
+                    $docInforArr["tableName"] = 'salesreturn';
+                    $docInforArr["modelName"] = 'SalesReturn';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2601,7 +2630,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

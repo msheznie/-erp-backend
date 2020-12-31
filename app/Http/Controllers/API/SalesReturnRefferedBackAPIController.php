@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateTenantAPIRequest;
-use App\Http\Requests\API\UpdateTenantAPIRequest;
-use App\Models\Tenant;
-use App\Repositories\TenantRepository;
+use App\Http\Requests\API\CreateSalesReturnRefferedBackAPIRequest;
+use App\Http\Requests\API\UpdateSalesReturnRefferedBackAPIRequest;
+use App\Models\SalesReturnRefferedBack;
+use App\Repositories\SalesReturnRefferedBackRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TenantController
+ * Class SalesReturnRefferedBackController
  * @package App\Http\Controllers\API
  */
 
-class TenantAPIController extends AppBaseController
+class SalesReturnRefferedBackAPIController extends AppBaseController
 {
-    /** @var  TenantRepository */
-    private $tenantRepository;
+    /** @var  SalesReturnRefferedBackRepository */
+    private $salesReturnRefferedBackRepository;
 
-    public function __construct(TenantRepository $tenantRepo)
+    public function __construct(SalesReturnRefferedBackRepository $salesReturnRefferedBackRepo)
     {
-        $this->tenantRepository = $tenantRepo;
+        $this->salesReturnRefferedBackRepository = $salesReturnRefferedBackRepo;
     }
 
     /**
@@ -32,10 +32,10 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants",
-     *      summary="Get a listing of the Tenants.",
-     *      tags={"Tenant"},
-     *      description="Get all Tenants",
+     *      path="/salesReturnRefferedBacks",
+     *      summary="Get a listing of the SalesReturnRefferedBacks.",
+     *      tags={"SalesReturnRefferedBack"},
+     *      description="Get all SalesReturnRefferedBacks",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +49,7 @@ class TenantAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Tenant")
+     *                  @SWG\Items(ref="#/definitions/SalesReturnRefferedBack")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +61,29 @@ class TenantAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->tenantRepository->pushCriteria(new RequestCriteria($request));
-        $this->tenantRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $tenants = $this->tenantRepository->all();
+        $this->salesReturnRefferedBackRepository->pushCriteria(new RequestCriteria($request));
+        $this->salesReturnRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $salesReturnRefferedBacks = $this->salesReturnRefferedBackRepository->all();
 
-        return $this->sendResponse($tenants->toArray(), 'Tenants retrieved successfully');
+        return $this->sendResponse($salesReturnRefferedBacks->toArray(), 'Sales Return Reffered Backs retrieved successfully');
     }
 
     /**
-     * @param CreateTenantAPIRequest $request
+     * @param CreateSalesReturnRefferedBackAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/tenants",
-     *      summary="Store a newly created Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Store Tenant",
+     *      path="/salesReturnRefferedBacks",
+     *      summary="Store a newly created SalesReturnRefferedBack in storage",
+     *      tags={"SalesReturnRefferedBack"},
+     *      description="Store SalesReturnRefferedBack",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be stored",
+     *          description="SalesReturnRefferedBack that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/SalesReturnRefferedBack")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +96,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/SalesReturnRefferedBack"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +106,13 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTenantAPIRequest $request)
+    public function store(CreateSalesReturnRefferedBackAPIRequest $request)
     {
         $input = $request->all();
 
-        $tenant = $this->tenantRepository->create($input);
+        $salesReturnRefferedBack = $this->salesReturnRefferedBackRepository->create($input);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant saved successfully');
+        return $this->sendResponse($salesReturnRefferedBack->toArray(), 'Sales Return Reffered Back saved successfully');
     }
 
     /**
@@ -120,14 +120,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants/{id}",
-     *      summary="Display the specified Tenant",
-     *      tags={"Tenant"},
-     *      description="Get Tenant",
+     *      path="/salesReturnRefferedBacks/{id}",
+     *      summary="Display the specified SalesReturnRefferedBack",
+     *      tags={"SalesReturnRefferedBack"},
+     *      description="Get SalesReturnRefferedBack",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of SalesReturnRefferedBack",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +143,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/SalesReturnRefferedBack"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +155,30 @@ class TenantAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var SalesReturnRefferedBack $salesReturnRefferedBack */
+        $salesReturnRefferedBack = $this->salesReturnRefferedBackRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($salesReturnRefferedBack)) {
+            return $this->sendError('Sales Return Reffered Back not found');
         }
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant retrieved successfully');
+        return $this->sendResponse($salesReturnRefferedBack->toArray(), 'Sales Return Reffered Back retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTenantAPIRequest $request
+     * @param UpdateSalesReturnRefferedBackAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/tenants/{id}",
-     *      summary="Update the specified Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Update Tenant",
+     *      path="/salesReturnRefferedBacks/{id}",
+     *      summary="Update the specified SalesReturnRefferedBack in storage",
+     *      tags={"SalesReturnRefferedBack"},
+     *      description="Update SalesReturnRefferedBack",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of SalesReturnRefferedBack",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +186,9 @@ class TenantAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be updated",
+     *          description="SalesReturnRefferedBack that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/SalesReturnRefferedBack")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +201,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/SalesReturnRefferedBack"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +211,20 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTenantAPIRequest $request)
+    public function update($id, UpdateSalesReturnRefferedBackAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var SalesReturnRefferedBack $salesReturnRefferedBack */
+        $salesReturnRefferedBack = $this->salesReturnRefferedBackRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($salesReturnRefferedBack)) {
+            return $this->sendError('Sales Return Reffered Back not found');
         }
 
-        $tenant = $this->tenantRepository->update($input, $id);
+        $salesReturnRefferedBack = $this->salesReturnRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant updated successfully');
+        return $this->sendResponse($salesReturnRefferedBack->toArray(), 'SalesReturnRefferedBack updated successfully');
     }
 
     /**
@@ -232,14 +232,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/tenants/{id}",
-     *      summary="Remove the specified Tenant from storage",
-     *      tags={"Tenant"},
-     *      description="Delete Tenant",
+     *      path="/salesReturnRefferedBacks/{id}",
+     *      summary="Remove the specified SalesReturnRefferedBack from storage",
+     *      tags={"SalesReturnRefferedBack"},
+     *      description="Delete SalesReturnRefferedBack",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of SalesReturnRefferedBack",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,22 +267,15 @@ class TenantAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var SalesReturnRefferedBack $salesReturnRefferedBack */
+        $salesReturnRefferedBack = $this->salesReturnRefferedBackRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($salesReturnRefferedBack)) {
+            return $this->sendError('Sales Return Reffered Back not found');
         }
 
-        $tenant->delete();
+        $salesReturnRefferedBack->delete();
 
-        return $this->sendSuccess('Tenant deleted successfully');
-    }
-
-
-    public function test()
-    {
-        $data = env('IS_MULTI_TENANCY');
-        return $this->sendResponse($data, 'retrieved successfully');
+        return $this->sendSuccess('Sales Return Reffered Back deleted successfully');
     }
 }

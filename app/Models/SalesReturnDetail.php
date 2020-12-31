@@ -6,17 +6,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DeliveryOrderDetail",
+ *      definition="SalesReturnDetail",
  *      required={""},
  *      @SWG\Property(
- *          property="deliveryOrderDetailID",
- *          description="deliveryOrderDetailID",
+ *          property="salesReturnDetailID",
+ *          description="salesReturnDetailID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="deliveryOrderID",
- *          description="deliveryOrderID",
+ *          property="salesReturnID",
+ *          description="salesReturnID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -67,14 +67,58 @@ use Eloquent as Model;
  *          format="number"
  *      ),
  *      @SWG\Property(
- *          property="qtyIssued",
- *          description="qtyIssued",
+ *          property="itemFinanceCategoryID",
+ *          description="itemFinanceCategoryID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemFinanceCategorySubID",
+ *          description="itemFinanceCategorySubID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodebBSSystemID",
+ *          description="financeGLcodebBSSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodebBS",
+ *          description="financeGLcodebBS",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodePLSystemID",
+ *          description="financeGLcodePLSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodePL",
+ *          description="financeGLcodePL",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodeRevenueSystemID",
+ *          description="financeGLcodeRevenueSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="financeGLcodeRevenue",
+ *          description="financeGLcodeRevenue",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="qtyReturned",
+ *          description="qtyReturned",
  *          type="number",
  *          format="number"
  *      ),
  *      @SWG\Property(
- *          property="qtyIssuedDefaultMeasure",
- *          description="qtyIssuedDefaultMeasure",
+ *          property="qtyReturnedDefaultMeasure",
+ *          description="qtyReturnedDefaultMeasure",
  *          type="number",
  *          format="number"
  *      ),
@@ -181,6 +225,41 @@ use Eloquent as Model;
  *          format="number"
  *      ),
  *      @SWG\Property(
+ *          property="deliveryOrderID",
+ *          description="deliveryOrderID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="deliveryOrderDetailID",
+ *          description="deliveryOrderDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="remarks",
+ *          description="remarks",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="qtyIssued",
+ *          description="qtyIssued",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="balanceQty",
+ *          description="balanceQty",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="fullyReturned",
+ *          description="0 -> default, 1->partially ordered, 2->fully ordered",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="timestamp",
  *          description="timestamp",
  *          type="string",
@@ -188,24 +267,23 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DeliveryOrderDetail extends Model
+class SalesReturnDetail extends Model
 {
 
-    public $table = 'erp_delivery_order_detail';
+    public $table = 'salesreturndetails';
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'deliveryOrderDetailID';
+    protected $primaryKey = 'salesReturnDetailID';
 
 
     public $fillable = [
-        'deliveryOrderID',
+        'salesReturnID',
         'companySystemID',
         'documentSystemID',
         'itemCodeSystem',
         'itemPrimaryCode',
-        'returnQty',
         'itemDescription',
         'itemUnitOfMeasure',
         'unitOfMeasureIssued',
@@ -218,8 +296,8 @@ class DeliveryOrderDetail extends Model
         'financeGLcodePL',
         'financeGLcodeRevenueSystemID',
         'financeGLcodeRevenue',
-        'qtyIssued',
-        'qtyIssuedDefaultMeasure',
+        'qtyReturned',
+        'qtyReturnedDefaultMeasure',
         'currentStockQty',
         'currentWareHouseStockQty',
         'currentStockQtyInDamageReturn',
@@ -237,14 +315,15 @@ class DeliveryOrderDetail extends Model
         'companyReportingCurrencyID',
         'companyReportingCurrencyER',
         'companyReportingAmount',
-        'quotationMasterID',
-        'quotationDetailsID',
+        'deliveryOrderID',
+        'deliveryOrderDetailID',
+        'customerItemDetailID',
+        'doInvRemainingQty',
+        'custInvoiceDirectAutoID',
         'remarks',
-        'requestedQty',
+        'qtyIssued',
         'balanceQty',
-        'fullyReceived',
         'fullyReturned',
-        'invQty',
         'timestamp'
     ];
 
@@ -254,9 +333,11 @@ class DeliveryOrderDetail extends Model
      * @var array
      */
     protected $casts = [
-        'deliveryOrderDetailID' => 'integer',
-        'deliveryOrderID' => 'integer',
+        'salesReturnDetailID' => 'integer',
+        'salesReturnID' => 'integer',
         'companySystemID' => 'integer',
+        'custInvoiceDirectAutoID' => 'integer',
+        'customerItemDetailID' => 'integer',
         'documentSystemID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
@@ -265,15 +346,15 @@ class DeliveryOrderDetail extends Model
         'unitOfMeasureIssued' => 'integer',
         'convertionMeasureVal' => 'float',
         'itemFinanceCategoryID' => 'integer',
-        'itemFinanceCategorySubID' => 'integer',
+        'itemFinanceCategorySubID' => 'string',
         'financeGLcodebBSSystemID' => 'integer',
         'financeGLcodebBS' => 'string',
         'financeGLcodePLSystemID' => 'integer',
         'financeGLcodePL' => 'string',
         'financeGLcodeRevenueSystemID' => 'integer',
         'financeGLcodeRevenue' => 'string',
-        'qtyIssued' => 'float',
-        'qtyIssuedDefaultMeasure' => 'float',
+        'qtyReturned' => 'float',
+        'qtyReturnedDefaultMeasure' => 'float',
         'currentStockQty' => 'float',
         'currentWareHouseStockQty' => 'float',
         'currentStockQtyInDamageReturn' => 'float',
@@ -291,15 +372,13 @@ class DeliveryOrderDetail extends Model
         'companyReportingCurrencyID' => 'integer',
         'companyReportingCurrencyER' => 'float',
         'companyReportingAmount' => 'float',
-        'quotationMasterID' => 'integer',
-        'quotationDetailsID' => 'integer',
+        'doInvRemainingQty' => 'float',
+        'deliveryOrderID' => 'integer',
+        'deliveryOrderDetailID' => 'integer',
         'remarks' => 'string',
-        'requestedQty'  => 'float',
-        'balanceQty'  => 'float',
-        'fullyReceived' => 'integer',
+        'qtyIssued' => 'float',
+        'balanceQty' => 'float',
         'fullyReturned' => 'integer',
-        'invQty' => 'float',
-        'returnQty' => 'float',
         'timestamp' => 'datetime'
     ];
 
@@ -309,7 +388,7 @@ class DeliveryOrderDetail extends Model
      * @var array
      */
     public static $rules = [
-//        'deliveryOrderID' => 'required'
+        'salesReturnID' => 'required'
     ];
 
     public function uom_default(){
@@ -325,18 +404,22 @@ class DeliveryOrderDetail extends Model
     }
 
     public function master(){
+        return $this->belongsTo('App\Models\SalesReturn','salesReturnID','id');
+    }
+
+    public function delivery_order(){
         return $this->belongsTo('App\Models\DeliveryOrder','deliveryOrderID','deliveryOrderID');
     }
 
-    public function quotation(){
-        return $this->belongsTo('App\Models\QuotationMaster','quotationMasterID','quotationMasterID');
+    public function sales_invoice(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
     }
 
-    public function sales_quotation_detail(){
-        return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
+    public function delivery_order_detail(){
+        return $this->belongsTo('App\Models\DeliveryOrderDetail','deliveryOrderDetailID','deliveryOrderDetailID');
     }
 
-    public function invoice_detail() {
-        return $this->hasMany('App\Models\CustomerInvoiceItemDetails','deliveryOrderDetailID','deliveryOrderDetailID');
+    public function sales_invoice_detail(){
+        return $this->belongsTo('App\Models\CustomerInvoiceItemDetails','customerItemDetailID','customerItemDetailID');
     }
 }

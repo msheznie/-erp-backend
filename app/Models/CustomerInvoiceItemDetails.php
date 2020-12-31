@@ -288,7 +288,9 @@ class CustomerInvoiceItemDetails extends Model
         'deliveryOrderID',
         'quotationMasterID',
         'quotationDetailsID',
+        'fullyReturned',
         'timesReferred',
+        'returnQty',
         'timestamp'
     ];
 
@@ -336,6 +338,7 @@ class CustomerInvoiceItemDetails extends Model
         'sellingCostAfterMargin' => 'float',
         'sellingTotal' => 'float',
         'sellingCostAfterMarginLocal' => 'float',
+        'returnQty' => 'float',
         'sellingCostAfterMarginRpt' => 'float',
         'customerCatalogDetailID'=> 'integer',
         'customerCatalogMasterID'=> 'integer',
@@ -343,6 +346,7 @@ class CustomerInvoiceItemDetails extends Model
         'deliveryOrderID'=> 'integer',
         'quotationMasterID'=> 'integer',
         'quotationDetailsID'=> 'integer',
+        'fullyReturned'=> 'integer',
         'timesReferred' => 'integer',
         'timestamp' => 'datetime'
     ];

@@ -407,6 +407,8 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Budget Master not found');
         }
 
+        $deleteBudgetDetails = Budjetdetails::where('budgetmasterID', $id)->delete();
+
         $budgetMaster->delete();
 
         return $this->sendResponse($id, 'Budget Master deleted successfully');
