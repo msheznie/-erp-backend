@@ -946,8 +946,8 @@ WHERE
 	$where ORDER BY docConfirmedDate $sort $limit";
         }
 
-        $output = DB::select($qry);
-
+        //$output = DB::select($qry);
+        $output = [];
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
            return $this->sendResponse($output,'data retrived successfully');
         }
@@ -966,7 +966,7 @@ WHERE
         if ($isEmployeeDischarched == 'true') {
             $output = [];
         }
-        
+
         return \DataTables::of($output)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
