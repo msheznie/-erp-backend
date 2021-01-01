@@ -287,7 +287,6 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
-
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
 FROM
@@ -1133,7 +1132,7 @@ WHERE
         $output = DB::select($qry);
 
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
-           return $this->sendResponse($output,'data retrived successfully');
+            return $this->sendResponse($output,'data retrived successfully');
         }
 
 
@@ -1150,7 +1149,7 @@ WHERE
         if ($isEmployeeDischarched == 'true') {
             $output = [];
         }
-        
+
         return \DataTables::of($output)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
@@ -1360,7 +1359,7 @@ WHERE
                             AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
                         AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
                         AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
-       // $output = DB::select($qry);
+        // $output = DB::select($qry);
 
         /*$output  = DocumentApproved::where('approvedYN',0)
             ->where('rejectedYN',0)
