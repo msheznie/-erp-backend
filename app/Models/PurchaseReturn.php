@@ -290,6 +290,7 @@ class PurchaseReturn extends Model
         'documentSystemID',
         'companyID',
         'serviceLineSystemID',
+        'isInvoiceCreatedForGrv',
         'documentID',
         'companyFinanceYearID',
         'companyFinancePeriodID',
@@ -384,6 +385,7 @@ class PurchaseReturn extends Model
         'approved' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'isInvoiceCreatedForGrv' => 'integer',
         'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserGroup' => 'string',
@@ -478,5 +480,4 @@ class PurchaseReturn extends Model
     {
         $this->attributes['purchaseReturnDate'] = Helper::dateAddTime($value);
     }
-
 }

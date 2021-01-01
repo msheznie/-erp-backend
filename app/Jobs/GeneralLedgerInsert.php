@@ -65,6 +65,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\UnbilledGRVInsert;
 
 class GeneralLedgerInsert implements ShouldQueue
 {
@@ -673,9 +674,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['glAccountType'] = 'BS';
                             $data['glAccountTypeID'] = 1;
-                            $data['supplierCodeSystem'] = $masterData->supplierID;;
-                            $data['chartOfAccountSystemID'] = $masterData->liabilityAccountSysemID;
-                            $data['glCode'] = $masterData->liabilityAccount;
+                            $data['supplierCodeSystem'] = $masterData->supplierID;
+                            $data['chartOfAccountSystemID'] = ($masterData->isInvoiceCreatedForGrv == 1) ? $masterData->liabilityAccountSysemID : $masterData->UnbilledGRVAccountSystemID;
+                            $data['glCode'] = ($masterData->isInvoiceCreatedForGrv == 1) ? $masterData->liabilityAccount : $masterData->UnbilledGRVAccount;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
                             $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount);
@@ -3186,7 +3187,18 @@ class GeneralLedgerInsert implements ShouldQueue
                                 Log::warning('Posted date document id not found ' . date('H:i:s'));
                         }
                         if (in_array($masterModel["documentSystemID"], [15, 11, 4, 24])) {
-                            $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+
+                            if ($masterModel["documentSystemID"] == 24) {
+                                $prData = PurchaseReturn::find($masterModel["autoID"]);
+                                if ($prData->isInvoiceCreatedForGrv == 1) {
+                                    $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                                } else {
+                                    $masterModel['supplierID'] = $prData->supplierID;
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterModel);
+                                }
+                            } else {
+                                $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                            }
                         }
                         if (in_array($masterModel["documentSystemID"], [19, 20, 21])) {
                             $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel);

@@ -709,6 +709,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
         Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
         Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
+        Route::get('grvReturnDetails', 'PurchaseReturnDetailsAPIController@grvReturnDetails');
         Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
         Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
 

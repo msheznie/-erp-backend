@@ -35,6 +35,7 @@ use App\Models\GRVTypes;
 use App\Models\ItemIssueMaster;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\BookInvSuppDet;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
 use App\Models\SegmentMaster;
@@ -577,6 +578,13 @@ class PurchaseReturnAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
+
+            $piDetailSingleData = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                                                       ->first();
+
+            if ($piDetailSingleData) {
+                $input['isInvoiceCreatedForGrv'] =  $this->updateGrvInvoiceStatus($id, $piDetailSingleData->grvAutoID, $input['isInvoiceCreatedForGrv']);
+            }
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -589,6 +597,50 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
         return $this->sendResponse($purchaseReturn->toArray(), 'PurchaseReturn updated successfully');
+    }
+
+
+    public function updateReturnQtyInGrvDetails($grvDetailsID)
+    {
+        $totalQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as totalRtnQty')
+                                         ->where('grvDetailsID', $grvDetailsID)
+                                         ->whereHas('master', function ($query) {
+                                            $query->where('approved', -1);
+                                         })
+                                         ->groupBy('grvDetailsID')
+                                         ->first();
+
+        $updateData = [
+                        'returnQty' => $totalQty->totalRtnQty
+                    ];
+
+
+        $updateRes = GRVDetails::where('grvDetailsID', $grvDetailsID)
+                               ->update($updateData);
+    }
+
+    public function updateGrvInvoiceStatus($purhaseReturnAutoID, $grvAutoID, $isInvoiceCreatedForGrv)
+    {
+        $purchaseReturn = PurchaseReturn::find($purhaseReturnAutoID);
+
+        if (!$purchaseReturn) {
+            return $isInvoiceCreatedForGrv;
+        }
+
+        $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $grvAutoID)
+                                                ->first();
+
+        if ($checkGrvAddedToIncoice) {
+            $isInvoiceCreatedForGrv = 1;
+            $purchaseReturn->isInvoiceCreatedForGrv = 1;
+        } else {
+            $isInvoiceCreatedForGrv = 0;
+            $purchaseReturn->isInvoiceCreatedForGrv = 0;
+        }
+
+        $purchaseReturn->save();
+
+        return $isInvoiceCreatedForGrv;
     }
 
     /**
@@ -899,7 +951,10 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher not found');
         }
 
-        $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)->with(['unit'])->get();
+        $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)
+                                ->with(['unit'])
+                                ->whereRaw('noQty - returnQty != ?', [0])
+                                ->get();
 
         return $this->sendResponse($grvDetails, 'success');
     }

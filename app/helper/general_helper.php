@@ -30,6 +30,8 @@ use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\PurchaseReturnDetails;
+use App\Models\GRVDetails;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
@@ -2016,6 +2018,13 @@ class Helper
                                 }
                             }
 
+                            if ($input["documentSystemID"] == 24) {
+                                $updateReturnQty = self::updateReturnQtyInGrvDetails($masterData);
+                                if (!$updateReturnQty["success"]) {
+                                    return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
+                            }
+
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
                                 $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
@@ -2321,6 +2330,33 @@ class Helper
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
+    }
+
+
+    public static function updateReturnQtyInGrvDetails($masterData)
+    {
+        $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterData['autoID'])->get();
+
+        foreach ($prDetails as $key => $value) {
+            $totalQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as totalRtnQty')
+                                             ->where('grvDetailsID', $value->grvDetailsID)
+                                             ->whereHas('master', function ($query) {
+                                                $query->where('approved', -1);
+                                             })
+                                             ->groupBy('grvDetailsID')
+                                             ->first();
+
+            $updateData = [
+                            'returnQty' => $totalQty->totalRtnQty
+                        ];
+
+
+            $updateRes = GRVDetails::where('grvDetailsID', $value->grvDetailsID)
+                                   ->update($updateData);
+        }
+
+        return ['success' => true];
+
     }
 
     public static function documentListForClickHere()
