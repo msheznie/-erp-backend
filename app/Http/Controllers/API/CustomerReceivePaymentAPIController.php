@@ -33,7 +33,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CurrencyMaster;
-use App\Models\customercurrency;
+use App\Models\CustomerCurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
@@ -495,7 +495,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
                 $input['customerGLCode'] = $customer->custGLaccount;
                 $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
-                $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+                $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
                 if ($currency) {
                     $input['custTransactionCurrencyID'] = $currency->currencyID;
                     $myCurr = $currency->currencyID;

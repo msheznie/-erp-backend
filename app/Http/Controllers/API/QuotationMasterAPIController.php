@@ -475,7 +475,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         }
 
-        $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
+        $customerCurrency = CustomerCurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
         if ($customerCurrency) {
 
             $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();

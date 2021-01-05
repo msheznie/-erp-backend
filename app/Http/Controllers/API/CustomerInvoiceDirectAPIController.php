@@ -40,7 +40,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
-use App\Models\customercurrency;
+use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
@@ -546,7 +546,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             $_post['customerGLCode'] = $customer->custGLaccount;
             $_post['customerGLSystemID'] = $customer->custGLAccountSystemID;
-            $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+            $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
             if ($currency) {
                 $_post['custTransactionCurrencyID'] = $currency->currencyID;
                 $myCurr = $currency->currencyID;
