@@ -399,6 +399,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
                 return $this->sendError('Please select an active department', 500,$serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if (isset($input['wareHouseFrom'])) {
@@ -411,6 +413,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                  $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
                 return $this->sendError('Please select an active warehouse', 500, $wareHouseError);
             }
+
+            $input['wareHouseFromCode'] = $checkWareHouseActive->wareHouseCode;
+            $input['wareHouseFromDes'] = $checkWareHouseActive->wareHouseDescription;
         }
 
         if (isset($input['issueDate'])) {
@@ -424,6 +429,8 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if (!empty($customer)) {
                 $input["customerID"] = $customer->CutomerCode;
+            }else{
+                $input["customerID"] = null;
             }
         }
 
