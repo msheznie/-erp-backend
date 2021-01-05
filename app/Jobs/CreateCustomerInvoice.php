@@ -12,6 +12,7 @@ use App\Models\CustomerMaster;
 use App\Models\SegmentMaster;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -54,186 +55,210 @@ class CreateCustomerInvoice implements ShouldQueue
             $customerInvoiceData['documentSystemiD'] = 20;
             $customerInvoiceData['documentID'] = 'INV';
 
-            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)->where('bigginingDate', '<', $dpMaster->disposalDocumentDate)->where('endingDate', '>', $dpMaster->disposalDocumentDate)->first();
+            $disposalDocumentDate = (new Carbon($dpMaster->disposalDocumentDate))->format('Y-m-d');
 
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', $dpMaster->disposalDocumentDate)->where('dateTo', '>', $dpMaster->disposalDocumentDate)->first();
-
-            $today = $dpMaster->disposalDocumentDate;
-            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode;
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)
+                ->whereDate('bigginingDate', '<=', $disposalDocumentDate)
+                ->whereDate('endingDate', '>=', $disposalDocumentDate)
+                ->first();
 
             if (!empty($fromCompanyFinanceYear)) {
 
-                $customerInvoiceData['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
-                $customerInvoiceData['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)
+                    ->where('departmentSystemID', 4)
+                    ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                    ->whereDate('dateFrom', '<=', $disposalDocumentDate)
+                    ->whereDate('dateTo', '>=', $disposalDocumentDate)
+                    ->first();
+
 
                 if (!empty($fromCompanyFinancePeriod)) {
-                    $customerInvoiceData['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
-                    $customerInvoiceData['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
-                    $customerInvoiceData['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom;
-                    $customerInvoiceData['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo;
-                }
-            }
 
-            $cusInvLastSerial = CustomerInvoiceDirect::where('companySystemID', $dpMaster->companySystemID)
-                ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                ->where('serialNo', '>', 0)
-                ->orderBy('serialNo', 'desc')
-                ->first();
 
-            $cusInvLastSerialNumber = 1;
-            if ($cusInvLastSerial) {
-                $cusInvLastSerialNumber = intval($cusInvLastSerial->serialNo) + 1;
-            }
-            $customerInvoiceData['serialNo'] = $cusInvLastSerialNumber;
+                    $today = $dpMaster->disposalDocumentDate;
+                    $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode;
 
-            $serviceLine = SegmentMaster::ofCompany([$dpMaster->companySystemID])->isPublic()->first();
+                    if (!empty($fromCompanyFinanceYear)) {
 
-            if ($serviceLine) {
-                $customerInvoiceData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                $customerInvoiceData['serviceLineCode'] = $serviceLine->ServiceLineCode;
-            }
+                        $customerInvoiceData['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
+                        $customerInvoiceData['FYEnd'] = $fromCompanyFinanceYear->endingDate;
 
-            if ($fromCompanyFinancePeriod) {
-                $cusStartYear = $fromCompanyFinanceYear->bigginingDate;
-                $cusFinYearExp = explode('-', $cusStartYear);
-                $cusFinYear = $cusFinYearExp[0];
-            } else {
-                $cusFinYear = date("Y");
-            }
-            $bookingInvCode = ($dpMaster->companyID . '\\' . $cusFinYear . '\\' . $customerInvoiceData['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $customerInvoiceData['bookingInvCode'] = $bookingInvCode;
-            $customerInvoiceData['bookingDate'] = $today;
+                        if (!empty($fromCompanyFinancePeriod)) {
+                            $customerInvoiceData['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
+                            $customerInvoiceData['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
+                            $customerInvoiceData['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom;
+                            $customerInvoiceData['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo;
+                        }
+                    }
 
-            $customerInvoiceData['comments'] = $comment;
+                    $cusInvLastSerial = CustomerInvoiceDirect::where('companySystemID', $dpMaster->companySystemID)
+                        ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                        ->where('serialNo', '>', 0)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
 
-            $customer = CustomerMaster::where('companyLinkedToSystemID', $dpMaster->toCompanySystemID)->first();
+                    $cusInvLastSerialNumber = 1;
+                    if ($cusInvLastSerial) {
+                        $cusInvLastSerialNumber = intval($cusInvLastSerial->serialNo) + 1;
+                    }
+                    $customerInvoiceData['serialNo'] = $cusInvLastSerialNumber;
 
-            if (!empty($customer)) {
-                $customerInvoiceData['customerID'] = $customer->customerCodeSystem;
-                $customerInvoiceData['customerGLCode'] = $customer->custGLaccount;
-                $customerInvoiceData['customerGLSystemID'] = $customer->custGLAccountSystemID;
-                $customerInvoiceData['customerInvoiceNo'] = $dpMaster->disposalDocumentCode;
-                $customerInvoiceData['customerInvoiceDate'] = $today;
-            }
-            $customerInvoiceData['invoiceDueDate'] = $today;
-            $customerInvoiceData['serviceStartDate'] = $today;
-            $customerInvoiceData['serviceEndDate'] = $today;
-            $customerInvoiceData['performaDate'] = $today;
+                    $serviceLine = SegmentMaster::ofCompany([$dpMaster->companySystemID])->isPublic()->first();
 
-            $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
+                    if ($serviceLine) {
+                        $customerInvoiceData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+                        $customerInvoiceData['serviceLineCode'] = $serviceLine->ServiceLineCode;
+                    }
 
-            $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
-            $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
-            $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    if ($fromCompanyFinancePeriod) {
+                        $cusStartYear = $fromCompanyFinanceYear->bigginingDate;
+                        $cusFinYearExp = explode('-', $cusStartYear);
+                        $cusFinYear = $cusFinYearExp[0];
+                    } else {
+                        $cusFinYear = date("Y");
+                    }
+                    $bookingInvCode = ($dpMaster->companyID . '\\' . $cusFinYear . '\\' . $customerInvoiceData['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $customerInvoiceData['bookingInvCode'] = $bookingInvCode;
+                    $customerInvoiceData['bookingDate'] = $today;
 
-            $customerInvoiceData['localCurrencyID'] = $fromCompany->localCurrencyID;
-            $customerInvoiceData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $customerInvoiceData['comments'] = $comment;
 
-            $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
-            $customerInvoiceData['custTransactionCurrencyER'] = 1;
+                    $customer = CustomerMaster::where('companyLinkedToSystemID', $dpMaster->toCompanySystemID)->first();
 
-            $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+                    if (!empty($customer)) {
+                        $customerInvoiceData['customerID'] = $customer->customerCodeSystem;
+                        $customerInvoiceData['customerGLCode'] = $customer->custGLaccount;
+                        $customerInvoiceData['customerGLSystemID'] = $customer->custGLAccountSystemID;
+                        $customerInvoiceData['customerInvoiceNo'] = $dpMaster->disposalDocumentCode;
+                        $customerInvoiceData['customerInvoiceDate'] = $today;
+                    }
+                    $customerInvoiceData['invoiceDueDate'] = $today;
+                    $customerInvoiceData['serviceStartDate'] = $today;
+                    $customerInvoiceData['serviceEndDate'] = $today;
+                    $customerInvoiceData['performaDate'] = $today;
+
+                    $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
+                    $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
+                    $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+
+                    $customerInvoiceData['localCurrencyID'] = $fromCompany->localCurrencyID;
+                    $customerInvoiceData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+                    $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
+                    $customerInvoiceData['custTransactionCurrencyER'] = 1;
+
+                    $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
             SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('assetDisposalDetailAutoID')->get();
 
-            $localAmount = 0;
-            $comRptAmount = 0;
+                    $localAmount = 0;
+                    $comRptAmount = 0;
 
-            if (count($disposalDetail) > 0) {
-                foreach ($disposalDetail as $val) {
-                    $localAmount += $val->localAmountDetail;
-                    $comRptAmount += $val->comRptAmountDetail;
-                }
-            }
+                    if (count($disposalDetail) > 0) {
+                        foreach ($disposalDetail as $val) {
+                            $localAmount += $val->localAmountDetail;
+                            $comRptAmount += $val->comRptAmountDetail;
+                        }
+                    }
 
-            $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
-            $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
-            $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
-            $customerInvoiceData['confirmedYN'] = 1;
-            $customerInvoiceData['confirmedByEmpSystemID'] = $dpMaster->confimedByEmpSystemID;
-            $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confimedByEmpID;
-            $customerInvoiceData['confirmedByName'] = $dpMaster->confirmedByEmpName;
-            $customerInvoiceData['confirmedDate'] = $today;
-            $customerInvoiceData['approved'] = -1;
-            $customerInvoiceData['approvedDate'] = $today;
-            $customerInvoiceData['postedDate'] = $today;
-            $customerInvoiceData['documentType'] = 11;
-            $customerInvoiceData['interCompanyTransferYN'] = -1;
-            $customerInvoiceData['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
-            $customerInvoiceData['createdUserID'] = $dpMaster->confimedByEmpID;
-            $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
-            $customerInvoiceData['createdDateAndTime'] = NOW();
-            Log::info($customerInvoiceData);
-            $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
+                    $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
+                    $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
+                    $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
+                    $customerInvoiceData['confirmedYN'] = 1;
+                    $customerInvoiceData['confirmedByEmpSystemID'] = $dpMaster->confimedByEmpSystemID;
+                    $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confimedByEmpID;
+                    $customerInvoiceData['confirmedByName'] = $dpMaster->confirmedByEmpName;
+                    $customerInvoiceData['confirmedDate'] = $today;
+                    $customerInvoiceData['approved'] = -1;
+                    $customerInvoiceData['approvedDate'] = $today;
+                    $customerInvoiceData['postedDate'] = $today;
+                    $customerInvoiceData['documentType'] = 11;
+                    $customerInvoiceData['interCompanyTransferYN'] = -1;
+                    $customerInvoiceData['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+                    $customerInvoiceData['createdUserID'] = $dpMaster->confimedByEmpID;
+                    $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
+                    $customerInvoiceData['createdDateAndTime'] = NOW();
+                    Log::info($customerInvoiceData);
+                    $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
-            $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
+                    $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 
             SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
 
-            if ($disposalDetail) {
-                $chartofAccount = ChartOfAccount::find(557);
-                $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
-                foreach ($disposalDetail as $val) {
-                    $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
-                    $cusInvoiceDetails['companyID'] = $dpMaster->companyID;
-                    $cusInvoiceDetails['serviceLineSystemID'] = $val->serviceLineSystemID;
-                    $cusInvoiceDetails['serviceLineCode'] = $val->ServiceLineCode;
-                    if($customer) {
-                        $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
+                    if ($disposalDetail) {
+                        $chartofAccount = ChartOfAccount::find(557);
+                        $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
+                        foreach ($disposalDetail as $val) {
+                            $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
+                            $cusInvoiceDetails['companyID'] = $dpMaster->companyID;
+                            $cusInvoiceDetails['serviceLineSystemID'] = $val->serviceLineSystemID;
+                            $cusInvoiceDetails['serviceLineCode'] = $val->ServiceLineCode;
+                            if ($customer) {
+                                $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
+                            }
+                            $cusInvoiceDetails['glSystemID'] = 557;
+                            $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
+                            $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
+                            $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
+                            $cusInvoiceDetails['comments'] = $comment;
+                            $cusInvoiceDetails['unitOfMeasure'] = 7;
+                            $cusInvoiceDetails['invoiceQty'] = 1;
+                            $cusInvoiceDetails['invoiceAmountCurrency'] = $fromCompany->localCurrencyID;;
+                            $cusInvoiceDetails['invoiceAmountCurrencyER'] = 1;
+                            $cusInvoiceDetails['localCurrency'] = $fromCompany->localCurrencyID;
+                            $cusInvoiceDetails['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                            $cusInvoiceDetails['comRptCurrency'] = $fromCompany->reportingCurrency;;
+                            $cusInvoiceDetails['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                            $cusInvoiceDetails['clientContractID'] = 'X';
+                            $cusInvoiceDetails['contractID'] = 159;
+                            $cusInvoiceDetails['performaMasterID'] = 0;
+
+                            $localAmountDetail = $val->sellingPriceLocal;
+                            $comRptAmountDetail = $val->sellingPriceRpt;
+
+                            /*$localAmountDetail = $val->localAmountDetail;
+                            $comRptAmountDetail = $val->comRptAmountDetail;*/
+
+                            /*if (round($val->netBookValueLocal, 2) == 0) {
+                                $localAmountDetail = $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);
+                            } else {
+                                $localAmountDetail = ($val->netBookValueLocal‌ + (($val->netBookValueLocal) * ($dpMaster->revenuePercentage / 100)));
+                            }
+                            if (round($val->netBookValueRpt, 2) == 0) {
+                                $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
+                            } else {
+                                $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
+                            }*/
+
+                            $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
+                            $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
+                            Log::info($cusInvoiceDetails);
+                            $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
+                        }
                     }
-                    $cusInvoiceDetails['glSystemID'] = 557;
-                    $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
-                    $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
-                    $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
-                    $cusInvoiceDetails['comments'] = $comment;
-                    $cusInvoiceDetails['unitOfMeasure'] = 7;
-                    $cusInvoiceDetails['invoiceQty'] = 1;
-                    $cusInvoiceDetails['invoiceAmountCurrency'] = $fromCompany->localCurrencyID;;
-                    $cusInvoiceDetails['invoiceAmountCurrencyER'] = 1;
-                    $cusInvoiceDetails['localCurrency'] = $fromCompany->localCurrencyID;
-                    $cusInvoiceDetails['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $cusInvoiceDetails['comRptCurrency'] = $fromCompany->reportingCurrency;;
-                    $cusInvoiceDetails['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $cusInvoiceDetails['clientContractID'] = 'X';
-                    $cusInvoiceDetails['contractID'] = 159;
-                    $cusInvoiceDetails['performaMasterID'] = 0;
 
-                    $localAmountDetail = $val->sellingPriceLocal;
-                    $comRptAmountDetail = $val->sellingPriceRpt;
+                    $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
+                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
 
-                    /*$localAmountDetail = $val->localAmountDetail;
-                    $comRptAmountDetail = $val->comRptAmountDetail;*/
 
-                    /*if (round($val->netBookValueLocal, 2) == 0) {
-                        $localAmountDetail = $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);
-                    } else {
-                        $localAmountDetail = ($val->netBookValueLocal‌ + (($val->netBookValueLocal) * ($dpMaster->revenuePercentage / 100)));
-                    }
-                    if (round($val->netBookValueRpt, 2) == 0) {
-                        $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
-                    } else {
-                        $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
-                    }*/
+                    $dpMaster2['invoiceCode'] = $bookingInvCode;
+                    $dpMaster2['assetdisposalMasterAutoID'] = $dpMaster->assetdisposalMasterAutoID;
+                    $grvInsert = CreateDirectGRV::dispatch($dpMaster2);
 
-                    $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
-                    $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
-                    $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
-                    $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
-                    Log::info($cusInvoiceDetails);
-                    $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
+                    DB::commit();
+                    Log::info('Customer invoice created successfully');
                 }
+                else {
+                    Log::info('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
+                    Log::info('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
+                }
+            }else {
+                Log::info('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
             }
-
-            $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
-            $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
-
-
-            $dpMaster2['invoiceCode'] = $bookingInvCode;
-            $dpMaster2['assetdisposalMasterAutoID'] = $dpMaster->assetdisposalMasterAutoID;
-            $grvInsert = CreateDirectGRV::dispatch($dpMaster2);
-
-            DB::commit();
-
         } catch
         (\Exception $e) {
             DB::rollback();
