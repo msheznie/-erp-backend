@@ -171,6 +171,8 @@ class GRVDetails extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'purhasereturnDetailID',
+        'purhaseReturnAutoID',
         'timeStamp',
         'binNumber'
     ];
@@ -183,6 +185,8 @@ class GRVDetails extends Model
     protected $casts = [
         'grvDetailsID' => 'integer',
         'grvAutoID' => 'integer',
+        'purhasereturnDetailID' => 'integer',
+        'purhaseReturnAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
@@ -277,6 +281,11 @@ class GRVDetails extends Model
     public function po_master()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderMastertID', 'purchaseOrderID');
+    }
+
+    public function prn_master()
+    {
+        return $this->belongsTo('App\Models\PurchaseReturn', 'purhaseReturnAutoID', 'purhaseReturnAutoID');
     }
 
     public function item_by()
