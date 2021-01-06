@@ -382,6 +382,10 @@ class ItemReturnMasterAPIController extends AppBaseController
                     $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
                     return $this->sendError('Please select a active department.', 500, $serviceLineError);
                 }
+
+                if ($checkDepartmentActive) {
+                    $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+                }
             }
         }
         if (isset($input['wareHouseLocation'])) {

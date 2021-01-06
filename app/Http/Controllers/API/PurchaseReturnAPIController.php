@@ -421,6 +421,8 @@ class PurchaseReturnAPIController extends AppBaseController
                 $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
                 return $this->sendError('Please select a active segment ', 500, $serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if (isset($input['purchaseReturnLocation'])) {

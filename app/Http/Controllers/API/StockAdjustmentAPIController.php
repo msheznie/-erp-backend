@@ -381,6 +381,8 @@ class StockAdjustmentAPIController extends AppBaseController
                 $this->stockAdjustmentRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
                 return $this->sendError('Please select a active service line', 500,$serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if ($input['location']) {
