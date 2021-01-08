@@ -147,7 +147,13 @@ class DirectReceiptDetail extends Model
         'comRptCurrency',
         'comRptCurrencyER',
         'comRptAmount',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -176,7 +182,13 @@ class DirectReceiptDetail extends Model
         'localAmount' => 'float',
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
-        'comRptAmount' => 'float'
+        'comRptAmount' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

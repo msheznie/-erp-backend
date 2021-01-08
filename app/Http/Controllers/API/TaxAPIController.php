@@ -79,6 +79,7 @@ class TaxAPIController extends AppBaseController
                 'companySystemID.required' => 'Company field is required.',
                 'authorityAutoID.required' => 'Authority field is required.',
                 'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
+                'outputVatTransferGLAccountAutoID.required' => 'Output Vat Transfer GL Account is required.',
                 'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
                 'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
                 'GLAutoID.required' => 'Liability Account field is required.',
@@ -92,6 +93,7 @@ class TaxAPIController extends AppBaseController
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
                 'outputVatGLAccountAutoID' => 'required|numeric|min:1',
                 'inputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
+                'outputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
                 'taxReferenceNo' => 'required'
 
             ], $messages);
@@ -174,6 +176,12 @@ class TaxAPIController extends AppBaseController
             $input['inputVatTransferGLAccount'] = $gltrans->AccountCode;
         }
 
+        if(isset($input['outputVatTransferGLAccountAutoID']) && $input['outputVatTransferGLAccountAutoID']>0){
+            $gloutputtrans = ChartOfAccount::find($input['outputVatTransferGLAccountAutoID']);
+            $input['outputVatTransferGLAccount'] = $gloutputtrans->AccountCode;
+        }
+
+
         $taxes = $this->taxRepository->create($input);
 
         return $this->sendResponse($taxes->toArray(), 'VAT saved successfully');
@@ -232,6 +240,7 @@ class TaxAPIController extends AppBaseController
                 'inputVatGLAccountAutoID.required' => 'Input Vat Transfer GL Account is required.',
                 'outputVatGLAccountAutoID.required' => 'Output Vat GL Account  is required.',
                 'inputVatTransferGLAccountAutoID.required' => 'Input Vat Transfer GL Account field is required.',
+                'outputVatTransferGLAccountAutoID.required' => 'Output Vat Transfer GL Account field is required.',
                 'GLAutoID.required' => 'Liability Account field is required.',
             ];
             $validator = \Validator::make($input, [
@@ -260,6 +269,7 @@ class TaxAPIController extends AppBaseController
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
+                'outputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
                 'taxReferenceNo' => 'required'
 
             ], $messages);
@@ -322,6 +332,11 @@ class TaxAPIController extends AppBaseController
         if(isset($input['inputVatTransferGLAccountAutoID']) && $input['inputVatTransferGLAccountAutoID']>0 && $tax->inputVatTransferGLAccountAutoID != $input['inputVatTransferGLAccountAutoID']){
             $gltrans = ChartOfAccount::find($input['inputVatTransferGLAccountAutoID']);
             $input['inputVatTransferGLAccount'] = $gltrans->AccountCode;
+        }
+
+        if(isset($input['outputVatTransferGLAccountAutoID']) && $input['outputVatTransferGLAccountAutoID']>0){
+            $gloutputtrans = ChartOfAccount::find($input['outputVatTransferGLAccountAutoID']);
+            $input['outputVatTransferGLAccount'] = $gloutputtrans->AccountCode;
         }
 
 

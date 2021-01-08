@@ -185,10 +185,31 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
                         if ($masterData) {
-                            if ($masterData->documentType == 13) {
+                            if ($masterData->documentType == 13 || $masterData->documentType == 15) {
                                 if ($masterData->finance_period_by->isActive == -1) {
                                     $masterDocumentDate = $masterData->custPaymentReceiveDate;
                                 }
+
+                                $transAmount = 0;
+                                $transAmountLocal = 0;
+                                $transAmountRpt = 0;
+
+                                if(isset($masterData->details) && count($masterData->details) > 0){
+                                    $transAmount = $transAmount + $masterData->details[0]->transAmount;
+                                    $transAmountLocal = $transAmountLocal + $masterData->details[0]->localAmount;
+                                    $transAmountRpt = $transAmountRpt + $masterData->details[0]->rptAmount;
+                                }
+
+                                if(isset($masterData->directdetails) && count($masterData->directdetails) > 0){
+                                    $transAmount = $transAmount + $masterData->directdetails[0]->transAmount;
+                                    $transAmountLocal = $transAmountLocal + $masterData->directdetails[0]->localAmount;
+                                    $transAmountRpt = $transAmountRpt + $masterData->directdetails[0]->rptAmount;
+                                }
+
+                                $transAmountLocal = \Helper::roundValue($transAmountLocal);
+                                $transAmountRpt = \Helper::roundValue($transAmountRpt);
+
+
                                 $data['companySystemID'] = $masterData->companySystemID;
                                 $data['companyID'] = $masterData->companyID;
                                 $data['documentSystemID'] = $masterData->documentSystemID;
@@ -201,16 +222,16 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['InvoiceDate'] = null;
                                 $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                                $data['custInvoiceAmount'] = ABS($masterData->details[0]->transAmount + $masterData->directdetails[0]->transAmount);
+                                $data['custInvoiceAmount'] = $transAmount;
                                 $data['custDefaultCurrencyID'] = 0;
                                 $data['custDefaultCurrencyER'] = 0;
                                 $data['custDefaultAmount'] = 0;
                                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                                 $data['localER'] = $masterData->localCurrencyER;
-                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount + $masterData->directdetails[0]->localAmount));
+                                $data['localAmount'] = $transAmountLocal;
                                 $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                 $data['comRptER'] = $masterData->companyRptCurrencyER;
-                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount + $masterData->directdetails[0]->rptAmount));
+                                $data['comRptAmount'] = $transAmountRpt;
                                 $data['isInvoiceLockedYN'] = 0;
                                 $data['documentType'] = $masterData->documentType;
                                 $data['selectedToPaymentInv'] = 0;

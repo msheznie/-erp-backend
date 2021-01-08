@@ -486,6 +486,14 @@ class CustomerReceivePayment extends Model
         'canceledByEmpID',
         'canceledByEmpName',
         'companyFinancePeriodID',
+        'isVATApplicable',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -571,6 +579,14 @@ class CustomerReceivePayment extends Model
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
         'companyFinancePeriodID' => 'integer',
+        'isVATApplicable' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

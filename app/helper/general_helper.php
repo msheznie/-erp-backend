@@ -4833,4 +4833,12 @@ class Helper
     public static function stringToFloat($str){
         return floatval(preg_replace('/[^0-9.]/', '', $str));
     }
+
+    public static function checkPolicy($companySystemID = 0 , $policyId = 0){
+
+        return CompanyPolicyMaster::where('companySystemID', $companySystemID)
+            ->where('companyPolicyCategoryID', $policyId)
+            ->where('isYesNO',1)
+            ->exists();
+    }
 }

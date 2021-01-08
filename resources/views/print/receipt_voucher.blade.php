@@ -249,6 +249,9 @@
                         @if($masterdata->documentType == 14)
                             Direct Receipt
                         @endif
+                        @if($masterdata->documentType == 15)
+                            Advance Receipt
+                        @endif
                     </span>
                 </div>
             </td>
@@ -287,7 +290,7 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
-    @if($masterdata->documentType == 13)
+    @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
         <table style="width: 100%">
             <tr style="width:100%">
                 <td style="width: 60%">
@@ -319,6 +322,16 @@
                                 <span>{{$masterdata->narration}}</span>
                             </td>
                         </tr>
+                        @if($masterdata->isVATApplicable)
+                            <tr>
+                                <td width="70px">
+                                    <span class="font-weight-bold">VAT Percentage (%) :</span>
+                                </td>
+                                <td colspan="2">
+                                    <span>{{$masterdata->VATPercentage}}</span>
+                                </td>
+                            </tr>
+                        @endif
                     </table>
                 </td>
                 <td style="width: 40%">
@@ -405,6 +418,19 @@
                                 <span>{{$masterdata->narration}}</span>
                             </td>
                         </tr>
+                        @if($masterdata->isVATApplicable)
+                            <tr>
+                                <td width="70px">
+                                    <span class="font-weight-bold">VAT Percentage (%) </span>
+                                </td>
+                                <td width="10px">
+                                    <span class="font-weight-bold">:</span>
+                                </td>
+                                <td>
+                                    <span>{{$masterdata->VATPercentage}}</span>
+                                </td>
+                            </tr>
+                        @endif
                     </table>
                 </td>
                 <td style="width: 40%">
@@ -440,18 +466,27 @@
             </tr>
         </table>
     @endif
-    @if($masterdata->documentType == 14)
+    @if($masterdata->documentType == 14 || $masterdata->documentType == 15)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Account Code</th>
-                    <th class="text-center">Account Description</th>
+                    @if($masterdata->documentType == 14)
+                        <th class="text-center">Account Code</th>
+                        <th class="text-center">Account Description</th>
+                    @endif
                     <th class="text-center">Department</th>
-                    <th class="text-center">Contract</th>
+                    @if($masterdata->documentType == 14)
+                        <th class="text-center">Contract</th>
+                    @endif
+                    <th class="text-center">Comments</th>
                     <th class="text-center">Amount</th>
-                    <th class="text-center">Local Amt (
+                    @if($masterdata->isVATApplicable)
+                        <th class="text-center">VAT Amount</th>
+                        <th class="text-center">Net Amount</th>
+                    @endif
+                    {{--<th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
@@ -462,32 +497,52 @@
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
                         )
-                    </th>
+                    </th>--}}
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($masterdata->directdetails as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
-                        <td>{{$item->glCode}}</td>
-                        <td>{{$item->glCodeDes}}</td>
+                        @if($masterdata->documentType == 14)
+                            <td>{{$item->glCode}}</td>
+                            <td>{{$item->glCodeDes}}</td>
+                        @endif
                         <td>  @if($item->segment)
                                 {{$item->segment->ServiceLineDes}}
                             @endif
                         </td>
-                        <td>{{$item->contractID}}</td>
+                        @if($masterdata->documentType == 14)
+                            <td>{{$item->contractID}}</td>
+                        @endif
+                        <td>{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->DRAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
+                        @if($masterdata->isVATApplicable)
+                            <td class="text-right">{{number_format($item->VATAmount, $transDecimal)}}</td>
+                            <td class="text-right">{{number_format($item->netAmount, $transDecimal)}}</td>
+                        @endif
+                        {{--<td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>--}}
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
+                    @if($masterdata->documentType == 14)
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
+                    @if($masterdata->documentType == 15)
+                        <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
+                    @if($masterdata->isVATApplicable)
+                        <td class="text-right"
+                            style="background-color: rgb(215,215,215)">{{number_format($directTotalVAT, $transDecimal)}}</td>
+                        <td class="text-right"
+                            style="background-color: rgb(215,215,215)">{{number_format($directTotalNet, $transDecimal)}}</td>
+                    @endif
+                    {{--<td class="text-right border-bottom-remov"></td>
+                    <td class="text-right border-bottom-remov"></td>--}}
                 </tr>
                 </tbody>
             </table>

@@ -64,6 +64,15 @@ class TaxService
             ->first();
     }
 
+    public  static function getOutputVATTransferGLAccount($companySystemID = 0){
+
+        return Tax::where('companySystemID',$companySystemID)
+            //->where('isActive',1)
+            ->where('taxCategory',2)
+            ->whereNotNull('outputVatTransferGLAccountAutoID')
+            ->first();
+    }
+
     public static function checkCompanyVATEligible($companySystemID = 0) {
 
         $vatConfig = Tax::where('companySystemID',$companySystemID)

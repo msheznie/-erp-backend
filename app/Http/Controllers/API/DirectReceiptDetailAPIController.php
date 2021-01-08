@@ -339,19 +339,17 @@ class DirectReceiptDetailAPIController extends AppBaseController
     public function customerDirectVoucherDetails(request $request)
     {
         $input = $request->all();
-
-
-        $input = $request->all();
         $messages = [
             'companySystemID.required' => 'Company is required.',
             'directReceiptAutoID.required' => 'ID is required.',
-            'glCode.required' => 'GL Account is required.'
+            'glCode.required' => 'GL Account is required.',
+            'serviceLineSystemID.required' => 'Department is required.'
         ];
 
         $validator = \Validator::make($request->all(), [
             'companySystemID' => 'required|numeric|min:1',
             'directReceiptAutoID' => 'required|numeric|min:1',
-            'glCode' => 'required|numeric|min:1'
+           // 'glCode' => 'required|numeric|min:1'
         ], $messages);
 
         if ($validator->fails()) {
@@ -359,10 +357,8 @@ class DirectReceiptDetailAPIController extends AppBaseController
         }
 
         $companySystemID = $input['companySystemID'];
+        $glCode = isset($input['glCode']) ? $input['glCode'] : 0;
         $directReceiptAutoID = $input['directReceiptAutoID'];
-        $glCode = $input['glCode'];
-
-
         /*get master*/
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $directReceiptAutoID)->first();
 
@@ -374,27 +370,63 @@ class DirectReceiptDetailAPIController extends AppBaseController
             return $this->sendError('You cannot add detail, this document already confirmed', 500);
         }
 
+        if($master->documentType == 13 || $master->documentType == 14){
+            $validator = \Validator::make($request->all(), [
+                 'glCode' => 'required|numeric|min:1'
+            ], $messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+        }else if($master->documentType == 15){
+            $validator = \Validator::make($request->all(), [
+                 'serviceLineSystemID' => 'required|numeric|min:1'
+            ], $messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
+                                      ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                      ->first();
+            if(empty($serviceLine)){
+                return $this->sendError('Department not found.');
+            }
+            $inputData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+            $inputData['serviceLineCode'] = $serviceLine->ServiceLineCode;
+        }
+
+
         if ($master->custChequeDate == '') {
             return $this->sendError('Cheque date field is required.', 500);
         }
-        $bankGL = BankAccount::select('chartOfAccountSystemID')->where('bankAccountAutoID', $master->bankAccount)->first();
+        $bankGL = BankAccount::select('chartOfAccountSystemID')
+                            ->where('bankAccountAutoID', $master->bankAccount)
+                            ->first();
+
         $company = Company::where('companySystemID', $companySystemID)->first();
 
+        if($glCode){
+            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
+                ->where('chartOfAccountSystemID', $glCode)
+                ->first();
 
-        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')->where('chartOfAccountSystemID', $glCode)->first();
+            if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
+                return $this->sendError('Cannot add. You are trying to select the same account.', 500);
+            }
 
-        if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
-            return $this->sendError('Cannot add. You are trying to select the same account.', 500);
+            $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+            $inputData['glCode'] = $chartOfAccount->AccountCode;
+            $inputData['glCodeDes'] = $chartOfAccount->AccountDescription;
         }
+
+
 
 
         $inputData['directReceiptAutoID'] = $directReceiptAutoID;
         $inputData['companyID'] = $company->CompanyID;
         $inputData['companySystemID'] = $companySystemID;
-
-        $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
-        $inputData['glCode'] = $chartOfAccount->AccountCode;
-        $inputData['glCodeDes'] = $chartOfAccount->AccountDescription;
 
         $inputData['comments'] = $master->narration;
         $inputData['DRAmountCurrency'] = $master->custTransactionCurrencyID;
@@ -487,14 +519,43 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
             $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
 
+            if($master->isVATApplicable){
+
+                //vat amount
+                $currencyVAT = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['VATAmount']);
+                $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
+                $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+            }else{
+                $input['VATAmount'] = 0;
+                $input['VATAmountRpt'] = 0;
+                $input['VATAmountLocal'] = 0;
+            }
+
+            //net amount
+            $currencyNet = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['netAmount']);
+            $input["netAmountRpt"] = \Helper::roundValue($currencyNet['reportingAmount']);
+            $input["netAmountLocal"] = \Helper::roundValue($currencyNet['localAmount']);
+
         }
 
         DB::beginTransaction();
 
         try {
 
-            $x = DirectReceiptDetail::where('directReceiptDetailsID', $id)->update($input);
-            $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"), DB::raw("IFNULL(SUM(localAmount),0) as localAmount"), DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"), DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"))->where('directReceiptAutoID', $detail->directReceiptAutoID)->first()->toArray();
+             DirectReceiptDetail::where('directReceiptDetailsID', $id)->update($input);
+            $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"),
+                DB::raw("IFNULL(SUM(localAmount),0) as localAmount"),
+                DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"),
+                DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"),
+                DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"),
+                DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"),
+                DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"),
+                DB::raw("IFNULL(SUM(netAmount),0) as netAmount"),
+                DB::raw("IFNULL(SUM(netAmountLocal),0) as netAmountLocal"),
+                DB::raw("IFNULL(SUM(netAmountRpt),0) as netAmountRpt"))
+                ->where('directReceiptAutoID', $detail->directReceiptAutoID)
+                ->first()
+                ->toArray();
 
             CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->update($details);
 
