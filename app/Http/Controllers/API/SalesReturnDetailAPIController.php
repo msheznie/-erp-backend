@@ -320,7 +320,10 @@ class SalesReturnDetailAPIController extends AppBaseController
 
             $totalAddedQty = (floatval($currentItemData['qtyReturned']) - floatval($oldQty)) + $detailSum['totalNoQty'];
 
-            if ($pullItemData->qtyIssuedDefaultMeasure == $totalAddedQty) {
+            $deliveryOrderDetailData = DeliveryOrderDetail::find($currentItemData['deliveryOrderDetailID']);
+
+            $remaingQty = $deliveryOrderDetailData->qtyIssuedDefaultMeasure; 
+            if ($remaingQty == $totalAddedQty) {
                 $fullyReturned = 2;
                 $closedYN = -1;
                 $selectedForSalesReturn= -1;
@@ -331,7 +334,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
 
             // checking the qty request is matching with sum total
-            if ($pullItemData->qtyIssuedDefaultMeasure >= $currentItemData['qtyReturned']) {
+            if ($remaingQty >= $currentItemData['qtyReturned']) {
 
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
 
@@ -414,7 +417,11 @@ class SalesReturnDetailAPIController extends AppBaseController
 
             $totalAddedQty = (floatval($currentItemData['qtyReturned']) - floatval($oldQty)) + $detailSum['totalNoQty'];
 
-            if ($pullItemData->qtyIssuedDefaultMeasure == $totalAddedQty) {
+            $customerInvDetailData = CustomerInvoiceItemDetails::find($currentItemData['customerItemDetailID']);
+
+            $remaingQty = $customerInvDetailData->qtyIssuedDefaultMeasure; 
+
+            if ($remaingQty == $totalAddedQty) {
                 $fullyReturned = 2;
                 $closedYN = -1;
                 $selectedForSalesReturn= -1;
@@ -425,7 +432,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
 
             // checking the qty request is matching with sum total
-            if ($pullItemData->qtyIssuedDefaultMeasure >= $currentItemData['qtyReturned']) {
+            if ($remaingQty >= $currentItemData['qtyReturned']) {
 
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                 $invDetail_arr['qtyReturned'] = $currentItemData['qtyReturned'];
