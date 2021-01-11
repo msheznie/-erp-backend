@@ -33,6 +33,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
+use App\Models\GrvDetailsPrn;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseMaster;
 use App\Repositories\GRVDetailsRepository;
@@ -255,14 +256,15 @@ class GRVDetailsAPIController extends AppBaseController
                         return $this->sendError('Number of quantity should not be greater than received qty', 422);
                     }
 
-                    $detailPOSUM = GRVDetails::WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $input['purchaseOrderDetailsID'])->sum('noQty');
-                    $masterPOSUM = GRVDetails::WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->sum('noQty');
+                    $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $input['purchaseOrderDetailsID'])->first();
+                    // get the total received qty
+                    $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
                     $receivedQty = 0;
                     $goodsRecievedYN = 0;
                     $GRVSelectedYN = 0;
-                    if ($detailPOSUM > 0) {
-                        $receivedQty = $detailPOSUM;
+                    if ($detailPOSUM->newNoQty > 0) {
+                        $receivedQty = $detailPOSUM->newNoQty;
                     }
 
                     $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
@@ -289,7 +291,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                             ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
                     } else {
-                        if ($masterPOSUM > 0) {
+                        if ($masterPOSUM->newNoQty > 0) {
                             $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                                 ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
                         } else {
@@ -298,15 +300,98 @@ class GRVDetailsAPIController extends AppBaseController
                         }
                     }
 
+                    $this->updatePrnRelatedData($id, $input['noQty']);
                 }
             }
-
+           
             $this->updatePullType($input['grvAutoID']);
             DB::commit();
             return $this->sendResponse($gRVDetails->toArray(), 'GRV details updated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
+        }
+    }
+
+    public function updatePrnRelatedData($grvDetailsID, $newNoQty)
+    {
+        $prnRelatedGrvDetails = GrvDetailsPrn::where('grvDetailsID', $grvDetailsID)
+                                             ->get();
+
+
+        foreach ($prnRelatedGrvDetails as $key => $value) {
+            if ($newNoQty > 0) {
+                if ($value->prnQty < $newNoQty) {
+                    $newNoQty = $newNoQty - $value->prnQty;
+                    $newPrnQty = $value->prnQty;
+                } else {
+                    $newPrnQty = $newNoQty;
+                    $newNoQty = 0;
+                }
+            } else {
+                $newPrnQty = 0;
+            }
+
+            $updatePrnRes = GrvDetailsPrn::where('id', $value->id)
+                                         ->update(['prnQty' => $newPrnQty]);
+        }
+
+
+        foreach ($prnRelatedGrvDetails as $key => $value) {
+            $detailExistPODetail = PurchaseReturnDetails::find($value->purhasereturnDetailID);
+
+            $detailPOSUM = GrvDetailsPrn::where('grvDetailsID', $grvDetailsID)
+                                        ->WHERE('purhasereturnDetailID', $value->purhasereturnDetailID)
+                                        ->sum('prnQty');
+
+            $prnDetailsData = PurchaseReturnDetails::where('purhaseReturnAutoID', $detailExistPODetail->purhaseReturnAutoID)
+                                                   ->get();
+
+            $prnDetailsIds = collect($prnDetailsData)->pluck('purhasereturnDetailID');
+
+            // get the total received qty
+            $masterPOSUM = GrvDetailsPrn::whereIn('purhasereturnDetailID', $prnDetailsIds)
+                                        ->sum('prnQty');
+         
+            $receivedQty = 0;
+            $goodsRecievedYN = 0;
+            $GRVSelectedYN = 0;
+            if ($detailPOSUM > 0) {
+                $receivedQty = $detailPOSUM;
+            }
+
+            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+            if ($receivedQty == 0) {
+                $goodsRecievedYN = 0;
+                $GRVSelectedYN = 0;
+            } else {
+                if ($checkQuantity == 0) {
+                    $goodsRecievedYN = 2;
+                    $GRVSelectedYN = 1;
+                } else {
+                    $goodsRecievedYN = 1;
+                    $GRVSelectedYN = 0;
+                }
+            }
+
+            $updateDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $detailExistPODetail->purhasereturnDetailID)
+                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+            $balanceQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')->WHERE('purhaseReturnAutoID', $detailExistPODetail->purhaseReturnAutoID)->first();
+
+
+            if ($balanceQty["balanceQty"] == 0) {
+                $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
+                    ->update(['prClosedYN' => 1, 'grvRecieved' => 2]);
+            } else {
+                if ($masterPOSUM > 0) {
+                    $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
+                        ->update(['prClosedYN' => 0, 'grvRecieved' => 1]);
+                } else {
+                    $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
+                        ->update(['prClosedYN' => 0, 'grvRecieved' => 0]);
+                }
+            }
         }
     }
 
@@ -413,15 +498,15 @@ class GRVDetailsAPIController extends AppBaseController
             if (!empty($purchaseOrderDetailsID) && !empty($purchaseOrderMastertID)) {
                 $detailExistPODetail = PurchaseOrderDetails::find($purchaseOrderDetailsID);
                 // get the total received qty for a specific item
-                $detailPOSUM = GRVDetails::WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $purchaseOrderDetailsID)->sum('noQty');
+                $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $purchaseOrderDetailsID)->first();
                 // get the total received qty
-                $masterPOSUM = GRVDetails::WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->sum('noQty');
+                $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
                 $receivedQty = 0;
                 $goodsRecievedYN = 0;
                 $GRVSelectedYN = 0;
-                if ($detailPOSUM > 0) {
-                    $receivedQty = $detailPOSUM;
+                if ($detailPOSUM->newNoQty > 0) {
+                    $receivedQty = $detailPOSUM->newNoQty;
                 }
 
                 $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
@@ -441,19 +526,81 @@ class GRVDetailsAPIController extends AppBaseController
                 $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
                     ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
 
-                if ($masterPOSUM > 0) {
+                if ($masterPOSUM->newNoQty > 0) {
                     $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                         ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
                 } else {
                     $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                         ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
                 }
+
+                $this->checkAndUpdatePrn($id);
             } 
         }
 
         $this->updatePullType($gRVDetails->grvAutoID);
 
         return $this->sendResponse($id, 'GRV details deleted successfully');
+    }
+
+
+    public function checkAndUpdatePrn($grvDetailsID)
+    {
+        $grvPrnData = GrvDetailsPrn::where('grvDetailsID', $grvDetailsID)
+                                   ->get();
+
+        foreach ($grvPrnData as $key => $value) {
+            $detailExistPODetail = PurchaseReturnDetails::find($value->purhasereturnDetailID);
+            // get the total received qty for a specific item
+            $detailPOSUM = GrvDetailsPrn::WHERE('grvDetailsID', '!=',$value->grvDetailsID)
+                                        ->WHERE('purhasereturnDetailID', $detailExistPODetail->purhasereturnDetailID)
+                                        ->sum('prnQty');
+
+            $prnDetailsData = PurchaseReturnDetails::where('purhaseReturnAutoID', $detailExistPODetail->purhaseReturnAutoID)
+                                                   ->get();
+
+            $prnDetailsIds = collect($prnDetailsData)->pluck('purhasereturnDetailID');
+
+            // get the total received qty
+            $masterPOSUM = GrvDetailsPrn::WHERE('grvDetailsID', '!=',$value->grvDetailsID)
+                                        ->whereIn('purhasereturnDetailID', $prnDetailsIds)
+                                        ->sum('prnQty');
+
+            $receivedQty = 0;
+            $goodsRecievedYN = 0;
+            $GRVSelectedYN = 0;
+            if ($detailPOSUM > 0) {
+                $receivedQty = $detailPOSUM;
+            }
+
+            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+            if ($receivedQty == 0) {
+                $goodsRecievedYN = 0;
+                $GRVSelectedYN = 0;
+            } else {
+                if ($checkQuantity == 0) {
+                    $goodsRecievedYN = 2;
+                    $GRVSelectedYN = 1;
+                } else {
+                    $goodsRecievedYN = 1;
+                    $GRVSelectedYN = 0;
+                }
+            }
+
+            $updateDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $value->purhasereturnDetailID)
+                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+            if ($masterPOSUM > 0) {
+                $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
+                    ->update(['prClosedYN' => 0, 'grvRecieved' => 1]);
+            } else {
+                $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
+                    ->update(['prClosedYN' => 0, 'grvRecieved' => 0]);
+            }
+        }
+
+        $grvPrnData = GrvDetailsPrn::where('grvDetailsID', $grvDetailsID)
+                                   ->delete();
     }
 
     public function getItemsByGRVMaster(Request $request)
@@ -684,6 +831,9 @@ class GRVDetailsAPIController extends AppBaseController
 
                         $update = PurchaseOrderDetails::where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
                             ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $totalAddedQty]);
+
+
+                        $this->checkPrnAndUpdateAsReturnedUsed($new['purchaseOrderDetailsID'], $new['noQty'], $item->grvDetailsID);
                     }
                 }
 
@@ -702,8 +852,14 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
 
+
+            // DB::rollBack();
+            // return $this->sendError('Error Occurred');
+            
             $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
                                         ->update(['pullType' => 1]);
+
+
             DB::commit();
             return $this->sendResponse('', 'GRV details saved successfully');
         } catch (\Exception $exception) {
@@ -712,6 +868,77 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
     }
+
+
+    public function checkPrnAndUpdateAsReturnedUsed($purchaseOrderDetailsID, $newGrvQty, $grvDetailsID)
+    {
+        $getGrvDetails = GRVDetails::with(['prn_details' => function($query) {
+                                        $query->whereRaw('noQty - receivedQty != ?', [0]);
+                                   }])
+                                   ->whereHas('prn_details', function($query) {
+                                        $query->whereRaw('noQty - receivedQty != ?', [0]);
+                                   })
+                                   ->where('returnQty', '>', 0)
+                                   ->where('purchaseOrderDetailsID', $purchaseOrderDetailsID)
+                                   ->get();
+
+        foreach ($getGrvDetails as $key => $value) {
+            foreach ($value->prn_details as $key1 => $value1) {
+                if ($newGrvQty > 0) {
+                    if (($value1->noQty - $value1->receivedQty) > $newGrvQty) {
+                        $receivedQty = $newGrvQty;
+
+                        $newGrvQty = 0;
+                    } else {
+                        $receivedQty = $value1->noQty - $value1->receivedQty;
+
+                        $newGrvQty = $newGrvQty - $receivedQty;
+                    }
+
+
+                    if ($value1->noQty == $receivedQty) {
+                        $goodsRecievedYN = 2;
+                        $GRVSelectedYN = 1;
+                    } else {
+                        $goodsRecievedYN = 1;
+                        $GRVSelectedYN = 0;
+                    }
+
+
+                    $update = PurchaseReturnDetails::where('purhasereturnDetailID', $value1->purhasereturnDetailID)
+                            ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+                    $grvDetailsPrnData = [
+                        'grvDetailsID' => $grvDetailsID,
+                        'purhasereturnDetailID' => $value1->purhasereturnDetailID,
+                        'prnQty' => $receivedQty
+                    ];
+
+                    $createRespo = GrvDetailsPrn::insert($grvDetailsPrnData);
+                    
+                    $this->checkPurchaseReturnAndUpdateReturnStatus($value1->purhaseReturnAutoID);
+                }
+            }
+        }
+    }
+
+    public function checkPurchaseReturnAndUpdateReturnStatus($purhaseReturnAutoID)
+    {
+        // fetching the total count records from purchase Request Details table
+        $purchaseOrderDetailTotalAmount = PurchaseReturnDetails::select(DB::raw('SUM(noQty) as detailQty,SUM(receivedQty) as receivedQty'))
+                                                                ->where('purhaseReturnAutoID', $purhaseReturnAutoID)
+                                                                ->first();
+
+        // Updating PO Master Table After All Detail Table records updated
+        if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
+            $updatePO = PurchaseReturn::find($purhaseReturnAutoID)
+                ->update(['prClosedYN' => 1, 'grvRecieved' => 2]);
+        } else {
+            $updatePO = PurchaseReturn::find($purhaseReturnAutoID)
+                ->update(['prClosedYN' => 0, 'grvRecieved' => 1]);
+        }
+    }
+
 
     public function storeGRVDetailsDirect(Request $request)
     {

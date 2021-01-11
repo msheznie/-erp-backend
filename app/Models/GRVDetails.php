@@ -308,5 +308,8 @@ class GRVDetails extends Model
         return $this->hasOne('App\Models\CurrencyMaster',  'currencyID', 'companyReportingCurrencyID');
     }
 
-
+     public function prn_details()
+    {
+        return $this->hasMany('App\Models\PurchaseReturnDetails',  'grvDetailsID', 'grvDetailsID');
+    }
 }
