@@ -3312,8 +3312,14 @@ class GeneralLedgerInsert implements ShouldQueue
                                 if ($prData->isInvoiceCreatedForGrv == 1) {
                                     $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                                 } else {
-                                    $masterModel['supplierID'] = $prData->supplierID;
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterModel);
+                                    $prnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterModel["autoID"])->first();
+                                    $unbilledModel['supplierID'] = $prData->supplierID;
+                                    $unbilledModel['forPrn'] = true;
+                                    $unbilledModel['purhaseReturnAutoID'] = $prData->purhaseReturnAutoID;
+                                    $unbilledModel['autoID'] = $prnDetails->grvAutoID;
+                                    $unbilledModel['companySystemID'] = $prData->companySystemID;
+                                    $unbilledModel['documentSystemID'] = $masterModel['documentSystemID'];
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($unbilledModel);
                                 }
                             } else {
                                 $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);

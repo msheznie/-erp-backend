@@ -205,6 +205,7 @@ class PurchaseReturnDetails extends Model
         'GRVQty',
         'comment',
         'noQty',
+        'receivedQty',
         'supplierDefaultCurrencyID',
         'supplierDefaultER',
         'supplierTransactionCurrencyID',
@@ -227,6 +228,8 @@ class PurchaseReturnDetails extends Model
         'financeGLcodebBS',
         'financeGLcodePLSystemID',
         'financeGLcodePL',
+        'GRVSelectedYN',
+        'goodsRecievedYN',
         'includePLForGRVYN'
     ];
 
@@ -238,6 +241,8 @@ class PurchaseReturnDetails extends Model
     protected $casts = [
         'purhasereturnDetailID' => 'integer',
         'purhaseReturnAutoID' => 'integer',
+        'goodsRecievedYN' => 'integer',
+        'GRVSelectedYN' => 'integer',
         'companyID' => 'string',
         'grvAutoID' => 'integer',
         'grvDetailsID' => 'integer',
@@ -249,6 +254,7 @@ class PurchaseReturnDetails extends Model
         'GRVQty' => 'float',
         'comment' => 'string',
         'noQty' => 'float',
+        'receivedQty' => 'float',
         'supplierDefaultCurrencyID' => 'integer',
         'supplierDefaultER' => 'float',
         'supplierTransactionCurrencyID' => 'integer',

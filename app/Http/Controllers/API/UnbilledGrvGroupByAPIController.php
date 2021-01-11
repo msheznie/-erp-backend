@@ -297,20 +297,21 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
 
         $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
-            $query->where('approved', -1);
-            $query->where('grvCancelledYN', 0);
-        })->whereHas('pomaster', function ($query) {
-            $query->where('approved', -1);
-            $query->where('poCancelledYN', 0);
-        })->with(['pomaster', 'grvmaster'])
-            ->where('companySystemID', $companyID)
-            ->where('fullyBooked', '<>', 2)
-            ->where('supplierID', $bookInvSuppMaster->supplierID)
-            ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
-            ->whereDate('grvDate', '<=', $bookingDate)
-            ->groupBy('purchaseOrderID')
-            ->orderBy('purchaseOrderID', 'DESC')
-            ->get();
+                                                    $query->where('approved', -1);
+                                                    $query->where('grvCancelledYN', 0);
+                                                })->whereHas('pomaster', function ($query) {
+                                                    $query->where('approved', -1);
+                                                    $query->where('poCancelledYN', 0);
+                                                })->with(['pomaster', 'grvmaster'])
+                                                    ->where('companySystemID', $companyID)
+                                                    ->where('fullyBooked', '<>', 2)
+                                                    ->where('supplierID', $bookInvSuppMaster->supplierID)
+                                                    ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+                                                    ->whereDate('grvDate', '<=', $bookingDate)
+                                                    ->whereNull('purhaseReturnAutoID')
+                                                    ->groupBy('purchaseOrderID')
+                                                    ->orderBy('purchaseOrderID', 'DESC')
+                                                    ->get();
 
         return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Masters retrieved successfully');
     }

@@ -640,15 +640,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
                 $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->where(function ($q) {
-                        $q->where('supplierInvoAmount', '<=', 0)
-                            ->orWhereNull('totLocalAmount', '<=', 0)
-                            ->orWhereNull('totRptAmount', '<=', 0)
-                            ->orWhereNull('totTransactionAmount')
-                            ->orWhereNull('totLocalAmount')
-                            ->orWhereNull('totRptAmount');
-                    })
-                    ->count();
+                                                    ->where(function ($q) {
+                                                        $q->where('supplierInvoAmount', '<=', 0)
+                                                            ->orWhereNull('totLocalAmount', '<=', 0)
+                                                            ->orWhereNull('totRptAmount', '<=', 0)
+                                                            ->orWhereNull('totTransactionAmount')
+                                                            ->orWhereNull('totLocalAmount')
+                                                            ->orWhereNull('totRptAmount');
+                                                    })
+                                                    ->whereHas('unbilled_grv', function($query){
+                                                        $query->whereNull('purhaseReturnAutoID');
+                                                    })
+                                                    ->count();
                 if ($checkGRVQuantity > 0) {
                     return $this->sendError('Amount should be greater than 0 for every items', 500);
                 }

@@ -556,8 +556,11 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
         Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
         Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
+        Route::get('purchaseReturnForGRV', 'PurchaseReturnAPIController@purchaseReturnForGRV');
         Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
+        Route::get('getPurchaseReturnDetailForGRV', 'PurchaseReturnAPIController@getPurchaseReturnDetailForGRV');
         Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
+        Route::post('storeGRVDetailsFromPR', 'GRVDetailsAPIController@storeGRVDetailsFromPR');
         Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
         Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
         Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
@@ -1983,3 +1986,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
+
+
+Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');

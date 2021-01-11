@@ -267,6 +267,11 @@ class BookInvSuppDet extends Model
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
 
+    public function unbilled_grv()
+    {
+        return $this->belongsTo('App\Models\UnbilledGrvGroupBy', 'unbilledgrvAutoID', 'unbilledgrvAutoID');
+    }
+
     public function pomaster()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');

@@ -35,8 +35,10 @@ use App\Models\GRVDetails;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ProcumentOrder;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
+use App\Models\PurchaseOrderDetails;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\SupplierAssigned;
@@ -2023,6 +2025,11 @@ class Helper
                                 if (!$updateReturnQty["success"]) {
                                     return ['success' => false, 'message' => $updateReturnQty["message"]];
                                 }
+
+                                $updateReturnQtyInPo = self::updateReturnQtyInPoDetails($masterData);
+                                if (!$updateReturnQtyInPo["success"]) {
+                                    return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 21) {
@@ -2353,6 +2360,72 @@ class Helper
 
             $updateRes = GRVDetails::where('grvDetailsID', $value->grvDetailsID)
                                    ->update($updateData);
+        }
+
+        return ['success' => true];
+
+    }
+
+    public static function updateReturnQtyInPoDetails($masterData)
+    {
+        $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterData['autoID'])->get();
+
+        foreach ($prDetails as $key => $value) {
+            $grvDetailsData = GRVDetails::find($value->grvDetailsID);
+
+            $detailExistPODetail = PurchaseOrderDetails::find($grvDetailsData->purchaseOrderDetailsID);
+
+            $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                                     ->WHERE('purchaseOrderDetailsID', $grvDetailsData->purchaseOrderDetailsID)
+                                     ->first();
+
+            // get the total received qty
+            $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                                     ->first();
+
+            $receivedQty = 0;
+            $goodsRecievedYN = 0;
+            $GRVSelectedYN = 0;
+            if ($detailPOSUM->newNoQty > 0) {
+                $receivedQty = $detailPOSUM->newNoQty;
+            }
+
+            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+            if ($receivedQty == 0) {
+                $goodsRecievedYN = 0;
+                $GRVSelectedYN = 0;
+            } else {
+                if ($checkQuantity == 0) {
+                    $goodsRecievedYN = 2;
+                    $GRVSelectedYN = 1;
+                } else {
+                    $goodsRecievedYN = 1;
+                    $GRVSelectedYN = 0;
+                }
+            }
+
+            $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
+                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+            $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')
+                                              ->WHERE('purchaseOrderMasterID', $grvDetailsData->purchaseOrderMastertID)
+                                              ->first();
+
+
+            if ($balanceQty["balanceQty"] == 0) {
+                $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                    ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
+            } else {
+                if ($masterPOSUM->newNoQty > 0) {
+                    $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                        ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
+                } else {
+                    $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                        ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
+                }
+            }
         }
 
         return ['success' => true];
