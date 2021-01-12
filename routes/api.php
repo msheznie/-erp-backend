@@ -127,6 +127,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
         Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
         Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
+        Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
