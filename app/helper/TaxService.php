@@ -5,6 +5,7 @@ namespace App\helper;
 
 
 use App\Models\Company;
+use App\Models\CustomerAssigned;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierAssigned;
@@ -86,7 +87,7 @@ class TaxService
         return false;
     }
 
-    public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$supplierID=0) {
+    public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$partyID=0 , $isSupplier = 1) {
 
         $data = array('applicableOn' => 2,'percentage' => 0);
         $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
@@ -107,12 +108,23 @@ class TaxService
             $data['applicableOn'] = $taxDetails->applicableOn; // 1 - Gross , 2 - Net
             $data['percentage']   = $taxDetails->percentage;
         }else{
-            $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
-                ->where('supplierCodeSytem',$supplierID)
-                ->first();
 
-            if(!empty($supplier)){
-                $data['percentage']   = $supplier->vatPercentage;
+            if($isSupplier){
+                $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
+                    ->where('supplierCodeSytem',$partyID)
+                    ->first();
+
+                if(!empty($supplier)){
+                    $data['percentage']   = $supplier->vatPercentage;
+                }
+            }else{
+                $customer = CustomerAssigned::where('companySystemID',$companySystemID)
+                    ->where('customerCodeSystem',$partyID)
+                    ->first();
+
+                if(!empty($customer)){
+                    $data['percentage']   = $customer->vatPercentage;
+                }
             }
         }
 

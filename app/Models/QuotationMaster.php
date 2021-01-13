@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\helper\TaxService;
 use Eloquent as Model;
 use App\Models\QuotationStatus;
 
@@ -384,7 +385,7 @@ class QuotationMaster extends Model
 
     protected $primaryKey = 'quotationMasterID';
 
-    protected $appends = ['quotation_last_status'];
+    protected $appends = ['quotation_last_status','isVatEligible'];
 
     public $fillable = [
         'documentSystemID',
@@ -473,7 +474,12 @@ class QuotationMaster extends Model
         'invoiceStatus',
         'deliveryStatus',
         'orderStatus',
-        'timestamp'
+        'timestamp',
+        'vatRegisteredYN',
+        'customerVATEligible',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt'
     ];
 
     /**
@@ -562,7 +568,12 @@ class QuotationMaster extends Model
         'isInSO' => 'integer',
         'invoiceStatus' => 'integer',
         'deliveryStatus' => 'integer',
-        'orderStatus' => 'integer'
+        'orderStatus' => 'integer',
+        'vatRegisteredYN' => 'integer',
+        'customerVATEligible' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
     ];
 
     /**
@@ -623,5 +634,8 @@ class QuotationMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'transactionCurrencyID', 'currencyID');
     }
 
-    
+    public function getIsVatEligibleAttribute()
+    {
+        return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN);
+    }
 }
