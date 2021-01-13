@@ -25,6 +25,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CompanyDocumentAttachment;
@@ -184,6 +185,9 @@ class QuotationMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+        }else{
+            $input['companyID'] = 0;
         }
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
@@ -243,6 +247,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->first();
         if ($customerGLCodeUpdate) {
 
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
             if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -399,7 +404,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -464,7 +469,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID', $input['companySystemID'])
             ->first();
         if ($customerGLCodeUpdate) {
-
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
             if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -493,13 +498,30 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         // updating header amounts
-        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount, COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, COALESCE(SUM(customerAmount),0) as totalCustomerAmount")
-            ->where('quotationMasterID', $id)->first();
+        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                                                     COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                                                     COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                                                     COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                                                     COALESCE(SUM(VATAmount),0) as totalVATAmount,
+                                                     COALESCE(SUM(VATAmountLocal),0) as totalVATAmountLocal,
+                                                     COALESCE(SUM(VATAmountRpt),0) as totalVATAmountRpt
+                                                     ")
+                                         ->where('quotationMasterID', $id)->first();
 
-        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount);
-        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount);
-        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount);
+        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
+        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
+        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
         $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
+
+        if(!TaxService::checkPOVATEligible($input['customerVATEligible'],$input['vatRegisteredYN'])){
+            $input['VATAmount'] = 0;
+            $input['VATAmountLocal'] = 0;
+            $input['VATAmountRpt'] = 0;
+        }else{
+            $input['VATAmount'] = \Helper::roundValue($totalAmount->totalVATAmount);
+            $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->totalVATAmountLocal);
+            $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->totalVATAmountRpt);
+        }
 
         if ($quotationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -1155,7 +1177,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError($quotOrSales.' is added to a sales order',500);
         }
 
-        $quotationMasterArray = $quotationMasterData->toArray();
+        $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
         unset($quotationMasterArray['quotation_last_status']);
         $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
 

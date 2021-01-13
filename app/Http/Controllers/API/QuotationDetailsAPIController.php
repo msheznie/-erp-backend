@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationDetailsAPIRequest;
 use App\Http\Requests\API\UpdateQuotationDetailsAPIRequest;
 use App\Models\ItemAssigned;
@@ -124,13 +125,13 @@ class QuotationDetailsAPIController extends AppBaseController
      */
     public function store(CreateQuotationDetailsAPIRequest $request)
     {
-        $input = $request->all();
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
+        $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
 
-        $companySystemID = $input['companySystemID'];
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
             ->where('companySystemID', $companySystemID)
@@ -154,6 +155,19 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
+        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
+        if (empty($unitMasterData)) {
+            return $this->sendError('Unit of Measure not found');
+        }
+        $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        $input['companyID'] = $company->CompanyID;
+
         $input['itemSystemCode'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
         $input['itemCategory'] = $item->financeCategoryMaster;
@@ -165,17 +179,22 @@ class QuotationDetailsAPIController extends AppBaseController
             $input['unittransactionAmount'] = round(\Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
         }
 
+        // Get VAT percentage for item
+        if ($quotationMasterData->isVatEligible) {
+            $vatDetails = TaxService::getVATDetailsByItem($quotationMasterData->companySystemID, $input['itemAutoID'], $quotationMasterData->customerSystemCode,0);
+            $input['VATPercentage'] = $vatDetails['percentage'];
+            $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['VATAmount'] = 0;
+            if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
+                $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+            }
+            $currencyConversionVAT = \Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
+
+            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
+
         $input['wacValueReporting'] = $item->wacValueReporting;
-
-        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
-        if ($unitMasterData) {
-            $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
-        }
-
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-        }
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
@@ -327,6 +346,12 @@ class QuotationDetailsAPIController extends AppBaseController
         $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['transactionAmount']);
 
         $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+
+        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
 
         $input['modifiedDateTime'] = Carbon::now();
         $input['modifiedPCID'] = gethostname();
