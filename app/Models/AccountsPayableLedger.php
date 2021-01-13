@@ -290,4 +290,24 @@ class AccountsPayableLedger extends Model
     {
         $this->attributes['documentDate'] = Helper::dateAddTime($value);
     }
+
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function transaction_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'comRptCurrencyID', 'currencyID');
+    }
+
+     public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierCodeSystem', 'supplierCodeSystem');
+    }
 }
