@@ -499,7 +499,7 @@ class SalesReturnAPIController extends AppBaseController
 
                 $data = array(
                     'companySystemID' => $salesReturn->companySystemID,
-                    'itemCodeSystem' => $salesReturn->itemCodeSystem,
+                    'itemCodeSystem' => $item->itemCodeSystem,
                     'wareHouseId' => $salesReturn->wareHouseSystemCode
                 );
 
@@ -880,6 +880,21 @@ class SalesReturnAPIController extends AppBaseController
         }
 
 
+        $checkOtherPrns = SalesReturnDetail::with(['master' => function ($query) {
+                                                    $query->where('approvedYN', 0);
+                                               }])
+                                               ->where('salesReturnID','!=', $input['salesReturnID'])
+                                               ->where('deliveryOrderID', $input['documentAutoID'])
+                                               ->whereHas('master', function($query) {
+                                                    $query->where('approvedYN', 0);
+                                               })
+                                               ->first();
+
+        if ($checkOtherPrns) {
+            return $this->sendError("There is a Sales Return (" . $checkOtherPrns->master->salesReturnCode . ") pending for approval for the Delivery Order you are trying to add. Please check again.", 500);
+        }
+
+
         DB::beginTransaction();
         try {
 
@@ -923,7 +938,7 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['companySystemID'] = $new['companySystemID'];
-                            // $invDetail_arr['documentSystemID'] = $new['companySystemID'];
+                            $invDetail_arr['documentSystemID'] = 87;
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
                             if(empty($item)){
@@ -941,8 +956,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                             $invDetail_arr['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $invDetail_arr['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                            $invDetail_arr['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                            $invDetail_arr['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            $invDetail_arr['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            $invDetail_arr['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
                             $invDetail_arr['convertionMeasureVal'] = 1;
 
                             $invDetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -1111,6 +1126,21 @@ class SalesReturnAPIController extends AppBaseController
 
         $salesReturn = SalesReturn::where('id', $salesReturnID)->first();
 
+
+        $checkOtherPrns = SalesReturnDetail::with(['master' => function ($query) {
+                                                    $query->where('approvedYN', 0);
+                                               }])
+                                               ->where('salesReturnID','!=', $input['salesReturnID'])
+                                               ->where('custInvoiceDirectAutoID', $input['documentAutoID'])
+                                               ->whereHas('master', function($query) {
+                                                    $query->where('approvedYN', 0);
+                                               })
+                                               ->first();
+
+        if ($checkOtherPrns) {
+            return $this->sendError("There is a Sales Return (" . $checkOtherPrns->master->salesReturnCode . ") pending for approval for the Sales Invoice you are trying to add. Please check again.", 500);
+        }
+
         DB::beginTransaction();
         try {
 
@@ -1172,8 +1202,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                             $invDetail_arr['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $invDetail_arr['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                            $invDetail_arr['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                            $invDetail_arr['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            $invDetail_arr['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            $invDetail_arr['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
                             $invDetail_arr['convertionMeasureVal'] = 1;
 
                             $invDetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -1637,7 +1667,7 @@ class SalesReturnAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $salesReturnID)
                                         ->where('companySystemID', $salesReturn->companySystemID)
                                         ->where('documentSystemID', $salesReturn->documentSystemID)
                                         ->delete();

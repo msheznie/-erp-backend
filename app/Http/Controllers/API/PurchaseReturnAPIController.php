@@ -1301,4 +1301,58 @@ class PurchaseReturnAPIController extends AppBaseController
         return $this->sendResponse($purchaseReturnMaster->toArray(), 'Purchase Return reopened successfully');
     }
 
+
+     public function purchaseReturnForGRV(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+            ->first();
+
+        if (empty($grvMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        //checking segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $grvMaster->serviceLineSystemID)
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        $purchaseReturn = PurchaseReturn::where('companySystemID', $companyID)
+                                        ->where('serviceLineSystemID', $grvMaster->serviceLineSystemID)
+                                        ->where('supplierID', $grvMaster->supplierID)
+                                        ->where('supplierTransactionCurrencyID', $grvMaster->supplierTransactionCurrencyID)
+                                        ->where('approved', -1)
+                                        ->where('confirmedYN', 1)
+                                        ->where('prClosedYN', 0)
+                                        ->where('grvRecieved', '<>', 2)
+                                        ->orderBy('purhaseReturnAutoID', 'DESC')
+                                        ->get();
+
+        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return Details retrieved successfully');
+    }
+
+    public function getPurchaseReturnDetailForGRV(Request $request)
+    {
+        $input = $request->all();
+        $purhaseReturnAutoID = $input['purhaseReturnAutoID'];
+
+        $detail = PurchaseReturnDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as prnQty,unitOfMeasure,purhaseReturnAutoID,purhasereturnDetailID,itemCode,receivedQty,companyID,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,grvDetailsID, grvAutoID'))
+            ->with(['unit' => function ($query) {
+            }])
+            ->where('purhaseReturnAutoID', $purhaseReturnAutoID)
+            ->where('GRVSelectedYN', 0)
+            ->where('goodsRecievedYN', '<>', 2)
+            ->get();
+
+        return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
+
+    }
 }

@@ -110,6 +110,7 @@ class GRVMaster extends Model
         'grvTypeID',
         'grvType',
         'companySystemID',
+        'pullType',
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -198,6 +199,7 @@ class GRVMaster extends Model
     protected $casts = [
         'grvAutoID' => 'integer',
         'grvTypeID' => 'integer',
+        'pullType' => 'integer',
         'grvType' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',

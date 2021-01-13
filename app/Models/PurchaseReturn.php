@@ -340,6 +340,8 @@ class PurchaseReturn extends Model
         'liabilityAccountSysemID',
         'liabilityAccount',
         'UnbilledGRVAccountSystemID',
+        'grvRecieved',
+        'prClosedYN',
         'UnbilledGRVAccount'
     ];
 
@@ -350,6 +352,8 @@ class PurchaseReturn extends Model
      */
     protected $casts = [
         'purhaseReturnAutoID' => 'integer',
+        'grvRecieved' => 'integer',
+        'prClosedYN' => 'integer',
         'companySystemID' => 'integer',
         'serviceLineCode' => 'string',
         'documentSystemID' => 'integer',

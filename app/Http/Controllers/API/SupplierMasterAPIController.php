@@ -1074,7 +1074,7 @@ class SupplierMasterAPIController extends AppBaseController
                     'registeredSupplierID' => $resMaster->id,
                     'currencyID' => $input['currency'],
                     'isAssigned' => -1,
-                    'isDefault' => 0,
+                    'isDefault' => -1,
                 ]; 
 
                 $resSupplierCurrency = RegisteredSupplierCurrency::create($supplierCurrencyData);
