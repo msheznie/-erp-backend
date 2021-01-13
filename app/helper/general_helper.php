@@ -2325,7 +2325,7 @@ class Helper
                     DB::commit();
                     return ['success' => true, 'message' => $userMessage];
                 } else {
-                    return ['success' => false, 'message' => 'Document is already approved'];
+                    return ['success' => false, 'message' => 'Level is already approved'];
                 }
             } else {
                 return ['success' => false, 'message' => 'No records found'];
