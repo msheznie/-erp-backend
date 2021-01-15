@@ -187,6 +187,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
+            $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
+
             $grvDetailsID = $input['grvDetailsID'];
             $grvDetails = GRVDetails::with(['grv_master'])->find($grvDetailsID);
             if ($grvDetails) {
@@ -269,9 +272,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                             $extension = $itemImgaeArr[0]['filetype'];
                             $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
 
-                            $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                            if ($awsPolicy) {
+                                $path = $input['companyID']. '/G_ERP/' .$input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                            } else {
+                                $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                            }
+
                             $data['itemPath'] = $path;
-                            Storage::disk('public')->put($path, $decodeFile);
+                            Storage::disk($disk)->put($path, $decodeFile);
                             $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
                         }
 
@@ -334,9 +342,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                                     $extension = $itemImgaeArr[0]['filetype'];
                                     $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
 
-                                    $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                                    if ($awsPolicy) {
+                                        $path = $input['companyID']. '/G_ERP/' .$input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                                    } else {
+                                        $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                                    }
                                     $data['itemPath'] = $path;
-                                    Storage::disk('public')->put($path, $decodeFile);
+                                    Storage::disk($disk)->put($path, $decodeFile);
                                     $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
                                 }
 
@@ -493,9 +505,16 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $extension = $itemImgaeArr[0]['filetype'];
                 $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
 
-                $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
+                $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
+
+                if ($awsPolicy) {
+                    $path = $input['companyID']. '/G_ERP/' .$input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                } else {
+                    $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                }
                 $data['itemPath'] = $path;
-                Storage::disk('public')->put($path, $decodeFile);
+                Storage::disk($disk)->put($path, $decodeFile);
                 $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
             }
 
@@ -782,9 +801,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $extension = $itemImgaeArr[0]['filetype'];
                 $data['itemPicture'] = $fixedAssetMaster->companyID . '_' . $fixedAssetMaster->documentID . '_' . $fixedAssetMaster['faID'] . '.' . $extension;
 
-                $path = $fixedAssetMaster->documentID . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
+                $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
+                $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
+
+                if ($awsPolicy) {
+                    $path = $fixedAssetMaster->companyID. '/G_ERP/' .$fixedAssetMaster->documentID . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
+                } else {
+                    $path = $fixedAssetMaster->documentID . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
+                }
+
                 $data['itemPath'] = $path;
-                Storage::disk('public')->put($path, $decodeFile);
+                Storage::disk($disk)->put($path, $decodeFile);
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);
 
                 if($fixedAssetMaster->approved == -1)
@@ -1668,10 +1695,11 @@ class FixedAssetMasterAPIController extends AppBaseController
             $decodeFile = base64_decode($excelUpload[0]['file']);
             $originalFileName = $excelUpload[0]['filename'];
 
-            Storage::disk('local')->put($originalFileName, $decodeFile);
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->first()->toArray();
 
             if (count($formatChk) > 0) {
@@ -1680,7 +1708,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('asset_description', 'serial_no'))->get()->toArray();
 
             $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
@@ -1768,7 +1796,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     FixedAssetMaster::insert($t);
                 }
             }
-            Storage::disk('local')->delete('app/' . $originalFileName);
+            Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
             return $this->sendResponse([], 'Assets uploaded successfully');
         } catch (\Exception $exception) {
@@ -1782,8 +1810,9 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function downloadAssetTemplate(Request $request)
     {
         $input = $request->all();
-        if ($exists = Storage::disk('public')->exists('asset_master_template/asset_upload_template.xlsx')) {
-            return Storage::disk('public')->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
         } else {
             return $this->sendError('Attachments not found', 500);
         }
