@@ -1267,6 +1267,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
             ->delete();
 
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($bookInvSuppMaster->documentSystemID,$bookingSuppMasInvAutoID,$input['reopenComments'],'Reopened');
+
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
 

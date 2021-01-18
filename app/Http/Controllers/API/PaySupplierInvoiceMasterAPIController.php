@@ -1843,7 +1843,7 @@ HAVING
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $payInvoice->companySystemID)
                 ->where('documentSystemID', $payInvoice->documentSystemID)
                 ->delete();
@@ -1917,6 +1917,9 @@ HAVING
                     }
                 }
             }
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($payInvoice->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
             return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher reopened successfully');
