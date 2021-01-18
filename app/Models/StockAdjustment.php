@@ -320,4 +320,9 @@ class StockAdjustment extends Model
         $this->attributes['stockAdjustmentDate'] = Helper::dateAddTime($value);
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockAdjustmentAutoID')->where('documentSystemID',7);
+    }
+
 }

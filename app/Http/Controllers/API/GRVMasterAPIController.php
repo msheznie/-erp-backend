@@ -1374,14 +1374,18 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $grvAutoID)
+            DocumentApproved::where('documentSystemCode', $grvAutoID)
                 ->where('companySystemID', $grvMasterData->companySystemID)
                 ->where('documentSystemID', $grvMasterData->documentSystemID)
                 ->delete();
 
-            $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
+            UnbilledGrvGroupBy::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
 
-            $unbilledGrv = UnbilledGRV::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
+            UnbilledGRV::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($grvMasterData->documentSystemID,$grvAutoID,$input['reopenComments'],'Reopened');
+
             DB::commit();
             return $this->sendResponse($grvMasterData->toArray(), 'Good Receipt Voucher reopened successfully');
         } catch (\Exception $e) {

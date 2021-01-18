@@ -37,6 +37,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\StockAdjustmentRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1041,10 +1042,13 @@ class StockAdjustmentAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $stockAdjustment->companySystemID)
             ->where('documentSystemID', $stockAdjustment->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($stockAdjustment->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment reopened successfully');
     }

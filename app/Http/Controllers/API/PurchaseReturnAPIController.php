@@ -47,6 +47,7 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseReturnRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1293,10 +1294,13 @@ class PurchaseReturnAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $purchaseReturnMaster->companySystemID)
             ->where('documentSystemID', $purchaseReturnMaster->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($purchaseReturnMaster->toArray(), 'Purchase Return reopened successfully');
     }

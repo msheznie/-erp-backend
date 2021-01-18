@@ -75,6 +75,6 @@ class MaterielRequestRepository extends BaseRepository
             $query->with(['employee' => function ($q) {
                 $q->with(['details.designation']);
             }])->where('documentSystemID',9);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 }

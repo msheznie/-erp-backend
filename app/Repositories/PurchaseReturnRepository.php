@@ -87,6 +87,6 @@ class PurchaseReturnRepository extends BaseRepository
                 $q->with(['details.designation']);
             }])
                 ->where('documentSystemID',24);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 }

@@ -29,6 +29,7 @@ use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\InventoryReclassificationRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Carbon;
@@ -928,10 +929,13 @@ class InventoryReclassificationAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $inventoryreclassificationID)
+            DocumentApproved::where('documentSystemCode', $inventoryreclassificationID)
                 ->where('companySystemID', $inventoryReclassification->companySystemID)
                 ->where('documentSystemID', $inventoryReclassification->documentSystemID)
                 ->delete();
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($inventoryReclassification->documentSystemID,$inventoryreclassificationID,$input['reopenComments'],'Reopened');
 
             DB::commit();
             return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory Reclassification reopened successfully');

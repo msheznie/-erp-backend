@@ -496,4 +496,9 @@ class ItemIssueMaster extends Model
     {
         $this->attributes['issueDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'itemIssueAutoID')->where('documentSystemID',8);
+    }
 }

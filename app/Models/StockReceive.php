@@ -384,4 +384,9 @@ class StockReceive extends Model
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockReceiveAutoID')->where('documentSystemID',10);
+    }
+
 }
