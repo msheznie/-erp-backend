@@ -1609,10 +1609,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+        DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
             ->where('companySystemID', $custReceivePaymentMaster->companySystemID)
             ->where('documentSystemID', $custReceivePaymentMaster->documentSystemID)
             ->delete();
+
+        AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
     }

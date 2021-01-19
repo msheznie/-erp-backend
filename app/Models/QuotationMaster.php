@@ -638,4 +638,9 @@ class QuotationMaster extends Model
     {
         return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'quotationMasterID')->whereIn('documentSystemID',[67,68]);
+    }
 }

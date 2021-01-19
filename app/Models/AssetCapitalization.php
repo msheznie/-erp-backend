@@ -358,4 +358,9 @@ class AssetCapitalization extends Model
         return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'capitalizationID')->where('documentSystemID',63);
+    }
+
 }

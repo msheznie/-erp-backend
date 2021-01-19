@@ -195,4 +195,9 @@ class BudgetMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetmasterID')->where('documentSystemID',65);
+    }
 }

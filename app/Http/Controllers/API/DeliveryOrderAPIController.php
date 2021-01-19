@@ -33,6 +33,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DeliveryOrderRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1039,7 +1040,7 @@ WHERE
         $data = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 71);
-        }, 'company'])->findWithoutFail($deliveryOrderID);
+        }, 'company','audit_trial.modified_by'])->findWithoutFail($deliveryOrderID);
 
 
         if (empty($data)) {
@@ -1137,10 +1138,13 @@ WHERE
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+        DocumentApproved::where('documentSystemCode', $deliveryOrderID)
             ->where('companySystemID', $deliveryOrder->companySystemID)
             ->where('documentSystemID', $deliveryOrder->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($deliveryOrder->documentSystemID,$deliveryOrderID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
     }

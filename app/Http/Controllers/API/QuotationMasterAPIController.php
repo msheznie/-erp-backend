@@ -56,6 +56,7 @@ use App\Models\ChartOfAccount;
 use App\Models\CustomerCurrency;
 use App\Models\QuotationStatusMaster;
 use App\Repositories\QuotationMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1134,10 +1135,13 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+        DocumentApproved::where('documentSystemCode', $quotationMasterID)
             ->where('companySystemID', $quotationMasterData->companySystemID)
             ->where('documentSystemID', $quotationMasterData->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($quotationMasterData->documentSystemID,$quotationMasterID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse('s', 'Sales quotation reopened successfully');
 
@@ -1334,7 +1338,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterdata = $this->quotationMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->whereIn('documentSystemID', [67, 68]);
-        }, 'company'])->findWithoutFail($quotationMasterID);
+        }, 'company','audit_trial.modified_by'])->findWithoutFail($quotationMasterID);
 
 
         if (empty($quotationMasterdata)) {

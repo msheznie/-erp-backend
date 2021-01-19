@@ -1414,10 +1414,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
+        DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
             ->where('companySystemID', $jvMasterData->companySystemID)
             ->where('documentSystemID', $jvMasterData->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$jvMasterAutoId,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($jvMasterData->toArray(), 'JV reopened successfully');
     }

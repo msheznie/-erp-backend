@@ -227,12 +227,76 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 67:
+            case 68: // Sales / quotation
+                $docInforArr["modelName"] = 'QuotationMaster';
+                $docInforArr["primarykey"] = 'quotationMasterID';
+                $docInforArr["documentCodeColumnName"] = 'quotationCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                break;
+            case 71: // DEO
+                $docInforArr["modelName"] = 'DeliveryOrder';
+                $docInforArr["primarykey"] = 'deliveryOrderID';
+                $docInforArr["documentCodeColumnName"] = 'deliveryOrderCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
             case 17: // JV
                 $docInforArr["modelName"] = 'JvMaster';
                 $docInforArr["primarykey"] = 'jvMasterAutoId';
                 $docInforArr["documentCodeColumnName"] = 'JVcode';
                 $docInforArr["companySystemID"] = 'companySystemID';
                 $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 46: // Budget Transfer Note - BTN
+                $docInforArr["modelName"] = 'BudgetTransferForm';
+                $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                $docInforArr["documentCodeColumnName"] = 'transferVoucherNo';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 65: // Budget
+                $docInforArr["modelName"] = 'BudgetMaster';
+                $docInforArr["primarykey"] = 'budgetmasterID';
+                $docInforArr["documentCodeColumnName"] = 'budgetmasterID';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
+            case 62: // BRC
+                $docInforArr["modelName"] = 'BankReconciliation';
+                $docInforArr["primarykey"] = 'bankRecAutoID';
+                $docInforArr["documentCodeColumnName"] = 'bankRecPrimaryCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
+            case 64: // PBT
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                $docInforArr["documentCodeColumnName"] = 'bankTransferDocumentCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
                 $docInforArr["documentSystemID"] = 'documentSystemID';
                 $docInforArr["documentID"] = 'documentID';
                 break;
@@ -269,6 +333,16 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 63: // ACA
+                $docInforArr["modelName"] = 'AssetCapitalization';
+                $docInforArr["primarykey"] = 'capitalizationID';
+                $docInforArr["documentCodeColumnName"] = 'capitalizationCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                break;
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -284,7 +358,7 @@ trait AuditTrial
             }
             $insertArray = [
                 'companySystemID' => $masterRec[$docInforArr["companySystemID"]],
-                'companyID' => $masterRec[$docInforArr["companyID"]],
+                'companyID' => isset($masterRec[$docInforArr["companyID"]])?$masterRec[$docInforArr["companyID"]]:null,
                 'serviceLineSystemID' => isset($masterRec[$docInforArr["serviceLineSystemID"]])?$masterRec[$docInforArr["serviceLineSystemID"]]:null,
                 'serviceLineCode' => isset($masterRec[$docInforArr["serviceLineCode"]])?$masterRec[$docInforArr["serviceLineCode"]]:null,
                 'documentSystemID' => $masterRec[$docInforArr["documentSystemID"]],
@@ -379,7 +453,6 @@ trait AuditTrial
             ];
             AuditTrail::create($insertArray);
         }
-
 
     }
 

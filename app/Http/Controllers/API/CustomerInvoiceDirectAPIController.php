@@ -2647,10 +2647,13 @@ GROUP BY
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+        DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $invoice->companySystemID)
             ->where('documentSystemID', $invoice->documentSystemiD)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($invoice->documentSystemiD,$custInvoiceDirectAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
     }
