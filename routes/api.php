@@ -1923,6 +1923,13 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
         Route::post('getApprovedSalesReturnForUser', 'SalesReturnAPIController@getApprovedSalesReturnForUser');
 
+        Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
+        Route::resource('so_payment_terms', 'SoPaymentTermsAPIController');
+        Route::get('getSalesOrderPaymentTerms', 'SoPaymentTermsAPIController@getSalesOrderPaymentTerms');
+        Route::resource('sales_order_adv_payments', 'SalesOrderAdvPaymentAPIController');
+        Route::get('soPaymentTermsAdvanceDetailView', 'SalesOrderAdvPaymentAPIController@soPaymentTermsAdvanceDetailView');
+        Route::get('getSoLogisticPrintDetail', 'SalesOrderAdvPaymentAPIController@getSoLogisticPrintDetail');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -1989,4 +1996,5 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
 
-Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
+
+
