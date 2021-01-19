@@ -614,7 +614,7 @@ class QuotationMasterAPIController extends AppBaseController
                 if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
 
                 } else {
-                    return $this->sendError('Payment terms total is not matching with the PO total');
+                    return $this->sendError('Payment terms total is not matching with the SO total');
                 }
 
                 $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
