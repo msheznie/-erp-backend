@@ -479,7 +479,9 @@ class QuotationMaster extends Model
         'customerVATEligible',
         'VATAmount',
         'VATAmountLocal',
-        'VATAmountRpt'
+        'VATAmountRpt',
+        'deliveryTerms',
+        'panaltyTerms'
     ];
 
     /**
@@ -574,6 +576,8 @@ class QuotationMaster extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
+        'deliveryTerms'  => 'string',
+        'panaltyTerms'  => 'string'
     ];
 
     /**
@@ -636,7 +640,7 @@ class QuotationMaster extends Model
 
     public function getIsVatEligibleAttribute()
     {
-        return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN);
+        return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN,$this->documentSystemID);
     }
 
     public function audit_trial()

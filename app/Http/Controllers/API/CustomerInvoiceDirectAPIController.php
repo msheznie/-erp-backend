@@ -1461,7 +1461,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
         $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
             $query->with(['rig']);
-        }])->where('companySystemID', $master->companySystemID)->where('customerSystemID', $master->customerID)->where('performaStatus', 0)->where('PerformaOpConfirmed', 1);
+        }])->where('companySystemID', $master->companySystemID)
+            ->where('customerSystemID', $master->customerID)
+            ->where('performaStatus', 0)
+            ->where('PerformaOpConfirmed', 1);
 
         $search = $request->input('search.value');
         if ($search) {

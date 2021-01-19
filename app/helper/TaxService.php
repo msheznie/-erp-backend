@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\DB;
 class TaxService
 {
 
-    public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0) {
+    public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0,$documentSystemID = 0) {
         //$vatRegisteredYN == 1 &
-        if($supplierVATEligible == 1 ){
+        if($supplierVATEligible == 1 && $documentSystemID != 67){ // 67 Quotation
             return true;
         }
         return false;

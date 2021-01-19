@@ -41,6 +41,8 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
+use App\Models\PoPaymentTerms;
+use App\Models\PoPaymentTermTypes;
 use App\Models\QuotationDetails;
 use App\Models\QuotationDetailsRefferedback;
 use App\Models\QuotationMaster;
@@ -49,6 +51,7 @@ use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
 use App\Models\SegmentMaster;
+use App\Models\SoPaymentTerms;
 use App\Models\YesNoSelection;
 use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
@@ -568,6 +571,70 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
+            //
+
+            if($quotationMaster->documentSystemID == 68){
+                //checking atleast one po payment terms should exist
+                $soPaymentTerms = SoPaymentTerms::where('soID', $id)
+                    ->count();
+
+                if ($soPaymentTerms == 0) {
+                    return $this->sendError('Sales Order should have at least one payment term');
+                }
+
+                // checking payment term amount value 0
+
+                $checkPoPaymentTermsAmount = SoPaymentTerms::where('soID', $id)
+                    ->where('comAmount', '<=', 0)
+                    ->count();
+
+                if ($checkPoPaymentTermsAmount > 0) {
+                    return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                }
+
+                //po payment terms exist
+                $PoPaymentTerms = SoPaymentTerms::where('soID', $id)
+                    ->where('LCPaymentYN', 2)
+                    ->where('isRequested', 0)
+                    ->first();
+
+                if (!empty($PoPaymentTerms)) {
+                    return $this->sendError('Advance payment request is pending');
+                }
+
+                //getting total sum of So Payment Terms
+                $paymentTotalSum = SoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+                    ->where('soID', $id)
+                    ->first();
+
+                $soMasterSumDeducted = $input['transactionAmount'];
+
+                //return floatval($soMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
+
+                //return $soMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
+                if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+                } else {
+                    return $this->sendError('Payment terms total is not matching with the SO total');
+                }
+
+                $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
+                    ->get();
+
+
+                if (!empty($poAdvancePaymentType)) {
+                    foreach ($poAdvancePaymentType as $payment) {
+                        $paymentPercentageAmount = ($payment['comPercentage'] / 100) * ($soMasterSumDeducted);
+
+                        if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+
+                        } else {
+                            return $this->sendError('Payment terms is not matching with the SO total');
+                        }
+                    }
+                }
+            }
+
             $input['RollLevForApp_curr'] = 1;
 
             unset($input['confirmedYN']);
@@ -693,7 +760,10 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationStatuses = QuotationStatusMaster::where('isAdmin', 0)->get();
 
-        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)
+                                  ->where('isActive', 1)
+                                  ->get();
+        $soPaymentTermsDrop = PoPaymentTermTypes::all();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -704,7 +774,8 @@ class QuotationMasterAPIController extends AppBaseController
             'quotationStatuses' => $quotationStatuses,
             'customer' => $customer,
             'salespersons' => $salespersons,
-            'segments' => $segments
+            'segments' => $segments,
+            'soPaymentTermsDrop' => $soPaymentTermsDrop
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
