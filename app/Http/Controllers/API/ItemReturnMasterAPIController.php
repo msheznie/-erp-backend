@@ -39,6 +39,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemReturnMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1120,10 +1121,13 @@ class ItemReturnMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $itemReturnMaster->companySystemID)
             ->where('documentSystemID', $itemReturnMaster->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($itemReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
     }

@@ -4288,10 +4288,13 @@ ORDER BY
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+        DocumentApproved::where('documentSystemCode', $purchaseOrderID)
             ->where('companySystemID', $purchaseOrder->companySystemID)
             ->where('documentSystemID', $purchaseOrder->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID,$purchaseOrderID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');
     }

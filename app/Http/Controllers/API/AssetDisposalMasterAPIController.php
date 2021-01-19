@@ -175,12 +175,12 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         unset($inputParam);
 
-        $input['documentDate'] = new Carbon($input['documentDate']);
+        $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
 
         $monthBegin = $input['FYPeriodDateFrom'];
         $monthEnd = $input['FYPeriodDateTo'];
 
-        if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
+        if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
         } else {
             return $this->sendError('Disposal date is not within financial period!', 500);
         }

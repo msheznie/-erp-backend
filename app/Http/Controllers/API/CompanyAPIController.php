@@ -246,6 +246,10 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
+
+        $disk = Helper::policyWiseDisk($input['masterCompanySystemIDReorting'], 'local_public');
+        $awsPolicy = Helper::checkPolicy($input['masterCompanySystemIDReorting'], 50);
+
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
@@ -268,9 +272,13 @@ class CompanyAPIController extends AppBaseController
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
-            $path = 'logos/' . $input['companyLogo'];
+            if ($awsPolicy) {
+                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
+            } else {
+                $path = 'logos/' . $input['companyLogo'];
+            }
 
-            Storage::disk('local_public')->put($path, $decodeFile);
+            Storage::disk($disk)->put($path, $decodeFile);
         }
 
 
@@ -355,6 +363,9 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
+        $disk = Helper::policyWiseDisk($company->companySystemID, 'local_public');
+        $awsPolicy = Helper::checkPolicy($company->companySystemID, 50);
+
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
@@ -377,13 +388,17 @@ class CompanyAPIController extends AppBaseController
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
-            $path = 'logos/' . $input['companyLogo'];
-
-            if ($exists = Storage::disk('local_public')->exists($path)) {
-                Storage::disk('local_public')->delete($path);
+            if ($awsPolicy) {
+                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
+            } else {
+                $path = 'logos/' . $input['companyLogo'];
             }
 
-            Storage::disk('local_public')->put($path, $decodeFile);
+            if ($exists = Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+
+            Storage::disk($disk)->put($path, $decodeFile);
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -540,6 +555,9 @@ class CompanyAPIController extends AppBaseController
 
         if (isset($input['companySystemID'])) {
 
+            $disk = Helper::policyWiseDisk($input['companySystemID'], 'local_public');
+            $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
+
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
 
             if ($companyMaster) {
@@ -549,9 +567,13 @@ class CompanyAPIController extends AppBaseController
 
                 $myFileName = $companyMaster->CompanyID.'_logo.' . $extension;
 
-                $path = 'logos/' . $myFileName;
+                if ($awsPolicy) {
+                    $path = $companyMaster->CompanyID.'/logos/' . $myFileName;
+                } else {
+                    $path = 'logos/' . $myFileName;
+                }
 
-                Storage::disk('local_public')->put($path, $decodeFile);
+                Storage::disk($disk)->put($path, $decodeFile);
 
                 $this->companyRepository->update(['companyLogo'=>$myFileName],$input['companySystemID']);
 

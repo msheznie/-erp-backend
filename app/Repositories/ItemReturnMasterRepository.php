@@ -76,7 +76,7 @@ class ItemReturnMasterRepository extends BaseRepository
         }, 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 12);
-        }])
+        },'audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

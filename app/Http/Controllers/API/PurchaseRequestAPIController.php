@@ -2292,10 +2292,13 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+        DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
             ->where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemID', $purchaseRequest->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$purchaseRequest->purchaseRequestID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request reopened successfully');
     }

@@ -224,6 +224,25 @@ class ErpItemLedger extends Model
         
     ];
 
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacLocalCurrencyID', 'currencyID');
+    }
 
-    
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacRptCurrencyID', 'currencyID');
+    }
+
+    public function service_line(){
+        return $this->belongsTo('App\Models\ServiceLine', 'serviceLineSystemID','serviceLineSystemID');
+    }
+
+    public function warehouse(){
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseSystemCode','wareHouseSystemCode');
+    }
+
+    public function uom(){
+        return $this->belongsTo('App\Models\Unit', 'unitOfMeasure','UnitID');
+    }
 }

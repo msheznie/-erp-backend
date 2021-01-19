@@ -14,6 +14,7 @@ use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Repositories\GRVDetailsRepository;
 use App\Repositories\GRVMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -66,183 +67,201 @@ class CreateDirectGRV implements ShouldQueue
                 $directGRV["serviceLineCode"] = $serviceLine->ServiceLineCode;
             }
 
-            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->toCompanySystemID)->where('bigginingDate', '<', $dpMaster->disposalDocumentDate)->where('endingDate', '>', $dpMaster->disposalDocumentDate)->first();
+            $disposalDocumentDate = (new Carbon($dpMaster->disposalDocumentDate))->format('Y-m-d');
 
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->toCompanySystemID)->where('departmentSystemID', 10)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', $dpMaster->disposalDocumentDate)->where('dateTo', '>', $dpMaster->disposalDocumentDate)->first();
-
-            $today = $dpMaster->disposalDocumentDate;
-            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode . ',' . $invoiceCode;
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->toCompanySystemID)
+                ->whereDate('bigginingDate', '<=', $disposalDocumentDate)
+                ->whereDate('endingDate', '>=', $disposalDocumentDate)
+                ->first();
 
             if (!empty($fromCompanyFinanceYear)) {
 
-                $directGRV['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
-                $directGRV['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->toCompanySystemID)
+                    ->where('departmentSystemID', 10)
+                    ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                    ->whereDate('dateFrom', '<=', $disposalDocumentDate)
+                    ->whereDate('dateTo', '>=', $disposalDocumentDate)
+                    ->first();
 
-                if (!empty($fromCompanyFinancePeriod)) {
+                if(!empty($fromCompanyFinancePeriod)){
+                    $today = $dpMaster->disposalDocumentDate;
+                    $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode . ',' . $invoiceCode;
+
+                    $directGRV['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
+                    $directGRV['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+
                     $directGRV['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
                     $directGRV['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
-                }
-            }
 
-            $directGRV['documentSystemID'] = 3;
-            $directGRV['documentID'] = 'GRV';
-            $grvLastSerial = GRVMaster::where('companySystemID', $dpMaster->toCompanySystemID)
-                ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                ->where('grvSerialNo', '>', 0)
-                ->orderBy('grvSerialNo', 'desc')
-                ->first();
+                    $directGRV['documentSystemID'] = 3;
+                    $directGRV['documentID'] = 'GRV';
+                    $grvLastSerial = GRVMaster::where('companySystemID', $dpMaster->toCompanySystemID)
+                        ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                        ->where('grvSerialNo', '>', 0)
+                        ->orderBy('grvSerialNo', 'desc')
+                        ->first();
 
-            $grvInvLastSerialNumber = 1;
-            if ($grvLastSerial) {
-                $grvInvLastSerialNumber = intval($grvLastSerial->grvSerialNo) + 1;
-            }
-            $directGRV['grvSerialNo'] = $grvInvLastSerialNumber;
-            if ($fromCompanyFinancePeriod) {
-                $grvStartYear = $fromCompanyFinanceYear->bigginingDate;
-                $grvFinYearExp = explode('-', $grvStartYear);
-                $grvFinYear = $grvFinYearExp[0];
-            } else {
-                $grvFinYear = date("Y");
-            }
-            $grvCode = ($dpMaster->toCompanyID . '\\' . $grvFinYear . '\\' . $directGRV['documentID'] . str_pad($grvInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $directGRV['grvPrimaryCode'] = $grvCode;
-            $directGRV['grvDate'] = $today;
-            $directGRV['stampDate'] = $today;
-            $directGRV['grvNarration'] = $comment;
-
-            $supplier = SupplierMaster::where('companyLinkedToSystemID', $dpMaster->companySystemID)->first();
-
-            if (!empty($supplier)) {
-                $directGRV['supplierID'] = $supplier->supplierCodeSystem;
-                $directGRV['supplierPrimaryCode'] = $supplier->primarySupplierCode;
-                $directGRV['supplierName'] = $supplier->supplierName;
-                $directGRV['supplierAddress'] = $supplier->address;
-                $directGRV['supplierTelephone'] = $supplier->telephone;
-                $directGRV['supplierFax'] = $supplier->fax;
-                $directGRV['supplierEmail'] = $supplier->supEmail;
-                $directGRV['liabilityAccountSysemID'] = $supplier->liabilityAccountSysemID;
-                $directGRV['liabilityAccount'] = $supplier->liabilityAccount;
-                $directGRV['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
-                $directGRV['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
-            }
-
-            $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
-            $toCompany = Company::where('companySystemID', $dpMaster->toCompanySystemID)->first();
-            $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, 0);
-
-            $directGRV['localCurrencyID'] = $toCompany->localCurrencyID;
-            $directGRV['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            $directGRV['companyReportingCurrencyID'] = $toCompany->reportingCurrency;
-            $directGRV['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-
-            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $supplier->supplierCodeSystem)
-                ->where('isDefault', -1)
-                ->first();
-
-            if ($supplierCurrency) {
-                $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-                $directGRV['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
-                if ($erCurrency) {
-                    $directGRV['supplierDefaultER'] = $erCurrency->ExchangeRate;
-                }
-            }
-
-            $directGRV['supplierTransactionCurrencyID'] = $fromCompany->reportingCurrency;
-            $directGRV['supplierTransactionER'] = 1;
-            $directGRV['interCompanyTransferYN'] = -1;
-            $directGRV['FromCompanyID'] = $dpMaster->companyID;
-            $directGRV['FromCompanySystemID'] = $dpMaster->companySystemID;
-            $directGRV['grvDoRefNo'] = $invoiceCode;
-
-            $directGRV['createdPcID'] = gethostname();
-            $directGRV['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
-            $directGRV['createdUserID'] = $dpMaster->confimedByEmpID;
-
-            Log::info($directGRV);
-            $grvMaster = $grvMasterRepo->create($directGRV);
-
-            $disposalDetail = AssetDisposalDetail::with(['item_by' => function ($query) {
-                $query->with('financeSubCategory');
-            }])->OfMaster($dpMaster->assetdisposalMasterAutoID)->get();
-
-            if ($disposalDetail) {
-                foreach ($disposalDetail as $val) {
-                    $directGRVDet['grvAutoID'] = $grvMaster['grvAutoID'];
-                    $directGRVDet['companySystemID'] = $dpMaster->toCompanySystemID;
-                    $directGRVDet['companyID'] = $dpMaster->toCompanyID;
-                    if ($serviceLine) {
-                        //$directGRVDet["serviceLineSystemID"] = $serviceLine->serviceLineSystemID;
-                        $directGRVDet["serviceLineCode"] = $serviceLine->ServiceLineCode;
+                    $grvInvLastSerialNumber = 1;
+                    if ($grvLastSerial) {
+                        $grvInvLastSerialNumber = intval($grvLastSerial->grvSerialNo) + 1;
                     }
-                    $directGRVDet['itemCode'] = $val->itemCode;
-                    $directGRVDet['itemPrimaryCode'] = $val->item_by->primaryCode;
-                    $directGRVDet['itemDescription'] = $val->item_by->itemDescription;
-                    $directGRVDet['itemFinanceCategoryID'] = $val->item_by->financeCategoryMaster;
-                    $directGRVDet['itemFinanceCategorySubID'] = $val->item_by->financeCategorySub;
-                    $directGRVDet['financeGLcodebBSSystemID'] = $val->item_by->financeSubCategory->financeGLcodebBSSystemID;
-                    $directGRVDet['financeGLcodebBS'] = $val->item_by->financeSubCategory->financeGLcodebBS;
-                    $directGRVDet['financeGLcodePLSystemID'] = $val->item_by->financeSubCategory->financeGLcodePLSystemID;
-                    $directGRVDet['financeGLcodePL'] = $val->item_by->financeSubCategory->financeGLcodePL;
-                    $directGRVDet['includePLForGRVYN'] = $val->item_by->financeSubCategory->includePLForGRVYN;
-                    $directGRVDet['supplierPartNumber'] = $val->item_by->secondaryItemCode;
-                    $directGRVDet['unitOfMeasure'] = 7;
-
-                    $directGRVDet['noQty'] = 1;
-                    $directGRVDet['prvRecievedQty'] = 1;
-                    $directGRVDet['poQty'] = 1;
-
-                    /*$comRptAmountDetail = 0;
-
-                    if (round($val->netBookValueRpt, 2) == 0) {
-                        $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
+                    $directGRV['grvSerialNo'] = $grvInvLastSerialNumber;
+                    if ($fromCompanyFinancePeriod) {
+                        $grvStartYear = $fromCompanyFinanceYear->bigginingDate;
+                        $grvFinYearExp = explode('-', $grvStartYear);
+                        $grvFinYear = $grvFinYearExp[0];
                     } else {
-                        $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
-                    }*/
+                        $grvFinYear = date("Y");
+                    }
+                    $grvCode = ($dpMaster->toCompanyID . '\\' . $grvFinYear . '\\' . $directGRV['documentID'] . str_pad($grvInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $directGRV['grvPrimaryCode'] = $grvCode;
+                    $directGRV['grvDate'] = $today;
+                    $directGRV['stampDate'] = $today;
+                    $directGRV['grvNarration'] = $comment;
 
-                    $comRptAmountDetail = $val->sellingPriceRpt;
+                    $supplier = SupplierMaster::where('companyLinkedToSystemID', $dpMaster->companySystemID)->first();
 
-                    $directGRVDet['unitCost'] = $comRptAmountDetail;
-                    $directGRVDet['netAmount'] = $comRptAmountDetail;
-                    $directGRVDet['comment'] = $val->faCode;
+                    if (!empty($supplier)) {
+                        $directGRV['supplierID'] = $supplier->supplierCodeSystem;
+                        $directGRV['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                        $directGRV['supplierName'] = $supplier->supplierName;
+                        $directGRV['supplierAddress'] = $supplier->address;
+                        $directGRV['supplierTelephone'] = $supplier->telephone;
+                        $directGRV['supplierFax'] = $supplier->fax;
+                        $directGRV['supplierEmail'] = $supplier->supEmail;
+                        $directGRV['liabilityAccountSysemID'] = $supplier->liabilityAccountSysemID;
+                        $directGRV['liabilityAccount'] = $supplier->liabilityAccount;
+                        $directGRV['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
+                        $directGRV['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
+                    }
+
+                    $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
+                    $toCompany = Company::where('companySystemID', $dpMaster->toCompanySystemID)->first();
+                    $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, 0);
+
+                    $directGRV['localCurrencyID'] = $toCompany->localCurrencyID;
+                    $directGRV['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $directGRV['companyReportingCurrencyID'] = $toCompany->reportingCurrency;
+                    $directGRV['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+
+                    $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $supplier->supplierCodeSystem)
+                        ->where('isDefault', -1)
+                        ->first();
+
                     if ($supplierCurrency) {
                         $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-                        $directGRVDet['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+                        $directGRV['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
                         if ($erCurrency) {
-                            $directGRVDet['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                            $directGRV['supplierDefaultER'] = $erCurrency->ExchangeRate;
                         }
                     }
 
-                    $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $comRptAmountDetail);
+                    $directGRV['supplierTransactionCurrencyID'] = $fromCompany->reportingCurrency;
+                    $directGRV['supplierTransactionER'] = 1;
+                    $directGRV['interCompanyTransferYN'] = -1;
+                    $directGRV['FromCompanyID'] = $dpMaster->companyID;
+                    $directGRV['FromCompanySystemID'] = $dpMaster->companySystemID;
+                    $directGRV['grvDoRefNo'] = $invoiceCode;
 
-                    $directGRVDet['supplierDefaultCurrencyID'] = $grvMaster['supplierDefaultCurrencyID'];
-                    $directGRVDet['supplierDefaultER'] = $grvMaster['supplierDefaultER'];
-                    $directGRVDet['supplierItemCurrencyID'] = $grvMaster['supplierTransactionCurrencyID'];
-                    $directGRVDet['foreignToLocalER'] = $grvMaster['supplierTransactionER'];
-                    $directGRVDet['companyReportingCurrencyID'] = $grvMaster['companyReportingCurrencyID'];
-                    $directGRVDet['companyReportingER'] = $grvMaster['companyReportingER'];
-                    $directGRVDet['localCurrencyID'] = $grvMaster['localCurrencyID'];
-                    $directGRVDet['localCurrencyER'] = $grvMaster['localCurrencyER'];
+                    $directGRV['createdPcID'] = gethostname();
+                    $directGRV['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+                    $directGRV['createdUserID'] = $dpMaster->confimedByEmpID;
 
-                    $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-                    $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-                    $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comRptAmountDetail);
-                    $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
-                    $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-                    $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail);
-                    $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+                    Log::info($directGRV);
+                    $grvMaster = $grvMasterRepo->create($directGRV);
 
-                    $directGRVDet['createdPcID'] = gethostname();
-                    $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
-                    $directGRVDet['createdUserID'] = $dpMaster->confimedByEmpID;
-                    Log::info($directGRVDet);
-                    $item = $grvDetailsRepository->create($directGRVDet);
+                    $disposalDetail = AssetDisposalDetail::with(['item_by' => function ($query) {
+                        $query->with('financeSubCategory');
+                    }])->OfMaster($dpMaster->assetdisposalMasterAutoID)->get();
+
+                    if ($disposalDetail) {
+                        foreach ($disposalDetail as $val) {
+                            $directGRVDet['grvAutoID'] = $grvMaster['grvAutoID'];
+                            $directGRVDet['companySystemID'] = $dpMaster->toCompanySystemID;
+                            $directGRVDet['companyID'] = $dpMaster->toCompanyID;
+                            if ($serviceLine) {
+                                //$directGRVDet["serviceLineSystemID"] = $serviceLine->serviceLineSystemID;
+                                $directGRVDet["serviceLineCode"] = $serviceLine->ServiceLineCode;
+                            }
+                            $directGRVDet['itemCode'] = $val->itemCode;
+                            $directGRVDet['itemPrimaryCode'] = $val->item_by->primaryCode;
+                            $directGRVDet['itemDescription'] = $val->item_by->itemDescription;
+                            $directGRVDet['itemFinanceCategoryID'] = $val->item_by->financeCategoryMaster;
+                            $directGRVDet['itemFinanceCategorySubID'] = $val->item_by->financeCategorySub;
+                            $directGRVDet['financeGLcodebBSSystemID'] = $val->item_by->financeSubCategory->financeGLcodebBSSystemID;
+                            $directGRVDet['financeGLcodebBS'] = $val->item_by->financeSubCategory->financeGLcodebBS;
+                            $directGRVDet['financeGLcodePLSystemID'] = $val->item_by->financeSubCategory->financeGLcodePLSystemID;
+                            $directGRVDet['financeGLcodePL'] = $val->item_by->financeSubCategory->financeGLcodePL;
+                            $directGRVDet['includePLForGRVYN'] = $val->item_by->financeSubCategory->includePLForGRVYN;
+                            $directGRVDet['supplierPartNumber'] = $val->item_by->secondaryItemCode;
+                            $directGRVDet['unitOfMeasure'] = 7;
+
+                            $directGRVDet['noQty'] = 1;
+                            $directGRVDet['prvRecievedQty'] = 1;
+                            $directGRVDet['poQty'] = 1;
+
+                            /*$comRptAmountDetail = 0;
+
+                            if (round($val->netBookValueRpt, 2) == 0) {
+                                $comRptAmountDetail = $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
+                            } else {
+                                $comRptAmountDetail = ($val->netBookValueRpt + (($val->netBookValueRpt) * ($dpMaster->revenuePercentage / 100)));
+                            }*/
+
+                            $comRptAmountDetail = $val->sellingPriceRpt;
+
+                            $directGRVDet['unitCost'] = $comRptAmountDetail;
+                            $directGRVDet['netAmount'] = $comRptAmountDetail;
+                            $directGRVDet['comment'] = $val->faCode;
+                            if ($supplierCurrency) {
+                                $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+                                $directGRVDet['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+                                if ($erCurrency) {
+                                    $directGRVDet['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                                }
+                            }
+
+                            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $comRptAmountDetail);
+
+                            $directGRVDet['supplierDefaultCurrencyID'] = $grvMaster['supplierDefaultCurrencyID'];
+                            $directGRVDet['supplierDefaultER'] = $grvMaster['supplierDefaultER'];
+                            $directGRVDet['supplierItemCurrencyID'] = $grvMaster['supplierTransactionCurrencyID'];
+                            $directGRVDet['foreignToLocalER'] = $grvMaster['supplierTransactionER'];
+                            $directGRVDet['companyReportingCurrencyID'] = $grvMaster['companyReportingCurrencyID'];
+                            $directGRVDet['companyReportingER'] = $grvMaster['companyReportingER'];
+                            $directGRVDet['localCurrencyID'] = $grvMaster['localCurrencyID'];
+                            $directGRVDet['localCurrencyER'] = $grvMaster['localCurrencyER'];
+
+                            $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
+                            $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
+                            $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comRptAmountDetail);
+                            $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+                            $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
+                            $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comRptAmountDetail);
+                            $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+
+                            $directGRVDet['createdPcID'] = gethostname();
+                            $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+                            $directGRVDet['createdUserID'] = $dpMaster->confimedByEmpID;
+                            Log::info($directGRVDet);
+                            $item = $grvDetailsRepository->create($directGRVDet);
+                        }
+                        DB::commit();
+                    }
+                }else{
+                    Log::info('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
+                    Log::info('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
                 }
-                DB::commit();
+
+            }else{
+                Log::info('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
             }
+
+
         } catch
         (\Exception $e) {
             DB::rollback();
-            Log::error($e->getMessage());
+            Log::error($this->failed($e));
         }
     }
 }

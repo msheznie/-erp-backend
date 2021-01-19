@@ -1154,15 +1154,26 @@ class SupplierMasterAPIController extends AppBaseController
                         'sizeInKbs' => isset($fileData['sizeInKbs']) ? $fileData['sizeInKbs'] : null,
                     ];
 
+                    $companyMaster = Company::where('companySystemID', $checkHash->companySystemID)->first();
+                    if ($companyMaster) {
+                        $companyID = $companyMaster->CompanyID;
+                    }
+
                     $documentAttachments = RegisteredSupplierAttachment::create($attachmentData);
 
                     $decodeFile = base64_decode($file);
 
                     $updateData['myFileName'] = $resMaster->id . '_' . $documentAttachments->id . '.' . $extension;
 
-                    $path = 'registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    $disk = Helper::policyWiseDisk($checkHash->companySystemID, 'public');
 
-                    Storage::disk('public')->put($path, $decodeFile);
+                    if (Helper::checkPolicy($checkHash->companySystemID, 50)) {
+                        $path = $companyID.'/G_ERP/registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    } else {
+                        $path = 'registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    }
+
+                    Storage::disk($disk)->put($path, $decodeFile);
 
                     $updateData['isUploaded'] = 1;
                     $updateData['path'] = $path;
@@ -1380,9 +1391,16 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Attachments not found');
         }
 
+        $supplierData = RegisteredSupplier::find($documentAttachments->resgisteredSupplierID);
+        if (!$supplierData) {
+            return $this->sendError('Supplier Data not found');
+        }
+
+        $disk = Helper::policyWiseDisk($supplierData->companySystemID, 'public');
+
         if(!is_null($documentAttachments->path)) {
-            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            if ($exists = Storage::disk($disk)->exists($documentAttachments->path)) {
+                return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }

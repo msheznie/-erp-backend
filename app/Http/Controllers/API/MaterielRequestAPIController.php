@@ -38,6 +38,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MaterielRequestRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -892,10 +893,13 @@ class MaterielRequestAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $requestID)
+        DocumentApproved::where('documentSystemCode', $requestID)
                                         ->where('companySystemID', $materielRequest->companySystemID)
                                         ->where('documentSystemID', $materielRequest->documentSystemID)
                                         ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($materielRequest->documentSystemID,$requestID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($materielRequest->toArray(), 'Request reopened successfully');
     }

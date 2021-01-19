@@ -484,4 +484,9 @@ class PurchaseReturn extends Model
     {
         $this->attributes['purchaseReturnDate'] = Helper::dateAddTime($value);
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purhaseReturnAutoID')->where('documentSystemID',24);
+    }
 }

@@ -41,6 +41,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\StockTransferDetails;
 use App\Repositories\StockTransferRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1243,10 +1244,13 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $stockTransfer->companySystemID)
             ->where('documentSystemID', $stockTransfer->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($stockTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer reopened successfully');
     }

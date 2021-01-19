@@ -316,9 +316,50 @@ class GeneralLedgerAPIController extends AppBaseController
             return $this->sendError('General Ledger not found');
         }
 
+        $accountPaybaleLedgerData = AccountsPayableLedger::with(['supplier','local_currency', 'transaction_currency', 'reporting_currency'])
+                                                         ->where('documentSystemID', $request->documentSystemID)
+                                                         ->where('documentSystemCode', $request->autoID)
+                                                         ->where('companySystemID', $request->companySystemID)
+                                                         ->get();
+
+
+        $accountReceviableLedgerData = AccountsReceivableLedger::with(['customer', 'local_currency', 'transaction_currency', 'reporting_currency'])
+                                                         ->where('documentSystemID', $request->documentSystemID)
+                                                         ->where('documentCodeSystem', $request->autoID)
+                                                         ->where('companySystemID', $request->companySystemID)
+                                                         ->get();
+
+        $itemLedgerData = ErpItemLedger::with(['service_line', 'warehouse', 'uom', 'local_currency', 'reporting_currency'])
+                                       ->where('documentSystemID', $request->documentSystemID)
+                                       ->where('documentSystemCode', $request->autoID)
+                                       ->where('companySystemID', $request->companySystemID)
+                                       ->get();
+
+        $unbilledLedgerData = [];
+        if (in_array($request->documentSystemID, [3, 24])) {
+            $unbilledLedgerData = UnbilledGrvGroupBy::with(['supplier', 'pomaster', 'grvmaster', 'local_currency', 'transaction_currency', 'reporting_currency'])
+                                                    ->where('companySystemID', $request->companySystemID);
+
+            if ($request->documentSystemID == 3) {
+                $unbilledLedgerData = $unbilledLedgerData->where('grvAutoID', $request->autoID);
+            } else {
+                $unbilledLedgerData = $unbilledLedgerData->where('purhaseReturnAutoID', $request->autoID);
+            }
+            
+            $unbilledLedgerData = $unbilledLedgerData->get();
+        }
+
+
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
-        $generalLedger = ['outputData' => $generalLedger->toArray(), 'companyCurrency' => $companyCurrency];
+        $generalLedger = [
+                'outputData' => $generalLedger->toArray(), 
+                'companyCurrency' => $companyCurrency,
+                'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
+                'accountReceviableLedgerData' => $accountReceviableLedgerData,
+                'itemLedgerData' => $itemLedgerData,
+                'unbilledLedgerData' => $unbilledLedgerData
+            ];
 
         return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
     }

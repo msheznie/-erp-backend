@@ -201,6 +201,21 @@ class UnbilledGrvGroupBy extends Model
         
     ];
 
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function transaction_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
     public function pomaster()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
@@ -209,6 +224,12 @@ class UnbilledGrvGroupBy extends Model
     public function grvmaster()
     {
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
     }
 
     public function detail()

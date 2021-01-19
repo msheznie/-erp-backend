@@ -1631,6 +1631,10 @@ class Helper
                     }
                 }
 
+                if ($docApproved->rejectedYN == -1) {
+                    return ['success' => false, 'message' => 'Level is already rejected'];
+                }
+
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -2325,7 +2329,7 @@ class Helper
                     DB::commit();
                     return ['success' => true, 'message' => $userMessage];
                 } else {
-                    return ['success' => false, 'message' => 'Document is already approved'];
+                    return ['success' => false, 'message' => 'Level is already approved'];
                 }
             } else {
                 return ['success' => false, 'message' => 'No records found'];
@@ -2730,6 +2734,11 @@ class Helper
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApprove) {
+
+                if ($docApprove->approvedYN == -1) {
+                    return ['success' => false, 'message' => 'Level is already approved'];
+                }
+
                 //check document is already rejected
                 $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
@@ -2755,13 +2764,13 @@ class Helper
                             $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $confirmedUser = $currentApproved->docConfirmedByEmpSystemID;
-//                                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
-//                                    ->where('documentSystemID', $currentApproved->documentSystemID)
-//                                    ->first();
-//
-//                                if (empty($companyDocument)) {
-//                                    return ['success' => false, 'message' => 'Policy not found for this document'];
-//                                }
+                               // $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                               //     ->where('documentSystemID', $currentApproved->documentSystemID)
+                               //     ->first();
+
+                               // if (empty($companyDocument)) {
+                               //     return ['success' => false, 'message' => 'Policy not found for this document'];
+                               // }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
@@ -2815,7 +2824,7 @@ class Helper
                     DB::commit();
                     return ['success' => true, 'message' => 'Document is successfully rejected'];
                 } else {
-                    return ['success' => false, 'message' => 'Document is already rejected'];
+                    return ['success' => false, 'message' => 'Level is already rejected'];
                 }
             } else {
                 return ['success' => false, 'message' => 'No record found'];
@@ -4913,5 +4922,20 @@ class Helper
             ->where('companyPolicyCategoryID', $policyId)
             ->where('isYesNO',1)
             ->exists();
+    }
+
+    public static function policyWiseDisk($companySystemID, $currentDisk = null)
+    {
+        $awsPolicy = self::checkPolicy($companySystemID, 50);
+
+        if ($awsPolicy) {
+            return 's3';
+        } else {
+            if (is_null($currentDisk)) {
+                return 'public';
+            } else {
+                return $currentDisk;
+            }
+        }
     }
 }

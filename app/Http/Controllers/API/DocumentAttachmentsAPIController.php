@@ -18,6 +18,7 @@ use App\Http\Requests\API\CreateDocumentAttachmentsAPIRequest;
 use App\Http\Requests\API\UpdateDocumentAttachmentsAPIRequest;
 use App\Models\Company;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Repositories\DocumentAttachmentsRepository;
@@ -29,6 +30,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Symfony\Component\Finder\SplFileInfo;
+use App\helper\Helper;
 
 /**
  * Class DocumentAttachmentsController
@@ -84,8 +86,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if(!is_null($documentAttachments->path)) {
-            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
+                return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
@@ -186,12 +188,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
             }
         }
 
+        $companyID = "";
         if (isset($input['companySystemID'])) {
 
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
 
             if ($companyMaster) {
                 $input['companyID'] = $companyMaster->CompanyID;
+                $companyID = $companyMaster->CompanyID;
             }
         }
 
@@ -206,10 +210,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
         }
 
-        $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
 
-
-        Storage::disk('public')->put($path, $decodeFile);
+        if (Helper::checkPolicy($input['companySystemID'], 50)) {
+            $path = $companyID. '/G_ERP/' .$documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        } else {
+            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        }
+        
+        Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
 
         $input['isUploaded'] = 1;
         $input['path'] = $path;
@@ -291,6 +299,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $path = $documentAttachments->path;
 
+        $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
+
         $attachment = DocumentAttachments::where('attachmentID', $id)
             ->first();
 
@@ -305,9 +315,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if($attachment['pullFromAnotherDocument'] == 0){
-            if ($exists = Storage::disk('public')->exists($path)) {
+            if ($exists = Storage::disk($disk)->exists($path)) {
                 $documentAttachments->delete();
-                Storage::disk('public')->delete($path);
+                Storage::disk($disk)->delete($path);
             } else {
                 $documentAttachments->delete();
             }

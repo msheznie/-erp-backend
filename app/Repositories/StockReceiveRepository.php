@@ -79,6 +79,6 @@ class StockReceiveRepository extends BaseRepository
         }, 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 10);
-        }])->findWithoutFail($id);
+        },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 }
