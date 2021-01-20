@@ -937,10 +937,13 @@ class CreditNoteAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
+        DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
             ->where('companySystemID', $creditnote->companySystemID)
             ->where('documentSystemID', $creditnote->documentSystemiD)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($creditnote->documentSystemiD,$creditNoteAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse('s', 'Credit note reopened successfully');
 

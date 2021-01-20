@@ -33,6 +33,7 @@ use App\Models\PaymentBankTransferRefferedBack;
 use App\Models\SupplierMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1214,10 +1215,13 @@ class PaymentBankTransferAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $bankTransfer->companySystemID)
             ->where('documentSystemID', $bankTransfer->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($bankTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer reopened successfully');
     }

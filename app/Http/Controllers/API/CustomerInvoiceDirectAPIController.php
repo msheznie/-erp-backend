@@ -1462,7 +1462,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
         $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
             $query->with(['rig']);
-        }])->where('companySystemID', $master->companySystemID)->where('customerSystemID', $master->customerID)->where('performaStatus', 0)->where('PerformaOpConfirmed', 1);
+        }])->where('companySystemID', $master->companySystemID)
+            ->where('customerSystemID', $master->customerID)
+            ->where('performaStatus', 0)
+            ->where('PerformaOpConfirmed', 1);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2655,10 +2658,13 @@ GROUP BY
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+        DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $invoice->companySystemID)
             ->where('documentSystemID', $invoice->documentSystemiD)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($invoice->documentSystemiD,$custInvoiceDirectAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
     }

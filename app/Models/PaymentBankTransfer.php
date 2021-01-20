@@ -258,5 +258,10 @@ class PaymentBankTransfer extends Model
     {
         return $this->hasMany('App\Models\BankLedger', 'paymentBankTransferID', 'paymentBankTransferID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'paymentBankTransferID')->where('documentSystemID',64);
+    }
     
 }

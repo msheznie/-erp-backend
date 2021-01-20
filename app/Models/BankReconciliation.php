@@ -292,4 +292,9 @@ class BankReconciliation extends Model
     {
         return $this->hasMany('App\Models\BankLedger', 'bankRecAutoID', 'bankRecAutoID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'bankRecAutoID')->where('documentSystemID',62);
+    }
 }

@@ -820,10 +820,13 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $assetDisposal->companySystemID)
                 ->where('documentSystemID', $assetDisposal->documentSystemID)
                 ->delete();
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($assetDisposal->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
             return $this->sendResponse($assetDisposal->toArray(), 'Asset disposal reopened successfully');

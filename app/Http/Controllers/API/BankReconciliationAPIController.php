@@ -37,6 +37,7 @@ use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\YesNoSelection;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1179,10 +1180,13 @@ class BankReconciliationAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $bankReconciliation->companySystemID)
             ->where('documentSystemID', $bankReconciliation->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($bankReconciliation->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation reopened successfully');
     }

@@ -39,6 +39,7 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -999,10 +1000,13 @@ class BudgetMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $budget->companySystemID)
             ->where('documentSystemID', $budget->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($budget->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($budget->toArray(), 'Budget reopened successfully');
     }

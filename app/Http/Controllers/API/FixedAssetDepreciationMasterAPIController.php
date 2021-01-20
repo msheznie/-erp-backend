@@ -634,10 +634,13 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $fixedAssetDep->companySystemID)
                 ->where('documentSystemID', $fixedAssetDep->documentSystemID)
                 ->delete();
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($fixedAssetDep->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
             return $this->sendResponse($fixedAssetDep->toArray(), 'Asset depreciation reopened successfully');
