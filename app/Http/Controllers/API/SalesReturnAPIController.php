@@ -36,6 +36,7 @@ use Carbon\Carbon;
 use App\helper\inventory;
 use App\helper\Helper;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 /**
@@ -1547,12 +1548,15 @@ class SalesReturnAPIController extends AppBaseController
 
         $do->docRefNo = Helper::getCompanyDocRefNo($do->companySystemID, $do->documentSystemID);
         $do->logoExists = false;
-        $companyLogo = isset($do->company->companyLogo)?"logos/".$do->company->companyLogo:'';
+        $companyLogo = isset($do->company->logo_url)? $do->company->logo_url:'';
 
-        if (file_exists($companyLogo)) {
+        $disk = Helper::policyWiseDisk($do->company->masterCompanySystemIDReorting, 'local_public');
+
+        $logoExists = Storage::disk($disk)->exists($do->company->companyLogo);
+        if ($logoExists) {
             $do->logoExists = true;
             $do->companyLogo = $companyLogo;
-        }
+        }      
 
         $array = array('entity' => $do);
         $time = strtotime("now");

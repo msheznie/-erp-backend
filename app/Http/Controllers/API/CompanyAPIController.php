@@ -278,6 +278,7 @@ class CompanyAPIController extends AppBaseController
                 $path = 'logos/' . $input['companyLogo'];
             }
 
+            $input['companyLogo'] = $path;
             Storage::disk($disk)->put($path, $decodeFile);
         }
 
@@ -363,8 +364,8 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
-        $disk = Helper::policyWiseDisk($company->companySystemID, 'local_public');
-        $awsPolicy = Helper::checkPolicy($company->companySystemID, 50);
+        $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
+        $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
 
         /*image upload*/
         $attachment = $input['nextAttachment'];
@@ -397,6 +398,9 @@ class CompanyAPIController extends AppBaseController
             if ($exists = Storage::disk($disk)->exists($path)) {
                 Storage::disk($disk)->delete($path);
             }
+
+
+            $input['companyLogo'] = $path;
 
             Storage::disk($disk)->put($path, $decodeFile);
         }
@@ -498,6 +502,7 @@ class CompanyAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->rawColumns(['logo_url'])
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
@@ -555,11 +560,11 @@ class CompanyAPIController extends AppBaseController
 
         if (isset($input['companySystemID'])) {
 
-            $disk = Helper::policyWiseDisk($input['companySystemID'], 'local_public');
-            $awsPolicy = Helper::checkPolicy($input['companySystemID'], 50);
 
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
 
+            $disk = Helper::policyWiseDisk($companyMaster->masterCompanySystemIDReorting, 'local_public');
+            $awsPolicy = Helper::checkPolicy($companyMaster->masterCompanySystemIDReorting, 50);
             if ($companyMaster) {
 
                 $file = $request->request->get('file');
@@ -573,6 +578,7 @@ class CompanyAPIController extends AppBaseController
                     $path = 'logos/' . $myFileName;
                 }
 
+                $myFileName = $path;
                 Storage::disk($disk)->put($path, $decodeFile);
 
                 $this->companyRepository->update(['companyLogo'=>$myFileName],$input['companySystemID']);

@@ -189,7 +189,7 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    <img src="logos/{{$request->company->companyLogo}}" width="180px" height="60px"></td>
+                    <img src="{{$request->company->logo_url}}" width="180px" height="60px"></td>
 
                 <td width="50%" style="text-align: center">
                     <div class="text-center">

@@ -77,6 +77,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class CustomerInvoiceDirectController
@@ -505,9 +506,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (isset($input['secondaryLogoCompanySystemID']) && $input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompID'] != '') {
-                $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $_post['secondaryLogoCompID'] = $company->CompanyID;
-                $_post['secondaryLogo'] = $company->companyLogo;
+                $_post['secondaryLogo'] = $company->logo_url;
             } else {
                 $_post['secondaryLogoCompID'] = NULL;
                 $_post['secondaryLogo'] = NULL;
@@ -1940,7 +1941,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $vatRegistratonNumber = '';
         $CompanyFax = '';
         if ($company) {
-            $companyLogo = $company->companyLogo;
+            $companyLogo = $company->logo_url;
             $CompanyName = $company->CompanyName;
             $vatRegistratonNumber = $company->vatRegistratonNumber;
             $CompanyFax = $company->CompanyFax;
@@ -1968,7 +1969,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $vatRegistratonNumber = $company->vatRegistratonNumber;
                 $CompanyAddress = $company->CompanyAddress;
                 $CompanyAddressSecondaryLanguage = $company->CompanyAddressSecondaryLanguage;
-                $companyLogo = $company->companyLogo;
+                $companyLogo = $company->logo_url;
                 $CompanyCountry = $company->country->countryName;
             }
 
@@ -2252,10 +2253,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->accountIBAN = $accountIBAN;
         $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
+        $awsPolicy = Helper::checkPolicy($companySystemID, 50);
 
         $customerInvoice->logoExists = false;
-        if (file_exists('logos/' . $customerInvoice->companyLogo)) {
-            $customerInvoice->logoExists = true;
+        if ($awsPolicy) {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->companyLogo)) {
+                $customerInvoice->logoExists = true;
+            }            
+        } else {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($customerInvoice->companyLogo)) {
+                $customerInvoice->logoExists = true;
+            }      
         }
 
         $directTraSubTotal = 0;

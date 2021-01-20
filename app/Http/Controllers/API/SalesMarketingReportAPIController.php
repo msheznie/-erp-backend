@@ -244,7 +244,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $customerName = CustomerMaster::find($request->singleCustomer);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $output = $this->getCustomerStatementAccountQRY($request);
 
@@ -292,7 +292,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -324,7 +324,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $currency = $request->currencyID;
                     $currencyId = 2;
@@ -385,7 +385,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerAgingSummaryQRY($request);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $outputArr = array();
                     $grandTotalArr = array();
@@ -427,7 +427,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerAgingDetailQRY($request);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $outputArr = array();
                     $customerCreditDays = array();
@@ -476,7 +476,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerCollectionQRY($request);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $outputArr = array();
 

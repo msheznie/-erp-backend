@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\helper\Helper;
 
 /**
  * Class Company
@@ -100,9 +101,8 @@ class Company extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'companySystemID';
 
-
+    protected $appends = ['logo_url'];
     protected $dates = ['deleted_at'];
-
 
     public $fillable = [
         'CompanyID',
@@ -270,6 +270,17 @@ class Company extends Model
     public static $rules = [
         
     ];
+
+    public function getLogoUrlAttribute(){
+
+        $awsPolicy = Helper::checkPolicy($this->masterCompanySystemIDReorting, 50);
+
+        if ($awsPolicy) {
+            return Helper::getFileUrlFromS3($this->companyLogo);    
+        } else {
+            return $this->companyLogo;
+        }
+    }
 
     public function employees(){
         return $this->belongsToMany('App\Models\Employee', 'employeesdepartments','CompanyID','companyId');

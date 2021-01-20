@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use Illuminate\Support\Facades\Storage;
 /**
  * Class DeliveryOrderController
  * @package App\Http\Controllers\API
@@ -1180,13 +1180,16 @@ WHERE
 
         $do->docRefNo = Helper::getCompanyDocRefNo($do->companySystemID, $do->documentSystemID);
         $do->logoExists = false;
-        $companyLogo = isset($do->company->companyLogo)?"logos/".$do->company->companyLogo:'';
+        $companyLogo = isset($do->company->logo_url) ? $do->company->logo_url:'';
 
-        if (file_exists($companyLogo)) {
+        $disk = Helper::policyWiseDisk($do->company->masterCompanySystemIDReorting, 'local_public');
+
+        $logoExists = Storage::disk($disk)->exists($do->company->companyLogo);
+        if ($logoExists) {
             $do->logoExists = true;
             $do->companyLogo = $companyLogo;
-        }
-
+        }      
+        
         $array = array('entity' => $do);
         $time = strtotime("now");
         $fileName = 'delivery_order_' . $id . '_' . $time . '.pdf';

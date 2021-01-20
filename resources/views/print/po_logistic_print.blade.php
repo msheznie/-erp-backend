@@ -168,7 +168,7 @@
                 <td width="35%">
                     <table>
                         <tr>
-                            <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                            <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px"></td>
                         </tr>
                     </table>
                 </td>

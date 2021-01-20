@@ -236,7 +236,7 @@
                             @if($isMergedCompany)
                                 <td><img src="logos/{{$secondaryCompany['logo']}}" width="180px" height="60px"></td>
                             @else
-                                <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px"></td>
                             @endif
                         </tr>
                         <tr>

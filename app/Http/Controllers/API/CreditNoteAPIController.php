@@ -389,9 +389,9 @@ class CreditNoteAPIController extends AppBaseController
 
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompanySystemID'] != '') {
-                $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $input['secondaryLogoCompID'] = $company->CompanyID;
-                $input['secondaryLogo'] = $company->companyLogo;
+                $input['secondaryLogo'] = $company->logo_url;
             } else {
                 $input['secondaryLogoCompID'] = NULL;
                 $input['secondaryLogo'] = NULL;

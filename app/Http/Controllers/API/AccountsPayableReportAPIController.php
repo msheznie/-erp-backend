@@ -5018,7 +5018,7 @@ ORDER BY
 
                     $checkIsGroup = Company::find($request->companySystemID);
 
-                    $companyLogo = $checkIsGroup->companyLogo;
+                    $companyLogo = $checkIsGroup->logo_url;
 
                     $request->fromPath = 'pdf';
                     $output = $this->getSupplierStatementQRY($request);
