@@ -2260,11 +2260,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->logoExists = false;
         if ($awsPolicy) {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->companyLogo)) {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
                 $customerInvoice->logoExists = true;
             }            
         } else {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($customerInvoice->companyLogo)) {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
                 $customerInvoice->logoExists = true;
             }      
         }

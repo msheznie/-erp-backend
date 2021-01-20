@@ -1552,7 +1552,7 @@ class SalesReturnAPIController extends AppBaseController
 
         $disk = Helper::policyWiseDisk($do->company->masterCompanySystemIDReorting, 'local_public');
 
-        $logoExists = Storage::disk($disk)->exists($do->company->companyLogo);
+        $logoExists = Storage::disk($disk)->exists($do->company->logoPath);
         if ($logoExists) {
             $do->logoExists = true;
             $do->companyLogo = $companyLogo;

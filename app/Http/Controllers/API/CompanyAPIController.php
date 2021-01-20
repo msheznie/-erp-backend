@@ -278,7 +278,7 @@ class CompanyAPIController extends AppBaseController
                 $path = 'logos/' . $input['companyLogo'];
             }
 
-            $input['companyLogo'] = $path;
+            $input['logoPath'] = $path;
             Storage::disk($disk)->put($path, $decodeFile);
         }
 
@@ -400,7 +400,7 @@ class CompanyAPIController extends AppBaseController
             }
 
 
-            $input['companyLogo'] = $path;
+            $input['logoPath'] = $path;
 
             Storage::disk($disk)->put($path, $decodeFile);
         }
@@ -578,10 +578,10 @@ class CompanyAPIController extends AppBaseController
                     $path = 'logos/' . $myFileName;
                 }
 
-                $myFileName = $path;
+                $logoPath = $path;
                 Storage::disk($disk)->put($path, $decodeFile);
 
-                $this->companyRepository->update(['companyLogo'=>$myFileName],$input['companySystemID']);
+                $this->companyRepository->update(['companyLogo'=>$myFileName, 'logoPath' => $logoPath],$input['companySystemID']);
 
                 return $this->sendResponse([], 'Company Logo uploaded successfully');
 

@@ -178,6 +178,7 @@ class Company extends Model
         'createdDateTime',
         'vatRegisteredYN',
         'vatRegistratonNumber',
+        'logoPath',
         'qhseApiKey',
         'timeStamp'
     ];
@@ -259,6 +260,7 @@ class Company extends Model
         'modifiedUser' => 'string',
         'vatRegisteredYN' => 'integer',
         'vatRegistratonNumber' => 'string',
+        'logoPath' => 'string',
         'qhseApiKey' => 'string'
     ];
 
@@ -276,9 +278,9 @@ class Company extends Model
         $awsPolicy = Helper::checkPolicy($this->masterCompanySystemIDReorting, 50);
 
         if ($awsPolicy) {
-            return Helper::getFileUrlFromS3($this->companyLogo);    
+            return Helper::getFileUrlFromS3($this->logoPath);    
         } else {
-            return $this->companyLogo;
+            return $this->logoPath;
         }
     }
 
