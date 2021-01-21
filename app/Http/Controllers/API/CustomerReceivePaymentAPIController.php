@@ -1669,7 +1669,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->sum('netAmount');
 
         $ciDetailTotTra = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-            ->sum('receiveAmountTrans');
+                                                      ->where('matchingDocID', 0)
+                                                      ->sum('receiveAmountTrans');
 
         $order = array(
             'masterdata' => $customerReceivePaymentRecord,

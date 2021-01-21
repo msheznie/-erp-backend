@@ -600,7 +600,8 @@ class CustomerReceivePayment extends Model
 
     public function details()
     {
-        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID','custReceivePaymentAutoID');
+        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID','custReceivePaymentAutoID')
+                    ->where('matchingDocID',0);
     }
 
     public function directdetails()
