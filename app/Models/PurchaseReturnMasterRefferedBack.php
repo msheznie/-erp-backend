@@ -1,22 +1,12 @@
 <?php
-/**
- * =============================================
- * -- File Name : PurchaseReturn.php
- * -- Project Name : ERP
- * -- Module Name : Purchase Return
- * -- Author : Mohamed Fayas
- * -- Create date : 31- July 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
-use App\helper\Helper;
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="PurchaseReturn",
+ *      definition="PurchaseReturnMasterRefferedBack",
  *      required={""},
  *      @SWG\Property(
  *          property="purhaseReturnAutoID",
@@ -25,19 +15,14 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companySystemID",
- *          description="companySystemID",
+ *          property="purhaseReturnRefferedBackID",
+ *          description="purhaseReturnRefferedBackID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="serviceLineCode",
- *          description="serviceLineCode",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="documentSystemID",
- *          description="documentSystemID",
+ *          property="companySystemID",
+ *          description="companySystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -49,6 +34,17 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="serviceLineSystemID",
  *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -70,10 +66,28 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="FYBiggin",
+ *          description="FYBiggin",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="FYEnd",
+ *          description="FYEnd",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
  *          property="serialNo",
  *          description="serialNo",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="purchaseReturnDate",
+ *          description="purchaseReturnDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="purchaseReturnCode",
@@ -113,6 +127,28 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="liabilityAccountSysemID",
+ *          description="liabilityAccountSysemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="liabilityAccount",
+ *          description="liabilityAccount",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="UnbilledGRVAccountSystemID",
+ *          description="UnbilledGRVAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="UnbilledGRVAccount",
+ *          description="UnbilledGRVAccount",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="supplierDefaultCurrencyID",
  *          description="supplierDefaultCurrencyID",
  *          type="integer",
@@ -122,7 +158,7 @@ use Eloquent as Model;
  *          property="supplierDefaultER",
  *          description="supplierDefaultER",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="supplierTransactionCurrencyID",
@@ -134,7 +170,7 @@ use Eloquent as Model;
  *          property="supplierTransactionER",
  *          description="supplierTransactionER",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="localCurrencyID",
@@ -146,7 +182,7 @@ use Eloquent as Model;
  *          property="localCurrencyER",
  *          description="localCurrencyER",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="companyReportingCurrencyID",
@@ -158,7 +194,7 @@ use Eloquent as Model;
  *          property="companyReportingER",
  *          description="companyReportingER",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -183,34 +219,46 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="confirmedDate",
+ *          description="confirmedDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
  *          property="totalSupplierDefaultAmount",
  *          description="totalSupplierDefaultAmount",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="totalSupplierTransactionAmount",
  *          description="totalSupplierTransactionAmount",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="totalLocalAmount",
  *          description="totalLocalAmount",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="totalComRptAmount",
  *          description="totalComRptAmount",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="approved",
  *          description="approved",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedDate",
+ *          description="approvedDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="approvedByUserID",
@@ -226,6 +274,12 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="timesReferred",
  *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -271,26 +325,56 @@ use Eloquent as Model;
  *          property="modifiedUser",
  *          description="modifiedUser",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDateTime",
+ *          description="createdDateTime",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="timeStamp",
+ *          description="timeStamp",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="isInvoiceCreatedForGrv",
+ *          description="isInvoiceCreatedForGrv",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="grvRecieved",
+ *          description="grvRecieved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="prClosedYN",
+ *          description="prClosedYN",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class PurchaseReturn extends Model
+class PurchaseReturnMasterRefferedBack extends Model
 {
 
-    public $table = 'erp_purchasereturnmaster';
+    public $table = 'erp_purchasereturnmaster_refferedback';
     
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'purhaseReturnAutoID';
+    const CREATED_AT = null;
+    const UPDATED_AT = null;
 
+    protected $primaryKey  = 'purhaseReturnRefferedBackID';
 
     public $fillable = [
+        'purhaseReturnAutoID',
         'companySystemID',
-        'serviceLineCode',
-        'documentSystemID',
         'companyID',
         'serviceLineSystemID',
-        'isInvoiceCreatedForGrv',
+        'serviceLineCode',
+        'documentSystemID',
         'documentID',
         'companyFinanceYearID',
         'companyFinancePeriodID',
@@ -305,6 +389,10 @@ class PurchaseReturn extends Model
         'supplierID',
         'supplierPrimaryCode',
         'supplierName',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'supplierDefaultCurrencyID',
         'supplierDefaultER',
         'supplierTransactionCurrencyID',
@@ -338,12 +426,9 @@ class PurchaseReturn extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'liabilityAccountSysemID',
-        'liabilityAccount',
-        'UnbilledGRVAccountSystemID',
+        'isInvoiceCreatedForGrv',
         'grvRecieved',
-        'prClosedYN',
-        'UnbilledGRVAccount'
+        'prClosedYN'
     ];
 
     /**
@@ -353,25 +438,30 @@ class PurchaseReturn extends Model
      */
     protected $casts = [
         'purhaseReturnAutoID' => 'integer',
-        'grvRecieved' => 'integer',
-        'prClosedYN' => 'integer',
+        'purhaseReturnRefferedBackID' => 'integer',
         'companySystemID' => 'integer',
-        'serviceLineCode' => 'string',
-        'documentSystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'documentSystemID' => 'integer',
         'documentID' => 'string',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
+        'FYBiggin' => 'datetime',
+        'FYEnd' => 'datetime',
         'serialNo' => 'integer',
+        'purchaseReturnDate' => 'datetime',
         'purchaseReturnCode' => 'string',
         'purchaseReturnRefNo' => 'string',
         'narration' => 'string',
         'purchaseReturnLocation' => 'integer',
-        'refferedBackYN' => 'integer',
         'supplierID' => 'integer',
         'supplierPrimaryCode' => 'string',
         'supplierName' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount' => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount' => 'string',
         'supplierDefaultCurrencyID' => 'integer',
         'supplierDefaultER' => 'float',
         'supplierTransactionCurrencyID' => 'integer',
@@ -384,15 +474,17 @@ class PurchaseReturn extends Model
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
+        'confirmedDate' => 'datetime',
         'totalSupplierDefaultAmount' => 'float',
         'totalSupplierTransactionAmount' => 'float',
         'totalLocalAmount' => 'float',
         'totalComRptAmount' => 'float',
         'approved' => 'integer',
+        'approvedDate' => 'datetime',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
-        'isInvoiceCreatedForGrv' => 'integer',
         'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
@@ -401,11 +493,11 @@ class PurchaseReturn extends Model
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'timeStamp' => 'string',
-        'liabilityAccountSysemID' => 'integer',
-        'liabilityAccount' => 'string',
-        'UnbilledGRVAccountSystemID' => 'integer',
-        'UnbilledGRVAccount' => 'string'
+        'createdDateTime' => 'datetime',
+        'timeStamp' => 'datetime',
+        'isInvoiceCreatedForGrv' => 'integer',
+        'grvRecieved' => 'integer',
+        'prClosedYN' => 'integer'
     ];
 
     /**
@@ -414,7 +506,7 @@ class PurchaseReturn extends Model
      * @var array
      */
     public static $rules = [
-        
+        'purhaseReturnAutoID' => 'required'
     ];
 
     public function created_by()

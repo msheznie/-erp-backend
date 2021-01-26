@@ -703,6 +703,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('purchase_returns', 'PurchaseReturnAPIController');
         Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+        Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
+        Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
         Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
         Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
         Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
@@ -1930,6 +1932,11 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('soPaymentTermsAdvanceDetailView', 'SalesOrderAdvPaymentAPIController@soPaymentTermsAdvanceDetailView');
         Route::get('getSoLogisticPrintDetail', 'SalesOrderAdvPaymentAPIController@getSoLogisticPrintDetail');
 
+
+        Route::get('getPRDetailsAmendHistory', 'PurchaseReturnDetailsRefferedBackAPIController@getPRDetailsAmendHistory');
+        Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
+        // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
+
         Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
         Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
 
@@ -1997,6 +2004,8 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
+
+
 
 
 
