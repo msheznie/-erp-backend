@@ -167,7 +167,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                         ->where('companySystemID', $item['companySystemID'])
                         ->first();
                     if ($detail) {
-                        if ($detail->receiveAmountTrans > $item['SumOfreceiveAmountTrans']) {
+                        if (abs($detail->receiveAmountTrans) > abs($item['SumOfreceiveAmountTrans'])) {
                             $itemDrt = "Selected Invoice " . $item['bookingInvDocCode'] . " is all ready fully settled. Please check again";
                             $itemExistArray[] = [$itemDrt];
 
