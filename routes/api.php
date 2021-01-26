@@ -1930,6 +1930,9 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('soPaymentTermsAdvanceDetailView', 'SalesOrderAdvPaymentAPIController@soPaymentTermsAdvanceDetailView');
         Route::get('getSoLogisticPrintDetail', 'SalesOrderAdvPaymentAPIController@getSoLogisticPrintDetail');
 
+        Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
+        Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

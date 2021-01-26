@@ -1545,7 +1545,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 87: // Delivery Order
+            case 87: // SalesReturn
                 $docInforArr["tableName"] = 'salesreturn';
                 $docInforArr["modelName"] = 'SalesReturn';
                 $docInforArr["primarykey"] = 'id';
@@ -4937,5 +4937,10 @@ class Helper
                 return $currentDisk;
             }
         }
+    }
+
+    static function isArray($value, $default = 0)
+    {
+        return isset($value) ? (is_array($value) ? (isset($value[0]) ? $value[0] : $default) : $value) : $default;
     }
 }
