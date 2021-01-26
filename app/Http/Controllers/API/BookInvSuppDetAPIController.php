@@ -425,6 +425,21 @@ class BookInvSuppDetAPIController extends AppBaseController
 
     public function deleteReturnUnbilledGrvs($grvAutoID, $bookingSuppMasInvAutoID)
     {
+        $unbilledDatas = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                      ->where('grvAutoID',  $grvAutoID)
+                      ->whereHas('unbilled_grv', function($query) {
+                        $query->whereNotNull('purhaseReturnAutoID');
+                      })
+                      ->get();
+
+        foreach ($unbilledDatas as $key => $value) {
+            $updatePRMaster = UnbilledGrvGroupBy::find($value->unbilledgrvAutoID)
+                ->update([
+                    'selectedForBooking' => 0,
+                    'fullyBooked' => 0
+                ]);
+        }
+
         $res = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
                       ->where('grvAutoID',  $grvAutoID)
                       ->whereHas('unbilled_grv', function($query) {
@@ -739,8 +754,6 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
 
-        //update vat
-
         if($unbilledGrvGroupByMaster->totalVATAmount > 0 && $unbilledGrvGroupByMaster->totTransactionAmount > 0){
             $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
             $percentage =  ($bookInvSuppDet->totTransactionAmount/$unbilledGrvGroupByMaster->totTransactionAmount);
@@ -754,6 +767,11 @@ class BookInvSuppDetAPIController extends AppBaseController
 
             $this->bookInvSuppDetRepository->update($vatData, $id);
         }
+
+        $unbilledGrvGroupByMaster->fullyBooked = 2;
+        $unbilledGrvGroupByMaster->selectedForBooking = -1;
+
+        $unbilledGrvGroupByMaster->save();
     }
 
     public function getSupplierInvoiceGRVItems(Request $request)

@@ -366,6 +366,7 @@ WHERE
 	unbilledMaster.companySystemID = ' . $companyID . '
 AND unbilledMaster.fullyBooked <> 2
 AND unbilledMaster.selectedForBooking = 0
+AND unbilledMaster.purhaseReturnAutoID IS NULL
 AND unbilledMaster.supplierID = ' . $bookInvSuppMaster->supplierID . '
 AND unbilledMaster.supplierTransactionCurrencyID = ' . $bookInvSuppMaster->supplierTransactionCurrencyID . '
 AND DATE_FORMAT(unbilledMaster.grvDate,"%Y-%m-%d") <= "' . $bookingDate . '"
