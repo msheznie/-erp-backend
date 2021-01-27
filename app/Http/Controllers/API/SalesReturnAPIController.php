@@ -1317,7 +1317,7 @@ class SalesReturnAPIController extends AppBaseController
     private function updateDOReturnedStatus($deliveryOrderID){
 
         $status = 0;
-        $invQty = SalesReturnDetail::where('deliveryOrderID',$deliveryOrderID)->sum('qtyReturnedDefaultMeasure');
+        $invQty = DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->sum('qtyIssuedDefaultMeasure');
 
         if($invQty!=0) {
             $doQty = SalesReturnDetail::where('deliveryOrderID',$deliveryOrderID)->sum('qtyReturnedDefaultMeasure');
@@ -1334,7 +1334,7 @@ class SalesReturnAPIController extends AppBaseController
     private function updateInvoiceReturnedStatus($custInvoiceDirectAutoID){
 
         $status = 0;
-        $invQty = SalesReturnDetail::where('custInvoiceDirectAutoID',$custInvoiceDirectAutoID)->sum('qtyReturnedDefaultMeasure');
+        $invQty = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$custInvoiceDirectAutoID)->sum('qtyIssuedDefaultMeasure');
 
         if($invQty!=0) {
             $doQty = SalesReturnDetail::where('custInvoiceDirectAutoID',$custInvoiceDirectAutoID)->sum('qtyReturnedDefaultMeasure');
