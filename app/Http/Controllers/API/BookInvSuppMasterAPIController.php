@@ -664,18 +664,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         $unbilledSumData = UnbilledGrvGroupBy::find($row['unbilledgrvAutoID']);
 
-                        $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
-                            ->sum('totTransactionAmount');
+                        if (is_null($unbilledSumData->purhaseReturnAutoID)) {
+                            $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
+                                ->sum('totTransactionAmount');
 
-                        if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+                            if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
 
-                            $unbilledSumData->selectedForBooking = -1;
-                            $unbilledSumData->fullyBooked = 2;
-                        } else {
-                            $unbilledSumData->selectedForBooking = 0;
-                            $unbilledSumData->fullyBooked = 1;
+                                $unbilledSumData->selectedForBooking = -1;
+                                $unbilledSumData->fullyBooked = 2;
+                            } else {
+                                $unbilledSumData->selectedForBooking = 0;
+                                $unbilledSumData->fullyBooked = 1;
+                            }
+                            $unbilledSumData->save();
                         }
-                        $unbilledSumData->save();
                     }
                 }
 
