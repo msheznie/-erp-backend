@@ -1959,7 +1959,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                                 ->first();
 
         if ($checkCompanyIsMerged) {
-            $companyLogo = $checkCompanyIsMerged['logo'];
+            $companyLogo = $checkCompanyIsMerged['logo_url'];
             $CompanyName = $checkCompanyIsMerged['name'];
         }
 
