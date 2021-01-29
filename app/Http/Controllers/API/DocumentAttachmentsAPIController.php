@@ -920,6 +920,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
             'myFileName',
             'path',
             'attachmentType',
+            'timeStamp',
+            'sizeInKbs',
             'pullFromAnotherDocument');
 
         return \DataTables::eloquent($attachments)
