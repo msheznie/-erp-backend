@@ -807,7 +807,7 @@ WHERE
 
         $status = 0;
         $isInDO = 0;
-        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
+        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
 
         if($invQty!=0) {
             $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');
