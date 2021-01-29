@@ -343,6 +343,18 @@ trait AuditTrial
                 $docInforArr["documentID"] = 'documentID';
                 break;
 
+            case 87: // SLR
+                $docInforArr["modelName"] = 'SalesReturn';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
+                $docInforArr["companySystemID"] = 'companySystemID';
+                $docInforArr["companyID"] = 'companyID';
+                $docInforArr["documentSystemID"] = 'documentSystemID';
+                $docInforArr["documentID"] = 'documentID';
+                $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

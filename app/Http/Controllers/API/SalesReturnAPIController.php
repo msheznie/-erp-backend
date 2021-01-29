@@ -27,6 +27,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\DocumentApproved;
 use App\Models\EmployeesDepartment;
 use App\Repositories\SalesReturnRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -1576,7 +1577,7 @@ class SalesReturnAPIController extends AppBaseController
         $data = $this->salesReturnRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 87);
-        }, 'company'])->findWithoutFail($salesReturnID);
+        }, 'company','audit_trial.modified_by'])->findWithoutFail($salesReturnID);
 
 
         if (empty($data)) {
@@ -1671,10 +1672,13 @@ class SalesReturnAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $salesReturnID)
+        DocumentApproved::where('documentSystemCode', $salesReturnID)
                                         ->where('companySystemID', $salesReturn->companySystemID)
                                         ->where('documentSystemID', $salesReturn->documentSystemID)
                                         ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($salesReturn->documentSystemID,$salesReturnID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($salesReturn->toArray(), 'Sales Return reopened successfully');
     }
