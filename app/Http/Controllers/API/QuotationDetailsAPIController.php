@@ -358,14 +358,21 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserName'] = $employee->empName;
 
-        $quotationDetails = $this->quotationDetailsRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
+            $quotationDetailss = $this->quotationDetailsRepository->update($input, $id);
 
 
-        if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2 && ($quotationDetails->requestedQty != $input['requestedQty'])) {
-            $this->updateCopiedQty($input);
+            if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2 && ($quotationDetails->requestedQty != $input['requestedQty'])) {
+                $this->updateCopiedQty($input);
+            }
+
+            DB::commit();
+            return $this->sendResponse($quotationDetailss->toArray(), 'Quotation Details updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
-
-        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details updated successfully');
     }
 
 
@@ -385,8 +392,8 @@ class QuotationDetailsAPIController extends AppBaseController
 
             //checking the fullyOrdered or partial in po
             $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
-                ->where('soQuotationDetailID', $input['soQuotationDetailID'])
-                ->first();
+                                        ->where('soQuotationDetailID', $input['soQuotationDetailID'])
+                                        ->first();
 
             $totalAddedQty = $detailSum['totalNoQty'];
 
@@ -402,7 +409,7 @@ class QuotationDetailsAPIController extends AppBaseController
             $new = [];
             $new['qtyIssuedDefaultMeasure'] = $input['requestedQty'];
 
-            $totalNetcost = ($new['unittransactionAmount'] - $new['discountAmount']) * $input['requestedQty'];
+            $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'];
 
             $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
 
@@ -800,7 +807,7 @@ WHERE
 
         $status = 0;
         $isInDO = 0;
-        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
+        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
 
         if($invQty!=0) {
             $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');

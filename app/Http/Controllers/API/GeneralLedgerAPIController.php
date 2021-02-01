@@ -341,7 +341,11 @@ class GeneralLedgerAPIController extends AppBaseController
                                                     ->where('companySystemID', $request->companySystemID);
 
             if ($request->documentSystemID == 3) {
-                $unbilledLedgerData = $unbilledLedgerData->where('grvAutoID', $request->autoID);
+                $unbilledLedgerData = $unbilledLedgerData->where('grvAutoID', $request->autoID)
+                                                         ->where(function($query) {
+                                                            $query->where('purhaseReturnAutoID', 0)
+                                                                  ->orWhereNull('purhaseReturnAutoID');
+                                                         });
             } else {
                 $unbilledLedgerData = $unbilledLedgerData->where('purhaseReturnAutoID', $request->autoID);
             }

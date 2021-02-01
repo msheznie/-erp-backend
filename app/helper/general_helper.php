@@ -1545,7 +1545,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 87: // Delivery Order
+            case 87: // SalesReturn
                 $docInforArr["tableName"] = 'salesreturn';
                 $docInforArr["modelName"] = 'SalesReturn';
                 $docInforArr["primarykey"] = 'id';
@@ -2013,7 +2013,7 @@ class Helper
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
@@ -2728,6 +2728,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 24:
+                    $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                    $docInforArr["modelName"] = 'PurchaseReturn';
+                    $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2748,7 +2754,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -4937,5 +4943,10 @@ class Helper
                 return $currentDisk;
             }
         }
+    }
+
+    static function isArray($value, $default = 0)
+    {
+        return isset($value) ? (is_array($value) ? (isset($value[0]) ? $value[0] : $default) : $value) : $default;
     }
 }

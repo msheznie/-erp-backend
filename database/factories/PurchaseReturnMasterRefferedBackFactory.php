@@ -1,0 +1,72 @@
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+
+use App\Models\PurchaseReturnMasterRefferedBack;
+use Faker\Generator as Faker;
+
+$factory->define(PurchaseReturnMasterRefferedBack::class, function (Faker $faker) {
+
+    return [
+        'purhaseReturnAutoID' => $faker->randomDigitNotNull,
+        'companySystemID' => $faker->randomDigitNotNull,
+        'companyID' => $faker->word,
+        'serviceLineSystemID' => $faker->randomDigitNotNull,
+        'serviceLineCode' => $faker->word,
+        'documentSystemID' => $faker->randomDigitNotNull,
+        'documentID' => $faker->word,
+        'companyFinanceYearID' => $faker->randomDigitNotNull,
+        'companyFinancePeriodID' => $faker->randomDigitNotNull,
+        'FYBiggin' => $faker->date('Y-m-d H:i:s'),
+        'FYEnd' => $faker->date('Y-m-d H:i:s'),
+        'serialNo' => $faker->randomDigitNotNull,
+        'purchaseReturnDate' => $faker->date('Y-m-d H:i:s'),
+        'purchaseReturnCode' => $faker->word,
+        'purchaseReturnRefNo' => $faker->word,
+        'narration' => $faker->text,
+        'purchaseReturnLocation' => $faker->randomDigitNotNull,
+        'supplierID' => $faker->randomDigitNotNull,
+        'supplierPrimaryCode' => $faker->word,
+        'supplierName' => $faker->text,
+        'liabilityAccountSysemID' => $faker->randomDigitNotNull,
+        'liabilityAccount' => $faker->word,
+        'UnbilledGRVAccountSystemID' => $faker->randomDigitNotNull,
+        'UnbilledGRVAccount' => $faker->word,
+        'supplierDefaultCurrencyID' => $faker->randomDigitNotNull,
+        'supplierDefaultER' => $faker->randomDigitNotNull,
+        'supplierTransactionCurrencyID' => $faker->randomDigitNotNull,
+        'supplierTransactionER' => $faker->randomDigitNotNull,
+        'localCurrencyID' => $faker->randomDigitNotNull,
+        'localCurrencyER' => $faker->randomDigitNotNull,
+        'companyReportingCurrencyID' => $faker->randomDigitNotNull,
+        'companyReportingER' => $faker->randomDigitNotNull,
+        'confirmedYN' => $faker->randomDigitNotNull,
+        'confirmedByEmpSystemID' => $faker->randomDigitNotNull,
+        'confirmedByEmpID' => $faker->word,
+        'confirmedByName' => $faker->word,
+        'confirmedDate' => $faker->date('Y-m-d H:i:s'),
+        'totalSupplierDefaultAmount' => $faker->randomDigitNotNull,
+        'totalSupplierTransactionAmount' => $faker->randomDigitNotNull,
+        'totalLocalAmount' => $faker->randomDigitNotNull,
+        'totalComRptAmount' => $faker->randomDigitNotNull,
+        'approved' => $faker->randomDigitNotNull,
+        'approvedDate' => $faker->date('Y-m-d H:i:s'),
+        'approvedByUserID' => $faker->word,
+        'approvedByUserSystemID' => $faker->randomDigitNotNull,
+        'timesReferred' => $faker->randomDigitNotNull,
+        'refferedBackYN' => $faker->randomDigitNotNull,
+        'RollLevForApp_curr' => $faker->randomDigitNotNull,
+        'createdUserGroup' => $faker->word,
+        'createdPcID' => $faker->word,
+        'createdUserSystemID' => $faker->randomDigitNotNull,
+        'createdUserID' => $faker->word,
+        'modifiedPc' => $faker->word,
+        'modifiedUserSystemID' => $faker->randomDigitNotNull,
+        'modifiedUser' => $faker->word,
+        'createdDateTime' => $faker->date('Y-m-d H:i:s'),
+        'timeStamp' => $faker->date('Y-m-d H:i:s'),
+        'isInvoiceCreatedForGrv' => $faker->randomDigitNotNull,
+        'grvRecieved' => $faker->randomDigitNotNull,
+        'prClosedYN' => $faker->randomDigitNotNull
+    ];
+});

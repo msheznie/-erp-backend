@@ -20,6 +20,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseReturnAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnAPIRequest;
+use App\Models\PurchaseReturnMasterRefferedBack;
+use App\Models\PurchaseReturnDetailsRefferedBack;
+use App\Models\DocumentReferedHistory;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -765,6 +768,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 'approvedDate',
                 'supplierTransactionCurrencyID',
                 'timesReferred',
+                'refferedBackYN',
                 'confirmedYN',
                 'approved'
             ]);
@@ -935,6 +939,7 @@ class PurchaseReturnAPIController extends AppBaseController
                         ->where('grvLocation', $purchaseReturn->purchaseReturnLocation)
                         ->where('approved', -1)
                         ->where('supplierID', $purchaseReturn->supplierID)
+                        ->whereDate('grvDate', '<=',$purchaseReturn->purchaseReturnDate)
                         ->where('supplierTransactionCurrencyID', $purchaseReturn->supplierTransactionCurrencyID)
                         ->get();
 
@@ -1358,5 +1363,72 @@ class PurchaseReturnAPIController extends AppBaseController
 
         return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
 
+    }
+
+
+    public function purchaseReturnAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $purhaseReturnAutoID = $input['purhaseReturnAutoID'];
+
+        $prMasterData = PurchaseReturn::find($purhaseReturnAutoID);
+        if (empty($prMasterData)) {
+            return $this->sendError('Good receipt voucher not found');
+        }
+
+        if ($prMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this good receipt voucher');
+        }
+
+        $prMasterDataArray = $prMasterData->toArray();
+
+        $storePRHistory = PurchaseReturnMasterRefferedBack::insert($prMasterDataArray);
+
+        $fetchPRDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $purhaseReturnAutoID)
+            ->get();
+
+        if (!empty($fetchPRDetails)) {
+            foreach ($fetchPRDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $prMasterData->timesReferred;
+            }
+        }
+
+        $prDetailArray = $fetchPRDetails->toArray();
+
+        $storePRDetailHistory = PurchaseReturnDetailsRefferedBack::insert($prDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purhaseReturnAutoID)
+                                                 ->where('companySystemID', $prMasterData->companySystemID)
+                                                 ->where('documentSystemID', $prMasterData->documentSystemID)
+                                                 ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $prMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purhaseReturnAutoID)
+                                        ->where('companySystemID', $prMasterData->companySystemID)
+                                        ->where('documentSystemID', $prMasterData->documentSystemID)
+                                        ->delete();
+
+        if ($deleteApproval) {
+            $prMasterData->refferedBackYN = 0;
+            $prMasterData->confirmedYN = 0;
+            $prMasterData->confirmedByEmpSystemID = null;
+            $prMasterData->confirmedByEmpID = null;
+            $prMasterData->confirmedByName = null;
+            $prMasterData->confirmedDate = null;
+            $prMasterData->RollLevForApp_curr = 1;
+            $prMasterData->save();
+        }
+
+        return $this->sendResponse($prMasterData->toArray(), 'Purchase return amend successfully');
     }
 }

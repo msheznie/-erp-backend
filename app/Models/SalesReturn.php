@@ -599,4 +599,9 @@ class SalesReturn extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'id')->where('documentSystemID',87);
+    }
 }

@@ -703,6 +703,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('purchase_returns', 'PurchaseReturnAPIController');
         Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+        Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
+        Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
         Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
         Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
         Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
@@ -1930,12 +1932,22 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('soPaymentTermsAdvanceDetailView', 'SalesOrderAdvPaymentAPIController@soPaymentTermsAdvanceDetailView');
         Route::get('getSoLogisticPrintDetail', 'SalesOrderAdvPaymentAPIController@getSoLogisticPrintDetail');
 
+
         Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
         Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
 
         Route::resource('advance_receipt_details', 'AdvanceReceiptDetailsAPIController');
         Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails');
         Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
+
+
+        Route::get('getPRDetailsAmendHistory', 'PurchaseReturnDetailsRefferedBackAPIController@getPRDetailsAmendHistory');
+        Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
+        // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
+
+        Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
+        Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
