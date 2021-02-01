@@ -1439,13 +1439,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
-    public
-    function checkPVDocumentActive(Request $request)
+    public function checkPVDocumentActive(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
+        /** @ PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input["PayMasterAutoId"]);
 
         if (empty($paySupplierInvoiceMaster)) {
@@ -1563,8 +1562,7 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public
-    function getADVPaymentForPV(Request $request)
+    public function getADVPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
         $output = DB::select('SELECT
@@ -1625,8 +1623,7 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public
-    function getPaymentVoucherMatchItems(Request $request)
+    public function getPaymentVoucherMatchItems(Request $request)
     {
         $input = $request->all();
 
