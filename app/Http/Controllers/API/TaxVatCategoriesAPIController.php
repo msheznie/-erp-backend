@@ -426,7 +426,8 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $output['items'] = ItemMaster::select(DB::Raw("itemCodeSystem,primaryCode,itemDescription,CONCAT(primaryCode, ' | ' ,itemDescription) as label"));
         if($seachText != ''){
             $output['items'] = $output['items']->where(function ($query) use ($seachText) {
-                $query->where('primaryCode','LIKE', "%{$seachText}%");
+                $query->where('primaryCode','LIKE', "%{$seachText}%")
+                ->orWhere('itemDescription','LIKE', "%{$seachText}%");
             });
         }
         $output['items'] = $output['items']->take(50)->get();
