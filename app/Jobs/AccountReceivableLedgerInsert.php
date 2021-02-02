@@ -181,7 +181,9 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(receiveAmountLocal) as localAmount, SUM(receiveAmountRpt) as rptAmount,SUM(receiveAmountTrans) as transAmount,custReceivePaymentAutoID');
                         }, 'directdetails' => function ($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,directReceiptAutoID,serviceLineSystemID,serviceLineCode');
-                        }, 'finance_period_by'])->find($masterModel["autoID"]);
+                        },'advance_receipt_details' => function($query) {
+                            $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,custReceivePaymentAutoID');
+                        },'finance_period_by'])->find($masterModel["autoID"]);
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
@@ -206,6 +208,13 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                     $transAmountLocal = $transAmountLocal + $masterData->directdetails[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->directdetails[0]->rptAmount;
                                 }
+
+                                if(isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0){
+                                    $transAmount = $transAmount + $masterData->advance_receipt_details[0]->transAmount;
+                                    $transAmountLocal = $transAmountLocal + $masterData->advance_receipt_details[0]->localAmount;
+                                    $transAmountRpt = $transAmountRpt + $masterData->advance_receipt_details[0]->rptAmount;
+                                }
+
 
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);

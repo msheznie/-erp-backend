@@ -466,7 +466,7 @@
             </tr>
         </table>
     @endif
-    @if($masterdata->documentType == 14 || $masterdata->documentType == 15)
+    @if($masterdata->documentType == 14 || ($masterdata->documentType == 15 && count($masterdata->advance_receipt_details) == 0))
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
@@ -548,6 +548,51 @@
             </table>
         </div>
     @endif
+
+    @if($masterdata->documentType == 15 && count($masterdata->advance_receipt_details) > 0 )
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th>#</th>
+                    <th class="text-center">Sales Order No</th>
+                    <th class="text-center">Comments</th>
+                    @if($masterdata->isVATApplicable)
+                        <th class="text-center">VAT Amount</th>
+                    @endif
+                    <th class="text-center">Payment Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->advance_receipt_details as $item)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>{{$item->salesOrderCode}}</td>
+                        <td>{{$item->comments}}</td>
+                        @if($masterdata->isVATApplicable)
+                            <td class="text-right">{{number_format($item->VATAmount, $transDecimal)}}</td>
+                        @endif
+                        <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
+                    </tr>
+                @endforeach
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    @if($masterdata->isVATApplicable)
+                        <td class="text-right" colspan="4" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    @endif
+                    @if(!$masterdata->isVATApplicable)
+                        <td class="text-right" colspan="3" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    @endif
+                    @if($masterdata->isVATApplicable)
+                        <td class="text-right"
+                            style="background-color: rgb(215,215,215)">{{number_format($advanceDetailsTotalNet, $transDecimal)}}</td>
+                    @endif
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+
     @if($masterdata->documentType == 13)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">

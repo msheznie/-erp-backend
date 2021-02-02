@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\helper\TaxService;
 use App\Models\AdvancePaymentDetails;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
@@ -2274,6 +2275,20 @@ class GeneralLedgerInsert implements ShouldQueue
                             ->WHERE('directReceiptAutoID', $masterModel["autoID"])
                             ->first();
 
+                        // advance receipt details
+
+                        $totalAdv = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as localAmount, 
+                                                                        SUM(comRptAmount) as rptAmount,
+                                                                        SUM(paymentAmount) as transAmount,
+                                                                        localCurrencyID as localCurrencyID,
+                                                                        comRptCurrencyID as reportingCurrencyID,
+                                                                        customerTransCurrencyID as transCurrencyID,
+                                                                        comRptER as reportingCurrencyER,
+                                                                        localER,
+                                                                        customerTransER as transCurrencyER")
+                                                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                                            ->first();
+
 
                         //get p&l account
                         $dd = DirectReceiptDetail::with(['chartofaccount'])
@@ -2402,8 +2417,16 @@ class GeneralLedgerInsert implements ShouldQueue
                             if ($masterData->documentType == 14 || $masterData->documentType == 15) { //Direct Receipt & advance receipt
                                 if ($totaldd) {
 
-                                    $data['serviceLineSystemID'] = $totaldd->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $totaldd->serviceLineCode;
+                                    if($totaldd->transAmount == 0){
+                                        $totaldd = $totalAdv;
+                                        $data['serviceLineSystemID'] = 24;
+                                        $data['serviceLineCode'] = 'X';
+                                    }else{
+                                        $data['serviceLineSystemID'] = $totaldd->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $totaldd->serviceLineCode;
+                                    }
+
+
                                     $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                     $data['glCode'] = $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';

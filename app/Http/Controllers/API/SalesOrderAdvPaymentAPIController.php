@@ -17,6 +17,7 @@ use App\Repositories\SalesOrderAdvPaymentRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -450,4 +451,5 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
 
         return $this->sendResponse($printData, 'Data retrieved successfully');
     }
+
 }
