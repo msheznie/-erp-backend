@@ -609,6 +609,11 @@ class CustomerReceivePayment extends Model
         return $this->hasMany('App\Models\DirectReceiptDetail', 'directReceiptAutoID', 'custReceivePaymentAutoID');
     }
 
+    public function advance_receipt_details()
+    {
+        return $this->hasMany(AdvanceReceiptDetails::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+    }
+
     public function bank()
     {
         return $this->belongsTo('App\Models\BankAccount', 'bankAccount', 'bankAccountAutoID');
