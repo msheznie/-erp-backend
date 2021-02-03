@@ -25,9 +25,6 @@ pool:
 steps:
 - checkout: self
   clean: fales
-
-- script: pwd
-  displayName: 'PWD'
   
 - script: sudo composer install
   displayName: 'Composer Install'
