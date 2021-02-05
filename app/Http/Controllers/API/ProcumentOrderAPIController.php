@@ -6347,15 +6347,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     foreach ($value1['payments'] as $key2 => $value2) {
                         $temp2 = [];
-                        $temp2['name'] = "Payment";
                         $temp2['cssClass'] = "ngx-org-step-five";
                         if (isset($value2['payment_master'])) {
+                            $temp2['name'] = "Payment";
                             $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                             $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
                         }
 
                         if (isset($value2['matching_master'])) {
+                             $temp2['name'] = "Debit Note";
                             $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
                             $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
@@ -6441,15 +6442,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     foreach ($value1['payments'] as $key2 => $value2) {
                         $temp2 = [];
-                        $temp2['name'] = "Payment";
                         $temp2['cssClass'] = "ngx-org-step-four";
                         if (isset($value2['payment_master'])) {
+                            $temp2['name'] = "Payment";
                             $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                             $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
                         }
 
                         if (isset($value2['matching_master'])) {
+                            $temp2['name'] = "Debit Note";
                             $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
                             $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
@@ -6559,15 +6561,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             foreach ($value1['payments'] as $key2 => $value2) {
                 $temp2 = [];
-                $temp2['name'] = "Payment";
                 $temp2['cssClass'] = "ngx-org-step-three";
                 if (isset($value2['payment_master'])) {
+                    $temp2['name'] = "Payment";
                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                     $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
                 }
 
                 if (isset($value2['matching_master'])) {
+                    $temp2['name'] = "Debit Note";
                     $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
                     $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
@@ -6648,15 +6651,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         foreach ($totalInvoices as $key2 => $value2) {
             $temp2 = [];
-            $temp2['name'] = "Payment";
             $temp2['cssClass'] = "ngx-org-step-two";
             if (isset($value2['payment_master'])) {
+                $temp2['name'] = "Payment";
                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                 $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
             }
 
             if (isset($value2['matching_master'])) {
+                $temp2['name'] = "Debit Note";
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
                 $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
