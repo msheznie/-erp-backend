@@ -119,6 +119,10 @@ class ChartOfAccountAPIController extends AppBaseController
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
+        if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
+            $input['masterAccount'] = $accountCode;
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
