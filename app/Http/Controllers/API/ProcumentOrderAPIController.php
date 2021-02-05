@@ -6243,12 +6243,99 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             case 11:
                 $tracingData = $this->getSupplierInvoiceTracingData($input);
                 break;
+            case 1:
+                $tracingData = $this->getPurchaseRequestTracingData($input);
+                break;
             default:
                 # code...
                 break;
         }
 
         return $this->sendResponse($tracingData, 'Document tracing data retrived successfully');
+    }
+
+
+    public function getPurchaseRequestTracingData($input)
+    {
+        $tracingData = [];
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['id'])
+                                        ->with(['currency_by'])
+                                        ->first();
+
+        $poMasters = PurchaseOrderDetails::selectRaw('sum(netAmount) as totalAmount,
+                                        purchaseRequestID,purchaseOrderMasterID')
+                                            ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                                            ->with(['order' => function($query) {
+                                                $query->with(['currency']);
+                                            }])
+                                            ->groupBy('purchaseOrderMasterID')
+                                            ->get();
+
+        foreach ($poMasters as $po) {
+            $po->grv = $this->getPOtoPaymentChain($po->order);
+        }
+
+        $poData = $poMasters->toArray();
+
+        $tracingData['name'] = "Purchae Request";
+        $tracingData['cssClass'] = "ngx-org-step-one";
+        $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
+        $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
+        $tracingData['title'] = "{Doc Code :} ".$purchaseRequest->purchaseRequestCode." -- {Doc Date :} ". Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d')." -- {Currency :} ".$purchaseRequest->currency_by->CurrencyCode."-- {Amount :} ".number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces);
+
+
+        foreach ($poData as $keyPo => $valuePo) {
+            $tempPo = [];
+            $tempPo['name'] = "Purchase Order";
+            $tempPo['cssClass'] = "ngx-org-step-two";
+            $tempPo['documentSystemID'] = $valuePo['order']['documentSystemID'];
+            $tempPo['docAutoID'] = $valuePo['order']['purchaseOrderID'];
+            $tempPo['title'] = "{Doc Code :} ".$valuePo['order']['purchaseOrderCode']." -- {Doc Date :} ". Carbon::parse($valuePo['order']['expectedDeliveryDate'])->format('Y-m-d')." -- {Currency :} ".$valuePo['order']['currency']['CurrencyCode']." -- {Amount :} ".number_format($valuePo['order']['poTotalSupplierTransactionCurrency'], $valuePo['order']['currency']['DecimalPlaces']);
+
+            foreach ($valuePo['grv'] as $key => $value) {
+                $temp = [];
+                $temp['name'] = "Good Received Voucher";
+                $temp['cssClass'] = "ngx-org-step-three";
+                $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
+                $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
+                $temp['title'] = "{Doc Code :} ".$value['grv_master']['grvPrimaryCode']." -- {Doc Date :} ". Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d')." -- {Currency :} ".$value['grv_master']['currency_by']['CurrencyCode']." -- {Amount :} ".number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']);
+
+                foreach ($value['invoices'] as $key1 => $value1) {
+                    $temp1 = [];
+                    $temp1['name'] = "Supplier Invoice";
+                    $temp1['cssClass'] = "ngx-org-step-four";
+                    $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
+                    $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
+                    $temp1['title'] = "{Doc Code :} ".$value1['suppinvmaster']['bookingInvCode']." -- {Doc Date :} ". Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d')." -- {Currency :} ".$value1['suppinvmaster']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']);
+
+                    foreach ($value1['payments'] as $key2 => $value2) {
+                        $temp2 = [];
+                        $temp2['name'] = "Payment";
+                        $temp2['cssClass'] = "ngx-org-step-five";
+                        if (isset($value2['payment_master'])) {
+                            $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
+                            $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
+                            $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+                        }
+
+                        if (isset($value2['matching_master'])) {
+                            $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                            $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
+                            $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                        }
+                        
+                        $temp1['childs'][] = $temp2;
+                    }
+                    
+                    $temp['childs'][] = $temp1;
+                }
+
+                $tempPo['childs'][] = $temp;
+            }
+            $tracingData['childs'][] = $tempPo;
+        }
+
+        return $tracingData;
     }
 
     public function getPurchaseOrderTracingData($input)
