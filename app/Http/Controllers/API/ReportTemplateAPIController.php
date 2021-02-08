@@ -437,6 +437,27 @@ class ReportTemplateAPIController extends AppBaseController
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
 
+    public function getReportTemplatesByCategory(Request $request)
+    {
+        $input = $request->all();
+        $reportTemplate = ReportTemplate::where('reportID', $input['catogaryBLorPLID'])
+                                        ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
+    public function getAssignedReportTemplatesByGl(Request $request)
+    {
+        $input = $request->all();
+        $reportTemplate = ReportTemplateDetails::with(['master', 'gllink' => function($query) use ($input) {
+                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
+                                                }])
+                                                ->whereHas('gllink', function($query) use ($input) {
+                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
+                                                })
+                                                ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
     function getEmployees(Request $request)
     {
         $companySystemID = $request['companySystemID'];

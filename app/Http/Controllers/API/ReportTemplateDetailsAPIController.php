@@ -582,4 +582,18 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);
         }
     }
+
+
+    public function getReportTemplatesCategoryByTemplate(Request $request)
+    {
+        $input = $request->all();
+        $reportTemplate = ReportTemplateDetails::where('companyReportTemplateID', $input['selectedReportTemplate'])
+                                               ->whereDoesntHave('gllink', function($query) use ($input){
+                                                    $query->where('glAutoID', $input['chartOfAccountSystemID']);
+                                               })
+                                               ->where('itemType', 2)
+                                               ->whereNotNull('masterID')
+                                               ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
 }

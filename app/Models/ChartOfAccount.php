@@ -179,5 +179,8 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
     }
 
+    public function chartofaccount_assigned(){
+        return $this->hasOne('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
+    }
 
 }

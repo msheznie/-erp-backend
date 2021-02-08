@@ -216,6 +216,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
         Route::resource('control_accounts', 'ControlAccountAPIController');
         Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
+        Route::post('getMasterChartOfAccountData', 'ChartOfAccountAPIController@getMasterChartOfAccountData');
         Route::resource('chart_of_account', 'ChartOfAccountAPIController');
         Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
         Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
@@ -1400,6 +1401,9 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('report_templates', 'ReportTemplateAPIController');
         Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+        Route::get('getAssignedReportTemplatesByGl', 'ReportTemplateAPIController@getAssignedReportTemplatesByGl');
+        Route::get('getReportTemplatesByCategory', 'ReportTemplateAPIController@getReportTemplatesByCategory');
+        Route::get('getReportTemplatesCategoryByTemplate', 'ReportTemplateDetailsAPIController@getReportTemplatesCategoryByTemplate');
         Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
         Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
         Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
@@ -1410,6 +1414,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
         Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
         Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+        Route::post('assignReportTemplateToGl', 'ReportTemplateLinksAPIController@assignReportTemplateToGl');
         Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
 
         Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');

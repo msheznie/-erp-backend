@@ -190,6 +190,11 @@ class ReportTemplateDetails extends Model
         return $this->hasMany(ReportTemplateDetails::class,'masterID','detID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo('App\Models\ReportTemplate','companyReportTemplateID','companyReportTemplateID');
+    }
+
     public function gllink()
     {
         return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
