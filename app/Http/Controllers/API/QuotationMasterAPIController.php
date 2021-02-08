@@ -1541,4 +1541,118 @@ class QuotationMasterAPIController extends AppBaseController
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
+
+
+    public function amendSalesQuotationReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['quotationMasterID'];
+
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = QuotationMaster::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Quotation Master not found');
+        }
+
+        $quotOrSales = ($masterData->documentSystemID == 68)?'Sales Order':'Quotation';
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', it is not confirmed');
+        }
+
+        /*check order is already added to invoice or delivery order*/
+
+        if(CustomerInvoiceItemDetails::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 2){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a customer invoice',500);
+        }
+
+        if(DeliveryOrderDetail::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 1){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a delivery order',500);
+        }
+
+        if(QuotationDetails::where('soQuotationMasterID',$id)->exists() || $masterData->isInSO == 1){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a sales order',500);
+        }
+
+
+        if(QuotationMasterVersion::where('quotationMasterID',$id)->exists()){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', versions created for it');
+        }
+
+        $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->quotationCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->quotationCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->quotationCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approvedYN = 0;
+            $masterData->approvedEmpSystemID = null;
+            $masterData->approvedbyEmpID = null;
+            $masterData->approvedbyEmpName = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Return back to amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 }
