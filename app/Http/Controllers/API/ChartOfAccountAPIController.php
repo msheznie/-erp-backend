@@ -119,6 +119,10 @@ class ChartOfAccountAPIController extends AppBaseController
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
+        if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
+            $input['masterAccount'] = $accountCode;
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -145,8 +149,8 @@ class ChartOfAccountAPIController extends AppBaseController
                 if($policy){
                     $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
-                    if ($checkChartOfAccountUsed) {
-                        return $this->sendError('Cannot amend the description. Chart is account is already used and available in general ledger.', 500);
+                    if ($checkChartOfAccountUsed && ($chartOfAccount->AccountDescription != $input['AccountDescription'])) {
+                        return $this->sendError('Cannot amend the description. Chart of account is already used and available in general ledger.', 500);
                     }
 
                     $updateData = [
@@ -168,7 +172,35 @@ class ChartOfAccountAPIController extends AppBaseController
                             }
                         }
                     }
+                }
 
+
+                //check policy 10
+                $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],10);
+                if($policyCAc){
+                    $updateData = [
+                        'controllAccountYN' => $input['controllAccountYN']
+                    ];
+
+                    $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                    if($updateChartOfAccount){
+                        $chartOfAccountOld = $chartOfAccount->toArray();
+                        ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+                        $old_array = array_only($chartOfAccountOld,['controllAccountYN']);
+                        $modified_array = array_only($input,['controllAccountYN']);
+                        // update in to user log table
+                        foreach ($old_array as $key => $old){
+                            if($old != $modified_array[$key]){
+                                $description = $employee->empName." Updated chart of account (".$chartOfAccount->chartOfAccountSystemID.") from ".$old." To ".(($modified_array[$key]) ? 1:0)."";
+                                UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$chartOfAccount->documentSystemID,$chartOfAccount->primaryCompanySystemID,$chartOfAccount->chartOfAccountSystemID,$description,$modified_array[$key],$old,$key);
+                            }
+                        }
+                    }
+
+                }
+
+                if($policyCAc || $policy){
                     return $this->sendResponse([], 'Chart Of Account updated successfully');
                 }
 

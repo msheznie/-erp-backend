@@ -64,13 +64,15 @@ class CreateFinancePeriod implements ShouldQueue
             $startDate = new Carbon($currentYear.'-'.$month.'-'.$firstDay);
             $endDate   = new Carbon(date("Y-m-t", strtotime($startDate)));
 
+            $formatedEndDate = $endDate->format('Y-m-d'). " 23:59:59";
+
            // if($bigginingDate <= $startDate && $endingDate >= $endDate) {
                 $dataArray = array(
                     'companySystemID' => $financeYear->companySystemID,
                     'companyID' => $financeYear->companyID,
                     'companyFinanceYearID' => $financeYear->companyFinanceYearID,
                     'dateFrom' => $startDate,
-                    'dateTo' => $endDate);
+                    'dateTo' => $formatedEndDate);
                 $financeYearPeriodMasterRepo->create($dataArray);
                 Log::info('Created Finance Period : '.$i);
             //}else{

@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateCompanyFinanceYearAPIRequest;
 use App\Http\Requests\API\UpdateCompanyFinanceYearAPIRequest;
 use App\Jobs\CreateFinancePeriod;
 use App\Models\Company;
+use App\Models\Year;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DepartmentMaster;
@@ -170,6 +171,21 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $year = $fromDate->format('Y');
+
+        $checkYear = Year::where('yearID', $year)->first();
+        if (!$checkYear) {
+            $yearData = [
+                            'yearID' => $year,
+                            'year' => $year
+                        ];
+
+            Year::insert($yearData);
+
+        }
+
+        $input['endingDate'] = $input['endingDate']. " 23:59:59";
 
         $companyFinanceYears = $this->companyFinanceYearRepository->create($input);
         CreateFinancePeriod::dispatch($companyFinanceYears);

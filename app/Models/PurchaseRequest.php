@@ -296,7 +296,11 @@ class PurchaseRequest extends Model
     ];
 
 
-
+    public function currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currency', 'currencyID');
+    }
+    
     public function created_by(){
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }

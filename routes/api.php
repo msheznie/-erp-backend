@@ -435,6 +435,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
         Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
         Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
+        Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData');
 
 
         Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
