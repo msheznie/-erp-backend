@@ -1948,6 +1948,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
         Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
 
+        Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
