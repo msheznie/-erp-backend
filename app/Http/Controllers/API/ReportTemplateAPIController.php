@@ -441,6 +441,7 @@ class ReportTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
         $reportTemplate = ReportTemplate::where('reportID', $input['catogaryBLorPLID'])
+                                        ->where('isActive', 1)
                                         ->get();
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
