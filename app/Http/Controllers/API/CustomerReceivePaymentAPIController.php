@@ -2303,19 +2303,19 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ( ( erp_salesorderadvpayment LEFT JOIN currencymaster ON erp_salesorderadvpayment.currencyID = currencymaster.currencyID ) INNER JOIN erp_quotationmaster ON erp_salesorderadvpayment.soID = erp_quotationmaster.quotationMasterID )
                                 LEFT JOIN (
                             SELECT
-                                erp_advanceReceiptDetails.soAdvPaymentID,
-                                erp_advanceReceiptDetails.companyID,
-                                erp_advanceReceiptDetails.companySystemID,
-                                erp_advanceReceiptDetails.salesOrderID,
-                                IFNULL( Sum( erp_advanceReceiptDetails.paymentAmount ), 0 ) AS SumOfpaymentAmount 
+                                erp_advancereceiptdetails.soAdvPaymentID,
+                                erp_advancereceiptdetails.companyID,
+                                erp_advancereceiptdetails.companySystemID,
+                                erp_advancereceiptdetails.salesOrderID,
+                                IFNULL( Sum( erp_advancereceiptdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount 
                             FROM
-                                erp_advanceReceiptDetails 
+                                erp_advancereceiptdetails 
                             GROUP BY
-                                erp_advanceReceiptDetails.soAdvPaymentID,
-                                erp_advanceReceiptDetails.companySystemID,
-                                erp_advanceReceiptDetails.salesOrderID 
+                                erp_advancereceiptdetails.soAdvPaymentID,
+                                erp_advancereceiptdetails.companySystemID,
+                                erp_advancereceiptdetails.salesOrderID 
                             HAVING
-                                ( ( ( erp_advanceReceiptDetails.salesOrderID ) IS NOT NULL ) ) 
+                                ( ( ( erp_advancereceiptdetails.salesOrderID ) IS NOT NULL ) ) 
                                 ) AS advd ON ( erp_salesorderadvpayment.soID = advd.salesOrderID ) 
                                 AND ( erp_salesorderadvpayment.soAdvPaymentID = advd.soAdvPaymentID ) 
                                 AND ( erp_salesorderadvpayment.companySystemID = advd.companySystemID ) 
