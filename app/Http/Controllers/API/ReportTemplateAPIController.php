@@ -196,6 +196,8 @@ class ReportTemplateAPIController extends AppBaseController
                         $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data3);
                     }
+
+                    $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetails->detID)->update(['isFinalLevel' => 1]);
                 }
 
             }

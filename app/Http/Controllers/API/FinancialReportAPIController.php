@@ -569,7 +569,33 @@ class FinancialReportAPIController extends AppBaseController
                             $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
                             $val->detail = $details;
                             foreach ($details as $key2 => $val2) {
-                                $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                                if ($val2->isFinalLevel == 1) {
+                                    $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
+                                } else {
+                                    $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
+                                    $val2->detail = $detailLevelTwo;
+                                    foreach ($detailLevelTwo as $key3 => $val3) {
+                                        if ($val3->isFinalLevel == 1) {
+                                            $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
+                                        } else {
+                                            $detailLevelThree = $outputCollect->where('masterID', $val3->detID)->sortBy('sortOrder')->values();
+                                            $val3->detail = $detailLevelThree;
+                                            foreach ($detailLevelThree as $key4 => $val4) {
+                                                if ($val4->isFinalLevel == 1) {
+                                                    $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
+                                                } else {
+                                                    $detailLevelFour = $outputCollect->where('masterID', $val4->detID)->sortBy('sortOrder')->values();
+                                                    $val4->detail = $detailLevelFour;
+                                                    foreach ($detailLevelFour as $key5 => $val5) {
+                                                        if ($val5->isFinalLevel == 1) {
+                                                            $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
+                                                        } 
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             if ($val->itemType != 3) {
                                 if (count($details) == 0) {
@@ -855,6 +881,7 @@ class FinancialReportAPIController extends AppBaseController
             $newHeaders[$value->detID]['detID'] = $value->detID;
             $newHeaders[$value->detID]['sortOrder'] = $value->sortOrder;
             $newHeaders[$value->detID]['masterID'] = $value->masterID;
+            $newHeaders[$value->detID]['isFinalLevel'] = $value->isFinalLevel;
             $newHeaders[$value->detID]['bgColor'] = $value->bgColor;
             $newHeaders[$value->detID]['fontColor'] = $value->fontColor;
             $newHeaders[$value->detID]['itemType'] = $value->itemType;
@@ -878,6 +905,7 @@ class FinancialReportAPIController extends AppBaseController
             $newOutputCollect[$value->detID]['detID'] = $value->detID;
             $newOutputCollect[$value->detID]['sortOrder'] = $value->sortOrder;
             $newOutputCollect[$value->detID]['masterID'] = $value->masterID;
+            $newOutputCollect[$value->detID]['isFinalLevel'] = $value->isFinalLevel;
             $newOutputCollect[$value->detID]['bgColor'] = $value->bgColor;
             $newOutputCollect[$value->detID]['fontColor'] = $value->fontColor;
             $newOutputCollect[$value->detID]['itemType'] = $value->itemType;
@@ -919,12 +947,50 @@ class FinancialReportAPIController extends AppBaseController
                 $temp[$key3] = $value3;
             }
             $details = collect($newOutputCollect)->where('masterID', $val['detID'])->sortBy('sortOrder')->values();
-            $temp2 = [];
             foreach ($details as $key2 => $val2) {
+                $temp2 = [];
                 foreach ($val2 as $key4 => $value4) {
                     $temp2[$key4] = $value4;
                 }
-                $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
+                if ($val2['isFinalLevel'] == 1) {
+                    $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
+                } else {
+                    $detailsTwo = collect($newOutputCollect)->where('masterID', $val2['detID'])->sortBy('sortOrder')->values();
+                    foreach ($detailsTwo as $key7 => $val7) {
+                        $temp3 = [];
+                        foreach ($val7 as $key8 => $value8) {
+                            $temp3[$key8] = $value8;
+                        }
+                        if ($val7['isFinalLevel'] == 1) {
+                            $temp3['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val7['detID'])->sortBy('sortOrder')->values();
+                        } else {
+                            $detailsThree = collect($newOutputCollect)->where('masterID', $val7['detID'])->sortBy('sortOrder')->values();
+                            foreach ($detailsThree as $key9 => $val9) {
+                                $temp4 = [];
+                                foreach ($val9 as $key10 => $value10) {
+                                    $temp4[$key10] = $value10;
+                                }
+                                if ($val9['isFinalLevel'] == 1) {
+                                    $temp4['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val9['detID'])->sortBy('sortOrder')->values();
+                                } else {
+                                    $detailsFour = collect($newOutputCollect)->where('masterID', $val9['detID'])->sortBy('sortOrder')->values();
+                                    foreach ($detailsFour as $key11 => $val11) {
+                                        $temp5 = [];
+                                        foreach ($val11 as $key12 => $value12) {
+                                            $temp5[$key12] = $value12;
+                                        }
+                                        if ($val11['isFinalLevel'] == 1) {
+                                            $temp5['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val11['detID'])->sortBy('sortOrder')->values();
+                                        } 
+                                        $temp4['detail'][] = $temp5;
+                                    }
+                                }
+                                $temp3['detail'][] = $temp4;
+                            }
+                        }
+                        $temp2['detail'][] = $temp3;
+                    }
+                }
                 $temp['detail'][] = $temp2;
             }
             if ($val['itemType'] != 3) {
@@ -2963,7 +3029,7 @@ AND MASTER .canceledYN = 0';
             $secondLinkedcolumnQry .= '((IFNULL(IFNULL( c.`' . $val . '`, e.`' . $val . '`),0))/' . $divisionValue . ') AS `' . $val . '`,';
             //$thirdLinkedcolumnQry .= 'IFNULL(SUM(d.`' . $val . '`),0) AS `' . $val . '`,';
             //$fourthLinkedcolumnQry .= 'IFNULL(SUM(`' . $val . '`),0) AS `' . $val . '`,';
-            $whereQry[] .= 'IF(masterID is not null , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
+            $whereQry[] .= 'IF(masterID is not null AND isFinalLevel = 1 , d.`' . $val . '` != 0,d.`' . $val . '` IS NOT NULL)';
         }
 
         $budgetJoin = '';
@@ -2985,6 +3051,7 @@ AND MASTER .canceledYN = 0';
 	' . $secondLinkedcolumnQry . '
 	c.sortOrder,
 	c.masterID,
+    c.isFinalLevel,
 	c.bgColor,
 	c.fontColor,
 	c.itemType,
@@ -2998,6 +3065,7 @@ SELECT
 	erp_companyreporttemplatedetails.description AS detDescription,
 	erp_companyreporttemplatedetails.sortOrder,
 	erp_companyreporttemplatedetails.masterID,
+    erp_companyreporttemplatedetails.isFinalLevel,
 	erp_companyreporttemplatedetails.bgColor,
 	erp_companyreporttemplatedetails.fontColor,
 	erp_companyreporttemplatedetails.hideHeader,
