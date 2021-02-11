@@ -1098,6 +1098,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         ])->findWithoutFail($id);
 
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        }
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
 
@@ -1105,15 +1108,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
         }
 
-        if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
-        } else {
-            /*   $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
-               $data['data']['master'] = $customerInvoiceDirect;
-               $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
-            $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
-            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
-        }
+        $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
+        return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
 
@@ -3085,6 +3081,7 @@ WHERE
         $customerInvoiceDirectData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
         $customerInvoiceDirectData->canceledByEmpID = $employee->empID;
         $customerInvoiceDirectData->canceledByEmpName = $employee->empFullName;
+        $customerInvoiceDirectData->customerInvoiceNo = null;
         $customerInvoiceDirectData->save();
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
