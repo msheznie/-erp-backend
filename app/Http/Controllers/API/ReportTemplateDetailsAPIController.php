@@ -38,10 +38,12 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 {
     /** @var  ReportTemplateDetailsRepository */
     private $reportTemplateDetailsRepository;
+    private $finalLevelSubCategories;
 
     public function __construct(ReportTemplateDetailsRepository $reportTemplateDetailsRepo)
     {
         $this->reportTemplateDetailsRepository = $reportTemplateDetailsRepo;
+        $this->finalLevelSubCategories = [];
     }
 
     /**
@@ -329,6 +331,14 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError('You cannot delete this record because already this record has been added to the formula');
             }
             $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
+
+            foreach ($detID as $key => $value) {
+                $res = $this->deleteSubCategories($value);
+                if (!$res['status']) {
+                    return $this->sendError($res['message']);
+                }
+            }
+
             $reportTemplateDetails->subcategory()->delete();
             $reportTemplateDetails->gllink()->delete();
             $reportTemplateDetails->subcatlink()->delete();
@@ -344,11 +354,61 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
     }
 
+    public function deleteSubCategories($categoryID)
+    {
+        $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($categoryID);
+        if (empty($reportTemplateDetails)) {
+            return ['status'=> false, 'message' => 'Report Template Details not found'];
+        }
+
+        $columnLink = ReportTemplateColumnLink::whereRaw("formulaRowID LIKE '$categoryID,%' OR formulaRowID LIKE '%,$categoryID,%' OR formulaRowID LIKE '%,$categoryID' OR formulaRowID = '$categoryID'")->first();
+
+        if ($columnLink) {
+            return ['status'=> false, 'message' => 'You cannot delete this record because already this record has been added to the formula'];
+        }
+        $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
+
+        foreach ($detID as $key => $value) {
+            $res = $this->deleteSubCategories($value);
+            if (!$res['status']) {
+                return ['status'=> false, 'message' => $res['message']];
+            }
+        }
+
+        $reportTemplateDetails->subcategory()->delete();
+        $reportTemplateDetails->gllink()->delete();
+        $reportTemplateDetails->subcatlink()->delete();
+        if ($detID) {
+            $glLink = ReportTemplateLinks::whereIN('templateDetailID', $detID)->delete();
+        }
+        $reportTemplateDetails->delete();
+
+        return ['status' => true];
+    }
+
     public function getReportTemplateDetail($id, Request $request)
     {
         $reportTemplateDetails = ReportTemplateDetails::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
             $q->with(['gllink' => function ($q) {
                 $q->with('subcategory');
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategory' => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory');
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
                 $q->orderBy('sortOrder', 'asc');
             }]);
             $q->orderBy('sortOrder', 'asc');
@@ -387,11 +447,30 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateDetails = '';
         if ($request->isHeader == 1) {
             $reportTemplateDetails = ReportTemplateDetails::where('companyReportTemplateID', $request->companyReportTemplateID)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
+            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
         } else {
             $reportTemplateDetails = ReportTemplateDetails::where('masterID', $request->masterID)->where('sortOrder', '<', $request->sortOrder)->whereIN('itemType', [2,4])->orderBy('sortOrder')->get();
+
+            $this->finalLevelSubCategories = [];
+            $reportTemplateDetailsFinalLevels = $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, [2,4]);
+
+            return $this->sendResponse($reportTemplateDetailsFinalLevels, 'Report Template Details retrieved successfully');
         }
 
-        return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+    }
+
+    public function getFinalCategoriesOfSubLevel($categories, $itemTypes)
+    {
+        foreach ($categories as $key => $value) {
+            if ($value->isFinalLevel == 1) {
+                $this->finalLevelSubCategories[] = $value;
+            } else {
+                $reportTemplateDetails = ReportTemplateDetails::where('masterID', $value->detID)->whereIN('itemType', $itemTypes)->orderBy('sortOrder')->get();
+                $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, $itemTypes);
+            }
+        }
+
+        return $this->finalLevelSubCategories;
     }
 
     public function addSubCategory(Request $request)
@@ -429,6 +508,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     $input['sortOrder'] = $val['sortOrder'];
                     if($input['itemType'] == 3){
                         $input['categoryType'] = null;
+                        $input['isFinalLevel'] = 1;
                     }
                     $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
                 }
@@ -507,6 +587,18 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $reportTemplateDetails = ReportTemplateDetails::with(['subcategory' => function ($q) {
             $q->with(['gllink' => function ($q) {
                 $q->with('subcategory_detail');
+            }, 'subcategory'  => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory_detail');
+                }, 'subcategory'  => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory_detail');
+                    }, 'subcategory'  => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory_detail');
+                        }]);
+                    }]);
+                }]);
             }]);
         }, 'subcategorytot' => function ($q) {
             $q->with('subcategory_detail');
@@ -534,6 +626,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     $subCateogryValue['masterID'] = $saveTemplateDetails['detID'];
                     $gllink = $subCateogryValue['gllink'];
                     unset($subCateogryValue['gllink']);
+                    $subCateogryValueArray = $subCateogryValue['subcategory'];
+                    unset($subCateogryValue['subcategory']);
                     $saveSubCategory = ReportTemplateDetails::create($subCateogryValue);
                     $oldReportIds[$subCategoryDetID] = $saveSubCategory['detID'];
 
@@ -552,6 +646,94 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                             $glValue['subCategory'] = null;
                         }
                         $saveTemplateDetailLinks = ReportTemplateLinks::create($glValue);
+                    }
+
+                    foreach ($subCateogryValueArray as $subKey1 => $subCateogryValue1) {
+                        $subCategoryDetID1 = $subCateogryValue1['detID'];
+                        $subCateogryValue1['detID'] = null;
+                        $subCateogryValue1['companyReportTemplateID'] = $templateID;
+                        $subCateogryValue1['masterID'] = $saveSubCategory['detID'];
+                        $subCateogryValue1Array = $subCateogryValue1['subcategory'];
+                        unset($subCateogryValue1['subcategory']);
+                        $gllink1 = $subCateogryValue1['gllink'];
+                        unset($subCateogryValue1['gllink']);
+                        $saveSubCategory1 = ReportTemplateDetails::create($subCateogryValue1);
+                        $oldReportIds[$subCategoryDetID1] = $saveSubCategory1['detID'];
+
+                        foreach ($gllink1 as $glKey1 => $glValue1) {
+                            $glValue1['linkID'] = null;
+                            $glValue1['templateMasterID'] = $templateID;
+                            $glValue1['templateDetailID'] = $saveSubCategory1['detID'];
+
+                            $glSubCategory = $glValue1['subCategory'];
+                            $glSubCategoryDetail = $glValue1['subcategory_detail'];
+                            unset($glValue1['subcategory_detail']);
+
+                            if ($glValue1['subCategory'] != null && isset($oldReportIds[$glValue1['subCategory']]) && $oldReportIds[$glValue1['subCategory']] != null) {
+                                $glValue1['subCategory'] = $oldReportIds[$glValue1['subCategory']];
+                            } else {
+                                $glValue1['subCategory'] = null;
+                            }
+                            $saveTemplateDetailLinks = ReportTemplateLinks::create($glValue1);
+                        }
+
+                        foreach ($subCateogryValue1Array as $subKey2 => $subCateogryValue2) {
+                            $subCategoryDetID2 = $subCateogryValue2['detID'];
+                            $subCateogryValue2['detID'] = null;
+                            $subCateogryValue2['companyReportTemplateID'] = $templateID;
+                            $subCateogryValue2['masterID'] = $saveSubCategory1['detID'];
+                            $gllink2 = $subCateogryValue2['gllink'];
+                            unset($subCateogryValue2['gllink']);
+                            $subCateogryValue2Array = $subCateogryValue2['subcategory'];
+                            unset($subCateogryValue2['subcategory']);
+                            $saveSubCategory2 = ReportTemplateDetails::create($subCateogryValue2);
+                            $oldReportIds[$subCategoryDetID2] = $saveSubCategory2['detID'];
+
+                            foreach ($gllink2 as $glKey2 => $glValue2) {
+                                $glValue2['linkID'] = null;
+                                $glValue2['templateMasterID'] = $templateID;
+                                $glValue2['templateDetailID'] = $saveSubCategory2['detID'];
+
+                                $glSubCategory = $glValue2['subCategory'];
+                                $glSubCategoryDetail = $glValue2['subcategory_detail'];
+                                unset($glValue2['subcategory_detail']);
+
+                                if ($glValue2['subCategory'] != null && isset($oldReportIds[$glValue2['subCategory']]) && $oldReportIds[$glValue2['subCategory']] != null) {
+                                    $glValue2['subCategory'] = $oldReportIds[$glValue2['subCategory']];
+                                } else {
+                                    $glValue2['subCategory'] = null;
+                                }
+                                $saveTemplateDetailLinks = ReportTemplateLinks::create($glValue2);
+                            }
+
+                            foreach ($subCateogryValue2Array as $subKey2 => $subCateogryValue3) {
+                                $subCategoryDetID3 = $subCateogryValue3['detID'];
+                                $subCateogryValue3['detID'] = null;
+                                $subCateogryValue3['companyReportTemplateID'] = $templateID;
+                                $subCateogryValue3['masterID'] = $saveSubCategory2['detID'];
+                                $gllink3 = $subCateogryValue3['gllink'];
+                                unset($subCateogryValue3['gllink']);
+                                $saveSubCategory3 = ReportTemplateDetails::create($subCateogryValue3);
+                                $oldReportIds[$subCategoryDetID3] = $saveSubCategory3['detID'];
+
+                                foreach ($gllink3 as $glKey3 => $glValue3) {
+                                    $glValue3['linkID'] = null;
+                                    $glValue3['templateMasterID'] = $templateID;
+                                    $glValue3['templateDetailID'] = $saveSubCategory3['detID'];
+
+                                    $glSubCategory = $glValue3['subCategory'];
+                                    $glSubCategoryDetail = $glValue3['subcategory_detail'];
+                                    unset($glValue3['subcategory_detail']);
+
+                                    if ($glValue3['subCategory'] != null && isset($oldReportIds[$glValue3['subCategory']]) && $oldReportIds[$glValue3['subCategory']] != null) {
+                                        $glValue3['subCategory'] = $oldReportIds[$glValue3['subCategory']];
+                                    } else {
+                                        $glValue3['subCategory'] = null;
+                                    }
+                                    $saveTemplateDetailLinks = ReportTemplateLinks::create($glValue3);
+                                }
+                            }
+                        }
                     }
                 }
 
