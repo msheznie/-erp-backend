@@ -33,6 +33,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -881,7 +882,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
                     } else {
-                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
                     IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
                         where('custInvoiceDirectID', $id)
@@ -896,9 +897,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     ->orwhereRaw('unitCost IS NULL OR unitCost =""');
                             });
 
-
                         if (!empty($detailValidation->get()->toArray())) {
 
+                                /*
+                                 * check policy 15
+                                 *  Allow to confirm the Customer invoice with contract number
+                                 *  This policy should work only for Revenue GL
+                                 * */
+
+                            $policyRGLCID = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
+                                ->where('companySystemID', $input['companySystemID'])
+                                ->where('isYesNO', 1)
+                                ->exists();
 
                             foreach ($detailValidation->get()->toArray() as $item) {
 
@@ -907,7 +917,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'serviceLineCode' => 'required|min:1',
                                     'unitOfMeasure' => 'required|numeric|min:1',
                                     'invoiceQty' => 'required|numeric|min:1',
-                                    'contractID' => 'required|numeric|min:1',
                                     'invoiceAmount' => 'required|numeric|min:1',
                                     'unitCost' => 'required|numeric|min:1',
                                 ], [
@@ -916,7 +925,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
-                                    'contractID.required' => 'Contract no. is required.',
                                     'invoiceAmount.required' => 'Amount is required.',
                                     'unitCost.required' => 'Unit cost is required.'
 
@@ -926,11 +934,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     return $this->sendError($validators->messages(), 422);
                                 }
 
+                                if(!$policyRGLCID){
+
+                                    $glSystemID = isset($item['glSystemID'])?$item['glSystemID']:0;
+                                    $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')
+                                        ->where('chartOfAccountSystemID', $glSystemID)
+                                        ->where('controlAccountsSystemID',1)// Revenue
+                                        ->exists();
+
+                                    if($chartOfAccount){
+                                        $contractValidator = \Validator::make($item, [
+                                            'contractID' => 'required|numeric|min:1'
+                                        ], [
+                                            'contractID.required' => 'Contract no. is required.'
+                                        ]);
+                                        if ($contractValidator->fails()) {
+                                            return $this->sendError($contractValidator->messages(), 422);
+                                        }
+                                    }
+
+                                }
 
                             }
 
                         }
-
                         $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
                         $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
