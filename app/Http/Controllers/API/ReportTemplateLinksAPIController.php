@@ -182,6 +182,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
             }
         }
 
+        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['templateDetailID'])->update(['isFinalLevel' => 1]);
+
         $lastSortOrder = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->where('templateDetailID',$input['templateDetailID'])->orderBy('linkID','asc')->get();
         if(count($lastSortOrder) > 0){
             foreach ($lastSortOrder as $key => $val) {
@@ -355,6 +357,12 @@ class ReportTemplateLinksAPIController extends AppBaseController
 
         $reportTemplateLinks->delete();
 
+        $checkTemplateLinksExists = ReportTemplateLinks::where('templateDetailID', $reportTemplateLinks->templateDetailID)->first();
+
+        if (!$checkTemplateLinksExists) {
+            $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateLinks->templateDetailID)->update(['isFinalLevel' => 0]);
+        }
+
         return $this->sendResponse($id, 'Report Template Links deleted successfully');
     }
 
@@ -406,6 +414,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
 
     public function deleteAllLinkedGLCodes(Request $request){
         $reportTemplateLinks = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)->delete();
+         $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $request->templateDetailID)->update(['isFinalLevel' => 0]);
         return $this->sendResponse([], 'Report Template Links deleted successfully');
     }
 
@@ -462,6 +471,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                 }
             }
         }
+
+        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['selectedReportCategory'])->update(['isFinalLevel' => 1]);
 
         $lastSortOrder = ReportTemplateLinks::ofTemplate($input['selectedReportTemplate'])->where('templateDetailID',$input['selectedReportCategory'])->orderBy('linkID','asc')->get();
         if(count($lastSortOrder) > 0){
