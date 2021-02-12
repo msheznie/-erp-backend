@@ -541,7 +541,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
+                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500, array('type' => 'customer_credit_days'));
             }
 
             /*if customer change*/
@@ -1001,7 +1001,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
 
             }
-        } else {
+        }
+        else {
             $this->customerInvoiceDirectRepository->update($_post, $id);
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
@@ -1335,7 +1336,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankID = $master->bankID;
         }
 
-        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,creditDays"))
             ->where('companySystemID', $companyId)
             ->where('isActive', 1)
             ->where('isAssigned', -1)
