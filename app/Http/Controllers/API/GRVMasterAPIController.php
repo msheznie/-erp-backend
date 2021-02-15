@@ -28,6 +28,8 @@ use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
+use App\Models\PurchaseOrderDetails;
+use App\Models\BudgetConsumedData;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
@@ -1569,6 +1571,16 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $grv->grvCancelledComment = $input['grvCancelledComment'];
             $grv->save();
 
+            if ($input['cancelMethod'] == 1) {
+                $this->openGrvRelatedDetailsInPo($input['grvAutoID'], $grv->companySystemID);
+            } else {
+                $cancelRes = $this->cancelGrvRelatedPo($input['grvAutoID'], $grv->companySystemID, $input['grvCancelledComment']);
+                if (!$cancelRes['status']) {
+                    DB::rollback();
+                    return $this->sendError($cancelRes['message'], 500);
+                }
+            }
+
             // update erp_unbilledgrvgroupby
             UnbilledGrvGroupBy::where('grvAutoID', $input['grvAutoID'])->update(['selectedForBooking' => -1, 'fullyBooked' => 2]);
 
@@ -1596,6 +1608,198 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError($e->getMessage());
         }
 
+    }
+
+    public function openGrvRelatedDetailsInPo($grvAutoID, $companySystemID)
+    {
+        $grvDetailsData = GRVDetails::where('grvAutoID', $grvAutoID)->get();
+
+        foreach ($grvDetailsData as $key => $value) {
+            $this->updatePoDetailForGrvCancel($value, $companySystemID);
+        }
+
+        return true;
+    }
+
+     public function cancelGrvRelatedPo($grvAutoID, $companySystemID, $grvCancelledComment)
+    {
+        $grvDetailsData = GRVDetails::where('grvAutoID', $grvAutoID)->get();
+        $poIds = [];
+        foreach ($grvDetailsData as $key => $value) {
+            $purchaseOrderDetailsID = $value->purchaseOrderDetailsID;
+            $purchaseOrderMastertID = $value->purchaseOrderMastertID;
+
+            if (!empty($purchaseOrderMastertID)) {
+                $checkAnyGrvExists = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderMastertID)
+                                               ->where('grvAutoID', '!=', $grvAutoID)
+                                               ->whereHas('grv_master', function($query) {
+                                                    $query->where('grvCancelledYN', '!=', -1);
+                                                 })
+                                               ->first();
+
+                if ($checkAnyGrvExists) {
+                    return ['status' => false, 'message' => "Order cannot be cancelled as there is another GRV created."];
+                }
+
+                // $poData = ProcumentOrder::find($purchaseOrderMastertID);
+
+                // if ($poData->grvRecieved != 2) {
+                //     return ['status' => false, 'message' => "Order cannot be cancelled as the order partially pulled."];
+                // }
+
+                $poIds[] = $purchaseOrderMastertID;
+            }
+        }
+
+        foreach ($poIds as $key => $value) {
+            $res = $this->procumentOrderCancel($value, $grvCancelledComment);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']];
+            }
+        }
+
+        return ['status' => true];
+
+    }
+
+     public function procumentOrderCancel($purchaseOrderID, $grvCancelledComment)
+    {
+        $employee = \Helper::getEmployeeInfo();
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+
+        if (empty($purchaseOrder)) {
+            return ['status' => false, 'message' => "Purchase Order not found."];
+        }
+
+        $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->update([
+                'poCancelledYN' => -1,
+                'poCancelledBySystemID' => $employee->employeeSystemID,
+                'poCancelledBy' => $employee->empID,
+                'poCancelledByName' => $employee->empName,
+                'poCancelledDate' => now(),
+                'cancelledComments' => $grvCancelledComment
+            ]);
+
+        $idsDeleted = array();
+        if ($purchaseOrder->approved == -1) {
+
+            $budgetDetail = BudgetConsumedData::where('companySystemID', $purchaseOrder->companySystemID)
+                ->where('documentSystemCode', $purchaseOrderID)
+                ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                ->get();
+
+            if (!empty($budgetDetail)) {
+                foreach ($budgetDetail as $bd) {
+                    array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
+                }
+                BudgetConsumedData::destroy($idsDeleted);
+            }
+
+        }
+
+        AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $grvCancelledComment, 'cancelled');
+
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $grvCancelledComment . '</p>';
+        $subject = $cancelDocNameSubject . ' is cancelled';
+
+        if ($purchaseOrder->poConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return ['status' => false, 'message' => $sendEmail["message"]];
+        }
+
+        return ['status' => true];
+    }
+
+    public function updatePoDetailForGrvCancel($gRVDetails, $companySystemID)
+    {
+        $purchaseOrderDetailsID = $gRVDetails->purchaseOrderDetailsID;
+        $purchaseOrderMastertID = $gRVDetails->purchaseOrderMastertID;
+
+         if (!empty($purchaseOrderDetailsID) && !empty($purchaseOrderMastertID)) {
+            $detailExistPODetail = PurchaseOrderDetails::find($purchaseOrderDetailsID);
+            // get the total received qty for a specific item
+            $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
+                                      ->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)
+                                      ->WHERE('companySystemID', $companySystemID)
+                                      ->WHERE('purchaseOrderDetailsID', $purchaseOrderDetailsID)
+                                      ->first();
+            // get the total received qty
+            $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                    ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
+                                     ->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)
+                                     ->WHERE('companySystemID', $companySystemID)
+                                     ->first();
+
+            $receivedQty = 0;
+            $goodsRecievedYN = 0;
+            $GRVSelectedYN = 0;
+            if ($detailPOSUM->newNoQty > 0) {
+                $receivedQty = $detailPOSUM->newNoQty;
+            }
+
+            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+            if ($receivedQty == 0) {
+                $goodsRecievedYN = 0;
+                $GRVSelectedYN = 0;
+            } else {
+                if ($checkQuantity == 0) {
+                    $goodsRecievedYN = 2;
+                    $GRVSelectedYN = 1;
+                } else {
+                    $goodsRecievedYN = 1;
+                    $GRVSelectedYN = 0;
+                }
+            }
+
+            $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
+                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+            if ($masterPOSUM->newNoQty > 0) {
+                $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
+                    ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
+            } else {
+                $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
+                    ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
+            }
+        } 
     }
 
     public function grvMarkupfinalyze(Request $request){

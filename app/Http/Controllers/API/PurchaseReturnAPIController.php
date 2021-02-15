@@ -938,6 +938,7 @@ class PurchaseReturnAPIController extends AppBaseController
                         ->where('serviceLineSystemID', $purchaseReturn->serviceLineSystemID)
                         ->where('grvLocation', $purchaseReturn->purchaseReturnLocation)
                         ->where('approved', -1)
+                        ->where('grvCancelledYN', '!=',-1)
                         ->where('supplierID', $purchaseReturn->supplierID)
                         ->whereDate('grvDate', '<=',$purchaseReturn->purchaseReturnDate)
                         ->where('supplierTransactionCurrencyID', $purchaseReturn->supplierTransactionCurrencyID)
