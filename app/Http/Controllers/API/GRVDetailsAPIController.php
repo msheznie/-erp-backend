@@ -256,9 +256,20 @@ class GRVDetailsAPIController extends AppBaseController
                         return $this->sendError('Number of quantity should not be greater than received qty', 422);
                     }
 
-                    $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $input['purchaseOrderDetailsID'])->first();
+                    $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                             ->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])
+                                             ->whereHas('grv_master', function($query) {
+                                                $query->where('grvCancelledYN', '!=', -1);
+                                             })
+                                             ->WHERE('companySystemID', $grvMaster->companySystemID)
+                                             ->WHERE('purchaseOrderDetailsID', $input['purchaseOrderDetailsID'])->first();
                     // get the total received qty
-                    $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->first();
+                    $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                             ->WHERE('purchaseOrderMastertID', $input['purchaseOrderMastertID'])
+                                             ->whereHas('grv_master', function($query) {
+                                                $query->where('grvCancelledYN', '!=', -1);
+                                             })
+                                             ->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
                     $receivedQty = 0;
                     $goodsRecievedYN = 0;
@@ -498,9 +509,20 @@ class GRVDetailsAPIController extends AppBaseController
             if (!empty($purchaseOrderDetailsID) && !empty($purchaseOrderMastertID)) {
                 $detailExistPODetail = PurchaseOrderDetails::find($purchaseOrderDetailsID);
                 // get the total received qty for a specific item
-                $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purchaseOrderDetailsID', $purchaseOrderDetailsID)->first();
+                $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                         ->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)
+                                         ->whereHas('grv_master', function($query) {
+                                            $query->where('grvCancelledYN', '!=', -1);
+                                         })
+                                         ->WHERE('companySystemID', $grvMaster->companySystemID)
+                                         ->WHERE('purchaseOrderDetailsID', $purchaseOrderDetailsID)->first();
                 // get the total received qty
-                $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)->WHERE('companySystemID', $grvMaster->companySystemID)->first();
+                $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                          ->WHERE('purchaseOrderMastertID', $purchaseOrderMastertID)
+                                          ->whereHas('grv_master', function($query) {
+                                            $query->where('grvCancelledYN', '!=', -1);
+                                         })
+                                          ->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
                 $receivedQty = 0;
                 $goodsRecievedYN = 0;

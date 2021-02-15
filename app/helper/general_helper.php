@@ -2380,12 +2380,18 @@ class Helper
             $detailExistPODetail = PurchaseOrderDetails::find($grvDetailsData->purchaseOrderDetailsID);
 
             $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
                                      ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
                                      ->WHERE('purchaseOrderDetailsID', $grvDetailsData->purchaseOrderDetailsID)
                                      ->first();
 
             // get the total received qty
             $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
                                      ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
                                      ->first();
 
