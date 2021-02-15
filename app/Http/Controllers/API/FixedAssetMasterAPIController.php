@@ -488,7 +488,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["serialNo"] = $lastSerialNumber;
             $input["faCode"] = $documentCode;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], 2, 2, $input['costUnitRpt']);
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
             if ($companyCurrencyConversion) {
                 $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
             }
