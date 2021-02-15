@@ -431,8 +431,8 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                 return $this->sendError('Payment amount cannot be greater than requested amount', 500, ['type' => 'amountmismatch']);
             }
 
-            $conversion = \Helper::convertAmountToLocalRpt(206, $id, $input["paymentAmount"]);
-            $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
+            $conversion = \Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $input["paymentAmount"]);
+            $input['supplierDefaultAmount'] = $input["paymentAmount"];
             $input['localAmount'] = $conversion['localAmount'];
             $input['comRptAmount'] = $conversion['reportingAmount'];
             $input['supplierTransAmount'] = $input["paymentAmount"];
@@ -444,7 +444,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                 $vatAmount  = ($advancePayment->VATAmount / $advancePayment->reqAmount) * $input["paymentAmount"];
             }
 
-            $conversionVAT = \Helper::convertAmountToLocalRpt(206, $id, $vatAmount);
+            $conversionVAT = \Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $vatAmount);
             $input['VATAmountLocal'] = $conversionVAT['localAmount'];
             $input['VATAmountRpt'] = $conversionVAT['reportingAmount'];
             $input['VATAmount'] = $vatAmount;
