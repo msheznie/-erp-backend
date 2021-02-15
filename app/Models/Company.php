@@ -347,4 +347,8 @@ class Company extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'vatOutputGLCodeSystemID','chartOfAccountSystemID');
     }
 
+     public function bank_assigned()
+    {
+        return $this->hasMany('App\Models\BankAssign', 'companySystemID','companySystemID');
+    }
 }

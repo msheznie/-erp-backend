@@ -295,10 +295,20 @@ class CustomerMasterAPIController extends AppBaseController
     {
 
         $customerId = $request['customerId'];
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $customer = CustomerMaster::where('customerCodeSystem', '=', $customerId)->first();
         if ($customer) {
             $customerCompanies = CustomerAssigned::where('customerCodeSystem', $customerId)
                 ->with(['company'])
+                ->whereIn("companySystemID",$subCompanies)
                 ->orderBy('customerAssignedID', 'DESC')
                 ->get();
         } else {

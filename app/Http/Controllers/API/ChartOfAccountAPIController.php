@@ -326,11 +326,25 @@ class ChartOfAccountAPIController extends AppBaseController
     public function assignedCompaniesByChartOfAccount(Request $request)
     {
         $chartOfAccountSystemID = $request['chartOfAccountSystemID'];
-        $data = ChartOfAccountsAssigned::where('chartOfAccountSystemID', '=', $chartOfAccountSystemID)->first();
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $data = ChartOfAccountsAssigned::where('chartOfAccountSystemID', '=', $chartOfAccountSystemID)
+                                       ->whereIn("companySystemID",$subCompanies)
+                                       ->first();
 
 
         if ($data) {
-            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountSystemID)->with(['company'])->get();
+            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountSystemID)
+                                                    ->with(['company'])
+                                                    ->whereIn("companySystemID",$subCompanies)
+                                                    ->get();
         } else {
             $itemCompanies = [];
         }

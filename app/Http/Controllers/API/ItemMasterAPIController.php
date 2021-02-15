@@ -813,10 +813,21 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $itemId = $request['itemCodeSystem'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $item = ItemMaster::where('itemCodeSystem', '=', $itemId)->first();
 
         if ($item) {
             $itemCompanies = ItemAssigned::where('itemCodeSystem', $itemId)->with(['company'])
+                ->whereIn("companySystemID",$subCompanies)
                 ->orderBy('idItemAssigned', 'DESC')
                 ->get();
         } else {

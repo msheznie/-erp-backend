@@ -665,6 +665,16 @@ class SupplierMasterAPIController extends AppBaseController
     public function getAssignedCompaniesBySupplier(Request $request)
     {
         $supplierId = $request['supplierId'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
             ->first();
         if ($supplier) {
@@ -675,6 +685,7 @@ class SupplierMasterAPIController extends AppBaseController
                 ->leftJoin('suppliercritical', 'supplierassigned.isCriticalYN', '=', 'suppliercritical.suppliercriticalID')
                 ->leftJoin('yesnoselection', 'supplierassigned.isActive', '=', 'yesnoselection.idyesNoselection')
                 ->where('supplierCodeSytem', $supplierId)
+                ->whereIn("companySystemID",$subCompanies)
                 ->orderBy('supplierAssignedID', 'DESC')
                 ->get();
         } else {
