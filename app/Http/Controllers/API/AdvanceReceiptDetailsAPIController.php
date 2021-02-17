@@ -248,10 +248,11 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
                         if ($tempArray) {
                             $advanceReceiptDetail = $this->advanceReceiptDetailsRepository->create($tempArray);
-                            $conversion = \Helper::convertAmountToLocalRpt(206, $advanceReceiptDetail->advanceReceiptDetailAutoID, $new["BalanceAmount"]);
+
+                            $conversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], $new["BalanceAmount"]);
 
                             AdvanceReceiptDetails::where('advanceReceiptDetailAutoID', $advanceReceiptDetail->advanceReceiptDetailAutoID)
-                                ->update(['supplierDefaultAmount' => $conversion['defaultAmount'],
+                                ->update(['supplierDefaultAmount' => $new['BalanceAmount'],
                                           'localAmount' => $conversion['localAmount'],
                                           'comRptAmount' => $conversion['reportingAmount']]);
 
