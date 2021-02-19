@@ -2324,6 +2324,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ( ( erp_salesorderadvpayment.companySystemID ) = ' . $masterData->companySystemID . ' ) 
                                 AND ( ( erp_salesorderadvpayment.customerId ) = ' . $masterData->customerID . ' ) 
                                 AND ( ( erp_salesorderadvpayment.currencyID ) = ' . $masterData->custTransactionCurrencyID . ' ) 
+                                AND ( ( erp_quotationmaster.documentDate ) <= "' . $masterData->custPaymentReceiveDate . '" ) 
                                 AND ( ( erp_salesorderadvpayment.selectedToPayment ) = 0 ) 
                                 AND ( ( erp_quotationmaster.confirmedYN ) = 1 ) 
                                 AND ( ( erp_quotationmaster.approvedYN ) = -1 ) 
