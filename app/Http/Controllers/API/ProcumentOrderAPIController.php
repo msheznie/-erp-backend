@@ -6517,6 +6517,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
     public function getGrvTracingData($grvAutoID, $type = 'grv', $bookingSuppMasInvAutoID = null)
     {
+        if (!is_array($grvAutoID)) {
+            $grvMasterData = GRVMaster::find($grvAutoID);
+
+            if ($grvMasterData->grvTypeID == 1) {
+                $res[] = $this->grvForwardTracing($grvAutoID);
+
+                return $res;
+            }
+        }
+
         $grvAutoIDs = (is_array($grvAutoID)) ? $grvAutoID : [$grvAutoID];
         $prDetails = GRVDetails::whereIn('grvAutoID', $grvAutoIDs)
                                  ->groupBy('purchaseOrderMastertID')
@@ -6536,7 +6546,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $masterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if ($masterData && $masterData->documentType == 1) {
-            return [];
+            $res[] = $this->supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID);
+
+            return $res;
         }
 
         $invoices = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
@@ -6546,5 +6558,182 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $grvIDS = $invoices->pluck('grvAutoID')->toArray();
 
         return $this->getGrvTracingData($grvIDS, $type, $bookingSuppMasInvAutoID);
+    }
+
+    public function grvForwardTracing($grvAutoID)
+    {
+        $tracingData = [];
+        $grvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+                                ->with(['currency_by'])
+                                ->first();
+
+        $invoices = BookInvSuppDet::selectRaw('sum(totLocalAmount) as localAmount,
+                                                 sum(totRptAmount) as rptAmount,grvAutoID,bookingSuppMasInvAutoID')
+                ->where('grvAutoID', $grvMaster->grvAutoID)
+                ->with(['suppinvmaster' => function($query) {
+                    $query->with(['transactioncurrency']);
+                }])
+                ->groupBy('bookingSuppMasInvAutoID')
+                ->get();
+
+        foreach ($invoices as $invoice) {
+            //supplierPaymentAmount
+            $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                             sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
+                ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
+                //->where('addedDocumentSystemID', 11)
+                ->where('matchingDocID', 0)
+                ->with(['payment_master' => function($query) {
+                    $query->with(['transactioncurrency']);
+                }])
+                ->groupBy('PayMasterAutoId')
+                ->get();
+
+            $paymentsInvoiceMatch = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                             sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
+                ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
+                //->where('addedDocumentSystemID', 11)
+                ->where('matchingDocID', '>', 0)
+                ->with(['matching_master'=> function($query) {
+                    $query->with(['transactioncurrency']);
+                }])
+                ->groupBy('PayMasterAutoId')
+                ->get();
+
+            $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+
+            $invoice->payments = $totalInvoices;
+        }
+
+        $invoiceData = $invoices->toArray();
+        $cancelStatus = ($grvMaster->grvCancelledYN == -1) ? " -- @Cancelled@": "";
+
+        $tracingData['name'] = "Good Received Voucher";
+        $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
+        $tracingData['documentSystemID'] = $grvMaster->documentSystemID;
+        $tracingData['docAutoID'] = $grvMaster->grvAutoID;
+        $tracingData['title'] = "{Doc Code :} ".$grvMaster->grvPrimaryCode." -- {Doc Date :} ". Carbon::parse($grvMaster->grvDate)->format('Y-m-d')." -- {Currency :} ".$grvMaster->currency_by->CurrencyCode."-- {Amount :} ".number_format($grvMaster->grvTotalSupplierTransactionCurrency, $grvMaster->currency_by->DecimalPlaces).$cancelStatus;
+
+  
+
+        foreach ($invoiceData as $key1 => $value1) {
+            $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@": "";
+            $temp1 = [];
+            $temp1['name'] = "Supplier Invoice";
+            $temp1['cssClass'] = "ngx-org-step-two";
+            $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
+            $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
+            $temp1['title'] = "{Doc Code :} ".$value1['suppinvmaster']['bookingInvCode']." -- {Doc Date :} ". Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d')." -- {Currency :} ".$value1['suppinvmaster']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
+
+            foreach ($value1['payments'] as $key2 => $value2) {
+                $temp2 = [];
+                $temp2['cssClass'] = "ngx-org-step-three";
+                if (isset($value2['payment_master'])) {
+                    $temp2['name'] = "Payment";
+                    $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
+                    $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
+                    $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+                }
+
+                if (isset($value2['matching_master'])) {
+                    $temp2['name'] = "Debit Note";
+                    $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                    $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
+                    $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                }
+                
+                $temp1['childs'][] = $temp2;
+            }
+            
+            $tracingData['childs'][] = $temp1;
+        }
+
+
+        $returnes = PurchaseReturnDetails::selectRaw('sum(netAmountLocal) as localAmount,
+                                                 sum(netAmountRpt) as rptAmount, sum(netAmount) as transAmount,grvAutoID,purhaseReturnAutoID')
+                                            ->where('grvAutoID', $grvMaster->grvAutoID)
+                                            ->with(['master' => function($query) {
+                                                $query->with(['currency_by']);
+                                            }])
+                                            ->groupBy('purhaseReturnAutoID')
+                                            ->get()
+                                            ->toArray();
+
+        foreach ($returnes as $key1 => $value1) {
+            if (isset($value1['master'])) {
+                $temp1 = [];
+                $temp1['name'] = "Purchase Return";
+                $temp1['cssClass'] = "ngx-org-step-two";
+                $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
+                $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
+                $temp1['title'] = "{Doc Code :} ".$value1['master']['purchaseReturnCode']." -- {Doc Date :} ". Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d')." -- {Currency :} ".$value1['master']['currency_by']['CurrencyCode']." -- {Amount :} ".number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
+                
+                $tracingData['childs'][] = $temp1;
+            }
+        }
+
+
+        return $tracingData;
+    }
+
+    public function supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID)
+    {
+        $tracingData = [];
+        $invoiceMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                ->with(['transactioncurrency'])
+                                ->first();
+    
+        //supplierPaymentAmount
+        $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                         sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
+            ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
+            //->where('addedDocumentSystemID', 11)
+            ->where('matchingDocID', 0)
+            ->with(['payment_master' => function($query) {
+                $query->with(['transactioncurrency']);
+            }])
+            ->groupBy('PayMasterAutoId')
+            ->get();
+
+        $paymentsInvoiceMatch = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                         sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
+            ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
+            //->where('addedDocumentSystemID', 11)
+            ->where('matchingDocID', '>', 0)
+            ->with(['matching_master'=> function($query) {
+                $query->with(['transactioncurrency']);
+            }])
+            ->groupBy('PayMasterAutoId')
+            ->get();
+
+        $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+        $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@": "";
+        $tracingData['name'] = "Supplier Invoice";
+        $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
+        $tracingData['documentSystemID'] = $invoiceMaster->documentSystemID;
+        $tracingData['docAutoID'] = $invoiceMaster->bookingSuppMasInvAutoID;
+        $tracingData['title'] = "{Doc Code :} ".$invoiceMaster->bookingInvCode." -- {Doc Date :} ". Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d')." -- {Currency :} ".$invoiceMaster->transactioncurrency->CurrencyCode."-- {Amount :} ".number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces).$cancelStatus;
+
+        foreach ($totalInvoices as $key2 => $value2) {
+            $temp2 = [];
+            $temp2['cssClass'] = "ngx-org-step-two";
+            if (isset($value2['payment_master'])) {
+                $temp2['name'] = "Payment";
+                $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
+                $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
+                $temp2['title'] = "{Doc Code :} ".$value2['payment_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['payment_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
+            }
+
+            if (isset($value2['matching_master'])) {
+                $temp2['name'] = "Debit Note";
+                $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
+                $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['BPVcode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+            }
+            
+            $tracingData['childs'][] = $temp2;
+        }
+          
+        return $tracingData;
     }
 }
