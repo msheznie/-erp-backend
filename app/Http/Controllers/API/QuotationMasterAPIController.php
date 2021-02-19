@@ -29,6 +29,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
@@ -506,9 +507,9 @@ class QuotationMasterAPIController extends AppBaseController
                                                      COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
                                                      COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
                                                      COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
-                                                     COALESCE(SUM(VATAmount),0) as totalVATAmount,
-                                                     COALESCE(SUM(VATAmountLocal),0) as totalVATAmountLocal,
-                                                     COALESCE(SUM(VATAmountRpt),0) as totalVATAmountRpt
+                                                     COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
+                                                     COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
+                                                     COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
                                                      ")
                                          ->where('quotationMasterID', $id)->first();
 
@@ -1582,6 +1583,10 @@ class QuotationMasterAPIController extends AppBaseController
 
         if(QuotationMasterVersion::where('quotationMasterID',$id)->exists()){
             return $this->sendError('You cannot return back to amend this '.$quotOrSales.', versions created for it');
+        }
+
+        if(AdvanceReceiptDetails::where('salesOrderID',$id)->exists()){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', It is added to advance receipt voucher');
         }
 
         $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
