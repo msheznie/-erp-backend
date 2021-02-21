@@ -1918,6 +1918,9 @@ WHERE
         }
 
         if ($deleteDocument) {
+
+            AuditTrial::insertAuditTrial('MatchDocumentMaster',$matchDocumentMasterAutoID,$input['comment'],'Cancelled');
+
             return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully');
         } else {
             return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');

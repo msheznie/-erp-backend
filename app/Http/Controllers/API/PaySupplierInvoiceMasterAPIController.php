@@ -1940,6 +1940,9 @@ HAVING
         $payInvoice->canceledByEmpID = \Helper::getEmployeeID();
         $payInvoice->save();
 
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($payInvoice->documentSystemID,$request['PayMasterAutoId'],$request['cancelComments'],'Cancelled');
+
         return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher cancelled successfully');
 
     }

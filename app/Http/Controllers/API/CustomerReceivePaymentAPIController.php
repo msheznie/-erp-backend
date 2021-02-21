@@ -2077,6 +2077,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData->canceledByEmpName = $employee->empFullName;
         $customerReceivePaymentData->save();
 
+        /*Audit entry*/
+        AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['cancelComments'],'Cancelled');
+
         return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher cancelled successfully');
     }
 

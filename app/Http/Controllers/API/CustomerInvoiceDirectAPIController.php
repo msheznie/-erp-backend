@@ -3112,6 +3112,9 @@ WHERE
         $customerInvoiceDirectData->customerInvoiceNo = null;
         $customerInvoiceDirectData->save();
 
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($customerInvoiceDirectData->documentSystemiD,$custInvoiceDirectAutoID,$request['cancelComments'],'Cancelled');
+
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }
 
