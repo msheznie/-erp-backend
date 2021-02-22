@@ -509,6 +509,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     if($input['itemType'] == 3){
                         $input['categoryType'] = null;
                         $input['isFinalLevel'] = 1;
+                    } else {
+                        $input['isFinalLevel'] = 0;
                     }
                     $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
                 }
