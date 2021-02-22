@@ -379,6 +379,15 @@ class WarehouseRightsAPIController extends AppBaseController
                 $company = array($selectedCompanyID);
             } else {
                 $company = $companiesByGroup;
+
+                $globalCompanyID = (isset($input['globalCompanyID'])) ? $input['globalCompanyID'] : 0;
+                $isGroup = \Helper::checkIsCompanyGroup($globalCompanyID);
+
+                if($isGroup){
+                    $company = \Helper::getGroupCompany($globalCompanyID);
+                }else{
+                    $company = [$globalCompanyID];
+                }
             }
 
             $search = $request->input('search.value');
