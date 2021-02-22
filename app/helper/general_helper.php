@@ -30,6 +30,7 @@ use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\GRVDetails;
 use App\Models\Alert;
@@ -4954,5 +4955,119 @@ class Helper
     static function isArray($value, $default = 0)
     {
         return isset($value) ? (is_array($value) ? (isset($value[0]) ? $value[0] : $default) : $value) : $default;
+    }
+
+    public static function getDocumentDetails($companySystemID, $documentSystemID, $documentSystemCode){
+        $output = [];
+        switch ($documentSystemID){
+            case 1:
+            case 50:
+            case 51:
+                $output = PurchaseRequestDetails::where('purchaseRequestID',$documentSystemCode)
+                    ->whereHas('purchase_request', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['purchase_request'=> function($query){
+                        $query->with(['currency_by']);
+                    }])
+                    ->get();
+                break;
+
+            case 2:
+            case 5:
+            case 52:
+            $output = PurchaseOrderDetails::where('purchaseOrderMasterID',$documentSystemCode)
+                ->whereHas('order', function ($query) use($companySystemID,$documentSystemID){
+                    $query->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID);
+                })
+                ->with(['order'=> function($query){
+                    $query->with(['transactioncurrency']);
+                }])
+                ->get();
+                break;
+            case 3:
+                $output = GRVDetails::where('grvAutoID',$documentSystemCode)
+                    ->whereHas('grv_master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['grv_master'=> function($query){
+                        $query->with(['currency_by']);
+                    }])
+                    ->get();
+                break;
+            case 9:
+                $output = Models\MaterielRequestDetails::where('RequestID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'])
+                    ->get();
+                break;
+            case 8:
+                $output = Models\ItemIssueDetails::where('itemIssueAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'])
+                    ->get();
+                break;
+            case 12:
+                $output = Models\ItemReturnDetails::where('itemReturnAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','issue'])
+                    ->get();
+                break;
+            case 13:
+                $output = Models\StockTransferDetails::where('stockTransferAutoID',$documentSystemCode)
+                    ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master_by'])
+                    ->get();
+                break;
+            case 10:
+                $output = Models\StockReceiveDetails::where('stockReceiveAutoID',$documentSystemCode)
+                    ->whereHas('stock_receive', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['stock_receive'])
+                    ->get();
+                break;
+            case 7:
+                $output = Models\StockAdjustmentDetails::where('stockAdjustmentAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','local_currency','rpt_currency'])
+                    ->get();
+                break;
+            case 24:
+                $output = Models\PurchaseReturnDetails::where('purhaseReturnAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','grv_master'])
+                    ->get();
+                break;
+
+
+            default:
+                $output = [];
+        }
+
+        return $output;
+
     }
 }

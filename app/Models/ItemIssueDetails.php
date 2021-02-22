@@ -483,5 +483,9 @@ class ItemIssueDetails extends Model
         return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
     }
 
+    public function master(){
+        return $this->belongsTo('App\Models\ItemIssueMaster','itemIssueAutoID','itemIssueAutoID');
+    }
+
     
 }

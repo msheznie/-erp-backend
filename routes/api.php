@@ -1955,6 +1955,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
 
         Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
+        Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
 
     });
 
