@@ -715,7 +715,7 @@ class GRVDetailsAPIController extends AppBaseController
                         if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
                             if ($new['isChecked'] && ((float)$new['noQty'] != ($new['poQty'] - (float)$new['receivedQty']))) {
-                                return $this->sendError('Full order quantity should be received', 422);
+                                // return $this->sendError('Full order quantity should be received', 422);
                             }
                         }
                     }

@@ -6307,14 +6307,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             }])
                                             ->groupBy('purchaseOrderMasterID');
 
-        // if (!is_null($purchaseOrderID)) {
-        //     $poMasters = $poMasters->where('purchaseOrderMasterID', $purchaseOrderID);
-        // }
+        if (!is_null($purchaseOrderID)) {
+            if (is_array($purchaseOrderID)) {
+                $poMasters = $poMasters->whereIn('purchaseOrderMasterID', $purchaseOrderID);
+            } else {
+                $poMasters = $poMasters->where('purchaseOrderMasterID', $purchaseOrderID);
+            }
+        }
 
         $poMasters = $poMasters->get();
 
         foreach ($poMasters as $po) {
-            $po->grv = $this->getPOtoPaymentChainForTracing($po->order, $grvAutoID, $bookingSuppMasInvAutoID);
+            $po->grv = $this->getPOtoPaymentChainForTracing($po->order, $grvAutoID, $bookingSuppMasInvAutoID, $type);
         }
 
         $poData = $poMasters->toArray();
@@ -6458,9 +6462,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }])
             ->groupBy('grvAutoID');
 
-        // if (!is_null($grvAutoID)) {
-        //     $grvMasters = $grvMasters->where('grvAutoID', $grvAutoID);
-        // }
+        if (!is_null($grvAutoID)) {
+            if (is_array($grvAutoID)) {
+                $grvMasters = $grvMasters->whereIn('grvAutoID', $grvAutoID);
+            } else {
+                $grvMasters = $grvMasters->where('grvAutoID', $grvAutoID);
+            }
+        }
 
         $grvMasters = $grvMasters->get();
 
@@ -6474,9 +6482,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('bookingSuppMasInvAutoID');
 
-            // if (!is_null($bookingSuppMasInvAutoID)) {
-            //     $invoices = $invoices->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID);
-            // }
+            if (!is_null($bookingSuppMasInvAutoID)) {
+                if (is_array($bookingSuppMasInvAutoID)) {
+                    $invoices = $invoices->whereIn('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID);
+                } else {
+                    $invoices = $invoices->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID);
+                }
+            }
             $invoices = $invoices->get();
 
             foreach ($invoices as $invoice) {
