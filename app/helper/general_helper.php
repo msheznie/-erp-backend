@@ -30,6 +30,7 @@ use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\GRVDetails;
@@ -5060,6 +5061,142 @@ class Helper
                     })
                     ->with(['master','grv_master'])
                     ->get();
+                break;
+            case 61:
+                $output = Models\InventoryReclassificationDetail::where('inventoryreclassificationID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','localcurrency','reportingcurrency'])
+                    ->get();
+                break;
+
+            case 14:
+                $output = Models\LogisticDetails::where('logisticMasterID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','supplier_by','warehouse_by','po'])
+                    ->get();
+                break;
+
+            case 11:
+
+                $master = Models\BookInvSuppMaster::find($documentSystemCode);
+                if($master->documentType == 1){
+                    $output = Models\DirectInvoiceDetails::where('directInvoiceAutoID',$documentSystemCode)
+                        ->whereHas('supplier_invoice_master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['supplier_invoice_master' => function($query){
+                            $query->with(['transactioncurrency']);
+                        },'segment'])
+                        ->get();
+                }else{
+                    $output = Models\BookInvSuppDet::where('bookingSuppMasInvAutoID',$documentSystemCode)
+                        ->whereHas('suppinvmaster', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['suppinvmaster' => function($query){
+                            $query->with(['transactioncurrency']);
+                        },'pomaster','grvmaster'])
+                        ->get();
+                }
+                break;
+
+            case 15:
+                $output = Models\DebitNoteDetails::where('debitNoteAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'=> function($query){
+                        $query->with(['transactioncurrency']);
+                    },'segment'])
+                    ->get();
+                break;
+            case 4:
+
+                $master = Models\PaySupplierInvoiceMaster::find($documentSystemCode);
+                if($master->invoiceType == 2 ){
+                    $output = Models\PaySupplierInvoiceDetail::where('PayMasterAutoId',$documentSystemCode)
+                        ->whereHas('payment_master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['payment_master'=> function($query){
+                            $query->with(['transactioncurrency']);
+                        },'pomaster'])
+                        ->get();
+                }elseif ($master->invoiceType == 5){
+                    $output = Models\AdvancePaymentDetails::where('PayMasterAutoId',$documentSystemCode)
+                        ->whereHas('pay_invoice', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['pay_invoice'=> function($query){
+                            $query->with(['transactioncurrency']);
+                        }])
+                        ->get();
+                }else{
+                    $output = Models\DirectPaymentDetails::where('directPaymentAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['transactioncurrency']);
+                        },'segment'])
+                        ->get();
+                }
+                break;
+            case 6:
+                $output = Models\ExpenseClaimDetails::where('expenseClaimMasterAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','segment','category','currency','local_currency'])
+                    ->get();
+                break;
+            case 28:
+                $output = Models\MonthlyAdditionDetail::where('monthlyAdditionsMasterID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','currency_ma','employee','department','expense_claim','chart_of_account'])
+                    ->get();
+                break;
+
+            case 20:
+                $master = Models\CustomerInvoiceDirect::find($documentSystemCode);
+
+                /*if($master->isPerforma == 0 || $master->isPerforma == 1){
+                    $output = Models\CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemiD',$documentSystemID);
+                        })
+                        ->with(['master','contract','department'])
+                        ->get();
+                }else{
+                    $output = Models\CustomerInvoiceItemDetails::where('custInvoiceDirectID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemiD',$documentSystemID);
+                        })
+                        ->with(['master'=>function($query){
+                            $query->with(['currency']);
+                        },'contract','department'])
+                        ->get();
+                }*/
+
+
                 break;
 
 
