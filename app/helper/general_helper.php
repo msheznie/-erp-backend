@@ -5227,6 +5227,51 @@ class Helper
                     ->get();
                 break;
 
+            case 67:
+            case 68:
+                $output = Models\QuotationDetails::where('quotationMasterID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'=> function($query){
+                        $query->with(['transaction_currency','local_currency']);
+                    }])
+                    ->get();
+                break;
+
+            case 71:
+                $output = Models\DeliveryOrderDetail::where('deliveryOrderID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'=> function($query){
+                        $query->with(['transaction_currency','local_currency']);
+                    },'quotation'])
+                    ->get();
+                break;
+            case 87:
+                $output = Models\SalesReturnDetail::where('salesReturnID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'=> function($query){
+                        $query->with(['transaction_currency']);
+                    },'delivery_order'])
+                    ->get();
+                break;
+            case 17:
+                $output = Models\JvDetail::where('jvMasterAutoId',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master','currency_by','segment'])
+                    ->get();
+                break;
+
             default:
                 $output = [];
         }
