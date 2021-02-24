@@ -275,4 +275,9 @@ class MonthlyAdditionDetail extends Model
     {
         return $this->belongsTo('App\Models\HRMSChartOfAccounts', 'glCode','charofAccAutoID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\MonthlyAdditionsMaster', 'monthlyAdditionsMasterID', 'monthlyAdditionsMasterID');
+    }
 }
