@@ -245,6 +245,20 @@ class FinancialReportAPIController extends AppBaseController
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
+
+                $input = $request->all();
+                $checkDetails = ReportTemplateDetails::where('companyReportTemplateID', $input['templateType'])->first();
+
+                if (!$checkDetails) {
+                    return $this->sendError("Report rows are not configured");
+                }
+
+                $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->first();
+
+                if (!$checkColoumns) {
+                    return $this->sendError("Report columns are not configured");
+                }
+
                 break;
             case 'JVD':
                 $validator = \Validator::make($request->all(), [
