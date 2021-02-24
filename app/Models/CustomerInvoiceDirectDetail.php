@@ -297,6 +297,6 @@ class CustomerInvoiceDirectDetail extends Model
 
     public function master()
     {
-        return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'custInvoiceDirectAutoID', 'custInvoiceDirectAutoID');
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'custInvoiceDirectID', 'custInvoiceDirectAutoID');
     }
 }
