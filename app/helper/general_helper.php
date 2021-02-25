@@ -5005,7 +5005,7 @@ class Helper
                         $query->where('companySystemID',$companySystemID)
                             ->where('documentSystemID',$documentSystemID);
                     })
-                    ->with(['master'])
+                    ->with(['master','item_by'])
                     ->get();
                 break;
             case 8:
