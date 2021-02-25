@@ -5271,6 +5271,63 @@ class Helper
                     ->with(['master','currency_by','segment'])
                     ->get();
                 break;
+            case 46:
+                $output = Models\BudgetTransferFormDetail::where('budgetTransferFormAutoID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master.company.reportingcurrency','from_segment','to_segment','from_template','to_template'])
+                    ->get();
+                break;
+            case 69:
+                $output = Models\ConsoleJVDetail::where('consoleJvMasterAutoId',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'])
+                    ->get();
+                break;
+            case 23:
+                $output = Models\FixedAssetDepreciationPeriod::where('depMasterAutoID',$documentSystemCode)
+                    ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master_by'=> function($query){
+                        $query->with(['company'=> function($q){
+                            $q->with(['reportingcurrency','localcurrency']);
+                        }]);
+                    },'maincategory_by', 'financecategory_by', 'serviceline_by'])
+                    ->get();
+                break;
+            case 41:
+                $output = Models\AssetDisposalDetail::where('assetdisposalMasterAutoID',$documentSystemCode)
+                    ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master_by'=> function($query){
+                        $query->with(['company'=> function($q){
+                            $q->with(['reportingcurrency','localcurrency']);
+                        }]);
+                    },'segment_by', 'item_by'])
+                    ->get();
+                break;
+            case 63:
+                $output = Models\AssetCapitalizationDetail::where('capitalizationID',$documentSystemCode)
+                    ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['master'=> function($query){
+                        $query->with(['company'=> function($q){
+                            $q->with(['reportingcurrency','localcurrency']);
+                        }]);
+                    },'segment'])
+                    ->get();
+                break;
 
             default:
                 $output = [];
