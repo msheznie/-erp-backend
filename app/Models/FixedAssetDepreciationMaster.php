@@ -257,4 +257,9 @@ class FixedAssetDepreciationMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'depMasterAutoID')->where('documentSystemID',23);
     }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
 }
