@@ -776,6 +776,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
                                                })
                                                ->where('itemType', 2)
+                                               ->where('isFinalLevel', 1)
                                                ->whereNotNull('masterID')
                                                ->get();
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
