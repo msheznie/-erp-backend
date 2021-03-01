@@ -2471,8 +2471,9 @@ class PurchaseRequestAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $documentSystemCode = $input['documentSystemCode'];
         $documentSystemID = $input['documentSystemID'];
+        $matchingDoc = isset($input['matchingDoc'])?$input['matchingDoc']:0;
 
-        $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode);
+        $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
 
         return $this->sendResponse($output,'Success');
     }
