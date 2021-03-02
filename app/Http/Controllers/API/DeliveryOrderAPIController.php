@@ -479,6 +479,11 @@ class DeliveryOrderAPIController extends AppBaseController
                 return  $this->sendError('Order detail not found', 500);
             }
 
+            $financeCategories = $detail->pluck('itemFinanceCategoryID')->toArray();
+            if (count(array_unique($financeCategories)) > 1) {
+                return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+            }
+
             $checkQuantity = DeliveryOrderDetail::where('deliveryOrderID', $id)
                 ->where(function ($q) {
                     $q->where('qtyIssued', '<=', 0)
@@ -559,18 +564,21 @@ class DeliveryOrderAPIController extends AppBaseController
                 if ($updateItem->unitTransactionAmount < 0) {
                     return $this->sendError('Item must not have negative cost', 500);
                 }
-                if ($updateItem->currentWareHouseStockQty <= 0) {
-                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
-                if ($updateItem->currentStockQty <= 0) {
-                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
 
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                if($updateItem->itemFinanceCategoryID==1){
+                    if ($updateItem->currentWareHouseStockQty <= 0) {
+                        return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+                    if ($updateItem->currentStockQty <= 0) {
+                        return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                        return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+
+                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                        return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
                 }
 
             }
