@@ -1571,9 +1571,8 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $grv->grvCancelledComment = $input['grvCancelledComment'];
             $grv->save();
 
-            if ($input['cancelMethod'] == 1) {
-                $this->openGrvRelatedDetailsInPo($input['grvAutoID'], $grv->companySystemID);
-            } else {
+            $this->openGrvRelatedDetailsInPo($input['grvAutoID'], $grv->companySystemID);
+            if ($input['cancelMethod'] != 1) {
                 $cancelRes = $this->cancelGrvRelatedPo($input['grvAutoID'], $grv->companySystemID, $input['grvCancelledComment']);
                 if (!$cancelRes['status']) {
                     DB::rollback();

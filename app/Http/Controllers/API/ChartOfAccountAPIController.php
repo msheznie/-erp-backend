@@ -170,23 +170,30 @@ class ChartOfAccountAPIController extends AppBaseController
                                                    ->where('masterAccount', $chartOfAccount->AccountCode)
                                                    ->first();
 
-            // if ($checkSubLedgerAccount) {
-            //     if (($isMasterAc !=  $chartOfAccount->isMasterAccount) && $isMasterAc == 0) {
-            //         return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change master account as sub ledger account');
-            //     }
+            if ($checkSubLedgerAccount) {
+                if (($isMasterAc !=  $chartOfAccount->isMasterAccount) && $isMasterAc == 0) {
+                    return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change master account as sub ledger account');
+                }
             
-            //     if ($chartOfAccount->isMasterAccount && !$isActiveAc) {
-            //          return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot deactivate this account');
-            //     }
+                if ($chartOfAccount->isMasterAccount && !$isActiveAc) {
+                    $checkForDeactiveAccounts = ChartOfAccount::where('chartOfAccountSystemID', '!=',$input['chartOfAccountSystemID'])
+                                                   ->where('masterAccount', $chartOfAccount->AccountCode)
+                                                   ->where('isActive', 1)
+                                                   ->first();
 
-            //     if ($input['catogaryBLorPLID'] != $chartOfAccount->catogaryBLorPLID) {
-            //         return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the category');
-            //     }
+                    if ($checkForDeactiveAccounts) {
+                        return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot deactivate this account');
+                    }
+                }
 
-            //     if ($input['controlAccountsSystemID'] != $chartOfAccount->controlAccountsSystemID) {
-            //         return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the control account');
-            //     }
-            // }
+                if ($input['catogaryBLorPLID'] != $chartOfAccount->catogaryBLorPLID) {
+                    return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the category');
+                }
+
+                if ($input['controlAccountsSystemID'] != $chartOfAccount->controlAccountsSystemID) {
+                    return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change the control account');
+                }
+            }
 
             if ($chartOfAccount->isApproved == 1) {
 
@@ -489,6 +496,12 @@ class ChartOfAccountAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('isMasterAccount', $input)) {
+            if (($input['isMasterAccount'] == 0 || $input['isMasterAccount'] == 1) && !is_null($input['isMasterAccount'])) {
+                $chartOfAccount->where('isMasterAccount', $input['isMasterAccount']);
+            }
+        }
+
         if (array_key_exists('catogaryBLorPLID', $input)) {
             if ($input['catogaryBLorPLID'] && !is_null($input['catogaryBLorPLID'])) {
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
@@ -771,6 +784,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function exportChartOfAccounts(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('controlAccountsSystemID','isBank','catogaryBLorPLID'));
         $type = $input['type'];
         $companyId = $input['companyId'];
 
@@ -788,7 +802,44 @@ class ChartOfAccountAPIController extends AppBaseController
                 ->whereIn('CompanySystemID', $childCompanies)
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
+            if(isset($input['isAllocation']) && $input['isAllocation']==1){
+                $chartOfAccount = $chartOfAccount->where('AllocationID','!=',null);
+            }
         }
+
+
+        if (array_key_exists('controlAccountsSystemID', $input)) {
+            if ($input['controlAccountsSystemID'] && !is_null($input['controlAccountsSystemID'])) {
+                $chartOfAccount->where('controlAccountsSystemID', $input['controlAccountsSystemID']);
+            }
+        }
+
+        if (array_key_exists('isBank', $input)) {
+            if (($input['isBank'] == 0 || $input['isBank'] == 1) && !is_null($input['isBank'])) {
+                $chartOfAccount->where('isBank', $input['isBank']);
+            }
+        }
+
+        if (array_key_exists('isMasterAccount', $input)) {
+            if (($input['isMasterAccount'] == 0 || $input['isMasterAccount'] == 1) && !is_null($input['isMasterAccount'])) {
+                $chartOfAccount->where('isMasterAccount', $input['isMasterAccount']);
+            }
+        }
+
+        if (array_key_exists('catogaryBLorPLID', $input)) {
+            if ($input['catogaryBLorPLID'] && !is_null($input['catogaryBLorPLID'])) {
+                $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if($search){
+            $chartOfAccount =   $chartOfAccount->where(function ($query) use($search) {
+                $query->where('AccountCode','LIKE',"%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
 
         $chartOfAccount = $chartOfAccount->get();
 
