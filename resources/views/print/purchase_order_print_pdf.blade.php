@@ -584,6 +584,10 @@
                 {{ $netUnitCost = 0 }}
                 {{ $subTotal += $det->netAmount }}
                 {{ $netUnitCost = $det->unitCost - $det->discountAmount + $det->VATAmount }}
+                @if($podata->rcmActivated)
+                    {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
+                @endif
+
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
