@@ -509,6 +509,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     if($input['itemType'] == 3){
                         $input['categoryType'] = null;
                         $input['isFinalLevel'] = 1;
+                    } else {
+                        $input['isFinalLevel'] = 0;
                     }
                     $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
                 }
@@ -774,6 +776,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
                                                })
                                                ->where('itemType', 2)
+                                               ->where('isFinalLevel', 1)
                                                ->whereNotNull('masterID')
                                                ->get();
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');

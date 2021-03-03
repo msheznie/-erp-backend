@@ -83,7 +83,9 @@ class FinancialReportAPIController extends AppBaseController
 
         $accountType = AccountsType::all();
 
-        $templateType = ReportTemplate::where('isActive', 1)->get();
+        $templateType = ReportTemplate::where('isActive', 1)
+                                      ->whereIN('companySystemID', $companiesByGroup)
+                                      ->get();
 
 
         $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
@@ -243,6 +245,20 @@ class FinancialReportAPIController extends AppBaseController
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
+
+                $input = $request->all();
+                $checkDetails = ReportTemplateDetails::where('companyReportTemplateID', $input['templateType'])->first();
+
+                if (!$checkDetails) {
+                    return $this->sendError("Report rows are not configured");
+                }
+
+                $checkColoumns = ReportTemplateColumnLink::where('templateID', $input['templateType'])->first();
+
+                if (!$checkColoumns) {
+                    return $this->sendError("Report columns are not configured");
+                }
+
                 break;
             case 'JVD':
                 $validator = \Validator::make($request->all(), [

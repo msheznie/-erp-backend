@@ -638,6 +638,11 @@ class QuotationMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'transactionCurrencyID', 'currencyID');
     }
 
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyLocalCurrencyID', 'currencyID');
+    }
+
     public function getIsVatEligibleAttribute()
     {
         return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN,$this->documentSystemID);

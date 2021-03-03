@@ -294,6 +294,12 @@ class PurchaseReturnDetailsRefferedBack extends Model
         'timesReferred',
         'GRVSelectedYN',
         'goodsRecievedYN',
+        'vatRegisteredYN',
+        'supplierVATEligible',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'receivedQty'
     ];
 
@@ -304,6 +310,12 @@ class PurchaseReturnDetailsRefferedBack extends Model
      */
     protected $casts = [
         'purhasereturnDetailID' => 'integer',
+        'vatRegisteredYN' => 'integer',
+        'supplierVATEligible' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'purhasereturnDetailRefferedBackID' => 'integer',
         'purhaseReturnAutoID' => 'integer',
         'companyID' => 'string',

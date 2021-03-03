@@ -199,4 +199,9 @@ class LogisticDetails extends Model
     {
         return $this->belongsTo('App\Models\ProcumentOrder','POid','purchaseOrderID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\Logistic', 'logisticMasterID', 'logisticMasterID');
+    }
 }

@@ -682,6 +682,14 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['financeGLcodePL'] = $new['financeGLcodePL'];
                 $item['includePLForGRVYN'] = $new['includePLForGRVYN'];
 
+
+                $item['vatRegisteredYN'] = $new['vatRegisteredYN'];
+                $item['supplierVATEligible'] = $new['supplierVATEligible'];
+                $item['VATPercentage'] = $new['VATPercentage'];
+                $item['VATAmount'] = $new['VATAmount'];
+                $item['VATAmountLocal'] = $new['VATAmountLocal'];
+                $item['VATAmountRpt'] = $new['VATAmountRpt'];
+
                 array_push($createArray, $item);
             }
         }

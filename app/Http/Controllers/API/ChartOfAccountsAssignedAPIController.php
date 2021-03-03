@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateChartOfAccountsAssignedAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
@@ -82,6 +83,46 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 return $this->sendError('Chart of Account company assigned not found!', 404);
             }
 
+            $chartofaccountData = ChartOfAccount::find($chartOfAccountsAssigned->chartOfAccountSystemID);
+
+            if (!$chartofaccountData) {
+                return $this->sendError('Chart of Account not found!', 404);
+            }
+
+            if ($chartofaccountData->isMasterAccount == 1) {
+                if ($input['isAssigned'] == 0 || !$input['isAssigned']) {
+                    $checkSubAccountIsAssigned = ChartOfAccount::where('masterAccount', $chartofaccountData->AccountCode)
+                                                               ->where('isMasterAccount', 0)
+                                                               ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
+                                                                    $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+                                                                          ->where(function($query) {
+                                                                            $query->where('isAssigned', -1)
+                                                                                 ->orWhere('isActive', 1);
+                                                                          });
+                                                               })
+                                                               ->first();
+
+                    if ($checkSubAccountIsAssigned) {
+                        return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot unassign');
+                    }
+                }
+            } else {
+                if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
+                    $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
+                                                               ->where('isMasterAccount', 1)
+                                                               ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
+                                                                    $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+                                                                          ->where('isAssigned', -1)
+                                                                          ->where('isActive', 1);
+                                                               })
+                                                               ->first();
+
+                    if (!$checkMasterAccountIsAssigned) {
+                        return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot update');
+                    }
+                }
+            }
+
             $input = $this->convertArrayToValue($input);
 
             foreach ($input as $key => $value) {
@@ -97,6 +138,27 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['chartOfAccountSystemID'], 'chartofaccounts');
             if (!$validatorResult['success']) {
                 return $this->sendError($validatorResult['message']);
+            }
+
+            $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
+
+            if (!$chartofaccountData) {
+                return $this->sendError('Chart of Account not found!', 404);
+            }
+
+            if ($chartofaccountData->isMasterAccount == 0) {
+                $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
+                                                           ->where('isMasterAccount', 1)
+                                                           ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                                                $query->where('companySystemID', $input['companySystemID'])
+                                                                      ->where('isAssigned', -1)
+                                                                      ->where('isActive', 1);
+                                                           })
+                                                           ->first();
+
+                if (!$checkMasterAccountIsAssigned) {
+                    return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
+                }
             }
 
             $input = $this->convertArrayToValue($input);
@@ -172,6 +234,29 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         if (empty($chartOfAccountsAssigned)) {
             return $this->sendError('Chart Of Accounts Assigned not found');
         }
+
+        $chartofaccountData = ChartOfAccount::find($chartOfAccountsAssigned->chartOfAccountSystemID);
+
+        if (!$chartofaccountData) {
+            return $this->sendError('Chart of Account not found!', 404);
+        }
+
+        if ($chartofaccountData->isMasterAccount == 1) {
+            $checkSubAccountIsAssigned = ChartOfAccount::where('masterAccount', $chartofaccountData->AccountCode)
+                                                       ->where('isMasterAccount', 0)
+                                                       ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
+                                                            $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+                                                                          ->where(function($query) {
+                                                                            $query->where('isAssigned', -1)
+                                                                                 ->orWhere('isActive', 1);
+                                                                          });
+                                                       })
+                                                       ->first();
+
+            if ($checkSubAccountIsAssigned) {
+                return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot delete');
+            }
+        } 
 
         $chartOfAccountsAssigned->delete();
 

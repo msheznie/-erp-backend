@@ -295,6 +295,11 @@ class ConsoleJVDetail extends Model
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo('App\Models\ConsoleJVMaster', 'consoleJvMasterAutoId', 'consoleJvMasterAutoId');
+    }
+
 
 
 }

@@ -8,6 +8,7 @@ use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
+use App\Models\Company;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -145,132 +146,139 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError("Selected item is already added. Please check again", 500);
         }
 
-        // check the item pending pending for approval in other delivery orders
-
-        $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrderMaster->deliveryOrderID)
-            ->where('companySystemID', $companySystemID)
-            ->select([
-                'erp_delivery_order.deliveryOrderID',
-                'erp_delivery_order.deliveryOrderCode'
-            ])
-            ->groupBy(
-                'erp_delivery_order.deliveryOrderID',
-                'erp_delivery_order.companySystemID'
-            )
-            ->whereHas('detail', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-            })
-            ->where('approvedYN', 0)
-            ->first();
-
-        if (!empty($checkWhether)) {
-            return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
+            return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
         }
 
+        if($item->financeCategoryMaster==1){
+            // check the item pending pending for approval in other delivery orders
 
-        // check the item pending pending for approval in other modules
-        $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
+            $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrderMaster->deliveryOrderID)
+                ->where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.deliveryOrderCode'
+                ])
+                ->groupBy(
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.companySystemID'
+                )
+                ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approvedYN', 0)
+                ->first();
+
+            if (!empty($checkWhether)) {
+                return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+
+            // check the item pending pending for approval in other modules
+            $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
 //            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
-            ->select([
-                'erp_itemissuemaster.itemIssueAutoID',
-                'erp_itemissuemaster.companySystemID',
-                'erp_itemissuemaster.wareHouseFromCode',
-                'erp_itemissuemaster.itemIssueCode',
-                'erp_itemissuemaster.approved'
-            ])
-            ->groupBy(
-                'erp_itemissuemaster.itemIssueAutoID',
-                'erp_itemissuemaster.companySystemID',
-                'erp_itemissuemaster.wareHouseFromCode',
-                'erp_itemissuemaster.itemIssueCode',
-                'erp_itemissuemaster.approved'
-            )
-            ->whereHas('details', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-            })
-            ->where('approved', 0)
-            ->first();
-        /* approved=0*/
+                ->select([
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                ])
+                ->groupBy(
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
 
-        if (!empty($checkWhetherItemIssueMaster)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-        }
+            if (!empty($checkWhetherItemIssueMaster)) {
+                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
 
-        $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+            $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
 //            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
-            ->select([
-                'erp_stocktransfer.stockTransferAutoID',
-                'erp_stocktransfer.companySystemID',
-                'erp_stocktransfer.locationFrom',
-                'erp_stocktransfer.stockTransferCode',
-                'erp_stocktransfer.approved'
-            ])
-            ->groupBy(
-                'erp_stocktransfer.stockTransferAutoID',
-                'erp_stocktransfer.companySystemID',
-                'erp_stocktransfer.locationFrom',
-                'erp_stocktransfer.stockTransferCode',
-                'erp_stocktransfer.approved'
-            )
-            ->whereHas('details', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-            })
-            ->where('approved', 0)
-            ->first();
-        /* approved=0*/
+                ->select([
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                ])
+                ->groupBy(
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
 
-        if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            if (!empty($checkWhetherStockTransfer)) {
+                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                ])
+                ->groupBy(
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.companySystemID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                )
+                ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->where('canceledYN', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherInvoice)) {
+                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            /*Check in purchase return*/
+            $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation',
+                    'erp_purchasereturnmaster.purchaseReturnCode',
+                ])
+                ->groupBy(
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation'
+                )
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCode', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+
+            if (!empty($checkWhetherPR)) {
+                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
         }
 
-        $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
-            ->select([
-                'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                'erp_custinvoicedirect.bookingInvCode',
-                'erp_custinvoicedirect.wareHouseSystemCode',
-                'erp_custinvoicedirect.approved'
-            ])
-            ->groupBy(
-                'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                'erp_custinvoicedirect.companySystemID',
-                'erp_custinvoicedirect.bookingInvCode',
-                'erp_custinvoicedirect.wareHouseSystemCode',
-                'erp_custinvoicedirect.approved'
-            )
-            ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-            })
-            ->where('approved', 0)
-            ->where('canceledYN', 0)
-            ->first();
-        /* approved=0*/
-
-        if (!empty($checkWhetherInvoice)) {
-            return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-        }
-
-        /*Check in purchase return*/
-        $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
-            ->select([
-                'erp_purchasereturnmaster.purhaseReturnAutoID',
-                'erp_purchasereturnmaster.companySystemID',
-                'erp_purchasereturnmaster.purchaseReturnLocation',
-                'erp_purchasereturnmaster.purchaseReturnCode',
-            ])
-            ->groupBy(
-                'erp_purchasereturnmaster.purhaseReturnAutoID',
-                'erp_purchasereturnmaster.companySystemID',
-                'erp_purchasereturnmaster.purchaseReturnLocation'
-            )
-            ->whereHas('details', function ($query) use ($input) {
-                $query->where('itemCode', $input['itemCodeSystem']);
-            })
-            ->where('approved', 0)
-            ->first();
-
-        if (!empty($checkWhetherPR)) {
-            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-        }
 
         /* approved=0*/
 
@@ -322,20 +330,22 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
         $input['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
-        if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-        }
+        if($item->financeCategoryMaster==1){
+            if ($input['currentStockQty'] <= 0) {
+                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            }
 
-        if ($input['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
+            if ($input['currentWareHouseStockQty'] <= 0) {
+                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            }
 
-        if ($input['wacValueLocal'] == 0 || $input['wacValueReporting'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue.", 500);
-        }
+            if ($input['wacValueLocal'] == 0 || $input['wacValueReporting'] == 0) {
+                return $this->sendError("Cost is 0. You cannot issue.", 500);
+            }
 
-        if ($input['wacValueLocal'] < 0 || $input['wacValueReporting'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue.", 500);
+            if ($input['wacValueLocal'] < 0 || $input['wacValueReporting'] < 0) {
+                return $this->sendError("Cost is negative. You cannot issue.", 500);
+            }
         }
 
         if($deliveryOrderMaster->transactionCurrencyID == $deliveryOrderMaster->companyLocalCurrencyID){
@@ -477,7 +487,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateDeliveryOrderDetailAPIRequest $request)
     {
-        $input = $request->all();
         $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits']);
         $input = $this->convertArrayToValue($input);
         /** @var DeliveryOrderDetail $deliveryOrderDetail */
@@ -494,26 +503,27 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
 
-        if ($deliveryOrderDetail->currentStockQty <= 0) {
-            $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-        }
+        if($deliveryOrderDetail->itemFinanceCategoryID == 1){
+            if ($deliveryOrderDetail->currentStockQty <= 0) {
+                $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            }
 
-        if ($deliveryOrderDetail->currentWareHouseStockQty <= 0) {
-            $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
+            if ($deliveryOrderDetail->currentWareHouseStockQty <= 0) {
+                $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
+                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            }
 
-        if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentStockQty) {
-            $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
-            return $this->sendError("Current stock Qty is: " . $deliveryOrderDetail->currentStockQty . " .You cannot issue more than the current stock qty.", 500);
-        }
+            if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentStockQty) {
+                $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Current stock Qty is: " . $deliveryOrderDetail->currentStockQty . " .You cannot issue more than the current stock qty.", 500);
+            }
 
-        if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentWareHouseStockQty) {
-            $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
-            return $this->sendError("Current warehouse stock Qty is: " . $deliveryOrderDetail->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500);
+            if ($input['qtyIssuedDefaultMeasure'] > $deliveryOrderDetail->currentWareHouseStockQty) {
+                $this->deliveryOrderDetailRepository->update(['transactionAmount' => 0,'qtyIssued' => 0], $id);
+                return $this->sendError("Current warehouse stock Qty is: " . $deliveryOrderDetail->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500);
+            }
         }
-
         // discount calculation
         $discountedUnit = $input['unitTransactionAmount'];
 
@@ -623,6 +633,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if($deliveryOrder->confirmedYN == 1){
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
+
+            $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+                                ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                                ->exists();
+            if($taxExist && $deliveryOrder->orderType != 3){
+                return $this->sendError('VAT is added. Please delete the tax and try again.',500);
+            }
+
             $deliveryOrderDetail->delete();
 
             // update maser table amount field
@@ -656,7 +674,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
-
+                     $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
+                    if (!$resVat['status']) {
+                       return $this->sendError($resVat['message']); 
+                    } 
                 }
 
 
@@ -729,6 +750,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
             return $this->sendError("No items selected to add.");
+        }
+
+        $inputDetails = $input['detailTable'];
+        $inputDetails = collect($inputDetails)->where('isChecked',1)->toArray();
+        $financeCategories = collect($inputDetails)->pluck('itemCategory')->toArray();
+        if (count(array_unique($financeCategories)) > 1) {
+            return $this->sendError('Multiple finance category cannot be added. Different finance category found on selected details.',500);
         }
 
         foreach ($input['detailTable'] as $newValidation) {
@@ -806,157 +834,158 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
                 $wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
 
-                if ($currentStockQty <= 0) {
-                    return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                if($row['itemCategory'] == 1){
+                    if ($currentStockQty <= 0) {
+                        return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                    }
 
-                if ($currentWareHouseStockQty <= 0) {
-                    return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                    if ($currentWareHouseStockQty <= 0) {
+                        return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                    }
 
-                if ($wacValueLocal == 0 || $wacValueReporting == 0) {
-                    return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                    if ($wacValueLocal == 0 || $wacValueReporting == 0) {
+                        return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
+                    }
 
-                if ($wacValueLocal < 0 || $wacValueReporting < 0) {
-                    return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                    if ($wacValueLocal < 0 || $wacValueReporting < 0) {
+                        return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                    }
 
-                if ($row['noQty'] > $currentStockQty) {
-                    return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
-                }
+                    if ($row['noQty'] > $currentStockQty) {
+                        return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
+                    }
 
-                if ($row['noQty'] > $currentWareHouseStockQty) {
-                    return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
-                }
+                    if ($row['noQty'] > $currentWareHouseStockQty) {
+                        return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
+                    }
+
+                    /*pending approval checking*/
+                    // check the item pending pending for approval in other delivery orders
+
+                    $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrder->deliveryOrderID)
+                        ->where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_delivery_order.deliveryOrderID',
+                            'erp_delivery_order.deliveryOrderCode'
+                        ])
+                        ->groupBy(
+                            'erp_delivery_order.deliveryOrderID',
+                            'erp_delivery_order.companySystemID'
+                        )
+                        ->whereHas('detail', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approvedYN', 0)
+                        ->first();
+
+                    if (!empty($checkWhether)) {
+                        return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
 
 
-                /*pending approval checking*/
-                // check the item pending pending for approval in other delivery orders
-
-                $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrder->deliveryOrderID)
-                    ->where('companySystemID', $row['companySystemID'])
-                    ->select([
-                        'erp_delivery_order.deliveryOrderID',
-                        'erp_delivery_order.deliveryOrderCode'
-                    ])
-                    ->groupBy(
-                        'erp_delivery_order.deliveryOrderID',
-                        'erp_delivery_order.companySystemID'
-                    )
-                    ->whereHas('detail', function ($query) use ($row) {
-                        $query->where('itemCodeSystem', $row['itemAutoID']);
-                    })
-                    ->where('approvedYN', 0)
-                    ->first();
-
-                if (!empty($checkWhether)) {
-                    return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
-                }
-
-
-                // check the item pending pending for approval in other modules
-                $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $row['companySystemID'])
+                    // check the item pending pending for approval in other modules
+                    $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $row['companySystemID'])
 //            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
-                    ->select([
-                        'erp_itemissuemaster.itemIssueAutoID',
-                        'erp_itemissuemaster.companySystemID',
-                        'erp_itemissuemaster.wareHouseFromCode',
-                        'erp_itemissuemaster.itemIssueCode',
-                        'erp_itemissuemaster.approved'
-                    ])
-                    ->groupBy(
-                        'erp_itemissuemaster.itemIssueAutoID',
-                        'erp_itemissuemaster.companySystemID',
-                        'erp_itemissuemaster.wareHouseFromCode',
-                        'erp_itemissuemaster.itemIssueCode',
-                        'erp_itemissuemaster.approved'
-                    )
-                    ->whereHas('details', function ($query) use ($row) {
-                        $query->where('itemCodeSystem', $row['itemAutoID']);
-                    })
-                    ->where('approved', 0)
-                    ->first();
-                /* approved=0*/
+                        ->select([
+                            'erp_itemissuemaster.itemIssueAutoID',
+                            'erp_itemissuemaster.companySystemID',
+                            'erp_itemissuemaster.wareHouseFromCode',
+                            'erp_itemissuemaster.itemIssueCode',
+                            'erp_itemissuemaster.approved'
+                        ])
+                        ->groupBy(
+                            'erp_itemissuemaster.itemIssueAutoID',
+                            'erp_itemissuemaster.companySystemID',
+                            'erp_itemissuemaster.wareHouseFromCode',
+                            'erp_itemissuemaster.itemIssueCode',
+                            'erp_itemissuemaster.approved'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
+                    /* approved=0*/
 
-                if (!empty($checkWhetherItemIssueMaster)) {
-                    return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
-                }
+                    if (!empty($checkWhetherItemIssueMaster)) {
+                        return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
 
-                $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
+                    $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
 //            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
-                    ->select([
-                        'erp_stocktransfer.stockTransferAutoID',
-                        'erp_stocktransfer.companySystemID',
-                        'erp_stocktransfer.locationFrom',
-                        'erp_stocktransfer.stockTransferCode',
-                        'erp_stocktransfer.approved'
-                    ])
-                    ->groupBy(
-                        'erp_stocktransfer.stockTransferAutoID',
-                        'erp_stocktransfer.companySystemID',
-                        'erp_stocktransfer.locationFrom',
-                        'erp_stocktransfer.stockTransferCode',
-                        'erp_stocktransfer.approved'
-                    )
-                    ->whereHas('details', function ($query) use ($row) {
-                        $query->where('itemCodeSystem', $row['itemAutoID']);
-                    })
-                    ->where('approved', 0)
-                    ->first();
-                /* approved=0*/
+                        ->select([
+                            'erp_stocktransfer.stockTransferAutoID',
+                            'erp_stocktransfer.companySystemID',
+                            'erp_stocktransfer.locationFrom',
+                            'erp_stocktransfer.stockTransferCode',
+                            'erp_stocktransfer.approved'
+                        ])
+                        ->groupBy(
+                            'erp_stocktransfer.stockTransferAutoID',
+                            'erp_stocktransfer.companySystemID',
+                            'erp_stocktransfer.locationFrom',
+                            'erp_stocktransfer.stockTransferCode',
+                            'erp_stocktransfer.approved'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
+                    /* approved=0*/
 
-                if (!empty($checkWhetherStockTransfer)) {
-                    return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
-                }
+                    if (!empty($checkWhetherStockTransfer)) {
+                        return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
 
-                $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $row['companySystemID'])
-                    ->select([
-                        'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                        'erp_custinvoicedirect.bookingInvCode',
-                        'erp_custinvoicedirect.wareHouseSystemCode',
-                        'erp_custinvoicedirect.approved'
-                    ])
-                    ->groupBy(
-                        'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                        'erp_custinvoicedirect.companySystemID',
-                        'erp_custinvoicedirect.bookingInvCode',
-                        'erp_custinvoicedirect.wareHouseSystemCode',
-                        'erp_custinvoicedirect.approved'
-                    )
-                    ->whereHas('issue_item_details', function ($query) use ($row) {
-                        $query->where('itemCodeSystem', $row['itemAutoID']);
-                    })
-                    ->where('approved', 0)
-                    ->where('canceledYN', 0)
-                    ->first();
-                /* approved=0*/
+                    $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                            'erp_custinvoicedirect.bookingInvCode',
+                            'erp_custinvoicedirect.wareHouseSystemCode',
+                            'erp_custinvoicedirect.approved'
+                        ])
+                        ->groupBy(
+                            'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                            'erp_custinvoicedirect.companySystemID',
+                            'erp_custinvoicedirect.bookingInvCode',
+                            'erp_custinvoicedirect.wareHouseSystemCode',
+                            'erp_custinvoicedirect.approved'
+                        )
+                        ->whereHas('issue_item_details', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->where('canceledYN', 0)
+                        ->first();
+                    /* approved=0*/
 
-                if (!empty($checkWhetherInvoice)) {
-                    return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
-                }
+                    if (!empty($checkWhetherInvoice)) {
+                        return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
 
-                /*Check in purchase return*/
-                $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
-                    ->select([
-                        'erp_purchasereturnmaster.purhaseReturnAutoID',
-                        'erp_purchasereturnmaster.companySystemID',
-                        'erp_purchasereturnmaster.purchaseReturnLocation',
-                        'erp_purchasereturnmaster.purchaseReturnCode',
-                    ])
-                    ->groupBy(
-                        'erp_purchasereturnmaster.purhaseReturnAutoID',
-                        'erp_purchasereturnmaster.companySystemID',
-                        'erp_purchasereturnmaster.purchaseReturnLocation'
-                    )
-                    ->whereHas('details', function ($query) use ($row) {
-                        $query->where('itemCode', $row['itemAutoID']);
-                    })
-                    ->where('approved', 0)
-                    ->first();
+                    /*Check in purchase return*/
+                    $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_purchasereturnmaster.purhaseReturnAutoID',
+                            'erp_purchasereturnmaster.companySystemID',
+                            'erp_purchasereturnmaster.purchaseReturnLocation',
+                            'erp_purchasereturnmaster.purchaseReturnCode',
+                        ])
+                        ->groupBy(
+                            'erp_purchasereturnmaster.purhaseReturnAutoID',
+                            'erp_purchasereturnmaster.companySystemID',
+                            'erp_purchasereturnmaster.purchaseReturnLocation'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCode', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
 
-                if (!empty($checkWhetherPR)) {
-                    return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    if (!empty($checkWhetherPR)) {
+                        return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    }
                 }
 
             }
@@ -1123,6 +1152,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             }
 
+            $resVat = $this->updateVatFromSalesQuotation($deliveryOrderID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
+
             DB::commit();
             return $this->sendResponse([], 'Delivery Order Details saved successfully');
         } catch (\Exception $exception) {
@@ -1130,6 +1164,155 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
+    }
+
+    public function updateVatFromSalesQuotation($deliveryOrderID)
+    {
+        $invoiceDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                                            ->with(['sales_quotation_detail'])
+                                            ->get();
+
+        $totalVATAmount = 0;
+
+        foreach ($invoiceDetails as $key => $value) {
+            $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+        }
+
+        if ($totalVATAmount > 0) {
+            $taxDelete = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                  ->where('documentSystemID', 71)
+                                  ->delete();
+
+            $res = $this->saveDeliveryOrderTaxDetails($deliveryOrderID, $totalVATAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        }
+
+        return ['status' => true];
+    }
+
+
+     public function saveDeliveryOrderTaxDetails($deliveryOrderID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Delivery Order not found.'];
+        }
+
+        $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
+      
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Delivery Order Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(unitTransactionAmount) as amount"))
+                                          ->where('deliveryOrderID', $deliveryOrderID)
+                                          ->groupBy('deliveryOrderID')
+                                          ->first();
+
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                ->where('documentSystemID', 71)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $deliveryOrderID;
+        $_post['documentCode'] = $master->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+       
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+
+        DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
+
+        return ['status' => true];
     }
 
     private function updateSalesQuotationDeliveryStatus($quotationMasterID){
@@ -1151,4 +1334,134 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
     }
 
+
+    public function saveDeliveryOrderTaxDetail(Request $request)
+    {
+        $input = $request->all();
+        $deliveryOrderID = isset($input['deliveryOrderID'])?$input['deliveryOrderID']:0;
+        $percentage = isset($input['percentage'])?$input['percentage']:0;
+
+        if (empty($input['taxMasterAutoID'])) {
+            $input['taxMasterAutoID'] = 0;
+        }
+
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+        $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
+
+        if (empty($master)) {
+            return $this->sendResponse('e', 'Delivery Order not found.');
+        }
+
+        $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
+        if (empty($invoiceDetail)) {
+            return $this->sendResponse('e', 'Delivery Details not found.');
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(transactionAmount) as amount"))
+                                          ->where('deliveryOrderID', $deliveryOrderID)
+                                          ->first();
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+        $totalAmount = ($percentage / 100) * $totalAmount;
+      
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                ->where('documentSystemID', 71)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return $this->sendResponse('e', 'VAT Detail Already exist');
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $deliveryOrderID;
+        $_post['documentCode'] = $master->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+
+
+        DB::beginTransaction();
+        try {
+            Taxdetail::create($_post);
+            $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+            $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+            $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+            $vatAmount['VATPercentage'] = $percentage;
+            $vatAmount['VATAmount'] = $_post['amount'];
+            $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+            $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+
+            DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
+
+            DB::commit();
+            return $this->sendResponse('s', 'Successfully Added');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error Occurred',500);
+        }
+    }
 }

@@ -393,9 +393,9 @@ class ItemLedgerInsert implements ShouldQueue
                     if($masterModel["documentSystemID"] == 3){
                         $query->where('itemFinanceCategoryID',1);
                     }
-//                    if($masterModel["documentSystemID"] == 20){
-//                        $query->where('isPerforma','!=',3);// from delivery note
-//                    }
+                    if($masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
+                        $query->where('itemFinanceCategoryID',1);   // Only Inventory Item
+                    }
                 }])
                     ->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])
                     ->when($masterModel["documentSystemID"] == 20, function ($q) {

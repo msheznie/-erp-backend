@@ -757,6 +757,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
+                        $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
+
+                        if (count(array_unique($financeCategories)) > 1) {
+                            return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+                        }
+
                         foreach ($details as $item) {
 
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
@@ -782,7 +788,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                             $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
 
-                            if ($isPerforma == 2) {
+                            if ($isPerforma == 2 && $updateItem->itemFinanceCategoryID == 1) {
                                 $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->companyReportingCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $updateItem->issueCostRpt);
                                 $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
                             }
@@ -829,25 +835,34 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->save();
 
                             if ($isPerforma == 2 || $isPerforma == 4 || $isPerforma == 5) {// only item sales invoice. we won't get from delivery note type.
-                                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                                    return $this->sendError('Item must not have zero cost', 500);
-                                }
-                                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                                    return $this->sendError('Item must not have negative cost', 500);
-                                }
-                                if ($updateItem->currentWareHouseStockQty <= 0) {
-                                    return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
-                                }
-                                if ($updateItem->currentStockQty <= 0) {
-                                    return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
-                                }
-                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                    return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+
+                                if($updateItem->itemFinanceCategoryID == 1){
+                                    if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                                        return $this->sendError('Item must not have zero cost', 500);
+                                    }
+                                    if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                                        return $this->sendError('Item must not have negative cost', 500);
+                                    }
+                                    if ($updateItem->currentWareHouseStockQty <= 0) {
+                                        return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->currentStockQty <= 0) {
+                                        return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                                        return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                                        return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+                                }else{
+                                    if ($updateItem->sellingCostAfterMargin == 0) {
+                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                    }
                                 }
 
-                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                    return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
-                                }
+
                             }
                         }
 

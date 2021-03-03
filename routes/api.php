@@ -1734,6 +1734,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
+        Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
         Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
 
@@ -1955,6 +1956,11 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
 
         Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
+        Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
+
+        Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
+        Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
+        Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
 
     });
 

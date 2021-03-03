@@ -2462,4 +2462,20 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($closedDetails, 'Record retrieved successfully');
     }
 
+    /*
+     * when hovering document code, show document details
+     * */
+    public function getDocumentDetails(Request $request){
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+        $documentSystemID = $input['documentSystemID'];
+        $matchingDoc = isset($input['matchingDoc'])?$input['matchingDoc']:0;
+
+        $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
+
+        return $this->sendResponse($output,'Success');
+    }
+
 }

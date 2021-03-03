@@ -710,15 +710,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             ->where('apAutoID', $val->apAutoID)
                             ->first();
 
+                        $a = $payDetailMoreBooked->supplierPaymentAmount;
+                        $b = $val->supplierInvoiceAmount;
+                        $epsilon = 0.0001;
                         if ($val->addedDocumentSystemID == 11) {
                             //supplier invoice
-                            if ($payDetailMoreBooked->supplierPaymentAmount > $val->supplierInvoiceAmount) {
+                            if (($a-$b) > $epsilon) {
                                 array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
                                 $error_count++;
                             }
                         } else if ($val->addedDocumentSystemID == 15) {
                             //debit note
-                            if ($payDetailMoreBooked->supplierPaymentAmount < $val->supplierInvoiceAmount) {
+                            if (($a-$b) < $epsilon) {
                                 array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
                                 $error_count++;
                             }
