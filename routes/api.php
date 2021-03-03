@@ -1957,6 +1957,10 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
         Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
 
+        Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
+        Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
+        Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
