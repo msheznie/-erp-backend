@@ -58,6 +58,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\TaxService;
 
 /**
  * Class PurchaseReturnController
@@ -566,6 +567,21 @@ class PurchaseReturnAPIController extends AppBaseController
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            //check Input Vat Transfer GL Account if vat exist
+            $totalVAT = PurchaseReturnDetails::where('purhaseReturnAutoID',$id)->selectRaw('SUM(VATAmount*noQty) as totalVAT')->first();
+            if(TaxService::checkGRVVATEligible($purchaseReturn->companySystemID,$purchaseReturn->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0){
+                if ($purchaseReturn->isInvoiceCreatedForGrv == 1) {
+                    if(empty(TaxService::getInputVATGLAccount($purchaseReturn->companySystemID))){
+                        return $this->sendError('Cannot confirm. Input VAT Control GL Account not configured.', 500);
+                    }
+                } else {
+                     if(empty(TaxService::getInputVATTransferGLAccount($purchaseReturn->companySystemID))){
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }
+                }
+
             }
 
             $amount = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)

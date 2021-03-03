@@ -230,6 +230,12 @@ class PurchaseReturnDetails extends Model
         'financeGLcodePL',
         'GRVSelectedYN',
         'goodsRecievedYN',
+        'vatRegisteredYN',
+        'supplierVATEligible',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'includePLForGRVYN'
     ];
 
@@ -243,6 +249,12 @@ class PurchaseReturnDetails extends Model
         'purhaseReturnAutoID' => 'integer',
         'goodsRecievedYN' => 'integer',
         'GRVSelectedYN' => 'integer',
+        'vatRegisteredYN' => 'integer',
+        'supplierVATEligible' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'companyID' => 'string',
         'grvAutoID' => 'integer',
         'grvDetailsID' => 'integer',
