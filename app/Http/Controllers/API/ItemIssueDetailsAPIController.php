@@ -915,12 +915,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyId = $input['companyId'];
+        $allowOtherCategory = isset($input['allowOtherCategory'])?$input['allowOtherCategory']:0;
+        if($allowOtherCategory == 1){
+            $categories = [1,2,4];
+        }else{
+            $categories = [1];
+        }
 
         if (array_key_exists('issueType', $input)) {
 
             if ($input['issueType'] == 1) {
                 $items = ItemAssigned::where('companySystemID', $companyId)
-                    ->where('financeCategoryMaster', 1)
+                    ->whereIn('financeCategoryMaster', $categories)
                     ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 
                 if (array_key_exists('search', $input)) {
