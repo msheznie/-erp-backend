@@ -1734,6 +1734,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
+        Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
         Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
 

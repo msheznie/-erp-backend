@@ -725,7 +725,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $taxExist = Taxdetail::where('documentSystemCode', $customerInvoice->custInvoiceDirectAutoID)
                 ->where('documentSystemID', $customerInvoice->documentSystemiD)
                 ->exists();
-            if($taxExist){
+            if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5){
                 return $this->sendError('VAT is added. Please delete the tax and try again.',500);
             }
 
