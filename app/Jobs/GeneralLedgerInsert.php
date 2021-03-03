@@ -3117,16 +3117,16 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
-                       // $data['documentTransAmount'] = $masterData->transactionAmount;
+                       // $data['documentTransAmount'] = $masterData->transactionAmount + $masterData->VATAmount;;
                         $data['documentTransAmount'] = 0;
 
                         $data['documentLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
-                        $data['documentLocalAmount'] = $masterData->companyLocalAmount;
+                        $data['documentLocalAmount'] = $masterData->companyLocalAmount + $masterData->VATAmountLocal;
 
                         $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyReportingCurrencyER;
-                        $data['documentRptAmount'] = $masterData->companyReportingAmount;
+                        $data['documentRptAmount'] = $masterData->companyReportingAmount + $masterData->VATAmountRpt;
 
                         $data['documentType'] = 11;
 
@@ -3213,6 +3213,53 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                         }
+
+                        $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                ->where('documentSystemCode', $masterData->deliveryOrderID)
+                                ->where('documentSystemID', 71)
+                                ->get();
+
+                        if (!empty($erp_taxdetail)) {
+                            $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
+                            if (!empty($taxConfigData)) {
+                                $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                    ->where('chartOfAccountSystemID', $taxConfigData->outputVatTransferGLAccountAutoID)
+                                    ->first();
+                                if (!empty($taxGL)) {
+                                    foreach ($erp_taxdetail as $tax) {
+                                        $data['serviceLineSystemID'] = 24;
+                                        $data['serviceLineCode'] = 'X';
+                                        // from customer invoice master table
+                                        $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                                        $data['glCode'] = $taxGL->AccountCode;
+                                        $data['glAccountType'] = $taxGL->catogaryBLorPL;
+                                        $data['glAccountTypeID'] = $taxGL->catogaryBLorPLID;
+
+                                        $data['documentNarration'] = $tax->taxDescription;
+                                        $data['clientContractID'] = 'X';
+                                        $data['supplierCodeSystem'] = $masterData->customerID;
+
+                                        $data['documentTransCurrencyID'] = $tax->currency;
+                                        $data['documentTransCurrencyER'] = $tax->currencyER;
+                                        $data['documentTransAmount'] = 0;
+                                        $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                        $data['documentLocalAmount'] = $tax->localAmount * -1;
+                                        $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                                        $data['documentRptAmount'] = $tax->rptAmount * -1;
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                }
+                            } else {
+                                Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                            }
+                        }
+
 
                         break;
                     case 87: // sales return

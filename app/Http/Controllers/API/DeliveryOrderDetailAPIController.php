@@ -8,6 +8,7 @@ use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
+use App\Models\Company;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -623,6 +624,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if($deliveryOrder->confirmedYN == 1){
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
+
+            $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+                                ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                                ->exists();
+            if($taxExist && $deliveryOrder->orderType != 3){
+                return $this->sendError('VAT is added. Please delete the tax and try again.',500);
+            }
+
             $deliveryOrderDetail->delete();
 
             // update maser table amount field
@@ -656,7 +665,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
-
+                     $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
+                    if (!$resVat['status']) {
+                       return $this->sendError($resVat['message']); 
+                    } 
                 }
 
 
@@ -806,29 +818,29 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
                 $wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
 
-                if ($currentStockQty <= 0) {
-                    return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                // if ($currentStockQty <= 0) {
+                //     return $this->sendError("Stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                // }
 
-                if ($currentWareHouseStockQty <= 0) {
-                    return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                // if ($currentWareHouseStockQty <= 0) {
+                //     return $this->sendError("Warehouse stock Qty is 0 for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                // }
 
-                if ($wacValueLocal == 0 || $wacValueReporting == 0) {
-                    return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                // if ($wacValueLocal == 0 || $wacValueReporting == 0) {
+                //     return $this->sendError("WAC Cost is 0 for  ".$row['itemSystemCode'].". You cannot issue.", 500);
+                // }
 
-                if ($wacValueLocal < 0 || $wacValueReporting < 0) {
-                    return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
-                }
+                // if ($wacValueLocal < 0 || $wacValueReporting < 0) {
+                //     return $this->sendError("WAC Cost is negative for ".$row['itemSystemCode'].". You cannot issue.", 500);
+                // }
 
-                if ($row['noQty'] > $currentStockQty) {
-                    return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
-                }
+                // if ($row['noQty'] > $currentStockQty) {
+                //     return $this->sendError('Insufficient Stock Qty for '.$row['itemSystemCode'], 500);
+                // }
 
-                if ($row['noQty'] > $currentWareHouseStockQty) {
-                    return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
-                }
+                // if ($row['noQty'] > $currentWareHouseStockQty) {
+                //     return $this->sendError('Insufficient Warehouse Qty for '.$row['itemSystemCode'], 500);
+                // }
 
 
                 /*pending approval checking*/
@@ -1123,6 +1135,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             }
 
+            $resVat = $this->updateVatFromSalesQuotation($deliveryOrderID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
+
             DB::commit();
             return $this->sendResponse([], 'Delivery Order Details saved successfully');
         } catch (\Exception $exception) {
@@ -1130,6 +1147,155 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
 
+    }
+
+    public function updateVatFromSalesQuotation($deliveryOrderID)
+    {
+        $invoiceDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                                            ->with(['sales_quotation_detail'])
+                                            ->get();
+
+        $totalVATAmount = 0;
+
+        foreach ($invoiceDetails as $key => $value) {
+            $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+        }
+
+        if ($totalVATAmount > 0) {
+            $taxDelete = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                  ->where('documentSystemID', 71)
+                                  ->delete();
+
+            $res = $this->saveDeliveryOrderTaxDetails($deliveryOrderID, $totalVATAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        }
+
+        return ['status' => true];
+    }
+
+
+     public function saveDeliveryOrderTaxDetails($deliveryOrderID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Delivery Order not found.'];
+        }
+
+        $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
+      
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Delivery Order Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(unitTransactionAmount) as amount"))
+                                          ->where('deliveryOrderID', $deliveryOrderID)
+                                          ->groupBy('deliveryOrderID')
+                                          ->first();
+
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                ->where('documentSystemID', 71)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $deliveryOrderID;
+        $_post['documentCode'] = $master->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+       
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+
+        DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
+
+        return ['status' => true];
     }
 
     private function updateSalesQuotationDeliveryStatus($quotationMasterID){
@@ -1151,4 +1317,134 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
     }
 
+
+    public function saveDeliveryOrderTaxDetail(Request $request)
+    {
+        $input = $request->all();
+        $deliveryOrderID = isset($input['deliveryOrderID'])?$input['deliveryOrderID']:0;
+        $percentage = isset($input['percentage'])?$input['percentage']:0;
+
+        if (empty($input['taxMasterAutoID'])) {
+            $input['taxMasterAutoID'] = 0;
+        }
+
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+        $master = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
+
+        if (empty($master)) {
+            return $this->sendResponse('e', 'Delivery Order not found.');
+        }
+
+        $invoiceDetail = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)->first();
+        if (empty($invoiceDetail)) {
+            return $this->sendResponse('e', 'Delivery Details not found.');
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(transactionAmount) as amount"))
+                                          ->where('deliveryOrderID', $deliveryOrderID)
+                                          ->first();
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+        $totalAmount = ($percentage / 100) * $totalAmount;
+      
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                                ->where('documentSystemID', 71)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return $this->sendResponse('e', 'VAT Detail Already exist');
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $deliveryOrderID;
+        $_post['documentCode'] = $master->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+
+
+        DB::beginTransaction();
+        try {
+            Taxdetail::create($_post);
+            $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+            $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+            $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+            $vatAmount['VATPercentage'] = $percentage;
+            $vatAmount['VATAmount'] = $_post['amount'];
+            $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+            $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+
+            DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
+
+            DB::commit();
+            return $this->sendResponse('s', 'Successfully Added');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error Occurred',500);
+        }
+    }
 }

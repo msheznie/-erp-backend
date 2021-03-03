@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\helper\inventory;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
 use App\Models\Company;
@@ -25,6 +26,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\GeneralLedger;
 use App\Models\Months;
+use App\Models\TaxMaster;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
@@ -34,6 +36,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DeliveryOrderRepository;
 use App\Traits\AuditTrial;
+use App\Models\Taxdetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -285,7 +288,7 @@ class DeliveryOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DeliveryOrder $deliveryOrder */
-        $deliveryOrder = $this->deliveryOrderRepository->with(['customer','transaction_currency', 'finance_year_by' => function ($query) {
+        $deliveryOrder = $this->deliveryOrderRepository->with(['tax','customer','transaction_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
@@ -583,6 +586,16 @@ class DeliveryOrderAPIController extends AppBaseController
                     ->sum(DB::raw('qtyIssuedDefaultMeasure * companyReportingAmount'));
             }
 
+            // VAT configuration validation
+            $taxSum = Taxdetail::where('documentSystemCode', $id)
+                ->where('companySystemID', $deliveryOrder->companySystemID)
+                ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                ->sum('amount');
+
+            if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($deliveryOrder->companySystemID))){
+                return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+            }
+
             $params = array('autoID' => $id,
                 'company' => $deliveryOrder->companySystemID,
                 'document' => $deliveryOrder->documentSystemID,
@@ -590,7 +603,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 'category' => '',
                 'amount' => $amount
             );
-            $update = array_except($input,['confirmedYN']);
+            $update = array_except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
             $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -704,13 +717,21 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $orderType = array(array('value' => 1, 'label' => 'Direct Order'), array('value' => 2, 'label' => 'Quotation Based'),array('value' => 3, 'label' => 'Sales Order Based'));
         $wareHouses = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
+        $taxData = TaxMaster::where('taxType', 2)
+                            ->where('companySystemID', $companyId)
+                            ->get();
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'currencies' => $currencies,
+            'isVATEligible' => $isVATEligible,
             'customer' => $customer,
+            'taxData' => $taxData,
             'salespersons' => $salespersons,
             'segments' => $segments,
             'financialYears' => $financialYears,
@@ -827,6 +848,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
+            ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1306,6 +1328,4 @@ WHERE
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
-
-
 }
