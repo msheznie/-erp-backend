@@ -507,7 +507,7 @@ class MaterielRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var MaterielRequest $materielRequest */
-        $materielRequest = $this->materielRequestRepository->with(['segment_by','created_by','confirmed_by'])->findWithoutFail($id);
+        $materielRequest = $this->materielRequestRepository->with(['segment_by','created_by','confirmed_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($materielRequest)) {
             return $this->sendError('Materiel Request not found');

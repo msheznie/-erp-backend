@@ -313,7 +313,7 @@ class LogisticAPIController extends AppBaseController
     public function show($id)
     {
         /** @var Logistic $logistic */
-        $logistic = $this->logisticRepository->findWithoutFail($id);
+        $logistic = $this->logisticRepository->with(['location','supplier_by'])->findWithoutFail($id);
 
         if (empty($logistic)) {
             return $this->sendError('Logistic not found');
@@ -371,6 +371,7 @@ class LogisticAPIController extends AppBaseController
     public function update($id, UpdateLogisticAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['supplier_by','location']);
         $input = $this->convertArrayToValue($input);
         /** @var Logistic $logistic */
         $logistic = $this->logisticRepository->with(['local_currency','reporting_currency'])->findWithoutFail($id);

@@ -327,7 +327,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        }, 'grv'])->findWithoutFail($id);
+        }, 'grv','customer','warehouse','segment'])->findWithoutFail($id);
 
 
         if (empty($customerInvoiceDirect)) {

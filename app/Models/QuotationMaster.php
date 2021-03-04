@@ -652,4 +652,9 @@ class QuotationMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'quotationMasterID')->whereIn('documentSystemID',[67,68]);
     }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerSystemCode', 'customerCodeSystem');
+    }
 }

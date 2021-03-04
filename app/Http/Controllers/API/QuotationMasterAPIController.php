@@ -351,7 +351,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var QuotationMaster $quotationMaster */
-        $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
+        $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by','customer','segment'])->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
             return $this->sendError('Quotation Master not found');
@@ -409,7 +409,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
