@@ -25,6 +25,7 @@ use App\Models\DocumentMaster;
 use App\Models\CustomerMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\DocumentApproved;
+use App\Models\Taxdetail;
 use App\Models\EmployeesDepartment;
 use App\Repositories\SalesReturnRepository;
 use App\Traits\AuditTrial;
@@ -36,6 +37,7 @@ use Response;
 use Carbon\Carbon;
 use App\helper\inventory;
 use App\helper\Helper;
+use App\helper\TaxService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -566,6 +568,35 @@ class SalesReturnAPIController extends AppBaseController
                     ->sum(DB::raw('qtyReturnedDefaultMeasure * companyReportingAmount'));
             }
 
+
+            //check Input Vat Transfer GL Account if vat exist
+            $totalVAT = $salesReturn->VATAmount;
+            if(TaxService::checkCompanyVATEligible($salesReturn->companySystemID) && $totalVAT > 0){
+                if ($salesReturn->returnType == 2) {
+                    if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
+                        return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                    }
+                } else {
+                     $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
+                                                ->where('salesReturnID', $id)
+                                                ->with(['delivery_order'])
+                                                ->groupBy('deliveryOrderID')
+                                                ->get();
+
+                    foreach ($invoiceDetails as $key => $value) {
+                        if (isset($value->delivery_order->selectedForCustomerInvoice) && $value->delivery_order->selectedForCustomerInvoice == -1) {
+                            if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
+                                return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                            }
+                        } else {
+                            if(empty(TaxService::getOutputVATTransferGLAccount($salesReturn->companySystemID))){
+                                return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                            }
+                        }
+                    }
+                }
+            }
+
             $params = array(
                 'autoID' => $id,
                 'company' => $salesReturn->companySystemID,
@@ -1058,6 +1089,10 @@ class SalesReturnAPIController extends AppBaseController
 
                 $this->updateDOReturnedStatus($new['deliveryOrderID']);
 
+                $resVat = $this->updateVatOfSalesReturn($salesReturnID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
             }
 
             DB::commit();
@@ -1067,6 +1102,190 @@ class SalesReturnAPIController extends AppBaseController
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
         
+    }
+
+    public function updateVatOfSalesReturn($salesReturnID)
+    {
+        $salesReturnMasterData = SalesReturn::find($salesReturnID);
+
+        $totalAmount = 0;
+        $totalTaxAmount = 0;
+        if ($salesReturnMasterData->returnType == 1) {
+            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
+                                                ->where('salesReturnID', $salesReturnID)
+                                                ->with(['delivery_order'])
+                                                ->groupBy('deliveryOrderID')
+                                                ->get();
+
+            foreach ($invoiceDetails as $key => $value) {
+                $totalAmount += $value->amount;
+                $tax = ($value->delivery_order->VATAmount / $value->delivery_order->transactionAmount) * $value->amount;
+
+                $totalTaxAmount += $tax;
+            }
+        } else {
+            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, custInvoiceDirectAutoID, salesReturnID')
+                                                ->where('salesReturnID', $salesReturnID)
+                                                ->with(['sales_invoice'])
+                                                ->groupBy('custInvoiceDirectAutoID')
+                                                ->get();
+
+            foreach ($invoiceDetails as $key => $value) {
+                $totalAmount += $value->amount;
+                $tax = ($value->sales_invoice->VATAmount / $value->sales_invoice->bookingAmountTrans) * $value->amount;
+
+                $totalTaxAmount += $tax;
+            }
+        }
+
+        if ($totalTaxAmount > 0) {
+            $taxDelete = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                  ->where('documentSystemID', 87)
+                                  ->delete();
+
+            $res = $this->saveSalesReturnTaxDetails($salesReturnID, $totalTaxAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        } else {
+            $taxDelete = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                  ->where('documentSystemID', 87)
+                                  ->delete();
+
+            $vatAmount['vatOutputGLCodeSystemID'] = 0;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            SalesReturn::where('id', $salesReturnID)->update($vatAmount);
+
+        }
+
+        return ['status' => true];
+    }
+
+
+     public function saveSalesReturnTaxDetails($salesReturnID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = SalesReturn::where('id', $salesReturnID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Sales Return not found.'];
+        }
+
+        $invoiceDetail = SalesReturnDetail::where('salesReturnID', $salesReturnID)->first();
+      
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Sales Return Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = SalesReturnDetail::select(DB::raw("SUM(transactionAmount) as amount"))
+                                          ->where('salesReturnID', $salesReturnID)
+                                          ->groupBy('salesReturnID')
+                                          ->first();
+
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                ->where('documentSystemID', 87)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'SLR';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $salesReturnID;
+        $_post['documentCode'] = $master->salesReturnCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+       
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+        SalesReturn::where('id', $salesReturnID)->update($vatAmount);
+
+        return ['status' => true];
     }
 
 
@@ -1303,6 +1522,11 @@ class SalesReturnAPIController extends AppBaseController
                 }
 
                 $this->updateInvoiceReturnedStatus($new['custInvoiceDirectAutoID']);
+
+                $resVat = $this->updateVatOfSalesReturn($salesReturnID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
 
             }
 

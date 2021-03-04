@@ -3320,9 +3320,21 @@ class GeneralLedgerInsert implements ShouldQueue
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER")
+                        $allAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodebBSSystemID')
+                            ->get();
+
+                        //all acoount
+                        $COSGAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
+                            ->WHERE('salesReturnID', $masterModel["autoID"])
+                            ->groupBy('financeGLcodePLSystemID')
+                            ->get();
+
+                        //all acoount
+                        $revenueAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodeRevenue")
+                            ->WHERE('salesReturnID', $masterModel["autoID"])
+                            ->groupBy('financeGLcodeRevenueSystemID')
                             ->get();
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
@@ -3349,20 +3361,40 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedEmpSystemID;
                             $data['documentNarration'] = $masterData->narration;
 
-                            $data['chartOfAccountSystemID'] = $masterData->custGLAccountSystemID;
-                            $data['glCode'] = $masterData->custGLAccountCode;
-                            $data['glAccountType'] = 'BS';
-                            $data['glAccountTypeID'] = 1;
+                            if ($masterData->returnType == 2) {
+                                $data['chartOfAccountSystemID'] = $masterData->custGLAccountSystemID;
+                                $data['glCode'] = $masterData->custGLAccountCode;
+                                $data['glAccountType'] = 'BS';
+                                $data['glAccountTypeID'] = 1;
+                            } else {
+                                $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
+                                                                    ->whereHas('delivery_order', function($query) {
+                                                                        $query->where('selectedForCustomerInvoice', -1);
+                                                                    })
+                                                                    ->first();
+
+                                if ($checkFromInvoice) {
+                                    $data['chartOfAccountSystemID'] = $masterData->custGLAccountSystemID;
+                                    $data['glCode'] = $masterData->custGLAccountCode;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountTypeID'] = 1;
+                                } else {
+                                    $data['chartOfAccountSystemID'] = $masterData->custUnbilledAccountSystemID;
+                                    $data['glCode'] = $masterData->custUnbilledAccountCode;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountTypeID'] = 1;
+                                }
+                            }
 
                             $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount)) * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0)) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount)) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0)) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount)) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0)) * -1;
                             $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
                             $data['serviceLineCode'] = $masterData->serviceLineCode;
                             $data['clientContractID'] = 'X';
@@ -3398,6 +3430,109 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
+                                }
+                            }
+
+                             if ($COSGAc) {
+                                foreach ($COSGAc as $val) {
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = 'PL';
+                                    $data['glAccountTypeID'] = 2;
+                                    $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($val->transAmount))) * -1;
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                    $data['documentLocalAmount'] = (\Helper::roundValue(ABS($val->localAmount))) * -1;
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                    $data['documentRptAmount'] = (\Helper::roundValue(ABS($val->rptAmount))) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            if ($revenueAc) {
+                                foreach ($revenueAc as $val) {
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodeRevenueSystemID;
+                                    $data['glCode'] = $val->financeGLcodeRevenue;
+                                    $data['glAccountType'] = 'PL';
+                                    $data['glAccountTypeID'] = 2;
+                                    $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+                                                    ->where('documentSystemCode', $masterData->id)
+                                                    ->where('documentSystemID', 87)
+                                                    ->get();
+
+                            if (!empty($erp_taxdetail)) {
+                                if ($masterData->returnType == 2) {
+                                    $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
+                                    $chartofaccountTaxID = $taxConfigData->outputVatGLAccountAutoID;
+                                } else {
+                                    $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
+                                                                        ->whereHas('delivery_order', function($query) {
+                                                                            $query->where('selectedForCustomerInvoice', -1);
+                                                                        })
+                                                                        ->first();
+
+                                    if ($checkFromInvoice) {
+                                        $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
+                                        $chartofaccountTaxID = $taxConfigData->outputVatGLAccountAutoID;
+                                    } else {
+                                        $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
+                                        $chartofaccountTaxID = $taxConfigData->outputVatTransferGLAccountAutoID;
+                                    }
+                                }
+                                if (!empty($taxConfigData) && isset($chartofaccountTaxID) && $chartofaccountTaxID > 0) {
+                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                        ->where('chartOfAccountSystemID', $chartofaccountTaxID)
+                                        ->first();
+                                    if (!empty($taxGL)) {
+                                        foreach ($erp_taxdetail as $tax) {
+                                            $data['serviceLineSystemID'] = 24;
+                                            $data['serviceLineCode'] = 'X';
+                                            // from customer invoice master table
+                                            $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                                            $data['glCode'] = $taxGL->AccountCode;
+                                            $data['glAccountType'] = $taxGL->catogaryBLorPL;
+                                            $data['glAccountTypeID'] = $taxGL->catogaryBLorPLID;
+
+                                            $data['documentNarration'] = $tax->taxDescription;
+                                            $data['clientContractID'] = 'X';
+                                            $data['supplierCodeSystem'] = $masterData->customerID;
+
+                                            $data['documentTransCurrencyID'] = $tax->currency;
+                                            $data['documentTransCurrencyER'] = $tax->currencyER;
+                                            $data['documentTransAmount'] = $tax->amount;
+                                            $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                            $data['documentLocalAmount'] = $tax->localAmount;
+                                            $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                                            $data['documentRptAmount'] = $tax->rptAmount;
+                                            array_push($finalData, $data);
+                                        }
+                                    } else {
+                                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                    }
+                                } else {
+                                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                                 }
                             }
                         }
