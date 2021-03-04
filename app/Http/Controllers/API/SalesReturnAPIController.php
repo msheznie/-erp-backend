@@ -289,7 +289,7 @@ class SalesReturnAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'detail' => function($query){
             $query->with(['delivery_order','uom_default', 'delivery_order_detail', 'sales_invoice']);
-        }])->findWithoutFail($id);
+        },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($salesReturn)) {
             return $this->sendError('Sales Return not found');
@@ -354,7 +354,7 @@ class SalesReturnAPIController extends AppBaseController
             return $this->sendError('Sales Return not found');
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','returnType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail']);
+        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($salesReturn->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);

@@ -294,7 +294,7 @@ class DeliveryOrderAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'detail' => function($query){
             $query->with(['quotation','uom_default']);
-        }])->findWithoutFail($id);
+        },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
@@ -360,7 +360,7 @@ class DeliveryOrderAPIController extends AppBaseController
             return $this->sendError('Delivery Order not found');
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail']);
+        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);

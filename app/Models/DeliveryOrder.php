@@ -604,4 +604,9 @@ class DeliveryOrder extends Model
         return $this->belongsTo('App\Models\Taxdetail', 'deliveryOrderID', 'documentSystemCode')
             ->where('documentSystemID', 71);
     }
+
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
 }
