@@ -759,7 +759,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
-            $discountedUnitPrice = $input['unitCost'] + $input['VATAmount'] - $input['discountAmount'];
+            $discountedUnitPrice = $input['unitCost']  - $input['discountAmount'];
+            if(TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible, $purchaseOrder->vatRegisteredYN)){
+                $discountedUnitPrice =  $discountedUnitPrice + $input['VATAmount'];
+            }
 
             if ($discountedUnitPrice > 0) {
                 $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
@@ -775,7 +778,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
                 $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount']);
-
                 $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                 $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
             } else {
@@ -887,6 +889,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
         } catch (\Exception $ex) {
             DB::rollback();
+            return $this->sendError($ex->getMessage(), 500);
         }
 
     }

@@ -455,6 +455,12 @@ class SalesReturnRefferedBack extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'postedDate',
+        'vatOutputGLCodeSystemID',
+        'vatOutputGLCode',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'timestamp'
     ];
 
@@ -467,6 +473,12 @@ class SalesReturnRefferedBack extends Model
         'salesReturnRefferedBackID' => 'integer',
         'salesReturnID' => 'integer',
         'returnType' => 'integer',
+        'vatOutputGLCodeSystemID' => 'integer',
+        'vatOutputGLCode' => 'string',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'salesReturnCode' => 'string',
         'serialNo' => 'integer',
         'companySystemID' => 'integer',

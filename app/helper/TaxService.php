@@ -9,6 +9,7 @@ use App\Models\CustomerAssigned;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierMaster;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use Illuminate\Support\Facades\DB;
@@ -145,11 +146,11 @@ class TaxService
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         //if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
         $poVATPercentage = 0;
-        if($poMasterSum && $purchaseOrder->isVatEligible){
+        if($poMasterSum && ($purchaseOrder->isVatEligible || $purchaseOrder->rcmActivated)){
             // $calculateVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
             $calculateVatAmount = $poMasterSum['totalVAT'];
             if($poMasterSum['masterTotalSum'] > 0){
-                $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'] - $poMasterSum['totalVAT'])) * 100;
+                $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'])) * 100;
             }
 
             $currencyConversionVatAmount = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateVatAmount);
@@ -172,5 +173,22 @@ class TaxService
         }
         ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
         return true;
+    }
+
+    public static function getRCMAvailable($companySystemID,$supplierID) {
+
+        if(!Helper::isLocalSupplier($supplierID, $companySystemID)){
+            $company = Company::find($companySystemID);
+
+            if(!empty($company) && $company->vatRegisteredYN == 1){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function poDetailsVATAmountUpdate($id,$amount){
+
     }
 }

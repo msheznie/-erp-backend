@@ -159,7 +159,7 @@ class ProcumentOrder extends Model
     protected $primaryKey = 'purchaseOrderID';
 
     protected $dates = ['deleted_at'];
-    protected $appends = ['isWoAmendAccess','isVatEligible'];
+    protected $appends = ['isWoAmendAccess','isVatEligible','rcmAvailable'];
 
     public $fillable = [
         'poProcessId',
@@ -302,6 +302,7 @@ class ProcumentOrder extends Model
         'supCategoryICVMasterID',
         'workOrderGenerateID',
         'supCategorySubICVID',
+        'rcmActivated'
     ];
 
     /**
@@ -436,7 +437,8 @@ class ProcumentOrder extends Model
         'isSelected' => 'boolean',
         'supCategoryICVMasterID' => 'integer',
         'workOrderGenerateID' => 'integer',
-        'supCategorySubICVID' => 'integer'
+        'supCategorySubICVID' => 'integer',
+        'rcmActivated' => 'integer'
     ];
 
     /**
@@ -622,6 +624,11 @@ class ProcumentOrder extends Model
     public function getIsVatEligibleAttribute()
     {
         return TaxService::checkPOVATEligible($this->supplierVATEligible,$this->vatRegisteredYN);
+    }
+
+    public function getRcmAvailableAttribute()
+    {
+        return TaxService::getRCMAvailable($this->companySystemID,$this->supplierID);
     }
 
     public function audit_trial()

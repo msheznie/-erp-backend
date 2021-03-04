@@ -1214,7 +1214,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
-        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(unitTransactionAmount) as amount"))
+        $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(transactionAmount) as amount"))
                                           ->where('deliveryOrderID', $deliveryOrderID)
                                           ->groupBy('deliveryOrderID')
                                           ->first();

@@ -174,8 +174,8 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
 
         $vatAmount = 0;
 
-        $totalAmount = QuotationDetails::selectRaw("(COALESCE(SUM(transactionAmount),0) + COALESCE(SUM(VATAmount),0) ) as totalTransactionAmount,
-                                                     COALESCE(SUM(VATAmount),0) as totalVATAmount")
+        $totalAmount = QuotationDetails::selectRaw("(COALESCE(SUM(transactionAmount),0) + COALESCE(SUM(VATAmount * requestedQty),0) ) as totalTransactionAmount,
+                                                     COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount")
                                          ->where('quotationMasterID', $input['soID'])
                                          ->first();
 
