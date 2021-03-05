@@ -634,6 +634,14 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
 
+
+
+            if(TaxService::isGRVRCMActivation($id) && !empty($totalVAT) && $totalVAT->totalVAT > 0 ){
+                if(empty(TaxService::getOutputVATTransferGLAccount($gRVMaster->companySystemID))){
+                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                }
+            }
+
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {

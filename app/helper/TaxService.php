@@ -6,10 +6,10 @@ namespace App\helper;
 
 use App\Models\Company;
 use App\Models\CustomerAssigned;
+use App\Models\GRVDetails;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierAssigned;
-use App\Models\SupplierMaster;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use Illuminate\Support\Facades\DB;
@@ -188,7 +188,12 @@ class TaxService
         return false;
     }
 
-    public static function poDetailsVATAmountUpdate($id,$amount){
+    public static function isGRVRCMActivation($id = 0){
 
+        return GRVDetails::where('grvAutoID',$id)
+                           ->whereHas('po_master',function ($q){
+                               $q->where('rcmActivated',1);
+                           })
+                          ->exists();
     }
 }

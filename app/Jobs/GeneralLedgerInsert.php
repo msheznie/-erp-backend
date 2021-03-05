@@ -95,6 +95,7 @@ class GeneralLedgerInsert implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/general_ledger_jobs.log');
         Log::info('---- GL  Start-----' . date('H:i:s'));
         $masterModel = $this->masterModel;
+
         if (!empty($masterModel)) {
             DB::beginTransaction();
             try {
@@ -165,9 +166,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
-
-                            if ($valEligible && $masterData->details[0]->transVATAmount > 0) {
-
+                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0) {
+                                Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
                                 if (!empty($taxData)) {
@@ -176,32 +176,55 @@ class GeneralLedgerInsert implements ShouldQueue
                                         ->first();
 
                                     if (!empty($chartOfAccountData)) {
-                                        $data['supplierCodeSystem'] = $masterData->supplierID;
                                         $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
                                         $data['glCode'] = $chartOfAccountData->AccountCode;
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                        $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
-                                        $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
                                         $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount);
-
-                                        $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
                                         $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount);
-
-                                        $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
-                                        $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
                                         $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount);
-                                        $data['timestamp'] = \Helper::currentDateTime();
+
                                         array_push($finalData, $data);
+                                        Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                     } else {
                                         Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                        Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
+                                        Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                                     }
                                 } else {
                                     Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                     Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
+                                }
+
+                                if(TaxService::isGRVRCMActivation($masterModel["autoID"])){
+
+                                    $taxDataOutputTransfer = TaxService::getOutputVATTransferGLAccount($masterData->companySystemID);
+                                    Log::info('Inside the Vat Entry OutputVATTransferGLAccoun Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    if (!empty($taxDataOutputTransfer)) {
+                                        $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxDataOutputTransfer->outputVatTransferGLAccountAutoID)
+                                            ->where('companySystemID', $masterData->companySystemID)
+                                            ->first();
+
+                                        if (!empty($chartOfAccountData)) {
+                                            $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                            $data['glCode'] = $chartOfAccountData->AccountCode;
+                                            $data['glAccountType'] = $chartOfAccountData->controlAccounts;
+                                            $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
+
+                                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount) * -1;
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            array_push($finalData, $data);
+                                            Log::info('Inside the Vat Entry OutVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        } else {
+                                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                            Log::info('Output Vat Transfer GL Account not assigned to company' . date('H:i:s'));
+                                        }
+                                    } else {
+                                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
+                                    }
                                 }
                             }
 
