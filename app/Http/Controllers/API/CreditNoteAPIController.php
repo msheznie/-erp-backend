@@ -288,7 +288,7 @@ class CreditNoteAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'debitNote' => function ($query) {
             $query->select('debitNoteAutoID', 'debitNoteCode');
-        }])->findWithoutFail($id);
+        },'customer'])->findWithoutFail($id);
 
         if (empty($creditNote)) {
             return $this->sendError('Credit Note not found');
@@ -349,7 +349,7 @@ class CreditNoteAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
-            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate'));
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);

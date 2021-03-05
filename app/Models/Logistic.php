@@ -496,4 +496,9 @@ class Logistic extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'customInvoiceRptCurrencyID','currencyID');
     }
 
+    public function location()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','agentDeliveryLocationID','wareHouseSystemCode');
+    }
+
 }

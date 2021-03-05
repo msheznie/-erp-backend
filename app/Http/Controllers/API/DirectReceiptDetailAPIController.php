@@ -309,7 +309,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $detail['detail'] = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+        $detail['detail'] = DirectReceiptDetail::where('directReceiptAutoID', $id)->with(['segment'])->get();
 
         $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
             ->where('matchingDocID', 0)
@@ -464,6 +464,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = array_except($input, ['segment']);
         $input = $this->convertArrayToValue($input);
         $id = $input['directReceiptDetailsID'];
         array_except($input, 'directReceiptDetailsID');

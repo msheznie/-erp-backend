@@ -345,7 +345,7 @@ class PurchaseReturnAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'supplier_by'])->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
@@ -404,7 +404,7 @@ class PurchaseReturnAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['confirmed_by', 'segment_by', 'location_by', 'finance_period_by', 'finance_year_by',
-            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName']);
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName','supplier_by']);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 

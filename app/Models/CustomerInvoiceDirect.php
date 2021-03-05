@@ -736,4 +736,13 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'custInvoiceDirectAutoID')->where('documentSystemID',20);
     }
+
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
+
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
 }

@@ -404,7 +404,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         }, 'currency' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID,CurrencyCode');
-        }])->findWithoutFail($id);
+        },'location'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -441,7 +441,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isAmendAccess = $input['isAmendAccess'];
 
-        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier']);
+        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier','location']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();

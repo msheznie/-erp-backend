@@ -447,6 +447,12 @@ class SalesReturn extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'postedDate',
+        'vatOutputGLCodeSystemID',
+        'vatOutputGLCode',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'timestamp'
     ];
 
@@ -458,6 +464,12 @@ class SalesReturn extends Model
     protected $casts = [
         'id' => 'integer',
         'returnType' => 'integer',
+        'vatOutputGLCodeSystemID' => 'integer',
+        'vatOutputGLCode' => 'string',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'salesReturnCode' => 'string',
         'serialNo' => 'integer',
         'companySystemID' => 'integer',
@@ -603,5 +615,10 @@ class SalesReturn extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'id')->where('documentSystemID',87);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
     }
 }

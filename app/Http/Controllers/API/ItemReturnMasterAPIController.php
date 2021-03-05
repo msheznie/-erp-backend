@@ -295,7 +295,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'segment_by','warehouse_by','customer_by'])->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
@@ -353,7 +353,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function update($id, UpdateItemReturnMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName',
+        $input = array_except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'finance_period_by', 'finance_year_by']);
 
         $input = $this->convertArrayToValue($input);
