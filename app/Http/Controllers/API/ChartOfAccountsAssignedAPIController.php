@@ -375,4 +375,26 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
     }
+
+    public function getCompanyWiseSubLedgerAccounts(request $request)
+    {
+        $input = $request->all();
+
+        $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
+
+        if (!$chartofaccountData) {
+            return $this->sendError('Chart of Account not found!', 404);
+        }
+
+        $checkSubAccountIsAssigned = ChartOfAccountsAssigned::with(['company'])
+                                                             ->where('companySystemID', $input['selectedCompanyId'])
+                                                             ->whereHas('chartofaccount', function($query) use ($chartofaccountData) {
+                                                                  $query->where('masterAccount', $chartofaccountData->AccountCode)
+                                                                        ->where('isMasterAccount', 0);
+                                                             })
+                                                             ->get();
+
+        return $this->sendResponse($checkSubAccountIsAssigned, 'Data retrieved successfully');
+
+    }
 }
