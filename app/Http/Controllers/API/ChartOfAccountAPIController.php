@@ -18,6 +18,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\AllocationMaster;
+use App\helper\ReopenDocument;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccountsRefferedBack;
@@ -887,5 +888,15 @@ class ChartOfAccountAPIController extends AppBaseController
         })->download('csv');
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+     public function chartOfAccountReopen(Request $request)
+    {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
+        }
     }
 }
