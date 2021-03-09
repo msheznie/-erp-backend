@@ -14,6 +14,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\hrCompany;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
@@ -33,8 +34,7 @@ use App\Models\SupplierCritical;
 use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
-use App\Models\SMECompany;
+use App\Http\Controllers\AppBaseController; 
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Storage;
@@ -51,14 +51,14 @@ use Response;
 class CompanyAPIController extends AppBaseController
 {
     /** @var  CompanyRepository */
-    private $companyRepository;
+    private $companyRepository;     
 
     public function __construct(CompanyRepository $companyRepo)
     {
-        $this->companyRepository = $companyRepo;
+        $this->companyRepository = $companyRepo;        
     }
-
-
+    
+    
     /**
      * Display a listing of the Company.
      * GET|HEAD /companies
@@ -294,11 +294,10 @@ class CompanyAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $companies = $this->companyRepository->create($input);
-
-           //$this->new_hr_company($companies); 
-
-            /* DB::rollback();
-            return $this->sendError('Company saved successfully', 500); */
+            
+            $hrCompany = app()->make(hrCompany::class);
+            $hrCompany->store($companies);
+ 
             DB::commit();
             return $this->sendResponse($companies->toArray(), 'Company saved successfully');
         }
@@ -431,8 +430,9 @@ class CompanyAPIController extends AppBaseController
         try {
             $company = $this->companyRepository->update($input, $id);
 
-            $this->update_hr_company($id, $input);
-
+            $hrCompany = app()->make(hrCompany::class);
+            $hrCompany->update($id, $input);
+            
             DB::commit();
             return $this->sendResponse($company->toArray(), 'Company updated successfully');
         }
@@ -463,62 +463,6 @@ class CompanyAPIController extends AppBaseController
         $company->delete();
 
         return $this->sendResponse($id, 'Company deleted successfully');
-    }
-
-    public function new_hr_company($det){
-        $integrated = Helper::isHRSysIntegrated();
-
-        if(!$integrated){ //if not integrated
-            return true;
-        }
-
-        $loc_cur = CurrencyMaster::selectRaw('currencyID,CurrencyCode,DecimalPlaces')->find($det['localCurrencyID']);
-        $rep_cur = CurrencyMaster::selectRaw('currencyID,CurrencyCode,DecimalPlaces')->find($det['reportingCurrency']);
-
-        $data = [
-            'company_id'=> $det['companySystemID'], 
-            'company_name'=> $det['CompanyName'], 
-            'company_default_currencyID'=> $det['localCurrencyID'],
-            'company_default_currency'=> $loc_cur->CurrencyCode, 'company_default_decimal'=> $loc_cur->DecimalPlaces,
-
-            'company_reporting_currencyID'=> $det['reportingCurrency'],
-            'company_reporting_currency'=> $rep_cur->CurrencyCode, 'company_reporting_decimal'=> $rep_cur->DecimalPlaces,
-                        
-            'countryID'=> $det['companyCountry'], 'createdPCID'=> $det['createdPcID'], 'createdUserID'=> $det['createdUserID'],
-
-            'timestamp'=> Carbon::now()
-        ];
-
-        SMECompany::create($data);
-
-        return $data;
-    }
-
-    public function update_hr_company($id, $input){
-        $integrated = Helper::isHRSysIntegrated();
-
-        if(!$integrated){ //if not integrated
-            return true;
-        }
-
-        $loc_cur = CurrencyMaster::selectRaw('currencyID,CurrencyCode,DecimalPlaces')->find($input['localCurrencyID']);
-        $rep_cur = CurrencyMaster::selectRaw('currencyID,CurrencyCode,DecimalPlaces')->find($input['reportingCurrency']);        
-
-        $data = [
-            'company_name'=> $input['CompanyName'], 
-            'company_default_currencyID'=> $input['localCurrencyID'],
-            'company_default_currency'=> $loc_cur->CurrencyCode, 'company_default_decimal'=> $loc_cur->DecimalPlaces,
-
-            'company_reporting_currencyID'=> $input['reportingCurrency'],
-            'company_reporting_currency'=> $rep_cur->CurrencyCode, 'company_reporting_decimal'=> $rep_cur->DecimalPlaces,
-            
-            'countryID'=> $input['companyCountry'],
-            'timestamp'=> Carbon::now()
-        ];
-
-        SMECompany::where('company_id', $id)->update($data);
-
-        return true;
     }
 
     public function getCompaniesByGroup(){

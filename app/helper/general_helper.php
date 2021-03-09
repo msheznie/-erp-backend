@@ -5364,11 +5364,6 @@ class Helper
 
     }
 
-    static function isHRSysIntegrated() /* Check Standerd HR integrated */
-    {        
-        return Schema::hasTable('srp_erp_company');        
-    }
-
     public static function exception_to_error($ex){
         return [
             'exception' => $ex->getMessage(),
