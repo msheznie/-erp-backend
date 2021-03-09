@@ -34,8 +34,9 @@ use App\Models\SupplierCritical;
 use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController; 
-use Carbon\Carbon;
+use App\Http\Controllers\AppBaseController;
+use App\Repositories\CompanyPolicyCategoryRepository;
+use App\Repositories\CompanyPolicyMasterRepository;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -51,11 +52,16 @@ use Response;
 class CompanyAPIController extends AppBaseController
 {
     /** @var  CompanyRepository */
-    private $companyRepository;     
+    private $companyRepository;
+    private $policyCategoryRepository;
+    private $policyMasterRepository;
 
-    public function __construct(CompanyRepository $companyRepo)
+    public function __construct(CompanyRepository $companyRepo, CompanyPolicyCategoryRepository $policyCategoryRepo,
+     CompanyPolicyMasterRepository $policyMasterRepo)
     {
-        $this->companyRepository = $companyRepo;        
+        $this->companyRepository = $companyRepo;
+        $this->policyCategoryRepository = $policyCategoryRepo;
+        $this->policyMasterRepository = $policyMasterRepo;
     }
     
     
@@ -295,6 +301,8 @@ class CompanyAPIController extends AppBaseController
         try {
             $companies = $this->companyRepository->create($input);
             
+            $this->addCompayPolicies($companies['companySystemID'], $companies['CompanyID']);
+
             $hrCompany = app()->make(hrCompany::class);
             $hrCompany->store($companies);
  
@@ -618,5 +626,25 @@ class CompanyAPIController extends AppBaseController
         }
     }
 
+    public function addCompayPolicies($companyID, $companyCode){ 
+        $policyCat = $this->policyCategoryRepository->selectRaw("companyPolicyCategoryID,documentID,isActive")->get()->toArray();
 
+        $policy_arr = [];
+        foreach ($policyCat as $value) {
+            $policy_arr[] = [
+                'companySystemID' => $companyID, 
+                'companyID' => $companyCode,
+                'companyPolicyCategoryID' => $value['companyPolicyCategoryID'],                
+                'documentID' => $value['documentID'], 
+                'isYesNO' => 0,
+                'policyValue' => null
+            ];
+        }
+
+        if($policy_arr){
+            $this->policyMasterRepository->insert($policy_arr);
+        }
+        
+        return true;
+    }
 }
