@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
 use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
 use App\Models\CompanyPolicyMaster;
@@ -833,5 +834,15 @@ class CustomerMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse($resData, 'Data retrieved successfully');
+    }
+
+     public function customerReOpen(Request $request)
+    {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
+        }
     }
 }

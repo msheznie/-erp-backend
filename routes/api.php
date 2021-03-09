@@ -143,6 +143,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
         Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
+        Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
@@ -257,6 +258,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
         Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
         Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
+        Route::post('customerReOpen', 'CustomerMasterAPIController@customerReOpen');
 
         /** Bank master Created by Pasan  */
         Route::resource('bank/masters', 'BankMasterAPIController');
@@ -346,6 +348,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
         Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
         Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts');
+        Route::post('chartOfAccountReopen', 'ChartOfAccountAPIController@chartOfAccountReopen');
 
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
         Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
@@ -1968,6 +1971,7 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
+    Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen');
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');

@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
@@ -1516,6 +1517,17 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError($reject["message"]);
         } else {
             return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+
+    public function supplierReOpen(Request $request)
+    {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
         }
     }
 }

@@ -23,6 +23,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DeliveryOrder;
@@ -1131,5 +1132,16 @@ class ItemMasterAPIController extends AppBaseController
 //            ->make(true);
 
 
+    }
+
+
+     public function itemReOpen(Request $request)
+    {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
+        }
     }
 }
