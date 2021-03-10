@@ -60,6 +60,7 @@ use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\IvmsDeliveryOrderService;
+use Illuminate\Support\Facades\Schema;
 
 class Helper
 {
@@ -5361,5 +5362,13 @@ class Helper
         }
         return $output;
 
+    }
+
+    public static function exception_to_error($ex){
+        return [
+            'exception' => $ex->getMessage(),
+            'file' => $ex->getFile(),
+            'line' => $ex->getLine()
+        ];
     }
 }
