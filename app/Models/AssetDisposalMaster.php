@@ -290,4 +290,8 @@ class AssetDisposalMaster extends Model
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster','customerID','customerCodeSystem');
+    }
+
 }
