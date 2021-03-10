@@ -3535,7 +3535,7 @@ WHERE
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
 
-        AuditTrial::createAuditTrial($procurementOrder->documentSystemID, $input['purchaseOrderID'], '', 'amend');
+        AuditTrial::createAuditTrial($procurementOrder->documentSystemID, $input['purchaseOrderID'], '', 'amended');
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
     }
@@ -5562,7 +5562,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $purchaseOrderMasterData->expectedDeliveryDate = $input['deliveryDate'];
         $purchaseOrderMasterData->save();
 
-        AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID, $input['purchaseOrderID'], '', 'expected delivery date amend to ' . $input['deliveryDate']);
+        AuditTrial::createAuditTrial($purchaseOrderMasterData->documentSystemID, $input['purchaseOrderID'], '', 'expected delivery date amended to ' . $input['deliveryDate']);
 
         return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
     }
