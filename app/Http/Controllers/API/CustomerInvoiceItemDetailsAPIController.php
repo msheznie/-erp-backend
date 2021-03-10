@@ -278,14 +278,22 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $input['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
             $input['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
         } else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError("Finance Item category sub assigned not found", 500);
         }
 
-        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']
+        if((!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']) && $input['itemFinanceCategoryID'] != 2){
+            return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+        }elseif (!$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+            return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+        }elseif (!$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']){
+            return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+        }
+
+        /*if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID']
             || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
-        }
+        }*/
 
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
@@ -1048,14 +1056,23 @@ WHERE
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError("Finance Item category sub assigned not found", 500);
+//                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
                             }
 
-                            if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
+                            if((!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
+                                return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']){
+                                return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']){
+                                return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }
+
+                            /*if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
                                 || !$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']
                                 || !$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']) {
                                 return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
-                            }
+                            }*/
 
 
                             $invDetail_arr['sellingCurrencyID'] = $deliveryOrder->transactionCurrencyID;
@@ -1510,14 +1527,22 @@ WHERE
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError("Finance Item category sub assigned not found", 500);
                             }
 
-                            if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
+                            if((!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
+                                return $this->sendError('BS account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']){
+                                return $this->sendError('Cost account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }elseif (!$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']){
+                                return $this->sendError('Revenue account cannot be null for ' . $new['itemSystemCode'], 500);
+                            }
+
+                            /*if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
                                 || !$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']
                                 || !$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']) {
                                 return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
-                            }
+                            }*/
 
 
                             $invDetail_arr['sellingCurrencyID'] = $quotationMaster->transactionCurrencyID;

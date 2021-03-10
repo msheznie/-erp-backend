@@ -767,7 +767,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
 
-                            if (!($item->financeGLcodebBSSystemID > 0)) {
+                            if ((!($item->financeGLcodebBSSystemID > 0)) && $item->itemFinanceCategoryID != 2) {
                                 return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             } elseif (!($item->financeGLcodePLSystemID > 0)) {
                                 return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
