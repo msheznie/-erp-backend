@@ -578,30 +578,42 @@ class FinancialReportAPIController extends AppBaseController
                     $companyWiseGrandTotalArray = $res['companyWiseGrandTotalArray'];
                     $outputOpeningBalanceArr = $res['outputOpeningBalanceArr'];
                     $outputClosingBalanceArr = $res['outputClosingBalanceArr'];
-
+                    $firstLevel = $res['firstLevel'];
+                    $secondLevel = $res['secondLevel'];
+                    $thirdLevel = $res['thirdLevel'];
+                    $fourthLevel = $res['fourthLevel'];
                 } else {
+                    $firstLevel = false;
+                    $secondLevel = false;
+                    $thirdLevel = false;
+                    $fourthLevel = false;
+                    $fifthLevel = false;
                     if (count($headers) > 0) {
                         foreach ($headers as $key => $val) {
                             $details = $outputCollect->where('masterID', $val->detID)->sortBy('sortOrder')->values();
                             $val->detail = $details;
+                            $firstLevel = true;
                             foreach ($details as $key2 => $val2) {
                                 if ($val2->isFinalLevel == 1) {
                                     $val2->glCodes = $outputDetail->where('templateDetailID', $val2->detID)->sortBy('sortOrder')->values();
                                 } else {
                                     $detailLevelTwo = $outputCollect->where('masterID', $val2->detID)->sortBy('sortOrder')->values();
                                     $val2->detail = $detailLevelTwo;
+                                    $secondLevel = true;
                                     foreach ($detailLevelTwo as $key3 => $val3) {
                                         if ($val3->isFinalLevel == 1) {
                                             $val3->glCodes = $outputDetail->where('templateDetailID', $val3->detID)->sortBy('sortOrder')->values();
                                         } else {
                                             $detailLevelThree = $outputCollect->where('masterID', $val3->detID)->sortBy('sortOrder')->values();
                                             $val3->detail = $detailLevelThree;
+                                            $thirdLevel = true;
                                             foreach ($detailLevelThree as $key4 => $val4) {
                                                 if ($val4->isFinalLevel == 1) {
                                                     $val4->glCodes = $outputDetail->where('templateDetailID', $val4->detID)->sortBy('sortOrder')->values();
                                                 } else {
                                                     $detailLevelFour = $outputCollect->where('masterID', $val4->detID)->sortBy('sortOrder')->values();
                                                     $val4->detail = $detailLevelFour;
+                                                    $fourthLevel = true;
                                                     foreach ($detailLevelFour as $key5 => $val5) {
                                                         if ($val5->isFinalLevel == 1) {
                                                             $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
@@ -652,6 +664,10 @@ class FinancialReportAPIController extends AppBaseController
                     'columnTemplateID' => $columnTemplateID,
                     'companyHeaderData' => $companyHeaderColumns,
                     'month' => $month,
+                    'firstLevel' => $firstLevel,
+                    'secondLevel' => $secondLevel,
+                    'thirdLevel' => $thirdLevel,
+                    'fourthLevel' => $fourthLevel
                 );
                 break;
             case 'JVD':
@@ -956,6 +972,10 @@ class FinancialReportAPIController extends AppBaseController
             }
         }
 
+        $firstLevel = false;
+        $secondLevel = false;
+        $thirdLevel = false;
+        $fourthLevel = false;
         $finalHeaders = [];
         foreach ($newHeaders as $key => $val) {
             $temp = [];
@@ -968,10 +988,12 @@ class FinancialReportAPIController extends AppBaseController
                 foreach ($val2 as $key4 => $value4) {
                     $temp2[$key4] = $value4;
                 }
+                $firstLevel = true;
                 if ($val2['isFinalLevel'] == 1) {
                     $temp2['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val2['detID'])->sortBy('sortOrder')->values();
                 } else {
                     $detailsTwo = collect($newOutputCollect)->where('masterID', $val2['detID'])->sortBy('sortOrder')->values();
+                    $secondLevel = true;
                     foreach ($detailsTwo as $key7 => $val7) {
                         $temp3 = [];
                         foreach ($val7 as $key8 => $value8) {
@@ -981,6 +1003,7 @@ class FinancialReportAPIController extends AppBaseController
                             $temp3['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val7['detID'])->sortBy('sortOrder')->values();
                         } else {
                             $detailsThree = collect($newOutputCollect)->where('masterID', $val7['detID'])->sortBy('sortOrder')->values();
+                            $thirdLevel = true;
                             foreach ($detailsThree as $key9 => $val9) {
                                 $temp4 = [];
                                 foreach ($val9 as $key10 => $value10) {
@@ -990,6 +1013,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $temp4['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val9['detID'])->sortBy('sortOrder')->values();
                                 } else {
                                     $detailsFour = collect($newOutputCollect)->where('masterID', $val9['detID'])->sortBy('sortOrder')->values();
+                                    $fourthLevel = true;
                                     foreach ($detailsFour as $key11 => $val11) {
                                         $temp5 = [];
                                         foreach ($val11 as $key12 => $value12) {
@@ -1043,7 +1067,7 @@ class FinancialReportAPIController extends AppBaseController
             }
         }
 
-        return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr];
+        return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr, 'firstLevel' => $firstLevel, 'secondLevel' => $secondLevel, 'thirdLevel' => $thirdLevel, 'fourthLevel' => $fourthLevel];
     }
 
     public function exportReport(Request $request)
@@ -5572,4 +5596,39 @@ GROUP BY
         return CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
     }
 
+    public function exportFinanceReport(Request $request)
+    {
+        $reportData = $this->generateFRReport($request);
+
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+        if ($reportData['template']['showDecimalPlaceYN']) {
+            if ($input['currency'] === 1) {
+                $reportData['decimalPlaces'] = $reportData['companyCurrency']['localcurrency']['DecimalPlaces'];
+            } else {
+                 $reportData['decimalPlaces'] = $reportData['companyCurrency']['reportingcurrency']['DecimalPlaces'];
+            }
+        } else {
+             $reportData['decimalPlaces'] = 0;
+        }
+
+        $reportData['accountType'] = $input['accountType'];
+
+         if (is_array($reportData['uncategorize']) && $reportData['columnTemplateID'] == null) {
+            $reportData['isUncategorize'] = false;
+        } else {
+            $reportData['isUncategorize'] = true;
+        }
+
+        if ($reportData['columnTemplateID'] == 1) {
+            $templateName = "export_report.finance_coloumn_template_one";
+        } else {
+            $templateName = "export_report.finance";
+        }
+
+        return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                     $excel->sheet('New sheet', function($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('xlsx');
+    }
 }
