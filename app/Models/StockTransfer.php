@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -163,7 +164,7 @@ use Eloquent as Model;
  */
 class StockTransfer extends Model
 {
-
+    use Compoships;
     public $table = 'erp_stocktransfer';
 
     const CREATED_AT = 'createdDateTime';

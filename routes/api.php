@@ -1965,6 +1965,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
         Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
+        Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
 
     });
 

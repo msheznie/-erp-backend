@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -125,7 +126,7 @@ use Eloquent as Model;
  */
 class FixedAssetDepreciationMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_fa_depmaster';
 
     const CREATED_AT = 'timeStamp';

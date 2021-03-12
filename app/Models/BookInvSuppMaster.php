@@ -14,6 +14,7 @@ namespace App\Models;
 
 use App\helper\Helper;
 use App\helper\TaxService;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -270,7 +271,7 @@ use Eloquent as Model;
  */
 class BookInvSuppMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_bookinvsuppmaster';
     
     const CREATED_AT = 'createdDateAndTime';

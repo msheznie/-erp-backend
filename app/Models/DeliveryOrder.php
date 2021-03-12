@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -343,7 +344,7 @@ use Eloquent as Model;
  */
 class DeliveryOrder extends Model
 {
-
+    use Compoships;
     public $table = 'erp_delivery_order';
     
     const CREATED_AT = 'createdDateTime';

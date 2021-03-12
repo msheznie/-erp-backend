@@ -14,6 +14,7 @@ namespace App\Models;
 
 use App\helper\Helper;
 use App\Traits\ApproveTrait;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -435,7 +436,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class FixedAssetMaster extends Model
 {
     use SoftDeletes;
-
+    use Compoships;
     public $table = 'erp_fa_asset_master';
     
     const CREATED_AT = 'createdDateAndTime';

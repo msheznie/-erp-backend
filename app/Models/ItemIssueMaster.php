@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -290,7 +291,7 @@ use Eloquent as Model;
  */
 class ItemIssueMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_itemissuemaster';
     
     const CREATED_AT = 'createdDateTime';

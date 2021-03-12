@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -376,7 +377,7 @@ use Eloquent as Model;
  */
 class SalesReturn extends Model
 {
-
+    use Compoships;
     public $table = 'salesreturn';
     
     const CREATED_AT = 'createdDateTime';

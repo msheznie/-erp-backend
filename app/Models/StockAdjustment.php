@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -165,7 +166,7 @@ use Eloquent as Model;
  */
 class StockAdjustment extends Model
 {
-
+    use Compoships;
     public $table = 'erp_stockadjustment';
     
     const CREATED_AT = 'createdDateTime';

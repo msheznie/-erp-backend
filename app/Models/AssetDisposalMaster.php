@@ -14,6 +14,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -130,7 +131,7 @@ use Eloquent as Model;
  */
 class AssetDisposalMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_fa_asset_disposalmaster';
 
     const CREATED_AT = 'createdDateTime';
