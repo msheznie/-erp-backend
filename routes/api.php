@@ -621,6 +621,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
