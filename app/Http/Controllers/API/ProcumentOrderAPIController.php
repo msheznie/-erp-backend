@@ -62,11 +62,15 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Alert;
 use App\Models\BookInvSuppDet;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
+use App\Models\SalesReturnDetail;
+use App\Models\DeliveryOrder;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ErpItemLedger;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\Months;
 use App\Models\MaterielRequest;
 use App\Models\PurchaseReturnDetails;
@@ -6260,6 +6264,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             case 67:
                 $tracingData[] = $this->getQuotationTracingData($input['id'], $input['documentSystemID']);
                 break;
+            case 68:
+                $tracingData = $this->getSalesOrderTracingData($input['id']);
+                break;
+            case 71:
+                $tracingData = $this->getDeliveryOrderTracingData($input['id']);
+                break;
+            case 20:
+                $tracingData = $this->getCustomerInvoiceTracingData($input['id']);
+                break;
             default:
                 # code...
                 break;
@@ -6756,7 +6769,171 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
-    public function getQuotationTracingData($quotationMasterID, $documentSystemID, $type = 'quo')
+
+    public function getSalesOrderTracingData($salesOrderID, $type = 'so', $deliveryOrderID = null, $custInvoiceDirectAutoID = null)
+    {
+        $quotationMaster = QuotationMaster::find($salesOrderID);
+
+        $tracingData = [];
+        if ($quotationMaster->quotationType == 1) {
+            $tracingData[] = $this->getQuotationTracingData($salesOrderID, $quotationMaster->documentSystemID, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID);
+        } else {
+            $soDetails = QuotationDetails::where('quotationMasterID', $salesOrderID)
+                                         ->groupBy('soQuotationMasterID')
+                                         ->get();
+
+            $quoIds = $soDetails->pluck('soQuotationMasterID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID);
+            }
+        }
+
+        return $tracingData;
+    }
+
+    public function getDeliveryOrderTracingData($deliveryOrderID, $type = 'do', $custInvoiceDirectAutoID = null)
+    {
+        $deliveryOrderData = DeliveryOrder::find($deliveryOrderID);
+
+        $tracingData = [];
+        if ($deliveryOrderData->orderType == 1) {
+            $deliveryOrderDetails = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
+                                                 sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID,deliveryOrderID')
+                                                ->where('deliveryOrderID', $deliveryOrderID)
+                                                ->with(['master' => function($query) {
+                                                    $query->with(['transaction_currency']);
+                                                }])
+                                                ->groupBy('deliveryOrderID')
+                                                ->first();
+
+            $deliveryOrderDetails->invoices = $this->customerInvoiceChainData($deliveryOrderID, null, $custInvoiceDirectAutoID);
+                                                
+            $deliveryOrderDetails = $deliveryOrderDetails->toArray();
+
+            $tracingData[] = $this->setDeliveryOrderChainData($deliveryOrderDetails, $type, $deliveryOrderID, $custInvoiceDirectAutoID);
+        } else if ($deliveryOrderData->orderType == 2) {
+            $soDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                                         ->groupBy('quotationMasterID')
+                                         ->get();
+
+            $quoIds = $soDetails->pluck('quotationMasterID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID);
+            }
+        } else {
+            $soDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                                         ->groupBy('quotationMasterID')
+                                         ->get();
+
+            $soIds = $soDetails->pluck('quotationMasterID');
+            foreach ($soIds as $key => $value) {
+                $tracingData = $this->getSalesOrderTracingData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID);
+            }
+        }
+
+        return $tracingData;
+    }
+
+    public function getCustomerInvoiceTracingData($custInvoiceDirectAutoID, $type = 'inv')
+    {
+        $ciData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+
+        $tracingData = [];
+        if ($ciData->isPerforma == 3) {
+            $soDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                 ->groupBy('deliveryOrderID')
+                                                 ->get();
+
+            $quoIds = $soDetails->pluck('deliveryOrderID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData = $this->getDeliveryOrderTracingData($value, $type, $custInvoiceDirectAutoID);
+            }
+        } else if ($ciData->isPerforma == 4) {
+            $soDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                         ->groupBy('quotationMasterID')
+                                         ->get();
+
+            $quoIds = $soDetails->pluck('quotationMasterID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData = $this->getSalesOrderTracingData($value, $type, null, $custInvoiceDirectAutoID);
+            }
+        } else if ($ciData->isPerforma == 5) {
+            $soDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                         ->groupBy('quotationMasterID')
+                                         ->get();
+
+            $quoIds = $soDetails->pluck('quotationMasterID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, null, $custInvoiceDirectAutoID);
+            }
+        } else if ($ciData->isPerforma == 0 || $ciData->isPerforma == 1) {
+            $invoice = CustomerInvoiceDirectDetail::selectRaw('sum(localAmount) as localAmount,
+                                                 sum(comRptAmount) as rptAmount, sum(invoiceAmount) as transAmount,custInvoiceDirectID')
+                                                    ->where('custInvoiceDirectID', $custInvoiceDirectAutoID)
+                                                    ->with(['master' => function($query) {
+                                                        $query->with(['currency']);
+                                                    }])
+                                                 ->groupBy('custInvoiceDirectID')
+                                                 ->first();
+
+
+
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
+                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                                                        ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
+                                                        ->where('addedDocumentSystemID', 20)
+                                                        ->where('matchingDocID', 0)
+                                                        ->with(['master' => function($query) {
+                                                            $query->with(['currency']);
+                                                        }])
+                                                        ->groupBy('custReceivePaymentAutoID')
+                                                        ->get();
+
+            $totalInvoices = $recieptVouchers->toArray();
+
+            $invoice->payments = $totalInvoices;
+
+            $invoice = $invoice->toArray();
+
+            
+            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID);
+        } else if ($ciData->isPerforma == 2) {
+            $invoice = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
+                                                 sum(issueCostRptTotal) as rptAmount, sum(sellingTotal) as transAmount,custInvoiceDirectAutoID')
+                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                    ->with(['master' => function($query) {
+                                                        $query->with(['currency']);
+                                                    }])
+                                                 ->groupBy('custInvoiceDirectAutoID')
+                                                 ->first();
+
+
+
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
+                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                                                        ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
+                                                        ->where('addedDocumentSystemID', 20)
+                                                        ->where('matchingDocID', 0)
+                                                        ->with(['master' => function($query) {
+                                                            $query->with(['currency']);
+                                                        }])
+                                                        ->groupBy('custReceivePaymentAutoID')
+                                                        ->get();
+
+            $totalInvoices = $recieptVouchers->toArray();
+
+            $invoice->payments = $totalInvoices;
+
+            $invoice = $invoice->toArray();
+
+            
+            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID);
+        } 
+
+        return $tracingData;
+    }
+
+    public function getQuotationTracingData($quotationMasterID, $documentSystemID, $type = 'quo', $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null)
     {
         $tracingData = [];
         $quotationMaster = QuotationMaster::where('quotationMasterID', $quotationMasterID)
@@ -6773,22 +6950,27 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                 ->with(['master' => function($query) {
                                                     $query->with(['transaction_currency']);
                                                 }])
-                                                ->groupBy('quotationMasterID')
-                                                ->get();
+                                                ->groupBy('quotationMasterID');
 
-        foreach ($salesOrderDeatils as $so) {
-            $so->delivery_order = $this->getSOToCNChainForTracing($so->master) + $this->customerInvoiceChainData(null, $so->quotationMasterID);
+        if (!is_null($salesOrderID)) {
+            $salesOrderDeatils = $salesOrderDeatils->where('quotationMasterID', $salesOrderID);
         }
 
-        $deliveryOrderData = $this->getSOToCNChainForTracing($quotationMaster);
+        $salesOrderDeatils = $salesOrderDeatils->get();
 
-        $customerInvoiceData = $this->customerInvoiceChainData(null, $quotationMasterID);
+        foreach ($salesOrderDeatils as $so) {
+            $so->delivery_order = $this->getSOToCNChainForTracing($so->master, $deliveryOrderID, $custInvoiceDirectAutoID) + $this->customerInvoiceChainData(null, $so->quotationMasterID, $custInvoiceDirectAutoID);
+        }
+
+        $deliveryOrderData = $this->getSOToCNChainForTracing($quotationMaster, $deliveryOrderID, $custInvoiceDirectAutoID);
+
+        $customerInvoiceData = $this->customerInvoiceChainData(null, $quotationMasterID, $custInvoiceDirectAutoID);
 
         $salesOrderData = $salesOrderDeatils->toArray() + $deliveryOrderData + $customerInvoiceData;
 
         $cancelStatus = ($quotationMaster->isDeleted != 0) ? " -- @Cancelled@": "";
-        $tracingData['name'] = "Quotation";
-        if ($type == 'quo' && ($quotationMaster->quotationMasterID == $quotationMasterID)) {
+        $tracingData['name'] = ($documentSystemID == 67) ? "Quotation" : "Sales Order";
+        if (($type == 'quo' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 67)) || ($type == 'so' && ($quotationMaster->quotationMasterID == $quotationMasterID && $documentSystemID == 68))) {
             $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
         } else {
             $tracingData['cssClass'] = "ngx-org-step-one";
@@ -6801,16 +6983,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         foreach ($salesOrderData as $keySo => $valueSo) {
             $tempSo = [];
             if (isset($valueSo['master']['documentSystemID']) && $valueSo['master']['documentSystemID'] == 68) {
-                $tempSo = $this->setSalesOrderChainData($valueSo, $type);
+                $tempSo = $this->setSalesOrderChainData($valueSo, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID);
             } 
 
             if (isset($valueSo['master']['documentSystemID']) && $valueSo['master']['documentSystemID'] == 71) {
-                $tempSo = $this->setDeliveryOrderChainData($valueSo, $type);
+                $tempSo = $this->setDeliveryOrderChainData($valueSo, $type, $deliveryOrderID, $custInvoiceDirectAutoID);
             } 
 
 
             if (isset($valueSo['master']['documentSystemiD']) && $valueSo['master']['documentSystemiD'] == 20) {
-                $tempSo = $this->setCustomerInvoiceChainData($valueSo, $type);
+                $tempSo = $this->setCustomerInvoiceChainData($valueSo, $type, $custInvoiceDirectAutoID);
             } 
 
             $tracingData['childs'][] = $tempSo;
@@ -6819,7 +7001,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
-    public function setSalesOrderChainData($valueSo, $type, $salesOrderID = null)
+    public function setSalesOrderChainData($valueSo, $type, $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null)
     {
         $tempSo = [];
         $cancelStatus = ($valueSo['master']['isDeleted'] != 0) ? " -- @Cancelled@": "";
@@ -6838,11 +7020,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp = [];
 
             if (isset($value['master']['documentSystemID']) && $value['master']['documentSystemID'] == 71) {
-                $temp = $this->setDeliveryOrderChainData($value, $type);
+                $temp = $this->setDeliveryOrderChainData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID);
             } 
 
-            if (isset($value['master']['documentSystemID']) && $value['master']['documentSystemID'] == 20) {
-                $temp = $this->setCustomerInvoiceChainData($value, $type);
+            if (isset($value['master']['documentSystemiD']) && $value['master']['documentSystemiD'] == 20) {
+                $temp = $this->setCustomerInvoiceChainData($value, $type, $custInvoiceDirectAutoID);
             } 
             
             $tempSo['childs'][] = $temp;
@@ -6852,7 +7034,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     }
 
 
-    public function setDeliveryOrderChainData($value, $type, $deliveryOrderID = null)
+    public function setDeliveryOrderChainData($value, $type, $deliveryOrderID = null, $custInvoiceDirectAutoID = null)
     {
         $temp = [];
         $cancelStatus = "";
@@ -6866,13 +7048,49 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $temp['docAutoID'] = $value['master']['deliveryOrderID'];
         $temp['title'] = "{Doc Code :} ".$value['master']['deliveryOrderCode']." -- {Doc Date :} ". Carbon::parse($value['master']['deliveryOrderDate'])->format('Y-m-d')." -- {Currency :} ".$value['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format($value['transAmount'], $value['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
 
-        foreach ($value['invoices'] as $key1 => $value1) {
+
+        $salesReturnDetails = SalesReturnDetail::selectRaw('sum(companyLocalAmount) as localAmount,
+                                             sum(companyReportingAmount) as rptAmount, SUM(transactionAmount) as transAmount,salesReturnID, deliveryOrderID')
+                                                ->where('deliveryOrderID', $value['master']['deliveryOrderID'])
+                                                ->with(['master'=> function($query) {
+                                                    $query->with(['transaction_currency']);
+                                                }])
+                                                ->groupBy('salesReturnID')
+                                                ->get()
+                                                ->toArray();
+
+        if (isset($value['invoices'])) {
+            foreach ($value['invoices'] as $key1 => $value1) {
+                $temp1 = [];
+                $temp1 = $this->setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID);
+                $temp['childs'][] = $temp1;
+            }
+        }
+
+        foreach ($salesReturnDetails as $keySR => $valueSR) {
             $temp1 = [];
-            $temp1 = $this->setCustomerInvoiceChainData($value1, $type);
+            $temp1 = $this->setSalesReturnChainData($valueSR, $type, 1);
             $temp['childs'][] = $temp1;
         }
 
         return $temp;
+    }
+
+    public function setSalesReturnChainData($value1, $type, $from, $salesReturnID = null)
+    {
+        $temp1 = [];
+        $cancelStatus = "";
+        $temp1['name'] = "Sales Return";
+         if ($type == 'inv' && ($value1['master']['id'] == $salesReturnID)) {
+            $temp1['cssClass'] = ($from == 1) ? "ngx-org-step-four root-tracing-node" : "ngx-org-step-five root-tracing-node";
+        } else {
+            $temp1['cssClass'] = ($from == 1) ? "ngx-org-step-four" : "ngx-org-step-five";
+        }
+        $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
+        $temp1['docAutoID'] = $value1['master']['id'];
+        $temp1['title'] = "{Doc Code :} ".$value1['master']['salesReturnCode']." -- {Doc Date :} ". Carbon::parse($value1['master']['salesReturnDate'])->format('Y-m-d')." -- {Currency :} ".$value1['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format($value1['transAmount'], $value1['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
+
+        return $temp1;
     }
 
     public function setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID = null)
@@ -6921,6 +7139,23 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
+
+        $salesReturnDetails = SalesReturnDetail::selectRaw('sum(companyLocalAmount) as localAmount,
+                                             sum(companyReportingAmount) as rptAmount, SUM(transactionAmount) as transAmount,salesReturnID, custInvoiceDirectAutoID')
+                                                ->where('custInvoiceDirectAutoID', $value1['master']['custInvoiceDirectAutoID'])
+                                                ->with(['master'=> function($query) {
+                                                    $query->with(['transaction_currency']);
+                                                }])
+                                                ->groupBy('salesReturnID')
+                                                ->get()
+                                                ->toArray();
+
+        foreach ($salesReturnDetails as $keySR => $valueSR) {
+            $temp3 = [];
+            $temp3 = $this->setSalesReturnChainData($valueSR, $type, 2);
+            $temp1['childs'][] = $temp3;
+        }
+
         return $temp1;
     }
 
@@ -6960,7 +7195,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $temp2;
     }
 
-    public function getSOToCNChainForTracing($salesOrder)
+    public function getSOToCNChainForTracing($salesOrder, $deliveryOrderID = null, $custInvoiceDirectAutoID = null)
     {
         $deliveryOrderDetails = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
                                                  sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID,deliveryOrderID')
@@ -6968,17 +7203,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                 ->with(['master' => function($query) {
                                                     $query->with(['transaction_currency']);
                                                 }])
-                                                ->groupBy('deliveryOrderID')
-                                                ->get();
+                                                ->groupBy('deliveryOrderID');
+
+        if (!is_null($deliveryOrderID)) {
+            $deliveryOrderDetails = $deliveryOrderDetails->where('deliveryOrderID', $deliveryOrderID);
+        }
+
+        $deliveryOrderDetails = $deliveryOrderDetails->get();
 
         foreach ($deliveryOrderDetails as $key1 => $deliveryOrder) {
-            $deliveryOrder->invoices = $this->customerInvoiceChainData($deliveryOrder->deliveryOrderID);
+            $deliveryOrder->invoices = $this->customerInvoiceChainData($deliveryOrder->deliveryOrderID, null, $custInvoiceDirectAutoID);
         }
 
         return $deliveryOrderDetails->toArray();
     }
 
-    public function customerInvoiceChainData($deliveryOrderID = null, $quotationID = null)
+    public function customerInvoiceChainData($deliveryOrderID = null, $quotationID = null, $custInvoiceDirectAutoID = null)
     {
         $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
                                                  sum(issueCostRptTotal) as rptAmount, sum(sellingTotal) as transAmount,custInvoiceDirectAutoID,deliveryOrderID');
@@ -6989,6 +7229,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $invoices = $invoices->where('quotationMasterID', $quotationID);
         }
 
+        if (!is_null($custInvoiceDirectAutoID)) {
+            $invoices = $invoices->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID);
+        }
                                                 
         $invoices = $invoices->with(['master' => function($query) {
                                 $query->with(['currency']);
