@@ -958,7 +958,9 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function getFAGrvDetailsByID(Request $request)
     {
-        $subCategory = GRVDetails::with(['grv_master'])->find($request->grvDetailsID);
+        $subCategory = GRVDetails::with(['grv_master' => function($query){
+            $query->with(['segment_by','supplier_by']);
+        }])->find($request->grvDetailsID);
         return $this->sendResponse($subCategory, 'Record retrieved successfully');
     }
 
@@ -1137,7 +1139,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by'])->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
