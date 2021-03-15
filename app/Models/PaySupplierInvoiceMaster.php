@@ -886,4 +886,9 @@ class PaySupplierInvoiceMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'PayMasterAutoId')->where('documentSystemID',4);
     }
+
+    public function payee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'directPaymentPayeeEmpID', 'employeeSystemID');
+    }
 }
