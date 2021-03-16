@@ -439,7 +439,7 @@ class CompanyAPIController extends AppBaseController
             $company = $this->companyRepository->update($input, $id);
 
             $hrCompany = app()->make(hrCompany::class);
-            //$hrCompany->update($id, $input);
+            $hrCompany->update($id, $input);
             
             DB::commit();
             return $this->sendResponse($company->toArray(), 'Company updated successfully');

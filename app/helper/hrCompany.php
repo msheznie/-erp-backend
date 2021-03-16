@@ -21,6 +21,7 @@ use App\Repositories\SMEReligionRepository;
 use App\Repositories\SMESystemEmployeeTypeRepository;
 use App\Repositories\SMETitleRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class hrCompany
 {
@@ -80,8 +81,14 @@ class hrCompany
         $this->sMELaveGroupRepository = $sMELaveGroupRepo;
     }
 
-    public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */        
-        return Schema::hasTable('srp_erp_company');
+    public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
+
+        $table_exists = DB::select("SHOW TABLES LIKE 'srp_erp_company'");
+        return ($table_exists)? true: false;
+        /*
+        We can not use Schema::hasTable('srp_erp_company') since we are changing the 
+        DB connection basd on sub-domain
+        */        
 
         /* following tables get update in company creation
             - srp_titlemaster
