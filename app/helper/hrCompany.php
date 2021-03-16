@@ -21,6 +21,7 @@ use App\Repositories\SMEReligionRepository;
 use App\Repositories\SMESystemEmployeeTypeRepository;
 use App\Repositories\SMETitleRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class hrCompany
 {
@@ -81,8 +82,11 @@ class hrCompany
     }
 
     public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
-        //return false;       
-        return Schema::connection('mysql')->hasTable('srp_erp_company');
+
+        $table_exists = DB::select("SHOW TABLES LIKE 'srp_erp_company'");
+        return ($table_exists)? true: false;
+        //return false;        
+        //return Schema::connection('mysql')->hasTable('srp_erp_company');
 
         /* following tables get update in company creation
             - srp_titlemaster
