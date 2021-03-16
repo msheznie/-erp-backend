@@ -146,7 +146,7 @@ class hrCompany
             'timestamp'=> Carbon::now()
         ];
 
-        $this->sMECompanyRepository->update($data, $id); 
+        //$this->sMECompanyRepository->update($data, $id); 
 
         return true;
     }
