@@ -80,7 +80,8 @@ class hrCompany
         $this->sMELaveGroupRepository = $sMELaveGroupRepo;
     }
 
-    public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */        
+    public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
+        return false;       
         return Schema::hasTable('srp_erp_company');
 
         /* following tables get update in company creation
@@ -146,7 +147,7 @@ class hrCompany
             'timestamp'=> Carbon::now()
         ];
 
-        //$this->sMECompanyRepository->update($data, $id); 
+        $this->sMECompanyRepository->update($data, $id); 
 
         return true;
     }
