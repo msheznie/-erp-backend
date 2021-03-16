@@ -81,8 +81,8 @@ class hrCompany
     }
 
     public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
-        return false;       
-        return Schema::hasTable('srp_erp_company');
+        //return false;       
+        return Schema::connection('mysql')->hasTable('srp_erp_company');
 
         /* following tables get update in company creation
             - srp_titlemaster
