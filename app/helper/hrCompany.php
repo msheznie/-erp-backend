@@ -85,8 +85,10 @@ class hrCompany
 
         $table_exists = DB::select("SHOW TABLES LIKE 'srp_erp_company'");
         return ($table_exists)? true: false;
-        //return false;        
-        //return Schema::connection('mysql')->hasTable('srp_erp_company');
+        /*
+        We can not use Schema::hasTable('srp_erp_company') since we are changing the 
+        DB connection basd on sub-domain
+        */        
 
         /* following tables get update in company creation
             - srp_titlemaster
