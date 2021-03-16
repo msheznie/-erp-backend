@@ -254,5 +254,10 @@ class AdvanceReceiptDetails extends Model
     {
         return $this->belongsTo(QuotationMaster::class, 'salesOrderID', 'quotationMasterID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+    }
     
 }
