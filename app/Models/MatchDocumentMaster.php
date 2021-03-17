@@ -455,6 +455,16 @@ class MatchDocumentMaster extends Model
         
     ];
 
+     public function credit_note()
+    {
+        return $this->belongsTo(CreditNote::class, 'PayMasterAutoId', 'creditNoteAutoID');
+    }
+
+     public function reciept_voucher()
+    {
+        return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');

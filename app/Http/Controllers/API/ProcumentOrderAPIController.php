@@ -69,6 +69,7 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
 use App\Models\SalesReturnDetail;
+use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
@@ -105,6 +106,7 @@ use App\Models\Tax;
 use App\Models\QuotationMaster;
 use App\Models\QuotationDetails;
 use App\Models\DeliveryOrderDetail;
+use App\Models\MatchDocumentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\ItemAssigned;
@@ -6240,7 +6242,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function getDocumentTracingData(Request $request)
     {
         $input = $request->all();
-
         if (!isset($input['documentSystemID'])) {
             return $this->sendError("Document System ID not found");
         }
@@ -6278,6 +6279,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 break;
             case 21:
                 $tracingData = $this->getReciptVoucherTracingData($input['id']);
+                break;
+            case 87:
+                $tracingData = $this->getSalesReturnTracingData($input['id']);
+                break;
+            case 70:
+                $tracingData = $this->getReciptMatchingTracingData($input['id']);
+                break;
+            case 19:
+                $tracingData = $this->getCreditNoteTracingData($input['id']);
                 break;
             default:
                 # code...
@@ -6775,14 +6785,90 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
+    public function getSalesReturnTracingData($salesReturnID, $type = 'sr')
+    {
+        $salesReturnData = SalesReturn::find($salesReturnID);
+        $tracingData = [];
+        if ($salesReturnData->returnType == 1) {
+            $soDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                         ->groupBy('deliveryOrderID')
+                                         ->get();
 
-    public function getSalesOrderTracingData($salesOrderID, $type = 'so', $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+            $quoIds = $soDetails->pluck('deliveryOrderID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData = $this->getDeliveryOrderTracingData($value, $type, null, null, $salesReturnID);
+            }
+        } else {
+            $soDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                         ->groupBy('custInvoiceDirectAutoID')
+                                         ->get();
+
+            $quoIds = $soDetails->pluck('custInvoiceDirectAutoID');
+            foreach ($quoIds as $key => $value) {
+                $tracingData = $this->getCustomerInvoiceTracingData($value, $type, null,$salesReturnID);
+            }
+        }
+
+        return $tracingData;
+    }
+
+    public function getReciptMatchingTracingData($matchDocumentMasterAutoID, $type = 'reciptVoucherMatching', $creditNoteAutoID = null)
+    {
+        $recieptVouchersMatch = CustomerReceivePaymentDetail::where('matchingDocID', $matchDocumentMasterAutoID)
+                                                            ->where('addedDocumentSystemID', 20)
+                                                            ->groupBy('bookingInvCodeSystem')
+                                                            ->get();
+
+
+        $tracingData = [];
+        foreach ($recieptVouchersMatch as $key => $value) {
+            $tracingData = $this->getCustomerInvoiceTracingData($value->bookingInvCodeSystem, $type, null, null, $matchDocumentMasterAutoID, $creditNoteAutoID);
+        }
+
+        return $tracingData;
+    }
+
+    public function getCreditNoteTracingData($creditNoteAutoID, $type = 'cn')
+    {
+        $creditNotes = MatchDocumentMaster::where('PayMasterAutoId', $creditNoteAutoID)
+                                                ->where('documentSystemID', 19)
+                                                ->groupBy('matchDocumentMasterAutoID')
+                                                ->get();
+
+
+        $tracingData = [];
+        foreach ($creditNotes as $key => $value) {
+            $tracingData[] = $this->getReciptMatchingTracingData($value->matchDocumentMasterAutoID, $type, $creditNoteAutoID);
+        }
+
+        $creditNotesFromRec = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $creditNoteAutoID)
+                                                    ->where('addedDocumentSystemID', 19)
+                                                    ->where('matchingDocID', 0)
+                                                    ->groupBY('custReceivePaymentAutoID')
+                                                    ->get();
+        foreach ($creditNotesFromRec as $key => $value) {
+            $tracingData[] = $this->getReciptVoucherTracingData($value->custReceivePaymentAutoID, $type, $creditNoteAutoID);
+        }
+
+        $finalData = [];
+
+        foreach ($tracingData as $key => $value) {
+            foreach ($value as $key1 => $value1) {
+                $finalData[] = $value1;
+            }
+        }
+
+
+        return $finalData;
+    }
+
+    public function getSalesOrderTracingData($salesOrderID, $type = 'so', $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $quotationMaster = QuotationMaster::find($salesOrderID);
 
         $tracingData = [];
         if ($quotationMaster->quotationType == 1) {
-            $tracingData[] = $this->getQuotationTracingData($salesOrderID, $quotationMaster->documentSystemID, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $tracingData[] = $this->getQuotationTracingData($salesOrderID, $quotationMaster->documentSystemID, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         } else {
             $soDetails = QuotationDetails::where('quotationMasterID', $salesOrderID)
                                          ->groupBy('soQuotationMasterID')
@@ -6790,14 +6876,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('soQuotationMasterID');
             foreach ($quoIds as $key => $value) {
-                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         }
 
         return $tracingData;
     }
 
-    public function getDeliveryOrderTracingData($deliveryOrderID, $type = 'do', $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function getDeliveryOrderTracingData($deliveryOrderID, $type = 'do', $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $deliveryOrderData = DeliveryOrder::find($deliveryOrderID);
 
@@ -6812,11 +6898,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                 ->groupBy('deliveryOrderID')
                                                 ->first();
 
-            $deliveryOrderDetails->invoices = $this->customerInvoiceChainData($deliveryOrderID, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $deliveryOrderDetails->invoices = $this->customerInvoiceChainData($deliveryOrderID, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
                                                 
             $deliveryOrderDetails = $deliveryOrderDetails->toArray();
 
-            $tracingData[] = $this->setDeliveryOrderChainData($deliveryOrderDetails, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $tracingData[] = $this->setDeliveryOrderChainData($deliveryOrderDetails, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         } else if ($deliveryOrderData->orderType == 2) {
             $soDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
                                          ->groupBy('quotationMasterID')
@@ -6824,7 +6910,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('quotationMasterID');
             foreach ($quoIds as $key => $value) {
-                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         } else {
             $soDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
@@ -6833,14 +6919,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $soIds = $soDetails->pluck('quotationMasterID');
             foreach ($soIds as $key => $value) {
-                $tracingData = $this->getSalesOrderTracingData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData = $this->getSalesOrderTracingData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         }
 
         return $tracingData;
     }
 
-    public function getCustomerInvoiceTracingData($custInvoiceDirectAutoID, $type = 'inv', $custReceivePaymentAutoID = null)
+    public function getCustomerInvoiceTracingData($custInvoiceDirectAutoID, $type = 'inv', $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $ciData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
@@ -6852,7 +6938,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('deliveryOrderID');
             foreach ($quoIds as $key => $value) {
-                $tracingData = $this->getDeliveryOrderTracingData($value, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData = $this->getDeliveryOrderTracingData($value, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         } else if ($ciData->isPerforma == 4) {
             $soDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
@@ -6861,7 +6947,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('quotationMasterID');
             foreach ($quoIds as $key => $value) {
-                $tracingData = $this->getSalesOrderTracingData($value, $type, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData = $this->getSalesOrderTracingData($value, $type, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         } else if ($ciData->isPerforma == 5) {
             $soDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
@@ -6870,7 +6956,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('quotationMasterID');
             foreach ($quoIds as $key => $value) {
-                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tracingData[] = $this->getQuotationTracingData($value, 67, $type, null, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             }
         } else if ($ciData->isPerforma == 0 || $ciData->isPerforma == 1) {
             $invoice = CustomerInvoiceDirectDetail::selectRaw('sum(localAmount) as localAmount,
@@ -6902,7 +6988,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $invoice = $invoice->toArray();
 
             
-            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         } else if ($ciData->isPerforma == 2) {
             $invoice = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
                                                  sum(issueCostRptTotal) as rptAmount, sum(sellingTotal) as transAmount,custInvoiceDirectAutoID')
@@ -6933,13 +7019,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $invoice = $invoice->toArray();
 
             
-            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         } 
 
         return $tracingData;
     }
 
-    public function getReciptVoucherTracingData($custReceivePaymentAutoID, $type = 'reciptVoucher')
+    public function getReciptVoucherTracingData($custReceivePaymentAutoID, $type = 'reciptVoucher', $creditNoteAutoID = null)
     {
         $ciData = CustomerReceivePayment::find($custReceivePaymentAutoID);
 
@@ -6953,7 +7039,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('bookingInvCodeSystem');
             foreach ($quoIds as $key => $value) {
-                $tracingData = $this->getCustomerInvoiceTracingData($value, $type, $custReceivePaymentAutoID);
+                $tracingData = $this->getCustomerInvoiceTracingData($value, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
             }
         } else if ($ciData->documentType == 14) {
             $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
@@ -6967,7 +7053,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                         ->toArray();
 
             
-            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID);
+            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
         } else if ($ciData->documentType == 15) {
             $recieptVouchers = AdvanceReceiptDetails::selectRaw('sum(localAmount) as localAmount,
                                              sum(comRptAmount) as rptAmount, SUM(supplierTransAmount) as transAmount,custReceivePaymentAutoID')
@@ -6980,13 +7066,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                         ->toArray();
 
             
-            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID);
+            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
         } 
 
         return $tracingData;
     }
 
-    public function getQuotationTracingData($quotationMasterID, $documentSystemID, $type = 'quo', $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function getQuotationTracingData($quotationMasterID, $documentSystemID, $type = 'quo', $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $tracingData = [];
         $quotationMaster = QuotationMaster::where('quotationMasterID', $quotationMasterID)
@@ -7012,12 +7098,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $salesOrderDeatils = $salesOrderDeatils->get();
 
         foreach ($salesOrderDeatils as $so) {
-            $so->delivery_order = $this->getSOToCNChainForTracing($so->master, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID) + $this->customerInvoiceChainData(null, $so->quotationMasterID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $so->delivery_order = $this->getSOToCNChainForTracing($so->master, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID) + $this->customerInvoiceChainData(null, $so->quotationMasterID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         }
 
-        $deliveryOrderData = $this->getSOToCNChainForTracing($quotationMaster, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+        $deliveryOrderData = $this->getSOToCNChainForTracing($quotationMaster, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
 
-        $customerInvoiceData = $this->customerInvoiceChainData(null, $quotationMasterID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+        $customerInvoiceData = $this->customerInvoiceChainData(null, $quotationMasterID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
 
         $salesOrderData = $salesOrderDeatils->toArray() + $deliveryOrderData + $customerInvoiceData;
 
@@ -7036,16 +7122,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         foreach ($salesOrderData as $keySo => $valueSo) {
             $tempSo = [];
             if (isset($valueSo['master']['documentSystemID']) && $valueSo['master']['documentSystemID'] == 68) {
-                $tempSo = $this->setSalesOrderChainData($valueSo, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tempSo = $this->setSalesOrderChainData($valueSo, $type, $salesOrderID, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             } 
 
             if (isset($valueSo['master']['documentSystemID']) && $valueSo['master']['documentSystemID'] == 71) {
-                $tempSo = $this->setDeliveryOrderChainData($valueSo, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tempSo = $this->setDeliveryOrderChainData($valueSo, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             } 
 
 
             if (isset($valueSo['master']['documentSystemiD']) && $valueSo['master']['documentSystemiD'] == 20) {
-                $tempSo = $this->setCustomerInvoiceChainData($valueSo, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $tempSo = $this->setCustomerInvoiceChainData($valueSo, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             } 
 
             $tracingData['childs'][] = $tempSo;
@@ -7054,7 +7140,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
-    public function setSalesOrderChainData($valueSo, $type, $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function setSalesOrderChainData($valueSo, $type, $salesOrderID = null, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $tempSo = [];
         $cancelStatus = ($valueSo['master']['isDeleted'] != 0) ? " -- @Cancelled@": "";
@@ -7073,11 +7159,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp = [];
 
             if (isset($value['master']['documentSystemID']) && $value['master']['documentSystemID'] == 71) {
-                $temp = $this->setDeliveryOrderChainData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $temp = $this->setDeliveryOrderChainData($value, $type, $deliveryOrderID, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             } 
 
             if (isset($value['master']['documentSystemiD']) && $value['master']['documentSystemiD'] == 20) {
-                $temp = $this->setCustomerInvoiceChainData($value, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $temp = $this->setCustomerInvoiceChainData($value, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             } 
             
             $tempSo['childs'][] = $temp;
@@ -7087,7 +7173,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     }
 
 
-    public function setDeliveryOrderChainData($value, $type, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function setDeliveryOrderChainData($value, $type, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp = [];
         $cancelStatus = "";
@@ -7108,33 +7194,38 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                 ->with(['master'=> function($query) {
                                                     $query->with(['transaction_currency']);
                                                 }])
-                                                ->groupBy('salesReturnID')
-                                                ->get()
+                                                ->groupBy('salesReturnID');
+
+        if (!is_null($salesReturnID)) {
+            $salesReturnDetails = $salesReturnDetails->where('salesReturnID', $salesReturnID);
+        }
+
+        $salesReturnDetails = $salesReturnDetails->get()
                                                 ->toArray();
 
         if (isset($value['invoices'])) {
             foreach ($value['invoices'] as $key1 => $value1) {
                 $temp1 = [];
-                $temp1 = $this->setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+                $temp1 = $this->setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
                 $temp['childs'][] = $temp1;
             }
         }
 
         foreach ($salesReturnDetails as $keySR => $valueSR) {
             $temp1 = [];
-            $temp1 = $this->setSalesReturnChainData($valueSR, $type, 1);
+            $temp1 = $this->setSalesReturnChainData($valueSR, $type, 1, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             $temp['childs'][] = $temp1;
         }
 
         return $temp;
     }
 
-    public function setSalesReturnChainData($value1, $type, $from, $salesReturnID = null)
+    public function setSalesReturnChainData($value1, $type, $from, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp1 = [];
         $cancelStatus = "";
         $temp1['name'] = "Sales Return";
-         if ($type == 'inv' && ($value1['master']['id'] == $salesReturnID)) {
+         if ($type == 'sr' && ($value1['master']['id'] == $salesReturnID)) {
             $temp1['cssClass'] = ($from == 1) ? "ngx-org-step-four root-tracing-node" : "ngx-org-step-five root-tracing-node";
         } else {
             $temp1['cssClass'] = ($from == 1) ? "ngx-org-step-four" : "ngx-org-step-five";
@@ -7146,7 +7237,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $temp1;
     }
 
-    public function setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function setCustomerInvoiceChainData($value1, $type, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp1 = [];
         $cancelStatus = ($value1['master']['canceledYN'] != 0) ? " -- @Cancelled@": "";
@@ -7162,7 +7253,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         foreach ($value1['payments'] as $key2 => $value2) {
             $temp2 = [];
-            $temp2 = $this->setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID);
+            $temp2 = $this->setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             
             $temp1['childs'][] = $temp2;
         }
@@ -7175,20 +7266,19 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                             ->with(['matching_master'=> function($query) {
                                                                 $query->with(['transactioncurrency']);
                                                             }])
-                                                            ->groupBy('matchingDocID')
-                                                            ->get()
-                                                            ->toArray();
+                                                            ->groupBy('matchingDocID');
+        if (!is_null($matchDocumentMasterAutoID)) {
+            $recieptVouchersMatch = $recieptVouchersMatch->where('matchingDocID', $matchDocumentMasterAutoID);
+        }
+        
+        $recieptVouchersMatch = $recieptVouchersMatch->get()
+                                                     ->toArray();
 
         foreach ($recieptVouchersMatch as $keyMatch => $valueMatch) {
-             $temp2 = [];
-             $temp2['cssClass'] = "ngx-org-step-five";
              if (isset($valueMatch['matching_master'])) {
-                $temp2['name'] = "Receipt Matching";
-                $temp2['documentSystemID'] = $valueMatch['matching_master']['documentSystemID'];
-                $temp2['docAutoID'] = $valueMatch['matching_master']['matchDocumentMasterAutoID'];
-                $temp2['title'] = "{Doc Code :} ".$valueMatch['matching_master']['matchingDocCode']." -- {Doc Date :} ". Carbon::parse($valueMatch['matching_master']['matchingDocdate'])->format('Y-m-d')." -- {Currency :} ".$valueMatch['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($valueMatch['transAmount'], $valueMatch['matching_master']['transactioncurrency']['DecimalPlaces']);
-
-                $temp1['childs'][] = $temp2;
+                $temp2x = [];
+                $temp2x = $this->setReciptMatchingChain($valueMatch, $type, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
+                $temp1['childs'][] = $temp2x;
             }
         }
 
@@ -7199,20 +7289,23 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                 ->with(['master'=> function($query) {
                                                     $query->with(['transaction_currency']);
                                                 }])
-                                                ->groupBy('salesReturnID')
-                                                ->get()
-                                                ->toArray();
+                                                ->groupBy('salesReturnID');
+        if (!is_null($salesReturnID)) {
+            $salesReturnDetails = $salesReturnDetails->where('salesReturnID', $salesReturnID);
+        }
 
+        $salesReturnDetails = $salesReturnDetails->get()
+                                                ->toArray();
         foreach ($salesReturnDetails as $keySR => $valueSR) {
             $temp3 = [];
-            $temp3 = $this->setSalesReturnChainData($valueSR, $type, 2);
+            $temp3 = $this->setSalesReturnChainData($valueSR, $type, 2, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
             $temp1['childs'][] = $temp3;
         }
 
         return $temp1;
     }
 
-    public function setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID = null)
+    public function setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp2 = [];
          if ($type == 'reciptVoucher' && ($value2['master']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
@@ -7232,14 +7325,23 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                         ->where('matchingDocID', 0)
                                                         ->with(['credit_note' => function($query) {
                                                             $query->with(['currency']);
-                                                        }])
-                                                        ->get();
+                                                        }]);
+
+            if (!is_null($creditNoteAutoID)) {
+                $creditNotes = $creditNotes->where('bookingInvCodeSystem', $creditNoteAutoID);
+            }
+
+            $creditNotes = $creditNotes->get();
 
             foreach ($creditNotes as $keyCN => $valueCN) {
                 if (isset($valueCN['credit_note'])) {
                     $tempCN = [];
                     $tempCN['name'] = "Credit Note";
-                    $tempCN['cssClass'] = "ngx-org-step-six";
+                    if ($type == 'cn' && ($valueCN['credit_note']['creditNoteAutoID'] == $creditNoteAutoID)) {
+                        $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
+                    } else {
+                        $tempCN['cssClass'] = "ngx-org-step-six";
+                    }
                     $tempCN['documentSystemID'] = $valueCN['credit_note']['documentSystemiD'];
                     $tempCN['docAutoID'] = $valueCN['credit_note']['creditNoteAutoID'];
                     $tempCN['title'] = "{Doc Code :} ".$valueCN['credit_note']['creditNoteCode']." -- {Doc Date :} ". Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d')." -- {Currency :} ".$valueCN['credit_note']['currency']['CurrencyCode']." -- {Amount :} ".number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
@@ -7252,7 +7354,84 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $temp2;
     }
 
-    public function getSOToCNChainForTracing($salesOrder, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function setReciptMatchingChain($value2, $type, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
+    {
+        $temp2 = [];
+        if (isset($value2['matching_master'])) {
+            if ($type == 'reciptVoucherMatching' && ($value2['matching_master']['matchDocumentMasterAutoID'] == $matchDocumentMasterAutoID)) {
+                $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
+            } else {
+                $temp2['cssClass'] = "ngx-org-step-five";
+            }
+            $cancelStatus = "";
+            $temp2['name'] = "Receipt Matching";
+            $temp2['documentSystemID'] = 70;
+            $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
+            $temp2['title'] = "{Doc Code :} ".$value2['matching_master']['matchingDocCode']." -- {Doc Date :} ". Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d')." -- {Currency :} ".$value2['matching_master']['transactioncurrency']['CurrencyCode']." -- {Amount :} ".number_format($value2['transAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']).$cancelStatus;
+
+            $creditNotes = MatchDocumentMaster::where('matchDocumentMasterAutoID', $value2['matching_master']['matchDocumentMasterAutoID'])
+                                                ->where('documentSystemID', 19)
+                                                ->with(['credit_note' => function($query) {
+                                                    $query->with(['currency']);
+                                                }]);
+
+            if (!is_null($creditNoteAutoID)) {
+                $creditNotes = $creditNotes->where('PayMasterAutoId', $creditNoteAutoID);
+            }
+            
+            $creditNotes = $creditNotes->get();
+
+            foreach ($creditNotes as $keyCN => $valueCN) {
+                if (isset($valueCN['credit_note'])) {
+                    $tempCN = [];
+                    $tempCN['name'] = "Credit Note";
+                    if ($type == 'cn' && ($valueCN['credit_note']['creditNoteAutoID'] == $creditNoteAutoID)) {
+                        $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
+                    } else {
+                        $tempCN['cssClass'] = "ngx-org-step-six";
+                    }
+                    $tempCN['documentSystemID'] = $valueCN['credit_note']['documentSystemiD'];
+                    $tempCN['docAutoID'] = $valueCN['credit_note']['creditNoteAutoID'];
+                    $tempCN['title'] = "{Doc Code :} ".$valueCN['credit_note']['creditNoteCode']." -- {Doc Date :} ". Carbon::parse($valueCN['credit_note']['creditNoteDate'])->format('Y-m-d')." -- {Currency :} ".$valueCN['credit_note']['currency']['CurrencyCode']." -- {Amount :} ".number_format($valueCN['credit_note']['creditAmountTrans'], $valueCN['credit_note']['currency']['DecimalPlaces']);
+                    
+                    $temp2['childs'][] = $tempCN;
+                }
+            }
+
+            $reciptVouchers = MatchDocumentMaster::where('matchDocumentMasterAutoID', $value2['matching_master']['matchDocumentMasterAutoID'])
+                                                ->where('documentSystemID', 21)
+                                                ->with(['reciept_voucher' => function($query) {
+                                                    $query->with(['currency']);
+                                                }]);
+
+            if (!is_null($custReceivePaymentAutoID)) {
+                $reciptVouchers = $reciptVouchers->where('PayMasterAutoId', $custReceivePaymentAutoID);
+            }
+            
+            $reciptVouchers = $reciptVouchers->get();
+
+            foreach ($reciptVouchers as $keyCN => $valueCN) {
+                if (isset($valueCN['reciept_voucher'])) {
+                    $tempCN = [];
+                    $tempCN['name'] = "Receipt Voucher";
+                    if ($type == 'reciptVoucher' && ($valueCN['reciept_voucher']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
+                        $tempCN['cssClass'] = "ngx-org-step-six root-tracing-node";
+                    } else {
+                        $tempCN['cssClass'] = "ngx-org-step-six";
+                    }
+                    $tempCN['documentSystemID'] = $valueCN['reciept_voucher']['documentSystemID'];
+                    $tempCN['docAutoID'] = $valueCN['reciept_voucher']['custReceivePaymentAutoID'];
+                    $tempCN['title'] = "{Doc Code :} ".$valueCN['reciept_voucher']['custPaymentReceiveCode']." -- {Doc Date :} ". Carbon::parse($valueCN['reciept_voucher']['custPaymentReceiveDate'])->format('Y-m-d')." -- {Currency :} ".$valueCN['reciept_voucher']['currency']['CurrencyCode']." -- {Amount :} ".number_format($valueCN['reciept_voucher']['netAmount'], $valueCN['reciept_voucher']['currency']['DecimalPlaces']);
+                    
+                    $temp2['childs'][] = $tempCN;
+                }
+            }
+        }
+
+        return $temp2;
+    }
+
+    public function getSOToCNChainForTracing($salesOrder, $deliveryOrderID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $deliveryOrderDetails = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
                                                  sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID,deliveryOrderID')
@@ -7269,13 +7448,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $deliveryOrderDetails = $deliveryOrderDetails->get();
 
         foreach ($deliveryOrderDetails as $key1 => $deliveryOrder) {
-            $deliveryOrder->invoices = $this->customerInvoiceChainData($deliveryOrder->deliveryOrderID, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID);
+            $deliveryOrder->invoices = $this->customerInvoiceChainData($deliveryOrder->deliveryOrderID, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         }
 
         return $deliveryOrderDetails->toArray();
     }
 
-    public function customerInvoiceChainData($deliveryOrderID = null, $quotationID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null)
+    public function customerInvoiceChainData($deliveryOrderID = null, $quotationID = null, $custInvoiceDirectAutoID = null, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
                                                  sum(issueCostRptTotal) as rptAmount, sum(sellingTotal) as transAmount,custInvoiceDirectAutoID,deliveryOrderID');
