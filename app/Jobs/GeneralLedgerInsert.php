@@ -1086,15 +1086,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                $data['documentTransAmount'] = ABS($masterData->bookingAmountTrans) * -1;
+                                $data['documentTransAmount'] = (ABS($masterData->bookingAmountTrans) + ABS($masterData->VATAmount)) * -1;
 
                                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                $data['documentLocalAmount'] = ABS($masterData->bookingAmountLocal) * -1;
+                                $data['documentLocalAmount'] = (ABS($masterData->bookingAmountLocal) + ABS($masterData->VATAmountLocal)) * -1;
 
                                 $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                                 $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                                $data['documentRptAmount'] = ABS($masterData->bookingAmountRpt) * -1;
+                                $data['documentRptAmount'] = (ABS($masterData->bookingAmountRpt) + ABS($masterData->VATAmountRpt)) * -1;
 
                                 $data['documentType'] = 11;
 
@@ -1137,13 +1137,55 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                             $data['documentTransCurrencyID'] = $tax->currency;
                                             $data['documentTransCurrencyER'] = $tax->currencyER;
-                                            $data['documentTransAmount'] = $tax->amount * -1;
+                                            $data['documentTransAmount'] = ABS($tax->amount) * -1;
                                             $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                                             $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                                            $data['documentLocalAmount'] = $tax->localAmount * -1;
+                                            $data['documentLocalAmount'] = ABS($tax->localAmount) * -1;
                                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
-                                            $data['documentRptAmount'] = $tax->rptAmount * -1;
+                                            $data['documentRptAmount'] = ABS($tax->rptAmount) * -1;
+                                            array_push($finalData, $data);
+                                        }
+                                    } else {
+                                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                    }
+                                } else {
+                                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                                }
+
+
+                                $taxConfigData2 = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
+                                if (!empty($taxConfigData2)) {
+                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                        ->where('chartOfAccountSystemID', $taxConfigData2->outputVatTransferGLAccountAutoID)
+                                        ->first();
+                                    if (!empty($taxGL)) {
+                                        foreach ($erp_taxdetail as $tax) {
+
+                                            $data['serviceLineSystemID'] = 24;
+                                            $data['serviceLineCode'] = 'X';
+
+                                            // from customer invoice master table
+                                            $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                                            $data['glCode'] = $taxGL->AccountCode;
+                                            $data['glAccountType'] = $taxGL->catogaryBLorPL;
+                                            $data['glAccountTypeID'] = $taxGL->catogaryBLorPLID;
+
+                                            $data['documentNarration'] = $tax->taxDescription;
+                                            $data['clientContractID'] = 'X';
+                                            $data['supplierCodeSystem'] = $masterData->customerID;
+
+                                            $data['documentTransCurrencyID'] = $tax->currency;
+                                            $data['documentTransCurrencyER'] = $tax->currencyER;
+                                            $data['documentTransAmount'] = ABS($tax->amount);
+                                            $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                            $data['documentLocalAmount'] = ABS($tax->localAmount);
+                                            $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                                            $data['documentRptAmount'] = ABS($tax->rptAmount);
                                             array_push($finalData, $data);
                                         }
                                     } else {

@@ -768,6 +768,11 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
                 $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
                     ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
+
+                $resVat = $this->updateVatFromSalesDeliveryOrder($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
             }
             $this->updateDOInvoicedStatus($customerInvoiceItemDetails->deliveryOrderID);
 
@@ -1161,6 +1166,11 @@ WHERE
                 $this->updateDOInvoicedStatus($new['deliveryOrderID']);
 
             }
+
+            $resVat = $this->updateVatFromSalesDeliveryOrder($custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
 
             DB::commit();
             return $this->sendResponse([], 'Customer Invoice Item Details saved successfully');
@@ -1641,6 +1651,44 @@ WHERE
 
         foreach ($invoiceDetails as $key => $value) {
             $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+        }
+
+        if ($totalVATAmount > 0) {
+            $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+                                  ->where('documentSystemID', 20)
+                                  ->delete();
+
+            $res = $this->savecustomerInvoiceTaxDetails($custInvoiceDirectAutoID, $totalVATAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        }
+
+        return ['status' => true];
+    }
+
+    public function updateVatFromSalesDeliveryOrder($custInvoiceDirectAutoID)
+    {
+        $invoiceDetails = CustomerInvoiceItemDetails::select('deliveryOrderID')
+                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                    ->groupBy('deliveryOrderID')
+                                                    ->get();
+
+        $totalVATAmount = 0;
+        foreach ($invoiceDetails as $key => $value) {
+            $invoiceData = CustomerInvoiceItemDetails::selectRaw('SUM(sellingTotal) as amount')
+                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                    ->where('deliveryOrderID', $value->deliveryOrderID)
+                                                    ->groupBy('deliveryOrderID')
+                                                    ->first();
+
+            $deliveryOrderData = DeliveryOrder::find($value->deliveryOrderID);
+            $totalAmount = 0;
+            if (!empty($invoiceData)) {
+                $totalAmount = $invoiceData->amount;
+            }
+            $totalVATAmount += ($deliveryOrderData->VATPercentage / 100) * $totalAmount;
         }
 
         if ($totalVATAmount > 0) {
