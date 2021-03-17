@@ -876,6 +876,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
                         }
 
+                        if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        }
+
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->sum('issueCostRptTotal');
 
