@@ -733,7 +733,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $taxExist = Taxdetail::where('documentSystemCode', $customerInvoice->custInvoiceDirectAutoID)
                 ->where('documentSystemID', $customerInvoice->documentSystemiD)
                 ->exists();
-            if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5){
+            if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5 && $customerInvoice->isPerforma != 3){
                 return $this->sendError('VAT is added. Please delete the tax and try again.',500);
             }
 
@@ -769,6 +769,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
                     ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
 
+                $taxDelete = Taxdetail::where('documentSystemCode', $customerInvoiceItemDetails->custInvoiceDirectAutoID)
+                                  ->where('documentSystemID', 20)
+                                  ->delete();
+
                 $resVat = $this->updateVatFromSalesDeliveryOrder($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
@@ -801,6 +805,9 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                     ->update([ 'fullyOrdered' => $fullyOrdered, 'doQuantity' => $updatedQuoQty]);
 
                 $this->updateSalesQuotationInvoicedStatus($customerInvoiceItemDetails->quotationMasterID);
+                $taxDelete = Taxdetail::where('documentSystemCode', $customerInvoiceItemDetails->custInvoiceDirectAutoID)
+                                  ->where('documentSystemID', 20)
+                                  ->delete();
 
                 $resVat = $this->updateVatFromSalesQuotation($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
@@ -1186,7 +1193,7 @@ WHERE
         $input = $request->all();
         $id = $input['deliveryOrderID'];
         $companySystemID = $input['companySystemID'];
-        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'tax','sales_person','detail' => function($query){
             $query->with(['quotation','uom_default','uom_issuing']);
         },'approved_by' => function($query) use($companySystemID){
             $query->where('companySystemID',$companySystemID)
