@@ -343,4 +343,12 @@ class StockTransfer extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockTransferAutoID')->where('documentSystemID',13);
     }
+
+    public function company_from(){
+        return $this->belongsTo('App\Models\Company','companyFromSystemID','companySystemID');
+    }
+
+    public function company_to(){
+        return $this->belongsTo('App\Models\Company','companyToSystemID','companySystemID');
+    }
 }
