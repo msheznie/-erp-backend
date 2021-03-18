@@ -390,4 +390,12 @@ class StockReceive extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockReceiveAutoID')->where('documentSystemID',10);
     }
 
+    public function company_from(){
+        return $this->belongsTo('App\Models\Company','companyFromSystemID','companySystemID');
+    }
+
+    public function company_to(){
+        return $this->belongsTo('App\Models\Company','companyToSystemID','companySystemID');
+    }
+
 }

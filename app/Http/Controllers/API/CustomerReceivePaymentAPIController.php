@@ -355,7 +355,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'customer'])->findWithoutFail($id);
+        },'customer','bank'])->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
@@ -416,7 +416,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer']);
+        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 

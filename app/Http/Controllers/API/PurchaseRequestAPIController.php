@@ -1276,7 +1276,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by',
             'priority_pdf', 'location_pdf', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
@@ -1364,7 +1364,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
-            'PRConfirmedBy', 'PRConfirmedByEmpName',
+            'PRConfirmedBy', 'PRConfirmedByEmpName','currency_by',
             'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment']);
         $input = $this->convertArrayToValue($input);
 

@@ -891,4 +891,8 @@ class PaySupplierInvoiceMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'directPaymentPayeeEmpID', 'employeeSystemID');
     }
+
+    public function company_to(){
+        return $this->belongsTo('App\Models\Company','interCompanyToSystemID','companySystemID');
+    }
 }
