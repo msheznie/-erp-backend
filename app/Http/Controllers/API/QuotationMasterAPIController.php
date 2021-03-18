@@ -856,6 +856,11 @@ class QuotationMasterAPIController extends AppBaseController
             });
         }
 
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $request->request->remove('search.value');
+
 
         return \DataTables::eloquent($quotationMaster)
             ->order(function ($query) use ($input) {
