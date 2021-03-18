@@ -728,18 +728,18 @@ class DeliveryOrderDetailAPIController extends AppBaseController
     private function updateAmountsByTransactionAmount($input,$deliveryOrder){
         $output = array();
         if($deliveryOrder->transactionCurrencyID != $deliveryOrder->companyLocalCurrencyID){
-            $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$deliveryOrder->transactionCurrencyID,$deliveryOrder->companyLocalCurrencyID,$input['unitTransactionAmount']);
+            $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$deliveryOrder->transactionCurrencyID,$deliveryOrder->transactionCurrencyID,$input['unitTransactionAmount']);
             if(!empty($currencyConversion)){
-                $output['companyLocalAmount'] = $currencyConversion['documentAmount'];
+                $output['companyLocalAmount'] = $currencyConversion['localAmount'];
             }
         }else{
             $output['companyLocalAmount'] = $input['unitTransactionAmount'];
         }
 
         if($deliveryOrder->transactionCurrencyID != $deliveryOrder->companyReportingCurrencyID){
-            $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$deliveryOrder->transactionCurrencyID,$deliveryOrder->companyReportingCurrencyID,$input['unitTransactionAmount']);
+            $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$deliveryOrder->transactionCurrencyID,$deliveryOrder->transactionCurrencyID,$input['unitTransactionAmount']);
             if(!empty($currencyConversion)){
-                $output['companyReportingAmount'] = $currencyConversion['documentAmount'];
+                $output['companyReportingAmount'] = $currencyConversion['reportingAmount'];
             }
         }else{
             $output['companyReportingAmount'] = $input['unitTransactionAmount'];
@@ -1282,15 +1282,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         } else {
             if ($_post['rptCurrencyER'] > $_post['currencyER']) {
                 if ($_post['rptCurrencyER'] > 1) {
-                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
                 } else {
-                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
                 }
             } else {
                 if ($_post['rptCurrencyER'] > 1) {
-                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
                 } else {
-                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
                 }
             }
         }

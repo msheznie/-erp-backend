@@ -758,15 +758,15 @@ class SalesReturnDetailAPIController extends AppBaseController
         } else {
             if ($_post['rptCurrencyER'] > $_post['currencyER']) {
                 if ($_post['rptCurrencyER'] > 1) {
-                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
                 } else {
-                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
                 }
             } else {
                 if ($_post['rptCurrencyER'] > 1) {
-                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
                 } else {
-                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
                 }
             }
         }

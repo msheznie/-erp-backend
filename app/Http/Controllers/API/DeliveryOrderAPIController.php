@@ -535,18 +535,18 @@ class DeliveryOrderAPIController extends AppBaseController
                 $updateItem->transactionAmount = $discountedUnit*$updateItem->qtyIssuedDefaultMeasure;
 
                 if($updateItem->transactionCurrencyID != $updateItem->companyLocalCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyLocalCurrencyID,$updateItem->unitTransactionAmount);
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->unitTransactionAmount);
                     if(!empty($currencyConversion)){
-                        $updateItem->companyLocalAmount = $currencyConversion['documentAmount'];
+                        $updateItem->companyLocalAmount = $currencyConversion['localAmount'];
                     }
                 }else{
                     $updateItem->companyLocalAmount = $updateItem->unitTransactionAmount;
                 }
 
                 if($updateItem->transactionCurrencyID != $updateItem->companyReportingCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyReportingCurrencyID,$updateItem->unitTransactionAmount);
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->unitTransactionAmount);
                     if(!empty($currencyConversion)){
-                        $updateItem->companyReportingAmount = $currencyConversion['documentAmount'];
+                        $updateItem->companyReportingAmount = $currencyConversion['reportingAmount'];
                     }
                 }else{
                     $updateItem->companyReportingAmount = $updateItem->unitTransactionAmount;
