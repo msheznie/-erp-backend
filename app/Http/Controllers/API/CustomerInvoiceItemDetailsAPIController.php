@@ -769,6 +769,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 $updateDetail = DeliveryOrderDetail::where('deliveryOrderDetailID', $customerInvoiceItemDetails->deliveryOrderDetailID)
                     ->update([ 'fullyReceived' => $fullyReceived, 'invQty' => $updatedQuoQty]);
 
+                $taxDelete = Taxdetail::where('documentSystemCode', $customerInvoiceItemDetails->custInvoiceDirectAutoID)
+                                  ->where('documentSystemID', 20)
+                                  ->delete();
+
                 $resVat = $this->updateVatFromSalesDeliveryOrder($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
@@ -801,6 +805,9 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                     ->update([ 'fullyOrdered' => $fullyOrdered, 'doQuantity' => $updatedQuoQty]);
 
                 $this->updateSalesQuotationInvoicedStatus($customerInvoiceItemDetails->quotationMasterID);
+                $taxDelete = Taxdetail::where('documentSystemCode', $customerInvoiceItemDetails->custInvoiceDirectAutoID)
+                                  ->where('documentSystemID', 20)
+                                  ->delete();
 
                 $resVat = $this->updateVatFromSalesQuotation($customerInvoiceItemDetails->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
@@ -873,7 +880,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             ->where('wareHouseSystemCode', $invoice->wareHouseSystemCode)
             ->where('customerID', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
-            // ->whereDate("postedDate", '<=', $invoice->bookingDate)
+            ->whereDate("postedDate", '<=', $invoice->bookingDate)
             ->orderBy('deliveryOrderID','DESC')
             ->get();
 
