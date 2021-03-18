@@ -1196,7 +1196,7 @@ WHERE
     function printDeliveryOrder(Request $request){
         $id = $request->get('id');
 
-        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'tax','approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 71);
         }, 'company','customer','transaction_currency','detail'=> function($query){

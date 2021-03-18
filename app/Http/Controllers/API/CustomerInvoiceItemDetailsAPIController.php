@@ -1193,7 +1193,7 @@ WHERE
         $input = $request->all();
         $id = $input['deliveryOrderID'];
         $companySystemID = $input['companySystemID'];
-        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+        $deliveryOrder = DeliveryOrder::with(['company','customer','transaction_currency', 'tax','sales_person','detail' => function($query){
             $query->with(['quotation','uom_default','uom_issuing']);
         },'approved_by' => function($query) use($companySystemID){
             $query->where('companySystemID',$companySystemID)
