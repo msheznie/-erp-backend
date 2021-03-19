@@ -307,100 +307,100 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $filter = " AND (( erp_accountsreceivableledger.documentCode LIKE '%{$search}%' OR erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' )) ";
         }
         $custPaymentReceiveDate = Carbon::parse($master->custPaymentReceiveDate)->format('Y-m-d');
-           $qry="
-   SELECT
-	erp_accountsreceivableledger.arAutoID,
-	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
-	custTransCurrencyID,
-	erp_accountsreceivableledger.custTransER,
-	erp_accountsreceivableledger.InvoiceNo,
-	erp_accountsreceivableledger.localCurrencyID,
-	erp_accountsreceivableledger.localER,
-	erp_accountsreceivableledger.localAmount,
-	erp_accountsreceivableledger.comRptCurrencyID,
-	erp_accountsreceivableledger.comRptER,
-	erp_accountsreceivableledger.comRptAmount,
-	erp_accountsreceivableledger.companySystemID,
-	erp_accountsreceivableledger.companyID,
-	erp_accountsreceivableledger.documentSystemID AS addedDocumentSystemID,
-	erp_accountsreceivableledger.documentID AS addedDocumentID,
-	erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
-	erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
-	erp_accountsreceivableledger.customerID,
-erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
-	erp_accountsreceivableledger.localAmount as SumOfreceiveAmountLocal,
-		erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,
-	CurrencyCode,
-	DecimalPlaces,
-	  erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount,
-	IFNULL( matchedAmount, 0 ) AS matchedAmount,
-	FALSE AS isChecked 
-FROM
-	erp_accountsreceivableledger
-LEFT JOIN (
-	SELECT
-		erp_custreceivepaymentdet.arAutoID,
-		IFNULL(
-			Sum(
-				erp_custreceivepaymentdet.bookingAmountTrans
-			),
-			0
-		) AS SumOfsupplierPaymentAmount,
-		IFNULL(
-			Sum(
-				erp_custreceivepaymentdet.custbalanceAmount
-			),
-			0
-		) AS SumOfcustbalanceAmount,
-		IFNULL(Sum(erp_custreceivepaymentdet.receiveAmountTrans), 0) AS SumOfreceiveAmountTrans
-	FROM
-		erp_custreceivepaymentdet
-	GROUP BY
-		erp_custreceivepaymentdet.arAutoID
-) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
-	LEFT JOIN (
-SELECT
-	erp_matchdocumentmaster.PayMasterAutoId,
-	erp_matchdocumentmaster.companyID,
-	erp_matchdocumentmaster.documentSystemID,
-	erp_matchdocumentmaster.BPVcode,
-	erp_matchdocumentmaster.BPVsupplierID,
-	erp_matchdocumentmaster.supplierTransCurrencyID,
-
-	erp_matchdocumentmaster.matchingConfirmedYN ,
-	   sum( erp_matchdocumentmaster.matchedAmount ) as matchedAmount,
-    sum( erp_matchdocumentmaster.matchLocalAmount ) as matchLocalAmount,
-    sum( erp_matchdocumentmaster.matchRptAmount ) as matchRptAmount
-FROM
-	erp_matchdocumentmaster 
-WHERE
-	erp_matchdocumentmaster.companySystemID = $master->companySystemID  
-	AND erp_matchdocumentmaster.documentSystemID IN (  19 ) 
-	GROUP BY 	erp_matchdocumentmaster.PayMasterAutoId,
-	erp_matchdocumentmaster.companyID,
-	erp_matchdocumentmaster.documentSystemID,
-	erp_matchdocumentmaster.BPVcode,
-	erp_matchdocumentmaster.BPVsupplierID,
-	erp_matchdocumentmaster.supplierTransCurrencyID,
-
-	erp_matchdocumentmaster.matchingConfirmedYN 
-	) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID 
-	AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem 
-	AND md.BPVsupplierID = erp_accountsreceivableledger.customerID 
-	AND md.supplierTransCurrencyID = custTransCurrencyID
-	LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
-WHERE
-	date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'
-	{$filter}
-	AND erp_accountsreceivableledger.selectedToPaymentInv = 0
-    AND erp_accountsreceivableledger.documentType <> 13
-    AND erp_accountsreceivableledger.fullyInvoiced <> 2
-    AND erp_accountsreceivableledger.companySystemID = $master->companySystemID 
-    AND erp_accountsreceivableledger.customerID = $master->customerID 
-    AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID 
-HAVING
-	ROUND(balanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
-        ";
+           $qry="SELECT
+                    erp_accountsreceivableledger.arAutoID,
+                    erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
+                    custTransCurrencyID,
+                    erp_accountsreceivableledger.custTransER,
+                    erp_accountsreceivableledger.InvoiceNo,
+                    erp_accountsreceivableledger.localCurrencyID,
+                    erp_accountsreceivableledger.localER,
+                    erp_accountsreceivableledger.localAmount,
+                    erp_accountsreceivableledger.comRptCurrencyID,
+                    erp_accountsreceivableledger.comRptER,
+                    erp_accountsreceivableledger.comRptAmount,
+                    erp_accountsreceivableledger.companySystemID,
+                    erp_accountsreceivableledger.companyID,
+                    erp_accountsreceivableledger.documentSystemID AS addedDocumentSystemID,
+                    erp_accountsreceivableledger.documentID AS addedDocumentID,
+                    erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
+                    erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
+                    erp_accountsreceivableledger.customerID,
+                erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
+                    erp_accountsreceivableledger.localAmount as SumOfreceiveAmountLocal,
+                        erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,
+                    CurrencyCode,
+                    DecimalPlaces,
+                      erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount,
+                    IFNULL( matchedAmount, 0 ) AS matchedAmount,
+                    FALSE AS isChecked 
+                FROM
+                    erp_accountsreceivableledger
+                LEFT JOIN (
+                    SELECT
+                        erp_custreceivepaymentdet.arAutoID,
+                        IFNULL(
+                            Sum(
+                                erp_custreceivepaymentdet.bookingAmountTrans
+                            ),
+                            0
+                        ) AS SumOfsupplierPaymentAmount,
+                        IFNULL(
+                            Sum(
+                                erp_custreceivepaymentdet.custbalanceAmount
+                            ),
+                            0
+                        ) AS SumOfcustbalanceAmount,
+                        IFNULL(Sum(erp_custreceivepaymentdet.receiveAmountTrans), 0) AS SumOfreceiveAmountTrans
+                    FROM
+                        erp_custreceivepaymentdet
+                    GROUP BY
+                        erp_custreceivepaymentdet.arAutoID
+                ) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
+                    LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.companyID,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    erp_matchdocumentmaster.BPVsupplierID,
+                    erp_matchdocumentmaster.supplierTransCurrencyID,
+                
+                    erp_matchdocumentmaster.matchingConfirmedYN ,
+                       sum( erp_matchdocumentmaster.matchedAmount ) as matchedAmount,
+                    sum( erp_matchdocumentmaster.matchLocalAmount ) as matchLocalAmount,
+                    sum( erp_matchdocumentmaster.matchRptAmount ) as matchRptAmount
+                FROM
+                    erp_matchdocumentmaster 
+                WHERE
+                    erp_matchdocumentmaster.companySystemID = $master->companySystemID  
+                    AND erp_matchdocumentmaster.documentSystemID IN (  19 ) 
+                    GROUP BY 	erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.companyID,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    erp_matchdocumentmaster.BPVsupplierID,
+                    erp_matchdocumentmaster.supplierTransCurrencyID,
+                
+                    erp_matchdocumentmaster.matchingConfirmedYN 
+                    ) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID 
+                    AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem 
+                    AND md.BPVsupplierID = erp_accountsreceivableledger.customerID 
+                    AND md.supplierTransCurrencyID = custTransCurrencyID
+                    LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
+                WHERE
+                    date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'
+                    {$filter}
+                    AND erp_accountsreceivableledger.selectedToPaymentInv = 0
+                    AND erp_accountsreceivableledger.documentType <> 13
+                    AND erp_accountsreceivableledger.documentType <> 15
+                    AND erp_accountsreceivableledger.fullyInvoiced <> 2
+                    AND erp_accountsreceivableledger.companySystemID = $master->companySystemID 
+                    AND erp_accountsreceivableledger.customerID = $master->customerID 
+                    AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID 
+                HAVING
+                    ROUND(balanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
+                        ";
 
         //echo $qry;
         //exit();
