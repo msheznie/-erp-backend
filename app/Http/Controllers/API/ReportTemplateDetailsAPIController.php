@@ -781,4 +781,68 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                ->get();
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
+
+    public function linkPandLGLCodeValidation(Request $request)
+    {
+        $input = $request->all();
+        $glIds = [];
+        $getExistinglinks = ReportTemplateLinks::where('templateDetailID', $input['detID'])
+                                               ->groupBy('glAutoID')
+                                               ->get();
+
+        if (sizeof($getExistinglinks) > 0) {
+            $glIds = $getExistinglinks->pluck('glAutoID');
+        }
+
+        $chartofaccount = ChartOfAccount::whereNotIn('chartOfAccountSystemID', $glIds)
+                                        ->where('isApproved', 1)
+                                        // ->where('isActive', 1)
+                                        ->where('catogaryBLorPL', 'PL')
+                                        ->count();
+      
+        return $this->sendResponse($chartofaccount, 'gl validated successfully');
+    }
+
+    public function linkPandLGLCode(Request $request)
+    {
+        $input = $request->all();
+        $glIds = [];
+        $getExistinglinks = ReportTemplateLinks::where('templateDetailID', $input['detID'])
+                                               ->groupBy('glAutoID')
+                                               ->get();
+
+        $maxSortOrder = ReportTemplateLinks::where('templateDetailID', $input['detID'])
+                                               ->max('sortOrder');
+
+        if (sizeof($getExistinglinks) > 0) {
+            $glIds = $getExistinglinks->pluck('glAutoID');
+        }
+
+        $chartofaccount = ChartOfAccount::whereNotIn('chartOfAccountSystemID', $glIds)
+                                        ->where('isApproved', 1)
+                                        // ->where('isActive', 1)
+                                        ->where('catogaryBLorPL', 'PL')
+                                        ->get();
+
+        if (count($chartofaccount) > 0) {
+            foreach ($chartofaccount as $key => $val) {
+                $data3['templateMasterID'] = $input['companyReportTemplateID'];
+                $data3['templateDetailID'] = $input['detID'];
+                $data3['sortOrder'] = ((isset($maxSortOrder) && $maxSortOrder != null) ? $maxSortOrder : 0) + $key + 1;
+                $data3['glAutoID'] = $val['chartOfAccountSystemID'];
+                $data3['glCode'] = $val['AccountCode'];
+                $data3['glDescription'] = $val['AccountDescription'];
+                $data3['companySystemID'] = $input['companySystemID'];
+                $data3['companyID'] = $input['companyID'];
+                $data3['createdPCID'] = gethostname();
+                $data3['createdUserID'] = \Helper::getEmployeeID();
+                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                ReportTemplateLinks::create($data3);
+            }
+
+            $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['detID'])->update(['isFinalLevel' => 1]);
+        }
+      
+        return $this->sendResponse([], 'gl synced successfully');
+    }
 }

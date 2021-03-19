@@ -60,6 +60,7 @@ use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\IvmsDeliveryOrderService;
+use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\Schema;
 
 class Helper
@@ -1990,6 +1991,11 @@ class Helper
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
+                                $assignResp = ChartOfAccountDependency::assignToReports($input["documentSystemCode"]);
+                                if (!$assignResp['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $assignResp['message']];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 63) { //Create Asset Disposal
@@ -2344,6 +2350,7 @@ class Helper
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
+            // return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
