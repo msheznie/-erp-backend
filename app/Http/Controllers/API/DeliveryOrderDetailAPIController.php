@@ -1477,7 +1477,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendResponse('s', 'Successfully Added');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error Occurred',500);
+            return $this->sendError($exception->getMessage(),500);
         }
     }
 }
