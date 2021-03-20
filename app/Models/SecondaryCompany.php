@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use App\Models\Company;
+use App\helper\Helper;
 
 /**
  * @SWG\Definition(
@@ -41,10 +43,12 @@ class SecondaryCompany extends Model
     const UPDATED_AT = 'updated_at';
     protected $primaryKey = 'secondaryCompanyID';
 
+     protected $appends = ['logo_url'];
 
     public $fillable = [
         'companySystemID',
         'logo',
+        'logoPath',
         'name',
         'cutOffDate'
     ];
@@ -58,6 +62,7 @@ class SecondaryCompany extends Model
         'secondaryCompanyID' => 'integer',
         'companySystemID' => 'integer',
         'logo' => 'string',
+        'logoPath' => 'string',
         'cutOffDate' => 'datetime',
         'name' => 'string'
     ];
@@ -71,5 +76,16 @@ class SecondaryCompany extends Model
         'secondaryCompanyID' => 'required'
     ];
 
-    
+    public function getLogoUrlAttribute(){
+
+        $companyData = Company::find($this->companySystemID);
+
+        $awsPolicy = Helper::checkPolicy($companyData->masterCompanySystemIDReorting, 50);
+
+        if ($awsPolicy) {
+            return Helper::getFileUrlFromS3($this->logoPath);    
+        } else {
+            return $this->logoPath;
+        }
+    }
 }

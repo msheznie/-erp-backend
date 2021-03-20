@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\TaxService;
 use App\Models\AccountsPayableLedger;
 use App\Models\BookInvSuppMaster;
 use App\Models\DebitNote;
@@ -257,11 +258,13 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         break;
                     case 24: // Purchase return
                         $masterData = PurchaseReturn::with(['details' => function ($query) {
-                            $query->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,purhaseReturnAutoID");
+                            $query->selectRaw("SUM(noQty * GRVcostPerUnitLocalCur) as localAmount, SUM(noQty * GRVcostPerUnitComRptCur) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,purhaseReturnAutoID, SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount");
                             $query->groupBy("purhaseReturnAutoID");
                         }])->find($masterModel["autoID"]);
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
+
+                        $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -276,16 +279,16 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['supplierInvoiceDate'] = $masterData->purchaseReturnDate;
                             $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['supplierTransER'] = $masterData->supplierTransactionER;
-                            $data['supplierInvoiceAmount'] = ABS($masterData->details[0]->transAmount) * -1;
+                            $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS((($valEligible) ? $masterData->details[0]->transAmount + $masterData->details[0]->transVATAmount : $masterData->details[0]->transAmount)) * -1);
                             $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['supplierDefaultCurrencyER'] = $masterData->supplierTransactionER;
-                            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->details[0]->transAmount) * -1);
+                            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS((($valEligible) ? $masterData->details[0]->transAmount + $masterData->details[0]->transVATAmount : $masterData->details[0]->transAmount)) * -1);
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount) * -1);
+                            $data['localAmount'] = \Helper::roundValue(ABS((($valEligible) ? $masterData->details[0]->localAmount + $masterData->details[0]->localVATAmount : $masterData->details[0]->localAmount)) * -1);
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount) * -1);
+                            $data['comRptAmount'] = \Helper::roundValue(ABS((($valEligible) ? $masterData->details[0]->rptAmount + $masterData->details[0]->rptVATAmount : $masterData->details[0]->rptAmount)) * -1);
                             $data['isInvoiceLockedYN'] = 0;
                             $data['invoiceType'] = 7;
                             $data['selectedToPaymentInv'] = 0;

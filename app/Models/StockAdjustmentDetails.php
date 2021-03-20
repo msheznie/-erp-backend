@@ -259,4 +259,10 @@ class StockAdjustmentDetails extends Model
     public function rpt_currency(){
         return $this->belongsTo('App\Models\CurrencyMaster','currentWacRptCurrencyID','currencyID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\StockAdjustment', 'stockAdjustmentAutoID', 'stockAdjustmentAutoID');
+    }
+
 }

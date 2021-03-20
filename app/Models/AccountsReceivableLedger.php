@@ -279,4 +279,25 @@ class AccountsReceivableLedger extends Model
     {
         $this->attributes['documentDate'] = Helper::dateAddTime($value);
     }
+
+     public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function transaction_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'custTransCurrencyID', 'currencyID');
+    }
+
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'comRptCurrencyID', 'currencyID');
+    }
+
+
+     public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
 }

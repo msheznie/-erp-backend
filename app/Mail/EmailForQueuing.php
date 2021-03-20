@@ -28,7 +28,11 @@ class EmailForQueuing extends Mailable implements ShouldQueue
         $this->subject = $subject;
         $this->content = $content;
         $this->mailAttachment = $attachment;
-        self::onConnection('database');
+        if(env('IS_MULTI_TENANCY',false)){
+            self::onConnection('database_main');
+        }else{
+            self::onConnection('database');
+        }
     }
 
     /**

@@ -283,7 +283,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
             }])->findWithoutFail($id);
 
         if (empty($customerInvoiceTracking)) {
-            return $this->sendError('Batc Submission not found');
+            return $this->sendError('Batch Submission not found');
         }
 
         return $this->sendResponse($customerInvoiceTracking->toArray(), 'Customer Invoice Tracking retrieved successfully');

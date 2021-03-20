@@ -30,11 +30,18 @@ use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PurchaseRequestDetails;
+use App\Models\PurchaseReturnDetails;
+use App\Models\GRVDetails;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ProcumentOrder;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
+use App\Models\PurchaseOrderDetails;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\SupplierAssigned;
@@ -53,6 +60,8 @@ use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\IvmsDeliveryOrderService;
+use App\helper\ChartOfAccountDependency;
+use Illuminate\Support\Facades\Schema;
 
 class Helper
 {
@@ -568,6 +577,17 @@ class Helper
                     $docInforArr["tableName"] = 'erp_delivery_order';
                     $docInforArr["modelName"] = 'DeliveryOrder';
                     $docInforArr["primarykey"] = 'deliveryOrderID';
+                    break;
+                 case 87: // Sales Return
+                    $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'salesreturn';
+                    $docInforArr["modelName"] = 'SalesReturn';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -1530,6 +1550,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 87: // SalesReturn
+                $docInforArr["tableName"] = 'salesreturn';
+                $docInforArr["modelName"] = 'SalesReturn';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedbyEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1602,6 +1634,10 @@ class Helper
                     if ($isConfirmed['year'] != date("Y")) {
                         return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
                     }
+                }
+
+                if ($docApproved->rejectedYN == -1) {
+                    return ['success' => false, 'message' => 'Level is already rejected'];
                 }
 
                 //check document is already approved
@@ -1922,7 +1958,7 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71])) { // already GL entry passed Check
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) { // already GL entry passed Check
                                 $outputGL = Models\GeneralLedger::where('documentSystemCode',$input["documentSystemCode"])->where('documentSystemID',$input["documentSystemID"])->first();
                                 if($outputGL){
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
@@ -1955,6 +1991,11 @@ class Helper
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
+                                $assignResp = ChartOfAccountDependency::assignToReports($input["documentSystemCode"]);
+                                if (!$assignResp['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $assignResp['message']];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 63) { //Create Asset Disposal
@@ -1975,14 +2016,14 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87])) {
 
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
@@ -1990,6 +2031,18 @@ class Helper
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 24) {
+                                $updateReturnQty = self::updateReturnQtyInGrvDetails($masterData);
+                                if (!$updateReturnQty["success"]) {
+                                    return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
+
+                                $updateReturnQtyInPo = self::updateReturnQtyInPoDetails($masterData);
+                                if (!$updateReturnQtyInPo["success"]) {
+                                    return ['success' => false, 'message' => $updateReturnQty["message"]];
                                 }
                             }
 
@@ -2286,7 +2339,7 @@ class Helper
                     DB::commit();
                     return ['success' => true, 'message' => $userMessage];
                 } else {
-                    return ['success' => false, 'message' => 'Document is already approved'];
+                    return ['success' => false, 'message' => 'Level is already approved'];
                 }
             } else {
                 return ['success' => false, 'message' => 'No records found'];
@@ -2297,7 +2350,107 @@ class Helper
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
+            // return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+
+    public static function updateReturnQtyInGrvDetails($masterData)
+    {
+        $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterData['autoID'])->get();
+
+        foreach ($prDetails as $key => $value) {
+            $totalQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as totalRtnQty')
+                                             ->where('grvDetailsID', $value->grvDetailsID)
+                                             ->whereHas('master', function ($query) {
+                                                $query->where('approved', -1);
+                                             })
+                                             ->groupBy('grvDetailsID')
+                                             ->first();
+
+            $updateData = [
+                            'returnQty' => $totalQty->totalRtnQty
+                        ];
+
+
+            $updateRes = GRVDetails::where('grvDetailsID', $value->grvDetailsID)
+                                   ->update($updateData);
+        }
+
+        return ['success' => true];
+
+    }
+
+    public static function updateReturnQtyInPoDetails($masterData)
+    {
+        $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterData['autoID'])->get();
+
+        foreach ($prDetails as $key => $value) {
+            $grvDetailsData = GRVDetails::find($value->grvDetailsID);
+
+            $detailExistPODetail = PurchaseOrderDetails::find($grvDetailsData->purchaseOrderDetailsID);
+
+            $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
+                                     ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                                     ->WHERE('purchaseOrderDetailsID', $grvDetailsData->purchaseOrderDetailsID)
+                                     ->first();
+
+            // get the total received qty
+            $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                                     ->whereHas('grv_master', function($query) {
+                                        $query->where('grvCancelledYN', '!=', -1);
+                                     })
+                                     ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                                     ->first();
+
+            $receivedQty = 0;
+            $goodsRecievedYN = 0;
+            $GRVSelectedYN = 0;
+            if ($detailPOSUM->newNoQty > 0) {
+                $receivedQty = $detailPOSUM->newNoQty;
+            }
+
+            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+            if ($receivedQty == 0) {
+                $goodsRecievedYN = 0;
+                $GRVSelectedYN = 0;
+            } else {
+                if ($checkQuantity == 0) {
+                    $goodsRecievedYN = 2;
+                    $GRVSelectedYN = 1;
+                } else {
+                    $goodsRecievedYN = 1;
+                    $GRVSelectedYN = 0;
+                }
+            }
+
+            $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
+                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+            $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')
+                                              ->WHERE('purchaseOrderMasterID', $grvDetailsData->purchaseOrderMastertID)
+                                              ->first();
+
+
+            if ($balanceQty["balanceQty"] == 0) {
+                $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                    ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
+            } else {
+                if ($masterPOSUM->newNoQty > 0) {
+                    $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                        ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
+                } else {
+                    $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                        ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
+                }
+            }
+        }
+
+        return ['success' => true];
+
     }
 
     public static function documentListForClickHere()
@@ -2586,12 +2739,29 @@ class Helper
                     $docInforArr["primarykey"] = 'deliveryOrderID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 87:// Delivery Order
+                    $docInforArr["tableName"] = 'salesreturn';
+                    $docInforArr["modelName"] = 'SalesReturn';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 24:
+                    $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                    $docInforArr["modelName"] = 'PurchaseReturn';
+                    $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApprove) {
+
+                if ($docApprove->approvedYN == -1) {
+                    return ['success' => false, 'message' => 'Level is already approved'];
+                }
+
                 //check document is already rejected
                 $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
@@ -2601,7 +2771,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2617,13 +2787,13 @@ class Helper
                             $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $confirmedUser = $currentApproved->docConfirmedByEmpSystemID;
-//                                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
-//                                    ->where('documentSystemID', $currentApproved->documentSystemID)
-//                                    ->first();
-//
-//                                if (empty($companyDocument)) {
-//                                    return ['success' => false, 'message' => 'Policy not found for this document'];
-//                                }
+                               // $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                               //     ->where('documentSystemID', $currentApproved->documentSystemID)
+                               //     ->first();
+
+                               // if (empty($companyDocument)) {
+                               //     return ['success' => false, 'message' => 'Policy not found for this document'];
+                               // }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
@@ -2677,7 +2847,7 @@ class Helper
                     DB::commit();
                     return ['success' => true, 'message' => 'Document is successfully rejected'];
                 } else {
-                    return ['success' => false, 'message' => 'Document is already rejected'];
+                    return ['success' => false, 'message' => 'Level is already rejected'];
                 }
             } else {
                 return ['success' => false, 'message' => 'No record found'];
@@ -2975,9 +3145,16 @@ class Helper
         return round($value, 7);
     }
 
+    public static function roundFloatValue($value)
+    {
+        return number_format((float) $value, 7, '.', '');
+    }
+
 
     public static function companyFinanceYearCheck($input)
     {
+        $input['companyFinanceYearID'] = isset($input['companyFinanceYearID']) ? $input['companyFinanceYearID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         if ($companyFinanceYear) {
             if ($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1) {
@@ -2997,6 +3174,8 @@ class Helper
 
     public static function companyFinancePeriodCheck($input)
     {
+        $input['companyFinancePeriodID'] = isset($input['companyFinancePeriodID']) ? $input['companyFinancePeriodID'] : 0;
+        $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         if ($companyFinancePeriod) {
             if ($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1) {
@@ -4329,7 +4508,7 @@ class Helper
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
 
-                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                                $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                                 if ($chartOfAccount->catogaryBLorPLID == 2) {
                                     $budgetConsumeData[] = array(
@@ -4368,7 +4547,7 @@ class Helper
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
 
-                                $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                                $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                                 if ($chartOfAccount->catogaryBLorPLID == 2) {
                                     $budgetConsumeData[] = array(
@@ -4406,7 +4585,7 @@ class Helper
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {
 
-                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                            $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                             if ($chartOfAccount->catogaryBLorPLID == 2) {
                                 $budgetConsumeData[] = array(
@@ -4443,7 +4622,7 @@ class Helper
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {
 
-                            $chartOfAccount = Models\chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
+                            $chartOfAccount = Models\ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $value->chartOfAccountSystemID)->first();
 
                             if ($chartOfAccount->catogaryBLorPLID == 2) {
                                 $budgetConsumeData[] = array(
@@ -4758,5 +4937,445 @@ class Helper
 
     public static function stringToFloat($str){
         return floatval(preg_replace('/[^0-9.]/', '', $str));
+    }
+
+    public static function checkPolicy($companySystemID = 0 , $policyId = 0){
+
+        return CompanyPolicyMaster::where('companySystemID', $companySystemID)
+            ->where('companyPolicyCategoryID', $policyId)
+            ->where('isYesNO',1)
+            ->exists();
+    }
+
+    public static function policyWiseDisk($companySystemID, $currentDisk = null)
+    {
+        $awsPolicy = self::checkPolicy($companySystemID, 50);
+
+        if ($awsPolicy) {
+            return 's3';
+        } else {
+            if (is_null($currentDisk)) {
+                return 'public';
+            } else {
+                return $currentDisk;
+            }
+        }
+    }
+
+    static function isArray($value, $default = 0)
+    {
+        return isset($value) ? (is_array($value) ? (isset($value[0]) ? $value[0] : $default) : $value) : $default;
+    }
+
+    public static function getDocumentDetails($companySystemID, $documentSystemID, $documentSystemCode, $isMatchingDoc=0){
+        $output = [];
+        if($isMatchingDoc==0){
+            switch ($documentSystemID){
+                case 1:
+                case 50:
+                case 51:
+                    $output = PurchaseRequestDetails::where('purchaseRequestID',$documentSystemCode)
+                        ->whereHas('purchase_request', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['purchase_request'=> function($query){
+                            $query->with(['currency_by']);
+                        },'uom'])
+                        ->get();
+                    break;
+
+                case 2:
+                case 5:
+                case 52:
+                    $output = PurchaseOrderDetails::where('purchaseOrderMasterID',$documentSystemCode)
+                        ->whereHas('order', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['order'=> function($query){
+                            $query->with(['transactioncurrency']);
+                        },'unit'])
+                        ->get();
+                    break;
+                case 3:
+                    $output = GRVDetails::where('grvAutoID',$documentSystemCode)
+                        ->whereHas('grv_master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['grv_master'=> function($query){
+                            $query->with(['currency_by']);
+                        },'unit'])
+                        ->get();
+                    break;
+                case 9:
+                    $output = Models\MaterielRequestDetails::where('RequestID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','item_by','uom_default','uom_issuing'])
+                        ->get();
+                    break;
+                case 8:
+                    $output = Models\ItemIssueDetails::where('itemIssueAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','uom_default','uom_issuing'])
+                        ->get();
+                    break;
+                case 12:
+                    $output = Models\ItemReturnDetails::where('itemReturnAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','issue','uom_receiving'])
+                        ->get();
+                    break;
+                case 13:
+                    $output = Models\StockTransferDetails::where('stockTransferAutoID',$documentSystemCode)
+                        ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master_by','unit_by'])
+                        ->get();
+                    break;
+                case 10:
+                    $output = Models\StockReceiveDetails::where('stockReceiveAutoID',$documentSystemCode)
+                        ->whereHas('stock_receive', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['stock_receive','unit_by'])
+                        ->get();
+                    break;
+                case 7:
+                    $output = Models\StockAdjustmentDetails::where('stockAdjustmentAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','local_currency','rpt_currency','uom'])
+                        ->get();
+                    break;
+                case 24:
+                    $output = Models\PurchaseReturnDetails::where('purhaseReturnAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','grv_master','unit'])
+                        ->get();
+                    break;
+                case 61:
+                    $output = Models\InventoryReclassificationDetail::where('inventoryreclassificationID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','localcurrency','reportingcurrency','unit'])
+                        ->get();
+                    break;
+
+                case 14:
+                    $output = Models\LogisticDetails::where('logisticMasterID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','supplier_by','warehouse_by','po','uom'])
+                        ->get();
+                    break;
+
+                case 11:
+
+                    $master = Models\BookInvSuppMaster::find($documentSystemCode);
+                    if($master->documentType == 1){
+                        $output = Models\DirectInvoiceDetails::where('directInvoiceAutoID',$documentSystemCode)
+                            ->whereHas('supplier_invoice_master', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemID',$documentSystemID);
+                            })
+                            ->with(['supplier_invoice_master' => function($query){
+                                $query->with(['transactioncurrency']);
+                            },'segment'])
+                            ->get();
+                    }else{
+                        $output = Models\BookInvSuppDet::where('bookingSuppMasInvAutoID',$documentSystemCode)
+                            ->whereHas('suppinvmaster', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemID',$documentSystemID);
+                            })
+                            ->with(['suppinvmaster' => function($query){
+                                $query->with(['transactioncurrency']);
+                            },'pomaster','grvmaster'])
+                            ->get();
+                    }
+                    break;
+
+                case 15:
+                    $output = Models\DebitNoteDetails::where('debitNoteAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['transactioncurrency']);
+                        },'segment'])
+                        ->get();
+                    break;
+                case 4:
+
+                    $master = Models\PaySupplierInvoiceMaster::find($documentSystemCode);
+                    if($master->invoiceType == 2 ){
+                        $output = Models\PaySupplierInvoiceDetail::where('PayMasterAutoId',$documentSystemCode)
+                            ->whereHas('payment_master', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemID',$documentSystemID);
+                            })
+                            ->with(['payment_master'=> function($query){
+                                $query->with(['transactioncurrency']);
+                            },'pomaster'])
+                            ->get();
+                    }elseif ($master->invoiceType == 5){
+                        $output = Models\AdvancePaymentDetails::where('PayMasterAutoId',$documentSystemCode)
+                            ->whereHas('pay_invoice', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemID',$documentSystemID);
+                            })
+                            ->with(['pay_invoice'=> function($query){
+                                $query->with(['transactioncurrency']);
+                            }])
+                            ->get();
+                    }else{
+                        $output = Models\DirectPaymentDetails::where('directPaymentAutoID',$documentSystemCode)
+                            ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemID',$documentSystemID);
+                            })
+                            ->with(['master'=> function($query){
+                                $query->with(['transactioncurrency']);
+                            },'segment'])
+                            ->get();
+                    }
+                    break;
+                case 6:
+                    $output = Models\ExpenseClaimDetails::where('expenseClaimMasterAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','segment','category','currency','local_currency'])
+                        ->get();
+                    break;
+                case 28:
+                    $output = Models\MonthlyAdditionDetail::where('monthlyAdditionsMasterID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','currency_ma','employee','department','expense_claim','chart_of_account'])
+                        ->get();
+                    break;
+
+                case 20:
+                    $master = Models\CustomerInvoiceDirect::find($documentSystemCode);
+
+                    if($master->isPerforma == 0 || $master->isPerforma == 1){
+                        $output = Models\CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$documentSystemCode)
+                            ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemiD',$documentSystemID);
+                            })
+                            ->with(['master'=>function($query){
+                                $query->with(['currency']);
+                            },'contract','department','unit'])
+                            ->get();
+                    }else{
+                        $output = Models\CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$documentSystemCode)
+                            ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                                $query->where('companySystemID',$companySystemID)
+                                    ->where('documentSystemiD',$documentSystemID);
+                            })
+                            ->with(['master'=>function($query){
+                                $query->with(['currency','report_currency','local_currency']);
+                            },'uom_default','uom_issuing'])
+                            ->get();
+                    }
+                    break;
+                case 19:
+                    $output = Models\CreditNoteDetails::where('creditNoteAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['currency']);
+                        },'segment'])
+                        ->get();
+                    break;
+                case 21:
+
+                    $output = CustomerReceivePayment::where('custReceivePaymentAutoID',$documentSystemCode)
+                        ->with(['currency','details','directdetails.segment','advance_receipt_details'])
+                        ->get();
+                    break;
+                case 39:
+                    $output = Models\CustomerInvoiceTrackingDetail::where('customerInvoiceTrackingID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['company.reportingcurrency']);
+                        },'approved_by','rejected_by'])
+                        ->get();
+                    break;
+
+                case 67:
+                case 68:
+                    $output = Models\QuotationDetails::where('quotationMasterID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['transaction_currency','local_currency']);
+                        },'uom_issuing'])
+                        ->get();
+                    break;
+
+                case 71:
+                    $output = Models\DeliveryOrderDetail::where('deliveryOrderID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['transaction_currency','local_currency']);
+                        },'quotation','uom_default','uom_issuing'])
+                        ->get();
+                    break;
+                case 87:
+                    $output = Models\SalesReturnDetail::where('salesReturnID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['transaction_currency']);
+                        },'delivery_order','uom_default','uom_issuing'])
+                        ->get();
+                    break;
+                case 17:
+                    $output = Models\JvDetail::where('jvMasterAutoId',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master','currency_by','segment'])
+                        ->get();
+                    break;
+                case 46:
+                    $output = Models\BudgetTransferFormDetail::where('budgetTransferFormAutoID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master.company.reportingcurrency','from_segment','to_segment','from_template','to_template'])
+                        ->get();
+                    break;
+                case 69:
+                    $output = Models\ConsoleJVDetail::where('consoleJvMasterAutoId',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'])
+                        ->get();
+                    break;
+                case 23:
+                    $output = Models\FixedAssetDepreciationPeriod::where('depMasterAutoID',$documentSystemCode)
+                        ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master_by'=> function($query){
+                            $query->with(['company'=> function($q){
+                                $q->with(['reportingcurrency','localcurrency']);
+                            }]);
+                        },'maincategory_by', 'financecategory_by', 'serviceline_by'])
+                        ->get();
+                    break;
+                case 41:
+                    $output = Models\AssetDisposalDetail::where('assetdisposalMasterAutoID',$documentSystemCode)
+                        ->whereHas('master_by', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master_by'=> function($query){
+                            $query->with(['company'=> function($q){
+                                $q->with(['reportingcurrency','localcurrency']);
+                            }]);
+                        },'segment_by', 'item_by'])
+                        ->get();
+                    break;
+                case 63:
+                    $output = Models\AssetCapitalizationDetail::where('capitalizationID',$documentSystemCode)
+                        ->whereHas('master', function ($query) use($companySystemID,$documentSystemID){
+                            $query->where('companySystemID',$companySystemID)
+                                ->where('documentSystemID',$documentSystemID);
+                        })
+                        ->with(['master'=> function($query){
+                            $query->with(['company'=> function($q){
+                                $q->with(['reportingcurrency','localcurrency']);
+                            }]);
+                        },'segment'])
+                        ->get();
+                    break;
+
+                default:
+                    $output = [];
+            }
+        }else{
+            if($isMatchingDoc == 1){    // voucher matching
+
+                $output = PaySupplierInvoiceDetail::where('matchingDocID',$documentSystemCode)
+                    ->whereHas('matching_master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['matching_master'=> function($query){
+                        $query->with(['transactioncurrency']);
+                    },'pomaster'])
+                    ->get();
+
+            }elseif ($isMatchingDoc == 2){  // receipt matching
+                $output = CustomerReceivePaymentDetail::where('matchingDocID',$documentSystemCode)
+                    ->whereHas('matching_master', function ($query) use($companySystemID,$documentSystemID){
+                        $query->where('companySystemID',$companySystemID)
+                            ->where('documentSystemID',$documentSystemID);
+                    })
+                    ->with(['matching_master'=> function($query){
+                        $query->with(['transactioncurrency']);
+                    }])
+                    ->get();
+            }
+        }
+        return $output;
+
+    }
+
+    public static function exception_to_error($ex){
+        return [
+            'exception' => $ex->getMessage(),
+            'file' => $ex->getFile(),
+            'line' => $ex->getLine()
+        ];
     }
 }

@@ -659,10 +659,13 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $monthlyAddition->companySystemID)
             ->where('documentSystemID', $monthlyAddition->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($monthlyAddition->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition reopened successfully');
     }

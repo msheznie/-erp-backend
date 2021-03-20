@@ -13,6 +13,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -418,7 +419,7 @@ use Eloquent as Model;
  */
 class CustomerInvoiceDirect extends Model
 {
-
+    use Compoships;
     public $table = 'erp_custinvoicedirect';
 
     const CREATED_AT = 'createdDateAndTime';
@@ -516,6 +517,8 @@ class CustomerInvoiceDirect extends Model
         'timestamp',
         'createdDateAndTime',
         'approvedByUserSystemID',
+        'returnStatus',
+        'selectedForSalesReturn',
         'approvedByUserID'
     ];
 
@@ -600,6 +603,8 @@ class CustomerInvoiceDirect extends Model
         'createdDateTime' => 'string',
         'createdDateAndTime' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'selectedForSalesReturn' => 'integer',
+        'returnStatus' => 'integer',
         'approvedByUserID' => 'integer'
     ];
 
@@ -731,5 +736,14 @@ class CustomerInvoiceDirect extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'custInvoiceDirectAutoID')->where('documentSystemID',20);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
+
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 }

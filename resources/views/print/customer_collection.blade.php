@@ -170,7 +170,7 @@
             <table style="width: 100%">
                 <tr>
                     <td valign="top" style="width: 45%">
-                        <img src="logos/{{$companylogo}}" width="180px" height="60px"><br>
+                        <img src="{{$companylogo}}" width="180px" height="60px"><br>
                     </td>
                     <td valign="top" style="width: 55%">
                         <br><br>

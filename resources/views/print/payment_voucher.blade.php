@@ -237,7 +237,7 @@
         <tr style="width: 100%">
             <td valign="top" style="width: 50%">
                 @if($masterdata->company)
-                    <img src="logos/{{$masterdata->company->companyLogo}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
                 @endif
                 <br>
 

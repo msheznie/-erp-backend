@@ -20,6 +20,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseReturnAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnAPIRequest;
+use App\Models\PurchaseReturnMasterRefferedBack;
+use App\Models\PurchaseReturnDetailsRefferedBack;
+use App\Models\DocumentReferedHistory;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -35,6 +38,7 @@ use App\Models\GRVTypes;
 use App\Models\ItemIssueMaster;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\BookInvSuppDet;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
 use App\Models\SegmentMaster;
@@ -46,6 +50,7 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseReturnRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -53,6 +58,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\TaxService;
 
 /**
  * Class PurchaseReturnController
@@ -339,7 +345,7 @@ class PurchaseReturnAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'supplier_by','currency_by'])->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
@@ -398,7 +404,7 @@ class PurchaseReturnAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['confirmed_by', 'segment_by', 'location_by', 'finance_period_by', 'finance_year_by',
-            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName']);
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName','supplier_by','currency_by']);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -420,6 +426,8 @@ class PurchaseReturnAPIController extends AppBaseController
                 $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
                 return $this->sendError('Please select a active segment ', 500, $serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if (isset($input['purchaseReturnLocation'])) {
@@ -561,6 +569,21 @@ class PurchaseReturnAPIController extends AppBaseController
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
+            //check Input Vat Transfer GL Account if vat exist
+            $totalVAT = PurchaseReturnDetails::where('purhaseReturnAutoID',$id)->selectRaw('SUM(VATAmount*noQty) as totalVAT')->first();
+            if(TaxService::checkGRVVATEligible($purchaseReturn->companySystemID,$purchaseReturn->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0){
+                if ($purchaseReturn->isInvoiceCreatedForGrv == 1) {
+                    if(empty(TaxService::getInputVATGLAccount($purchaseReturn->companySystemID))){
+                        return $this->sendError('Cannot confirm. Input VAT Control GL Account not configured.', 500);
+                    }
+                } else {
+                     if(empty(TaxService::getInputVATTransferGLAccount($purchaseReturn->companySystemID))){
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }
+                }
+
+            }
+
             $amount = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
                 ->sum('netAmount');
 
@@ -577,6 +600,13 @@ class PurchaseReturnAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
+
+            $piDetailSingleData = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                                                       ->first();
+
+            if ($piDetailSingleData) {
+                $input['isInvoiceCreatedForGrv'] =  $this->updateGrvInvoiceStatus($id, $piDetailSingleData->grvAutoID, $input['isInvoiceCreatedForGrv']);
+            }
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -589,6 +619,50 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
         return $this->sendResponse($purchaseReturn->toArray(), 'PurchaseReturn updated successfully');
+    }
+
+
+    public function updateReturnQtyInGrvDetails($grvDetailsID)
+    {
+        $totalQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as totalRtnQty')
+                                         ->where('grvDetailsID', $grvDetailsID)
+                                         ->whereHas('master', function ($query) {
+                                            $query->where('approved', -1);
+                                         })
+                                         ->groupBy('grvDetailsID')
+                                         ->first();
+
+        $updateData = [
+                        'returnQty' => $totalQty->totalRtnQty
+                    ];
+
+
+        $updateRes = GRVDetails::where('grvDetailsID', $grvDetailsID)
+                               ->update($updateData);
+    }
+
+    public function updateGrvInvoiceStatus($purhaseReturnAutoID, $grvAutoID, $isInvoiceCreatedForGrv)
+    {
+        $purchaseReturn = PurchaseReturn::find($purhaseReturnAutoID);
+
+        if (!$purchaseReturn) {
+            return $isInvoiceCreatedForGrv;
+        }
+
+        $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $grvAutoID)
+                                                ->first();
+
+        if ($checkGrvAddedToIncoice) {
+            $isInvoiceCreatedForGrv = 1;
+            $purchaseReturn->isInvoiceCreatedForGrv = 1;
+        } else {
+            $isInvoiceCreatedForGrv = 0;
+            $purchaseReturn->isInvoiceCreatedForGrv = 0;
+        }
+
+        $purchaseReturn->save();
+
+        return $isInvoiceCreatedForGrv;
     }
 
     /**
@@ -710,6 +784,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 'approvedDate',
                 'supplierTransactionCurrencyID',
                 'timesReferred',
+                'refferedBackYN',
                 'confirmedYN',
                 'approved'
             ]);
@@ -879,7 +954,9 @@ class PurchaseReturnAPIController extends AppBaseController
                         ->where('serviceLineSystemID', $purchaseReturn->serviceLineSystemID)
                         ->where('grvLocation', $purchaseReturn->purchaseReturnLocation)
                         ->where('approved', -1)
+                        ->where('grvCancelledYN', '!=',-1)
                         ->where('supplierID', $purchaseReturn->supplierID)
+                        ->whereDate('grvDate', '<=',$purchaseReturn->purchaseReturnDate)
                         ->where('supplierTransactionCurrencyID', $purchaseReturn->supplierTransactionCurrencyID)
                         ->get();
 
@@ -899,7 +976,10 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher not found');
         }
 
-        $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)->with(['unit'])->get();
+        $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)
+                                ->with(['unit'])
+                                ->whereRaw('noQty - returnQty != ?', [0])
+                                ->get();
 
         return $this->sendResponse($grvDetails, 'success');
     }
@@ -1236,12 +1316,136 @@ class PurchaseReturnAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $purchaseReturnMaster->companySystemID)
             ->where('documentSystemID', $purchaseReturnMaster->documentSystemID)
             ->delete();
 
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
+
         return $this->sendResponse($purchaseReturnMaster->toArray(), 'Purchase Return reopened successfully');
     }
 
+
+     public function purchaseReturnForGRV(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+            ->first();
+
+        if (empty($grvMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        //checking segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $grvMaster->serviceLineSystemID)
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        $purchaseReturn = PurchaseReturn::where('companySystemID', $companyID)
+                                        ->where('serviceLineSystemID', $grvMaster->serviceLineSystemID)
+                                        ->where('supplierID', $grvMaster->supplierID)
+                                        ->where('supplierTransactionCurrencyID', $grvMaster->supplierTransactionCurrencyID)
+                                        ->where('approved', -1)
+                                        ->where('confirmedYN', 1)
+                                        ->where('prClosedYN', 0)
+                                        ->where('grvRecieved', '<>', 2)
+                                        ->orderBy('purhaseReturnAutoID', 'DESC')
+                                        ->get();
+
+        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return Details retrieved successfully');
+    }
+
+    public function getPurchaseReturnDetailForGRV(Request $request)
+    {
+        $input = $request->all();
+        $purhaseReturnAutoID = $input['purhaseReturnAutoID'];
+
+        $detail = PurchaseReturnDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as prnQty,unitOfMeasure,purhaseReturnAutoID,purhasereturnDetailID,itemCode,receivedQty,companyID,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,grvDetailsID, grvAutoID'))
+            ->with(['unit' => function ($query) {
+            }])
+            ->where('purhaseReturnAutoID', $purhaseReturnAutoID)
+            ->where('GRVSelectedYN', 0)
+            ->where('goodsRecievedYN', '<>', 2)
+            ->get();
+
+        return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
+
+    }
+
+
+    public function purchaseReturnAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $purhaseReturnAutoID = $input['purhaseReturnAutoID'];
+
+        $prMasterData = PurchaseReturn::find($purhaseReturnAutoID);
+        if (empty($prMasterData)) {
+            return $this->sendError('Good receipt voucher not found');
+        }
+
+        if ($prMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this good receipt voucher');
+        }
+
+        $prMasterDataArray = $prMasterData->toArray();
+
+        $storePRHistory = PurchaseReturnMasterRefferedBack::insert($prMasterDataArray);
+
+        $fetchPRDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $purhaseReturnAutoID)
+            ->get();
+
+        if (!empty($fetchPRDetails)) {
+            foreach ($fetchPRDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $prMasterData->timesReferred;
+            }
+        }
+
+        $prDetailArray = $fetchPRDetails->toArray();
+
+        $storePRDetailHistory = PurchaseReturnDetailsRefferedBack::insert($prDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purhaseReturnAutoID)
+                                                 ->where('companySystemID', $prMasterData->companySystemID)
+                                                 ->where('documentSystemID', $prMasterData->documentSystemID)
+                                                 ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $prMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purhaseReturnAutoID)
+                                        ->where('companySystemID', $prMasterData->companySystemID)
+                                        ->where('documentSystemID', $prMasterData->documentSystemID)
+                                        ->delete();
+
+        if ($deleteApproval) {
+            $prMasterData->refferedBackYN = 0;
+            $prMasterData->confirmedYN = 0;
+            $prMasterData->confirmedByEmpSystemID = null;
+            $prMasterData->confirmedByEmpID = null;
+            $prMasterData->confirmedByName = null;
+            $prMasterData->confirmedDate = null;
+            $prMasterData->RollLevForApp_curr = 1;
+            $prMasterData->save();
+        }
+
+        return $this->sendResponse($prMasterData->toArray(), 'Purchase return amend successfully');
+    }
 }

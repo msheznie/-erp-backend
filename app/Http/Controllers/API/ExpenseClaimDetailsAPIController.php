@@ -653,9 +653,13 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
         $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
-        $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        if (Helper::checkPolicy($input['companySystemID'], 50)) {
+            $path = $expenseClaim->companyID. '/G_ERP/' .$documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        } else {
+            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        }
 
-        Storage::disk('public')->put($path, $decodeFile);
+        Storage::disk(Helper::policyWiseDisk($expenseClaim->companySystemID, 'public'))->put($path, $decodeFile);
 
         $input['isUploaded'] = 1;
         $input['path'] = $path;

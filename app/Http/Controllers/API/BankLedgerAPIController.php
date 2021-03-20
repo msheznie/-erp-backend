@@ -31,6 +31,7 @@ use App\Models\ChequeRegisterDetail;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerReceivePayment;
+use App\Models\DocumentApproved;
 use App\Models\DirectPaymentDetails;
 use App\Models\GeneralLedger;
 use App\Models\PaymentBankTransfer;
@@ -1924,5 +1925,125 @@ class BankLedgerAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+
+    public function amendBankTransferReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['paymentBankTransferID'];
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = PaymentBankTransfer::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Bank transfer not found');
+        }
+
+
+        $checkBankTransferGenerated = PaymentBankTransfer::where('bankAccountAutoID', $masterData->bankAccountAutoID)
+                                                         ->whereDate('documentDate', '>=', Carbon::parse($masterData->documentDate))
+                                                         ->where('companySystemID', $masterData->companySystemID)
+                                                         ->where('paymentBankTransferID', '!=',$id)
+                                                         ->first();
+
+        if ($checkBankTransferGenerated) {
+            return $this->sendError("You cannot return back to amend this bank transfer, upcoming month's bank transfer is already created");
+        }
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this bank transfer, it is not confirmed');
+        }
+
+
+        $emailBody = '<p>' . $masterData->bankTransferDocumentCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->bankTransferDocumentCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->bankTransferDocumentCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->bankTransferDocumentCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approvedYN = 0;
+            $masterData->exportedYN = 0;
+            $masterData->approvedByUserSystemID = null;
+            $masterData->approvedByUserID = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Bank transfer amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    public function clearExportBlockConfirm(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['paymentBankTransferID'];
+        $masterData = PaymentBankTransfer::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Bank transfer not found');
+        }
+
+        $masterData->exportedYN = 0;
+        $masterData->save();
+
+        return $this->sendResponse($masterData->toArray(), 'Bank transfer updated successfully');
     }
 }

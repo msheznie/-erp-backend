@@ -62,7 +62,7 @@ class BudgetTransferFormRepository extends BaseRepository
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 46);
-        }, 'company','confirmed_by', 'created_by', 'modified_by'])
+        }, 'company','confirmed_by', 'created_by', 'modified_by','audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

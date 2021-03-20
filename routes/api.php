@@ -127,6 +127,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
         Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
         Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
+        Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
@@ -142,6 +143,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
         Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
+        Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
@@ -215,6 +217,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
         Route::resource('control_accounts', 'ControlAccountAPIController');
         Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
+        Route::post('getMasterChartOfAccountData', 'ChartOfAccountAPIController@getMasterChartOfAccountData');
         Route::resource('chart_of_account', 'ChartOfAccountAPIController');
         Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
         Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
@@ -255,6 +258,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
         Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
         Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
+        Route::post('customerReOpen', 'CustomerMasterAPIController@customerReOpen');
 
         /** Bank master Created by Pasan  */
         Route::resource('bank/masters', 'BankMasterAPIController');
@@ -343,6 +347,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
         Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+        Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts');
+        Route::post('chartOfAccountReopen', 'ChartOfAccountAPIController@chartOfAccountReopen');
 
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
         Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
@@ -433,6 +439,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
         Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
         Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
+        Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData');
 
 
         Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -555,8 +562,11 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
         Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
         Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
+        Route::get('purchaseReturnForGRV', 'PurchaseReturnAPIController@purchaseReturnForGRV');
         Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
+        Route::get('getPurchaseReturnDetailForGRV', 'PurchaseReturnAPIController@getPurchaseReturnDetailForGRV');
         Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
+        Route::post('storeGRVDetailsFromPR', 'GRVDetailsAPIController@storeGRVDetailsFromPR');
         Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
         Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
         Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
@@ -611,6 +621,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
@@ -698,6 +709,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('purchase_returns', 'PurchaseReturnAPIController');
         Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+        Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
+        Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
         Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
         Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
         Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
@@ -708,6 +721,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
         Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
         Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
+        Route::get('grvReturnDetails', 'PurchaseReturnDetailsAPIController@grvReturnDetails');
         Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
         Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
 
@@ -728,6 +742,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+        Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
 
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
@@ -862,6 +877,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
         Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
         Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+        Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts');
         Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
         Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
         Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
@@ -1010,6 +1026,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
         Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
         Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
+        Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
         Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
         Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
@@ -1102,6 +1119,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
         Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
         Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+        Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview');
+        Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm');
 
         Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
         Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
@@ -1387,6 +1406,9 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('report_templates', 'ReportTemplateAPIController');
         Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
+        Route::get('getAssignedReportTemplatesByGl', 'ReportTemplateAPIController@getAssignedReportTemplatesByGl');
+        Route::get('getReportTemplatesByCategory', 'ReportTemplateAPIController@getReportTemplatesByCategory');
+        Route::get('getReportTemplatesCategoryByTemplate', 'ReportTemplateDetailsAPIController@getReportTemplatesCategoryByTemplate');
         Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
         Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
         Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
@@ -1394,9 +1416,12 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
         Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
         Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
+        Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation');
+        Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode');
         Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
         Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
         Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
+        Route::post('assignReportTemplateToGl', 'ReportTemplateLinksAPIController@assignReportTemplateToGl');
         Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
 
         Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
@@ -1463,6 +1488,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getSalesQuotationFormData', 'QuotationMasterAPIController@getSalesQuotationFormData');
         Route::get('getItemsForSalesQuotation', 'QuotationMasterAPIController@getItemsForSalesQuotation');
         Route::get('getSalesQuotationDetails', 'QuotationDetailsAPIController@getSalesQuotationDetails');
+        Route::post('storeSalesOrderFromSalesQuotation', 'QuotationDetailsAPIController@storeSalesOrderFromSalesQuotation');
+        Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
         Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
         Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
         Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
@@ -1714,6 +1741,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
+        Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
         Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
 
@@ -1853,6 +1881,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
         Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
         Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
+        Route::get('salesQuotationForSO', 'QuotationMasterAPIController@salesQuotationForSO');
+        Route::get('getSalesQuoatationDetailForSO', 'QuotationMasterAPIController@getSalesQuoatationDetailForSO');
         Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
 
         Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');
@@ -1890,11 +1920,62 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
+
+        Route::resource('sales_returns', 'SalesReturnAPIController');
+        Route::post('getAllSalesReturn', 'SalesReturnAPIController@getAllSalesReturn');
+        Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO');
+        Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR');
+        Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail');
+        Route::get('getSalesReturnRecord', 'SalesReturnAPIController@getSalesReturnRecord');
+        Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit');
+        Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
+
+        Route::post('getSalesReturnApprovals', 'SalesReturnAPIController@getSalesReturnApprovals');
+        Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen');
+        Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend');
+        Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
+        Route::post('rejectSalesReturn', 'SalesReturnAPIController@rejectSalesReturn');
+        Route::post('getSalesReturnDetailsForDO', 'SalesReturnAPIController@getSalesReturnDetailsForDO');
+        Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
+        Route::post('getApprovedSalesReturnForUser', 'SalesReturnAPIController@getApprovedSalesReturnForUser');
+
+        Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
+        Route::resource('so_payment_terms', 'SoPaymentTermsAPIController');
+        Route::get('getSalesOrderPaymentTerms', 'SoPaymentTermsAPIController@getSalesOrderPaymentTerms');
+        Route::resource('sales_order_adv_payments', 'SalesOrderAdvPaymentAPIController');
+        Route::get('soPaymentTermsAdvanceDetailView', 'SalesOrderAdvPaymentAPIController@soPaymentTermsAdvanceDetailView');
+        Route::get('getSoLogisticPrintDetail', 'SalesOrderAdvPaymentAPIController@getSoLogisticPrintDetail');
+
+
+        Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
+        Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
+
+        Route::resource('advance_receipt_details', 'AdvanceReceiptDetailsAPIController');
+        Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails');
+        Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
+
+
+        Route::get('getPRDetailsAmendHistory', 'PurchaseReturnDetailsRefferedBackAPIController@getPRDetailsAmendHistory');
+        Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
+        // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
+
+        Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
+        Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
+
+        Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
+        Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
+
+        Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
+        Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
+        Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
+        Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
+    Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen');
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
@@ -1932,6 +2013,7 @@ Route::group(['middleware' => 'tenant'], function () {
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
+    Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
@@ -1940,7 +2022,21 @@ Route::group(['middleware' => 'tenant'], function () {
 
 
 Route::resource('tenants', 'TenantAPIController');
+Route::get('test', 'TenantAPIController@test');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
+
+
+
+
+
+
+
+
+//Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
+
+//Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
+
+
 
 
 

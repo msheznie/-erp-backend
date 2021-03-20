@@ -360,4 +360,9 @@ class MaterielRequest extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'RequestID')->where('documentSystemID',9);
+    }
 }

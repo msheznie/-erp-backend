@@ -85,6 +85,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function getItemMasterPurchaseHistory(Request $request)
     {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $purchaseOrderDetails = DB::table('erp_purchaseorderdetails')
             ->leftJoin('units', 'erp_purchaseorderdetails.unitOfMeasure', '=', 'units.UnitID')
             ->leftJoin('currencymaster', 'erp_purchaseorderdetails.supplierItemCurrencyID', '=', 'currencymaster.currencyID')
@@ -96,6 +105,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseorderdetails.manuallyClosed', 0)
             ->where('erp_purchaseorderdetails.itemCode', $request['itemCodeSystem'])
+            ->whereIn('erp_purchaseordermaster.companySystemID', $subCompanies)
             ->orderBy('erp_purchaseordermaster.approvedDate', 'DESC')
             ->select('erp_purchaseorderdetails.purchaseOrderMasterID',
                 'erp_purchaseorderdetails.companyID',
@@ -132,6 +142,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     {
 
         $type = $request['type'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
         $data = [];
         $purchaseOrderDetails = DB::table('erp_purchaseorderdetails')
             ->leftJoin('units', 'erp_purchaseorderdetails.unitOfMeasure', '=', 'units.UnitID')
@@ -141,6 +160,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->leftJoin('erp_location', 'erp_purchaseordermaster.poLocation', '=', 'erp_location.locationID')
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseorderdetails.itemCode', $request['itemCodeSystem'])
+            ->whereIn('erp_purchaseordermaster.companySystemID', $subCompanies)
             ->select('erp_purchaseorderdetails.purchaseOrderMasterID',
                 'erp_purchaseorderdetails.companyID',
                 'companymaster.CompanyName',
@@ -739,7 +759,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
-            $discountedUnitPrice = $input['unitCost'] + $input['VATAmount'] - $input['discountAmount'];
+            $discountedUnitPrice = $input['unitCost']  - $input['discountAmount'];
+            if(TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible, $purchaseOrder->vatRegisteredYN)){
+                $discountedUnitPrice =  $discountedUnitPrice + $input['VATAmount'];
+            }
 
             if ($discountedUnitPrice > 0) {
                 $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
@@ -755,7 +778,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
                 $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount']);
-
                 $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                 $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
             } else {
@@ -867,6 +889,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
         } catch (\Exception $ex) {
             DB::rollback();
+            return $this->sendError($ex->getMessage(), 500);
         }
 
     }

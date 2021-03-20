@@ -314,6 +314,10 @@ class PoPaymentTermsAPIController extends AppBaseController
         $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
         $vatAmount = $input['vat'];
 
+        if($purchaseOrder->rcmActivated){
+            $vatAmount = 0;
+        }
+
         if (!empty($poAdvancePaymentType)) {
             foreach ($poAdvancePaymentType as $advance) {
 

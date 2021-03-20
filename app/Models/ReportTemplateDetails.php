@@ -118,6 +118,7 @@ class ReportTemplateDetails extends Model
         'itemType',
         'sortOrder',
         'masterID',
+        'isFinalLevel',
         'accountType',
         'categoryType',
         'fontColor',
@@ -148,6 +149,7 @@ class ReportTemplateDetails extends Model
         'itemType' => 'integer',
         'sortOrder' => 'integer',
         'masterID' => 'integer',
+        'isFinalLevel' => 'integer',
         'accountType' => 'string',
         'categoryType' => 'integer',
         'fontColor' => 'string',
@@ -188,6 +190,11 @@ class ReportTemplateDetails extends Model
     public function subcategory()
     {
         return $this->hasMany(ReportTemplateDetails::class,'masterID','detID');
+    }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\ReportTemplate','companyReportTemplateID','companyReportTemplateID');
     }
 
     public function gllink()

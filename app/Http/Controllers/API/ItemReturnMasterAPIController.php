@@ -39,6 +39,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemReturnMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -294,7 +295,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'segment_by','warehouse_by','customer_by'])->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
@@ -352,7 +353,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function update($id, UpdateItemReturnMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName',
+        $input = array_except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'finance_period_by', 'finance_year_by']);
 
         $input = $this->convertArrayToValue($input);
@@ -381,6 +382,10 @@ class ItemReturnMasterAPIController extends AppBaseController
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
                     return $this->sendError('Please select a active department.', 500, $serviceLineError);
+                }
+
+                if ($checkDepartmentActive) {
+                    $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
                 }
             }
         }
@@ -1116,10 +1121,13 @@ class ItemReturnMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $itemReturnMaster->companySystemID)
             ->where('documentSystemID', $itemReturnMaster->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($itemReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
     }

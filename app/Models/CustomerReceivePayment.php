@@ -14,6 +14,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -384,7 +385,7 @@ use Eloquent as Model;
  */
 class CustomerReceivePayment extends Model
 {
-
+    use Compoships;
     public $table = 'erp_customerreceivepayment';
 
     const CREATED_AT = 'createdDateTime';
@@ -486,6 +487,14 @@ class CustomerReceivePayment extends Model
         'canceledByEmpID',
         'canceledByEmpName',
         'companyFinancePeriodID',
+        'isVATApplicable',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -571,6 +580,14 @@ class CustomerReceivePayment extends Model
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
         'companyFinancePeriodID' => 'integer',
+        'isVATApplicable' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**
@@ -591,6 +608,11 @@ class CustomerReceivePayment extends Model
     public function directdetails()
     {
         return $this->hasMany('App\Models\DirectReceiptDetail', 'directReceiptAutoID', 'custReceivePaymentAutoID');
+    }
+
+    public function advance_receipt_details()
+    {
+        return $this->hasMany(AdvanceReceiptDetails::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
     }
 
     public function bank()

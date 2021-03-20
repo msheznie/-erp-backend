@@ -30,6 +30,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
@@ -232,6 +233,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Document date is not within the financial period!');
+        }
+
+
+        // check rcm activation
+        if (isset($input['documentType']) && $input['documentType'] == 1 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            if (!empty($company) && $company->vatRegisteredYN == 1) {
+                return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
+            }
         }
 
         $input['createdPcID'] = gethostname();
@@ -499,7 +509,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookingAmountLocal = 0;
         $bookingAmountRpt = 0;
         if ($input['documentType'] == 0) {
-
+            $input['rcmActivated'] = 0;
             $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                 ->sum('totTransactionAmount');
             $grvAmountLocal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
@@ -640,15 +650,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
                 $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->where(function ($q) {
-                        $q->where('supplierInvoAmount', '<=', 0)
-                            ->orWhereNull('totLocalAmount', '<=', 0)
-                            ->orWhereNull('totRptAmount', '<=', 0)
-                            ->orWhereNull('totTransactionAmount')
-                            ->orWhereNull('totLocalAmount')
-                            ->orWhereNull('totRptAmount');
-                    })
-                    ->count();
+                                                    ->where(function ($q) {
+                                                        $q->where('supplierInvoAmount', '<=', 0)
+                                                            ->orWhereNull('totLocalAmount', '<=', 0)
+                                                            ->orWhereNull('totRptAmount', '<=', 0)
+                                                            ->orWhereNull('totTransactionAmount')
+                                                            ->orWhereNull('totLocalAmount')
+                                                            ->orWhereNull('totRptAmount');
+                                                    })
+                                                    ->whereHas('unbilled_grv', function($query){
+                                                        $query->whereNull('purhaseReturnAutoID');
+                                                    })
+                                                    ->count();
                 if ($checkGRVQuantity > 0) {
                     return $this->sendError('Amount should be greater than 0 for every items', 500);
                 }
@@ -661,18 +674,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                         $unbilledSumData = UnbilledGrvGroupBy::find($row['unbilledgrvAutoID']);
 
-                        $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
-                            ->sum('totTransactionAmount');
+                        if (is_null($unbilledSumData->purhaseReturnAutoID)) {
+                            $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
+                                ->sum('totTransactionAmount');
 
-                        if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+                            if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
 
-                            $unbilledSumData->selectedForBooking = -1;
-                            $unbilledSumData->fullyBooked = 2;
-                        } else {
-                            $unbilledSumData->selectedForBooking = 0;
-                            $unbilledSumData->fullyBooked = 1;
+                                $unbilledSumData->selectedForBooking = -1;
+                                $unbilledSumData->fullyBooked = 2;
+                            } else {
+                                $unbilledSumData->selectedForBooking = 0;
+                                $unbilledSumData->fullyBooked = 1;
+                            }
+                            $unbilledSumData->save();
                         }
-                        $unbilledSumData->save();
                     }
                 }
 
@@ -848,8 +863,21 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             //check tax configuration if tax added
-            if($detailTaxSumTrans > 0 && empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
-                return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+            if($detailTaxSumTrans > 0 ){
+                if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                }
+
+                //if rcm activated
+                if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
+                    if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                    }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                    }
+                }
             }
 
             if($input['documentType'] == 0){
@@ -1263,6 +1291,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
             ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($bookInvSuppMaster->documentSystemID,$bookingSuppMasInvAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
     }

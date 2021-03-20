@@ -18,7 +18,9 @@ use App\Http\Requests\API\CreateDocumentAttachmentsAPIRequest;
 use App\Http\Requests\API\UpdateDocumentAttachmentsAPIRequest;
 use App\Models\Company;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentAttachments;
+use App\Models\DocumentAttachmentType;
 use App\Models\DocumentMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
@@ -29,6 +31,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Symfony\Component\Finder\SplFileInfo;
+use App\helper\Helper;
 
 /**
  * Class DocumentAttachmentsController
@@ -84,8 +87,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if(!is_null($documentAttachments->path)) {
-            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            if ($exists = Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->exists($documentAttachments->path)) {
+                return Storage::disk(Helper::policyWiseDisk($documentAttachments->companySystemID, 'public'))->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
@@ -186,12 +189,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
             }
         }
 
+        $companyID = "";
         if (isset($input['companySystemID'])) {
 
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
 
             if ($companyMaster) {
                 $input['companyID'] = $companyMaster->CompanyID;
+                $companyID = $companyMaster->CompanyID;
             }
         }
 
@@ -206,10 +211,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
         }
 
-        $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
 
-
-        Storage::disk('public')->put($path, $decodeFile);
+        if (Helper::checkPolicy($input['companySystemID'], 50)) {
+            $path = $companyID. '/G_ERP/' .$documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        } else {
+            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+        }
+        
+        Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
 
         $input['isUploaded'] = 1;
         $input['path'] = $path;
@@ -291,6 +300,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $path = $documentAttachments->path;
 
+        $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
+
         $attachment = DocumentAttachments::where('attachmentID', $id)
             ->first();
 
@@ -305,9 +316,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if($attachment['pullFromAnotherDocument'] == 0){
-            if ($exists = Storage::disk('public')->exists($path)) {
+            if ($exists = Storage::disk($disk)->exists($path)) {
                 $documentAttachments->delete();
-                Storage::disk('public')->delete($path);
+                Storage::disk($disk)->delete($path);
             } else {
                 $documentAttachments->delete();
             }
@@ -330,5 +341,607 @@ class DocumentAttachmentsAPIController extends AppBaseController
         } else {
             return response([], 200);
         }
+    }
+
+    /**
+     * Get attachment master data for list
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllAttachments(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $documentSystemID = isset($input['documentSystemID'])?Helper::isArray($input['documentSystemID']):0;
+        $attachmentType = isset($input['attachmentType'])?Helper::isArray($input['attachmentType']):0;
+        $search = str_replace("\\", "\\\\", $request->input('search.value'));
+        $attachments = DocumentAttachments::whereIn('companySystemID',$childCompanies)
+            ->when($documentSystemID > 0, function ($query) use($documentSystemID){
+                $query->where('documentSystemID',$documentSystemID);
+            })
+            ->when($attachmentType > 0, function ($query) use($attachmentType){
+                $query->where('attachmentType',$attachmentType);
+            })
+            ->with([
+                'document',
+                'type'=>function($query){
+                    $query->select('travelClaimAttachmentTypeID','description');
+                },
+                'request'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'order'=>function($query){
+                    $query->select('purchaseOrderID','purchaseOrderCode','companySystemID','documentSystemID');
+                },
+                'grv'=>function($query){
+                    $query->select('grvAutoID','grvPrimaryCode','companySystemID','documentSystemID');
+                },
+                'payment_voucher'=>function($query){
+                    $query->select('PayMasterAutoId','BPVcode','companySystemID','documentSystemID');
+                },
+                'expense_claim'=>function($query){
+                    $query->select('expenseClaimMasterAutoID','expenseClaimCode','companySystemID','documentSystemID');
+                },
+                'stock_adjustment'=>function($query){
+                    $query->select('stockAdjustmentAutoID','stockAdjustmentCode','companySystemID','documentSystemID');
+                },
+                'material_issue'=>function($query){
+                    $query->select('itemIssueAutoID','itemIssueCode','companySystemID','documentSystemID');
+                },
+                'material_request'=>function($query){
+                    $query->select('RequestID','RequestCode','companySystemID','documentSystemID');
+                },
+                'receive_stock'=>function($query){
+                    $query->select('stockReceiveAutoID','stockReceiveCode','companySystemID','documentSystemID');
+                },
+                'supplier_invoice'=>function($query){
+                    $query->select('bookingSuppMasInvAutoID','bookingInvCode','companySystemID','documentSystemID');
+                },
+                'stock_return'=>function($query){
+                    $query->select('itemReturnAutoID','itemReturnCode','companySystemID','documentSystemID');
+                },
+                'stock_transfer'=>function($query){
+                    $query->select('stockTransferAutoID','stockTransferCode','companySystemID','documentSystemID');
+                },
+                'logistic'=>function($query){
+                    $query->select('logisticMasterID','logisticDocCode','companySystemID','documentSystemID');
+                },
+                'debit_note'=>function($query){
+                    $query->select('debitNoteAutoID','debitNoteCode','companySystemID','documentSystemID');
+                },
+                /*'direct_payment'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'journal_entries'=>function($query){
+                    $query->select('jvMasterAutoId','JVcode','companySystemID','documentSystemID');
+                },
+                /*'direct_invoice'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'credit_note'=>function($query){
+                    $query->select('creditNoteAutoID','creditNoteCode','companySystemID','documentSystemID');
+                },
+                'customer_invoice'=>function($query){
+                    $query->select('custInvoiceDirectAutoID','bookingInvCode','companySystemID','documentSystemiD');
+                },
+                'bank_receipt'=>function($query){
+                    $query->select('custReceivePaymentAutoID','custPaymentReceiveCode','companySystemID','documentSystemID');
+                },
+                'fixed_asset'=>function($query){
+                    $query->select('faID','faCode','companySystemID','documentSystemID');
+                },
+                'fixed_asset_dep'=>function($query){
+                    $query->select('depMasterAutoID','depCode','companySystemID','documentSystemID');
+                },
+                'purchase_return'=>function($query){
+                    $query->select('purhaseReturnAutoID','purchaseReturnCode','companySystemID','documentSystemID');
+                },
+                /*'job_bonus'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'desert_allowance'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'salary_dec'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'monthly_addition'=>function($query){
+                    $query->select('monthlyAdditionsMasterID','monthlyAdditionsCode','companySystemID','documentSystemID');
+                },
+                /*'monthly_deduction'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'job_bonus_calculation'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'desert_allowance_calculation'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'over_time_calculation'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'loan_management'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'extra_pay'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'salary_process'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'split_salary'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'leave_application'=>function($query){
+                    $query->select('leavedatamasterID','leaveDataMasterCode','companySystemID','documentID');
+                },
+                /*'leave_accrual'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'batch_submission'=>function($query){
+                    $query->select('customerInvoiceTrackingID','customerInvoiceTrackingCode','companySystemID','documentSystemID');
+                },
+                /*'bonus_sheet'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'fixed_asset_disposal'=>function($query){
+                    $query->select('assetdisposalMasterAutoID','disposalDocumentCode','companySystemID','documentSystemID');
+                },
+                /*'non_salary_payment'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'final_settlement'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'travel_claim_request'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'travel_claim_accrual'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'budget_transfer_notes'=>function($query){
+                    $query->select('budgetTransferFormAutoID','transferVoucherNo','companySystemID','documentSystemID');
+                },
+                /*'probation_form'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'radio_active_allowance'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'job_profile'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'journey_plan'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'recruitment_request'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'supplier_master'=>function($query){
+                    $query->select('supplierCodeSystem','primarySupplierCode','primaryCompanySystemID','documentSystemID');
+                },
+                'item_master'=>function($query){
+                    $query->select('itemCodeSystem','primaryCode','primaryCompanySystemID','documentSystemID');
+                },
+                'customer_master'=>function($query){
+                    $query->select('customerCodeSystem','CutomerCode','primaryCompanySystemID','documentSystemID');
+                },
+                'chart_of_account_master'=>function($query){
+                    $query->select('chartOfAccountSystemID','AccountCode','primaryCompanySystemID','documentSystemID');
+                },
+                /*'po_logistic'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'inventory_reclassification'=>function($query){
+                    $query->select('inventoryreclassificationID','documentCode','companySystemID','documentSystemID');
+                },
+                'bank_reconciliation'=>function($query){
+                    $query->select('bankRecAutoID','bankRecPrimaryCode','companySystemID','documentSystemID');
+                },
+                'asset_capitalization'=>function($query){
+                    $query->select('capitalizationID','capitalizationCode','companySystemID','documentSystemID');
+                },
+                'payment_bank_transfer'=>function($query){
+                    $query->select('paymentBankTransferID','bankTransferDocumentCode','companySystemID','documentSystemID');
+                },
+                /*'budget'=>function($query){
+                    $query->select('budgetmasterID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                /*'bank_account'=>function($query){
+                    $query->select('bankAccountAutoID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'sales_quotation'=>function($query){
+                    $query->select('quotationMasterID','quotationCode','companySystemID','documentSystemID');
+                },
+                'console_jv'=>function($query){
+                    $query->select('consoleJvMasterAutoId','consoleJVcode','companySystemID','documentSystemID');
+                },
+                'matching'=>function($query){
+                    $query->select('matchDocumentMasterAutoID','matchingDocCode','companySystemID','documentSystemID');
+                },
+                'delivery_order'=>function($query){
+                    $query->select('deliveryOrderID','deliveryOrderCode','companySystemID','documentSystemID');
+                },
+                /*'contracts'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'contract_details'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'mobile_bill'=>function($query){
+                    $query->select('mobilebillMasterID','mobilebillmasterCode','documentSystemID');
+                },
+                /*'proforma'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                /*'material_outward_ticket'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'material_inward_ticket'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'damage_beyond_repair'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'lost_in_hole'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'job_card'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'evaluation'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },
+                'registered_supplier'=>function($query){
+                    $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
+                },*/
+                'sales_return'=>function($query){
+                    $query->select('id','salesReturnCode','companySystemID','documentSystemID');
+                }
+
+            ])
+            ->when($search, function ($query) use($search,$childCompanies){
+
+                $query->where(function ($main) use($search,$childCompanies){
+                    $main->where('documentID','LIKE',"%{$search}%")
+                        ->orWhere('attachmentDescription', 'LIKE', "%{$search}%")
+                        ->orWhere('myFileName', 'LIKE', "%{$search}%")
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->whereHas('type', function ($q1) use($search,$childCompanies){
+                                    $q1->where('description','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->whereIn('documentSystemID',[1,50,51])
+                                ->whereHas('request', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('purchaseRequestCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->whereIn('documentSystemID',[2,5,52])
+                                ->whereHas('order', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('purchaseOrderCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',3)
+                                ->whereHas('grv', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('grvPrimaryCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',4)
+                                ->whereHas('payment_voucher', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('BPVcode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',6)
+                                ->whereHas('expense_claim', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('expenseClaimCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',7)
+                                ->whereHas('stock_adjustment', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('stockAdjustmentCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',8)
+                                ->whereHas('material_issue', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('itemIssueCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',9)
+                                ->whereHas('material_request', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('RequestCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',10)
+                                ->whereHas('receive_stock', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('stockReceiveCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',11)
+                                ->whereHas('supplier_invoice', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('bookingInvCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',12)
+                                ->whereHas('stock_return', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('itemReturnCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',13)
+                                ->whereHas('stock_transfer', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('stockTransferCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',14)
+                                ->whereHas('logistic', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('logisticDocCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',15)
+                                ->whereHas('debit_note', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('debitNoteCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',17)
+                                ->whereHas('journal_entries', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('JVcode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',19)
+                                ->whereHas('credit_note', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('creditNoteCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',20)
+                                ->whereHas('customer_invoice', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('bookingInvCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',21)
+                                ->whereHas('bank_receipt', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('custPaymentReceiveCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',22)
+                                ->whereHas('fixed_asset', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('faCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',23)
+                                ->whereHas('fixed_asset_dep', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('depCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',24)
+                                ->whereHas('purchase_return', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('purchaseReturnCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',28)
+                                ->whereHas('monthly_addition', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('monthlyAdditionsCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentID','LA')
+                                ->whereHas('leave_application', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('leaveDataMasterCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',39)
+                                ->whereHas('batch_submission', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('customerInvoiceTrackingCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',41)
+                                ->whereHas('fixed_asset_disposal', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('disposalDocumentCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',46)
+                                ->whereHas('budget_transfer_notes', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('transferVoucherNo','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',56)
+                                ->whereHas('supplier_master', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('primarySupplierCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',57)
+                                ->whereHas('item_master', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('primaryCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',58)
+                                ->whereHas('customer_master', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('CutomerCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',59)
+                                ->whereHas('chart_of_account_master', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('AccountCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',61)
+                                ->whereHas('inventory_reclassification', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('documentCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',62)
+                                ->whereHas('bank_reconciliation', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('bankRecPrimaryCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',63)
+                                ->whereHas('asset_capitalization', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('capitalizationCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',64)
+                                ->whereHas('payment_bank_transfer', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('bankTransferDocumentCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->whereIn('documentSystemID',[67,68])
+                                ->whereHas('sales_quotation', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('quotationCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',69)
+                                ->whereHas('console_jv', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('consoleJVcode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',70)
+                                ->whereHas('matching', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('matchingDocCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',71)
+                                ->whereHas('delivery_order', function ($q1) use($search,$childCompanies){
+                                    $q1->whereIn('companySystemID',$childCompanies)
+                                        ->where('deliveryOrderCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',74)
+                                ->whereHas('mobile_bill', function ($q1) use($search,$childCompanies){
+                                    $q1->where('mobilebillmasterCode','LIKE',"%{$search}%");
+                                });
+                        })
+                        ->orWhere(function($q) use($search,$childCompanies){
+                            $q->where('documentSystemID',87)
+                                ->whereHas('sales_return', function ($q1) use($search,$childCompanies){
+                                    $q1->where('salesReturnCode','LIKE',"%{$search}%");
+                                });
+                        });
+
+                });
+
+            })
+        ->select(
+            'attachmentID',
+            'companySystemID',
+            'companyID',
+            'documentSystemID',
+            'documentID',
+            'documentSystemCode',
+            'attachmentDescription',
+            'originalFileName',
+            'myFileName',
+            'path',
+            'attachmentType',
+            'timeStamp',
+            'sizeInKbs',
+            'pullFromAnotherDocument');
+
+        return \DataTables::eloquent($attachments)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('attachmentID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getAttachmentFormData(Request $request){
+        $output['documents'] = DocumentMaster::all();
+        $output['attachmentTypes'] = DocumentAttachmentType::all();
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

@@ -69,7 +69,7 @@ class StockTransferRepository extends BaseRepository
         }, 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 13);
-        }])
+        },'audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

@@ -42,6 +42,7 @@ use App\Models\PoPaymentTerms;
 use Carbon\Carbon;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use App\helper\Helper;
 
 /**
  * Class PoAdvancePaymentController
@@ -236,9 +237,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
                 foreach ($attachment as $das) {
                     $path = $das->path;
                     $attachmentDel = DocumentAttachments::find($das->attachmentID);
-                    if ($exists = Storage::disk('public')->exists($path)) {
+                    $disk = Helper::policyWiseDisk($attachmentDel->companySystemID, 'public');
+                    if ($exists = Storage::disk($disk)->exists($path)) {
                         $attachmentDel->delete();
-                        Storage::disk('public')->delete($path);
+                        Storage::disk($disk)->delete($path);
                     } else {
                         $attachmentDel->delete();
                     }

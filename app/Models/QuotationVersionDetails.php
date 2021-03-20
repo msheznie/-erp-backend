@@ -261,6 +261,10 @@ class QuotationVersionDetails extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timesReferred',
+        'soQuotationDetailID',
+        'soQuantity',
+        'qtyIssuedDefaultMeasure',
+        'soQuotationMasterID',
         'timestamp'
     ];
 
@@ -307,7 +311,11 @@ class QuotationVersionDetails extends Model
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'soQuotationDetailID' => 'integer', 
+        'soQuantity' => 'float', 
+        'qtyIssuedDefaultMeasure' => 'float', 
+        'soQuotationMasterID' => 'integer'
     ];
 
     /**

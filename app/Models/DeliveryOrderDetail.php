@@ -205,6 +205,7 @@ class DeliveryOrderDetail extends Model
         'documentSystemID',
         'itemCodeSystem',
         'itemPrimaryCode',
+        'returnQty',
         'itemDescription',
         'itemUnitOfMeasure',
         'unitOfMeasureIssued',
@@ -242,6 +243,7 @@ class DeliveryOrderDetail extends Model
         'requestedQty',
         'balanceQty',
         'fullyReceived',
+        'fullyReturned',
         'invQty',
         'timestamp'
     ];
@@ -295,7 +297,9 @@ class DeliveryOrderDetail extends Model
         'requestedQty'  => 'float',
         'balanceQty'  => 'float',
         'fullyReceived' => 'integer',
+        'fullyReturned' => 'integer',
         'invQty' => 'float',
+        'returnQty' => 'float',
         'timestamp' => 'datetime'
     ];
 

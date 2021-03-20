@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\BookInvSuppDet;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\UnbilledGrvGroupBy;
@@ -154,7 +155,8 @@ class GRVMasterRepository extends BaseRepository
             case 2: // Service - Don't allow to cancel the GRV, If the GRV is added to BSI
             case 3: // Don’t allow to cancel, If the GRV is added in the asset allocation or  If the GRV is added to BSI
             case 4: // Don't allow to cancel the GRV, If the GRV is added to BSI
-                $isExistBSI = UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->where('selectedForBooking',-1)->exists();
+               // $isExistBSI = UnbilledGrvGroupBy::where('grvAutoID',$input['grvAutoID'])->where('selectedForBooking',-1)->exists();
+                $isExistBSI = BookInvSuppDet::where('grvAutoID',$input['grvAutoID'])->exists();
                 if($isExistBSI){
                     return $array = [
                         'status' => 0,

@@ -25,9 +25,11 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
 use App\Http\Requests\API\UpdateQuotationMasterAPIRequest;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
@@ -40,6 +42,8 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
+use App\Models\PoPaymentTerms;
+use App\Models\PoPaymentTermTypes;
 use App\Models\QuotationDetails;
 use App\Models\QuotationDetailsRefferedback;
 use App\Models\QuotationMaster;
@@ -48,6 +52,7 @@ use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
 use App\Models\SegmentMaster;
+use App\Models\SoPaymentTerms;
 use App\Models\YesNoSelection;
 use App\Models\Company;
 use App\Models\YesNoSelectionForMinus;
@@ -55,6 +60,7 @@ use App\Models\ChartOfAccount;
 use App\Models\CustomerCurrency;
 use App\Models\QuotationStatusMaster;
 use App\Repositories\QuotationMasterRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -184,6 +190,9 @@ class QuotationMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+        }else{
+            $input['companyID'] = 0;
         }
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
@@ -243,6 +252,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->first();
         if ($customerGLCodeUpdate) {
 
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
             if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -341,7 +351,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var QuotationMaster $quotationMaster */
-        $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
+        $quotationMaster = $this->quotationMasterRepository->with(['created_by', 'confirmed_by','customer','segment'])->findWithoutFail($id);
 
         if (empty($quotationMaster)) {
             return $this->sendError('Quotation Master not found');
@@ -399,7 +409,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -464,7 +474,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID', $input['companySystemID'])
             ->first();
         if ($customerGLCodeUpdate) {
-
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
             $chartOfAccountData = ChartOfAccount::where('chartOfAccountSystemID', $customerGLCodeUpdate->custGLAccountSystemID)->first();
             if ($chartOfAccountData) {
                 $input['customerReceivableAutoID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -475,7 +485,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         }
 
-        $customerCurrency = customercurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
+        $customerCurrency = CustomerCurrency::where('customerCodeSystem', $input['customerSystemCode'])->where('isDefault', -1)->first();
         if ($customerCurrency) {
 
             $customerCurrencyMasterData = CurrencyMaster::where('currencyID', $customerCurrency->currencyID)->first();
@@ -493,13 +503,30 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         // updating header amounts
-        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount, COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, COALESCE(SUM(customerAmount),0) as totalCustomerAmount")
-            ->where('quotationMasterID', $id)->first();
+        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                                                     COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                                                     COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                                                     COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                                                     COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
+                                                     COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
+                                                     COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
+                                                     ")
+                                         ->where('quotationMasterID', $id)->first();
 
-        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount);
-        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount);
-        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount);
+        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
+        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
+        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
         $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
+
+        if(!TaxService::checkPOVATEligible($input['customerVATEligible'],$input['vatRegisteredYN'])){
+            $input['VATAmount'] = 0;
+            $input['VATAmountLocal'] = 0;
+            $input['VATAmountRpt'] = 0;
+        }else{
+            $input['VATAmount'] = \Helper::roundValue($totalAmount->totalVATAmount);
+            $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->totalVATAmountLocal);
+            $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->totalVATAmountRpt);
+        }
 
         if ($quotationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -542,6 +569,70 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
                 if ($checkAmount > 0) {
                     return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            //
+
+            if($quotationMaster->documentSystemID == 68){
+                //checking atleast one po payment terms should exist
+                $soPaymentTerms = SoPaymentTerms::where('soID', $id)
+                    ->count();
+
+                if ($soPaymentTerms == 0) {
+                    return $this->sendError('Sales Order should have at least one payment term');
+                }
+
+                // checking payment term amount value 0
+
+                $checkPoPaymentTermsAmount = SoPaymentTerms::where('soID', $id)
+                    ->where('comAmount', '<=', 0)
+                    ->count();
+
+                if ($checkPoPaymentTermsAmount > 0) {
+                    return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                }
+
+                //po payment terms exist
+                $PoPaymentTerms = SoPaymentTerms::where('soID', $id)
+                    ->where('LCPaymentYN', 2)
+                    ->where('isRequested', 0)
+                    ->first();
+
+                if (!empty($PoPaymentTerms)) {
+                    return $this->sendError('Advance payment request is pending');
+                }
+
+                //getting total sum of So Payment Terms
+                $paymentTotalSum = SoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+                    ->where('soID', $id)
+                    ->first();
+
+                $soMasterSumDeducted = $input['transactionAmount'];
+
+                //return floatval($soMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
+
+                //return $soMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
+                if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+                } else {
+                    return $this->sendError('Payment terms total is not matching with the SO total');
+                }
+
+                $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
+                    ->get();
+
+
+                if (!empty($poAdvancePaymentType)) {
+                    foreach ($poAdvancePaymentType as $payment) {
+                        $paymentPercentageAmount = ($payment['comPercentage'] / 100) * ($soMasterSumDeducted);
+
+                        if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+
+                        } else {
+                            return $this->sendError('Payment terms is not matching with the SO total');
+                        }
+                    }
                 }
             }
 
@@ -670,7 +761,10 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationStatuses = QuotationStatusMaster::where('isAdmin', 0)->get();
 
-        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)->where('isActive', 1)->get();
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies)
+                                  ->where('isActive', 1)
+                                  ->get();
+        $soPaymentTermsDrop = PoPaymentTermTypes::all();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -681,7 +775,8 @@ class QuotationMasterAPIController extends AppBaseController
             'quotationStatuses' => $quotationStatuses,
             'customer' => $customer,
             'salespersons' => $salespersons,
-            'segments' => $segments
+            'segments' => $segments,
+            'soPaymentTermsDrop' => $soPaymentTermsDrop
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -747,12 +842,24 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
+
+        if (array_key_exists('quotationType', $input)) {
+            if ($input['quotationType'] && !is_null($input['quotationType'])) {
+                $quotationMaster->where('quotationType', $input['quotationType']);
+            }
+        }
+
         $search = $request->input('search.value');
         if ($search) {
             $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
                 $query->where('quotationCode', 'LIKE', "%{$search}%");
             });
         }
+
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $request->request->remove('search.value');
 
 
         return \DataTables::eloquent($quotationMaster)
@@ -1105,10 +1212,13 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $quotationMasterID)
+        DocumentApproved::where('documentSystemCode', $quotationMasterID)
             ->where('companySystemID', $quotationMasterData->companySystemID)
             ->where('documentSystemID', $quotationMasterData->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($quotationMasterData->documentSystemID,$quotationMasterID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse('s', 'Sales quotation reopened successfully');
 
@@ -1133,6 +1243,7 @@ class QuotationMasterAPIController extends AppBaseController
         /*check order is already added to invoice or delivery order*/
         $existsinCI = CustomerInvoiceItemDetails::where('quotationMasterID',$quotationMasterID)->exists();
         $existsinDO = DeliveryOrderDetail::where('quotationMasterID',$quotationMasterID)->exists();
+        $existsinSO = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->exists();
         $quotOrSales = ($quotationMasterData->documentSystemID == 68)?'Sales Order':'Quotation';
 
         if($existsinCI || $quotationMasterData->isInDOorCI == 2){
@@ -1143,7 +1254,11 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError($quotOrSales.' is added to a delivery order',500);
         }
 
-        $quotationMasterArray = $quotationMasterData->toArray();
+        if($existsinSO || $quotationMasterData->isInSO == 1){
+            return $this->sendError($quotOrSales.' is added to a sales order',500);
+        }
+
+        $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
         unset($quotationMasterArray['quotation_last_status']);
         $storeQuotationMasterVersion = QuotationMasterVersion::insert($quotationMasterArray);
 
@@ -1300,7 +1415,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterdata = $this->quotationMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->whereIn('documentSystemID', [67, 68]);
-        }, 'company'])->findWithoutFail($quotationMasterID);
+        }, 'company','audit_trial.modified_by'])->findWithoutFail($quotationMasterID);
 
 
         if (empty($quotationMasterdata)) {
@@ -1325,11 +1440,14 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
+            ->where('selectedForSalesOrder', 0)
             ->where('isInDOorCI', '!=',1)
+            ->where('isInSO', '!=',1)
             ->where('closedYN',0)
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1368,5 +1486,184 @@ class QuotationMasterAPIController extends AppBaseController
             },'sales_quotation_detail','uom_issuing'])
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+
+     public function salesQuotationForSO(Request $request){
+        $input = $request->all();
+        $documentSystemID = 67;
+      
+        $salesOrderData = QuotationMaster::find($input['salesOrderID']);
+
+        $master = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->where('approvedYN', -1)
+            ->where('selectedForDeliveryOrder', 0)
+            ->where('selectedForSalesOrder', 0)
+            ->where('isInDOorCI', '!=',2)
+            ->where('isInDOorCI', '!=',1)
+            ->where('closedYN',0)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
+
+        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+    }
+
+    public function getSalesQuoatationDetailForSO(Request $request){
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+
+        $detail = DB::select('SELECT
+                                quotationdetails.*,
+                                erp_quotationmaster.serviceLineSystemID,
+                                "" AS isChecked,
+                                "" AS noQty,
+                                IFNULL(sodetails.soTakenQty,0) as soTakenQty 
+                            FROM
+                                erp_quotationdetails quotationdetails
+                                INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
+                            WHERE
+                                quotationdetails.quotationMasterID = ' . $id . ' 
+                                AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInDOorCI != 1');
+
+        return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+    }
+
+
+    function getOrderDetailsForSQ(Request $request)
+    {
+        $input = $request->all();
+
+        $quotationMasterID = $input['quotationMasterID'];
+
+        $detail = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)
+            ->with(['sales_order_detail','uom_issuing',
+                'master'=> function($query){
+                    $query->with(['transaction_currency']);
+                }])
+            ->get();
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+
+    public function amendSalesQuotationReview(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['quotationMasterID'];
+
+
+        $employee = \Helper::getEmployeeInfo();
+        $emails = array();
+
+        $masterData = QuotationMaster::find($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Quotation Master not found');
+        }
+
+        $quotOrSales = ($masterData->documentSystemID == 68)?'Sales Order':'Quotation';
+
+        if ($masterData->confirmedYN == 0) {
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', it is not confirmed');
+        }
+
+        /*check order is already added to invoice or delivery order*/
+
+        if(CustomerInvoiceItemDetails::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 2){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a customer invoice',500);
+        }
+
+        if(DeliveryOrderDetail::where('quotationMasterID',$id)->exists() || $masterData->isInDOorCI == 1){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a delivery order',500);
+        }
+
+        if(QuotationDetails::where('soQuotationMasterID',$id)->exists() || $masterData->isInSO == 1){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.'. It is added to a sales order',500);
+        }
+
+
+        if(QuotationMasterVersion::where('quotationMasterID',$id)->exists()){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', versions created for it');
+        }
+
+        if(AdvanceReceiptDetails::where('salesOrderID',$id)->exists()){
+            return $this->sendError('You cannot return back to amend this '.$quotOrSales.', It is added to advance receipt voucher');
+        }
+
+        $emailBody = '<p>' . $masterData->quotationCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $emailSubject = $masterData->quotationCode . ' has been return back to amend';
+
+        DB::beginTransaction();
+        try {
+
+            //sending email to relevant party
+            if ($masterData->confirmedYN == 1) {
+                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
+                    'companySystemID' => $masterData->companySystemID,
+                    'docSystemID' => $masterData->documentSystemID,
+                    'alertMessage' => $emailSubject,
+                    'emailAlertMessage' => $emailBody,
+                    'docSystemCode' => $id,
+                    'docCode' => $masterData->quotationCode
+                );
+            }
+
+            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemCode', $id)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->get();
+
+            foreach ($documentApproval as $da) {
+                if ($da->approvedYN == -1) {
+                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+                        'companySystemID' => $masterData->companySystemID,
+                        'docSystemID' => $masterData->documentSystemID,
+                        'alertMessage' => $emailSubject,
+                        'emailAlertMessage' => $emailBody,
+                        'docSystemCode' => $id,
+                        'docCode' => $masterData->quotationCode
+                    );
+                }
+            }
+
+            $sendEmail = \Email::sendEmail($emails);
+            if (!$sendEmail["success"]) {
+                return $this->sendError($sendEmail["message"], 500);
+            }
+
+            //deleting from approval table
+            DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            // updating fields
+            $masterData->confirmedYN = 0;
+            $masterData->confirmedByEmpSystemID = null;
+            $masterData->confirmedByEmpID = null;
+            $masterData->confirmedByName = null;
+            $masterData->confirmedDate = null;
+            $masterData->RollLevForApp_curr = 1;
+
+            $masterData->approvedYN = 0;
+            $masterData->approvedEmpSystemID = null;
+            $masterData->approvedbyEmpID = null;
+            $masterData->approvedbyEmpName = null;
+            $masterData->approvedDate = null;
+            $masterData->save();
+
+            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+
+            DB::commit();
+            return $this->sendResponse($masterData->toArray(), 'Return back to amend saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

@@ -67,7 +67,7 @@ class StockAdjustmentRepository extends BaseRepository
                 $q->with(['details.designation']);
             }])
                 ->where('documentSystemID',7);
-        }])
+        },'audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

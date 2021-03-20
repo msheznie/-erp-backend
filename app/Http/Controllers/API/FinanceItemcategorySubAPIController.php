@@ -163,7 +163,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             unset($input['Actions']);
         }
 
-        foreach ($input as $key => $value) {
+        /*foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
                 if (count($input[$key]) > 0) {
                     $input[$key] = $input[$key][0];
@@ -171,22 +171,27 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                     $input[$key] = 0;
                 }
             }
-        }
+        }*/
+        $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+
+        //
 
         if(isset($input['financeGLcodebBSSystemID']) && !$input['financeGLcodebBSSystemID']){
             $input['financeGLcodebBSSystemID'] = null;
+            $input['financeGLcodebBS'] = null;
         }
         if(isset($input['financeGLcodePLSystemID']) && !$input['financeGLcodePLSystemID']){
-            $input['financeGLcodebBSSystemID'] = null;
+            $input['financeGLcodePLSystemID'] = null;
+            $input['financeGLcodePL'] = null;
         }
         if(isset($input['financeGLcodeRevenueSystemID']) && !$input['financeGLcodeRevenueSystemID']){
             $input['financeGLcodeRevenueSystemID'] = null;
+            $input['financeGLcodeRevenue'] = null;
         }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
-        $empName = $user->employee['empName'];
 
         if(array_key_exists ('financeGLcodebBSSystemID' , $input )){
             $financeBS = ChartOfAccount::where('chartOfAccountSystemID',$input['financeGLcodebBSSystemID'])->first();

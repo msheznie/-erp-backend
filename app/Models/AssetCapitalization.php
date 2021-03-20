@@ -350,12 +350,17 @@ class AssetCapitalization extends Model
 
     public function contra_account()
     {
-        return $this->belongsTo('App\Models\ChartofAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
+        return $this->belongsTo('App\Models\ChartOfAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
     }
 
     public function asset_by()
     {
         return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'capitalizationID')->where('documentSystemID',63);
     }
 
 }

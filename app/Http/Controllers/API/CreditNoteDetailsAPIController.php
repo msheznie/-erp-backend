@@ -6,7 +6,7 @@ use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNote;
-use App\Models\chartOfAccount;
+use App\Models\ChartOfAccount;
 use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Repositories\CreditNoteDetailsRepository;
@@ -314,7 +314,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $x = 0;
 
 
-        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
 
 
         $inputData['creditNoteAutoID'] = $creditNoteAutoID;
@@ -364,7 +364,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $data = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
+        $data = CreditNoteDetails::with(['segment'])->where('creditNoteAutoID', $id)->get();
         return $this->sendResponse($data, 'Credit Note Details deleted successfully');
     }
 
@@ -384,6 +384,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
     public function updateCreditNote(Request $request)
     {
         $input = $request->all();
+        $input=array_except($input, array('segment'));
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
         array_except($input, 'creditNoteDetailsID');
@@ -436,7 +437,18 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input["comRptAmount"] = $currency['reportingAmount'];
         $input["localAmount"] = $currency['localAmount'];
 
-        $x = CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
+        // vat amount
+        $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;
+        $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
+        $input["VATAmountRpt"] = $currencyVAT['reportingAmount'];
+        $input["VATAmountLocal"] = $currencyVAT['localAmount'];
+        // net amount
+        $netAmount = isset($input['netAmount'])?$input['netAmount']:0;
+        $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
+        $input["netAmountRpt"] = $currencyNet['reportingAmount'];
+        $input["netAmountLocal"] = $currencyNet['localAmount'];
+
+        CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
 
         return $this->sendResponse('s', 'Credit note detail updated successfully');
 

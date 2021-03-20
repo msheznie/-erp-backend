@@ -256,4 +256,8 @@ class MaterielRequestDetails extends Model
     public function item_by(){
         return $this->belongsTo('App\Models\ItemMaster','itemCode','itemCodeSystem');
     }
+
+    public function master(){
+        return $this->belongsTo('App\Models\MaterielRequest','RequestID','RequestID');
+    }
 }

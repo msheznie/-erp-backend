@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -343,7 +344,7 @@ use Eloquent as Model;
  */
 class DeliveryOrder extends Model
 {
-
+    use Compoships;
     public $table = 'erp_delivery_order';
     
     const CREATED_AT = 'createdDateTime';
@@ -420,6 +421,14 @@ class DeliveryOrder extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'selectedForCustomerInvoice',
+        'selectedForSalesReturn',
+        'returnStatus',
+        'vatOutputGLCodeSystemID',
+        'vatOutputGLCode',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'timestamp'
     ];
 
@@ -430,6 +439,13 @@ class DeliveryOrder extends Model
      */
     protected $casts = [
         'deliveryOrderID' => 'integer',
+        'vatOutputGLCodeSystemID' => 'integer',
+        'vatOutputGLCode' => 'string',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'returnStatus' => 'integer',
         'orderType' => 'integer',
         'deliveryOrderCode' => 'string',
         'serialNo' => 'integer',
@@ -497,6 +513,7 @@ class DeliveryOrder extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'selectedForCustomerInvoice' => 'integer',
+        'selectedForSalesReturn' => 'integer',
         'timestamp' => 'datetime'
     ];
 
@@ -576,5 +593,21 @@ class DeliveryOrder extends Model
     public function finance_period_by()
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'deliveryOrderID')->where('documentSystemID',71);
+    }
+
+    public function tax()
+    {
+        return $this->belongsTo('App\Models\Taxdetail', 'deliveryOrderID', 'documentSystemCode')
+            ->where('documentSystemID', 71);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
     }
 }

@@ -427,6 +427,7 @@ class QuotationMasterVersion extends Model
     public $fillable = [
         'quotationMasterID',
         'documentSystemID',
+        'quotationType',
         'documentID',
         'quotationCode',
         'serialNumber',
@@ -507,6 +508,8 @@ class QuotationMasterVersion extends Model
         'isInDOorCI',
         'invoiceStatus',
         'deliveryStatus',
+        'selectedForSalesOrder',
+        'isInSO',
         'timestamp'
     ];
 
@@ -518,6 +521,9 @@ class QuotationMasterVersion extends Model
     protected $casts = [
         'quotationVerstionMasterID' => 'integer',
         'quotationMasterID' => 'integer',
+        'isInSO' => 'integer',
+        'selectedForSalesOrder' => 'integer',
+        'quotationType' => 'integer',
         'documentSystemID' => 'string',
         'documentID' => 'string',
         'quotationCode' => 'string',

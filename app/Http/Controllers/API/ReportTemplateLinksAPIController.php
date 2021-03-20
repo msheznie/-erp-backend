@@ -16,6 +16,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateReportTemplateLinksAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateLinksAPIRequest;
 use App\Models\Company;
+use App\Models\ChartOfAccount;
+use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
 use App\Repositories\ReportTemplateLinksRepository;
@@ -179,6 +181,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                 }
             }
         }
+
+        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['templateDetailID'])->update(['isFinalLevel' => 1]);
 
         $lastSortOrder = ReportTemplateLinks::ofTemplate($input['templateMasterID'])->where('templateDetailID',$input['templateDetailID'])->orderBy('linkID','asc')->get();
         if(count($lastSortOrder) > 0){
@@ -353,6 +357,12 @@ class ReportTemplateLinksAPIController extends AppBaseController
 
         $reportTemplateLinks->delete();
 
+        $checkTemplateLinksExists = ReportTemplateLinks::where('templateDetailID', $reportTemplateLinks->templateDetailID)->first();
+
+        if (!$checkTemplateLinksExists) {
+            $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateLinks->templateDetailID)->update(['isFinalLevel' => 0]);
+        }
+
         return $this->sendResponse($id, 'Report Template Links deleted successfully');
     }
 
@@ -404,8 +414,74 @@ class ReportTemplateLinksAPIController extends AppBaseController
 
     public function deleteAllLinkedGLCodes(Request $request){
         $reportTemplateLinks = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)->delete();
+         $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $request->templateDetailID)->update(['isFinalLevel' => 0]);
         return $this->sendResponse([], 'Report Template Links deleted successfully');
     }
 
+    public function assignReportTemplateToGl(Request $request)
+    {
+        $input = $request->all();
 
+        $input = $this->convertArrayToValue($input);
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $reportTemplateMaster = ReportTemplate::find($input['selectedReportTemplate']);
+
+        $tempDetail = ReportTemplateLinks::ofTemplate($input['selectedReportTemplate'])->pluck('glAutoID')->toArray();
+
+        $finalError = array(
+            'already_gl_linked' => array(),
+        );
+        $error_count = 0;
+         $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
+        if ($input['chartOfAccountSystemID']) {
+            if (in_array($input['chartOfAccountSystemID'], $tempDetail)) {
+                array_push($finalError['already_gl_linked'], $chartOfAccount->AccountCode . ' | ' . $chartOfAccount->AccountDescription);
+                $error_count++;
+            }
+
+            $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
+            }else{
+                if (!in_array($input['chartOfAccountSystemID'], $tempDetail)) {
+                    $data['templateMasterID'] = $input['selectedReportTemplate'];
+                    $data['templateDetailID'] = $input['selectedReportCategory'];
+                    $data['sortOrder'] = 1;
+                    $data['glAutoID'] = $input['chartOfAccountSystemID'];
+                    $data['glCode'] = $chartOfAccount->AccountCode;
+                    $data['glDescription'] = $chartOfAccount->AccountDescription;
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $input['companyID'];
+                    if($reportTemplateMaster->reportID == 1) {
+                        if ($chartOfAccount->controlAccounts == 'BSA') {
+                            $data['categoryType'] = 1;
+                        } else {
+                            $data['categoryType'] = 2;
+                        }
+                    }
+                    $data['createdPCID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
+                }
+            }
+        }
+
+        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $input['selectedReportCategory'])->update(['isFinalLevel' => 1]);
+
+        $lastSortOrder = ReportTemplateLinks::ofTemplate($input['selectedReportTemplate'])->where('templateDetailID',$input['selectedReportCategory'])->orderBy('linkID','asc')->get();
+        if(count($lastSortOrder) > 0){
+            foreach ($lastSortOrder as $key => $val) {
+                $data2['sortOrder'] = $key + 1;
+                $reportTemplateLinks = $this->reportTemplateLinksRepository->update($data2, $val->linkID);
+            }
+        }
+
+        return $this->sendResponse([], 'Report Template Links saved successfully');
+    }
 }

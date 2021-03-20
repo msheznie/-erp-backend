@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -95,7 +96,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class GRVMaster extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'erp_grvmaster';
     
     const CREATED_AT = 'createdDateTime';
@@ -110,6 +111,7 @@ class GRVMaster extends Model
         'grvTypeID',
         'grvType',
         'companySystemID',
+        'pullType',
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -198,6 +200,7 @@ class GRVMaster extends Model
     protected $casts = [
         'grvAutoID' => 'integer',
         'grvTypeID' => 'integer',
+        'pullType' => 'integer',
         'grvType' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',

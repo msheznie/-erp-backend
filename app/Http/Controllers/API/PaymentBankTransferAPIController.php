@@ -33,6 +33,7 @@ use App\Models\PaymentBankTransferRefferedBack;
 use App\Models\SupplierMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -554,6 +555,10 @@ class PaymentBankTransferAPIController extends AppBaseController
             $month = Carbon::parse($input['month'])->format('m');
 
             $bankTransfer = $bankTransfer->whereMonth('documentDate', $month);
+        }
+
+        if (isset($input['forReview']) && $input['forReview']) {
+            $bankTransfer = $bankTransfer->where('confirmedYN', 1);
         }
 
         if (isset($input['year']) && $input['year'] != null) {
@@ -1210,10 +1215,13 @@ class PaymentBankTransferAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $bankTransfer->companySystemID)
             ->where('documentSystemID', $bankTransfer->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($bankTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer reopened successfully');
     }

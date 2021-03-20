@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -165,7 +166,7 @@ use Eloquent as Model;
  */
 class StockAdjustment extends Model
 {
-
+    use Compoships;
     public $table = 'erp_stockadjustment';
     
     const CREATED_AT = 'createdDateTime';
@@ -318,6 +319,11 @@ class StockAdjustment extends Model
     public function setStockAdjustmentDateAttribute($value)
     {
         $this->attributes['stockAdjustmentDate'] = Helper::dateAddTime($value);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockAdjustmentAutoID')->where('documentSystemID',7);
     }
 
 }

@@ -373,7 +373,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
 
         /*$serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $serviceLineSystemID)->first();*/
-        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
         $totalAmount = 0; //$unitCost * $qty;
 
         $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;

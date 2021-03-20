@@ -286,5 +286,10 @@ class JvDetail extends Model
         return $this->belongsTo('App\Models\Contract', 'contractUID', 'contractUID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo('App\Models\JvMaster', 'jvMasterAutoId', 'jvMasterAutoId');
+    }
+
     
 }

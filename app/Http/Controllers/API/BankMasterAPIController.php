@@ -242,6 +242,14 @@ class BankMasterAPIController extends AppBaseController
     public function assignedCompaniesByBank(Request $request)
     {
         $bankId = $request['bankmasterAutoID'];
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -250,7 +258,9 @@ class BankMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $itemCompanies = BankAssign::with(['company'])->where('bankmasterAutoID',$bankId);
+        $itemCompanies = BankAssign::with(['company'])
+                                   ->where('bankmasterAutoID',$bankId)
+                                   ->whereIn("companySystemID",$subCompanies);
 
         return \DataTables::of($itemCompanies)
             ->order(function ($query) use ($input) {
@@ -274,16 +284,21 @@ class BankMasterAPIController extends AppBaseController
     public function getBankMasterFormData(Request $request)
     {
         $bankId = $request['bankmasterAutoID'];
+         $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
         /** Get not assign company list */
 
-        $assignCompanyId = BankAssign::select('companyID')->where('bankmasterAutoID', $bankId)->get();
-        $comanyIdArray = [];
-        foreach($assignCompanyId as $key=>$val)
-        {
-            $comanyIdArray[] = $val->companyID;
-        }
-        $allCompanies = Company::where("isGroup", 0)->whereNotIn('CompanyID', $comanyIdArray)->get();
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)
+                            ->whereDoesntHave('bank_assigned',function ($query) use ($bankId) {
+                                $query->where('bankmasterAutoID', '=', $bankId);
+                            })->where('isGroup',0)
+                            ->get();
 
         $output = array(
             'allCompanies' => $allCompanies,

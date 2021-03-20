@@ -37,6 +37,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\StockAdjustmentRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -298,7 +299,7 @@ class StockAdjustmentAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($stockAdjustment)) {
             return $this->sendError('Stock Adjustment not found');
@@ -357,7 +358,7 @@ class StockAdjustmentAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
@@ -381,6 +382,8 @@ class StockAdjustmentAPIController extends AppBaseController
                 $this->stockAdjustmentRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
                 return $this->sendError('Please select a active service line', 500,$serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if ($input['location']) {
@@ -1039,10 +1042,13 @@ class StockAdjustmentAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $stockAdjustment->companySystemID)
             ->where('documentSystemID', $stockAdjustment->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($stockAdjustment->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment reopened successfully');
     }

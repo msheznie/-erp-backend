@@ -482,6 +482,12 @@ class DeliveryOrderRefferedback extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'selectedForCustomerInvoice',
+        'vatOutputGLCodeSystemID',
+        'vatOutputGLCode',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'timestamp'
     ];
 
@@ -493,6 +499,12 @@ class DeliveryOrderRefferedback extends Model
     protected $casts = [
         'deliveryOrderRefferedbackID' => 'integer',
         'deliveryOrderID' => 'integer',
+        'vatOutputGLCodeSystemID' => 'integer',
+        'vatOutputGLCode' => 'string',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'orderType' => 'integer',
         'deliveryOrderCode' => 'string',
         'serialNo' => 'integer',

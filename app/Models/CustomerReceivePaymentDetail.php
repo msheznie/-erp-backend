@@ -262,6 +262,11 @@ class CustomerReceivePaymentDetail extends Model
         return $this->belongsTo(CustomerReceivePayment::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
     }
 
+    public function credit_note()
+    {
+        return $this->belongsTo(CreditNote::class, 'bookingInvCodeSystem', 'creditNoteAutoID');
+    }
+
     public function matching_master()
     {
         return $this->belongsTo(MatchDocumentMaster::class, 'matchingDocID', 'matchDocumentMasterAutoID');

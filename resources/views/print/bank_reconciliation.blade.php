@@ -187,7 +187,7 @@
         </tr>
         <tr style="width:100%">
             <td style="width: 30%">
-                <img src="logos/{{$entity->company->companyLogo}}" width="180px" height="60px">
+                <img src="{{$entity->company->logo_url}}" width="180px" height="60px">
             </td>
             <td style="width: 30%;text-align: center">
             </td>

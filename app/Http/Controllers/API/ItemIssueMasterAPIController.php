@@ -48,6 +48,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemIssueMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -317,7 +318,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
@@ -376,7 +377,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
@@ -399,6 +400,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
                 return $this->sendError('Please select an active department', 500,$serviceLineError);
             }
+
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
 
         if (isset($input['wareHouseFrom'])) {
@@ -411,6 +414,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                  $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
                 return $this->sendError('Please select an active warehouse', 500, $wareHouseError);
             }
+
+            $input['wareHouseFromCode'] = $checkWareHouseActive->wareHouseCode;
+            $input['wareHouseFromDes'] = $checkWareHouseActive->wareHouseDescription;
         }
 
         if (isset($input['issueDate'])) {
@@ -424,6 +430,8 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if (!empty($customer)) {
                 $input["customerID"] = $customer->CutomerCode;
+            }else{
+                $input["customerID"] = null;
             }
         }
 
@@ -1292,10 +1300,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $itemIssueMaster->companySystemID)
             ->where('documentSystemID', $itemIssueMaster->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($itemIssueMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue reopened successfully');
     }

@@ -35,6 +35,7 @@ use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetCapitalizationRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -784,6 +785,9 @@ class AssetCapitalizationAPIController extends AppBaseController
                 ->where('documentSystemID', $assetCapitalization->documentSystemID)
                 ->delete();
 
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($assetCapitalization->documentSystemID,$id,$input['reopenComments'],'Reopened');
+
             DB::commit();
             return $this->sendResponse($assetCapitalization->toArray(), 'Asset capitalization reopened successfully');
         } catch (\Exception $exception) {
@@ -802,7 +806,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 63);
-            }, 'created_by', 'modified_by'])->findWithoutFail($input['capitalizationID']);
+            }, 'created_by', 'modified_by','audit_trial.modified_by'])->findWithoutFail($input['capitalizationID']);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

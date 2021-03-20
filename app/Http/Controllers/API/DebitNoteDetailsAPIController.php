@@ -361,6 +361,24 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
 
+        //vat amount currency conversion
+
+        $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
+        $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = $VATCurrencyConversion['localAmount'];
+        $input['VATAmountRpt'] = $VATCurrencyConversion['reportingAmount'];
+
+
+        // total amount currency conversion
+
+        $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
+        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['netAmount']);
+
+        $input['netAmountLocal'] = $totalCurrencyConversion['localAmount'];
+        $input['netAmountRpt'] = $totalCurrencyConversion['reportingAmount'];
+
+
         $debitNoteDetails = $this->debitNoteDetailsRepository->update($input, $id);
 
         $amount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
@@ -368,9 +386,32 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $companyCurrencyConversionMaster = \Helper::currencyConversion($debitNote->companySystemID, $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $amount);
         $debitNote['debitAmountTrans'] = $amount;
         $debitNote['debitAmountLocal'] = $companyCurrencyConversionMaster['localAmount'];
-        $debitNote['debitAmountRpt'] = $companyCurrencyConversionMaster['reportingAmount'];
-        $debitNote['localCurrencyER'] = $companyCurrencyConversionMaster['trasToLocER'];
+        $debitNote['debitAmountRpt']   = $companyCurrencyConversionMaster['reportingAmount'];
+        $debitNote['localCurrencyER']  = $companyCurrencyConversionMaster['trasToLocER'];
         $debitNote['companyReportingER'] = $companyCurrencyConversionMaster['trasToRptER'];
+
+
+        $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
+            ->sum('VATAmount');
+        //vat amount currency conversion
+
+        $debitNote['VATAmount'] = $vatAmount;
+        $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $vatAmount);
+
+        $debitNote['VATAmountLocal'] = $VATCurrencyConversion['localAmount'];
+        $debitNote['VATAmountRpt'] = $VATCurrencyConversion['reportingAmount'];
+
+        $totalNetAmount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
+            ->sum('netAmount');
+        // total amount currency conversion
+
+        $debitNote['netAmount'] = $totalNetAmount;
+        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $totalNetAmount);
+
+        $debitNote['netAmountLocal'] = $totalCurrencyConversion['localAmount'];
+        $debitNote['netAmountRpt'] = $totalCurrencyConversion['reportingAmount'];
+
+
         $debitNote->save();
         return $this->sendResponse($debitNoteDetails->toArray(), 'DebitNoteDetails updated successfully');
     }

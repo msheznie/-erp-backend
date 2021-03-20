@@ -14,3 +14,4 @@ yarn-error.log
 .env
 /.scannerwork
 /public/tmp/
+composer.lock

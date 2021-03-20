@@ -20,7 +20,9 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
 use App\Models\GRVMaster;
 use App\Models\ItemIssueMaster;
+use App\Models\BookInvSuppDet;
 use App\Models\PurchaseReturn;
+use App\Models\GRVDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\StockTransfer;
 use App\Repositories\PurchaseReturnDetailsRepository;
@@ -242,10 +244,21 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Return Details not found');
         }
 
+        $grvDetails = GRVDetails::find($purchaseReturnDetails->grvDetailsID);
+
+        if (!$grvDetails) {
+            return $this->sendError('GRV Details not found');
+        }
+
         $purchaseReturn = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
+        }
+
+
+        if ($input['noQty'] > ($grvDetails->noQty - $grvDetails->returnQty)) {
+             return $this->sendError("GRV balance Qty is ".($grvDetails->noQty - $grvDetails->returnQty).". You cannot return more than balance Qty.", 500,$qtyError);
         }
 
 
@@ -280,6 +293,18 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $input['netAmount'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitSupTransCur;
         $input['netAmountLocal'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitLocalCur;
         $input['netAmountRpt'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitComRptCur;
+        
+        if (isset($input['unit'])) {
+            unset($input['unit']);
+        }
+
+        if (isset($input['grv_master'])) {
+            unset($input['grv_master']);
+        }
+
+        if (isset($input['grv_detail_master'])) {
+            unset($input['grv_detail_master']);
+        }
 
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->update($input, $id);
 
@@ -335,6 +360,22 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $purchaseReturnDetails->delete();
 
+
+        $remainingPrnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $purchaseReturnDetails->purhaseReturnAutoID)
+                                                    ->first();
+
+
+        if (!$remainingPrnDetails) {
+            $masterData = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);  
+
+            if (!$masterData) {
+                return $this->sendError('Purchase Return not found');
+            } 
+
+            $masterData->isInvoiceCreatedForGrv = 0;     
+            $masterData->save();
+        } 
+
         return $this->sendResponse($id, 'Purchase Return Details deleted successfully');
     }
 
@@ -349,7 +390,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Return  not found');
         }
 
-        $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['id'])->with(['unit', 'grv_master'])->get();
+        $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['id'])->with(['unit', 'grv_master', 'grv_detail_master'])->get();
 
         return $this->sendResponse($purchaseReturnDetails, 'Purchase Return Details retrieved successfully');
     }
@@ -366,6 +407,36 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return  not found');
+        }
+
+
+        $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['purhaseReturnAutoID'])
+                                          ->get();
+
+        $checkDuplicateGrv = false;
+        foreach ($prDetails as $key => $value) {
+            if ($value->grvAutoID != $input['grvAutoID']) {
+                $checkDuplicateGrv = true;
+            }
+        }
+
+        if ($checkDuplicateGrv) {
+            return $this->sendError('Different GRV cannot be added to Purchase Return');
+        }
+
+
+        $checkOtherPrns = PurchaseReturnDetails::with(['master' => function ($query) {
+                                                    $query->where('approved', 0);
+                                               }])
+                                               ->where('purhaseReturnAutoID','!=', $input['purhaseReturnAutoID'])
+                                               ->where('grvAutoID', $input['grvAutoID'])
+                                               ->whereHas('master', function($query) {
+                                                    $query->where('approved', 0);
+                                               })
+                                               ->first();
+
+        if ($checkOtherPrns) {
+            return $this->sendError("There is a Purchase Return (" . $checkOtherPrns->master->purchaseReturnCode . ") pending for approval for the GRV you are trying to add. Please check again.", 500);
         }
 
         $grv = GRVMaster::find($input['grvAutoID']);
@@ -611,6 +682,14 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['financeGLcodePL'] = $new['financeGLcodePL'];
                 $item['includePLForGRVYN'] = $new['includePLForGRVYN'];
 
+
+                $item['vatRegisteredYN'] = $new['vatRegisteredYN'];
+                $item['supplierVATEligible'] = $new['supplierVATEligible'];
+                $item['VATPercentage'] = $new['VATPercentage'];
+                $item['VATAmount'] = $new['VATAmount'];
+                $item['VATAmountLocal'] = $new['VATAmountLocal'];
+                $item['VATAmountRpt'] = $new['VATAmountRpt'];
+
                 array_push($createArray, $item);
             }
         }
@@ -626,7 +705,32 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             }
         }
 
+        $this->updateGrvInvoiceStatus($input['purhaseReturnAutoID'], $input['grvAutoID']);
+
         return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
+    }
+
+
+    public function updateGrvInvoiceStatus($purhaseReturnAutoID, $grvAutoID)
+    {
+        $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($purhaseReturnAutoID);
+
+        if (empty($purchaseReturn)) {
+            return false;
+        }
+
+        $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $grvAutoID)
+                                                ->first();
+
+        if ($checkGrvAddedToIncoice) {
+            $purchaseReturn->isInvoiceCreatedForGrv = 1;
+        } else {
+            $purchaseReturn->isInvoiceCreatedForGrv = 0;
+        }
+
+        $purchaseReturn->save();
+
+        return true;
     }
 
 
@@ -650,5 +754,24 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         return $this->sendResponse($purchaseReturnAutoID, 'Purchase Return details deleted successfully');
     }
 
+    public function grvReturnDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $grvDetailsID = $input['grvDetailsID'];
+
+
+        $detailExistAll = PurchaseReturnDetails::with(['master' => function($query) {
+                                                    $query->with(['currency_by']);
+                                                }, 'unit'])
+                                               ->where('grvDetailsID', $grvDetailsID)
+                                               ->whereHas('master', function($query) {
+                                                    $query->where('approved', -1); 
+                                               })
+                                               ->get();
+
+
+       return $this->sendResponse($detailExistAll, 'Purchase Return details deleted successfully');
+    }
 
 }

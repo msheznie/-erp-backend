@@ -72,7 +72,7 @@ class InventoryReclassificationRepository extends BaseRepository
                 $q->with(['details.designation']);
             }])
                 ->where('documentSystemID',61);
-        }])
+        },'audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

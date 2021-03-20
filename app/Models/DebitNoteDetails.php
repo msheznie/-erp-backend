@@ -166,7 +166,13 @@ class DebitNoteDetails extends Model
         'comRptAmount',
         'budgetYear',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -197,7 +203,13 @@ class DebitNoteDetails extends Model
         'comRptCurrencyER' => 'float',
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**
@@ -219,5 +231,8 @@ class DebitNoteDetails extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
-    
+    public function master()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'debitNoteAutoID', 'debitNoteAutoID');
+    }
 }

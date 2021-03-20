@@ -133,7 +133,7 @@ class QuotationStatus extends Model
     {
         $quotationStatusData = QuotationStatus::where('quotationID', $quotationID)
                                               ->with(['status'])
-                                              ->orderBy('quotationID', 'desc')
+                                              ->orderBy('quotationStatusID', 'desc')
                                               ->first();
 
         $status = '';

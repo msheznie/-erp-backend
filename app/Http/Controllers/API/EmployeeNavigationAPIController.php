@@ -208,10 +208,26 @@ class EmployeeNavigationAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->findWithoutFail($id);
 
+        $selectedCompanyId = (isset($request['selectedCompanyId'])) ? $request['selectedCompanyId'] : 0;
+        
         $employee= EmployeeNavigation::select('companyID')->where('employeeSystemID',$user->employee_id)->get();
         $companiesByGroup = array_pluck($employee, 'companyID');
 
-        $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0)->get();
+        $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0);
+
+        if ($selectedCompanyId > 0) {
+           $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+            if($isGroup){
+                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            }else{
+                $subCompanies = [$selectedCompanyId];
+            }
+
+            $groupCompany = $groupCompany->whereIn('companySystemID', $subCompanies);
+        }
+
+        $groupCompany = $groupCompany->get();
         return $this->sendResponse($groupCompany, 'Employee Navigation deleted successfully');
     }
 

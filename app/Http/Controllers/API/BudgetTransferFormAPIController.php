@@ -32,6 +32,7 @@ use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetTransferFormRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -646,10 +647,13 @@ class BudgetTransferFormAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $budgetTransfer->companySystemID)
             ->where('documentSystemID', $budgetTransfer->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($budgetTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($budgetTransfer->toArray(), 'Budget Transfer reopened successfully');
     }
