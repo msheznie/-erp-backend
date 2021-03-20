@@ -33,6 +33,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -40,7 +41,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
-use App\Models\customercurrency;
+use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
@@ -77,6 +78,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class CustomerInvoiceDirectController
@@ -325,7 +327,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        }, 'grv'])->findWithoutFail($id);
+        }, 'grv','customer','warehouse','segment'])->findWithoutFail($id);
 
 
         if (empty($customerInvoiceDirect)) {
@@ -505,9 +507,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (isset($input['secondaryLogoCompanySystemID']) && $input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompID'] != '') {
-                $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $_post['secondaryLogoCompID'] = $company->CompanyID;
-                $_post['secondaryLogo'] = $company->companyLogo;
+                $_post['secondaryLogo'] = $company->logo_url;
             } else {
                 $_post['secondaryLogoCompID'] = NULL;
                 $_post['secondaryLogo'] = NULL;
@@ -539,14 +541,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
+                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500, array('type' => 'customer_credit_days'));
             }
 
             /*if customer change*/
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             $_post['customerGLCode'] = $customer->custGLaccount;
             $_post['customerGLSystemID'] = $customer->custGLAccountSystemID;
-            $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+            $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
             if ($currency) {
                 $_post['custTransactionCurrencyID'] = $currency->currencyID;
                 $myCurr = $currency->currencyID;
@@ -755,11 +757,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
+                        $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
+
+                        if (count(array_unique($financeCategories)) > 1) {
+                            return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+                        }
+
                         foreach ($details as $item) {
 
 //                            If the revenue account or cost account or BS account is null do not allow to confirm
 
-                            if (!($item->financeGLcodebBSSystemID > 0)) {
+                            if ((!($item->financeGLcodebBSSystemID > 0)) && $item->itemFinanceCategoryID != 2) {
                                 return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
                             } elseif (!($item->financeGLcodePLSystemID > 0)) {
                                 return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
@@ -780,7 +788,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                             $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
 
-                            if ($isPerforma == 2) {
+                            if ($isPerforma == 2 && $updateItem->itemFinanceCategoryID == 1) {
                                 $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->companyReportingCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $updateItem->issueCostRpt);
                                 $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
                             }
@@ -827,25 +835,34 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $updateItem->save();
 
                             if ($isPerforma == 2 || $isPerforma == 4 || $isPerforma == 5) {// only item sales invoice. we won't get from delivery note type.
-                                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                                    return $this->sendError('Item must not have zero cost', 500);
-                                }
-                                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                                    return $this->sendError('Item must not have negative cost', 500);
-                                }
-                                if ($updateItem->currentWareHouseStockQty <= 0) {
-                                    return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
-                                }
-                                if ($updateItem->currentStockQty <= 0) {
-                                    return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
-                                }
-                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                                    return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+
+                                if($updateItem->itemFinanceCategoryID == 1){
+                                    if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                                        return $this->sendError('Item must not have zero cost', 500);
+                                    }
+                                    if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                                        return $this->sendError('Item must not have negative cost', 500);
+                                    }
+                                    if ($updateItem->currentWareHouseStockQty <= 0) {
+                                        return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->currentStockQty <= 0) {
+                                        return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                                        return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                                        return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+                                }else{
+                                    if ($updateItem->sellingCostAfterMargin == 0) {
+                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                    }
                                 }
 
-                                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                                    return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
-                                }
+
                             }
                         }
 
@@ -857,6 +874,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
                             return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        }
+
+                        if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
                         }
 
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
@@ -880,7 +901,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
                     } else {
-                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
                     IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
                         where('custInvoiceDirectID', $id)
@@ -895,9 +916,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     ->orwhereRaw('unitCost IS NULL OR unitCost =""');
                             });
 
-
                         if (!empty($detailValidation->get()->toArray())) {
 
+                                /*
+                                 * check policy 15
+                                 *  Allow to confirm the Customer invoice with contract number
+                                 *  This policy should work only for Revenue GL
+                                 * */
+
+                            $policyRGLCID = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
+                                ->where('companySystemID', $input['companySystemID'])
+                                ->where('isYesNO', 1)
+                                ->exists();
 
                             foreach ($detailValidation->get()->toArray() as $item) {
 
@@ -906,7 +936,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'serviceLineCode' => 'required|min:1',
                                     'unitOfMeasure' => 'required|numeric|min:1',
                                     'invoiceQty' => 'required|numeric|min:1',
-                                    'contractID' => 'required|numeric|min:1',
                                     'invoiceAmount' => 'required|numeric|min:1',
                                     'unitCost' => 'required|numeric|min:1',
                                 ], [
@@ -915,7 +944,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
-                                    'contractID.required' => 'Contract no. is required.',
                                     'invoiceAmount.required' => 'Amount is required.',
                                     'unitCost.required' => 'Unit cost is required.'
 
@@ -925,11 +953,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     return $this->sendError($validators->messages(), 422);
                                 }
 
+                                if(!$policyRGLCID){
+
+                                    $glSystemID = isset($item['glSystemID'])?$item['glSystemID']:0;
+                                    $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')
+                                        ->where('chartOfAccountSystemID', $glSystemID)
+                                        ->where('controlAccountsSystemID',1)// Revenue
+                                        ->exists();
+
+                                    if($chartOfAccount){
+                                        $contractValidator = \Validator::make($item, [
+                                            'contractID' => 'required|numeric|min:1'
+                                        ], [
+                                            'contractID.required' => 'Contract no. is required.'
+                                        ]);
+                                        if ($contractValidator->fails()) {
+                                            return $this->sendError($contractValidator->messages(), 422);
+                                        }
+                                    }
+
+                                }
 
                             }
 
                         }
-
                         $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
                         $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
 
@@ -973,7 +1020,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
 
             }
-        } else {
+        }
+        else {
             $this->customerInvoiceDirectRepository->update($_post, $id);
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
@@ -1097,6 +1145,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         ])->findWithoutFail($id);
 
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        }
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
 
@@ -1104,15 +1155,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
         }
 
-        if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found', 500);
-        } else {
-            /*   $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
-               $data['data']['master'] = $customerInvoiceDirect;
-               $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
-            $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
-            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
-        }
+        $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
+        return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
 
@@ -1311,7 +1355,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankID = $master->bankID;
         }
 
-        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,creditDays"))
             ->where('companySystemID', $companyId)
             ->where('isActive', 1)
             ->where('isAssigned', -1)
@@ -1461,7 +1505,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
         $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
             $query->with(['rig']);
-        }])->where('companySystemID', $master->companySystemID)->where('customerSystemID', $master->customerID)->where('performaStatus', 0)->where('PerformaOpConfirmed', 1);
+        }])->where('companySystemID', $master->companySystemID)
+            ->where('customerSystemID', $master->customerID)
+            ->where('performaStatus', 0)
+            ->where('PerformaOpConfirmed', 1);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1940,7 +1987,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $vatRegistratonNumber = '';
         $CompanyFax = '';
         if ($company) {
-            $companyLogo = $company->companyLogo;
+            $companyLogo = $company->logo_url;
             $CompanyName = $company->CompanyName;
             $vatRegistratonNumber = $company->vatRegistratonNumber;
             $CompanyFax = $company->CompanyFax;
@@ -1955,7 +2002,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                                 ->first();
 
         if ($checkCompanyIsMerged) {
-            $companyLogo = $checkCompanyIsMerged['logo'];
+            $companyLogo = $checkCompanyIsMerged['logo_url'];
             $CompanyName = $checkCompanyIsMerged['name'];
         }
 
@@ -1968,7 +2015,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $vatRegistratonNumber = $company->vatRegistratonNumber;
                 $CompanyAddress = $company->CompanyAddress;
                 $CompanyAddressSecondaryLanguage = $company->CompanyAddressSecondaryLanguage;
-                $companyLogo = $company->companyLogo;
+                $companyLogo = $company->logo_url;
                 $CompanyCountry = $company->country->countryName;
             }
 
@@ -2252,10 +2299,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->accountIBAN = $accountIBAN;
         $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
+        $awsPolicy = Helper::checkPolicy($companySystemID, 50);
 
         $customerInvoice->logoExists = false;
-        if (file_exists('logos/' . $customerInvoice->companyLogo)) {
-            $customerInvoice->logoExists = true;
+        if ($awsPolicy) {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
+                $customerInvoice->logoExists = true;
+            }            
+        } else {
+            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
+                $customerInvoice->logoExists = true;
+            }      
         }
 
         $directTraSubTotal = 0;
@@ -2647,10 +2701,13 @@ GROUP BY
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+        DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
             ->where('companySystemID', $invoice->companySystemID)
             ->where('documentSystemID', $invoice->documentSystemiD)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($invoice->documentSystemiD,$custInvoiceDirectAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
     }
@@ -2774,6 +2831,7 @@ WHERE
             'erp_custinvoicedirect.createdDateAndTime',
             'erp_custinvoicedirect.confirmedDate',
             'erp_custinvoicedirect.bookingAmountTrans',
+            'erp_custinvoicedirect.VATAmount',
             'erp_custinvoicedirect.isPerforma',
             'erp_custinvoicedirect.documentType',
             'erp_documentapproved.documentApprovedID',
@@ -2864,6 +2922,7 @@ WHERE
             'erp_custinvoicedirect.createdDateAndTime',
             'erp_custinvoicedirect.confirmedDate',
             'erp_custinvoicedirect.bookingAmountTrans',
+            'erp_custinvoicedirect.VATAmount',
             'erp_custinvoicedirect.isPerforma',
             'erp_custinvoicedirect.documentType',
             'erp_custinvoicedirect.approvedDate',
@@ -3071,7 +3130,11 @@ WHERE
         $customerInvoiceDirectData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
         $customerInvoiceDirectData->canceledByEmpID = $employee->empID;
         $customerInvoiceDirectData->canceledByEmpName = $employee->empFullName;
+        $customerInvoiceDirectData->customerInvoiceNo = null;
         $customerInvoiceDirectData->save();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($customerInvoiceDirectData->documentSystemiD,$custInvoiceDirectAutoID,$request['cancelComments'],'Cancelled');
 
         return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer invoice cancelled successfully');
     }

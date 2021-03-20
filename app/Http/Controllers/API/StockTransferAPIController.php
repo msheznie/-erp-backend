@@ -41,6 +41,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\StockTransferDetails;
 use App\Repositories\StockTransferRepository;
+use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -358,7 +359,7 @@ class StockTransferAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'location_to_by','location_from_by','company_from','company_to'])->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
@@ -417,7 +418,7 @@ class StockTransferAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by','location_to_by','location_from_by','company_from','company_to']);
         $input = $this->convertArrayToValue($input);
         $wareHouseFromError = array('type' => 'locationFrom');
         $wareHouseToError   = array('type' => 'locationTo');
@@ -1243,10 +1244,13 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $stockTransfer->companySystemID)
             ->where('documentSystemID', $stockTransfer->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($stockTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer reopened successfully');
     }

@@ -234,9 +234,9 @@
                     <table>
                         <tr>
                             @if($isMergedCompany)
-                                <td><img src="logos/{{$secondaryCompany['logo']}}" width="180px" height="60px"></td>
+                                <td><img src="{{$secondaryCompany['logo_url']}}" width="180px" height="60px"></td>
                             @else
-                                <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px"></td>
                             @endif
                         </tr>
                         <tr>
@@ -584,6 +584,10 @@
                 {{ $netUnitCost = 0 }}
                 {{ $subTotal += $det->netAmount }}
                 {{ $netUnitCost = $det->unitCost - $det->discountAmount + $det->VATAmount }}
+                @if($podata->rcmActivated)
+                    {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
+                @endif
+
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>

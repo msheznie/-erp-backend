@@ -196,6 +196,8 @@ class ReportTemplateAPIController extends AppBaseController
                         $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data3);
                     }
+
+                    $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetails->detID)->update(['isFinalLevel' => 1]);
                 }
 
             }
@@ -434,6 +436,53 @@ class ReportTemplateAPIController extends AppBaseController
         $reportTemplate = ReportTemplate::with(['template_type'])->OfCompany($companyID)
                                         ->where('companyReportTemplateID','!=', $companyReportTemplateID)
                                         ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
+    public function getReportTemplatesByCategory(Request $request)
+    {
+        $input = $request->all();
+
+        $selectedCompanyId = $input['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $reportTemplate = ReportTemplate::where('reportID', $input['catogaryBLorPLID'])
+                                        ->where('isActive', 1)
+                                        ->whereIn('companySystemID', $subCompanies)
+                                        ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
+    public function getAssignedReportTemplatesByGl(Request $request)
+    {
+        $input = $request->all();
+        $selectedCompanyId = $input['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $reportTemplate = ReportTemplateDetails::with(['master' => function($query) use ($subCompanies) {
+                                                    $query->whereIn('companySystemID', $subCompanies);
+                                                }, 'gllink' => function($query) use ($input, $subCompanies) {
+                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
+                                                }])
+                                                ->whereHas('master', function($query) use ($subCompanies) {
+                                                    $query->whereIn('companySystemID', $subCompanies);
+                                                })
+                                                ->whereHas('gllink', function($query) use ($input) {
+                                                     $query->where('glAutoID', $input['chartOfAccountSystemID']);
+                                                })
+                                                ->get();
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
 

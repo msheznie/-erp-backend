@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSupplierCurrencyAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCurrencyAPIRequest;
 use App\Models\SupplierCurrency;
+use App\Models\CurrencyMaster;
 use App\Repositories\SupplierCurrencyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -134,5 +135,17 @@ class SupplierCurrencyAPIController extends AppBaseController
         $supplierCurrency->delete();
 
         return $this->sendResponse($id, 'Supplier Currency deleted successfully');
+    }
+
+    public function getCurrencyDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $resData = [
+            'localCurrency' => isset($input['localCurrencyID']) ? CurrencyMaster::find($input['localCurrencyID']) : null,
+            'reportingCurrency' => isset($input['reportingCurrencyID']) ? CurrencyMaster::find($input['reportingCurrencyID']) : null
+        ];
+
+        return $this->sendResponse($resData, 'Currency details retrieved successfully');
     }
 }

@@ -288,7 +288,7 @@ class CreditNoteAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'debitNote' => function ($query) {
             $query->select('debitNoteAutoID', 'debitNoteCode');
-        }])->findWithoutFail($id);
+        },'customer'])->findWithoutFail($id);
 
         if (empty($creditNote)) {
             return $this->sendError('Credit Note not found');
@@ -349,7 +349,7 @@ class CreditNoteAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
-            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate'));
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
         /** @var CreditNote $creditNote */
         $creditNote = $this->creditNoteRepository->findWithoutFail($id);
@@ -389,9 +389,9 @@ class CreditNoteAPIController extends AppBaseController
 
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompanySystemID'] != '') {
-                $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
                 $input['secondaryLogoCompID'] = $company->CompanyID;
-                $input['secondaryLogo'] = $company->companyLogo;
+                $input['secondaryLogo'] = $company->logo_url;
             } else {
                 $input['secondaryLogoCompID'] = NULL;
                 $input['secondaryLogo'] = NULL;
@@ -937,10 +937,13 @@ class CreditNoteAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
+        DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
             ->where('companySystemID', $creditnote->companySystemID)
             ->where('documentSystemID', $creditnote->documentSystemiD)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($creditnote->documentSystemiD,$creditNoteAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse('s', 'Credit note reopened successfully');
 

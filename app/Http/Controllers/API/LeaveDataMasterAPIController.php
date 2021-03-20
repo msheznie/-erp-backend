@@ -558,11 +558,12 @@ class LeaveDataMasterAPIController extends AppBaseController
         $data = $this->convertArrayToValue($data);
         $documentAttachments = HrmsDocumentAttachments::create($data);
 
+        $disk = Helper::policyWiseDisk($documentAttachments->companySystemID, 'public');
         $decodeFile = base64_decode($data['file']);
-
+  
         $data_update['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
-        Storage::disk('public')->put($data_update['myFileName'], $decodeFile);
+        Storage::disk($disk)->put($data_update['myFileName'], $decodeFile);
 
         HrmsDocumentAttachments::where('attachmentID', $documentAttachments->attachmentID)->update($data_update);
 

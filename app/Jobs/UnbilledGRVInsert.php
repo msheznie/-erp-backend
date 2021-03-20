@@ -54,40 +54,71 @@ class UnbilledGRVInsert implements ShouldQueue
                     $valEligible = true;
                 }
 
-                if ($valEligible) {
-                    $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as totTransactionAmount,ROUND(SUM((GRVcostPerUnitLocalCur*noQty) + (VATAmountLocal*noQty)),7) as totLocalAmount, ROUND(SUM((GRVcostPerUnitComRptCur*noQty) + (VATAmountRpt*noQty)),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
-                        ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
-                        ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
-                        ->groupBy('purchaseOrderMastertID')
-                        ->get();
-                } else {
-                    $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
-                        ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
-                        ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
-                        ->groupBy('purchaseOrderMastertID')
-                        ->get();
-                }
-
-                Log::info($output);
-                if ($output) {
-                    UnbilledGrvGroupBy::insert($output->toArray());
-                    $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp")
-                                                ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
-                                                ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
-                                                ->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])
-                                                ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')
-                                                ->get();
-                    if($output){
-                        UnbilledGrvGroupBy::insert($output->toArray());
+                if ($masterModel['documentSystemID'] == 3) {
+                    if ($valEligible) {
+                        $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as totTransactionAmount,ROUND(SUM((GRVcostPerUnitLocalCur*noQty) + (VATAmountLocal*noQty)),7) as totLocalAmount, ROUND(SUM((GRVcostPerUnitComRptCur*noQty) + (VATAmountRpt*noQty)),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
+                            ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                            ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                            ->groupBy('purchaseOrderMastertID')
+                            ->get();
+                    } else {
+                        $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
+                            ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                            ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                            ->groupBy('purchaseOrderMastertID')
+                            ->get();
                     }
-                    DB::commit();
-                    Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));
-                }else{
-                    DB::rollback();
-                    Log::info('No records found in unbilled grv table' . date('H:i:s'));
+
+                    if ($output) {
+                        $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
+
+                        $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp")
+                                                    ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                                                    ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                                                    ->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])
+                                                    ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')
+                                                    ->get();
+                        if($output){
+                            $unbillRes1 = UnbilledGrvGroupBy::insert($output->toArray());
+                        }
+                        DB::commit();
+                        Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));
+                    }else{
+                        DB::rollback();
+                        Log::info('No records found in unbilled grv table' . date('H:i:s'));
+                    }
+                } else if ($masterModel['documentSystemID'] == 24) {
+                     if ($valEligible) {
+                        $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM((erp_grvdetails.GRVcostPerUnitSupTransCur*erp_purchasereturndetails.noQty) + (erp_grvdetails.VATAmount*erp_purchasereturndetails.noQty)),7) as totTransactionAmount,ROUND(SUM((erp_grvdetails.GRVcostPerUnitLocalCur*erp_purchasereturndetails.noQty) + (erp_grvdetails.VATAmountLocal*erp_purchasereturndetails.noQty)),7) as totLocalAmount, ROUND(SUM((erp_grvdetails.GRVcostPerUnitComRptCur*erp_purchasereturndetails.noQty) + (erp_grvdetails.VATAmountRpt*erp_purchasereturndetails.noQty)),7) as totRptAmount,ROUND(SUM(erp_grvdetails.VATAmount*erp_purchasereturndetails.noQty),7) as totalVATAmount,ROUND(SUM(erp_grvdetails.VATAmountLocal*erp_purchasereturndetails.noQty),7) as totalVATAmountLocal,ROUND(SUM(erp_grvdetails.VATAmountRpt*erp_purchasereturndetails.noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp, erp_purchasereturndetails.purhaseReturnAutoID as purhaseReturnAutoID")
+                            ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                            ->join('erp_purchasereturndetails', 'erp_grvdetails.grvDetailsID', '=', 'erp_purchasereturndetails.grvDetailsID')
+                            ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                            ->WHERE('erp_purchasereturndetails.purhaseReturnAutoID', $masterModel["purhaseReturnAutoID"])
+                            ->groupBy('purchaseOrderMastertID')
+                            ->get();
+                    } else {
+                        $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_purchasereturndetails.noQty),7) as totTransactionAmount,ROUND(SUM(erp_grvdetails.GRVcostPerUnitLocalCur*erp_purchasereturndetails.noQty),7) as totLocalAmount, ROUND(SUM(erp_grvdetails.GRVcostPerUnitComRptCur*erp_purchasereturndetails.noQty),7) as totRptAmount,ROUND(SUM(erp_grvdetails.VATAmount*erp_purchasereturndetails.noQty),7) as totalVATAmount,ROUND(SUM(erp_grvdetails.VATAmountLocal*erp_purchasereturndetails.noQty),7) as totalVATAmountLocal,ROUND(SUM(erp_grvdetails.VATAmountRpt*erp_purchasereturndetails.noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp, erp_purchasereturndetails.purhaseReturnAutoID as purhaseReturnAutoID")
+                            ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                            ->join('erp_purchasereturndetails', 'erp_grvdetails.grvDetailsID', '=', 'erp_purchasereturndetails.grvDetailsID')
+                            ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
+                            ->WHERE('erp_purchasereturndetails.purhaseReturnAutoID', $masterModel["purhaseReturnAutoID"])
+                            ->groupBy('purchaseOrderMastertID')
+                            ->get();
+                    }
+
+                    if ($output) {
+                        $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
+
+                        DB::commit();
+                        Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));
+                    }else{
+                        DB::rollback();
+                        Log::info('No records found in unbilled grv table' . date('H:i:s'));
+                    }
                 }
             } catch (\Exception $e) {
                 DB::rollback();
+                Log::info($e->getMessage());
                 Log::error('Error occurred when updating to unbilled grv table' . date('H:i:s'));
             }
         }

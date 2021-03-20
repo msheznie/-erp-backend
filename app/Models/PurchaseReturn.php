@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -276,7 +277,7 @@ use Eloquent as Model;
  */
 class PurchaseReturn extends Model
 {
-
+    use Compoships;
     public $table = 'erp_purchasereturnmaster';
     
     const CREATED_AT = 'createdDateTime';
@@ -290,6 +291,7 @@ class PurchaseReturn extends Model
         'documentSystemID',
         'companyID',
         'serviceLineSystemID',
+        'isInvoiceCreatedForGrv',
         'documentID',
         'companyFinanceYearID',
         'companyFinancePeriodID',
@@ -326,6 +328,7 @@ class PurchaseReturn extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'timesReferred',
+        'refferedBackYN',
         'RollLevForApp_curr',
         'createdUserGroup',
         'createdPcID',
@@ -339,6 +342,8 @@ class PurchaseReturn extends Model
         'liabilityAccountSysemID',
         'liabilityAccount',
         'UnbilledGRVAccountSystemID',
+        'grvRecieved',
+        'prClosedYN',
         'UnbilledGRVAccount'
     ];
 
@@ -349,6 +354,8 @@ class PurchaseReturn extends Model
      */
     protected $casts = [
         'purhaseReturnAutoID' => 'integer',
+        'grvRecieved' => 'integer',
+        'prClosedYN' => 'integer',
         'companySystemID' => 'integer',
         'serviceLineCode' => 'string',
         'documentSystemID' => 'integer',
@@ -362,6 +369,7 @@ class PurchaseReturn extends Model
         'purchaseReturnRefNo' => 'string',
         'narration' => 'string',
         'purchaseReturnLocation' => 'integer',
+        'refferedBackYN' => 'integer',
         'supplierID' => 'integer',
         'supplierPrimaryCode' => 'string',
         'supplierName' => 'string',
@@ -384,6 +392,7 @@ class PurchaseReturn extends Model
         'approved' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'isInvoiceCreatedForGrv' => 'integer',
         'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserGroup' => 'string',
@@ -479,4 +488,8 @@ class PurchaseReturn extends Model
         $this->attributes['purchaseReturnDate'] = Helper::dateAddTime($value);
     }
 
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purhaseReturnAutoID')->where('documentSystemID',24);
+    }
 }

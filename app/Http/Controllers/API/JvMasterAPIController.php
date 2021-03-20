@@ -62,7 +62,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\Helper;
 /**
  * Class JvMasterController
  * @package App\Http\Controllers\API
@@ -921,8 +921,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function exportStandardJVFormat(Request $request)
     {
         $input = $request->all();
-        if ($exists = Storage::disk('public')->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
-            return Storage::disk('public')->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
+        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public'; 
+        if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
         } else {
             return $this->sendError('Attachments not found', 500);
         }
@@ -1413,10 +1414,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
+        DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
             ->where('companySystemID', $jvMasterData->companySystemID)
             ->where('documentSystemID', $jvMasterData->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$jvMasterAutoId,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($jvMasterData->toArray(), 'JV reopened successfully');
     }

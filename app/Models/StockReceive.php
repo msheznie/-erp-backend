@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -211,7 +212,7 @@ use Eloquent as Model;
  */
 class StockReceive extends Model
 {
-
+    use Compoships;
     public $table = 'erp_stockreceive';
     
     const CREATED_AT = 'createdDateTime';
@@ -382,6 +383,19 @@ class StockReceive extends Model
     public function setPostedDateAttribute($value)
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockReceiveAutoID')->where('documentSystemID',10);
+    }
+
+    public function company_from(){
+        return $this->belongsTo('App\Models\Company','companyFromSystemID','companySystemID');
+    }
+
+    public function company_to(){
+        return $this->belongsTo('App\Models\Company','companyToSystemID','companySystemID');
     }
 
 }

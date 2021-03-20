@@ -364,7 +364,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $data = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
+        $data = CreditNoteDetails::with(['segment'])->where('creditNoteAutoID', $id)->get();
         return $this->sendResponse($data, 'Credit Note Details deleted successfully');
     }
 
@@ -384,6 +384,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
     public function updateCreditNote(Request $request)
     {
         $input = $request->all();
+        $input=array_except($input, array('segment'));
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
         array_except($input, 'creditNoteDetailsID');
@@ -437,11 +438,13 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input["localAmount"] = $currency['localAmount'];
 
         // vat amount
-        $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $input['VATAmount']);
+        $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;
+        $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
         $input["VATAmountRpt"] = $currencyVAT['reportingAmount'];
         $input["VATAmountLocal"] = $currencyVAT['localAmount'];
         // net amount
-        $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $input['netAmount']);
+        $netAmount = isset($input['netAmount'])?$input['netAmount']:0;
+        $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
         $input["netAmountRpt"] = $currencyNet['reportingAmount'];
         $input["netAmountLocal"] = $currencyNet['localAmount'];
 

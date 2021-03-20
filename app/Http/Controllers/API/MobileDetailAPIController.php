@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class MobileDetailController
@@ -326,8 +327,9 @@ class MobileDetailAPIController extends AppBaseController
     public function downloadDetailTemplate(Request $request)
     {
         $input = $request->all();
-        if (Storage::disk('local_public')->exists('mobile_bill_templates/detail_template.xlsx')) {
-            return Storage::disk('local_public')->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
+        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'local_public') : 'local_public';v
+        if (Storage::disk($disk)->exists('mobile_bill_templates/detail_template.xlsx')) {
+            return Storage::disk($disk)->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
         } else {
             return $this->sendError('Summary template not found', 500);
         }

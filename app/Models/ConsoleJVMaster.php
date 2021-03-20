@@ -272,5 +272,9 @@ class ConsoleJVMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
+    public function details(){
+        return $this->hasMany('App\Models\ConsoleJVDetail', 'consoleJvMasterAutoId', 'consoleJvMasterAutoId');
+    }
+
     
 }

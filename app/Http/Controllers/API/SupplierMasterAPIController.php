@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
@@ -665,6 +666,16 @@ class SupplierMasterAPIController extends AppBaseController
     public function getAssignedCompaniesBySupplier(Request $request)
     {
         $supplierId = $request['supplierId'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
             ->first();
         if ($supplier) {
@@ -675,6 +686,7 @@ class SupplierMasterAPIController extends AppBaseController
                 ->leftJoin('suppliercritical', 'supplierassigned.isCriticalYN', '=', 'suppliercritical.suppliercriticalID')
                 ->leftJoin('yesnoselection', 'supplierassigned.isActive', '=', 'yesnoselection.idyesNoselection')
                 ->where('supplierCodeSytem', $supplierId)
+                ->whereIn("companySystemID",$subCompanies)
                 ->orderBy('supplierAssignedID', 'DESC')
                 ->get();
         } else {
@@ -1074,7 +1086,7 @@ class SupplierMasterAPIController extends AppBaseController
                     'registeredSupplierID' => $resMaster->id,
                     'currencyID' => $input['currency'],
                     'isAssigned' => -1,
-                    'isDefault' => 0,
+                    'isDefault' => -1,
                 ]; 
 
                 $resSupplierCurrency = RegisteredSupplierCurrency::create($supplierCurrencyData);
@@ -1154,15 +1166,26 @@ class SupplierMasterAPIController extends AppBaseController
                         'sizeInKbs' => isset($fileData['sizeInKbs']) ? $fileData['sizeInKbs'] : null,
                     ];
 
+                    $companyMaster = Company::where('companySystemID', $checkHash->companySystemID)->first();
+                    if ($companyMaster) {
+                        $companyID = $companyMaster->CompanyID;
+                    }
+
                     $documentAttachments = RegisteredSupplierAttachment::create($attachmentData);
 
                     $decodeFile = base64_decode($file);
 
                     $updateData['myFileName'] = $resMaster->id . '_' . $documentAttachments->id . '.' . $extension;
 
-                    $path = 'registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    $disk = Helper::policyWiseDisk($checkHash->companySystemID, 'public');
 
-                    Storage::disk('public')->put($path, $decodeFile);
+                    if (Helper::checkPolicy($checkHash->companySystemID, 50)) {
+                        $path = $companyID.'/G_ERP/registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    } else {
+                        $path = 'registered-supplier/'.$documentAttachments->id . '/' . $updateData['myFileName'];
+                    }
+
+                    Storage::disk($disk)->put($path, $decodeFile);
 
                     $updateData['isUploaded'] = 1;
                     $updateData['path'] = $path;
@@ -1380,9 +1403,16 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Attachments not found');
         }
 
+        $supplierData = RegisteredSupplier::find($documentAttachments->resgisteredSupplierID);
+        if (!$supplierData) {
+            return $this->sendError('Supplier Data not found');
+        }
+
+        $disk = Helper::policyWiseDisk($supplierData->companySystemID, 'public');
+
         if(!is_null($documentAttachments->path)) {
-            if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-                return Storage::disk('public')->download($documentAttachments->path, $documentAttachments->myFileName);
+            if ($exists = Storage::disk($disk)->exists($documentAttachments->path)) {
+                return Storage::disk($disk)->download($documentAttachments->path, $documentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments not found', 500);
             }
@@ -1487,6 +1517,17 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError($reject["message"]);
         } else {
             return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+
+    public function supplierReOpen(Request $request)
+    {
+        $reopen = ReopenDocument::reopenDocument($request);
+        if (!$reopen["success"]) {
+            return $this->sendError($reopen["message"]);
+        } else {
+            return $this->sendResponse(array(), $reopen["message"]);
         }
     }
 }

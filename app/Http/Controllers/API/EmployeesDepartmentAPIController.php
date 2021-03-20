@@ -91,6 +91,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $input[$key]['ServiceLineSystemID'] = $ServiceLineSystemID;
             $input[$key]['employeeSystemID'] = $employeeSystemID;
             $input[$key]['employeeGroupID'] = $employeeGroupID;
+            $input[$key]['isActive'] = 1;
             $input[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
             $input[$key]['createdDate'] = date("Y-m-d H:m:s");
             if ($companySystemID) {
@@ -542,6 +543,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $temp['reportingManagerID'] = $value['reportingManagerID'];
                 $temp['isDefault'] = $value['isDefault'];
                 $temp['dischargedYN'] = 0;
+                $temp['isActive'] = 1;
                 $temp['approvalDeligated'] = $value['approvalDeligated'];
                 $temp['approvalDeligatedFromEmpID'] = $value['approvalDeligatedFromEmpID'];
                 $temp['approvalDeligatedFrom'] = $value['approvalDeligatedFrom'];

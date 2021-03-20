@@ -14,6 +14,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -130,7 +131,7 @@ use Eloquent as Model;
  */
 class AssetDisposalMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_fa_asset_disposalmaster';
 
     const CREATED_AT = 'createdDateTime';
@@ -283,6 +284,15 @@ class AssetDisposalMaster extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'assetdisposalMasterAutoID')->where('documentSystemID',41);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster','customerID','customerCodeSystem');
     }
 
 }

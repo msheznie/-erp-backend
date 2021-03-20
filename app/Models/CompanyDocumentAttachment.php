@@ -104,4 +104,11 @@ class CompanyDocumentAttachment extends Model
         return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
     }
 
+     public static function companyDocumentAttachemnt($companySystemID, $documentSystemID)
+    {
+        $attachemnt = new CompanyDocumentAttachment();
+        return $attachemnt->where('companySystemID', $companySystemID)
+                        ->where('documentSystemID', $documentSystemID)
+                        ->first();
+    }
 }

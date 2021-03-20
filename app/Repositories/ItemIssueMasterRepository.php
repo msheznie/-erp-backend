@@ -95,7 +95,7 @@ class ItemIssueMasterRepository extends BaseRepository
             $query->with(['employee' => function ($q) {
                 $q->with(['details.designation']);
             }])->where('documentSystemID', 8);
-        }])
+        },'audit_trial.modified_by'])
             ->findWithoutFail($id);
     }
 }

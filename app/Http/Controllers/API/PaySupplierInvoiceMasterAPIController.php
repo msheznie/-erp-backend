@@ -381,7 +381,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
         }, 'suppliercurrency' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
-        }])->withCount(['approved_by as approvalLevels' => function ($q) {
+        },'bank','bankaccount.currency','payee','company_to'])->withCount(['approved_by as approvalLevels' => function ($q) {
             $q->where('documentSystemID', 4);
         }])->findWithoutFail($id);
 
@@ -710,15 +710,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             ->where('apAutoID', $val->apAutoID)
                             ->first();
 
+                        $a = $payDetailMoreBooked->supplierPaymentAmount;
+                        $b = $val->supplierInvoiceAmount;
+                        $epsilon = 0.0001;
                         if ($val->addedDocumentSystemID == 11) {
                             //supplier invoice
-                            if ($payDetailMoreBooked->supplierPaymentAmount > $val->supplierInvoiceAmount) {
+                            if (($a-$b) > $epsilon) {
                                 array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
                                 $error_count++;
                             }
                         } else if ($val->addedDocumentSystemID == 15) {
                             //debit note
-                            if ($payDetailMoreBooked->supplierPaymentAmount < $val->supplierInvoiceAmount) {
+                            if (($a-$b) < $epsilon) {
                                 array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
                                 $error_count++;
                             }
@@ -1439,13 +1442,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
-    public
-    function checkPVDocumentActive(Request $request)
+    public function checkPVDocumentActive(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
+        /** @ PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input["PayMasterAutoId"]);
 
         if (empty($paySupplierInvoiceMaster)) {
@@ -1563,8 +1565,7 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public
-    function getADVPaymentForPV(Request $request)
+    public function getADVPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
         $output = DB::select('SELECT
@@ -1625,8 +1626,7 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public
-    function getPaymentVoucherMatchItems(Request $request)
+    public function getPaymentVoucherMatchItems(Request $request)
     {
         $input = $request->all();
 
@@ -1843,7 +1843,7 @@ HAVING
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $payInvoice->companySystemID)
                 ->where('documentSystemID', $payInvoice->documentSystemID)
                 ->delete();
@@ -1918,6 +1918,9 @@ HAVING
                 }
             }
 
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($payInvoice->documentSystemID,$id,$input['reopenComments'],'Reopened');
+
             DB::commit();
             return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher reopened successfully');
         } catch (\Exception $exception) {
@@ -1939,6 +1942,9 @@ HAVING
         $payInvoice->cancelledByEmpSystemID = \Helper::getEmployeeSystemID();
         $payInvoice->canceledByEmpID = \Helper::getEmployeeID();
         $payInvoice->save();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($payInvoice->documentSystemID,$request['PayMasterAutoId'],$request['cancelComments'],'Cancelled');
 
         return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher cancelled successfully');
 

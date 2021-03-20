@@ -65,9 +65,19 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
      */
     public function assignedCompaniesBySubCategory(Request $request)
     {
+        $input = $request->all();
+        $selectedCompanyId = $input['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
 
         $financeItemcategorySubAssigneds = FinanceItemcategorySubAssigned::where('itemCategorySubID', $request->get('itemCategorySubID'))
             ->with(['company'])
+            ->whereIn('companySystemID', $subCompanies)
             ->orderBy('itemCategoryAssignedID', 'DESC')
             ->paginate(10);
         //->get();
@@ -171,11 +181,21 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
      */
     public function getNotAssignedCompanies(Request $request)
     {
+        $input = $request->all();
+        $selectedCompanyId = $input['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
 
         $itemCategorySubID = $request->get('itemCategorySubID');
         $companies = DB::table('companymaster AS c')
             ->where('isGroup', 0)
-           ->whereNotExists( function ($query) use ($itemCategorySubID) {
+            ->whereIn('companySystemID', $subCompanies)
+            ->whereNotExists( function ($query) use ($itemCategorySubID) {
                 $query
                     ->select(DB::raw(1))
                     ->from('financeitemcategorysubassigned AS fc')

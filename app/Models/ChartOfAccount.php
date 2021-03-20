@@ -95,6 +95,7 @@ class ChartOfAccount extends Model
         'modifiedUser',
         'timestamp',
         'refferedBackYN',
+        'isMasterAccount',
         'timesReferred'
     ];
 
@@ -108,6 +109,7 @@ class ChartOfAccount extends Model
         'primaryCompanySystemID' => 'integer',
         'primaryCompanyID' => 'string',
         'documentSystemID' => 'integer',
+        'isMasterAccount' => 'integer',
         'documentID' => 'string',
         'AccountCode' => 'string',
         'AccountDescription' => 'string',
@@ -177,5 +179,8 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
     }
 
+    public function chartofaccount_assigned(){
+        return $this->hasOne('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
+    }
 
 }

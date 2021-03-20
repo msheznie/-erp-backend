@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateHrmsDocumentAttachmentsAPIRequest;
 use App\Http\Requests\API\UpdateHrmsDocumentAttachmentsAPIRequest;
 use App\Models\HrmsDocumentAttachments;
@@ -274,9 +275,12 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
         if (empty($hrmsDocumentAttachments)) {
             return $this->sendError('Hrms Document Attachments not found');
         }
+
+        $disk = Helper::policyWiseDisk($hrmsDocumentAttachments->companySystemID, 'public');
+
         $path = $hrmsDocumentAttachments->myFileName;
-        if ($exists = Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if ($exists = Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
         }
         $hrmsDocumentAttachments->delete();
         return $this->sendResponse($id, 'Hrms Document Attachments deleted successfully');
@@ -300,9 +304,11 @@ class HrmsDocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
+        $disk = Helper::policyWiseDisk($hrmsDocumentAttachments->companySystemID, 'public');
+
         if(!is_null($hrmsDocumentAttachments->myFileName)) {
-            if ($exists = Storage::disk('public')->exists($hrmsDocumentAttachments->myFileName)) {
-                return Storage::disk('public')->download($hrmsDocumentAttachments->myFileName);
+            if ($exists = Storage::disk($disk)->exists($hrmsDocumentAttachments->myFileName)) {
+                return Storage::disk($disk)->download($hrmsDocumentAttachments->myFileName);
             } else {
                 return $this->sendError('Attachments detail not found');
             }

@@ -1143,10 +1143,13 @@ class DebitNoteAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $debitNote->companySystemID)
             ->where('documentSystemID', $debitNote->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($debitNote->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($debitNote->toArray(), 'Debit Note reopened successfully');
     }

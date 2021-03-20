@@ -178,7 +178,7 @@
         <tr style="width:100%">
             <td style="width: 25%;">
                 @if($entity->company)
-                    <img src="logos/{{$entity->company->companyLogo}}" width="180px" height="60px">
+                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px">
                 @endif
             </td>
             <td style="width: 35%" valign="top">

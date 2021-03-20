@@ -22,9 +22,12 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateCustomerReceivePaymentAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
@@ -33,7 +36,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CurrencyMaster;
-use App\Models\customercurrency;
+use App\Models\CustomerCurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
@@ -53,6 +56,7 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DirectReceiptDetail;
 use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
+use App\Models\Taxdetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -168,7 +172,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
         $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
-        if ($input['documentType'] == 13 && $input['customerID'] == '') {
+        if (($input['documentType'] == 13 || $input['documentType'] == 15 ) && $input['customerID'] == '') {
             return $this->sendError("Customer is required", 500);
         }
 
@@ -283,7 +287,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['modifiedUser'] = \Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
-        if ($input['documentType'] == 13) {
+        if ($input['documentType'] == 13 || $input['documentType'] == 15) {
             /* Customer Invoice Receipt*/
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
@@ -351,7 +355,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        }])->findWithoutFail($id);
+        },'customer','bank'])->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
@@ -412,14 +416,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency']);
-        $bankcurrencyID = $input['bankCurrency'];
-        /** @var CustomerReceivePayment $customerReceivePayment */
+        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
+
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
 
         if (empty($customerReceivePayment)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError('Receipt Voucher not found');
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
@@ -480,7 +483,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
 
-        if ($input['documentType'] == 13) {
+        if ($input['documentType'] == 13 || $input['documentType'] == 15) {
             /*customer reciept*/
             $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
 
@@ -489,13 +492,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if (count($detail) > 0) {
                     return $this->sendError('Invoice details exist. You can not change the customer.', 500);
                 }
-                $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
 
                 /*if customer change*/
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                if (empty($customer)) {
+                    return $this->sendError('Customer not found.', 500);
+                }
                 $input['customerGLCode'] = $customer->custGLaccount;
-                $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
-                $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+                $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
+                $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
                 if ($currency) {
                     $input['custTransactionCurrencyID'] = $currency->currencyID;
                     $myCurr = $currency->currencyID;
@@ -611,7 +616,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         }
 
-        if ($input['documentType'] == 14) {
+        if ($input['documentType'] == 14 || $input['documentType'] == 15) {
             /*direct receipt*/
             $detail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
@@ -704,11 +709,29 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
             $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
 
-        } else if ($input['documentType'] == 14) {
+        }
+        else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
 
             $masterHeaderSumTrans = $checkPreDirectSumTrans;
             $masterHeaderSumLocal = $checkPreDirectSumLocal;
             $masterHeaderSumReport = $checkPreDirectSumReport;
+
+            if($input['documentType'] == 15){
+
+                $detailsTotal = AdvanceReceiptDetails::select(
+                    DB::raw("IFNULL(SUM(paymentAmount),0) as netAmount"),
+                    DB::raw("IFNULL(SUM(localAmount),0) as netAmountLocal"),
+                    DB::raw("IFNULL(SUM(comRptAmount),0) as netAmountRpt"))
+                    ->where('custReceivePaymentAutoID', $id)
+                    ->first();
+
+                if(!empty($detailsTotal)){
+                    $masterHeaderSumTrans  = $masterHeaderSumTrans + $detailsTotal->netAmount;
+                    $masterHeaderSumLocal  = $masterHeaderSumLocal + $detailsTotal->netAmountLocal;
+                    $masterHeaderSumReport = $masterHeaderSumReport + $detailsTotal->netAmountRpt;
+                }
+
+            }
 
             $masterHeaderSumTrans = abs($masterHeaderSumTrans);
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
@@ -763,10 +786,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if ($customerReceivePaymentDetailCount == 0) {
                     return $this->sendError('Every receipt voucher should have at least one item', 500);
                 }
-            } else if ($input['documentType'] == 14) {
+            }
+            else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
                 $checkDirectItemsCount = DirectReceiptDetail::where('directReceiptAutoID', $id)
                     ->count();
-                if ($checkDirectItemsCount == 0) {
+
+                if($input['documentType'] == 14 && $checkDirectItemsCount == 0){
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
+
+                $checkAdvReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->count();
+
+                if ($checkAdvReceiptDetails == 0 && $checkDirectItemsCount == 0) {
                     return $this->sendError('Every receipt voucher should have at least one item', 500);
                 }
             }
@@ -845,7 +876,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
             }
 
-            if ($input['documentType'] == 14) {
+            if ($input['documentType'] == 14 ||  $input['documentType'] == 15) {
                 $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
                     ->where(function ($q) {
                         $q->where('DRAmount', '<=', 0)
@@ -856,7 +887,22 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                             ->orWhereNull('comRptAmount');
                     })
                     ->count();
-                if ($checkQuantity > 0) {
+                if ($input['documentType'] == 14 && $checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+
+                $checkAdvReceiptDetailsAmount = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)
+                                                                        ->where(function ($q) {
+                                                                            $q->where('paymentAmount', '<=', 0)
+                                                                                ->orWhereNull('localAmount', '<=', 0)
+                                                                                ->orWhereNull('comRptAmount', '<=', 0)
+                                                                                ->orWhereNull('paymentAmount')
+                                                                                ->orWhereNull('localAmount')
+                                                                                ->orWhereNull('comRptAmount');
+                                                                        })
+                                                                        ->count();
+
+                if ($checkAdvReceiptDetailsAmount > 0 || $checkQuantity > 0) {
                     return $this->sendError('Amount should be greater than 0 for every items', 500);
                 }
             }
@@ -865,7 +911,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->where('companySystemID', $input['companySystemID'])
                 ->first();
 
-            if ($input['documentType'] == 14) {
+            if ($input['documentType'] == 14 || $input['documentType'] == 15) {
                 $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
                 $finalError = array('amount_zero' => array(),
@@ -907,7 +953,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                     foreach ($directReceiptDetail as $item) {
 
-                        $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
+                        $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')
+                                                                 ->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)
+                                                                 ->first();
 
                         if ($chartOfAccount->controlAccountsSystemID == 1) {
                             if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
@@ -1043,6 +1091,111 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             }
 
+            if($input['documentType'] == 14 || $input['documentType'] == 15){
+                $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"),
+                    DB::raw("IFNULL(SUM(localAmount),0) as localAmount"),
+                    DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"),
+                    DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"),
+                    DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"),
+                    DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"),
+                    DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"),
+                    DB::raw("IFNULL(SUM(netAmount),0) as netAmount"),
+                    DB::raw("IFNULL(SUM(netAmountLocal),0) as netAmountLocal"),
+                    DB::raw("IFNULL(SUM(netAmountRpt),0) as netAmountRpt"))
+                    ->where('directReceiptAutoID', $id)
+                    ->first();
+
+                if(!empty($details)) {
+                    $input['VATAmount'] = $details->VATAmount;
+                    $input['VATAmountLocal'] = $details->VATAmountLocal;
+                    $input['VATAmountRpt'] = $details->VATAmountRpt;
+                    $input['netAmount'] = $details->netAmount;
+                    $input['netAmountLocal'] = $details->netAmountLocal;
+                    $input['netAmountRpt'] = $details->netAmountRpt;
+                }
+
+                if($input['documentType'] == 15){
+                    $details = AdvanceReceiptDetails::select(DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"),
+                        DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"),
+                        DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"),
+                        DB::raw("IFNULL(SUM(paymentAmount),0) as netAmount"),
+                        DB::raw("IFNULL(SUM(localAmount),0) as netAmountLocal"),
+                        DB::raw("IFNULL(SUM(comRptAmount),0) as netAmountRpt"))
+                        ->where('custReceivePaymentAutoID', $id)
+                        ->first();
+
+                    if(!empty($details)) {
+                        $input['VATAmount'] = $details->VATAmount;
+                        $input['VATAmountLocal'] = $details->VATAmountLocal;
+                        $input['VATAmountRpt'] = $details->VATAmountRpt;
+                        $input['netAmount'] = $details->netAmount;
+                        $input['netAmountLocal'] = $details->netAmountLocal;
+                        $input['netAmountRpt'] = $details->netAmountRpt;
+                    }
+                }
+            }
+
+            Taxdetail::where('documentSystemCode', $id)
+                ->where('documentSystemID', $input["documentSystemID"])
+                ->delete();
+
+            // if VAT Applicable
+            if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
+
+                if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                }
+
+                if($input['documentType'] == 15 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                }
+
+                $taxDetail['companyID'] = $input['companyID'];
+                $taxDetail['companySystemID'] = $input['companySystemID'];
+                $taxDetail['documentID'] = $input['documentID'];
+                $taxDetail['documentSystemID'] = $input['documentSystemID'];
+                $taxDetail['documentSystemCode'] = $id;
+                $taxDetail['documentCode'] = $customerReceivePayment->custPaymentReceiveCode;
+                $taxDetail['taxShortCode'] = '';
+                $taxDetail['taxDescription'] = '';
+                $taxDetail['taxPercent'] = $input['VATPercentage'];
+
+
+                if($input['documentType'] == 15){
+                    $taxDetail['payeeSystemCode'] = $input['customerID'];
+                    $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+
+                    if(!empty($customer)) {
+                        $taxDetail['payeeCode'] = $customer->CutomerCode;
+                        $taxDetail['payeeName'] = $customer->CustomerName;
+                    }else{
+                        return $this->sendError('Customer not found', 500);
+                    }
+                }else {
+                    $taxDetail['payeeSystemCode'] = 0;
+                    $taxDetail['payeeCode'] = '';
+                    $taxDetail['payeeName'] = '';
+                }
+
+
+
+                $taxDetail['amount'] = $input['VATAmount'];
+                $taxDetail['localCurrencyER']  = $input['localCurrencyER'];
+                $taxDetail['rptCurrencyER'] = $input['companyRptCurrencyER'];
+                $taxDetail['localAmount'] = $input['VATAmountLocal'];
+                $taxDetail['rptAmount'] = $input['VATAmountRpt'];
+                $taxDetail['currency'] =  $input['custTransactionCurrencyID'];
+                $taxDetail['currencyER'] =  1;
+
+                $taxDetail['localCurrencyID'] =  $customerReceivePayment->localCurrencyID;
+                $taxDetail['rptCurrencyID'] =  $customerReceivePayment->companyRptCurrencyID;
+                $taxDetail['payeeDefaultCurrencyID'] =  $input['custTransactionCurrencyID'];
+                $taxDetail['payeeDefaultCurrencyER'] =  1;
+                $taxDetail['payeeDefaultAmount'] =  $input['VATAmount'];
+
+                Taxdetail::create($taxDetail);
+            }
+
             $input['RollLevForApp_curr'] = 1;
 
             unset($input['confirmedYN']);
@@ -1074,7 +1227,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($customerReceivePayment->toArray(), 'Customer Receive Payment updated successfully');
+        return $this->sendResponse($customerReceivePayment->toArray(), 'Receipt Voucher updated successfully');
     }
 
     /**
@@ -1135,6 +1288,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         /*companySystemID*/
         $companySystemID = isset($input['companyId']) ? $input['companyId'] : 0;
         $type = $input['type']; /*value ['filter','create','getCurrency']*/
+        $advaceReceipt  = array('value' => 15, 'label' => 'Advance Receipt');
 
         switch ($type) {
             case 'filter':
@@ -1147,12 +1301,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->groupby('year')
                     ->orderby('year', 'desc')
                     ->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
+                                               array('value' => 14, 'label' => 'Direct Receipt'));
+
+                if(Helper::checkPolicy($companySystemID,49)){
+                    array_push($output['invoiceType'], $advaceReceipt);
+                }
+
                 break;
 
             case 'create':
 
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -1161,9 +1321,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
-                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'), array('value' => 14, 'label' => 'Direct Receipt'));
+                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
+                                               array('value' => 14, 'label' => 'Direct Receipt'));
+
+                if(Helper::checkPolicy($companySystemID,49)){
+                    array_push($output['invoiceType'], $advaceReceipt);
+                }
                 break;
             case 'getCurrency':
                 $customerID = $input['customerID'];
@@ -1173,7 +1338,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             case 'edit':
                 $id = $input['id'];
                 $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->first();
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['expenseClaimType'] = ExpenseClaimType::all();
 
                 if ($master->customerID != '') {
@@ -1181,7 +1346,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -1224,7 +1389,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             case 'amendEdit':
                 $id = $input['id'];
                 $master = CustomerReceivePaymentRefferedHistory::where('custReceivePaymentRefferedID', $id)->first();
-                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['expenseClaimType'] = ExpenseClaimType::all();
 
                 if ($master->customerID != '') {
@@ -1233,7 +1398,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
 
-                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->where('companySystemID', $companySystemID)
                     ->where('isActive', 1)
                     ->where('isAssigned', -1)
@@ -1406,7 +1571,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }, 'details', 'bankledger_by' => function ($query) {
             $query->with('bankrec_by');
             $query->where('documentSystemID', 21);
-        },'audit_trial.modified_by'])->first();
+        },'audit_trial.modified_by','advance_receipt_details'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1505,10 +1670,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+        DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
             ->where('companySystemID', $custReceivePaymentMaster->companySystemID)
             ->where('documentSystemID', $custReceivePaymentMaster->documentSystemID)
             ->delete();
+
+        AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
@@ -1529,7 +1696,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('segment');
-        }, 'details'])->first();
+        }, 'details','advance_receipt_details'])->first();
 
         if (empty($customerReceivePaymentRecord)) {
             return $this->sendError('Customer Receive Payment not found');
@@ -1540,6 +1707,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $transDecimal = 2;
         $localDecimal = 3;
         $rptDecimal = 2;
+        $advanceDetailsTotalNet = 0;
 
         if ($customerReceivePaymentRecord->currency) {
             $transDecimal = $customerReceivePaymentRecord->currency->DecimalPlaces;
@@ -1556,8 +1724,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $directTotTra = DirectReceiptDetail::where('directReceiptAutoID', $id)
             ->sum('DRAmount');
 
+        $directTotalVAT = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('VATAmount');
+
+        $directTotalNet = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('netAmount');
+
         $ciDetailTotTra = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-            ->sum('receiveAmountTrans');
+                                                      ->where('matchingDocID', 0)
+                                                      ->sum('receiveAmountTrans');
+
+        $advanceDetailsTotalNet =  AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->sum('paymentAmount');
 
         $order = array(
             'masterdata' => $customerReceivePaymentRecord,
@@ -1566,7 +1743,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'localDecimal' => $localDecimal,
             'rptDecimal' => $rptDecimal,
             'directTotTra' => $directTotTra,
-            'ciDetailTotTra' => $ciDetailTotTra
+            'directTotalVAT' => $directTotalVAT,
+            'directTotalNet' => $directTotalNet,
+            'ciDetailTotTra' => $ciDetailTotTra,
+            'advanceDetailsTotalNet' => $advanceDetailsTotalNet
         );
 
         $time = strtotime("now");
@@ -1897,6 +2077,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $customerReceivePaymentData->canceledByEmpName = $employee->empFullName;
         $customerReceivePaymentData->save();
 
+        /*Audit entry*/
+        AuditTrial::insertAuditTrial('CustomerReceivePayment', $custReceivePaymentAutoID,$input['cancelComments'],'Cancelled');
+
         return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher cancelled successfully');
     }
 
@@ -2048,6 +2231,109 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function checkBRVDocumentActive(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $input["custReceivePaymentAutoID"] = isset($input["custReceivePaymentAutoID"]) ? $input["custReceivePaymentAutoID"] : 0;
+
+        /** @ PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
+        $masterData = $this->customerReceivePaymentRepository->findWithoutFail($input["custReceivePaymentAutoID"]);
+
+        if (empty($masterData)) {
+            return $this->sendError('Receipt Voucher not found');
+        }
+
+        $bankMaster = BankAssign::ofCompany($masterData->companySystemID)
+            ->isActive()
+            ->where('bankmasterAutoID', $masterData->bankID)
+            ->first();
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active', 500);
+        }
+
+        $bankAccount = BankAccount::isActive()->find($masterData->bankAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active', 500);
+        }
+
+        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+    }
+
+    public function getADVPaymentForBRV(Request $request)
+    {
+        $input = $request->all();
+        $id = isset($input["custReceivePaymentAutoID"]) ? $input["custReceivePaymentAutoID"] : 0;
+
+        /** @ PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
+        $masterData = $this->customerReceivePaymentRepository->findWithoutFail($id);
+
+        if (empty($masterData)) {
+            return $this->sendError('Receipt Voucher not found');
+        }
+
+        $output = DB::select('SELECT
+                                erp_salesorderadvpayment.soAdvPaymentID,
+                                erp_salesorderadvpayment.companyID,
+                                erp_salesorderadvpayment.companySystemID,
+                                erp_salesorderadvpayment.soID AS salesOrderID,
+                                erp_salesorderadvpayment.soCode AS salesOrderCode,
+                                erp_salesorderadvpayment.customerId,
+                                erp_salesorderadvpayment.narration AS comments,
+                                erp_salesorderadvpayment.currencyID,
+                                erp_salesorderadvpayment.VATAmount,
+                                erp_salesorderadvpayment.VATAmountLocal,
+                                erp_salesorderadvpayment.VATAmountRpt,
+                                currencymaster.CurrencyCode,
+                                currencymaster.DecimalPlaces,
+                                IFNULL( erp_salesorderadvpayment.reqAmount, 0 ) AS reqAmount,
+                                ( IFNULL( erp_salesorderadvpayment.reqAmount, 0 ) - IFNULL( advd.SumOfpaymentAmount, 0 ) ) AS BalanceAmount,
+                                erp_quotationmaster.transactionCurrencyID AS transactionCurrencyID,
+                                erp_quotationmaster.transactionExchangeRate AS transactionExchangeRate,
+                                -- erp_quotationmaster.supplierDefaultCurrencyID,
+                                -- erp_quotationmaster.supplierDefaultER AS supplierDefaultCurrencyER,
+                                erp_quotationmaster.companyLocalCurrency,
+                                erp_quotationmaster.companyLocalExchangeRate AS localER,
+                                erp_quotationmaster.companyReportingCurrency AS comRptCurrencyID,
+                                erp_quotationmaster.companyReportingExchangeRate AS comRptER,
+                                erp_quotationmaster.transactionAmount AS totalTransactionAmount,
+                                FALSE AS isChecked 
+                            FROM
+                                ( ( erp_salesorderadvpayment LEFT JOIN currencymaster ON erp_salesorderadvpayment.currencyID = currencymaster.currencyID ) INNER JOIN erp_quotationmaster ON erp_salesorderadvpayment.soID = erp_quotationmaster.quotationMasterID )
+                                LEFT JOIN (
+                            SELECT
+                                erp_advancereceiptdetails.soAdvPaymentID,
+                                erp_advancereceiptdetails.companyID,
+                                erp_advancereceiptdetails.companySystemID,
+                                erp_advancereceiptdetails.salesOrderID,
+                                IFNULL( Sum( erp_advancereceiptdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount 
+                            FROM
+                                erp_advancereceiptdetails 
+                            GROUP BY
+                                erp_advancereceiptdetails.soAdvPaymentID,
+                                erp_advancereceiptdetails.companySystemID,
+                                erp_advancereceiptdetails.salesOrderID 
+                            HAVING
+                                ( ( ( erp_advancereceiptdetails.salesOrderID ) IS NOT NULL ) ) 
+                                ) AS advd ON ( erp_salesorderadvpayment.soID = advd.salesOrderID ) 
+                                AND ( erp_salesorderadvpayment.soAdvPaymentID = advd.soAdvPaymentID ) 
+                                AND ( erp_salesorderadvpayment.companySystemID = advd.companySystemID ) 
+                            WHERE
+                                (
+                                ( ( erp_salesorderadvpayment.companySystemID ) = ' . $masterData->companySystemID . ' ) 
+                                AND ( ( erp_salesorderadvpayment.customerId ) = ' . $masterData->customerID . ' ) 
+                                AND ( ( erp_salesorderadvpayment.currencyID ) = ' . $masterData->custTransactionCurrencyID . ' ) 
+                                AND ( ( erp_quotationmaster.documentDate ) <= "' . $masterData->custPaymentReceiveDate . '" ) 
+                                AND ( ( erp_salesorderadvpayment.selectedToPayment ) = 0 ) 
+                                AND ( ( erp_quotationmaster.confirmedYN ) = 1 ) 
+                                AND ( ( erp_quotationmaster.approvedYN ) = -1 ) 
+                                AND ( ( erp_salesorderadvpayment.fullyPaid ) <> 2 ) 
+                                );');
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
 }

@@ -13,6 +13,7 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -173,7 +174,7 @@ use Eloquent as Model;
  */
 class InventoryReclassification extends Model
 {
-
+    use Compoships;
     public $table = 'erp_inventoryreclassification';
     
     const CREATED_AT = 'createdDateTime';
@@ -327,5 +328,10 @@ class InventoryReclassification extends Model
     public function setPostedDateAttribute($value)
     {
         $this->attributes['postedDate'] = Helper::dateAddTime($value);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'inventoryreclassificationID')->where('documentSystemID',61);
     }
 }

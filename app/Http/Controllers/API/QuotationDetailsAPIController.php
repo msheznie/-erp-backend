@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationDetailsAPIRequest;
 use App\Http\Requests\API\UpdateQuotationDetailsAPIRequest;
 use App\Models\ItemAssigned;
@@ -124,13 +125,13 @@ class QuotationDetailsAPIController extends AppBaseController
      */
     public function store(CreateQuotationDetailsAPIRequest $request)
     {
-        $input = $request->all();
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
+        $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
 
-        $companySystemID = $input['companySystemID'];
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
             ->where('companySystemID', $companySystemID)
@@ -154,6 +155,19 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
+        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
+        if (empty($unitMasterData)) {
+            return $this->sendError('Unit of Measure not found');
+        }
+        $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        $input['companyID'] = $company->CompanyID;
+
         $input['itemSystemCode'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
         $input['itemCategory'] = $item->financeCategoryMaster;
@@ -165,17 +179,22 @@ class QuotationDetailsAPIController extends AppBaseController
             $input['unittransactionAmount'] = round(\Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
         }
 
+        // Get VAT percentage for item
+        if ($quotationMasterData->isVatEligible) {
+            $vatDetails = TaxService::getVATDetailsByItem($quotationMasterData->companySystemID, $input['itemAutoID'], $quotationMasterData->customerSystemCode,0);
+            $input['VATPercentage'] = $vatDetails['percentage'];
+            $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['VATAmount'] = 0;
+            if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
+                $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+            }
+            $currencyConversionVAT = \Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
+
+            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
+
         $input['wacValueReporting'] = $item->wacValueReporting;
-
-        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
-        if ($unitMasterData) {
-            $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
-        }
-
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-        }
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
@@ -300,6 +319,22 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
+
+        if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2) {
+            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
+                                        ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
+                                        ->first();
+
+            $quotationData = QuotationDetails::find($quotationDetails->soQuotationDetailID);
+
+            $balanceQty = $quotationData->requestedQty  - ($detailSum['totalQty'] - $quotationDetails->requestedQty);
+
+            $bQty = $quotationData->requestedQty  - $detailSum['totalQty'];
+            if ($balanceQty < $input['requestedQty']) {
+                 return $this->sendError('Quotation balance qty is '.$balanceQty.', No of Qty cannot be grater than balance qty.');
+            }
+        }
+
         // updating transaction amount for local and reporting
         $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['transactionAmount']);
 
@@ -312,16 +347,107 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
 
+        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+
         $input['modifiedDateTime'] = Carbon::now();
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserName'] = $employee->empName;
 
-        $quotationDetails = $this->quotationDetailsRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
+            $quotationDetailss = $this->quotationDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($quotationDetails->toArray(), 'Quotation Details updated successfully');
+
+            if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2 && ($quotationDetails->requestedQty != $input['requestedQty'])) {
+                $this->updateCopiedQty($input);
+            }
+
+            DB::commit();
+            return $this->sendResponse($quotationDetailss->toArray(), 'Quotation Details updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+        }
     }
 
+
+
+    public function updateCopiedQty($input)
+    {
+        $salesOrderID = $input['quotationMasterID'];
+
+        $salesOrder = QuotationMaster::where('quotationMasterID', $salesOrderID)->first();
+        $employee = \Helper::getEmployeeInfo();
+
+        DB::beginTransaction();
+        try {
+            $qoMaster = QuotationMaster::find($input['soQuotationMasterID']);
+
+            $soQuotationMasterID = $input['soQuotationMasterID'];
+
+            //checking the fullyOrdered or partial in po
+            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
+                                        ->where('soQuotationDetailID', $input['soQuotationDetailID'])
+                                        ->first();
+
+            $totalAddedQty = $detailSum['totalNoQty'];
+
+
+            $quotationDetailData = QuotationDetails::find($input['soQuotationDetailID']);
+
+            if ($quotationDetailData->requestedQty == $totalAddedQty) {
+                $fullyOrdered = 2;
+            } else {
+                $fullyOrdered = 1;
+            }
+
+            $new = [];
+            $new['qtyIssuedDefaultMeasure'] = $input['requestedQty'];
+
+            $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'];
+
+            $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
+
+           
+            $quotationDetails = $this->quotationDetailsRepository->update($new, $input['quotationDetailsID']);
+
+            QuotationDetails::where('quotationDetailsID', $input['soQuotationDetailID'])
+                            ->update(['fullyOrdered' => $fullyOrdered, 'soQuantity' => $totalAddedQty]);
+
+            //check all details fullyOrdered in PR Master
+            $quoMasterfullyOrdered = QuotationDetails::where('quotationMasterID', $soQuotationMasterID)
+                ->whereIn('fullyOrdered', [1, 0])
+                ->get()->toArray();
+
+            if (empty($quoMasterfullyOrdered)) {
+                $updateQuotation = QuotationMaster::find($soQuotationMasterID)
+                    ->update([
+                        'selectedForSalesOrder' => -1,
+                        'closedYN' => -1,
+                    ]);
+            } else {
+                $updateQuotation = QuotationMaster::find($soQuotationMasterID)
+                    ->update([
+                        'selectedForSalesOrder' => 0,
+                        'closedYN' => 0,
+                    ]);
+            }
+
+            $this->updateSalesQuotationOrderStatus($soQuotationMasterID);
+
+            DB::commit();
+            return $this->sendResponse([], 'Sales Order Details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+        }
+
+    }
     /**
      * @param int $id
      * @return Response
@@ -526,6 +652,13 @@ WHERE
                     return $this->sendError($validator->messages(), 422);
                 }
             }
+
+
+            $remaingQty = $newValidation['requestedQty'] - $newValidation['soTakenQty'];
+
+            if ($remaingQty < $newValidation['noQty']) {
+                return $this->sendError("SO Qty cannot be greater than SO balance Qty");
+            }
         }
 
         $itemExistArray = array();
@@ -674,7 +807,7 @@ WHERE
 
         $status = 0;
         $isInDO = 0;
-        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('qtyIssuedDefaultMeasure');
+        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
 
         if($invQty!=0) {
             $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');

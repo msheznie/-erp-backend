@@ -14,7 +14,7 @@ namespace App\Models;
 
 use App\helper\Helper;
 use Eloquent as Model;
-
+use Awobaz\Compoships\Compoships;
 /**
  * @SWG\Definition(
  *      definition="GeneralLedger",
@@ -289,6 +289,8 @@ use Eloquent as Model;
 class GeneralLedger extends Model
 {
 
+    use Compoships;
+
     public $table = 'erp_generalledger';
 
     const CREATED_AT = 'createdDateTime';
@@ -464,5 +466,85 @@ class GeneralLedger extends Model
 
     public function final_approved_by(){
         return $this->belongsTo('App\Models\Employee', 'documentFinalApprovedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function grv(){
+        return $this->belongsTo('App\Models\GRVMaster', ['documentSystemCode','documentSystemID','companySystemID'], ['grvAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function material_issue(){
+        return $this->belongsTo('App\Models\ItemIssueMaster',['documentSystemCode','documentSystemID','companySystemID'], ['itemIssueAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function stock_return(){
+        return $this->belongsTo('App\Models\ItemReturnMaster',['documentSystemCode','documentSystemID','companySystemID'], ['itemReturnAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function stock_transfer(){
+        return $this->belongsTo('App\Models\StockTransfer',['documentSystemCode','documentSystemID','companySystemID'], ['stockTransferAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function receive_stock(){
+        return $this->belongsTo('App\Models\StockReceive',['documentSystemCode','documentSystemID','companySystemID'], ['stockReceiveAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function stock_adjustment(){
+        return $this->belongsTo('App\Models\StockAdjustment',['documentSystemCode','documentSystemID','companySystemID'], ['stockAdjustmentAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function inventory_reclassification(){
+        return $this->belongsTo('App\Models\InventoryReclassification',['documentSystemCode','documentSystemID','companySystemID'], ['inventoryreclassificationID','documentSystemID','companySystemID']);
+    }
+
+    public function purchase_return(){
+        return $this->belongsTo('App\Models\PurchaseReturn',['documentSystemCode','documentSystemID','companySystemID'], ['purhaseReturnAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function customer_invoice(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect',['documentSystemCode','documentSystemID','companySystemID'], ['custInvoiceDirectAutoID','documentSystemiD','companySystemID']);
+    }
+
+    public function supplier_invoice(){
+        return $this->belongsTo('App\Models\BookInvSuppMaster',['documentSystemCode','documentSystemID','companySystemID'], ['bookingSuppMasInvAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function debit_note(){
+        return $this->belongsTo('App\Models\DebitNote',['documentSystemCode','documentSystemID','companySystemID'], ['debitNoteAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function credit_note(){
+        return $this->belongsTo('App\Models\CreditNote',['documentSystemCode','documentSystemID','companySystemID'], ['creditNoteAutoID','documentSystemiD','companySystemID']);
+    }
+
+    public function payment_voucher(){
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster',['documentSystemCode','documentSystemID','companySystemID'], ['PayMasterAutoId','documentSystemID','companySystemID']);
+    }
+
+    public function bank_receipt(){
+        return $this->belongsTo('App\Models\CustomerReceivePayment',['documentSystemCode','documentSystemID','companySystemID'], ['custReceivePaymentAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function journal_entries(){
+        return $this->belongsTo('App\Models\JvMaster',['documentSystemCode','documentSystemID','companySystemID'], ['jvMasterAutoId','documentSystemID','companySystemID']);
+    }
+
+    public function fixed_asset(){
+        return $this->belongsTo('App\Models\FixedAssetMaster',['documentSystemCode','documentSystemID','companySystemID'], ['faID','documentSystemID','companySystemID']);
+    }
+
+    public function fixed_asset_dep(){
+        return $this->belongsTo('App\Models\FixedAssetDepreciationMaster',['documentSystemCode','documentSystemID','companySystemID'], ['depMasterAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function fixed_asset_disposal(){
+        return $this->belongsTo('App\Models\AssetDisposalMaster',['documentSystemCode','documentSystemID','companySystemID'], ['assetdisposalMasterAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function delivery_order(){
+        return $this->belongsTo('App\Models\DeliveryOrder',['documentSystemCode','documentSystemID','companySystemID'], ['deliveryOrderID','documentSystemID','companySystemID']);
+    }
+
+    public function sales_return(){
+        return $this->belongsTo('App\Models\SalesReturn',['documentSystemCode','documentSystemID','companySystemID'], ['id','documentSystemID','companySystemID']);
     }
 }

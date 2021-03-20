@@ -229,7 +229,7 @@
         <tr style="width: 100%">
             <td valign="top" style="width: 50%">
                 @if($masterdata->company)
-                    <img src="logos/{{$masterdata->company->companyLogo}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
                 @endif
                 <br>
 
@@ -408,6 +408,9 @@
                 <th>Qty</th>
                 <th>Unit Rate</th>
                 <th>Discount</th>
+                @if($masterdata->isVatEligible)
+                    <th>VAT. Per Unit</th>
+                @endif
                 <th>Net Amount</th>
             </tr>
             </thead>
@@ -424,13 +427,34 @@
                     <td class="text-right">{{$item->requestedQty}}</td>
                     <td class="text-right">{{number_format($item->unittransactionAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                     <td class="text-right">{{number_format($item->discountAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                    @if($masterdata->isVatEligible)
+                        <td class="text-right">{{number_format($item->VATAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                    @endif
                     <td class="text-right">{{number_format($item->transactionAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endforeach
-            <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                <td colspan="8" class="text-right border-bottom-remov"></td>
-                <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
-            </tr>
+            @if($masterdata->isVatEligible)
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="9" class="text-right">Order Amount</td>
+                    <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                </tr>
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="9" class="text-right">VAT Amount	</td>
+                    <td class="text-right ">{{number_format($masterdata->VATAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                </tr>
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="9" class="text-right">Net Amount</td>
+                    <td class="text-right ">{{number_format(($netTotal + $masterdata->VATAmount), $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                </tr>
+            @endif
+
+            @if(!$masterdata->isVatEligible)
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="8" class="text-right">Net Amount</td>
+                    <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
+                </tr>
+            @endif
+
             </tbody>
         </table>
     </div>

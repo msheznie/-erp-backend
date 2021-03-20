@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\helper\inventory;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
 use App\Models\Company;
@@ -25,6 +26,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\GeneralLedger;
 use App\Models\Months;
+use App\Models\TaxMaster;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesPersonMaster;
@@ -33,6 +35,8 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DeliveryOrderRepository;
+use App\Traits\AuditTrial;
+use App\Models\Taxdetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -40,7 +44,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use Illuminate\Support\Facades\Storage;
 /**
  * Class DeliveryOrderController
  * @package App\Http\Controllers\API
@@ -284,13 +288,13 @@ class DeliveryOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DeliveryOrder $deliveryOrder */
-        $deliveryOrder = $this->deliveryOrderRepository->with(['customer','transaction_currency', 'finance_year_by' => function ($query) {
+        $deliveryOrder = $this->deliveryOrderRepository->with(['tax','customer','transaction_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'detail' => function($query){
             $query->with(['quotation','uom_default']);
-        }])->findWithoutFail($id);
+        },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
@@ -356,7 +360,7 @@ class DeliveryOrderAPIController extends AppBaseController
             return $this->sendError('Delivery Order not found');
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail']);
+        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -478,6 +482,11 @@ class DeliveryOrderAPIController extends AppBaseController
                 return  $this->sendError('Order detail not found', 500);
             }
 
+            $financeCategories = $detail->pluck('itemFinanceCategoryID')->toArray();
+            if (count(array_unique($financeCategories)) > 1) {
+                return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+            }
+
             $checkQuantity = DeliveryOrderDetail::where('deliveryOrderID', $id)
                 ->where(function ($q) {
                     $q->where('qtyIssued', '<=', 0)
@@ -490,16 +499,16 @@ class DeliveryOrderAPIController extends AppBaseController
 
             foreach ($detail as $item) {
 
+                $updateItem = DeliveryOrderDetail::find($item['deliveryOrderDetailID']);
+
                 //If the revenue account or cost account or BS account is null do not allow to confirm
-                if(!($item->financeGLcodebBSSystemID > 0)){
+                if((!($item->financeGLcodebBSSystemID > 0)) && $updateItem->itemFinanceCategoryID!=2){
                     return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }elseif (!($item->financeGLcodePLSystemID > 0)){
                     return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
                     return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
                 }
-
-                $updateItem = DeliveryOrderDetail::find($item['deliveryOrderDetailID']);
 
                 $data = array(
                     'companySystemID' => $deliveryOrder->companySystemID,
@@ -526,18 +535,18 @@ class DeliveryOrderAPIController extends AppBaseController
                 $updateItem->transactionAmount = $discountedUnit*$updateItem->qtyIssuedDefaultMeasure;
 
                 if($updateItem->transactionCurrencyID != $updateItem->companyLocalCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyLocalCurrencyID,$updateItem->unitTransactionAmount);
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->unitTransactionAmount);
                     if(!empty($currencyConversion)){
-                        $updateItem->companyLocalAmount = $currencyConversion['documentAmount'];
+                        $updateItem->companyLocalAmount = $currencyConversion['localAmount'];
                     }
                 }else{
                     $updateItem->companyLocalAmount = $updateItem->unitTransactionAmount;
                 }
 
                 if($updateItem->transactionCurrencyID != $updateItem->companyReportingCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyReportingCurrencyID,$updateItem->unitTransactionAmount);
+                    $currencyConversion = Helper::currencyConversion($deliveryOrder->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->unitTransactionAmount);
                     if(!empty($currencyConversion)){
-                        $updateItem->companyReportingAmount = $currencyConversion['documentAmount'];
+                        $updateItem->companyReportingAmount = $currencyConversion['reportingAmount'];
                     }
                 }else{
                     $updateItem->companyReportingAmount = $updateItem->unitTransactionAmount;
@@ -558,18 +567,21 @@ class DeliveryOrderAPIController extends AppBaseController
                 if ($updateItem->unitTransactionAmount < 0) {
                     return $this->sendError('Item must not have negative cost', 500);
                 }
-                if ($updateItem->currentWareHouseStockQty <= 0) {
-                    return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
-                if ($updateItem->currentStockQty <= 0) {
-                    return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                    return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
-                }
 
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                    return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                if($updateItem->itemFinanceCategoryID==1){
+                    if ($updateItem->currentWareHouseStockQty <= 0) {
+                        return $this->sendError('Warehouse stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+                    if ($updateItem->currentStockQty <= 0) {
+                        return $this->sendError('Stock Qty is 0 for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                        return $this->sendError('Insufficient Stock Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
+
+                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                        return $this->sendError('Insufficient Warehouse Qty for '.$updateItem->itemPrimaryCode.' - '.$updateItem->itemDescription, 500);
+                    }
                 }
 
             }
@@ -582,6 +594,16 @@ class DeliveryOrderAPIController extends AppBaseController
                     ->sum(DB::raw('qtyIssuedDefaultMeasure * companyReportingAmount'));
             }
 
+            // VAT configuration validation
+            $taxSum = Taxdetail::where('documentSystemCode', $id)
+                ->where('companySystemID', $deliveryOrder->companySystemID)
+                ->where('documentSystemID', $deliveryOrder->documentSystemID)
+                ->sum('amount');
+
+            if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($deliveryOrder->companySystemID))){
+                return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+            }
+
             $params = array('autoID' => $id,
                 'company' => $deliveryOrder->companySystemID,
                 'document' => $deliveryOrder->documentSystemID,
@@ -589,7 +611,7 @@ class DeliveryOrderAPIController extends AppBaseController
                 'category' => '',
                 'amount' => $amount
             );
-            $update = array_except($input,['confirmedYN']);
+            $update = array_except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
             $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -703,13 +725,21 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $orderType = array(array('value' => 1, 'label' => 'Direct Order'), array('value' => 2, 'label' => 'Quotation Based'),array('value' => 3, 'label' => 'Sales Order Based'));
         $wareHouses = WarehouseMaster::where("companySystemID", $companyId)->where('isActive', 1)->get();
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
+        $taxData = TaxMaster::where('taxType', 2)
+                            ->where('companySystemID', $companyId)
+                            ->get();
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'currencies' => $currencies,
+            'isVATEligible' => $isVATEligible,
             'customer' => $customer,
+            'taxData' => $taxData,
             'salespersons' => $salespersons,
             'segments' => $segments,
             'financialYears' => $financialYears,
@@ -826,6 +856,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
+            ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -878,6 +909,7 @@ WHERE
             'erp_delivery_order.createdDateTime',
             'erp_delivery_order.confirmedDate',
             'erp_delivery_order.transactionAmount',
+            'erp_delivery_order.VATAmount',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -960,6 +992,7 @@ WHERE
             'erp_delivery_order.createdDateTime',
             'erp_delivery_order.confirmedDate',
             'erp_delivery_order.transactionAmount',
+            'erp_delivery_order.VATAmount',
             'erp_delivery_order.approvedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
@@ -1039,7 +1072,7 @@ WHERE
         $data = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 71);
-        }, 'company'])->findWithoutFail($deliveryOrderID);
+        }, 'company','audit_trial.modified_by'])->findWithoutFail($deliveryOrderID);
 
 
         if (empty($data)) {
@@ -1137,10 +1170,13 @@ WHERE
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
+        DocumentApproved::where('documentSystemCode', $deliveryOrderID)
             ->where('companySystemID', $deliveryOrder->companySystemID)
             ->where('documentSystemID', $deliveryOrder->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($deliveryOrder->documentSystemID,$deliveryOrderID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($deliveryOrder->toArray(), 'Delivery Order reopened successfully');
     }
@@ -1162,7 +1198,7 @@ WHERE
     function printDeliveryOrder(Request $request){
         $id = $request->get('id');
 
-        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+        $do = $this->deliveryOrderRepository->with(['created_by', 'confirmed_by', 'modified_by', 'tax','approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 71);
         }, 'company','customer','transaction_currency','detail'=> function($query){
@@ -1180,13 +1216,16 @@ WHERE
 
         $do->docRefNo = Helper::getCompanyDocRefNo($do->companySystemID, $do->documentSystemID);
         $do->logoExists = false;
-        $companyLogo = isset($do->company->companyLogo)?"logos/".$do->company->companyLogo:'';
+        $companyLogo = isset($do->company->logo_url) ? $do->company->logo_url:'';
 
-        if (file_exists($companyLogo)) {
+        $disk = Helper::policyWiseDisk($do->company->masterCompanySystemIDReorting, 'local_public');
+
+        $logoExists = Storage::disk($disk)->exists($do->company->logoPath);
+        if ($logoExists) {
             $do->logoExists = true;
             $do->companyLogo = $companyLogo;
-        }
-
+        }      
+        
         $array = array('entity' => $do);
         $time = strtotime("now");
         $fileName = 'delivery_order_' . $id . '_' . $time . '.pdf';
@@ -1299,6 +1338,4 @@ WHERE
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
-
-
 }

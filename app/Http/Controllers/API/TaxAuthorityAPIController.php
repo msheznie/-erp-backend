@@ -172,6 +172,9 @@ class TaxAuthorityAPIController extends AppBaseController
             if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $companiesByGroup = $input['globalCompanyId'];
                 $authority = $authority->where('companySystemID', $companiesByGroup);
+            } else {
+                $subCompanies = \Helper::getGroupCompany($input['globalCompanyId']);
+                $authority = $authority->whereIn('companySystemID', $subCompanies);
             }
         }
 

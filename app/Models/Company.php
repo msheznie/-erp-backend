@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\helper\Helper;
 
 /**
  * Class Company
@@ -100,9 +101,8 @@ class Company extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'companySystemID';
 
-
+    protected $appends = ['logo_url'];
     protected $dates = ['deleted_at'];
-
 
     public $fillable = [
         'CompanyID',
@@ -178,6 +178,7 @@ class Company extends Model
         'createdDateTime',
         'vatRegisteredYN',
         'vatRegistratonNumber',
+        'logoPath',
         'qhseApiKey',
         'timeStamp'
     ];
@@ -259,6 +260,7 @@ class Company extends Model
         'modifiedUser' => 'string',
         'vatRegisteredYN' => 'integer',
         'vatRegistratonNumber' => 'string',
+        'logoPath' => 'string',
         'qhseApiKey' => 'string'
     ];
 
@@ -270,6 +272,17 @@ class Company extends Model
     public static $rules = [
         
     ];
+
+    public function getLogoUrlAttribute(){
+
+        $awsPolicy = Helper::checkPolicy($this->masterCompanySystemIDReorting, 50);
+
+        if ($awsPolicy) {
+            return Helper::getFileUrlFromS3($this->logoPath);    
+        } else {
+            return $this->logoPath;
+        }
+    }
 
     public function employees(){
         return $this->belongsToMany('App\Models\Employee', 'employeesdepartments','CompanyID','companyId');
@@ -334,4 +347,8 @@ class Company extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'vatOutputGLCodeSystemID','chartOfAccountSystemID');
     }
 
+     public function bank_assigned()
+    {
+        return $this->hasMany('App\Models\BankAssign', 'companySystemID','companySystemID');
+    }
 }

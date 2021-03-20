@@ -164,6 +164,9 @@ class TaxFormulaMasterAPIController extends AppBaseController
             if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $companiesByGroup = $input['globalCompanyId'];
                 $formula = $formula->where('companySystemID', $companiesByGroup);
+            } else {
+                $subCompanies = \Helper::getGroupCompany($input['globalCompanyId']);
+                $formula = $formula->whereIn('companySystemID', $subCompanies);
             }
         }
 

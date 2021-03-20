@@ -373,7 +373,7 @@
             <tr>
                 <td width="30%">
                     @if($request->logo)
-                        <img src="logos/{{$request->companyLogo}}"
+                        <img src="{{$request->companyLogo}}"
                              width="180px" height="60px">
                     @endif
                 </td>

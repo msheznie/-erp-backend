@@ -426,7 +426,8 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $output['items'] = ItemMaster::select(DB::Raw("itemCodeSystem,primaryCode,itemDescription,CONCAT(primaryCode, ' | ' ,itemDescription) as label"));
         if($seachText != ''){
             $output['items'] = $output['items']->where(function ($query) use ($seachText) {
-                $query->where('primaryCode','LIKE', "%{$seachText}%");
+                $query->where('primaryCode','LIKE', "%{$seachText}%")
+                ->orWhere('itemDescription','LIKE', "%{$seachText}%");
             });
         }
         $output['items'] = $output['items']->take(50)->get();
@@ -475,11 +476,35 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $selected = isset($input['selectedItems'])?$input['selectedItems']:[];
 
         $id = isset($input['id'])?$input['id']:[];
+        $error = [];
         if(count($selected)>0 && $id){
-            foreach ($selected as $row){
-                ItemMaster::where('itemCodeSystem',$row['itemCodeSystem'])->update(['vatSubCategory'=>$id]);
+
+            DB::beginTransaction();
+            try{
+                foreach ($selected as $row){
+
+                    $item = ItemMaster::where('itemCodeSystem',$row['itemCodeSystem'])
+                        ->where('vatSubCategory','>',0)
+                        ->where('vatSubCategory','!=',$id)
+                        ->with(['vat_sub_category'])
+                        ->first();
+                    if($item && isset($item->vat_sub_category->taxMasterAutoID)){
+                        $error[] = $item->primaryCode.' has already assigned to '.$item->vat_sub_category->subCategoryDescription;
+                    }else{
+                        ItemMaster::where('itemCodeSystem',$row['itemCodeSystem'])->update(['vatSubCategory'=>$id]);
+                    }
+                }
+
+                if(!empty($error) && count($error)>0){
+                    return $this->sendError($error,422);
+                }
+                DB::commit();
+                return $this->sendResponse([], 'Successfully assigned');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage());
             }
-            return $this->sendResponse([], 'Successfully assigned');
+
         }
         return $this->sendError('Error Occurred',500);
     }

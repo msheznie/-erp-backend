@@ -13,6 +13,8 @@
 namespace App\Models;
 
 use App\helper\Helper;
+use App\helper\TaxService;
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -269,11 +271,13 @@ use Eloquent as Model;
  */
 class BookInvSuppMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_bookinvsuppmaster';
     
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
+
+    protected $appends = ['rcmAvailable'];
 
     protected $primaryKey = 'bookingSuppMasInvAutoID';
 
@@ -342,7 +346,8 @@ class BookInvSuppMaster extends Model
         'timestamp',
         'supplierGLCodeSystemID',
         'UnbilledGRVAccountSystemID',
-        'UnbilledGRVAccount'
+        'UnbilledGRVAccount',
+        'rcmActivated'
     ];
 
     /**
@@ -401,7 +406,8 @@ class BookInvSuppMaster extends Model
         'UnbilledGRVAccount' => 'string',
         'supplierGLCodeSystemID' => 'integer',
         'UnbilledGRVAccountSystemID' => 'integer',
-        'custInvoiceDirectAutoID' => 'integer'
+        'custInvoiceDirectAutoID' => 'integer',
+        'rcmActivated' => 'integer'
     ];
 
     /**
@@ -517,4 +523,8 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'bookingSuppMasInvAutoID')->where('documentSystemID',11);
     }
 
+    public function getRcmAvailableAttribute()
+    {
+        return TaxService::getRCMAvailable($this->companySystemID,$this->supplierID);
+    }
 }

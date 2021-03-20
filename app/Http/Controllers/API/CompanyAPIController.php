@@ -14,6 +14,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\hrCompany;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
@@ -34,6 +35,9 @@ use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Repositories\CompanyPolicyCategoryRepository;
+use App\Repositories\CompanyPolicyMasterRepository;
+use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -49,13 +53,18 @@ class CompanyAPIController extends AppBaseController
 {
     /** @var  CompanyRepository */
     private $companyRepository;
+    private $policyCategoryRepository;
+    private $policyMasterRepository;
 
-    public function __construct(CompanyRepository $companyRepo)
+    public function __construct(CompanyRepository $companyRepo, CompanyPolicyCategoryRepository $policyCategoryRepo,
+     CompanyPolicyMasterRepository $policyMasterRepo)
     {
         $this->companyRepository = $companyRepo;
+        $this->policyCategoryRepository = $policyCategoryRepo;
+        $this->policyMasterRepository = $policyMasterRepo;
     }
-
-
+    
+    
     /**
      * Display a listing of the Company.
      * GET|HEAD /companies
@@ -246,6 +255,10 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
+
+        $disk = Helper::policyWiseDisk($input['masterCompanySystemIDReorting'], 'local_public');
+        $awsPolicy = Helper::checkPolicy($input['masterCompanySystemIDReorting'], 50);
+
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
@@ -268,20 +281,39 @@ class CompanyAPIController extends AppBaseController
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
-            $path = 'logos/' . $input['companyLogo'];
+            if ($awsPolicy) {
+                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
+            } else {
+                $path = 'logos/' . $input['companyLogo'];
+            }
 
-            Storage::disk('local_public')->put($path, $decodeFile);
+            $input['logoPath'] = $path;
+            Storage::disk($disk)->put($path, $decodeFile);
         }
-
 
 
         $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
 
-        $companies = $this->companyRepository->create($input);
+       
+        DB::beginTransaction();
+        try {
+            $companies = $this->companyRepository->create($input);
+            
+            $this->addCompayPolicies($companies['companySystemID'], $companies['CompanyID']);
 
-        return $this->sendResponse($companies->toArray(), 'Company saved successfully');
+            $hrCompany = app()->make(hrCompany::class);
+            $hrCompany->store($companies);
+ 
+            DB::commit();
+            return $this->sendResponse($companies->toArray(), 'Company saved successfully');
+        }
+        catch(Exception $ex){
+            DB::rollback();
+            $ex_arr = Helper::exception_to_error($ex);
+            return $this->sendError('Error in company create process.', 500, $ex_arr);
+        }
     }
 
     /**
@@ -316,7 +348,7 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-//        $input = $this->convertArrayToValue($input);
+        // $input = $this->convertArrayToValue($input);
         $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
         /** @var Company $company */
         $company = $this->companyRepository->findWithoutFail($id);
@@ -355,6 +387,9 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
+        $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
+        $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
+
         /*image upload*/
         $attachment = $input['nextAttachment'];
         if(!empty($attachment) && isset($attachment['file'])){
@@ -377,22 +412,43 @@ class CompanyAPIController extends AppBaseController
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
-            $path = 'logos/' . $input['companyLogo'];
-
-            if ($exists = Storage::disk('local_public')->exists($path)) {
-                Storage::disk('local_public')->delete($path);
+            if ($awsPolicy) {
+                $path = $input['CompanyID'].'/logos/' . $input['companyLogo'];
+            } else {
+                $path = 'logos/' . $input['companyLogo'];
             }
 
-            Storage::disk('local_public')->put($path, $decodeFile);
+            if ($exists = Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+
+
+            $input['logoPath'] = $path;
+
+            Storage::disk($disk)->put($path, $decodeFile);
         }
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        $company = $this->companyRepository->update($input, $id);
+        $input = array_except($input, ['createdDateTime', 'timeStamp']); 
 
-        return $this->sendResponse($company->toArray(), 'Company updated successfully');
+        DB::beginTransaction();
+        try {
+            $company = $this->companyRepository->update($input, $id);
+
+            $hrCompany = app()->make(hrCompany::class);
+            $hrCompany->update($id, $input);
+            
+            DB::commit();
+            return $this->sendResponse($company->toArray(), 'Company updated successfully');
+        }
+        catch(Exception $ex){
+            DB::rollback();
+            $ex_arr = Helper::exception_to_error($ex);
+            return $this->sendError('Error in company updated process.', 500, $ex_arr);
+        }
     }
 
     /**
@@ -483,6 +539,7 @@ class CompanyAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->rawColumns(['logo_url'])
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
@@ -540,8 +597,11 @@ class CompanyAPIController extends AppBaseController
 
         if (isset($input['companySystemID'])) {
 
+
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
 
+            $disk = Helper::policyWiseDisk($companyMaster->masterCompanySystemIDReorting, 'local_public');
+            $awsPolicy = Helper::checkPolicy($companyMaster->masterCompanySystemIDReorting, 50);
             if ($companyMaster) {
 
                 $file = $request->request->get('file');
@@ -549,11 +609,16 @@ class CompanyAPIController extends AppBaseController
 
                 $myFileName = $companyMaster->CompanyID.'_logo.' . $extension;
 
-                $path = 'logos/' . $myFileName;
+                if ($awsPolicy) {
+                    $path = $companyMaster->CompanyID.'/logos/' . $myFileName;
+                } else {
+                    $path = 'logos/' . $myFileName;
+                }
 
-                Storage::disk('local_public')->put($path, $decodeFile);
+                $logoPath = $path;
+                Storage::disk($disk)->put($path, $decodeFile);
 
-                $this->companyRepository->update(['companyLogo'=>$myFileName],$input['companySystemID']);
+                $this->companyRepository->update(['companyLogo'=>$myFileName, 'logoPath' => $logoPath],$input['companySystemID']);
 
                 return $this->sendResponse([], 'Company Logo uploaded successfully');
 
@@ -561,5 +626,25 @@ class CompanyAPIController extends AppBaseController
         }
     }
 
+    public function addCompayPolicies($companyID, $companyCode){ 
+        $policyCat = $this->policyCategoryRepository->selectRaw("companyPolicyCategoryID,documentID,isActive")->get()->toArray();
 
+        $policy_arr = [];
+        foreach ($policyCat as $value) {
+            $policy_arr[] = [
+                'companySystemID' => $companyID, 
+                'companyID' => $companyCode,
+                'companyPolicyCategoryID' => $value['companyPolicyCategoryID'],                
+                'documentID' => $value['documentID'], 
+                'isYesNO' => 0,
+                'policyValue' => null
+            ];
+        }
+
+        if($policy_arr){
+            $this->policyMasterRepository->insert($policy_arr);
+        }
+        
+        return true;
+    }
 }

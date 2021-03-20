@@ -5,6 +5,8 @@ namespace App\helper;
 
 
 use App\Models\Company;
+use App\Models\CustomerAssigned;
+use App\Models\GRVDetails;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierAssigned;
@@ -15,9 +17,9 @@ use Illuminate\Support\Facades\DB;
 class TaxService
 {
 
-    public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0) {
+    public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0,$documentSystemID = 0) {
         //$vatRegisteredYN == 1 &
-        if($supplierVATEligible == 1 ){
+        if($supplierVATEligible == 1 && $documentSystemID != 67){ // 67 Quotation
             return true;
         }
         return false;
@@ -64,6 +66,15 @@ class TaxService
             ->first();
     }
 
+    public  static function getOutputVATTransferGLAccount($companySystemID = 0){
+
+        return Tax::where('companySystemID',$companySystemID)
+            //->where('isActive',1)
+            ->where('taxCategory',2)
+            ->whereNotNull('outputVatTransferGLAccountAutoID')
+            ->first();
+    }
+
     public static function checkCompanyVATEligible($companySystemID = 0) {
 
         $vatConfig = Tax::where('companySystemID',$companySystemID)
@@ -77,7 +88,7 @@ class TaxService
         return false;
     }
 
-    public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$supplierID=0) {
+    public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$partyID=0 , $isSupplier = 1) {
 
         $data = array('applicableOn' => 2,'percentage' => 0);
         $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
@@ -98,12 +109,23 @@ class TaxService
             $data['applicableOn'] = $taxDetails->applicableOn; // 1 - Gross , 2 - Net
             $data['percentage']   = $taxDetails->percentage;
         }else{
-            $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
-                ->where('supplierCodeSytem',$supplierID)
-                ->first();
 
-            if(!empty($supplier)){
-                $data['percentage']   = $supplier->vatPercentage;
+            if($isSupplier){
+                $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
+                    ->where('supplierCodeSytem',$partyID)
+                    ->first();
+
+                if(!empty($supplier)){
+                    $data['percentage']   = $supplier->vatPercentage;
+                }
+            }else{
+                $customer = CustomerAssigned::where('companySystemID',$companySystemID)
+                    ->where('customerCodeSystem',$partyID)
+                    ->first();
+
+                if(!empty($customer)){
+                    $data['percentage']   = $customer->vatPercentage;
+                }
             }
         }
 
@@ -124,11 +146,11 @@ class TaxService
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         //if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
         $poVATPercentage = 0;
-        if($poMasterSum && $purchaseOrder->isVatEligible){
+        if($poMasterSum && ($purchaseOrder->isVatEligible || $purchaseOrder->rcmActivated)){
             // $calculateVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
             $calculateVatAmount = $poMasterSum['totalVAT'];
             if($poMasterSum['masterTotalSum'] > 0){
-                $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'] - $poMasterSum['totalVAT'])) * 100;
+                $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'])) * 100;
             }
 
             $currencyConversionVatAmount = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateVatAmount);
@@ -151,5 +173,27 @@ class TaxService
         }
         ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
         return true;
+    }
+
+    public static function getRCMAvailable($companySystemID,$supplierID) {
+
+        if(!Helper::isLocalSupplier($supplierID, $companySystemID)){
+            $company = Company::find($companySystemID);
+
+            if(!empty($company) && $company->vatRegisteredYN == 1){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function isGRVRCMActivation($id = 0){
+
+        return GRVDetails::where('grvAutoID',$id)
+                           ->whereHas('po_master',function ($q){
+                               $q->where('rcmActivated',1);
+                           })
+                          ->exists();
     }
 }

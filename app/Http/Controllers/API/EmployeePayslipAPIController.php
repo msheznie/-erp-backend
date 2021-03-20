@@ -69,7 +69,7 @@ class EmployeePayslipAPIController extends AppBaseController
             $company = array(
                 'CompanyName' => isset($company_details->CompanyName)?$company_details->CompanyName:null,
                 'CompanyAddress' => isset($company_details->CompanyAddress)?$company_details->CompanyAddress:null,
-                'companyLogo' => isset($company_details->companyLogo)?"logos/".$company_details->companyLogo:null,
+                'companyLogo' => isset($company_details->logo_url)? $company_details->logo_url : null,
             );
         }
 

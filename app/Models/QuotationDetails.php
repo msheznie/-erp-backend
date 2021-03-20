@@ -247,7 +247,12 @@ class QuotationDetails extends Model
         'qtyIssuedDefaultMeasure',
         'soQuantity',
         'soQuotationMasterID',
-        'timestamp'
+        'timestamp',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'VATApplicableOn'
     ];
 
     /**
@@ -297,7 +302,12 @@ class QuotationDetails extends Model
         'soQuotationMasterID' => 'integer',
         'doQuantity' => 'float',
         'qtyIssuedDefaultMeasure' => 'float',
-        'soQuantity' => 'float'
+        'soQuantity' => 'float',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**

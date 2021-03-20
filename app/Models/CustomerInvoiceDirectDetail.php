@@ -294,4 +294,9 @@ class CustomerInvoiceDirectDetail extends Model
     {
         return $this->hasMany('App\Models\FreeBilling', 'performaInvoiceNo', 'performaMasterID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'custInvoiceDirectID', 'custInvoiceDirectAutoID');
+    }
 }

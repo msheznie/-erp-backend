@@ -175,12 +175,12 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         unset($inputParam);
 
-        $input['documentDate'] = new Carbon($input['documentDate']);
+        $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
 
         $monthBegin = $input['FYPeriodDateFrom'];
         $monthEnd = $input['FYPeriodDateTo'];
 
-        if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
+        if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
         } else {
             return $this->sendError('Disposal date is not within financial period!', 500);
         }
@@ -287,7 +287,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 41);
-        },'audit_trial.modified_by'])->findWithoutFail($id);
+        },'audit_trial.modified_by','customer'])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
@@ -820,10 +820,13 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
             }
 
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            DocumentApproved::where('documentSystemCode', $id)
                 ->where('companySystemID', $assetDisposal->companySystemID)
                 ->where('documentSystemID', $assetDisposal->documentSystemID)
                 ->delete();
+
+            /*Audit entry*/
+            AuditTrial::createAuditTrial($assetDisposal->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
             return $this->sendResponse($assetDisposal->toArray(), 'Asset disposal reopened successfully');

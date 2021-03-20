@@ -181,4 +181,27 @@ class DocumentApproved extends Model
                                                     ->where('companySystemID',$this->companySystemID);
     }
 
+
+     public static function levelWiseDocumentApprover($documentSystemID, $documentSystemCode, $rollLevelOrder, $companySystemID = null)
+    {
+        $res = new DocumentApproved();
+        $result =  $res->where("documentSystemID", $documentSystemID)
+                            ->where("documentSystemCode", $documentSystemCode)
+                            ->where("rollLevelOrder", $rollLevelOrder);
+
+        if (!is_null($companySystemID)) {
+            $result = $result->where('companySystemID', $companySystemID);
+        }
+
+        return $result->first();
+    }
+
+     public static function deleteApproval($documentSystemCode, $companySystemID, $documentSystemID)
+    {
+        $res = new DocumentApproved();
+        return $res->where('documentSystemCode', $documentSystemCode)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->delete();
+    }
 }

@@ -10,6 +10,8 @@ use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\SalesReturn;
+use App\Models\Company;
+use App\Models\Taxdetail;
 use App\Repositories\SalesReturnDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -320,7 +322,10 @@ class SalesReturnDetailAPIController extends AppBaseController
 
             $totalAddedQty = (floatval($currentItemData['qtyReturned']) - floatval($oldQty)) + $detailSum['totalNoQty'];
 
-            if ($pullItemData->qtyIssuedDefaultMeasure == $totalAddedQty) {
+            $deliveryOrderDetailData = DeliveryOrderDetail::find($currentItemData['deliveryOrderDetailID']);
+
+            $remaingQty = $deliveryOrderDetailData->qtyIssuedDefaultMeasure; 
+            if ($remaingQty == $totalAddedQty) {
                 $fullyReturned = 2;
                 $closedYN = -1;
                 $selectedForSalesReturn= -1;
@@ -331,7 +336,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
 
             // checking the qty request is matching with sum total
-            if ($pullItemData->qtyIssuedDefaultMeasure >= $currentItemData['qtyReturned']) {
+            if ($remaingQty >= $currentItemData['qtyReturned']) {
 
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
 
@@ -386,6 +391,10 @@ class SalesReturnDetailAPIController extends AppBaseController
 
             $this->updateDOReturnedStatus($currentItemData['deliveryOrderID']);
 
+            $resVat = $this->updateVatOfSalesReturn($salesReturnID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
             DB::commit();
             return $this->sendResponse([], 'Sales Return Item Details updated successfully');
         } catch (\Exception $exception) {
@@ -414,7 +423,11 @@ class SalesReturnDetailAPIController extends AppBaseController
 
             $totalAddedQty = (floatval($currentItemData['qtyReturned']) - floatval($oldQty)) + $detailSum['totalNoQty'];
 
-            if ($pullItemData->qtyIssuedDefaultMeasure == $totalAddedQty) {
+            $customerInvDetailData = CustomerInvoiceItemDetails::find($currentItemData['customerItemDetailID']);
+
+            $remaingQty = $customerInvDetailData->qtyIssuedDefaultMeasure; 
+
+            if ($remaingQty == $totalAddedQty) {
                 $fullyReturned = 2;
                 $closedYN = -1;
                 $selectedForSalesReturn= -1;
@@ -425,7 +438,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
 
             // checking the qty request is matching with sum total
-            if ($pullItemData->qtyIssuedDefaultMeasure >= $currentItemData['qtyReturned']) {
+            if ($remaingQty >= $currentItemData['qtyReturned']) {
 
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                 $invDetail_arr['qtyReturned'] = $currentItemData['qtyReturned'];
@@ -476,6 +489,11 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
 
             $this->updateInvoiceReturnedStatus($currentItemData['custInvoiceDirectAutoID']);
+
+            $resVat = $this->updateVatOfSalesReturn($salesReturnID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
 
             DB::commit();
             return $this->sendResponse([], 'Sales Return Item Details updated successfully');
@@ -595,7 +613,197 @@ class SalesReturnDetailAPIController extends AppBaseController
             $this->updateInvoiceReturnedStatus($salesReturnDetail->custInvoiceDirectAutoID);
         }
 
+        $resVat = $this->updateVatOfSalesReturn($salesReturnDetail->salesReturnID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
+
         return $this->sendResponse([], 'Sales Return Detail deleted successfully');
+    }
+
+
+    public function updateVatOfSalesReturn($salesReturnID)
+    {
+        $salesReturnMasterData = SalesReturn::find($salesReturnID);
+
+        $totalAmount = 0;
+        $totalTaxAmount = 0;
+        if ($salesReturnMasterData->returnType == 1) {
+            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
+                                                ->where('salesReturnID', $salesReturnID)
+                                                ->with(['delivery_order'])
+                                                ->groupBy('deliveryOrderID')
+                                                ->get();
+
+            foreach ($invoiceDetails as $key => $value) {
+                $totalAmount += $value->amount;
+                $tax = ($value->delivery_order->VATAmount / $value->delivery_order->transactionAmount) * $value->amount;
+
+                $totalTaxAmount += $tax;
+            }
+        } else {
+            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, custInvoiceDirectAutoID, salesReturnID')
+                                                ->where('salesReturnID', $salesReturnID)
+                                                ->with(['sales_invoice'])
+                                                ->groupBy('custInvoiceDirectAutoID')
+                                                ->get();
+
+            foreach ($invoiceDetails as $key => $value) {
+                $totalAmount += $value->amount;
+                $tax = ($value->sales_invoice->VATAmount / $value->sales_invoice->bookingAmountTrans) * $value->amount;
+
+                $totalTaxAmount += $tax;
+            }
+        }
+
+        if ($totalTaxAmount > 0) {
+            $taxDelete = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                  ->where('documentSystemID', 87)
+                                  ->delete();
+
+            $res = $this->saveSalesReturnTaxDetails($salesReturnID, $totalTaxAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        } else {
+            $taxDelete = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                  ->where('documentSystemID', 87)
+                                  ->delete();
+
+            $vatAmount['vatOutputGLCodeSystemID'] = 0;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            SalesReturn::where('id', $salesReturnID)->update($vatAmount);
+
+        }
+
+        return ['status' => true];
+    }
+
+
+     public function saveSalesReturnTaxDetails($salesReturnID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = SalesReturn::where('id', $salesReturnID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Sales Return not found.'];
+        }
+
+        $invoiceDetail = SalesReturnDetail::where('salesReturnID', $salesReturnID)->first();
+      
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Sales Return Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+
+        $totalDetail = SalesReturnDetail::select(DB::raw("SUM(transactionAmount) as amount"))
+                                          ->where('salesReturnID', $salesReturnID)
+                                          ->groupBy('salesReturnID')
+                                          ->first();
+
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $salesReturnID)
+                                ->where('documentSystemID', 87)
+                                ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'SLR';
+        $_post['documentSystemID'] = $master->documentSystemID;
+        $_post['documentSystemCode'] = $salesReturnID;
+        $_post['documentCode'] = $master->salesReturnCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->transactionCurrencyID;
+        $_post['currencyER'] = $master->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $master->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+       
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+        SalesReturn::where('id', $salesReturnID)->update($vatAmount);
+
+        return ['status' => true];
     }
 
 

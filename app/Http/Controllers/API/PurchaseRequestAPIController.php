@@ -320,7 +320,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
             ->where('PRConfirmedYN', 1)
-//            ->where('cancelledYN', 0)
+           // ->where('cancelledYN', 0)
             ->when(request('date_by') == 'PRRequestedDate', function ($q) use ($from, $to) {
                 return $q->whereBetween('PRRequestedDate', [$from, $to]);
             })
@@ -441,7 +441,10 @@ class PurchaseRequestAPIController extends AppBaseController
                                 });
                             })
                             ->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
-                                $q->where('poConfirmedYN', 1);
+                                $q->where('poConfirmedYN', 1)
+                                  ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                        return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                    });
                             })
                             ->with(['order' => function ($q) use ($from, $to, $documentSearch) {
                                 $q->where('poConfirmedYN', 1)
@@ -1276,7 +1279,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by',
             'priority_pdf', 'location_pdf', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
@@ -1364,7 +1367,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
-            'PRConfirmedBy', 'PRConfirmedByEmpName',
+            'PRConfirmedBy', 'PRConfirmedByEmpName','currency_by',
             'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment']);
         $input = $this->convertArrayToValue($input);
 
@@ -2292,10 +2295,13 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+        DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
             ->where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemID', $purchaseRequest->documentSystemID)
             ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$purchaseRequest->purchaseRequestID,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request reopened successfully');
     }
@@ -2457,6 +2463,22 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->first();
         }
         return $this->sendResponse($closedDetails, 'Record retrieved successfully');
+    }
+
+    /*
+     * when hovering document code, show document details
+     * */
+    public function getDocumentDetails(Request $request){
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+        $documentSystemID = $input['documentSystemID'];
+        $matchingDoc = isset($input['matchingDoc'])?$input['matchingDoc']:0;
+
+        $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
+
+        return $this->sendResponse($output,'Success');
     }
 
 }
