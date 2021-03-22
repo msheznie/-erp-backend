@@ -194,7 +194,7 @@ class CustomerMasterAPIController extends AppBaseController
                     });
                 });
         })->where('erp_documentapproved.approvedYN', 0)
-            ->join('countrymaster', 'customerCountry', '=', 'countryID')
+            ->leftJoin('countrymaster', 'customerCountry', '=', 'countryID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 58)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
