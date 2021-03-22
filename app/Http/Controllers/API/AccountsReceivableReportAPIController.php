@@ -2133,8 +2133,8 @@ WHERE
 	) AS InvoiceFromUNION 
 GROUP BY
 	bookingInvCode 
-	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
-	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
+	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = MainQuery.documentSystemID 
+	AND MainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
     }
 
     function getCustomerBalanceStatementQRY($request)
