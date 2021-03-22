@@ -180,7 +180,7 @@ class ReportTemplateAPIController extends AppBaseController
                 $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $reportTemplateDetails = ReportTemplateDetails::create($data2);
 
-                $chartofaccount = ChartOfAccount::where('isActive', 1)->where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
+                $chartofaccount = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
                 if (count($chartofaccount) > 0) {
                     foreach ($chartofaccount as $key => $val) {
                         $data3['templateMasterID'] = $reportTemplates->companyReportTemplateID;
