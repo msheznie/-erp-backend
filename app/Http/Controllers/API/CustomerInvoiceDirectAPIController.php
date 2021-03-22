@@ -1963,7 +1963,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $customerInvoice = (object)[];
-
         if ($master->isPerforma == 1) {
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
         } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
