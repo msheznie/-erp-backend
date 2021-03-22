@@ -1416,6 +1416,8 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
         Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
         Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
+        Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation');
+        Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode');
         Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
         Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
         Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');

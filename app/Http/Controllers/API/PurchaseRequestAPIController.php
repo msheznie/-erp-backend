@@ -320,7 +320,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
             ->where('PRConfirmedYN', 1)
-//            ->where('cancelledYN', 0)
+           // ->where('cancelledYN', 0)
             ->when(request('date_by') == 'PRRequestedDate', function ($q) use ($from, $to) {
                 return $q->whereBetween('PRRequestedDate', [$from, $to]);
             })
@@ -441,7 +441,10 @@ class PurchaseRequestAPIController extends AppBaseController
                                 });
                             })
                             ->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
-                                $q->where('poConfirmedYN', 1);
+                                $q->where('poConfirmedYN', 1)
+                                  ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                        return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                    });
                             })
                             ->with(['order' => function ($q) use ($from, $to, $documentSearch) {
                                 $q->where('poConfirmedYN', 1)
