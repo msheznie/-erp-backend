@@ -354,13 +354,33 @@
             @endforeach
             </tbody>
             <tr>
-            <td colspan="7" style="text-align: right; border-left: none !important;"><b>Total </b></td>
-            <td class="text-right">
-                @if ($entity->detail)
-                    {{number_format($directTraSubTotal, $entity->currency)}}
-                @endif
-            </td>
+                <td colspan="7" style="text-align: right; border-left: none !important;"><b>Total </b></td>
+                <td class="text-right">
+                    @if ($entity->detail)
+                        {{number_format($directTraSubTotal, $entity->currency)}}
+                    @endif
+                </td>
             </tr>
+             @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
+            <tr>
+                <td colspan="7" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
+                <td class="text-right">
+                    @if ($entity->detail)
+                        {{number_format($entity->tax->amount, $entity->currency)}}
+                    @endif
+                </td>
+            </tr>
+            @endif
+            @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
+            <tr>
+                <td colspan="7" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
+                <td class="text-right">
+                    @if ($entity->detail)
+                        {{number_format(($directTraSubTotal + $entity->tax->amount), $entity->currency)}}
+                    @endif
+                </td>
+            </tr>
+            @endif
         </table>
     </div>
     {{--<hr>--}}
