@@ -1587,7 +1587,11 @@ class ProcumentOrderAPIController extends AppBaseController
         }, 'paymentTerms_by' => function ($query) {
             $query->with('type');
         }, 'advance_detail' => function ($query) {
-            $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
+            $query->with(['category_by', 'grv_by', 'currency', 'supplier_by'])
+                   ->where('poTermID', 0)
+                   ->where('confirmedYN', 1)
+                   ->where('isAdvancePaymentYN', 1)
+                   ->where('approvedYN', -1);
         }, 'company',
             'secondarycompany' => function ($query) use ($createdDateTime) {
                 $query->whereDate('cutOffDate', '<=', $createdDateTime);
