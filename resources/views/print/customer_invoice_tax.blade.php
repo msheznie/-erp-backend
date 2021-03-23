@@ -500,26 +500,7 @@
     </div>
 
     <br>
-   <!--  @if($request->line_rentalPeriod)
 
-        <div class="row" style="text-align: center">
-            <b>Rental Period From
-                {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalStartDate)}} -
-                {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalEndDate)}}</b>
-        </div>
-        <div class="row" style="">
-            <b><span>{{isset($request->invoicedetail->billmaster->ticketmaster->rig->RigDescription)?$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription:''}}</span> |
-                <span> {{isset($request->invoicedetail->billmaster->ticketmaster->regNo)?$request->invoicedetail->billmaster->ticketmaster->regNo:''}}</span></b>
-        </div>
-    @else
-        <div class="row" style="">
-            <b>Comments : </b> {!! nl2br($request->comments) !!}
-        </div>
-    @endif -->
-   <!--  <div class="row">
-        <div style="text-align: right"><b>Currency
-                : {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} </b></div>
-    </div> -->
     <div class="row">
 
         @if($request->linePdoinvoiceDetails)
@@ -637,7 +618,7 @@
             </table>
         @endif
 
-        @if ($request->template <> 1 && !$request->line_invoiceDetails)
+        @if ($request->template <> 1 && !$request->line_invoiceDetails && isset($request->invoicedetails) && sizeof($request->invoicedetails) > 0)
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
@@ -670,20 +651,73 @@
 
             </table>
         @endif
+
+         @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
+                <table class="table table-bordered" style="width: 100%;">
+                    <thead>
+                    <tr class="theme-tr-head">
+                        <th style="width:3%"></th>
+                        <th style="width:60%;text-align: center">Description</th>
+                        <!-- <th style="width:10%;text-align: center">UOM</th> -->
+                        <th style="width:10%;text-align: center">Quantity</th>
+                        <th style="width:10%;text-align: center">Unit Price</th>
+                        <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                        <th style="width:10%;text-align: right">Taxable Rate</th>
+                        <th style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                        <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{$decimal = 2}}
+                    {{$x=1}}
+                    {{$directTraSubTotal=0}}
+                    {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+                    @if(!empty($request->issue_item_details))
+                        @foreach ($request->issue_item_details as $item)
+                             @if ($item->sellingTotal != 0)
+                                {{$directTraSubTotal +=$item->sellingTotal}}
+                                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                                    <td>{{$x}}</td>
+                                    <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                    <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
+                                    <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
+                                    <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                    <td  class="text-right"></td>
+                                    <td  class="text-right"></td>
+                                    <td  class="text-right"></td>
+                                    <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
+                                </tr>
+                                {{ $x++ }}
+                             @endif
+                        @endforeach
+                    @endif
+                    </tbody>
+
+                </table>
+        @endif
     </div>
     <div class="row">
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td class="text-right" style="width: 20%;border-bottom: none !important"><span
-                            class="font-weight-bold"
-                            style="border-bottom: none !important;font-size: 11.5px">Total:</span>
+                <td style="border:none !important;">
+                        &nbsp;
                 </td>
+                @if ($request->tax && isset($request->tax->amount))
+                    <td class="text-right" style="border:none !important;width: 85%"><span
+                                class="font-weight-bold"
+                                style="font-size: 11.5px">Subtotal (Excluding VAT):</span>
+                    </td>
+                @else
+                    <td class="text-right" style="border:none !important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11.5px">Total:</span>
+                    </td>
+                @endif
                 <td class="text-right"
-                    style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                <span class="font-weight-bold">
-                @if ($request->invoicedetails)
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                                class="font-weight-bold">
+                    @if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
                     @endif
                 </span>
@@ -696,9 +730,9 @@
                     <td style="border:none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;"><span
+                    <td class="text-right" style="border:none !important;width: 85%""><span
                                 class="font-weight-bold"
-                                style="font-size: 11.5px">VAT Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{$request->tax->taxPercent}} %)
+                                style="font-size: 11.5px">Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round($request->tax->taxPercent, 2)}} %)
                             </span></td>
                     <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
@@ -710,9 +744,9 @@
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;"><span
+                    <td class="text-right" style="border:none !important;width: 85%""><span
                                 class="font-weight-bold"
-                                style="font-size: 11.5px">Net Amount</span>
+                                style="font-size: 11.5px">Total Amount Payable</span>
                     </td>
                     <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">

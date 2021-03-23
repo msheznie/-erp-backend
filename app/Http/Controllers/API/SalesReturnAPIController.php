@@ -1925,6 +1925,7 @@ class SalesReturnAPIController extends AppBaseController
 
         $salesReturnArray = $doData->toArray();
         $salesReturnArray['salesReturnID'] = $salesReturnArray['id'];
+        unset($salesReturnArray['id']);
         $storeDeliveryOrderHistory = SalesReturnRefferedBack::insert($salesReturnArray);
 
         $fetchSalesReturnDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
