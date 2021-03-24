@@ -1426,6 +1426,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
         Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+        Route::post('getAllBankAccounts', 'BankAccountAPIController@getAllBankAccounts');
+        Route::post('exportBankAccountMaster', 'BankAccountAPIController@exportBankAccountMaster');
         Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
         Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
         Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');

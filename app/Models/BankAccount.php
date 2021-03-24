@@ -204,6 +204,11 @@ class BankAccount extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'accountCurrencyID','currencyID');
     }
 
+     public function bank()
+    {
+        return $this->belongsTo('App\Models\BankMaster', 'bankmasterAutoID','bankmasterAutoID');
+    }
+
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
