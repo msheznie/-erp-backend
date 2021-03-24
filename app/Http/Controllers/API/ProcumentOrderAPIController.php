@@ -880,7 +880,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             foreach ($details as $detail) {
                 $PRMaster = PurchaseRequest::find($detail['purchaseRequestID']);
-                if ($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID) {
+                if ($PRMaster && ($procumentOrder->serviceLineSystemID != $PRMaster->serviceLineSystemID)) {
                     return $this->sendError("Added Request department is different from order");
                 }
             }
@@ -1137,7 +1137,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable', 'financeCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable', 'financeCategory', 'poTypeID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1229,6 +1229,12 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('poTypeID', $input)) {
+            if ($input['poTypeID'] && !is_null($input['poTypeID'])) {
+                $procumentOrders->where('poTypeID', $input['poTypeID']);
+            }
+        }
+
         if (array_key_exists('sentToSupplier', $input)) {
             if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
                 $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
@@ -1269,6 +1275,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.financeCategory',
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
+                'erp_purchaseordermaster.poTypeID',
                 'erp_purchaseordermaster.sentToSupplier'
             ]);
 

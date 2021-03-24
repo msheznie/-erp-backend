@@ -299,6 +299,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $item->wacValueLocal);
+
+        $input['unitCost'] = $currencyConversion['documentAmount'];
+
         $input['localCurrencyID'] = $purchaseOrder->localCurrencyID;
         $input['localCurrencyER'] = $purchaseOrder->localCurrencyER;
 
