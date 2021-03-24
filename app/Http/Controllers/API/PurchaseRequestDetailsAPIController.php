@@ -178,6 +178,29 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $input['itemCategoryID'] = 0;
 
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $purchaseRequest->companySystemID)
+                ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+
+            if ($policy == 0) {
+                //checking if item category is same or not
+                $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                    ->first();
+
+                if ($pRDetailExistSameItem) {
+                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                        return $this->sendError('You cannot add different category item', 422);
+                    }
+                }
+            }
+        }
+
+
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -406,6 +429,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['quantityOnOrder'] = $quantityOnOrder;
         $input['quantityInHand'] = $quantityInHand;
 
+       
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
 
         return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');

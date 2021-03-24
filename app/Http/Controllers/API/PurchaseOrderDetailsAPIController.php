@@ -299,6 +299,27 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+
+            if ($policy == 0) {
+                //checking if item category is same or not
+                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('purchaseRequestID', $input['purchaseOrderID'])
+                    ->first();
+
+                if ($pRDetailExistSameItem) {
+                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                        return $this->sendError('You cannot add different category item', 422);
+                    }
+                }
+            }
+        }
+
         $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $item->wacValueLocal);
 
         $input['unitCost'] = $currencyConversion['documentAmount'];
