@@ -171,7 +171,10 @@ class TaxService
                     'VATAmountRpt' => 0
                 ]);
         }
-        ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
+
+        if (!is_null($poMasterSum['budgetYear'])) {
+            ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
+        }
         return true;
     }
 

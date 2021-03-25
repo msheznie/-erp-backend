@@ -1735,6 +1735,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
         Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
+        Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
         Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
         Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
         Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');

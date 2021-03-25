@@ -27,6 +27,7 @@ use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseRequest;
@@ -293,7 +294,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($anyPendingApproval)) {
-                    return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    // return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                 }
 
             }
@@ -320,9 +321,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+            ->where('mainItemCategoryID', $item->financeCategoryMaster)
+            ->where('itemCategorySubID', $item->financeCategorySub)
+            ->first();
+
+        if (empty($financeItemCategorySubAssigned)) {
+            return $this->sendError('Finance category not assigned for the selected item.');
+        }
+
+        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        $input['budgetYear'] = $purchaseOrder->budgetYear;
+
         $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $item->wacValueLocal);
 
-        $input['unitCost'] = $currencyConversion['documentAmount'];
+        $input['unitCost'] =  \Helper::roundValue($currencyConversion['documentAmount']);
 
         $input['localCurrencyID'] = $purchaseOrder->localCurrencyID;
         $input['localCurrencyER'] = $purchaseOrder->localCurrencyER;
@@ -347,31 +364,32 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $prDetail_arr['netAmount'] = ($input['unitCost'] + $input['VATAmount']) * $input['noQty'];
             $currencyConversionVAT = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount']);
 
-            $prDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $prDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $input['VATAmount'] = 0;
+            $input['VATAmountLocal'] = 0;
+            $input['VATAmountRpt'] = 0;
 
         }
 
-        $grvCost = $input['unitCost'] + $input['VATAmount'];
+        $grvCost = $input['unitCost'];
 
         if ($grvCost > 0) {
             $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $grvCost);
 
-            $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
             $input['GRVcostPerUnitSupTransCur'] = $grvCost;
-            $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+            $input['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-            $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
             $input['purchaseRetcostPerUnitTranCur'] = $input['unitCost'];
-            $input['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+            $input['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
         }
 
         // adding supplier Default CurrencyID base currency conversion
         if ($grvCost > 0) {
             $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $grvCost);
 
-            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
-            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+            $input['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+            $input['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
         }
 
         $input['purchaseOrderMasterID'] = $input['purchaseOrderID'];
@@ -386,7 +404,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineCode'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $item->companySystemID;
-        $input['companyID'] = $item->companyID;
+        $input['companyID'] =  \Helper::getCompanyById($item->companySystemID);
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];

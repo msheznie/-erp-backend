@@ -1189,7 +1189,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('supplyChainOnGoing', 0)
             ->where('manuallyClosed', 0)
             ->where('documentSystemID', $documentSystemIDChanged);
-        if (isset($procumentOrder->financeCategory)) {
+        if (isset($procumentOrder->financeCategory) && $procumentOrder->financeCategory > 0) {
             $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);
         }
         $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $procumentOrder->serviceLineSystemID)
