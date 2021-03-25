@@ -539,10 +539,10 @@ class BankAccountAPIController extends AppBaseController
         $x = 0;
         foreach ($bankAccounts as $val) {
             $x++;
-            $data[$x]['Bank Short Code'] = $val->bank->bankShortCode;
-            $data[$x]['Bank Name'] = $val->bank->bankName;
+            $data[$x]['Bank Short Code'] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
+            $data[$x]['Bank Name'] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
             $data[$x]['Account No'] = $val->AccountNo;
-            $data[$x]['Currency'] = $val->currency->CurrencyCode;
+            $data[$x]['Currency'] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
             $data[$x]['GL Code'] = $val->glCodeLinked;
             $data[$x]['Branch'] = $val->bankBranch;
             $data[$x]['Swift'] = $val->accountSwiftCode;
