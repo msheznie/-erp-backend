@@ -6981,8 +6981,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
 
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
-                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
                                                         ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
                                                         ->where('addedDocumentSystemID', 20)
                                                         ->where('matchingDocID', 0)
@@ -7012,8 +7012,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
 
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
-                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
                                                         ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
                                                         ->where('addedDocumentSystemID', 20)
                                                         ->where('matchingDocID', 0)
@@ -7089,13 +7089,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $quotationMaster = QuotationMaster::where('quotationMasterID', $quotationMasterID)
                                         ->with(['transaction_currency', 'detail' => function($query) {
                                             $query->selectRaw('sum(companyLocalAmount) as localAmount,
-                                                 sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID')
+                                                 sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID, sum(VATAmount * requestedQty) as transVATAmount')
                                                   ->groupBy('quotationMasterID');
                                         }])
                                         ->first();
 
         $salesOrderDeatils = QuotationDetails::selectRaw('sum(companyLocalAmount) as localAmount,
-                                                 sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount,quotationMasterID,soQuotationMasterID')
+                                                 sum(companyReportingAmount) as rptAmount, sum(transactionAmount) as transAmount, sum(VATAmount * requestedQty) as transVATAmount,quotationMasterID,soQuotationMasterID')
                                                 ->where('soQuotationMasterID', $quotationMasterID)
                                                 ->with(['master' => function($query) {
                                                     $query->with(['transaction_currency']);
@@ -7127,7 +7127,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $quotationMaster->documentSystemID;
         $tracingData['docAutoID'] = $quotationMaster->quotationMasterID;
-        $tracingData['title'] = "{Doc Code :} ".$quotationMaster->quotationCode." -- {Doc Date :} ". Carbon::parse($quotationMaster->documentDate)->format('Y-m-d')." -- {Currency :} ".$quotationMaster->transaction_currency->CurrencyCode."-- {Amount :} ".number_format($quotationMaster->detail[0]->transAmount, $quotationMaster->transaction_currency->DecimalPlaces). $cancelStatus;
+        $tracingData['title'] = "{Doc Code :} ".$quotationMaster->quotationCode." -- {Doc Date :} ". Carbon::parse($quotationMaster->documentDate)->format('Y-m-d')." -- {Currency :} ".$quotationMaster->transaction_currency->CurrencyCode."-- {Amount :} ".number_format(($quotationMaster->detail[0]->transAmount + $quotationMaster->detail[0]->transVATAmount), $quotationMaster->transaction_currency->DecimalPlaces). $cancelStatus;
 
 
         foreach ($salesOrderData as $keySo => $valueSo) {
@@ -7164,7 +7164,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $tempSo['documentSystemID'] = $valueSo['master']['documentSystemID'];
         $tempSo['docAutoID'] = $valueSo['master']['quotationMasterID'];
-        $tempSo['title'] = "{Doc Code :} ".$valueSo['master']['quotationCode']." -- {Doc Date :} ". Carbon::parse($valueSo['master']['documentDate'])->format('Y-m-d')." -- {Currency :} ".$valueSo['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format($valueSo['transAmount'], $valueSo['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
+        $tempSo['title'] = "{Doc Code :} ".$valueSo['master']['quotationCode']." -- {Doc Date :} ". Carbon::parse($valueSo['master']['documentDate'])->format('Y-m-d')." -- {Currency :} ".$valueSo['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format(($valueSo['transAmount'] + $valueSo['transVATAmount']), $valueSo['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
 
         foreach ($valueSo['delivery_order'] as $key => $value) {
             $temp = [];
@@ -7196,7 +7196,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $temp['documentSystemID'] = $value['master']['documentSystemID'];
         $temp['docAutoID'] = $value['master']['deliveryOrderID'];
-        $temp['title'] = "{Doc Code :} ".$value['master']['deliveryOrderCode']." -- {Doc Date :} ". Carbon::parse($value['master']['deliveryOrderDate'])->format('Y-m-d')." -- {Currency :} ".$value['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format($value['transAmount'], $value['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
+        $temp['title'] = "{Doc Code :} ".$value['master']['deliveryOrderCode']." -- {Doc Date :} ". Carbon::parse($value['master']['deliveryOrderDate'])->format('Y-m-d')." -- {Currency :} ".$value['master']['transaction_currency']['CurrencyCode']." -- {Amount :} ".number_format(($value['transAmount'] + $value['master']['VATAmount']), $value['master']['transaction_currency']['DecimalPlaces']).$cancelStatus;
 
 
         $salesReturnDetails = SalesReturnDetail::selectRaw('sum(companyLocalAmount) as localAmount,
@@ -7260,7 +7260,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $temp1['documentSystemID'] = $value1['master']['documentSystemiD'];
         $temp1['docAutoID'] = $value1['master']['custInvoiceDirectAutoID'];
-        $temp1['title'] = "{Doc Code :} ".$value1['master']['bookingInvCode']." -- {Doc Date :} ". Carbon::parse($value1['master']['bookingDate'])->format('Y-m-d')." -- {Currency :} ".$value1['master']['currency']['CurrencyCode']." -- {Amount :} ".number_format($value1['transAmount'], $value1['master']['currency']['DecimalPlaces']).$cancelStatus;
+        $temp1['title'] = "{Doc Code :} ".$value1['master']['bookingInvCode']." -- {Doc Date :} ". Carbon::parse($value1['master']['bookingDate'])->format('Y-m-d')." -- {Currency :} ".$value1['master']['currency']['CurrencyCode']." -- {Amount :} ".number_format(($value1['transAmount'] + $value1['master']['VATAmount']), $value1['master']['currency']['DecimalPlaces']).$cancelStatus;
 
         foreach ($value1['payments'] as $key2 => $value2) {
             $temp2 = [];
@@ -7269,8 +7269,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp1['childs'][] = $temp2;
         }
 
-        $recieptVouchersMatch = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
-                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,matchingDocID')
+        $recieptVouchersMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,matchingDocID')
                                                             ->where('bookingInvCodeSystem', $value1['master']['custInvoiceDirectAutoID'])
                                                             ->where('addedDocumentSystemID', 20)
                                                             ->where('matchingDocID', '>', 0)
@@ -7488,8 +7488,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
 
         foreach ($invoices as $invoice) {
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(bookingAmountLocal) as localAmount,
-                                             sum(bookingAmountRpt) as rptAmount, SUM(bookingAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
                                                         ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
                                                         ->where('addedDocumentSystemID', 20)
                                                         ->where('matchingDocID', 0)
