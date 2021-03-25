@@ -511,7 +511,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
-                                   ->with(['currency', 'bank']);
+                                   ->with(['currency', 'bank', 'company']);
 
         $search = $request->input('search.value');
 
@@ -525,6 +525,8 @@ class BankAccountAPIController extends AppBaseController
                     ->orWhereHas('bank', function ($query) use ($search) {
                         $query->where('bankShortCode', 'LIKE', "%{$search}%")
                               ->orWhere('bankName', 'LIKE', "%{$search}%");
+                    })->orWhereHas('company', function ($query) use ($search) {
+                        $query->where('CompanyID', 'LIKE', "%{$search}%");
                     });
             });
         }
@@ -539,6 +541,7 @@ class BankAccountAPIController extends AppBaseController
         $x = 0;
         foreach ($bankAccounts as $val) {
             $x++;
+            $data[$x]['Company ID'] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
             $data[$x]['Bank Short Code'] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
             $data[$x]['Bank Name'] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
             $data[$x]['Account No'] = $val->AccountNo;
