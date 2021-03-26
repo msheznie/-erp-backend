@@ -870,7 +870,7 @@ class ProcumentOrderAPIController extends AppBaseController
                         ->where('purchaseRequestID', $input['purchaseOrderID'])
                         ->get();
 
-                    if (sizeof($pRDetailExistSameItem) > 0) {
+                    if (sizeof($pRDetailExistSameItem) > 1) {
                         return $this->sendError('You cannot add different category item', 422);
                     }
                 }

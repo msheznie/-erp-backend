@@ -1430,7 +1430,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
                         ->get();
 
-                    if (sizeof($pRDetailExistSameItem) > 0) {
+                    if (sizeof($pRDetailExistSameItem) > 1) {
                         return $this->sendError('You cannot add different category item', 500);
                     }
                 }
