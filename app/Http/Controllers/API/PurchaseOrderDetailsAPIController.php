@@ -308,6 +308,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $policy = $allowFinanceCategory->isYesNO;
 
             if ($policy == 0) {
+                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
+                    return $this->sendError('Category is not found.', 500);
+                }
+                
                 //checking if item category is same or not
                 $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                     ->where('purchaseRequestID', $input['purchaseOrderID'])
@@ -503,6 +507,20 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (empty($purchaseOrder)) {
             return $this->sendError("Request department is different from order");
+        }
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+
+            if ($policy == 0) {
+                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
+                    return $this->sendError('Category is not found.', 500);
+                }
+            }
         }
 
         //check PO segment is correct with PR pull segment

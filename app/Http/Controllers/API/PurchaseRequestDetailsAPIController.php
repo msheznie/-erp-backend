@@ -187,6 +187,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $policy = $allowFinanceCategory->isYesNO;
 
             if ($policy == 0) {
+                if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                    return $this->sendError('Category is not found.', 500);
+                }
+
                 //checking if item category is same or not
                 $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                     ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
