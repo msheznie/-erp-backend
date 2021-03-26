@@ -294,7 +294,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (!empty($anyPendingApproval)) {
-                    // return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                 }
 
             }
