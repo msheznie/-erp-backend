@@ -311,10 +311,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
                     return $this->sendError('Category is not found.', 500);
                 }
-                
+
                 //checking if item category is same or not
                 $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                    ->where('purchaseRequestID', $input['purchaseOrderID'])
+                    ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                     ->first();
 
                 if ($pRDetailExistSameItem) {
@@ -426,24 +426,24 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         //calculate tax amount according to the percantage for tax update
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
-        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
-        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
-            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
+        // //getting total sum of PO detail Amount
+        // $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+        //     ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+        //     ->first();
+        // //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
+        // if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
+        //     $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
 
-            $currencyConversionVatAmount = \Helper::currencyConversion($companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
+        //     $currencyConversionVatAmount = \Helper::currencyConversion($companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
 
-            $updatePOMaster = ProcumentOrder::find($input['purchaseOrderID'])
-                ->update([
-                    'VATAmount' => $calculatVatAmount,
-                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
-                ]);
+        //     $updatePOMaster = ProcumentOrder::find($input['purchaseOrderID'])
+        //         ->update([
+        //             'VATAmount' => $calculatVatAmount,
+        //             'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
+        //             'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+        //         ]);
 
-        }
+        // }
 
         return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details saved successfully');
     }

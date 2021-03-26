@@ -867,7 +867,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     
                     //checking if item category is same or not
                     $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseRequestID', $input['purchaseOrderID'])
+                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                         ->get();
 
                     if (sizeof($pRDetailExistSameItem) > 1) {
