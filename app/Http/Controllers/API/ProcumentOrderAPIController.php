@@ -6536,21 +6536,21 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $procumentOrderData = ProcumentOrder::with(['currency'])
                                                 ->find($purchaseOrderID)
                                                 ->toArray();
+            $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
+            $tempPo = [];
+            $tempPo['name'] = "Purchase Order";
+            if ($type == 'po' && ($procumentOrder->purchaseOrderID == $purchaseOrderID)) {
+                $tempPo['cssClass'] = "ngx-org-step-two root-tracing-node";
+            } else {
+                $tempPo['cssClass'] = "ngx-org-step-two";
+            }
+
+            $tempPo['documentSystemID'] = $procumentOrderData['documentSystemID'];
+            $tempPo['docAutoID'] = $procumentOrderData['purchaseOrderID'];
+            $tempPo['title'] = "{Doc Code :} " . $procumentOrderData['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
+            
             $grvData = $this->getPOtoPaymentChainForTracing($procumentOrder, $grvAutoID, $bookingSuppMasInvAutoID, $type);
             if (sizeof($grvData) > 0) {
-                $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
-                $tempPo = [];
-                $tempPo['name'] = "Purchase Order";
-                if ($type == 'po' && ($procumentOrder->purchaseOrderID == $purchaseOrderID)) {
-                    $tempPo['cssClass'] = "ngx-org-step-two root-tracing-node";
-                } else {
-                    $tempPo['cssClass'] = "ngx-org-step-two";
-                }
-
-                $tempPo['documentSystemID'] = $procumentOrderData['documentSystemID'];
-                $tempPo['docAutoID'] = $procumentOrderData['purchaseOrderID'];
-                $tempPo['title'] = "{Doc Code :} " . $procumentOrderData['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
-
                 foreach ($grvData as $key => $value) {
                     $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
 
@@ -6628,11 +6628,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     $tempPo['childs'][] = $temp;
                 }
-
-                $tracingData[] = $tempPo;
-
             }
 
+            $tracingData[] = $tempPo;
             return $tracingData;
         }
 
