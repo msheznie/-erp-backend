@@ -319,7 +319,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if ($pRDetailExistSameItem) {
                     if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError('You cannot add different category item', 422);
+                        return $this->sendError('You cannot add different category item', 500);
                     }
                 }
             }
@@ -334,6 +334,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Finance category not assigned for the selected item.');
         }
 
+    
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
         $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;

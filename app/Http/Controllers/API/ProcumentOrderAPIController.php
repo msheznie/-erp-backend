@@ -859,20 +859,27 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if ($allowFinanceCategory) {
                 $policy = $allowFinanceCategory->isYesNO;
-
+                 //checking if item category is same or not
+                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                        ->get();
                 if ($policy == 0) {
                     if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
                         return $this->sendError('Category is not found.', 500);
                     }
                     
-                    //checking if item category is same or not
-                    $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                        ->get();
-
                     if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError('You cannot add different category item', 422);
+                        return $this->sendError('You cannot add different category item', 500);
                     }
+                } else {
+                    if (sizeof($pRDetailExistSameItem) == 1) {
+                        $updateFinanceCategory = $pRDetailExistSameItem[0]['itemFinanceCategoryID'];
+                    } else {
+                        $updateFinanceCategory = null;
+                    }
+
+                    ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)
+                                  ->update(['financeCategory' => $updateFinanceCategory]);
                 }
             }
 
