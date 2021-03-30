@@ -245,7 +245,12 @@ class DeliveryOrderDetail extends Model
         'fullyReceived',
         'fullyReturned',
         'invQty',
-        'timestamp'
+        'timestamp',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'VATApplicableOn'
     ];
 
     /**
@@ -300,7 +305,12 @@ class DeliveryOrderDetail extends Model
         'fullyReturned' => 'integer',
         'invQty' => 'float',
         'returnQty' => 'float',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**
