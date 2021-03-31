@@ -373,6 +373,22 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
+        $commonValidorMessages = [
+            'customerCountry.required' => 'Country field is required.'
+        ];
+
+        $commonValidator = \Validator::make($input, [
+            'customerCountry' => 'required',
+        ], $commonValidorMessages);
+
+        if ($commonValidator->fails()) {
+            return $this->sendError($commonValidator->messages(), 422);
+        }
+
+        if($input['customerCountry']==0 || $input['customerCountry']==''){
+            return $this->sendError('Country field is required',500);
+        }
+
 
         if (array_key_exists('customerCodeSystem', $input)) {
 
