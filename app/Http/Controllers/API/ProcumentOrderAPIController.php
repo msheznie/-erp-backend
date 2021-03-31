@@ -883,6 +883,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
 
+
+
             $poDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
@@ -890,6 +892,57 @@ class ProcumentOrderAPIController extends AppBaseController
             if (empty($poDetailExist)) {
                 return $this->sendError('Order cannot be confirmed without any details');
             }
+
+            $poDetails = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                                                 ->get();
+
+            $accountValidationArray = [];
+            foreach ($poDetails as $key => $value) {
+                if (is_null($value->itemFinanceCategoryID)) {
+                    $accountValidationArray[] = "Finance category of ".$value->itemPrimaryCode." not found";
+                } else {
+                    switch ($value->itemFinanceCategoryID) {
+                        case 1:
+                            if (is_null($value->financeGLcodebBSSystemID) || is_null($value->financeGLcodePLSystemID)) {
+                              
+                                $accountValidationArray[1][] = $value->itemPrimaryCode;
+                            }
+                            break;
+                         case 2:
+                         case 3:
+                         case 4:
+                            if (is_null($value->financeGLcodebBSSystemID) && is_null($value->financeGLcodePLSystemID)) {
+                                $accountValidationArray[1][] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item ".$value->itemPrimaryCode;
+                            }
+
+                            if (is_null($value->financeGLcodebBSSystemID) && !is_null($value->financeGLcodePLSystemID) && $value->includePLForGRVYN != -1) {
+                                $accountValidationArray[2][] = $value->itemPrimaryCode;
+                                
+                            }
+                            break;
+                        
+                        default:
+                            # code...
+                            break;
+                    }
+                }
+            }
+
+
+            if (!empty($accountValidationArray)) {
+                $accountValidationErrrArray = [];
+                if (isset($accountValidationArray[1])) {
+                    $itemsA = implode (", ", $accountValidationArray[1]);
+                    $accountValidationErrrArray[] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item(s) ".$itemsA;
+                }
+
+                if (isset($accountValidationArray[2])) {
+                    $itemsB = implode (", ", $accountValidationArray[2]);
+                    $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) ".$itemsB;
+                }
+                return $this->sendError($accountValidationErrrArray, 420);
+            }
+
 
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
                 ->where('noQty', '<', 0.1)
