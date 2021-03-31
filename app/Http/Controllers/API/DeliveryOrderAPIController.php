@@ -191,10 +191,18 @@ class DeliveryOrderAPIController extends AppBaseController
             return $this->sendError('Unbilled receivable account is not configured for this customer',500);
         }
 
+        $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+        if ($customerGLCodeUpdate) {
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+        }
+
         $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
         $input['custGLAccountCode'] = $customer->custGLaccount;
         $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
         $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
 
         //deliveryOrderCode
         $lastSerial = DeliveryOrder::where('companySystemID', $input['companySystemID'])
@@ -212,6 +220,8 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['serialNo'] = $lastSerialNumber;
         $input['companyID'] = $company['CompanyID'];
         $input['documentID'] = 'DEO';
+
+        $input['vatRegisteredYN'] = $company['vatRegisteredYN'];
 
         if(isset($input['serviceLineSystemID']) && $input['serviceLineSystemID']){
             $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -427,6 +437,20 @@ class DeliveryOrderAPIController extends AppBaseController
                 $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
                 $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
 
+            }
+
+            if (isset($input['orderType']) && $input['orderType'] != $deliveryOrder->orderType) {
+                $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                        ->where('companySystemID', $input['companySystemID'])
+                                                        ->first();
+                if ($customerGLCodeUpdate) {
+                    $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+                }
+
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                if ($company) {
+                    $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+                }
             }
         }
 

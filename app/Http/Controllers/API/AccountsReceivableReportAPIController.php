@@ -4709,8 +4709,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                 ) AS InvoiceFromUNION 
             GROUP BY
                 bookingInvCode 
-                ) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
-                AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
+                ) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = MainQuery.documentSystemID 
+                AND MainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
 
         return $output;
     }

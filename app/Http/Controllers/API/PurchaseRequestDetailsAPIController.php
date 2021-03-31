@@ -198,7 +198,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 if ($pRDetailExistSameItem) {
                     if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError('You cannot add different category item', 422);
+                        return $this->sendError('You cannot add different category item', 500);
                     }
                 }
             }

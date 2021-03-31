@@ -859,20 +859,27 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if ($allowFinanceCategory) {
                 $policy = $allowFinanceCategory->isYesNO;
-
+                 //checking if item category is same or not
+                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                        ->get();
                 if ($policy == 0) {
                     if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
                         return $this->sendError('Category is not found.', 500);
                     }
                     
-                    //checking if item category is same or not
-                    $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                        ->get();
-
                     if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError('You cannot add different category item', 422);
+                        return $this->sendError('You cannot add different category item', 500);
                     }
+                } else {
+                    if (sizeof($pRDetailExistSameItem) == 1) {
+                        $updateFinanceCategory = $pRDetailExistSameItem[0]['itemFinanceCategoryID'];
+                    } else {
+                        $updateFinanceCategory = null;
+                    }
+
+                    ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)
+                                  ->update(['financeCategory' => $updateFinanceCategory]);
                 }
             }
 
@@ -6507,20 +6514,126 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function getPurchaseOrderTracingData($purchaseOrderID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null)
     {
         $tracingData = [];
-        $poIdsArray = (is_array($purchaseOrderID)) ? $purchaseOrderID : [$purchaseOrderID];
 
-        $prDetails = PurchaseOrderDetails::whereIn('purchaseOrderMasterID', $poIdsArray)
-            ->groupBy('purchaseRequestID')
-            ->get();
+        $procumentOrder = ProcumentOrder::find($purchaseOrderID);
 
-        $prIDS = $prDetails->pluck('purchaseRequestID');
+        if ($procumentOrder->poTypeID == 1) {
+            $poIdsArray = (is_array($purchaseOrderID)) ? $purchaseOrderID : [$purchaseOrderID];
 
-        $trData = [];
-        foreach ($prIDS as $key => $value) {
-            $trData[] = $this->getPurchaseRequestTracingData($value, $type, $purchaseOrderID, $grvAutoID, $bookingSuppMasInvAutoID);
+            $prDetails = PurchaseOrderDetails::whereIn('purchaseOrderMasterID', $poIdsArray)
+                ->groupBy('purchaseRequestID')
+                ->get();
+
+            $prIDS = $prDetails->pluck('purchaseRequestID');
+
+            $trData = [];
+            foreach ($prIDS as $key => $value) {
+                $trData[] = $this->getPurchaseRequestTracingData($value, $type, $purchaseOrderID, $grvAutoID, $bookingSuppMasInvAutoID);
+            }
+
+            return $trData;
+        } else {
+            $procumentOrderData = ProcumentOrder::with(['currency'])
+                                                ->find($purchaseOrderID)
+                                                ->toArray();
+            $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
+            $tempPo = [];
+            $tempPo['name'] = "Purchase Order";
+            if ($type == 'po' && ($procumentOrder->purchaseOrderID == $purchaseOrderID)) {
+                $tempPo['cssClass'] = "ngx-org-step-two root-tracing-node";
+            } else {
+                $tempPo['cssClass'] = "ngx-org-step-two";
+            }
+
+            $tempPo['documentSystemID'] = $procumentOrderData['documentSystemID'];
+            $tempPo['docAutoID'] = $procumentOrderData['purchaseOrderID'];
+            $tempPo['title'] = "{Doc Code :} " . $procumentOrderData['purchaseOrderCode'] . " -- {Doc Date :} " . Carbon::parse($procumentOrderData['expectedDeliveryDate'])->format('Y-m-d') . " -- {Currency :} " . $procumentOrderData['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($procumentOrderData['poTotalSupplierTransactionCurrency'], $procumentOrderData['currency']['DecimalPlaces']) . $cancelStatus;
+            
+            $grvData = $this->getPOtoPaymentChainForTracing($procumentOrder, $grvAutoID, $bookingSuppMasInvAutoID, $type);
+            if (sizeof($grvData) > 0) {
+                foreach ($grvData as $key => $value) {
+                    $cancelStatus = ($value['grv_master']['grvCancelledYN'] == -1) ? " -- @Cancelled@" : "";
+
+                    $temp = [];
+                    $temp['name'] = "Good Receipt Voucher";
+                    if ($type == 'grv' && ($value['grv_master']['grvAutoID'] == $grvAutoID)) {
+                        $temp['cssClass'] = "ngx-org-step-three root-tracing-node";
+                    } else {
+                        $temp['cssClass'] = "ngx-org-step-three";
+                    }
+                    $temp['documentSystemID'] = $value['grv_master']['documentSystemID'];
+                    $temp['docAutoID'] = $value['grv_master']['grvAutoID'];
+                    $temp['title'] = "{Doc Code :} " . $value['grv_master']['grvPrimaryCode'] . " -- {Doc Date :} " . Carbon::parse($value['grv_master']['grvDate'])->format('Y-m-d') . " -- {Currency :} " . $value['grv_master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value['grv_master']['grvTotalSupplierTransactionCurrency'], $value['grv_master']['currency_by']['DecimalPlaces']) . $cancelStatus;
+
+                    foreach ($value['invoices'] as $key1 => $value1) {
+                        $cancelStatus = ($value1['suppinvmaster']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                        $temp1 = [];
+                        $temp1['name'] = "Supplier Invoice";
+                        if ($type == 'supInv' && ($value1['suppinvmaster']['bookingSuppMasInvAutoID'] == $bookingSuppMasInvAutoID)) {
+                            $temp1['cssClass'] = "ngx-org-step-four root-tracing-node";
+                        } else {
+                            $temp1['cssClass'] = "ngx-org-step-four";
+                        }
+                        $temp1['documentSystemID'] = $value1['suppinvmaster']['documentSystemID'];
+                        $temp1['docAutoID'] = $value1['suppinvmaster']['bookingSuppMasInvAutoID'];
+                        $temp1['title'] = "{Doc Code :} " . $value1['suppinvmaster']['bookingInvCode'] . " -- {Doc Date :} " . Carbon::parse($value1['suppinvmaster']['bookingDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['suppinvmaster']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['suppinvmaster']['bookingAmountTrans'], $value1['suppinvmaster']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+
+                        foreach ($value1['payments'] as $key2 => $value2) {
+                            $temp2 = [];
+                            $temp2['cssClass'] = "ngx-org-step-five";
+                            if (isset($value2['payment_master'])) {
+                                $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
+                                $temp2['name'] = "Payment";
+                                $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
+                                $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
+                                $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']) . $cancelStatus;
+                            }
+
+                            if (isset($value2['matching_master'])) {
+                                $temp2['name'] = "Debit Note";
+                                $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                                $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
+                                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                            }
+
+                            $temp1['childs'][] = $temp2;
+                        }
+
+                        $temp['childs'][] = $temp1;
+                    }
+
+
+                    $returnes = PurchaseReturnDetails::selectRaw('sum(netAmountLocal) as localAmount,
+                                                     sum(netAmountRpt) as rptAmount, sum(netAmount) as transAmount,grvAutoID,purhaseReturnAutoID')
+                        ->where('grvAutoID', $value['grv_master']['grvAutoID'])
+                        ->with(['master' => function ($query) {
+                            $query->with(['currency_by']);
+                        }])
+                        ->groupBy('purhaseReturnAutoID')
+                        ->get()
+                        ->toArray();
+
+                    foreach ($returnes as $key1 => $value1) {
+                        if (isset($value1['master'])) {
+                            $temp1 = [];
+                            $temp1['name'] = "Purchase Return";
+                            $temp1['cssClass'] = "ngx-org-step-four";
+                            $temp1['documentSystemID'] = $value1['master']['documentSystemID'];
+                            $temp1['docAutoID'] = $value1['master']['purhaseReturnAutoID'];
+                            $temp1['title'] = "{Doc Code :} " . $value1['master']['purchaseReturnCode'] . " -- {Doc Date :} " . Carbon::parse($value1['master']['purchaseReturnDate'])->format('Y-m-d') . " -- {Currency :} " . $value1['master']['currency_by']['CurrencyCode'] . " -- {Amount :} " . number_format($value1['transAmount'], $value1['master']['currency_by']['DecimalPlaces']);
+
+                            $temp['childs'][] = $temp1;
+                        }
+                    }
+
+                    $tempPo['childs'][] = $temp;
+                }
+            }
+
+            $tracingData[] = $tempPo;
+            return $tracingData;
         }
 
-        return $trData;
     }
 
     function getPOtoPaymentChainForTracing($row, $grvAutoID = null, $bookingSuppMasInvAutoID = null)
