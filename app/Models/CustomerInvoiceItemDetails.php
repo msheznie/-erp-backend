@@ -291,6 +291,11 @@ class CustomerInvoiceItemDetails extends Model
         'fullyReturned',
         'timesReferred',
         'returnQty',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'VATApplicableOn',
         'timestamp'
     ];
 
@@ -348,7 +353,12 @@ class CustomerInvoiceItemDetails extends Model
         'quotationDetailsID'=> 'integer',
         'fullyReturned'=> 'integer',
         'timesReferred' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**

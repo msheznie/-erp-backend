@@ -407,6 +407,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
 
+        $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
+
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
 
@@ -689,12 +694,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
 
-            $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
-                                ->where('documentSystemID', $deliveryOrder->documentSystemID)
-                                ->exists();
-            if($taxExist && $deliveryOrder->orderType != 3){
-                return $this->sendError('VAT is added. Please delete the tax and try again.',500);
-            }
+            // $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+            //                     ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            //                     ->exists();
+            // if($taxExist && $deliveryOrder->orderType != 3){
+            //     return $this->sendError('VAT is added. Please delete the tax and try again.',500);
+            // }
 
             $deliveryOrderDetail->delete();
 
@@ -729,16 +734,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
-                     $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
-                    if (!$resVat['status']) {
-                       return $this->sendError($resVat['message']); 
-                    } 
-
-                    $resVat = $this->updateVatEligibilityOfDeliveryOrder($deliveryOrderDetail->deliveryOrderID);
-                    if (!$resVat['status']) {
-                       return $this->sendError($resVat['message']); 
-                    } 
-
+                      $resVat = $this->updateVatEligibilityOfDeliveryOrder($deliveryOrderDetail->deliveryOrderID);
+                      if (!$resVat['status']) {
+                           return $this->sendError($resVat['message']); 
+                      } 
                 }
 
 
@@ -772,6 +771,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 //                return $this->sendError('Tax is added. Please delete the tax and try again.',500);
 //            }
 
+            $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
         }
 
 

@@ -7,7 +7,7 @@
     #footer {
         position: fixed;
         left: 0px;
-        bottom: 0px;
+        bottom: 10px;
         right: 0px;
         height: 0px;
         font-size: 10px;
@@ -398,9 +398,9 @@
     <div class="row">
         <table style="width: 100%">
             <tr>
-                <td style="width: 100%; text-align: left;">
+                <td style="width: 100%; text-align: left;" colspan="3">
                     <span class="font-weight-bold">
-                        {{$request->CompanyName}}
+                        {{$request->CompanyName}}<br>
                         {{$request->CompanyAddress}}<br>
                         <!-- {{$request->CompanyCountry}}<br> -->
                         Tel: {{$request->CompanyTelephone}}<br>
@@ -682,9 +682,9 @@
                                     <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
                                     <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
                                     <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                    <td  class="text-right"></td>
-                                    <td  class="text-right"></td>
-                                    <td  class="text-right"></td>
+                                    <td  class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
+                                    <td  class="text-right">{{$item->VATPercentage}}</td>
+                                    <td  class="text-right">{{number_format(($item->VATAmount * $item->qtyIssued),$numberFormatting)}}</td>
                                     <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                                 </tr>
                                 {{ $x++ }}
