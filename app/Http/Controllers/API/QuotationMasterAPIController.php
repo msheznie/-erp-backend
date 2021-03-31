@@ -1085,7 +1085,7 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1108,8 +1108,20 @@ class QuotationMasterAPIController extends AppBaseController
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
 
+        $soPaymentTerms = SoPaymentTerms::where('soID', $id)
+            ->get();
+
+        $paymentTermsView = '';
+
+        if ($soPaymentTerms) {
+            foreach ($soPaymentTerms as $val) {
+                $paymentTermsView .= $val['paymentTemDes'] . ', ';
+            }
+        }
+
         $order = array(
             'masterdata' => $output,
+            'paymentTermsView' => $paymentTermsView,
             'netTotal' => $netTotal
         );
 
