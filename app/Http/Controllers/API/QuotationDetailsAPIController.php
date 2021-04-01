@@ -347,7 +347,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
 
-        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['VATAmount']);
+        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
 
         $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
