@@ -216,6 +216,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 }
 
+
                 \Excel::create('quotation_so_report', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -651,6 +652,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $x = 0;
         if(!empty($details) && $details != []){
             foreach ($details as $data){
+                $output[$x]['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
                 $output[$x]['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
                 $output[$x]['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
                 $output[$x]['serviceLine'] = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
