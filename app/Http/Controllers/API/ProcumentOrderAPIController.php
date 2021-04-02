@@ -903,7 +903,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 } else {
                     switch ($value->itemFinanceCategoryID) {
                         case 1:
-                            if (is_null($value->financeGLcodebBSSystemID) || is_null($value->financeGLcodePLSystemID)) {
+                            if (is_null($value->financeGLcodebBSSystemID) || is_null($value->financeGLcodePLSystemID) || $value->financeGLcodebBSSystemID == 0 || $value->financeGLcodePLSystemID == 0) {
                               
                                 $accountValidationArray[1][] = $value->itemPrimaryCode;
                             }
@@ -911,11 +911,11 @@ class ProcumentOrderAPIController extends AppBaseController
                          case 2:
                          case 3:
                          case 4:
-                            if (is_null($value->financeGLcodebBSSystemID) && is_null($value->financeGLcodePLSystemID)) {
+                            if ((is_null($value->financeGLcodebBSSystemID) || $value->financeGLcodebBSSystemID == 0) && (is_null($value->financeGLcodePLSystemID) || $value->financeGLcodePLSystemID == 0)) {
                                 $accountValidationArray[1][] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item ".$value->itemPrimaryCode;
                             }
 
-                            if (is_null($value->financeGLcodebBSSystemID) && !is_null($value->financeGLcodePLSystemID) && $value->includePLForGRVYN != -1) {
+                            if ((is_null($value->financeGLcodebBSSystemID) || $value->financeGLcodebBSSystemID == 0) && !is_null($value->financeGLcodePLSystemID) && $value->financeGLcodePLSystemID != 0 && $value->includePLForGRVYN != -1) {
                                 $accountValidationArray[2][] = $value->itemPrimaryCode;
                                 
                             }
