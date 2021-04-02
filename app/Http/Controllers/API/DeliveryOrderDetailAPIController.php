@@ -394,6 +394,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $vatDetails = TaxService::getVATDetailsByItem($deliveryOrderMaster->companySystemID, $input['itemCodeSystem'], $deliveryOrderMaster->customerID,0);
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
             $input['VATAmount'] = 0;
             if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
                 $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
@@ -1104,6 +1106,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $DODetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
                             $DODetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
                             $DODetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $DODetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            $DODetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
 
                             $data = array(
                                 'companySystemID' => $deliveryOrder->companySystemID,

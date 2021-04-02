@@ -971,6 +971,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['companySystemID'] = $new['companySystemID'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                             $invDetail_arr['documentSystemID'] = 87;
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
@@ -1404,6 +1406,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemCodeSystem'] = $new['itemCodeSystem'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                             $invDetail_arr['companySystemID'] = $customerInvoice->companySystemID;
                             // $invDetail_arr['documentSystemID'] = $new['companySystemID'];
 

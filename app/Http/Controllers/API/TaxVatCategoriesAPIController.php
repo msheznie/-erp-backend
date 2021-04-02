@@ -8,7 +8,12 @@ use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
+use App\Models\PurchaseOrderDetails;
+use App\Models\QuotationDetails;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\DeliveryOrderDetail;
 use App\Models\TaxVatCategories;
+use App\Models\Tax;
 use App\Models\TaxVatMainCategories;
 use App\Models\YesNoSelection;
 use App\Repositories\TaxVatCategoriesRepository;
@@ -291,6 +296,25 @@ class TaxVatCategoriesAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $taxData = Tax::find($input['taxMasterAutoID']);
+
+        if (!$taxData) {
+            return $this->sendError('Tax Master not found',500);
+        }
+
+        if (isset($input['isDefault']) && $input['isDefault']) {
+            $checkAnyOtherActive = TaxVatCategories::where('isDefault', 1)
+                                                   ->where('taxVatSubCategoriesAutoID', '!=', $id)
+                                                   ->whereHas('tax', function($query) use ($taxData) {
+                                                        $query->where('companySystemID', $taxData->companySystemID);
+                                                   })
+                                                   ->first();
+
+            if ($checkAnyOtherActive) {
+                return $this->sendError('Only one catgeory can be default',500);
+            }
+        }
+
         $isDuplicated = TaxVatCategories::where('subCategoryDescription',$input['subCategoryDescription'])->where('taxMasterAutoID',$input['taxMasterAutoID'])->where('taxVatSubCategoriesAutoID','!=',$id)->exists();
         if($isDuplicated){
             return $this->sendError('Subcategory is already taken',500);
@@ -420,6 +444,27 @@ class TaxVatCategoriesAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getVatCategoryFormData(Request $request){
+
+        $input = $request->all();
+        $main = TaxVatMainCategories::whereHas('tax',function($query) use ($input) {
+                                        $query->where('companySystemID', $input['companyId']);
+                                    })
+                                    ->where('isActive',1)
+                                    ->get();
+        $subCategories = TaxVatCategories::whereHas('tax',function($query) use ($input) {
+                                        $query->where('companySystemID', $input['companyId']);
+                                    })
+                                    ->where('isActive',1)
+                                    ->get();
+        $output = array(
+            'mainCategories' => $main,
+            'subCategories' => $subCategories
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
     public function getVatSubCategoryItemAssignFromData(Request $request){
         $input = $request->all();
         $seachText = isset($input['seachText'])?$input['seachText']:'';
@@ -534,4 +579,108 @@ class TaxVatCategoriesAPIController extends AppBaseController
         return $this->sendError('Error Occured',500);
     }
 
+    public function updateItemVatCategories(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['documentSystemID'])) {
+            return $this->sendError('Document System ID not found');
+        }
+
+        DB::beginTransaction();
+        try{
+            switch ($input['documentSystemID']) {
+                case 2:
+                    $res = $this->updatePurchaseOrderDetailVATCategories($input['items']);
+                    break;
+                case 68:
+                    $res = $this->updateSalesOrderDetailVATCategories($input['items']);
+                    break;
+                case 71:
+                    $res = $this->updateDeliveryOrderDetailVATCategories($input['items']);
+                    break;
+                case 20:
+                    $res = $this->updateCustomerInvoiceDetailVATCategories($input['items']);
+                    break;
+                
+                default:
+                    # code...
+                    break;
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'VAT Categories updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function updatePurchaseOrderDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = PurchaseOrderDetails::where('purchaseOrderDetailsID', $value['purchaseOrderDetailsID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+    public function updateSalesOrderDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = QuotationDetails::where('quotationDetailsID', $value['quotationDetailsID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+    public function updateDeliveryOrderDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = DeliveryOrderDetail::where('deliveryOrderDetailID', $value['deliveryOrderDetailID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+    public function updateCustomerInvoiceDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = CustomerInvoiceItemDetails::where('customerItemDetailID', $value['customerItemDetailID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
 }

@@ -322,6 +322,8 @@ class SalesReturnDetail extends Model
         'custInvoiceDirectAutoID',
         'remarks',
         'qtyIssued',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'balanceQty',
         'fullyReturned',
         'timestamp'
@@ -336,6 +338,8 @@ class SalesReturnDetail extends Model
         'salesReturnDetailID' => 'integer',
         'salesReturnID' => 'integer',
         'companySystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
         'customerItemDetailID' => 'integer',
         'documentSystemID' => 'integer',

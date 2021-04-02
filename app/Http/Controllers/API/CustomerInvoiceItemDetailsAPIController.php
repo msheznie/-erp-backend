@@ -441,6 +441,8 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $vatDetails = TaxService::getVATDetailsByItem($customerInvoiceDirect->companySystemID, $input['itemCodeSystem'], $customerInvoiceDirect->customerID,0);
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
             $input['VATAmount'] = 0;
             if (isset($input['sellingCostAfterMargin']) && $input['sellingCostAfterMargin'] > 0) {
                 $input['VATAmount'] = (($input['sellingCostAfterMargin'] / 100) * $vatDetails['percentage']);
@@ -1093,6 +1095,8 @@ WHERE
                             $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
                             $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
                             $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
                             if(empty($item)){
@@ -1580,6 +1584,8 @@ WHERE
                             $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
                             $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
                             $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
 
 
                             $item = ItemMaster::find($new['itemAutoID']);

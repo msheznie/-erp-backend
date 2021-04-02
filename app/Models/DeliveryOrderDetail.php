@@ -250,6 +250,8 @@ class DeliveryOrderDetail extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'VATApplicableOn'
     ];
 
@@ -263,6 +265,8 @@ class DeliveryOrderDetail extends Model
         'deliveryOrderID' => 'integer',
         'companySystemID' => 'integer',
         'documentSystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',

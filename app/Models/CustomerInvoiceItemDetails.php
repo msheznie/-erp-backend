@@ -296,6 +296,8 @@ class CustomerInvoiceItemDetails extends Model
         'VATAmountLocal',
         'VATAmountRpt',
         'VATApplicableOn',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timestamp'
     ];
 
@@ -307,6 +309,8 @@ class CustomerInvoiceItemDetails extends Model
     protected $casts = [
         'customerItemDetailID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',

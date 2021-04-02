@@ -1898,6 +1898,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
         Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
         Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+        Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData');
 
         Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
 
@@ -1913,6 +1914,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign');
         Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem');
         Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory');
+        Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories');
 
         Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');

@@ -90,7 +90,7 @@ class TaxService
 
     public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$partyID=0 , $isSupplier = 1) {
 
-        $data = array('applicableOn' => 2,'percentage' => 0);
+        $data = array('applicableOn' => 2,'percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
         $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
                 $q->where('companySystemID',$companySystemID)
                     ->where('isActive',1)
@@ -108,6 +108,8 @@ class TaxService
         if(!empty($taxDetails)){
             $data['applicableOn'] = $taxDetails->applicableOn; // 1 - Gross , 2 - Net
             $data['percentage']   = $taxDetails->percentage;
+            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
         }else{
 
             if($isSupplier){
@@ -127,6 +129,15 @@ class TaxService
                     $data['percentage']   = $customer->vatPercentage;
                 }
             }
+
+            $defaultVAT = TaxVatCategories::where('isDefault', 1)
+                                          ->first();
+
+            if ($defaultVAT) {
+                $data['vatSubCategoryID']   = $defaultVAT->taxVatSubCategoriesAutoID;
+                $data['vatMasterCategoryID']   = $defaultVAT->mainCategory;
+            }
+
         }
 
         return $data;

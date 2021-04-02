@@ -689,6 +689,8 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['VATAmount'] = $new['VATAmount'];
                 $item['VATAmountLocal'] = $new['VATAmountLocal'];
                 $item['VATAmountRpt'] = $new['VATAmountRpt'];
+                $item['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                $item['vatSubCategoryID'] = $new['vatSubCategoryID'];
 
                 array_push($createArray, $item);
             }
