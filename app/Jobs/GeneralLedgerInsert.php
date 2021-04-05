@@ -3665,6 +3665,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 if ($masterData->returnType == 2) {
                                     $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                                     $chartofaccountTaxID = $taxConfigData->outputVatGLAccountAutoID;
+                                    $taxLedgerData['outputVatGLAccountID'] = $chartofaccountTaxID;
                                 } else {
                                     $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
                                                                         ->whereHas('delivery_order', function($query) {
@@ -3675,9 +3676,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                     if ($checkFromInvoice) {
                                         $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                                         $chartofaccountTaxID = $taxConfigData->outputVatGLAccountAutoID;
+                                        $taxLedgerData['outputVatGLAccountID'] = $chartofaccountTaxID;
                                     } else {
                                         $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
                                         $chartofaccountTaxID = $taxConfigData->outputVatTransferGLAccountAutoID;
+                                        $taxLedgerData['outputVatTransferGLAccountID'] = $chartofaccountTaxID;
                                     }
                                 }
                                 if (!empty($taxConfigData) && isset($chartofaccountTaxID) && $chartofaccountTaxID > 0) {

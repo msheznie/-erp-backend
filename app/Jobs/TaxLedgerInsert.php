@@ -24,6 +24,8 @@ use App\Models\TaxLedger;
 use App\Models\TaxVatCategories;
 use App\helper\TaxService;
 use App\Models\Employee;
+use App\Models\SalesReturn;
+use App\Models\SalesReturnDetail;
 
 class TaxLedgerInsert implements ShouldQueue
 {
@@ -236,6 +238,46 @@ class TaxLedgerInsert implements ShouldQueue
                             $ledgerData['localCurrencyID'] = $value->companyLocalCurrencyID;
                             $ledgerData['rptCurrencyID'] = $value->companyReportingCurrencyID;
                             $ledgerData['transCurrencyID'] = $value->transactionCurrencyID;
+
+                            array_push($finalData, $ledgerData);
+                        }
+
+                        break;
+                   case 87://SalesReturn
+                        $masterData = SalesReturn::with(['finance_period_by'])->find($masterModel["autoID"]);
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->salesReturnDate;
+                        }
+
+                        $ledgerData['documentCode'] = $masterData->salesReturnCode;
+                        $ledgerData['documentDate'] = $masterDocumentDate;
+
+                        $details = SalesReturnDetail::selectRaw('SUM(VATAmount*qtyReturned) as transVATAmount,SUM(VATAmountLocal*qtyReturned) as localVATAmount ,SUM(VATAmountRpt*qtyReturned) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER')
+                                                ->where('salesReturnID', $masterModel["autoID"])
+                                                ->whereNotNull('vatSubCategoryID')
+                                                ->groupBy('vatSubCategoryID')
+                                                ->get();
+
+                        foreach ($details as $key => $value) {
+                            $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
+
+                            if ($subCategoryData) {
+                                $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                            }
+
+                            $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
+                            $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
+                            $ledgerData['localAmount'] = $value->localVATAmount;
+                            $ledgerData['rptAmount'] = $value->rptVATAmount;
+                            $ledgerData['transAmount'] = $value->transVATAmount;
+                            $ledgerData['transER'] = $value->transCurrencyER;
+                            $ledgerData['localER'] = $value->localCurrencyER;
+                            $ledgerData['comRptER'] = $value->reportingCurrencyER;
+                            $ledgerData['localCurrencyID'] = $value->localCurrencyID;
+                            $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
+                            $ledgerData['transCurrencyID'] = $value->transCurrencyID;
 
                             array_push($finalData, $ledgerData);
                         }
