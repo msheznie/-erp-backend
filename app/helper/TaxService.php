@@ -202,6 +202,15 @@ class TaxService
         return false;
     }
 
+    public static function getRCMAvailability($isLocalSupplier,$vatRegisteredYN) {
+
+        if(!$isLocalSupplier && $vatRegisteredYN == 1){
+            return true;
+        }
+
+        return false;
+    }
+
     public static function isGRVRCMActivation($id = 0){
 
         return GRVDetails::where('grvAutoID',$id)
