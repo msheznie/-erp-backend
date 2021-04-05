@@ -973,6 +973,11 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['companySystemID'] = $new['companySystemID'];
                             $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
                             $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             $invDetail_arr['documentSystemID'] = 87;
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
@@ -1409,6 +1414,11 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
                             $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                             $invDetail_arr['companySystemID'] = $customerInvoice->companySystemID;
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             // $invDetail_arr['documentSystemID'] = $new['companySystemID'];
 
                             $item = ItemMaster::find($new['itemCodeSystem']);

@@ -244,11 +244,6 @@
                                      @foreach ($request->approved_by as $det)
                                             @if($det->employee)
                                                 {{$det->employee->empFullName }}
-                                                @if($det->employee->details)
-                                                    @if($det->employee->details->designation)
-                                                        {{$det->employee->details->designation->designation}}
-                                                    @endif
-                                                @endif
                                                 <br>
                                                 @if($det->employee)
                                                     {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
@@ -345,14 +340,27 @@
                 </td>
 
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <b>Invoice No :</b> {{$request->bookingInvCode}}<br>
-                    <b>Invoice Date :</b>   @if(!empty($request->bookingDate))
-                                                {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                                            @endif <br>
-                    <b>Name Of Customer :</b>  @if($request->line_customerShortCode)
+                     <table style="width: 100%">
+                        <tr>
+                            <td><b>Invoice No </b></td>
+                            <td>: {{$request->bookingInvCode}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Invoice Date </b></td>
+                            <td>: @if(!empty($request->bookingDate))
+                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                  @endif 
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Name Of Customer </b></td>
+                            <td>:@if($request->line_customerShortCode)
                                                     {{$request->customer->CutomerCode}} - 
                                                @endif
-                                                {{$request->customer->ReportTitle}}
+                                                {{$request->customer->ReportTitle}}</td>
+                        </tr>
+                        
+                    </table>
                 </td>
             <tr>
         </table>
