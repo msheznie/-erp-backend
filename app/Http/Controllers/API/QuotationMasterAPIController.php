@@ -1085,7 +1085,9 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by'])->first();
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
+            $query->with(['term_description']);
+        }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1109,13 +1111,14 @@ class QuotationMasterAPIController extends AppBaseController
             ->sum('transactionAmount');
 
         $soPaymentTerms = SoPaymentTerms::where('soID', $id)
-            ->get();
+                                        ->with(['term_description'])
+                                        ->get();
 
         $paymentTermsView = '';
 
         if ($soPaymentTerms) {
             foreach ($soPaymentTerms as $val) {
-                $paymentTermsView .= $val['paymentTemDes'] . ', ';
+                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
             }
         }
 
