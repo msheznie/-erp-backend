@@ -69,6 +69,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
+use App\Jobs\TaxLedgerInsert;
 
 class GeneralLedgerInsert implements ShouldQueue
 {
@@ -100,6 +101,7 @@ class GeneralLedgerInsert implements ShouldQueue
             DB::beginTransaction();
             try {
                 $data = [];
+                $taxLedgerData = [];
                 $finalData = [];
                 $empID = Employee::find($masterModel['employeeSystemID']);
                 switch ($masterModel["documentSystemID"]) {
@@ -121,7 +123,6 @@ class GeneralLedgerInsert implements ShouldQueue
                         if ($masterData) {
 
                             $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
-
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
                             $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
@@ -186,6 +187,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount);
 
                                         array_push($finalData, $data);
+
+                                        $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+
                                         Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                     } else {
                                         Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -216,6 +220,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount) * -1;
                                             $data['timestamp'] = \Helper::currentDateTime();
                                             array_push($finalData, $data);
+
+                                            $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                             Log::info('Inside the Vat Entry OutVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                         } else {
                                             Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -226,6 +232,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                         Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
                                     }
                                 }
+
                             }
 
                             if ($bs) {
@@ -738,10 +745,14 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatGLAccountAutoID)
                                             ->where('companySystemID', $masterData->companySystemID)
                                             ->first();
+
+                                        $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                     } else {
                                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatTransferGLAccountAutoID)
                                             ->where('companySystemID', $masterData->companySystemID)
                                             ->first();
+
+                                        $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                     }
 
                                     if (!empty($chartOfAccountData)) {
@@ -970,6 +981,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                             $data['documentRptAmount'] = $tax->rptAmount * -1;
                                             array_push($finalData, $data);
+
+                                            $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                                         }
                                     } else {
                                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -1145,6 +1158,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                             $data['documentRptAmount'] = ABS($tax->rptAmount) * -1;
                                             array_push($finalData, $data);
+
+                                            $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                                         }
                                     } else {
                                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -1187,6 +1202,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                             $data['documentRptAmount'] = ABS($tax->rptAmount);
                                             array_push($finalData, $data);
+
+                                            $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                                         }
                                     } else {
                                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -1353,6 +1370,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                             $data['documentRptAmount'] = $tax->rptAmount * -1;
                                             array_push($finalData, $data);
+
+                                            $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                                         }
                                     } else {
                                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -3463,6 +3482,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                                         $data['documentRptAmount'] = $tax->rptAmount * -1;
                                         array_push($finalData, $data);
+
+                                        $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                                     }
                                 } else {
                                     Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
@@ -3838,6 +3859,11 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         if (in_array($masterModel["documentSystemID"], [19, 20, 21, 87])) {
                             $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel);
+                        }
+
+
+                        if (!empty($taxLedgerData)) {
+                            $updateVATLedger = TaxLedgerInsert::dispatch($masterModel, $taxLedgerData);
                         }
                     }
                     DB::commit();

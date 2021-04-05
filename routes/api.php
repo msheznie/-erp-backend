@@ -2046,3 +2046,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+Route::resource('tax_ledgers', 'TaxLedgerAPIController');
