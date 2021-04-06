@@ -851,6 +851,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
                 $query->where('quotationCode', 'LIKE', "%{$search}%");
             });
