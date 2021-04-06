@@ -594,7 +594,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
          $netUnitAmount = 0;
          if ($input['VATApplicableOn'] === 1) { // before discount
-            $netUnitAmount = $input["unittransactionAmount"];
+            $netUnitAmount = $input["unitTransactionAmount"];
          } else {
             $netUnitAmount = $discountedUnit;
          }

@@ -13,7 +13,9 @@ use App\Models\GRVMaster;
 use App\Models\PurchaseReturn;
 use App\Models\SupplierAssigned;
 use App\Models\Tax;
+use App\Models\TaxLedger;
 use App\Models\TaxVatMainCategories;
+use App\Models\TaxVatCategories;
 use App\Models\Year;
 use App\Repositories\YearRepository;
 use Carbon\Carbon;
@@ -45,9 +47,11 @@ class VATReportAPIController extends AppBaseController
         $listOfDocuments = [3,8,12,13,10,24,61,4,11,15,19,20,21,17,41,71,87,7,22,23 ];
         $documentTypes = DocumentMaster::whereIn('documentSystemID',$listOfDocuments)->get();
 
-        $vatTypes = TaxVatMainCategories::whereHas('tax',function ($query) use($selectedCompanyId){
-            $query->where('companySystemID',$selectedCompanyId);
-        })->where('isActive',1)->get();
+        $vatTypes = TaxVatCategories::where('isActive', 1)
+                                   ->whereHas('tax', function($query) use ($selectedCompanyId) {
+                                        $query->where('companySystemID', $selectedCompanyId);
+                                   })
+                                   ->get();
 
         $suppliers = SupplierAssigned::where('companySystemID', $selectedCompanyId)->get();
         $customers = CustomerAssigned::where('companySystemID', $selectedCompanyId)->get();
@@ -130,9 +134,6 @@ class VATReportAPIController extends AppBaseController
 
         return \DataTables::of($output)
             ->addIndexColumn()
-            ->addColumn('document', function ($row) {
-                return $this->getAmountDetailsFromDocuments($row);
-            })
             ->with('orderCondition', 'desc')
             ->make(true);
 
@@ -264,9 +265,11 @@ class VATReportAPIController extends AppBaseController
                 ];
                 break;
             case 87: // sales return
+                $currencyConversionAmount = \Helper::currencyConversion($row->sales_return->companySystemID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionAmount);
+
                 $output= [
-                    'localAmount'=> isset($row->sales_return->companyLocalAmount)?number_format($row->sales_return->companyLocalAmount,$localDecimal):number_format(0,$localDecimal),
-                    'rptAmount'=> isset($row->sales_return->companyReportingAmount)?number_format($row->sales_return->companyReportingAmount,$rptDecimal):number_format(0,$rptDecimal),
+                    'localAmount'=> isset($currencyConversionAmount['localAmount'])?number_format($currencyConversionAmount['localAmount'],$localDecimal):number_format(0,$localDecimal),
+                    'rptAmount'=> isset($currencyConversionAmount['reportingAmount'])?number_format($currencyConversionAmount['reportingAmount'],$rptDecimal):number_format(0,$rptDecimal),
                 ];
                 break;
             default:
@@ -285,29 +288,32 @@ class VATReportAPIController extends AppBaseController
             foreach ($output as $val) {
                 $x++;
 
-                $data[$x]['Document Type'] = $val->documentID;
+                $data[$x]['Document Type'] = $val->document_master->documentID;
                 $data[$x]['Document Code'] = $val->documentCode;
                 $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
-                    $data[$x]['Party Name'] =isset($val->supplier->supplierName)?$val->supplier->supplierName:'';
+                    $data[$x]['Party Name'] =isset($val->supplier->supplierName) ? $val->supplier->supplierName: '';
                 }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
-                    $data[$x]['Party Name'] =isset($val->customer->CustomerName)?$val->customer->CustomerName:'';
+                    $data[$x]['Party Name'] =isset($val->customer->CustomerName) ? $val->customer->CustomerName: '';
                 }else{
                     $data[$x]['Party Name'] ='';
                 }
 
-                $data[$x]['Approved By'] = isset($val->final_approved_by->empName)?$val->final_approved_by->empName:'';
+                $data[$x]['Approved By'] = isset($val->final_approved_by->empName)? $val->final_approved_by->empName : '';
 
-                $amountArray=$this->getAmountDetailsFromDocuments($val);
-                $data[$x]['Document Total Amount'] = round($amountArray['localAmount'],3);
-                $data[$x]['Document VAT Amount'] = round($val->documentLocalAmount,3);
+                $localDecimalPlaces = isset($val->localcurrency->DecimalPlaces) ? $val->localcurrency->DecimalPlaces : 3;
+                $rptDecimalPlaces = isset($val->rptcurrency->DecimalPlaces) ? $val->rptcurrency->DecimalPlaces : 2;
+
+                $data[$x]['Document Total Amount'] = round($val->documentLocalAmount,$localDecimalPlaces);
+                $data[$x]['Document VAT Amount'] = round($val->localAmount,$localDecimalPlaces);
                 if(isset($input['currencyID'])&&$input['currencyID']==2){
-                    $data[$x]['Document Total Amount'] = round($amountArray['rptAmount'],2);
-                    $data[$x]['Document VAT Amount'] = round($val->documentRptAmount,2);
+                    $data[$x]['Document Total Amount'] = round($val->documentReportingAmount,$rptDecimalPlaces);
+                    $data[$x]['Document VAT Amount'] = round($val->rptAmount,$rptDecimalPlaces);
                 }
 
-                $data[$x]['VAT Type'] = '';
-                $data[$x]['Is Claimed'] = 'Claimed';
+                $data[$x]['VAT Main Category'] = isset($val->main_category->mainCategoryDescription) ? $val->main_category->mainCategoryDescription : '-';
+                $data[$x]['VAT Type'] = isset($val->sub_category->subCategoryDescription) ? $val->sub_category->subCategoryDescription : '-';
+                $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
             }
 
             \Excel::create('vat_report', function ($excel) use ($data) {
@@ -341,7 +347,7 @@ class VATReportAPIController extends AppBaseController
         }
         if(isset($input['vatTypes'])){
             $vatTypes = (array)$input['vatTypes'];
-            $vatTypesIDs = array_filter(collect($vatTypes)->pluck('taxVatMainCategoriesAutoID')->toArray());
+            $vatTypesIDs = array_filter(collect($vatTypes)->pluck('taxVatSubCategoriesAutoID')->toArray());
         }
         if(isset($input['fromDate'])){
             $fromDate = new Carbon($input['fromDate']);
@@ -351,35 +357,55 @@ class VATReportAPIController extends AppBaseController
             $toDate = new Carbon($input['toDate']);
         }
 
-        //  get gl account ID
-        $tax = Tax::where('taxCategory',2)->where('isActive',1)->first();
-
-        if (empty($tax)){
-            return $this->sendError('VAT not found on Tax setup');
+        $accountTypeIds = [];
+        if (isset($input['accountType'])) {
+            $accountTypeIds = array_filter(collect($input['accountType'])->pluck('id')->toArray());
         }
 
-        if($reportTypeID == 1){
-            $chartOfAccountID = $tax->outputVatGLAccountAutoID;
-        }else{
-            $chartOfAccountID = $tax->inputVatGLAccountAutoID;
-        }
-
-        $output = GeneralLedger::where('companySystemID',$companySystemID)
-            ->whereDate('documentDate','>=',$fromDate)
-            ->whereDate('documentDate','<=',$toDate)
-            ->where('chartOfAccountSystemID',$chartOfAccountID)
-            ->when(count($documentSystemIDs)>0, function ($query) use($documentSystemIDs){
-                $query->whereIn('documentSystemID',$documentSystemIDs);
-            })
-            //            ->when(count($vatTypesIDs)>0, function ($query) use($vatTypesIDs){})
-            ->with(['supplier','customer','rptcurrency','localcurrency','final_approved_by',
-                'grv','material_issue','stock_return','stock_transfer',
-                'receive_stock','stock_adjustment','inventory_reclassification','purchase_return',
-                'customer_invoice','supplier_invoice','debit_note','credit_note',
-                'payment_voucher','bank_receipt','journal_entries','fixed_asset',
-                'fixed_asset_dep','fixed_asset_disposal','delivery_order','sales_return',
-            ])
-            ->orderBy('GeneralLedgerID', 'desc');
+        $output = TaxLedger::where('companySystemID',$companySystemID)
+                           ->whereDate('documentDate','>=',$fromDate)
+                           ->whereDate('documentDate','<=',$toDate)
+                           ->when(count($documentSystemIDs) > 0, function ($query) use ($documentSystemIDs) {
+                                $query->whereIn('documentSystemID',$documentSystemIDs);
+                            })
+                            ->when(count($vatTypesIDs) > 0, function ($query) use ($vatTypesIDs) {
+                                $query->whereIn('subCategoryID',$vatTypesIDs);
+                            })
+                            ->when($reportTypeID == 1, function ($query) use ($accountTypeIds) {
+                                if (sizeof($accountTypeIds) == 1) {
+                                    $query->when($accountTypeIds[0] == 1, function ($query) {
+                                                $query->whereNotNull('outputVatTransferGLAccountID');
+                                          })
+                                          ->when($accountTypeIds[0] == 2, function ($query) {
+                                                $query->whereNotNull('outputVatGLAccountID');
+                                          });
+                                } else {
+                                    $query->where(function ($query) {
+                                                $query->whereNotNull('outputVatTransferGLAccountID')
+                                                      ->orWhereNotNull('outputVatGLAccountID');
+                                            });
+                                }
+                            })
+                            ->when($reportTypeID == 2, function ($query) use ($accountTypeIds) {
+                                 if (sizeof($accountTypeIds) == 1) {
+                                    $query->when($accountTypeIds[0] == 1, function ($query) {
+                                                $query->whereNotNull('inputVatTransferAccountID');
+                                          })
+                                          ->when($accountTypeIds[0] == 2,function ($query) {
+                                                $query->whereNotNull('inputVATGlAccountID');
+                                          });
+                                } else {
+                                    $query->where(function ($query) {
+                                                $query->whereNotNull('inputVatTransferAccountID')
+                                                      ->orWhereNotNull('inputVATGlAccountID');
+                                            });
+                                }
+                            })
+                            ->when(isset($input['isClaimed']), function ($query) use ($input) {
+                                $query->where('isClaimed', $input['isClaimed']);
+                            })
+                            ->with(['supplier','customer','rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
+                            ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){
             $output = $output->get();

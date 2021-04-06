@@ -1825,25 +1825,13 @@ WHERE
 
     public function updateVatFromSalesDeliveryOrder($custInvoiceDirectAutoID)
     {
-        $invoiceDetails = CustomerInvoiceItemDetails::select('deliveryOrderID')
-                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
-                                                    ->groupBy('deliveryOrderID')
+        $invoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                    ->with(['delivery_order_detail'])
                                                     ->get();
 
         $totalVATAmount = 0;
         foreach ($invoiceDetails as $key => $value) {
-            $invoiceData = CustomerInvoiceItemDetails::selectRaw('SUM(sellingTotal) as amount')
-                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
-                                                    ->where('deliveryOrderID', $value->deliveryOrderID)
-                                                    ->groupBy('deliveryOrderID')
-                                                    ->first();
-
-            $deliveryOrderData = DeliveryOrder::find($value->deliveryOrderID);
-            $totalAmount = 0;
-            if (!empty($invoiceData)) {
-                $totalAmount = $invoiceData->amount;
-            }
-            $totalVATAmount += ($deliveryOrderData->VATPercentage / 100) * $totalAmount;
+            $totalVATAmount += $value->qtyIssued * (isset($value->delivery_order_detail->VATAmount) ? $value->delivery_order_detail->VATAmount : 0);
         }
 
         $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)

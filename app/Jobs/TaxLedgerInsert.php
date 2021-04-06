@@ -97,6 +97,11 @@ class TaxLedgerInsert implements ShouldQueue
 
                         $ledgerData['documentCode'] = $master->grvPrimaryCode;
                         $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $master->supplierID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $master->approvedByUserSystemID;
+                        $ledgerData['documentTransAmount'] = $master->grvTotalSupplierTransactionCurrency;
+                        $ledgerData['documentLocalAmount'] = $master->grvTotalLocalCurrency;
+                        $ledgerData['documentReportingAmount'] = $master->grvTotalComRptCurrency;
                         
                         foreach ($details as $key => $value) {
                             $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -129,15 +134,25 @@ class TaxLedgerInsert implements ShouldQueue
                                                 ->groupBy('vatSubCategoryID')
                                                 ->get();
 
-                        $master = PurchaseReturn::with(['finance_period_by'])->find($masterModel["autoID"]);
+                        $master = PurchaseReturn::with(['finance_period_by', 'details' => function ($query) {
+                            $query->selectRaw("SUM(noQty * GRVcostPerUnitLocalCur) as localAmount, SUM(noQty * GRVcostPerUnitComRptCur) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,purhaseReturnAutoID, SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, supplierTransactionCurrencyID, supplierTransactionER, localCurrencyID, localCurrencyER, companyReportingCurrencyID, companyReportingER");
+                        }])->find($masterModel["autoID"]);
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
                         if (isset($master->finance_period_by->isActive) && $master->finance_period_by->isActive == -1) {
                             $masterDocumentDate = $master->purchaseReturnDate;
                         }
 
+                        $valEligible = TaxService::checkGRVVATEligible($master->companySystemID, $master->supplierID);
+
                         $ledgerData['documentCode'] = $master->purchaseReturnCode;
                         $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $master->supplierID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $master->approvedByUserSystemID;
+
+                        $ledgerData['documentTransAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->transAmount + $master->details[0]->transVATAmount : $master->details[0]->transAmount));
+                        $ledgerData['documentLocalAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->localAmount + $master->details[0]->localVATAmount : $master->details[0]->localAmount));
+                        $ledgerData['documentReportingAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->rptAmount + $master->details[0]->rptVATAmount : $master->details[0]->rptAmount));
 
                         foreach ($details as $key => $value) {
                             $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -173,6 +188,12 @@ class TaxLedgerInsert implements ShouldQueue
 
                             $ledgerData['documentCode'] = $masterData->bookingInvCode;
                             $ledgerData['documentDate'] = $masterDocumentDate;
+                            $ledgerData['partyID'] = $masterData->customerID;
+                            $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+
+                            $ledgerData['documentTransAmount'] = floatval($masterData->bookingAmountTrans) + floatval($masterData->VATAmount);
+                            $ledgerData['documentLocalAmount'] = floatval($masterData->bookingAmountLocal) + floatval($masterData->VATAmountLocal);
+                            $ledgerData['documentReportingAmount'] = floatval($masterData->bookingAmountRpt) + floatval($masterData->VATAmountRpt);
 
                             $details = CustomerInvoiceItemDetails::selectRaw('SUM(VATAmount*qtyIssuedDefaultMeasure) as transVATAmount,SUM(VATAmountLocal*qtyIssuedDefaultMeasure) as localVATAmount ,SUM(VATAmountRpt*qtyIssuedDefaultMeasure) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, localCurrencyER, reportingCurrencyID, reportingCurrencyER, sellingCurrencyID, sellingCurrencyER')
                                                     ->where('custInvoiceDirectAutoID', $masterModel["autoID"])
@@ -203,7 +224,7 @@ class TaxLedgerInsert implements ShouldQueue
                             }
                         }
                         break;
-                    case 71://Delivery Order
+                   case 71://Delivery Order
                         $masterData = DeliveryOrder::with(['finance_period_by'])->find($masterModel["autoID"]);
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
@@ -213,6 +234,12 @@ class TaxLedgerInsert implements ShouldQueue
 
                         $ledgerData['documentCode'] = $masterData->deliveryOrderCode;
                         $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $masterData->customerID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedEmpSystemID;
+
+                        $ledgerData['documentTransAmount'] = floatval($masterData->transactionAmount) + floatval($masterData->VATAmount);
+                        $ledgerData['documentLocalAmount'] = floatval($masterData->companyLocalAmount) + floatval($masterData->VATAmountLocal);
+                        $ledgerData['documentReportingAmount'] = floatval($masterData->companyReportingAmount) + floatval($masterData->VATAmountRpt);
 
                         $details = DeliveryOrderDetail::selectRaw('SUM(VATAmount*qtyIssuedDefaultMeasure) as transVATAmount,SUM(VATAmountLocal*qtyIssuedDefaultMeasure) as localVATAmount ,SUM(VATAmountRpt*qtyIssuedDefaultMeasure) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID, transactionCurrencyID, transactionCurrencyER')
                                                 ->where('deliveryOrderID', $masterModel["autoID"])
@@ -244,7 +271,9 @@ class TaxLedgerInsert implements ShouldQueue
 
                         break;
                    case 87://SalesReturn
-                        $masterData = SalesReturn::with(['finance_period_by'])->find($masterModel["autoID"]);
+                        $masterData = SalesReturn::with(['finance_period_by', 'detail' => function ($query) {
+                            $query->selectRaw('SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,salesReturnID');
+                        }])->find($masterModel["autoID"]);
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
                         if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
@@ -253,6 +282,15 @@ class TaxLedgerInsert implements ShouldQueue
 
                         $ledgerData['documentCode'] = $masterData->salesReturnCode;
                         $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $masterData->customerID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedEmpSystemID;
+
+                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $masterData->transactionAmount);
+
+                        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->transactionAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0);
+                        $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0);
+                        $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0);
+                            
 
                         $details = SalesReturnDetail::selectRaw('SUM(VATAmount*qtyReturned) as transVATAmount,SUM(VATAmountLocal*qtyReturned) as localVATAmount ,SUM(VATAmountRpt*qtyReturned) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER')
                                                 ->where('salesReturnID', $masterModel["autoID"])
