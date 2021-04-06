@@ -417,6 +417,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
@@ -467,6 +469,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         }
+
+        if ($customerInvoiceDirect->customerCodeSystem != $input['customerID']) {
+            $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                                    ->first();
+            if ($customerGLCodeUpdate) {
+                $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+            }
+        }
+
 
         $input['departmentSystemID'] = 4;
         /*financial Year check*/

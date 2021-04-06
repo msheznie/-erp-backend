@@ -439,18 +439,16 @@ class DeliveryOrderAPIController extends AppBaseController
 
             }
 
-            if (isset($input['orderType']) && $input['orderType'] != $deliveryOrder->orderType) {
-                $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
-                                                        ->where('companySystemID', $input['companySystemID'])
-                                                        ->first();
-                if ($customerGLCodeUpdate) {
-                    $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
-                }
+            $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                    ->where('companySystemID', $input['companySystemID'])
+                                                    ->first();
+            if ($customerGLCodeUpdate) {
+                $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+            }
 
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                if ($company) {
-                    $input['vatRegisteredYN'] = $company->vatRegisteredYN;
-                }
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            if ($company) {
+                $input['vatRegisteredYN'] = $company->vatRegisteredYN;
             }
         }
 
