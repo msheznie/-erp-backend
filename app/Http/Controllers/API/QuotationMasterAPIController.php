@@ -1373,7 +1373,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
-        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status']);
+        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 
