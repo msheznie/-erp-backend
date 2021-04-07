@@ -322,6 +322,13 @@ class SalesReturnDetail extends Model
         'custInvoiceDirectAutoID',
         'remarks',
         'qtyIssued',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'VATApplicableOn',
         'balanceQty',
         'fullyReturned',
         'timestamp'
@@ -336,6 +343,8 @@ class SalesReturnDetail extends Model
         'salesReturnDetailID' => 'integer',
         'salesReturnID' => 'integer',
         'companySystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
         'customerItemDetailID' => 'integer',
         'documentSystemID' => 'integer',
@@ -379,7 +388,12 @@ class SalesReturnDetail extends Model
         'qtyIssued' => 'float',
         'balanceQty' => 'float',
         'fullyReturned' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**

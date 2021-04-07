@@ -174,6 +174,8 @@ class GRVDetails extends Model
         'purhasereturnDetailID',
         'purhaseReturnAutoID',
         'timeStamp',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'binNumber'
     ];
 
@@ -186,6 +188,8 @@ class GRVDetails extends Model
         'grvDetailsID' => 'integer',
         'grvAutoID' => 'integer',
         'purhasereturnDetailID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'purhaseReturnAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',

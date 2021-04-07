@@ -184,6 +184,8 @@ class QuotationDetailsAPIController extends AppBaseController
             $vatDetails = TaxService::getVATDetailsByItem($quotationMasterData->companySystemID, $input['itemAutoID'], $quotationMasterData->customerSystemCode,0);
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
             $input['VATAmount'] = 0;
             if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
                 $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
@@ -347,7 +349,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
 
-        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['VATAmount']);
+        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
 
         $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
@@ -760,6 +762,23 @@ WHERE
                             $new['createdPCID'] = gethostname();
                             $new['createdUserID'] = $employee->empID;
                             $new['createdUserName'] = $employee->empName;
+
+                             // Get VAT percentage for item
+                            if ($salesOrder->isVatEligible) {
+                                $vatDetails = TaxService::getVATDetailsByItem($salesOrder->companySystemID, $new['itemAutoID'], $salesOrder->customerSystemCode,0);
+                                $new['VATPercentage'] = $vatDetails['percentage'];
+                                $new['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                $new['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                $new['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                $new['VATAmount'] = 0;
+                                if (isset($new['unittransactionAmount']) && $new['unittransactionAmount'] > 0) {
+                                    $new['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+                                }
+                                $currencyConversionVAT = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['VATAmount']);
+
+                                $new['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $new['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                            }
                            
                             $this->quotationDetailsRepository->create($new);
 

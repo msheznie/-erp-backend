@@ -115,6 +115,7 @@ class TaxVatCategories extends Model
         'modifiedPCID',
         'modifiedUserID',
         'modifiedUserSystemID',
+        'isDefault',
         'timestamp'
     ];
 
@@ -138,6 +139,7 @@ class TaxVatCategories extends Model
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
+        'isDefault' => 'boolean',
         'timestamp' => 'datetime'
     ];
 

@@ -291,6 +291,13 @@ class CustomerInvoiceItemDetails extends Model
         'fullyReturned',
         'timesReferred',
         'returnQty',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'VATApplicableOn',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timestamp'
     ];
 
@@ -302,6 +309,8 @@ class CustomerInvoiceItemDetails extends Model
     protected $casts = [
         'customerItemDetailID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',
@@ -348,7 +357,12 @@ class CustomerInvoiceItemDetails extends Model
         'quotationDetailsID'=> 'integer',
         'fullyReturned'=> 'integer',
         'timesReferred' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**

@@ -243,6 +243,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
         $bookingInvCode = ($company['CompanyID'] . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
+        $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+            ->where('companySystemID', $input['companyID'])
+            ->first();
+        if ($customerGLCodeUpdate) {
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+        }
+
+        $company = Company::where('companySystemID', $input['companyID'])->first();
+
+        if ($company) {
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+        }
+
         $input['documentID'] = "INV";
         $input['documentSystemiD'] = 20;
         $input['bookingInvCode'] = $bookingInvCode;
@@ -404,6 +417,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
@@ -454,6 +469,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         }
+
+        if ($customerInvoiceDirect->customerCodeSystem != $input['customerID']) {
+            $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                                    ->first();
+            if ($customerGLCodeUpdate) {
+                $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+            }
+        }
+
 
         $input['departmentSystemID'] = 4;
         /*financial Year check*/

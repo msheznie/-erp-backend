@@ -484,11 +484,20 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             }
         }
 
+        $catalog = $this->getCatelogDataForPO($po_id, $item_array);
+
+
+        return $this->sendResponse($catalog,'Catalog retrieved successfully');
+
+    }
+
+    public function getCatelogDataForPO($po_id, $item_array)
+    {
         $po = ProcumentOrder::find($po_id);
         $poDate = Carbon::parse($po->createdDateTime)->format('y-m-d');
         $supplierID = $po->supplierID;
 
-        $catalog = SupplierCatalogMaster::whereDate('fromDate','<=',$poDate)
+        return $catalog = SupplierCatalogMaster::whereDate('fromDate','<=',$poDate)
             ->whereDate('toDate','>=',$poDate)
             ->where('supplierID',$supplierID)
             ->where('isActive',1)
@@ -511,6 +520,17 @@ class SupplierCatalogMasterAPIController extends AppBaseController
                     })
                     ->with(['uom_default','item_by','local_currency','master']);
             }])->first();
+    }
+
+    function getSupplierCatalogDetailBySupplierItemForPo(Request $request){
+
+        $input  = $request->all();
+
+        $company_id = $input['companyId'];
+        $po_id = $input['id'];
+        $item_array[] = $input['item_id'];
+
+        $catalog = $this->getCatelogDataForPO($po_id, $item_array);
 
 
         return $this->sendResponse($catalog,'Catalog retrieved successfully');

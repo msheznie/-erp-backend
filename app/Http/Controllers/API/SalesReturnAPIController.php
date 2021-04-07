@@ -971,6 +971,13 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['companySystemID'] = $new['companySystemID'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             $invDetail_arr['documentSystemID'] = 87;
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
@@ -1111,30 +1118,20 @@ class SalesReturnAPIController extends AppBaseController
         $totalAmount = 0;
         $totalTaxAmount = 0;
         if ($salesReturnMasterData->returnType == 1) {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['delivery_order'])
-                                                ->groupBy('deliveryOrderID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['delivery_order_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->delivery_order->VATAmount / $value->delivery_order->transactionAmount) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                $totalTaxAmount += $value->qtyReturned * ((isset($value->delivery_order_detail->VATAmount) && !is_null($value->delivery_order_detail->VATAmount)) ? $value->delivery_order_detail->VATAmount : 0);
             }
         } else {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, custInvoiceDirectAutoID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['sales_invoice'])
-                                                ->groupBy('custInvoiceDirectAutoID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['sales_invoice_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->sales_invoice->VATAmount / $value->sales_invoice->bookingAmountTrans) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                $totalTaxAmount += $value->qtyReturned * ((isset($value->sales_invoice_detail->VATAmount) && !is_null($value->sales_invoice_detail->VATAmount)) ? $value->sales_invoice_detail->VATAmount : 0);
             }
         }
 
@@ -1404,7 +1401,14 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemCodeSystem'] = $new['itemCodeSystem'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                             $invDetail_arr['companySystemID'] = $customerInvoice->companySystemID;
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             // $invDetail_arr['documentSystemID'] = $new['companySystemID'];
 
                             $item = ItemMaster::find($new['itemCodeSystem']);

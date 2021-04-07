@@ -245,7 +245,14 @@ class DeliveryOrderDetail extends Model
         'fullyReceived',
         'fullyReturned',
         'invQty',
-        'timestamp'
+        'timestamp',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'VATApplicableOn'
     ];
 
     /**
@@ -258,6 +265,8 @@ class DeliveryOrderDetail extends Model
         'deliveryOrderID' => 'integer',
         'companySystemID' => 'integer',
         'documentSystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',
@@ -300,7 +309,12 @@ class DeliveryOrderDetail extends Model
         'fullyReturned' => 'integer',
         'invQty' => 'float',
         'returnQty' => 'float',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATApplicableOn' => 'integer'
     ];
 
     /**

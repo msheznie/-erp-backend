@@ -266,6 +266,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyReportingCurrencyID'] = $company->reportingCurrency;
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
@@ -302,6 +303,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
+
+        $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
 
         if ($supplierAssignedDetail) {
             $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
@@ -435,6 +438,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+            $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
         }
 
         $customValidation = CustomValidation::validation(11,$bookInvSuppMaster,2,$input);

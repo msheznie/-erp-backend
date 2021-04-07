@@ -7,10 +7,10 @@
     #footer {
         position: fixed;
         left: 0px;
-        bottom: 0px;
+        bottom: 10px;
         right: 0px;
         height: 0px;
-        font-size: 10px;
+        /*font-size: 10px;*/
     }
 
     body {
@@ -177,12 +177,10 @@
                     @endif
                     <table>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Bank Details </span></td>
-                            <td>-</td>
+                            <td width="100px" colspan="2"><span class="font-weight-bold" style="text-decoration: underline;">Bank Details </span></td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
-                            <td> -
+                            <td width="100px"><span class="font-weight-bold">Bank : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                      @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
@@ -193,8 +191,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Branch </span></td>
-                            <td> -
+                            <td width="100px"><span class="font-weight-bold">Branch : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankBranch}}
@@ -205,8 +202,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Ac Num </span></td>
-                            <td> -
+                            <td width="100px"><span class="font-weight-bold">Account No : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->AccountNo}}
@@ -218,8 +214,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">SWIFT Code </span></td>
-                            <td> -
+                            <td width="100px"><span class="font-weight-bold">SWIFT Code : </span>
                                 @if($request->secondaryLogoCompanySystemID)
                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
@@ -237,95 +232,33 @@
                         <table width="100%">
 
                             <tr>
-                                <td width="15%">
-                                    <span class="font-weight-bold">Prepared By :</span>
-                                </td>
-                                <td width="35%">
+                                <td width="50%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Prepared By :</span><br>
                                     @if($request->createduser)
                                         {{$request->createduser->empName}}
-                                    @endif
+                                    @endif <br>
+                                    {{ \App\helper\Helper::dateFormat($request->createdDateAndTime)}}
                                 </td>
-                                @if(!$request->is_pdo_vendor)
-                                    <td width="15%">
-                                        <span class="font-weight-bold">Checked By :</span>
-                                    </td>
-                                    <td width="15%">
-                                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
-                                    </td>
-                                @endif
-                                @if($request->lineApprovedBy && !$request->is_pdo_vendor)
-                                    <td width="15%">
-                                        <span class="font-weight-bold">Approved By :</span>
-                                    </td>
-                                    <td width="15%">
-                                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
-                                    </td>
-                                @endif
-                            </tr>
-                        </table>
-                    </div>
-
-
-                    <div class="" style="margin-top: 10px">
-                        <table style="width: 100%">
-                            <tr>
-                                <td>
-                                    <span class="font-weight-bold">Electronically Approved By :</span>
-                                </td>
-                            </tr>
-                            <tr>
-
-                                @foreach ($request->approved_by as $det)
-                                    <td style="padding-right: 25px" class="text-center">
-                                        @if($det->employee)
-                                            {{$det->employee->empFullName }}
-                                            <br>
-
-                                            @if($det->employee->details)
-                                                @if($det->employee->details->designation)
-                                                    {{$det->employee->details->designation->designation}}
+                                <td width="50%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Approved By :</span><br>
+                                     @foreach ($request->approved_by as $det)
+                                            @if($det->employee)
+                                                {{$det->employee->empFullName }}
+                                                <br>
+                                                @if($det->employee)
+                                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
                                                 @endif
                                             @endif
-                                            <br><br>
-                                            @if($det->employee)
-                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                            @endif
-                                        @endif
-
-
-                                    </td>
-                                @endforeach
+                                            <br>
+                                            <br>
+                                    @endforeach
+                                </td>
                             </tr>
-                        </table>
-                    </div>
-                @else
-                    {{--SGG PDO ONLY--}}
-                    <div class="" style="">
-                        <table width="100%">
-                            <tr>
-                                <td width="15%">
-                                    <span class="font-weight-bold">Prepared By :</span>
-                                </td>
-                                <td width="35%">
-                                    @if($request->createduser)
-                                        {{$request->createduser->empName}}
-                                    @endif
-                                </td>
-                                <td width="30%" style="">
-
-                                </td>
-                                <td width="20%" style="text-align:center; border-top: 1px solid black;margin-top: 7px;">
-                                    <span class="font-weight-bold">Authorized  Signatory :</span>
-                                </td>
-
-
-                            </tr>
-
                         </table>
                     </div>
                 @endif
 
-                <table style="width:100%;">
+             <!--    <table style="width:100%;">
 
                     <tr>
                         @if($request->footerDate)
@@ -350,7 +283,7 @@
                                 E-mail : {{$request->company->CompanyEmail}}  </td>
                         </tr>
                     @endif
-                </table>
+                </table> -->
         </div>
 </div>
 {{--<div id="watermark">
@@ -398,104 +331,38 @@
     <div class="row">
         <table style="width: 100%">
             <tr>
-                <td style="width: 100%; text-align: left;">
-                    <span class="font-weight-bold">
-                        {{$request->CompanyName}}
+                <td style="width: 50%; text-align: left;vertical-align: top;">
+                        <b>{{$request->CompanyName}}</b><br>
                         {{$request->CompanyAddress}}<br>
-                        <!-- {{$request->CompanyCountry}}<br> -->
-                        Tel: {{$request->CompanyTelephone}}<br>
-                        Fax: {{$request->CompanyFax}}<br>
-                        <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
-                    </span>
+                        <b> Tel: </b> {{$request->CompanyTelephone}}<br>
+                        <b> Fax: </b> {{$request->CompanyFax}}<br>
+                        <b>VAT NO: </b>{{$request->vatRegistratonNumber}}
                 </td>
-            </tr>
-            <tr>
-                <td width="120px"><span class="font-weight-bold">Invoice Date</span></td>
-                <td width="10px"><span class="font-weight-bold">-</span></td>
-                <td><span>
-                     @if(!empty($request->bookingDate))
-                            {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                        @endif
-                </span></td>
-            </tr>
-            <tr>
-                <td width="120px"><span class="font-weight-bold">Invoice Number</span></td>
-                <td width="10px"><span class="font-weight-bold">-</span></td>
-                <td><span>{{$request->bookingInvCode}}</span></td>
-            </tr>
-            <tr>
-                <td width="120px"><span class="font-weight-bold">Date Of Supply</span></td>
-                <td width="10px"><span class="font-weight-bold">-</span></td>
-                <td><span>
-                     @if(!empty($request->bookingDate))
-                            {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                        @endif
-                </span></td>
-            </tr>
-            <tr>
-                <td width="120px" style="vertical-align: top;"><span class="font-weight-bold">Buyer</span></td>
-                <td width="10px" style="vertical-align: top;"><span class="font-weight-bold">-</span></td>
-                <td><span>
-                       <table style="width: 100%; !important">
-                        @if($request->line_subcontractNo && !empty($request->invoicedetails) )
-                            <tr>
-                                <td>{{$request->invoicedetails[0]->clientContractID}}</td>
-                            </tr>
-                        @endif
-                        @if($request->line_customerShortCode)
-                            <tr>
-                                <td>{{$request->customer->CutomerCode}}</td>
-                            </tr>
-                        @endif
+
+                <td style="width: 50%; text-align: left;vertical-align: top;">
+                     <table style="width: 100%">
                         <tr>
-                            <td>{{$request->customer->ReportTitle}}</td>
+                            <td><b>Invoice No </b></td>
+                            <td>: {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td>
-                                <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
+                            <td><b>Invoice Date </b></td>
+                            <td>: @if(!empty($request->bookingDate))
+                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                  @endif 
                             </td>
                         </tr>
-                        @if($request->lineSecondAddress)
-                            <tr>
-                                <td>
-                                    <div>{{$request->customer->customerAddress2}}</div>
-                                </td>
-                            </tr>
-                        @else
-                            <tr>
-                                <td>{{$request->customer->customerCity}}</td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                        @endif
                         <tr>
-                            <td>
-                                @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif
-                            </td>
+                            <td><b>Name Of Customer </b></td>
+                            <td>:@if($request->line_customerShortCode)
+                                                    {{$request->customer->CutomerCode}} - 
+                                               @endif
+                                                {{$request->customer->ReportTitle}}</td>
                         </tr>
-                        @if($request->is_pdo_vendor)
-                            <tr>
-                                <td>
-                                    &nbsp;
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    &nbsp;
-                                </td>
-                            </tr>
-                        @endif
+                        
                     </table>
-                    </table>
-                </span></td>
-            </tr>
+                </td>
+            <tr>
         </table>
     </div>
 
@@ -682,9 +549,9 @@
                                     <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
                                     <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
                                     <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                    <td  class="text-right"></td>
-                                    <td  class="text-right"></td>
-                                    <td  class="text-right"></td>
+                                    <td  class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
+                                    <td  class="text-right">{{$item->VATPercentage}}</td>
+                                    <td  class="text-right">{{number_format(($item->VATAmount * $item->qtyIssued),$numberFormatting)}}</td>
                                     <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                                 </tr>
                                 {{ $x++ }}
@@ -704,24 +571,22 @@
                         &nbsp;
                 </td>
                 @if ($request->tax && isset($request->tax->amount))
-                    <td class="text-right" style="border:none !important;width: 85%"><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Subtotal (Excluding VAT):</span>
+                    <td class="text-right" style="border:none !important;width: 85%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Subtotal (Excluding VAT)
+                        </span>
                     </td>
                 @else
-                    <td class="text-right" style="border:none !important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Total:</span>
+                    <td class="text-right" style="border:none !important;width: 85%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Total
+                        </span>
                     </td>
                 @endif
-                <td class="text-right"
+                 <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                class="font-weight-bold">
-                    @if ($request->invoicedetails)
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
-                    @endif
-                </span>
-                </td>
+                                class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                    </td>
             </tr>
 
             @if ($request->tax)
@@ -730,10 +595,11 @@
                     <td style="border:none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;width: 85%""><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round($request->tax->taxPercent, 2)}} %)
-                            </span></td>
+                    <td class="text-right" style="border:none !important;width: 85%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round($request->tax->taxPercent, 2)}} %)
+                        </span>
+                    </td>
                     <td class="text-right"
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
                                 class="font-weight-bold">{{number_format($request->tax->amount, $numberFormatting)}}</span>
@@ -741,20 +607,17 @@
                 </tr>
 
                 <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    <td style="border:none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;width: 85%""><span
-                                class="font-weight-bold"
-                                style="font-size: 11.5px">Total Amount Payable</span>
+                    <td class="text-right" style="border:none !important;width: 85%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Total Amount Payable
+                        </span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
-                            <span class="font-weight-bold">
-
-                                    {{number_format($directTraSubTotal, $numberFormatting)}}
-
-                            </span>
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                                class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
                     </td>
                 </tr>
             @endif

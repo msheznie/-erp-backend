@@ -192,6 +192,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             $delivery_status = 'Fully Delivered';
                         }
 
+
                         $dp = (isset($val['dp']) && $val['dp'])?$val['dp']:3;
 
 
@@ -214,6 +215,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                 }
+
 
                 \Excel::create('quotation_so_report', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
@@ -620,7 +622,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->select('custInvoiceDirectAutoID');
 
                     }])
-                    ->select('sellingTotal','customerItemDetailID','quotationDetailsID','custInvoiceDirectAutoID','custInvoiceDirectAutoID');
+                    ->select('sellingTotal','customerItemDetailID','quotationDetailsID','custInvoiceDirectAutoID','custInvoiceDirectAutoID', 'VATAmount', 'qtyIssuedDefaultMeasure');
 
                 },
                     'delivery_order_detail'=> function($q1){
@@ -634,13 +636,13 @@ class SalesMarketingReportAPIController extends AppBaseController
                                 }])
                                     ->select('custInvoiceDirectAutoID');
                             }])
-                                ->select('sellingTotal','customerItemDetailID','quotationDetailsID','deliveryOrderDetailID','custInvoiceDirectAutoID');
+                                ->select('sellingTotal','customerItemDetailID','quotationDetailsID','deliveryOrderDetailID','custInvoiceDirectAutoID',  'VATAmount', 'qtyIssuedDefaultMeasure');
                         }])
                             ->select('deliveryOrderDetailID','quotationDetailsID');
 
                     }
                 ])
-                    ->select('quotationDetailsID','quotationMasterID','transactionAmount');
+                    ->select('quotationDetailsID','quotationMasterID','transactionAmount', 'VATAmount', 'requestedQty');
             }])
             ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN')
             ->get()
@@ -650,6 +652,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $x = 0;
         if(!empty($details) && $details != []){
             foreach ($details as $data){
+                $output[$x]['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
                 $output[$x]['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
                 $output[$x]['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
                 $output[$x]['serviceLine'] = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
@@ -670,7 +673,8 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $invoiceArray = [];
                 if(isset($data['detail']) && count($data['detail'])> 0){
                     foreach ($data['detail'] as $qdetail){
-                        $output[$x]['document_amount'] += isset($qdetail['transactionAmount'])?$qdetail['transactionAmount']:0;
+                        $vatAmount = isset($qdetail['VATAmount']) ? ($qdetail['VATAmount'] * $qdetail['requestedQty']) : 0;
+                        $output[$x]['document_amount'] += isset($qdetail['transactionAmount'])?($qdetail['transactionAmount']+$vatAmount):0;
 
                         // quotation -> delovery order -> invoice
 
@@ -682,7 +686,8 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                                     foreach ($deliverydetail['invoice_detail'] as $invoiceDetails){
                                         $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                        $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?$invoiceDetails['sellingTotal']:0;
+                                        $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                                        $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])? ($invoiceDetails['sellingTotal']+ $vatAmount):0;
 
                                         if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
                                             $paid1 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
@@ -717,7 +722,8 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                             foreach ($qdetail['invoice_detail'] as $invoiceDetails){
                                 $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?$invoiceDetails['sellingTotal']:0;
+                                $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                                $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?($invoiceDetails['sellingTotal']+$vatAmount):0;
                                 if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
                                     $paid2 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
                                 }
