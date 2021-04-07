@@ -479,6 +479,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        $_post['customerVATEligible'] = $input['customerVATEligible'];
 
         $input['departmentSystemID'] = 4;
         /*financial Year check*/
