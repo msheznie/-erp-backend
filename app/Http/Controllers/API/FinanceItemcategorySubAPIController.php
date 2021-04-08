@@ -127,6 +127,34 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
     }
 
+     public function getSubcategoriesBymainCategories(Request $request){
+
+        $companyId = $request->get('selectedCompanyId');
+        $mainCategory = $request->get('mainCategory');
+
+        $mainCategoryIds = collect($mainCategory)->pluck('id');
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $subCategories = FinanceItemcategorySubAssigned::whereIn('mainItemCategoryID',$mainCategoryIds)
+                                            ->where('isActive',1)
+                                            ->whereHas('finance_item_category_sub', function ($query){
+                                                $query->where('isActive',1);
+                                            })
+                                            ->whereIn('companySystemID',$companyID)
+                                            ->where('isAssigned',-1)
+                                            ->groupBy('itemCategorySubID')
+                                            ->get();
+
+        return $this->sendResponse($subCategories, 'Finance Item Category Subs retrieved successfully');
+    }
+
     /**
      * Store a newly created FinanceItemCategorySub in storage.
      * POST /financeItemCategorySubs
