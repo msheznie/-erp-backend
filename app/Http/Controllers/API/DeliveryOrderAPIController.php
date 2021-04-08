@@ -1275,7 +1275,7 @@ WHERE
         }
 
         $deliveryOrderArray = $doData->toArray();
-
+        unset($deliveryOrderArray['isVatEligible']);
         $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
 
         $fetchDeliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)

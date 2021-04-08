@@ -3047,6 +3047,7 @@ WHERE
         }
 
         $customerInvoiceArray = $customerInvoiceDirectData->toArray();
+        unset($customerInvoiceArray['isVatEligible']);
 
         CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
 
