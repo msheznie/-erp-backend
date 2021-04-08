@@ -285,7 +285,7 @@ class SalesReturnAPIController extends AppBaseController
     {
         /** @var SalesReturn $salesReturn */
 
-        $salesReturn = $this->salesReturnRepository->with(['customer','transaction_currency', 'finance_year_by' => function ($query) {
+        $salesReturn = $this->salesReturnRepository->with(['tax','customer','transaction_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
@@ -426,197 +426,197 @@ class SalesReturnAPIController extends AppBaseController
             }
         }
 
+        DB::beginTransaction();
+        try {
+            if ($input['confirmedYN'] == 1 && $salesReturn->confirmedYN == 0) {
 
-        if ($input['confirmedYN'] == 1 && $salesReturn->confirmedYN == 0) {
-
-            // check document date between financial period
-            if (($input['salesReturnDate'] >= $input['FYPeriodDateFrom']) && ($input['salesReturnDate'] <= $input['FYPeriodDateTo'])) {
-            } else {
-                return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
-            }
-
-            $messages = [
-                'transactionCurrencyID.required' => 'Currency field is required',
-                'customerID.required' => 'Customer field is required',
-                'companyFinanceYearID.required' => 'Finance Year field is required',
-                'companyFinancePeriodID.required' => 'Finance Period field is required',
-                'serviceLineSystemID.required' => 'Segment field is required',
-                'wareHouseSystemCode.required' => 'Warehouse field is required',
-                'salesReturnDate.required' => 'Document Date field is required',
-            ];
-
-            $validator = \Validator::make($input, [
-                'returnType' => 'required|numeric|min:1',
-                'companySystemID' => 'required|numeric|min:1',
-                'documentSystemID' => 'required|numeric|min:1',
-                'customerID' => 'required',
-                'transactionCurrencyID' => 'required',
-                'companyFinanceYearID' => 'required',
-                'companyFinancePeriodID' => 'required',
-                'serviceLineSystemID' => 'required',
-                'wareHouseSystemCode' => 'required',
-                'salesReturnDate' => 'required|date'
-            ], $messages);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-
-            // check customer master unbilled gl account configured
-            $customer = CustomerMaster::find($input['customerID']);
-            if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
-                return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
-            }
-            $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
-            $input['custGLAccountCode'] = $customer->custGLaccount;
-            $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
-            $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
-
-
-            $detail = SalesReturnDetail::where('salesReturnID', $id)->get();
-            if(count((array)$detail) == 0){
-                return  $this->sendError('Return detail not found', 500);
-            }
-
-            $checkQuantity = SalesReturnDetail::where('salesReturnID', $id)
-                ->where(function ($q) {
-                    $q->where('qtyReturned', '<=', 0)
-                        ->orWhereNull('qtyReturned');
-                })
-                ->exists();
-            if ($checkQuantity) {
-                return $this->sendError('Every Item should have at least one minimum Qty Returned', 500);
-            }
-
-            foreach ($detail as $item) {
-
-                //If the revenue account or cost account or BS account is null do not allow to confirm
-                if(!($item->financeGLcodebBSSystemID > 0)){
-                    return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
-                }elseif (!($item->financeGLcodePLSystemID > 0)){
-                    return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
-                }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
-                    return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
-                }
-
-                $updateItem = SalesReturnDetail::find($item['salesReturnDetailID']);
-
-                $data = array(
-                    'companySystemID' => $salesReturn->companySystemID,
-                    'itemCodeSystem' => $item->itemCodeSystem,
-                    'wareHouseId' => $salesReturn->wareHouseSystemCode
-                );
-
-                $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
-
-                $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
-                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-
-                $updateItem->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
-                $updateItem->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
-
-                //discount calculation
-                $discountedUnit = $updateItem->unitTransactionAmount;
-
-                if($updateItem->discountAmount > 0) {
-                    $discountedUnit = $updateItem->unitTransactionAmount - $updateItem->discountAmount;
-                }
-
-                $updateItem->transactionAmount = $discountedUnit * $updateItem->qtyReturnedDefaultMeasure;
-
-                if($updateItem->transactionCurrencyID != $updateItem->companyLocalCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($salesReturn->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyLocalCurrencyID,$updateItem->unitTransactionAmount);
-                    if(!empty($currencyConversion)){
-                        $updateItem->companyLocalAmount = $currencyConversion['documentAmount'];
-                    }
-                }else{
-                    $updateItem->companyLocalAmount = $updateItem->unitTransactionAmount;
-                }
-
-                if($updateItem->transactionCurrencyID != $updateItem->companyReportingCurrencyID){
-                    $currencyConversion = Helper::currencyConversion($salesReturn->companySystemID,$updateItem->transactionCurrencyID,$updateItem->companyReportingCurrencyID,$updateItem->unitTransactionAmount);
-                    if(!empty($currencyConversion)){
-                        $updateItem->companyReportingAmount = $currencyConversion['documentAmount'];
-                    }
-                }else{
-                    $updateItem->companyReportingAmount = $updateItem->unitTransactionAmount;
-                }
-
-                $updateItem->unitTransactionAmount = Helper::roundValue($updateItem->unitTransactionAmount);
-                $updateItem->discountPercentage = Helper::roundValue($updateItem->discountPercentage);
-                $updateItem->discountAmount = Helper::roundValue($updateItem->discountAmount);
-                $updateItem->transactionAmount = Helper::roundValue($updateItem->transactionAmount);
-                $updateItem->companyLocalAmount = Helper::roundValue($updateItem->companyLocalAmount);
-                $updateItem->companyReportingAmount = Helper::roundValue($updateItem->companyReportingAmount);
-
-                $updateItem->save();
-
-                if ($updateItem->unitTransactionAmount == 0) {
-                    return $this->sendError('Item must not have zero cost', 500);
-                }
-                if ($updateItem->unitTransactionAmount < 0) {
-                    return $this->sendError('Item must not have negative cost', 500);
-                }
-            }
-
-            if($updateItem->discountPercentage != 0){
-                $amount = SalesReturnDetail::where('salesReturnID', $id)
-                    ->sum(DB::raw('qtyReturnedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))'));
-            }else{
-                $amount = SalesReturnDetail::where('salesReturnID', $id)
-                    ->sum(DB::raw('qtyReturnedDefaultMeasure * companyReportingAmount'));
-            }
-
-
-            //check Input Vat Transfer GL Account if vat exist
-            $totalVAT = $salesReturn->VATAmount;
-            if(TaxService::checkCompanyVATEligible($salesReturn->companySystemID) && $totalVAT > 0){
-                if ($salesReturn->returnType == 2) {
-                    if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
-                        return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
-                    }
+                // check document date between financial period
+                if (($input['salesReturnDate'] >= $input['FYPeriodDateFrom']) && ($input['salesReturnDate'] <= $input['FYPeriodDateTo'])) {
                 } else {
-                     $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
-                                                ->where('salesReturnID', $id)
-                                                ->with(['delivery_order'])
-                                                ->groupBy('deliveryOrderID')
-                                                ->get();
+                    return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+                }
 
-                    foreach ($invoiceDetails as $key => $value) {
-                        if (isset($value->delivery_order->selectedForCustomerInvoice) && $value->delivery_order->selectedForCustomerInvoice == -1) {
-                            if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
-                                return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
-                            }
-                        } else {
-                            if(empty(TaxService::getOutputVATTransferGLAccount($salesReturn->companySystemID))){
-                                return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                $messages = [
+                    'transactionCurrencyID.required' => 'Currency field is required',
+                    'customerID.required' => 'Customer field is required',
+                    'companyFinanceYearID.required' => 'Finance Year field is required',
+                    'companyFinancePeriodID.required' => 'Finance Period field is required',
+                    'serviceLineSystemID.required' => 'Segment field is required',
+                    'wareHouseSystemCode.required' => 'Warehouse field is required',
+                    'salesReturnDate.required' => 'Document Date field is required',
+                ];
+
+                $validator = \Validator::make($input, [
+                    'returnType' => 'required|numeric|min:1',
+                    'companySystemID' => 'required|numeric|min:1',
+                    'documentSystemID' => 'required|numeric|min:1',
+                    'customerID' => 'required',
+                    'transactionCurrencyID' => 'required',
+                    'companyFinanceYearID' => 'required',
+                    'companyFinancePeriodID' => 'required',
+                    'serviceLineSystemID' => 'required',
+                    'wareHouseSystemCode' => 'required',
+                    'salesReturnDate' => 'required|date'
+                ], $messages);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                // check customer master unbilled gl account configured
+                $customer = CustomerMaster::find($input['customerID']);
+                if(!empty($customer) && !$customer->custUnbilledAccountSystemID){
+                    return $this->sendError('Unbilled receivable account is not configured for this customer', 500);
+                }
+                $input['custGLAccountSystemID'] = $customer->custGLAccountSystemID;
+                $input['custGLAccountCode'] = $customer->custGLaccount;
+                $input['custUnbilledAccountSystemID'] = $customer->custUnbilledAccountSystemID;
+                $input['custUnbilledAccountCode'] = $customer->custUnbilledAccount;
+
+
+                $detail = SalesReturnDetail::where('salesReturnID', $id)->get();
+                if(count((array)$detail) == 0){
+                    return  $this->sendError('Return detail not found', 500);
+                }
+
+                $checkQuantity = SalesReturnDetail::where('salesReturnID', $id)
+                    ->where(function ($q) {
+                        $q->where('qtyReturned', '<=', 0)
+                            ->orWhereNull('qtyReturned');
+                    })
+                    ->exists();
+                if ($checkQuantity) {
+                    return $this->sendError('Every Item should have at least one minimum Qty Returned', 500);
+                }
+
+                foreach ($detail as $item) {
+
+                    //If the revenue account or cost account or BS account is null do not allow to confirm
+                    if(!($item->financeGLcodebBSSystemID > 0)){
+                        return $this->sendError('BS account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    }elseif (!($item->financeGLcodePLSystemID > 0)){
+                        return $this->sendError('Cost account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    }elseif (!($item->financeGLcodeRevenueSystemID > 0)){
+                        return $this->sendError('Revenue account cannot be null for '.$item->itemPrimaryCode.'-'.$item->itemDescription, 500);
+                    }
+
+                    $updateItem = SalesReturnDetail::find($item['salesReturnDetailID']);
+
+                    $data = array(
+                        'companySystemID' => $salesReturn->companySystemID,
+                        'itemCodeSystem' => $item->itemCodeSystem,
+                        'wareHouseId' => $salesReturn->wareHouseSystemCode
+                    );
+
+                    $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+
+                    $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                    $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                    $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+
+                    $updateItem->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                    $updateItem->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
+
+                    //discount calculation
+                    $discountedUnit = $updateItem->unitTransactionAmount;
+
+                    if($updateItem->discountAmount > 0) {
+                        $discountedUnit = $updateItem->unitTransactionAmount - $updateItem->discountAmount;
+                    }
+
+                    $updateItem->transactionAmount = $discountedUnit * $updateItem->qtyReturnedDefaultMeasure;
+
+                    $currencyConversion = Helper::currencyConversion($salesReturn->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->transactionAmount);
+                    if(!empty($currencyConversion)){
+                        $updateItem->companyLocalAmount = $currencyConversion['localAmount'];
+                    }
+
+                    $currencyConversion = Helper::currencyConversion($salesReturn->companySystemID,$updateItem->transactionCurrencyID,$updateItem->transactionCurrencyID,$updateItem->transactionAmount);
+                    if(!empty($currencyConversion)){
+                        $updateItem->companyReportingAmount = $currencyConversion['reportingAmount'];
+                    }
+
+                    $updateItem->unitTransactionAmount = Helper::roundValue($updateItem->unitTransactionAmount);
+                    $updateItem->discountPercentage = Helper::roundValue($updateItem->discountPercentage);
+                    $updateItem->discountAmount = Helper::roundValue($updateItem->discountAmount);
+                    $updateItem->transactionAmount = Helper::roundValue($updateItem->transactionAmount);
+                    $updateItem->companyLocalAmount = Helper::roundValue($updateItem->companyLocalAmount);
+                    $updateItem->companyReportingAmount = Helper::roundValue($updateItem->companyReportingAmount);
+
+                    $updateItem->save();
+
+                    if ($updateItem->unitTransactionAmount == 0) {
+                        return $this->sendError('Item must not have zero cost', 500);
+                    }
+                    if ($updateItem->unitTransactionAmount < 0) {
+                        return $this->sendError('Item must not have negative cost', 500);
+                    }
+                }
+
+                if($updateItem->discountPercentage != 0){
+                    $amount = SalesReturnDetail::where('salesReturnID', $id)
+                        ->sum(DB::raw('qtyReturnedDefaultMeasure * (companyReportingAmount-(companyReportingAmount*discountPercentage/100))'));
+                }else{
+                    $amount = SalesReturnDetail::where('salesReturnID', $id)
+                        ->sum(DB::raw('qtyReturnedDefaultMeasure * companyReportingAmount'));
+                }
+
+
+                //check Input Vat Transfer GL Account if vat exist
+                $totalVAT = $salesReturn->VATAmount;
+                if(TaxService::checkCompanyVATEligible($salesReturn->companySystemID) && $totalVAT > 0){
+                    if ($salesReturn->returnType == 2) {
+                        if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
+                            return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                        }
+                    } else {
+                         $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
+                                                    ->where('salesReturnID', $id)
+                                                    ->with(['delivery_order'])
+                                                    ->groupBy('deliveryOrderID')
+                                                    ->get();
+
+                        foreach ($invoiceDetails as $key => $value) {
+                            if (isset($value->delivery_order->selectedForCustomerInvoice) && $value->delivery_order->selectedForCustomerInvoice == -1) {
+                                if(empty(TaxService::getOutputVATGLAccount($salesReturn->companySystemID))){
+                                    return $this->sendError('Cannot confirm. Output VAT Control GL Account not configured.', 500);
+                                }
+                            } else {
+                                if(empty(TaxService::getOutputVATTransferGLAccount($salesReturn->companySystemID))){
+                                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                                }
                             }
                         }
                     }
                 }
+
+                $params = array(
+                    'autoID' => $id,
+                    'company' => $salesReturn->companySystemID,
+                    'document' => $salesReturn->documentSystemID,
+                    'segment' => '',
+                    'category' => '',
+                    'amount' => $amount
+                );
+                $update = array_except($input,['confirmedYN']);
+                $salesReturn = $this->salesReturnRepository->update($update, $id);
+                $confirm = Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500);
+                } else {
+                    DB::commit();
+                    return $this->sendResponse($salesReturn->toArray(), 'Sales Return confirmed successfully');
+                }
+
+            }else{
+                $salesReturn = $this->salesReturnRepository->update($input, $id);
+                DB::commit();
+                return $this->sendResponse($salesReturn->toArray(), 'Sales Return updated successfully');
             }
 
-            $params = array(
-                'autoID' => $id,
-                'company' => $salesReturn->companySystemID,
-                'document' => $salesReturn->documentSystemID,
-                'segment' => '',
-                'category' => '',
-                'amount' => $amount
-            );
-            $update = array_except($input,['confirmedYN']);
-            $salesReturn = $this->salesReturnRepository->update($update, $id);
-            $confirm = Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"], 500);
-            } else {
-                return $this->sendResponse($salesReturn->toArray(), 'Sales Return confirmed successfully');
-            }
-
-        }else{
-            $salesReturn = $this->salesReturnRepository->update($input, $id);
-            return $this->sendResponse($salesReturn->toArray(), 'Sales Return updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
         }
     }
 
@@ -971,6 +971,13 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['companySystemID'] = $new['companySystemID'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             $invDetail_arr['documentSystemID'] = 87;
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
@@ -1111,30 +1118,20 @@ class SalesReturnAPIController extends AppBaseController
         $totalAmount = 0;
         $totalTaxAmount = 0;
         if ($salesReturnMasterData->returnType == 1) {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['delivery_order'])
-                                                ->groupBy('deliveryOrderID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['delivery_order_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->delivery_order->VATAmount / $value->delivery_order->transactionAmount) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                $totalTaxAmount += $value->qtyReturned * ((isset($value->delivery_order_detail->VATAmount) && !is_null($value->delivery_order_detail->VATAmount)) ? $value->delivery_order_detail->VATAmount : 0);
             }
         } else {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, custInvoiceDirectAutoID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['sales_invoice'])
-                                                ->groupBy('custInvoiceDirectAutoID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['sales_invoice_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->sales_invoice->VATAmount / $value->sales_invoice->bookingAmountTrans) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                $totalTaxAmount += $value->qtyReturned * ((isset($value->sales_invoice_detail->VATAmount) && !is_null($value->sales_invoice_detail->VATAmount)) ? $value->sales_invoice_detail->VATAmount : 0);
             }
         }
 
@@ -1404,7 +1401,14 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['itemCodeSystem'] = $new['itemCodeSystem'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                             $invDetail_arr['companySystemID'] = $customerInvoice->companySystemID;
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
                             // $invDetail_arr['documentSystemID'] = $new['companySystemID'];
 
                             $item = ItemMaster::find($new['itemCodeSystem']);
@@ -1599,6 +1603,7 @@ class SalesReturnAPIController extends AppBaseController
             'salesreturn.createdDateTime',
             'salesreturn.confirmedDate',
             'salesreturn.transactionAmount',
+            'salesreturn.VATAmount',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -1681,6 +1686,7 @@ class SalesReturnAPIController extends AppBaseController
             'salesreturn.createdDateTime',
             'salesreturn.confirmedDate',
             'salesreturn.transactionAmount',
+            'salesreturn.VATAmount',
             'salesreturn.approvedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
@@ -1737,7 +1743,7 @@ class SalesReturnAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['salesReturnID'];
         $companySystemID = $input['companySystemID'];
-        $salesReturn = SalesReturn::with(['company','customer','transaction_currency', 'sales_person','detail' => function($query){
+        $salesReturn = SalesReturn::with(['tax','company','customer','transaction_currency', 'sales_person','detail' => function($query){
             $query->with(['delivery_order','uom_default','uom_issuing', 'sales_invoice']);
         },'approved_by' => function($query) use($companySystemID){
             $query->where('companySystemID',$companySystemID)
@@ -1755,7 +1761,7 @@ class SalesReturnAPIController extends AppBaseController
     function printSalesReturn(Request $request){
         $id = $request->get('id');
 
-        $do = $this->salesReturnRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+        $do = $this->salesReturnRepository->with(['tax','created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee')
                 ->where('documentSystemID', 71);
         }, 'company','customer','transaction_currency','detail'=> function($query){
@@ -1925,6 +1931,7 @@ class SalesReturnAPIController extends AppBaseController
 
         $salesReturnArray = $doData->toArray();
         $salesReturnArray['salesReturnID'] = $salesReturnArray['id'];
+        unset($salesReturnArray['id']);
         $storeDeliveryOrderHistory = SalesReturnRefferedBack::insert($salesReturnArray);
 
         $fetchSalesReturnDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)

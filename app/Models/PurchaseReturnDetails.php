@@ -236,6 +236,8 @@ class PurchaseReturnDetails extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'includePLForGRVYN'
     ];
 
@@ -248,6 +250,8 @@ class PurchaseReturnDetails extends Model
         'purhasereturnDetailID' => 'integer',
         'purhaseReturnAutoID' => 'integer',
         'goodsRecievedYN' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'GRVSelectedYN' => 'integer',
         'vatRegisteredYN' => 'integer',
         'supplierVATEligible' => 'integer',

@@ -748,14 +748,25 @@ class GRVDetailsAPIController extends AppBaseController
 
                     //checking if item category is same or not
 
-                    $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('grvAutoID', $grvAutoID)
-                        ->first();
+                    $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                                                                ->where('companySystemID', $GRVMaster->companySystemID)
+                                                                ->first();
 
-                    if ($grvDetailExistSameItem) {
-                        if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError('You cannot add different category item', 422);
-                        }
+                    if ($allowFinanceCategory) {
+                        $policy = $allowFinanceCategory->isYesNO;
+
+                        if ($policy == 0) {
+                            $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                                ->where('grvAutoID', $grvAutoID)
+                                ->first();
+
+                            if ($grvDetailExistSameItem) {
+                                if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
+                                    return $this->sendError('You cannot add different category item', 422);
+                                }
+                            }
+
+                         }
                     }
 
                     //checking if item is inventory item cannot be added more than one
@@ -843,6 +854,8 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['VATAmount'] = $new['VATAmount'];
                         $GRVDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
                         $GRVDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                        $GRVDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                        $GRVDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
                         $GRVDetail_arr['logisticsAvailable'] = $POMaster->logisticsAvailable;
                         $GRVDetail_arr['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
 
@@ -1015,14 +1028,24 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError('Item not assigned');
             }
 
-            //checking if item category is same or not
-            $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                ->where('grvAutoID', $grvAutoID)
+             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $grvMaster->companySystemID)
                 ->first();
 
-            if ($grvDetailExistSameItem) {
-                if ($itemAssign->financeCategoryMaster != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                    return $this->sendError('You cannot add different category item', 422);
+            if ($allowFinanceCategory) {
+                $policy = $allowFinanceCategory->isYesNO;
+
+                if ($policy == 0) {
+                    //checking if item category is same or not
+                    $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('grvAutoID', $grvAutoID)
+                        ->first();
+
+                    if ($grvDetailExistSameItem) {
+                        if ($itemAssign->financeCategoryMaster != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
+                            return $this->sendError('You cannot add different category item', 422);
+                        }
+                    }
                 }
             }
 

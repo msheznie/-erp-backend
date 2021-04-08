@@ -851,6 +851,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
                 $query->where('quotationCode', 'LIKE', "%{$search}%");
             });
@@ -1085,7 +1086,9 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
+            $query->with(['term_description']);
+        }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1108,8 +1111,21 @@ class QuotationMasterAPIController extends AppBaseController
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
 
+        $soPaymentTerms = SoPaymentTerms::where('soID', $id)
+                                        ->with(['term_description'])
+                                        ->get();
+
+        $paymentTermsView = '';
+
+        if ($soPaymentTerms) {
+            foreach ($soPaymentTerms as $val) {
+                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
+            }
+        }
+
         $order = array(
             'masterdata' => $output,
+            'paymentTermsView' => $paymentTermsView,
             'netTotal' => $netTotal
         );
 
@@ -1357,7 +1373,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
-        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status']);
+        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 

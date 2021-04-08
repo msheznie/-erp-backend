@@ -252,6 +252,8 @@ class QuotationDetails extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'VATApplicableOn'
     ];
 
@@ -264,6 +266,8 @@ class QuotationDetails extends Model
         'quotationDetailsID' => 'integer',
         'quotationMasterID' => 'integer',
         'soQuotationDetailID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'itemAutoID' => 'integer',
         'itemSystemCode' => 'string',
         'itemDescription' => 'string',

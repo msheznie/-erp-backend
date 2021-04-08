@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\helper\inventory;
 use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
@@ -389,7 +390,29 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['discountAmount'] = 0;
         $input['transactionAmount'] = 0;
 
+        if ($deliveryOrderMaster->isVatEligible) {
+            $vatDetails = TaxService::getVATDetailsByItem($deliveryOrderMaster->companySystemID, $input['itemCodeSystem'], $deliveryOrderMaster->customerID,0);
+            $input['VATPercentage'] = $vatDetails['percentage'];
+            $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+            $input['VATAmount'] = 0;
+            if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
+                $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+            }
+            $currencyConversionVAT = \Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
+
+            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
+
+
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
+
+        $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
 
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($input['deliveryOrderID']);
@@ -495,8 +518,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateDeliveryOrderDetailAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits']);
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits', 'quotation']);
+
         $input = $this->convertArrayToValue($input);
+
         /** @var DeliveryOrderDetail $deliveryOrderDetail */
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->findWithoutFail($id);
 
@@ -535,8 +560,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         // discount calculation
         $discountedUnit = $input['unitTransactionAmount'];
 
-        if(isset($input['by'])){
-
+        if(isset($input['by']) && ($input['by'] == 'amount' || $input['by'] == 'percentage')){
             if ($input['by']=='amount' && $input['discountAmount'] > 0){
                 $discountedUnit = $input['unitTransactionAmount']-$input['discountAmount'];
                 if($input['unitTransactionAmount']){
@@ -549,7 +573,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $input['discountPercentage'] = 0;
                 $input['discountAmount'] = 0;
             }
-
         }else{
 
             if($discountedUnit> 0 ){
@@ -569,6 +592,32 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
         }
 
+         $netUnitAmount = 0;
+         if ($input['VATApplicableOn'] === 1) { // before discount
+            $netUnitAmount = $input["unitTransactionAmount"];
+         } else {
+            $netUnitAmount = $discountedUnit;
+         }
+
+        if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
+            if ($input['by'] === 'VATPercentage') {
+              $input["VATAmount"] = $netUnitAmount * $input["VATPercentage"] / 100;
+            } else if ($input['by'] === 'VATAmount') {
+              $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+            }
+        } else {
+            if ($input['VATPercentage'] != 0) {
+              $input["VATAmount"] = $netUnitAmount * $input["VATPercentage"] / 100;
+            } else {
+              $input["VATPercentage"] = ($input["VATAmount"] / $netUnitAmount) * 100;
+            }
+        }
+
+        $currencyConversionVAT = \Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
         $input['transactionAmount'] = $discountedUnit*$input['qtyIssuedDefaultMeasure'];
 
         $amounts = $this->updateAmountsByTransactionAmount($input,$deliveryOrderMaster);
@@ -583,6 +632,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['companyReportingAmount'] = Helper::roundValue($input['companyReportingAmount']);
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
+
+        $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
 
         // update maser table amount field
         $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
@@ -642,12 +696,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError('Order was already confirmed. you cannot delete',500);
             }
 
-            $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
-                                ->where('documentSystemID', $deliveryOrder->documentSystemID)
-                                ->exists();
-            if($taxExist && $deliveryOrder->orderType != 3){
-                return $this->sendError('VAT is added. Please delete the tax and try again.',500);
-            }
+            // $taxExist = Taxdetail::where('documentSystemCode', $deliveryOrder->deliveryOrderID)
+            //                     ->where('documentSystemID', $deliveryOrder->documentSystemID)
+            //                     ->exists();
+            // if($taxExist && $deliveryOrder->orderType != 3){
+            //     return $this->sendError('VAT is added. Please delete the tax and try again.',500);
+            // }
 
             $deliveryOrderDetail->delete();
 
@@ -682,10 +736,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                     $this->updateSalesQuotationDeliveryStatus($deliveryOrderDetail->quotationMasterID);
 
-                     $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
-                    if (!$resVat['status']) {
-                       return $this->sendError($resVat['message']); 
-                    } 
+                      $resVat = $this->updateVatEligibilityOfDeliveryOrder($deliveryOrderDetail->deliveryOrderID);
+                      if (!$resVat['status']) {
+                           return $this->sendError($resVat['message']); 
+                      } 
                 }
 
 
@@ -719,6 +773,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 //                return $this->sendError('Tax is added. Please delete the tax and try again.',500);
 //            }
 
+            $resVat = $this->updateVatFromSalesQuotation($deliveryOrderDetail->deliveryOrderID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
         }
 
 
@@ -1043,6 +1101,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $DODetail_arr['itemCodeSystem'] = $new['itemAutoID'];
                             $DODetail_arr['itemPrimaryCode'] = $new['itemSystemCode'];
                             $DODetail_arr['itemDescription'] = $new['itemDescription'];
+                            $DODetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $DODetail_arr['VATAmount'] = $new['VATAmount'];
+                            $DODetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $DODetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $DODetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $DODetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            $DODetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
 
                             $data = array(
                                 'companySystemID' => $deliveryOrder->companySystemID,
@@ -1173,6 +1238,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                return $this->sendError($resVat['message']); 
             } 
 
+            $resVat = $this->updateVatEligibilityOfDeliveryOrder($deliveryOrderID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
+
             DB::commit();
             return $this->sendResponse([], 'Delivery Order Details saved successfully');
         } catch (\Exception $exception) {
@@ -1182,28 +1252,68 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
     }
 
+    public function updateVatEligibilityOfDeliveryOrder($deliveryOrderID)
+    { 
+        $doDetailData = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                                           ->groupBy('quotationMasterID')
+                                           ->get();
+
+        $quMasterIds = $doDetailData->pluck('quotationMasterID');
+
+        $quotaionVatEligibleCheck = QuotationMaster::whereIn('quotationMasterID', $quMasterIds)
+                                                   ->where('vatRegisteredYN', 1)
+                                                   ->where('customerVATEligible', 1)
+                                                   ->first();
+        $vatRegisteredYN = 0;
+        $customerVATEligible = 0;
+        if ($quotaionVatEligibleCheck) {
+            $customerVATEligible = 1;
+            $vatRegisteredYN = 1;
+        } 
+
+        $updateRes = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)
+                                  ->update(['vatRegisteredYN' => $vatRegisteredYN, 'customerVATEligible' => $customerVATEligible]);
+
+        return ['status' => true];
+    }
+
     public function updateVatFromSalesQuotation($deliveryOrderID)
     {
         $invoiceDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
                                             ->with(['sales_quotation_detail'])
                                             ->get();
 
+        $deliveryOrderData = DeliveryOrder::find($deliveryOrderID);
+
         $totalVATAmount = 0;
 
         foreach ($invoiceDetails as $key => $value) {
-            $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+            if ($deliveryOrderData->orderType == 3) {
+                $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+            } else {
+                $totalVATAmount += ($value->qtyIssued * $value->VATAmount);
+            }
         }
 
+        $taxDelete = Taxdetail::where('documentSystemCode', $deliveryOrderID)
+                              ->where('documentSystemID', 71)
+                              ->delete();
         if ($totalVATAmount > 0) {
-            $taxDelete = Taxdetail::where('documentSystemCode', $deliveryOrderID)
-                                  ->where('documentSystemID', 71)
-                                  ->delete();
 
             $res = $this->saveDeliveryOrderTaxDetails($deliveryOrderID, $totalVATAmount);
 
             if (!$res['status']) {
                return ['status' => false, 'message' => $res['message']]; 
             } 
+        } else {
+            $vatAmount['vatOutputGLCodeSystemID'] = null;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->update($vatAmount);
         }
 
         return ['status' => true];

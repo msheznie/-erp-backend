@@ -622,4 +622,10 @@ class SalesReturn extends Model
     {
         return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
     }
+
+    public function tax()
+    {
+        return $this->belongsTo('App\Models\Taxdetail', 'id', 'documentSystemCode')
+            ->where('documentSystemID', 87);
+    }
 }

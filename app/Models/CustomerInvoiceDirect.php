@@ -15,6 +15,7 @@ namespace App\Models;
 use App\helper\Helper;
 use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
+use App\helper\TaxService;
 
 /**
  * @SWG\Definition(
@@ -426,6 +427,7 @@ class CustomerInvoiceDirect extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'custInvoiceDirectAutoID';
 
+    protected $appends = ['isVatEligible'];
 
     public $fillable = [
         'transactionMode',
@@ -519,6 +521,8 @@ class CustomerInvoiceDirect extends Model
         'approvedByUserSystemID',
         'returnStatus',
         'selectedForSalesReturn',
+        'vatRegisteredYN',
+        'customerVATEligible',
         'approvedByUserID'
     ];
 
@@ -605,7 +609,9 @@ class CustomerInvoiceDirect extends Model
         'approvedByUserSystemID' => 'integer',
         'selectedForSalesReturn' => 'integer',
         'returnStatus' => 'integer',
-        'approvedByUserID' => 'integer'
+        'approvedByUserID' => 'integer',
+        'vatRegisteredYN' => 'integer',
+        'customerVATEligible' => 'integer'
     ];
 
     /**
@@ -616,6 +622,11 @@ class CustomerInvoiceDirect extends Model
     public static $rules = [
 
     ];
+
+    public function getIsVatEligibleAttribute()
+    {
+        return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN,$this->documentSystemiD);
+    }
 
 
     public function company()

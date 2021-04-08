@@ -657,4 +657,9 @@ class QuotationMaster extends Model
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerSystemCode', 'customerCodeSystem');
     }
+
+    public function paymentTerms_by()
+    {
+        return $this->hasMany('\App\Models\SoPaymentTerms','soID','quotationMasterID');
+    }
 }

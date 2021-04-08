@@ -41,6 +41,14 @@ class AuthAPIController extends PassportAccessTokenController
             if($employees->isLock == 4){
                 return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
             }
+
+            if($employees->empLoginActive != 1){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+            }
+
+            if($employees->empActive != 1){
+                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+            }
         }
         try {
             $response = $this->server->respondToAccessTokenRequest($request, new Psr7Response);
@@ -65,6 +73,14 @@ class AuthAPIController extends PassportAccessTokenController
                 }
 
                 if(!$employees->ActivationFlag){
+                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                }
+
+                if($employees->empLoginActive != 1){
+                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                }
+
+                if($employees->empActive != 1){
                     return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
                 }
 

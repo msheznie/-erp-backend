@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\helper\inventory;
 use App\Http\Requests\API\CreateCustomerInvoiceItemDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceItemDetailsAPIRequest;
@@ -436,6 +437,22 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             }
         }
 
+        if ($customerInvoiceDirect->isVatEligible) {
+            $vatDetails = TaxService::getVATDetailsByItem($customerInvoiceDirect->companySystemID, $input['itemCodeSystem'], $customerInvoiceDirect->customerID,0);
+            $input['VATPercentage'] = $vatDetails['percentage'];
+            $input['VATApplicableOn'] = $vatDetails['applicableOn'];
+            $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+            $input['VATAmount'] = 0;
+            if (isset($input['sellingCostAfterMargin']) && $input['sellingCostAfterMargin'] > 0) {
+                $input['VATAmount'] = (($input['sellingCostAfterMargin'] / 100) * $vatDetails['percentage']);
+            }
+            $currencyConversionVAT = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->custTransactionCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $input['VATAmount']);
+
+            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
+
         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->create($input);
 
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), 'Customer Invoice Item Details saved successfully');
@@ -605,6 +622,26 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
 
+
+        if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
+            if ($input['by'] === 'VATPercentage') {
+              $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+            } else if ($input['by'] === 'VATAmount') {
+              $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+            }
+        } else {
+            if ($input['VATPercentage'] != 0) {
+              $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+            } else {
+              $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+            }
+        }
+
+        $currencyConversionVAT = \Helper::currencyConversion($customerDirectInvoice->companySystemID, $customerDirectInvoice->custTransactionCurrencyID, $customerDirectInvoice->custTransactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
         if($customerInvoiceItemDetails->itemFinanceCategoryID == 1){
             if ($customerInvoiceItemDetails->issueCostLocal == 0) {
                 $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
@@ -675,6 +712,11 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             }
         }
 
+        $resVat = $this->updateVatFromSalesQuotation($customerDirectInvoice->custInvoiceDirectAutoID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
+
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }
 
@@ -733,7 +775,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $taxExist = Taxdetail::where('documentSystemCode', $customerInvoice->custInvoiceDirectAutoID)
                 ->where('documentSystemID', $customerInvoice->documentSystemiD)
                 ->exists();
-            if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5 && $customerInvoice->isPerforma != 3){
+            if($taxExist && $customerInvoice->isPerforma != 4 && $customerInvoice->isPerforma != 5 && $customerInvoice->isPerforma != 3 &&  $customerInvoice->isPerforma != 2){
                 return $this->sendError('VAT is added. Please delete the tax and try again.',500);
             }
 
@@ -777,6 +819,11 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
                 } 
+
+                $resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
             }
             $this->updateDOInvoicedStatus($customerInvoiceItemDetails->deliveryOrderID);
 
@@ -813,8 +860,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
                 } 
+
+                $resVat = $this->updateVatEligibilityOfCustomerInvoice($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
             }
 
+        } else if ($customerInvoice->isPerforma == 2) {
+            $resVat = $this->updateVatFromSalesQuotation($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
         }
 
         return $this->sendResponse($id, 'Customer Invoice Item Details deleted successfully');
@@ -1033,6 +1090,14 @@ WHERE
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
 
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+
                             $item = ItemMaster::find($new['itemCodeSystem']);
                             if(empty($item)){
                                 return $this->sendError('Item not found',500);
@@ -1175,6 +1240,11 @@ WHERE
             }
 
             $resVat = $this->updateVatFromSalesDeliveryOrder($custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
+
+            $resVat = $this->updateVatEligibilityOfCustomerInvoiceFromDO($custInvoiceDirectAutoID);
             if (!$resVat['status']) {
                return $this->sendError($resVat['message']); 
             } 
@@ -1509,6 +1579,15 @@ WHERE
                             $invDetail_arr['itemPrimaryCode'] = $new['itemSystemCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
 
+                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+
+
                             $item = ItemMaster::find($new['itemAutoID']);
                             if(empty($item)){
                                 return $this->sendError('Item not found',500);
@@ -1639,6 +1718,11 @@ WHERE
                return $this->sendError($resVat['message']); 
             } 
 
+            $resVat = $this->updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
+
             DB::commit();
             return $this->sendResponse([], 'Customer Invoice Item Details saved successfully');
         } catch (\Exception $exception) {
@@ -1648,6 +1732,56 @@ WHERE
 
     }
 
+    public function updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID)
+    { 
+        $doDetailData = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                           ->groupBy('quotationMasterID')
+                                           ->get();
+
+        $quMasterIds = $doDetailData->pluck('quotationMasterID');
+
+        $quotaionVatEligibleCheck = QuotationMaster::whereIn('quotationMasterID', $quMasterIds)
+                                                   ->where('vatRegisteredYN', 1)
+                                                   ->where('customerVATEligible', 1)
+                                                   ->first();
+        $vatRegisteredYN = 0;
+        $customerVATEligible = 0;
+        if ($quotaionVatEligibleCheck) {
+            $customerVATEligible = 1;
+            $vatRegisteredYN = 1;
+        } 
+
+        $updateRes = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                  ->update(['vatRegisteredYN' => $vatRegisteredYN, 'customerVATEligible' => $customerVATEligible]);
+
+        return ['status' => true];
+    }
+
+    public function updateVatEligibilityOfCustomerInvoiceFromDO($custInvoiceDirectAutoID)
+    { 
+        $doDetailData = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                           ->groupBy('quotationMasterID')
+                                           ->get();
+
+        $quMasterIds = $doDetailData->pluck('deliveryOrderID');
+
+        $quotaionVatEligibleCheck = DeliveryOrder::whereIn('deliveryOrderID', $quMasterIds)
+                                                   ->where('vatRegisteredYN', 1)
+                                                   ->where('customerVATEligible', 1)
+                                                   ->first();
+        $vatRegisteredYN = 0;
+        $customerVATEligible = 0;
+        if ($quotaionVatEligibleCheck) {
+            $customerVATEligible = 1;
+            $vatRegisteredYN = 1;
+        } 
+
+        $updateRes = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                  ->update(['vatRegisteredYN' => $vatRegisteredYN, 'customerVATEligible' => $customerVATEligible]);
+
+        return ['status' => true];
+    }
+
     public function updateVatFromSalesQuotation($custInvoiceDirectAutoID)
     {
         $invoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
@@ -1655,59 +1789,69 @@ WHERE
                                                     ->get();
 
         $totalVATAmount = 0;
+        $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-            $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+            if ($invoice->isPerforma == 2) {
+                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
+            } else {
+                $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
+            }
         }
 
+        $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+                              ->where('documentSystemID', 20)
+                              ->delete();
         if ($totalVATAmount > 0) {
-            $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
-                                  ->where('documentSystemID', 20)
-                                  ->delete();
-
             $res = $this->savecustomerInvoiceTaxDetails($custInvoiceDirectAutoID, $totalVATAmount);
 
             if (!$res['status']) {
                return ['status' => false, 'message' => $res['message']]; 
             } 
+        } else {
+            $vatAmount['vatOutputGLCodeSystemID'] = null;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
         }
+
 
         return ['status' => true];
     }
 
     public function updateVatFromSalesDeliveryOrder($custInvoiceDirectAutoID)
     {
-        $invoiceDetails = CustomerInvoiceItemDetails::select('deliveryOrderID')
-                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
-                                                    ->groupBy('deliveryOrderID')
+        $invoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+                                                    ->with(['delivery_order_detail'])
                                                     ->get();
 
         $totalVATAmount = 0;
         foreach ($invoiceDetails as $key => $value) {
-            $invoiceData = CustomerInvoiceItemDetails::selectRaw('SUM(sellingTotal) as amount')
-                                                    ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
-                                                    ->where('deliveryOrderID', $value->deliveryOrderID)
-                                                    ->groupBy('deliveryOrderID')
-                                                    ->first();
-
-            $deliveryOrderData = DeliveryOrder::find($value->deliveryOrderID);
-            $totalAmount = 0;
-            if (!empty($invoiceData)) {
-                $totalAmount = $invoiceData->amount;
-            }
-            $totalVATAmount += ($deliveryOrderData->VATPercentage / 100) * $totalAmount;
+            $totalVATAmount += $value->qtyIssued * (isset($value->delivery_order_detail->VATAmount) ? $value->delivery_order_detail->VATAmount : 0);
         }
 
+        $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+                              ->where('documentSystemID', 20)
+                              ->delete();
         if ($totalVATAmount > 0) {
-            $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
-                                  ->where('documentSystemID', 20)
-                                  ->delete();
-
             $res = $this->savecustomerInvoiceTaxDetails($custInvoiceDirectAutoID, $totalVATAmount);
 
             if (!$res['status']) {
                return ['status' => false, 'message' => $res['message']]; 
             } 
+        } else {
+            $vatAmount['vatOutputGLCodeSystemID'] = null;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
         }
 
         return ['status' => true];

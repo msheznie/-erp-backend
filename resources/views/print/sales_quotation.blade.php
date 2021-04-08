@@ -459,6 +459,33 @@
         </table>
     </div>
     <hr style="color: #d3d9df">
+    <div class="row">
+        <table style="width:100%;padding-top: 3%;">
+            <tr>
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Delivery Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{!! nl2br($masterdata->deliveryTerms) !!}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table style="width:100%;padding-top: 3%;">
+            <tr style="padding-bottom: 2%;">
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Penalty Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{!! nl2br($masterdata->panaltyTerms) !!}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
+            <tr style="padding-bottom: 2%;">
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
+            </tr>
+        </table>
+    </div>
     <div class="row" style="font-size: 11.5px !important;">
         <div><span class="font-weight-bold">Notes :</span></div>
         <div>{!! nl2br($masterdata->Note) !!}</div>
