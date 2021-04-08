@@ -317,7 +317,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                                  ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'salesreturn.customerID')
                                  ->leftJoin('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'salesreturndetails.itemFinanceCategorySubID')
                                  ->where('salesreturn.approvedYN',-1)
-                                 ->where('salesreturn.companySystemID',$companyID)
+                                 ->whereIn('salesreturn.companySystemID',$companyID)
                                  ->whereDate('salesreturn.salesReturnDate', '>=', $fromDate)
                                  ->whereDate('salesreturn.salesReturnDate', '<=', $toDate)
                                  ->when(sizeof($customerIds) > 0, function($query) use ($customerIds) {
@@ -338,7 +338,8 @@ class SalesMarketingReportAPIController extends AppBaseController
                              ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_custinvoicedirect.customerID')
                              ->leftJoin('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
                              ->where('erp_custinvoicedirect.approved',-1)
-                             ->where('erp_custinvoicedirect.companySystemID',$companyID)
+                             ->whereIn('erp_custinvoicedirect.companySystemID',$companyID)
+                             ->whereIn('erp_custinvoicedirect.isPerforma',[2,4,5])
                              ->whereDate('erp_custinvoicedirect.bookingDate', '>=', $fromDate)
                              ->whereDate('erp_custinvoicedirect.bookingDate', '<=', $toDate)
                              ->when(sizeof($customerIds) > 0, function($query) use ($customerIds) {
