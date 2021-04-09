@@ -2051,3 +2051,9 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+
+Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+
+Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+
+Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
