@@ -1101,13 +1101,22 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $DODetail_arr['itemCodeSystem'] = $new['itemAutoID'];
                             $DODetail_arr['itemPrimaryCode'] = $new['itemSystemCode'];
                             $DODetail_arr['itemDescription'] = $new['itemDescription'];
-                            $DODetail_arr['VATPercentage'] = $new['VATPercentage'];
-                            $DODetail_arr['VATAmount'] = $new['VATAmount'];
-                            $DODetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
-                            $DODetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
-                            $DODetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
-                            $DODetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
-                            $DODetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+
+
+                            if ($qoMaster->documentSystemID == 67) {
+                                $vatDetails = TaxService::getVATDetailsByItem($deliveryOrder->companySystemID, $new['itemAutoID'], $deliveryOrder->customerID,0);
+                                $DODetail_arr['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                $DODetail_arr['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                $DODetail_arr['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                            } else {
+                                $DODetail_arr['VATPercentage'] = $new['VATPercentage'];
+                                $DODetail_arr['VATAmount'] = $new['VATAmount'];
+                                $DODetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                                $DODetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                                $DODetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                                $DODetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                                $DODetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                            }
 
                             $data = array(
                                 'companySystemID' => $deliveryOrder->companySystemID,
