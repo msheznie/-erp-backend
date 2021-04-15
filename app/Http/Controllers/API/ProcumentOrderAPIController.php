@@ -1360,6 +1360,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.poTypeID',
+                'erp_purchaseordermaster.rcmActivated',
                 'erp_purchaseordermaster.sentToSupplier'
             ]);
 
@@ -1749,6 +1750,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
             'erp_purchaseordermaster.poType_N',
             'erp_purchaseordermaster.budgetYear',
+            'erp_purchaseordermaster.rcmActivated',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -3090,6 +3092,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
             'erp_purchaseordermaster.budgetYear',
+            'erp_purchaseordermaster.rcmActivated',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
