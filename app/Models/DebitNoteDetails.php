@@ -172,6 +172,8 @@ class DebitNoteDetails extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'netAmountRpt'
     ];
 
@@ -184,6 +186,8 @@ class DebitNoteDetails extends Model
         'debitNoteDetailsID' => 'integer',
         'debitNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',

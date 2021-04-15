@@ -1898,6 +1898,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
                                         $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
                                         array_push($finalData, $data);
+
+                                        $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                     } else {
                                         Log::info('Debit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                         Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
@@ -2081,6 +2083,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glCode'] = $chartOfAccountData->AccountCode;
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
+
+                                        $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                                     } else {
                                         Log::info('Credit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                         Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));

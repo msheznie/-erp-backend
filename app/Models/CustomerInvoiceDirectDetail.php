@@ -213,6 +213,8 @@ class CustomerInvoiceDirectDetail extends Model
         'timesReferred',
         'timeStamp',
         'serviceLineSystemID',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'glSystemID'
     ];
 
@@ -224,6 +226,8 @@ class CustomerInvoiceDirectDetail extends Model
     protected $casts = [
         'custInvDirDetAutoID' => 'integer',
         'custInvoiceDirectID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',

@@ -167,6 +167,8 @@ class DirectInvoiceDetails extends Model
         'comRptAmount',
         'budgetYear',
         'isExtraAddon',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timesReferred',
         'timeStamp'
     ];
@@ -180,6 +182,8 @@ class DirectInvoiceDetails extends Model
         'directInvoiceDetailsID' => 'integer',
         'directInvoiceAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',

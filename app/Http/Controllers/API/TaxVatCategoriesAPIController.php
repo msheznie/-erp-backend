@@ -9,6 +9,11 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\PurchaseOrderDetails;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DebitNoteDetails;
+use App\Models\CreditNoteDetails;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\QuotationDetails;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\DeliveryOrderDetail;
@@ -602,6 +607,15 @@ class TaxVatCategoriesAPIController extends AppBaseController
                 case 20:
                     $res = $this->updateCustomerInvoiceDetailVATCategories($input['items']);
                     break;
+                case 19:
+                    $res = $this->updateCreditNoteDetailVATCategories($input['items']);
+                    break;
+                case 15:
+                    $res = $this->updateDebitNoteDetailVATCategories($input['items']);
+                    break;
+                case 11:
+                    $res = $this->updateDirectSupplierInvoiceDetailVATCategories($input['items']);
+                    break;
                 
                 default:
                     # code...
@@ -616,7 +630,41 @@ class TaxVatCategoriesAPIController extends AppBaseController
         }
     }
 
-    public function updatePurchaseOrderDetailVATCategories($items)
+    public function updateDirectSupplierInvoiceDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = DirectInvoiceDetails::where('directInvoiceDetailsID', $value['directInvoiceDetailsID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+   public function updateDebitNoteDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = DebitNoteDetails::where('debitNoteDetailsID', $value['debitNoteDetailsID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+   public function updatePurchaseOrderDetailVATCategories($items)
     {
         foreach ($items as $key => $value) {
             $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
@@ -627,6 +675,23 @@ class TaxVatCategoriesAPIController extends AppBaseController
             ];
 
             $res = PurchaseOrderDetails::where('purchaseOrderDetailsID', $value['purchaseOrderDetailsID'])
+                                    ->update($updateData);
+        }
+
+        return ['status' => true];
+    }
+
+    public function updateCreditNoteDetailVATCategories($items)
+    {
+        foreach ($items as $key => $value) {
+            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+            $updateData = [
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID']
+            ];
+
+            $res = CreditNoteDetails::where('creditNoteDetailsID', $value['creditNoteDetailsID'])
                                     ->update($updateData);
         }
 
@@ -669,17 +734,36 @@ class TaxVatCategoriesAPIController extends AppBaseController
 
     public function updateCustomerInvoiceDetailVATCategories($items)
     {
-        foreach ($items as $key => $value) {
-            $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+        $custInvoiceDirectID = (sizeof($items) > 0) ? $items[0]['custInvoiceDirectID'] : 0; 
 
-            $updateData = [
-                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
-                'vatSubCategoryID' => $value['vatSubCategoryID']
-            ];
+        $customerInvoice = CustomerInvoiceDirect::find($custInvoiceDirectID);
 
-            $res = CustomerInvoiceItemDetails::where('customerItemDetailID', $value['customerItemDetailID'])
-                                    ->update($updateData);
+        if ($customerInvoice && $customerInvoice->isPerforma == 0) {
+            foreach ($items as $key => $value) {
+                $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+                $updateData = [
+                    'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                    'vatSubCategoryID' => $value['vatSubCategoryID']
+                ];
+
+                $res = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $value['custInvDirDetAutoID'])
+                                        ->update($updateData);
+            }
+        } else {
+            foreach ($items as $key => $value) {
+                $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
+
+                $updateData = [
+                    'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                    'vatSubCategoryID' => $value['vatSubCategoryID']
+                ];
+
+                $res = CustomerInvoiceItemDetails::where('customerItemDetailID', $value['customerItemDetailID'])
+                                        ->update($updateData);
+            }
         }
+
 
         return ['status' => true];
     }
