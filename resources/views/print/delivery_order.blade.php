@@ -381,22 +381,24 @@
                 </td>
             </tr>
             @endif
-            @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
+            @if($entity->isVatEligible)
             <tr>
                 <td colspan="9" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
                 <td class="text-right">
-                    @if ($entity->detail)
+                    @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format($entity->tax->amount, $entity->currency)}}
+                    @else
+                        {{number_format(0, $entity->currency)}}
                     @endif
                 </td>
             </tr>
-            @endif
-            @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
             <tr>
                 <td colspan="9" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
                 <td class="text-right">
-                    @if ($entity->detail)
+                    @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format(($directTraSubTotal + $entity->tax->amount), $entity->currency)}}
+                    @else
+                        {{number_format(($directTraSubTotal), $entity->currency)}}
                     @endif
                 </td>
             </tr>
