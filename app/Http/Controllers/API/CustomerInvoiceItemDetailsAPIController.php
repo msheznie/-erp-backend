@@ -1792,7 +1792,7 @@ WHERE
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-            if ($invoice->isPerforma == 2) {
+            if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
                 $totalVATAmount += $value->qtyIssued * $value->VATAmount;
             } else {
                 $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
