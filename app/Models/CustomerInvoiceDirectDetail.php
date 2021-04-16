@@ -215,6 +215,10 @@ class CustomerInvoiceDirectDetail extends Model
         'serviceLineSystemID',
         'vatMasterCategoryID',
         'vatSubCategoryID',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'glSystemID'
     ];
 
@@ -257,6 +261,10 @@ class CustomerInvoiceDirectDetail extends Model
         'timesReferred' => 'integer',
         'contractID' => 'integer',
         'serviceLineSystemID' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'glSystemID' => 'integer'
     ];
 
