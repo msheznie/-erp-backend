@@ -570,7 +570,7 @@
                 <td style="border:none !important;">
                         &nbsp;
                 </td>
-                @if ($request->tax && isset($request->tax->amount))
+                @if ($request->isVATEligible)
                     <td class="text-right" style="border:none !important;width: 85%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Subtotal (Excluding VAT)
@@ -589,20 +589,20 @@
                     </td>
             </tr>
 
-            @if ($request->tax)
-                {{$directTraSubTotal+=$request->tax->amount}}
+            @if ($request->isVATEligible)
+                {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                {{$directTraSubTotal+= $totalVATAmount}}
                 <tr>
                     <td style="border:none !important;">
                         &nbsp;
                     </td>
                     <td class="text-right" style="border:none !important;width: 85%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round($request->tax->taxPercent, 2)}} %)
+                            Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
                         </span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                class="font-weight-bold">{{number_format($request->tax->amount, $numberFormatting)}}</span>
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
                     </td>
                 </tr>
 
