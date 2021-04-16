@@ -198,6 +198,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->addColumn('average_cost', function ($row) use ($input, $currency){
                             return $this->getAverageCostUpToDate($row, $input, $currency);
                         })
+                        ->addColumn('discount_amount', function ($row) use ($input, $currency){
+                            return $this->getDiscountAmountOfDeliveryOrder($row, $input, $currency);
+                        })
                         ->make(true);
 
                 break;
@@ -258,10 +261,30 @@ class SalesMarketingReportAPIController extends AppBaseController
 
         $average_cost = 0;
         if ($itemLedgerData) {
-            $average_cost = (isset($input['currencyID']) && $input['currencyID'] == 1) ? ($itemLedgerData->localTotal / $itemLedgerData->totalQty) : ($itemLedgerData->rptTotal / $itemLedgerData->totalQty); 
+            if ((isset($input['currencyID']) && $input['currencyID'] == 1 && $itemLedgerData->localTotal > 0) || (isset($input['currencyID']) && $input['currencyID'] == 2 && $itemLedgerData->rptTotal > 0)) {
+                $average_cost = (isset($input['currencyID']) && $input['currencyID'] == 1) ? ($itemLedgerData->localTotal / $itemLedgerData->totalQty) : ($itemLedgerData->rptTotal / $itemLedgerData->totalQty); 
+            }
         } 
 
         return round($average_cost, $currency->DecimalPlaces);
+    }
+
+    public function getDiscountAmountOfDeliveryOrder($row, $input, $currency)
+    {
+        $discount_amount = 0;
+
+        if ($row->documentSystemID == 71) {
+            $currencyConversionDiscount = \Helper::currencyConversion($row->companySystemID, $currency->currencyID, $currency->currencyID, $row->discountAmount);
+
+            if (isset($input['currencyID']) && $input['currencyID'] == 1)
+            {
+                $discount_amount = $currencyConversionDiscount['localAmount'] * $row->quantity;
+            } else {
+                $discount_amount = $currencyConversionDiscount['reportingAmount'] * $row->quantity;
+            }
+        } 
+
+        return round($discount_amount, $currency->DecimalPlaces);
     }
 
     public function getSalesDetailQry($input, $search)
@@ -289,9 +312,13 @@ class SalesMarketingReportAPIController extends AppBaseController
         $wareHouse = isset($input['wareHouse']) ? $input['wareHouse'] : [];
         $wareHouseIds = collect($wareHouse)->pluck('id');
 
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+        }
+
 
         $deliveryOrderDetail = DB::table('erp_delivery_order_detail')
-                                 ->selectRaw('erp_delivery_order.documentSystemID as documentSystemID, erp_delivery_order.deliveryOrderID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_delivery_order.deliveryOrderCode as documentCode, erp_delivery_order.deliveryOrderDate as documentDate, erp_delivery_order_detail.itemPrimaryCode as itemCode, erp_delivery_order_detail.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_delivery_order_detail.qtyIssued as quantity, erp_delivery_order_detail.companyLocalAmount + (erp_delivery_order_detail.VATAmountLocal*qtyIssued) as localAmount, erp_delivery_order_detail.companyReportingAmount + (erp_delivery_order_detail.VATAmountRpt*qtyIssued)  as rptAmount, erp_delivery_order_detail.wacValueLocal*qtyIssued as localCost, erp_delivery_order_detail.wacValueReporting*qtyIssued as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_delivery_order_detail.itemCodeSystem as itemCodeSystem')
+                                 ->selectRaw('erp_delivery_order.documentSystemID as documentSystemID, erp_delivery_order.deliveryOrderID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_delivery_order.deliveryOrderCode as documentCode, erp_delivery_order.deliveryOrderDate as documentDate, erp_delivery_order_detail.itemPrimaryCode as itemCode, erp_delivery_order_detail.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_delivery_order_detail.qtyIssued as quantity, (erp_delivery_order_detail.companyLocalAmount*qtyIssued) + (erp_delivery_order_detail.VATAmountLocal*qtyIssued) as localAmount, (erp_delivery_order_detail.companyReportingAmount*qtyIssued) + (erp_delivery_order_detail.VATAmountRpt*qtyIssued)  as rptAmount, erp_delivery_order_detail.wacValueLocal*qtyIssued as localCost, erp_delivery_order_detail.wacValueReporting*qtyIssued as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_delivery_order_detail.itemCodeSystem as itemCodeSystem, discountAmount, erp_delivery_order.companySystemID')
                                  ->join('erp_delivery_order', 'erp_delivery_order.deliveryOrderID', '=', 'erp_delivery_order_detail.deliveryOrderID')
                                  ->leftJoin('units', 'units.UnitID', '=', 'erp_delivery_order_detail.unitOfMeasureIssued')
                                  ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_delivery_order.customerID')
@@ -310,8 +337,16 @@ class SalesMarketingReportAPIController extends AppBaseController
                                     $query->whereIn('erp_delivery_order.wareHouseSystemCode', $wareHouseIds);
                                  });
 
+        if ($search) {
+            $deliveryOrderDetail = $deliveryOrderDetail->where(function ($query) use ($search) {
+                                                    $query->orWhere('erp_delivery_order.deliveryOrderCode', 'LIKE', "%{$search}%")
+                                                          ->orWhere('erp_delivery_order_detail.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                                          ->orWhere('erp_delivery_order_detail.itemDescription', 'LIKE', "%{$search}%");
+                                                });
+        }
+
         $salesReturnDetail = DB::table('salesreturndetails')
-                                 ->selectRaw('salesreturn.documentSystemID as documentSystemID, salesreturn.id as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, salesreturn.salesReturnCode as documentCode, salesreturn.salesReturnDate as documentDate, salesreturndetails.itemPrimaryCode as itemCode, salesreturndetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, (salesreturndetails.qtyReturned*-1) as quantity, (salesreturndetails.companyLocalAmount + (salesreturndetails.VATAmountLocal*qtyReturned))*-1 as localAmount, (salesreturndetails.companyReportingAmount + (salesreturndetails.VATAmountRpt*qtyReturned))*-1  as rptAmount, (salesreturndetails.wacValueLocal*qtyReturned)*-1 as localCost, (salesreturndetails.wacValueReporting*qtyReturned)*-1 as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, salesreturndetails.itemCodeSystem as itemCodeSystem')
+                                 ->selectRaw('salesreturn.documentSystemID as documentSystemID, salesreturn.id as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, salesreturn.salesReturnCode as documentCode, salesreturn.salesReturnDate as documentDate, salesreturndetails.itemPrimaryCode as itemCode, salesreturndetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, (salesreturndetails.qtyReturned*-1) as quantity, (salesreturndetails.companyLocalAmount + (salesreturndetails.VATAmountLocal*qtyReturned))*-1 as localAmount, (salesreturndetails.companyReportingAmount + (salesreturndetails.VATAmountRpt*qtyReturned))*-1  as rptAmount, (salesreturndetails.wacValueLocal*qtyReturned)*-1 as localCost, (salesreturndetails.wacValueReporting*qtyReturned)*-1 as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, salesreturndetails.itemCodeSystem as itemCodeSystem, discountAmount, salesreturn.companySystemID')
                                  ->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
                                  ->leftJoin('units', 'units.UnitID', '=', 'salesreturndetails.unitOfMeasureIssued')
                                  ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'salesreturn.customerID')
@@ -330,9 +365,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                                     $query->whereIn('salesreturn.wareHouseSystemCode', $wareHouseIds);
                                  });
 
+        if ($search) {
+            $salesReturnDetail = $salesReturnDetail->where(function ($query) use ($search) {
+                                                    $query->orWhere('salesreturn.salesReturnCode', 'LIKE', "%{$search}%")
+                                                          ->orWhere('salesreturndetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                                          ->orWhere('salesreturndetails.itemDescription', 'LIKE', "%{$search}%");
+                                                });
+        }
+
 
         $salesInvoiceDetail = DB::table('erp_customerinvoiceitemdetails')
-                             ->selectRaw('erp_custinvoicedirect.documentSystemiD as documentSystemID, erp_custinvoicedirect.custInvoiceDirectAutoID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_custinvoicedirect.bookingInvCode as documentCode, erp_custinvoicedirect.bookingDate as documentDate, erp_customerinvoiceitemdetails.itemPrimaryCode as itemCode, erp_customerinvoiceitemdetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_customerinvoiceitemdetails.qtyIssuedDefaultMeasure as quantity, (erp_customerinvoiceitemdetails.sellingCostAfterMarginLocal*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountLocal*qtyIssuedDefaultMeasure) as localAmount, (erp_customerinvoiceitemdetails.sellingCostAfterMarginRpt*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountRpt*qtyIssuedDefaultMeasure) as rptAmount, erp_customerinvoiceitemdetails.issueCostLocal*qtyIssuedDefaultMeasure as localCost, erp_customerinvoiceitemdetails.issueCostRpt*qtyIssuedDefaultMeasure as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_customerinvoiceitemdetails.itemCodeSystem as itemCodeSystem')
+                             ->selectRaw('erp_custinvoicedirect.documentSystemiD as documentSystemID, erp_custinvoicedirect.custInvoiceDirectAutoID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_custinvoicedirect.bookingInvCode as documentCode, erp_custinvoicedirect.bookingDate as documentDate, erp_customerinvoiceitemdetails.itemPrimaryCode as itemCode, erp_customerinvoiceitemdetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_customerinvoiceitemdetails.qtyIssuedDefaultMeasure as quantity, (erp_customerinvoiceitemdetails.sellingCostAfterMarginLocal*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountLocal*qtyIssuedDefaultMeasure) as localAmount, (erp_customerinvoiceitemdetails.sellingCostAfterMarginRpt*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountRpt*qtyIssuedDefaultMeasure) as rptAmount, erp_customerinvoiceitemdetails.issueCostLocal*qtyIssuedDefaultMeasure as localCost, erp_customerinvoiceitemdetails.issueCostRpt*qtyIssuedDefaultMeasure as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_customerinvoiceitemdetails.itemCodeSystem as itemCodeSystem, issueCostRpt as discountAmount, erp_custinvoicedirect.companySystemID')
                              ->join('erp_custinvoicedirect', 'erp_custinvoicedirect.custInvoiceDirectAutoID', '=', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID')
                              ->leftJoin('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
                              ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_custinvoicedirect.customerID')
@@ -354,6 +397,14 @@ class SalesMarketingReportAPIController extends AppBaseController
                              ->union($salesReturnDetail)
                              ->union($deliveryOrderDetail)
                              ->orderBy('documentDate', 'desc');
+
+         if ($search) {
+            $salesInvoiceDetail = $salesInvoiceDetail->where(function ($query) use ($search) {
+                                                    $query->orWhere('erp_custinvoicedirect.bookingDate', 'LIKE', "%{$search}%")
+                                                          ->orWhere('erp_customerinvoiceitemdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                                          ->orWhere('erp_customerinvoiceitemdetails.itemDescription', 'LIKE', "%{$search}%");
+                                                });
+        }
 
         return $salesInvoiceDetail;
 
@@ -490,7 +541,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             'Item Description' => $value->itemDescription,
                             'UOM' => $value->unitShortCode,
                             'Quantity' => $value->quantity,
-                            'Total Sales Value ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localAmount, $currency->DecimalPlaces) : round($value->rptAmount, $currency->DecimalPlaces),
+                            'Total Sales Value ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
                             'Total Cost ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
                             'Profit ('.$currency->CurrencyCode.')' => round($profit, $currency->DecimalPlaces),
                             'Profit Margin' => $profitMargin,
