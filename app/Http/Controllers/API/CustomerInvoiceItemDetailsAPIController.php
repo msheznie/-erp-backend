@@ -1578,15 +1578,31 @@ WHERE
                             $invDetail_arr['itemCodeSystem'] = $new['itemAutoID'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemSystemCode'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
+                            $invDetail_arr['sellingCost'] = ($new['unittransactionAmount'] - $new['discountAmount']);
+                            if ($quotationMaster->documentSystemID == 67) {
+                                $vatDetails = TaxService::getVATDetailsByItem($customerInvoioce->companySystemID, $new['itemAutoID'], $customerInvoioce->customerID,0);
+                                $invDetail_arr['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                $invDetail_arr['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                $invDetail_arr['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                $invDetail_arr['VATPercentage'] = $vatDetails['percentage'];
+                                $invDetail_arr['VATAmount'] = 0;
 
-                            $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
-                            $invDetail_arr['VATAmount'] = $new['VATAmount'];
-                            $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
-                            $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
-                            $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
-                            $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
-                            $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                                if (isset($invDetail_arr['sellingCost']) && $invDetail_arr['sellingCost'] > 0) {
+                                    $invDetail_arr['VATAmount'] = (($invDetail_arr['sellingCost'] / 100) * $vatDetails['percentage']);
+                                }
+                                $currencyConversionVAT = \Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
 
+                                $invDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $invDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                            } else {
+                                $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
+                                $invDetail_arr['VATAmount'] = $new['VATAmount'];
+                                $invDetail_arr['VATAmountLocal'] = $new['VATAmountLocal'];
+                                $invDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
+                                $invDetail_arr['VATApplicableOn'] = $new['VATApplicableOn'];
+                                $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
+                                $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                            }
 
                             $item = ItemMaster::find($new['itemAutoID']);
                             if(empty($item)){
@@ -1660,7 +1676,7 @@ WHERE
                                 $invDetail_arr['sellingCost'] = $new['unittransactionAmount'];
                             }*/
 
-                            $invDetail_arr['sellingCost'] = ($new['unittransactionAmount'] - $new['discountAmount']);
+                            
                             $invDetail_arr['sellingCostAfterMargin'] = $invDetail_arr['sellingCost'];
 
                             $costs = $this->updateCostBySellingCost($invDetail_arr,$customerInvoioce);

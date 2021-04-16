@@ -1108,6 +1108,16 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $DODetail_arr['VATApplicableOn'] = $vatDetails['applicableOn'];
                                 $DODetail_arr['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                 $DODetail_arr['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                $DODetail_arr['VATPercentage'] = $vatDetails['percentage'];
+                                $DODetail_arr['VATAmount'] = 0;
+
+                                if (isset($new['unittransactionAmount']) && $new['unittransactionAmount'] > 0) {
+                                    $DODetail_arr['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+                                }
+                                $currencyConversionVAT = \Helper::currencyConversion($deliveryOrder->companySystemID, $deliveryOrder->transactionCurrencyID, $deliveryOrder->transactionCurrencyID, $DODetail_arr['VATAmount']);
+
+                                $DODetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $DODetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             } else {
                                 $DODetail_arr['VATPercentage'] = $new['VATPercentage'];
                                 $DODetail_arr['VATAmount'] = $new['VATAmount'];

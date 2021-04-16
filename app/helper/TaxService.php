@@ -111,31 +111,31 @@ class TaxService
             $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
             $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
         }else{
-
-            if($isSupplier){
-                $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
-                    ->where('supplierCodeSytem',$partyID)
-                    ->first();
-
-                if(!empty($supplier)){
-                    $data['percentage']   = $supplier->vatPercentage;
-                }
-            }else{
-                $customer = CustomerAssigned::where('companySystemID',$companySystemID)
-                    ->where('customerCodeSystem',$partyID)
-                    ->first();
-
-                if(!empty($customer)){
-                    $data['percentage']   = $customer->vatPercentage;
-                }
-            }
-
             $defaultVAT = TaxVatCategories::where('isDefault', 1)
                                           ->first();
 
             if ($defaultVAT) {
                 $data['vatSubCategoryID']   = $defaultVAT->taxVatSubCategoriesAutoID;
                 $data['vatMasterCategoryID']   = $defaultVAT->mainCategory;
+                $data['percentage']   = $defaultVAT->percentage;
+            } else {
+                 if($isSupplier){
+                    $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
+                        ->where('supplierCodeSytem',$partyID)
+                        ->first();
+
+                    if(!empty($supplier)){
+                        $data['percentage']   = $supplier->vatPercentage;
+                    }
+                }else{
+                    $customer = CustomerAssigned::where('companySystemID',$companySystemID)
+                        ->where('customerCodeSystem',$partyID)
+                        ->first();
+
+                    if(!empty($customer)){
+                        $data['percentage']   = $customer->vatPercentage;
+                    }
+                }
             }
 
         }
