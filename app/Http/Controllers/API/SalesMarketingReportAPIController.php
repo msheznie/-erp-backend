@@ -400,7 +400,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
          if ($search) {
             $salesInvoiceDetail = $salesInvoiceDetail->where(function ($query) use ($search) {
-                                                    $query->orWhere('erp_custinvoicedirect.bookingDate', 'LIKE', "%{$search}%")
+                                                    $query->orWhere('erp_custinvoicedirect.bookingInvCode', 'LIKE', "%{$search}%")
                                                           ->orWhere('erp_customerinvoiceitemdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
                                                           ->orWhere('erp_customerinvoiceitemdetails.itemDescription', 'LIKE', "%{$search}%");
                                                 });
