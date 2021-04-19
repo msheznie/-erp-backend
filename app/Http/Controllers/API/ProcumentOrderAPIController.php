@@ -410,7 +410,7 @@ class ProcumentOrderAPIController extends AppBaseController
     {
         /** @var ProcumentOrder $procumentOrder */
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment', 'supplier' => function ($query) {
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
+            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem, vatNumber');
         }, 'currency' => function ($query) {
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID,CurrencyCode');
         },'location'])->findWithoutFail($id);
@@ -1670,7 +1670,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['detail' => function ($query) {
             $query->with('unit');
-        }, 'approved' => function ($query) {
+        }, 'supplier' => function ($query) {
+            $query->select('vatNumber','supplierCodeSystem');
+        },'approved' => function ($query) {
             $query->with('employee');
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
@@ -2968,6 +2970,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->with('employee');
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
+        }, 'supplier' => function ($query) {
+            $query->select('vatNumber','supplierCodeSystem');
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
