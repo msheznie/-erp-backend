@@ -31,6 +31,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\helper\Helper;
+use App\helper\SupplierInvoice;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
@@ -299,7 +300,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
+            'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
@@ -311,6 +313,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
         }
 
         $bookInvSuppMasters = $this->bookInvSuppMasterRepository->create($input);
@@ -470,7 +473,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
@@ -480,6 +483,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
         }
 
         if (isset($input['bookingDate']) && $input['bookingDate']) {
@@ -918,6 +922,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
+
+        SupplierInvoice::updateMaster($id);
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
     }
