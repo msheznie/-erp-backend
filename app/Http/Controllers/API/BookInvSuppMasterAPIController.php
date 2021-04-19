@@ -1700,6 +1700,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $directTotTra = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
 
+        $directTotVAT = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('VATAmount');
+
+        $directTotNet = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('netAmount');
+
         $directTotLoc = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('localAmount');
 
@@ -1712,6 +1718,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $grvTotRpt = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
             ->sum('totRptAmount');
 
+        $isVATEligible = TaxService::checkCompanyVATEligible($bookInvSuppMaster->companySystemID);
+
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
             'docRef' => $refernaceDoc,
@@ -1719,9 +1727,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'localDecimal' => $localDecimal,
             'rptDecimal' => $rptDecimal,
             'directTotTra' => $directTotTra,
+            'directTotVAT' => $directTotVAT,
+            'directTotNet' => $directTotNet,
             'directTotLoc' => $directTotLoc,
             'grvTotTra' => $grvTotTra,
             'grvTotLoc' => $grvTotLoc,
+            'isVATEligible' => $isVATEligible,
             'grvTotRpt' => $grvTotRpt
         );
 

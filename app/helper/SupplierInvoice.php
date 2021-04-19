@@ -14,7 +14,7 @@ class SupplierInvoice
     {
 
         // update master table
-        $bookInvSuppMaster = BookInvSuppMaster::find($id);
+        $bookInvSuppMaster = BookInvSuppMaster::with(['supplier'])->find($id);
 
         if(!empty($bookInvSuppMaster) && $bookInvSuppMaster->documentType == 1) {
 
@@ -55,8 +55,8 @@ class SupplierInvoice
                 $newVat['documentCode'] = $bookInvSuppMaster->bookingInvCode;
                 $newVat['taxPercent'] = $bookInvSuppMaster->VATPercentage;
                 $newVat['payeeSystemCode'] = $bookInvSuppMaster->supplierID;
-                //$newVat['payeeCode'] = ;
-                //$newVat['payeeName'] = ;
+                $newVat['payeeCode'] = isset($bookInvSuppMaster->supplier->primarySupplierCode) ? $bookInvSuppMaster->supplier->primarySupplierCode : '';
+                $newVat['payeeName'] = isset($bookInvSuppMaster->supplier->supplierName) ? $bookInvSuppMaster->supplier->supplierName : '';
                 $newVat['currency'] = $bookInvSuppMaster->supplierTransactionCurrencyID;
                 $newVat['currencyER'] = $bookInvSuppMaster->supplierTransactionCurrencyER;
                 $newVat['amount'] = $bookInvSuppMaster['VATAmount'];

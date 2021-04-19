@@ -116,7 +116,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         $taxRpt = 0;
                         $taxTrans = 0;
 
-                        if ($tax) {
+                        if ($tax && $masterData->documentType != 1) {
                             $taxLocal = $tax->localAmount;
                             $taxRpt = $tax->rptAmount;
                             $taxTrans = $tax->transAmount;

@@ -14,6 +14,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\SupplierInvoice;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateDirectInvoiceDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -178,6 +179,14 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             $input['budgetYear'] = $finYearExp[0];
         } else {
             $input['budgetYear'] = date("Y");
+        }
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($BookInvSuppMaster->companySystemID);
+
+        if ($isVATEligible) {
+            $defaultVAT = TaxService::getDefaultVAT($BookInvSuppMaster->companySystemID, $BookInvSuppMaster->supplierID);
+            $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+            $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
         }
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->create($input);

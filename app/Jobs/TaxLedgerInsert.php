@@ -31,6 +31,8 @@ use App\helper\TaxService;
 use App\Models\Employee;
 use App\Models\SalesReturn;
 use App\Models\SalesReturnDetail;
+use App\Models\BookInvSuppMaster;
+use App\Models\DirectInvoiceDetails;
 
 class TaxLedgerInsert implements ShouldQueue
 {
@@ -456,7 +458,59 @@ class TaxLedgerInsert implements ShouldQueue
                         }
 
                         break;
-                    
+                    case 11://Supplier Invoice
+                        $masterData = BookInvSuppMaster::with(['financeperiod_by', 'directdetail' => function ($query) {
+                            $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID');
+                        }])->find($masterModel["autoID"]);
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if (isset($masterData->financeperiod_by->isActive) && $masterData->financeperiod_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
+
+                        $ledgerData['documentCode'] = $masterData->bookingInvCode;
+                        $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $masterData->supplierID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+
+                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->directdetail[0]->transAmount);
+
+                        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->directdetail[0]->transAmount);
+                        $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
+                        $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
+                            
+
+                        $details = DirectInvoiceDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DIAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DIAmountCurrencyER as transCurrencyER')
+                                                ->where('directInvoiceAutoID', $masterModel["autoID"])
+                                                ->whereNotNull('vatSubCategoryID')
+                                                ->groupBy('vatSubCategoryID')
+                                                ->get();
+
+                        if ($masterData->documentType == 1) {
+                            foreach ($details as $key => $value) {
+                                $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
+
+                                if ($subCategoryData) {
+                                    $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                                }
+
+                                $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
+                                $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
+                                $ledgerData['localAmount'] = $value->localVATAmount;
+                                $ledgerData['rptAmount'] = $value->rptVATAmount;
+                                $ledgerData['transAmount'] = $value->transVATAmount;
+                                $ledgerData['transER'] = $value->transCurrencyER;
+                                $ledgerData['localER'] = $value->localCurrencyER;
+                                $ledgerData['comRptER'] = $value->reportingCurrencyER;
+                                $ledgerData['localCurrencyID'] = $value->localCurrencyID;
+                                $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
+                                $ledgerData['transCurrencyID'] = $value->transCurrencyID;
+
+                                array_push($finalData, $ledgerData);
+                            }
+                        }
+
+                        break;
                     default:
                         # code...
                         break;
