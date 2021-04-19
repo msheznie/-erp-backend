@@ -202,6 +202,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
             }
 
+
             unset($inputParam);
 
             $input['BPVdate'] = new Carbon($input['BPVdate']);

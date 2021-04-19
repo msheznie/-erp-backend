@@ -119,6 +119,7 @@ use App\Models\PoPaymentTerms;
 use App\Models\SupplierCurrency;
 use App\Models\GRVDetails;
 use App\Models\AdvancePaymentDetails;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\GRVMaster;
 use App\Models\Year;
@@ -6391,6 +6392,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             case 19:
                 $tracingData = $this->getCreditNoteTracingData($input['id']);
                 break;
+            case 4:
+                $tracingData = $this->getPaymentVoucherTracingData($input['id']);
+                break;
             default:
                 # code...
                 break;
@@ -6431,7 +6435,35 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
-    public function getPurchaseRequestTracingData($purchaseRequestID, $type, $purchaseOrderID = null, $grvAutoID = null, $bookingSuppMasInvAutoID = null)
+    public function getPaymentVoucherTracingData($PayMasterAutoId, $type = 'pv')
+    {
+        $paymentVocherData = PaySupplierInvoiceMaster::find($PayMasterAutoId);
+
+        if ($paymentVocherData->invoiceType == 2) {
+            $PayMasterAutoIdArray = (is_array($PayMasterAutoId)) ? $PayMasterAutoId : [$PayMasterAutoId];
+            $prDetails = PaySupplierInvoiceDetail::whereIn('PayMasterAutoId', $PayMasterAutoIdArray)
+                                                ->where('addedDocumentSystemID', 11)
+                                                ->groupBy('bookingInvSystemCode')
+                                                ->get();
+
+            $supplierInvoiceIds = $prDetails->pluck('bookingInvSystemCode')->toArray();
+
+            return $this->getSupplierInvoiceTracingData($supplierInvoiceIds, $type, $PayMasterAutoId);
+        } else if ($paymentVocherData->invoiceType == 3) {
+            return [];
+        } else if ($paymentVocherData->invoiceType == 5) {
+            $PayMasterAutoIdArray = (is_array($PayMasterAutoId)) ? $PayMasterAutoId : [$PayMasterAutoId];
+            $prDetails = AdvancePaymentDetails::whereIn('PayMasterAutoId', $PayMasterAutoIdArray)
+                                                ->groupBy('purchaseOrderID')
+                                                ->get();
+
+            $poIds = $prDetails->pluck('purchaseOrderID')->toArray();
+
+            return $this->getPurchaseOrderTracingData($poIds, $type, null, null, $PayMasterAutoId);
+        }
+    }
+
+    public function getPurchaseRequestTracingData($purchaseRequestID, $type, $purchaseOrderID = null, $grvAutoID = null, $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null)
     {
         $tracingData = [];
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequestID)
@@ -6566,19 +6598,61 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $tempPo['childs'][] = $temp;
             }
             $tracingData['childs'][] = $tempPo;
+
+            $tempAdPay = [];
+
+            $advancePayments = AdvancePaymentDetails::selectRaw('PayMasterAutoId, supplierTransCurrencyID, SUM(supplierTransAmount) as transAmount')
+                                                    ->with(['pay_invoice', 'supplier_currency'])
+                                                    ->where('purchaseOrderID', $valuePo['order']['purchaseOrderID'])
+                                                    ->groupBy('purchaseOrderID')
+                                                    ->first();
+
+            if ($advancePayments) {
+                $tempAdPay['name'] = "Payment Voucher";
+                if ($type == 'pv' && ($advancePayments->PayMasterAutoId == $PayMasterAutoId)) {
+                    $tempAdPay['cssClass'] = "ngx-org-step-three root-tracing-node";
+                } else {
+                    $tempAdPay['cssClass'] = "ngx-org-step-three";
+                }
+
+                $tempAdPay['documentSystemID'] = $advancePayments->pay_invoice->documentSystemID;
+                $tempAdPay['docAutoID'] = $advancePayments->pay_invoice->PayMasterAutoId;
+                $tempAdPay['title'] = "{Doc Code :} " . $advancePayments->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($advancePayments->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $advancePayments->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($advancePayments->transAmount, $advancePayments->supplier_currency->DecimalPlaces);
+
+                $tracingData['childs'][] = $tempAdPay;
+
+            }
         }
 
         return $tracingData;
     }
 
-    public function getPurchaseOrderTracingData($purchaseOrderID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null)
+    public function getPurchaseOrderTracingData($purchaseOrderID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null)
     {
         $tracingData = [];
 
-        $procumentOrder = ProcumentOrder::find($purchaseOrderID);
 
+        if (!is_array($purchaseOrderID) || (is_array($purchaseOrderID) && sizeof($purchaseOrderID) == 1)) {
+            $poID = is_array($purchaseOrderID) ? $purchaseOrderID[0] : $purchaseOrderID;
+            return $this->singlePoTracingData($poID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
+        } else {
+            $poData = ProcumentOrder::whereIn('purchaseOrderID', $purchaseOrderID)
+                                    ->get();
+
+            foreach ($poData as $key => $value) {
+                $tracingData[] = $this->singlePoTracingData($value->purchaseOrderID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
+            }
+
+            return $tracingData;
+        }
+
+    }
+
+    public function singlePoTracingData($poID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null)
+    {
+        $procumentOrder = ProcumentOrder::find($poID);
         if ($procumentOrder->poTypeID == 1) {
-            $poIdsArray = (is_array($purchaseOrderID)) ? $purchaseOrderID : [$purchaseOrderID];
+            $poIdsArray = (is_array($poID)) ? $poID : [$poID];
 
             $prDetails = PurchaseOrderDetails::whereIn('purchaseOrderMasterID', $poIdsArray)
                 ->groupBy('purchaseRequestID')
@@ -6588,14 +6662,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $trData = [];
             foreach ($prIDS as $key => $value) {
-                $trData[] = $this->getPurchaseRequestTracingData($value, $type, $purchaseOrderID, $grvAutoID, $bookingSuppMasInvAutoID);
+                $trData[] = $this->getPurchaseRequestTracingData($value, $type, $poID, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
             }
 
             return $trData;
         } else {
             $procumentOrderData = ProcumentOrder::with(['currency'])
-                                                ->find($purchaseOrderID)
-                                                ->toArray();
+                                            ->find($poID)
+                                            ->toArray();
             $cancelStatus = ($procumentOrder->poCancelledYN == -1) ? " -- @Cancelled@" : "";
             $tempPo = [];
             $tempPo['name'] = "Purchase Order";
@@ -6693,7 +6767,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $tracingData[] = $tempPo;
             return $tracingData;
         }
-
     }
 
     function getPOtoPaymentChainForTracing($row, $grvAutoID = null, $bookingSuppMasInvAutoID = null)
@@ -6796,14 +6869,31 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     }
 
 
-    public function getSupplierInvoiceTracingData($bookingSuppMasInvAutoID, $type = 'supInv')
+    public function getSupplierInvoiceTracingData($bookingSuppMasInvAutoID, $type = 'supInv', $PayMasterAutoId = null)
     {
         $tracingData = [];
 
+        if (!is_array($bookingSuppMasInvAutoID) || (is_array($bookingSuppMasInvAutoID) && sizeof($bookingSuppMasInvAutoID) == 1)) {
+            $poID = is_array($bookingSuppMasInvAutoID) ? $bookingSuppMasInvAutoID[0] : $bookingSuppMasInvAutoID;
+            return $this->singleSupInvoiceTracingData($poID, $type, $PayMasterAutoId);
+        } else {
+            $poData = BookInvSuppMaster::whereIn('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                    ->get();
+
+            foreach ($poData as $key => $value) {
+                $tracingData[] = $this->singleSupInvoiceTracingData($value->bookingSuppMasInvAutoID, $type, $PayMasterAutoId);
+            }
+
+            return $tracingData;
+        }
+    }
+
+    public function singleSupInvoiceTracingData($bookingSuppMasInvAutoID, $type = 'supInv', $PayMasterAutoId = null)
+    {
         $masterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if ($masterData && $masterData->documentType == 1) {
-            $res[] = $this->supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID);
+            $res[] = $this->supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID, $type, $PayMasterAutoId);
 
             return $res;
         }
@@ -6932,7 +7022,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         return $tracingData;
     }
 
-    public function supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID)
+    public function supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID, $type, $PayMasterAutoId = null)
     {
         $tracingData = [];
         $invoiceMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
@@ -6965,15 +7055,23 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
         $tracingData['name'] = "Supplier Invoice";
-        $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
+        if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
+            $tracingData['cssClass'] = "ngx-org-step-one root-tracing-node";
+        } else {
+            $tracingData['cssClass'] = "ngx-org-step-one";
+        }
         $tracingData['documentSystemID'] = $invoiceMaster->documentSystemID;
         $tracingData['docAutoID'] = $invoiceMaster->bookingSuppMasInvAutoID;
         $tracingData['title'] = "{Doc Code :} " . $invoiceMaster->bookingInvCode . " -- {Doc Date :} " . Carbon::parse($invoiceMaster->bookingDate)->format('Y-m-d') . " -- {Currency :} " . $invoiceMaster->transactioncurrency->CurrencyCode . "-- {Amount :} " . number_format($invoiceMaster->bookingAmountTrans, $invoiceMaster->transactioncurrency->DecimalPlaces) . $cancelStatus;
 
         foreach ($totalInvoices as $key2 => $value2) {
             $temp2 = [];
-            $temp2['cssClass'] = "ngx-org-step-two";
             if (isset($value2['payment_master'])) {
+                 if ($type == "pv" && ($PayMasterAutoId == $value2['payment_master']['PayMasterAutoId'])) {
+                    $temp2['cssClass'] = "ngx-org-step-two root-tracing-node";
+                } else {
+                    $temp2['cssClass'] = "ngx-org-step-two";
+                }
                 $temp2['name'] = "Payment";
                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
@@ -6981,6 +7079,11 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             if (isset($value2['matching_master'])) {
+                // if ($type == "supInv" && ($bookingSuppMasInvAutoID == $value2['payment_master']['PayMasterAutoId'])) {
+                //     $temp2['cssClass'] = "ngx-org-step-two root-tracing-node";
+                // } else {
+                    $temp2['cssClass'] = "ngx-org-step-two";
+                // }
                 $temp2['name'] = "Debit Note";
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
@@ -7207,27 +7310,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                                  ->groupBy('custInvoiceDirectAutoID')
                                                  ->first();
 
+            if ($invoice) {
+                $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                                 sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                                                            ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
+                                                            ->where('addedDocumentSystemID', 20)
+                                                            ->where('matchingDocID', 0)
+                                                            ->with(['master' => function($query) {
+                                                                $query->with(['currency']);
+                                                            }])
+                                                            ->groupBy('custReceivePaymentAutoID')
+                                                            ->get();
 
+                $totalInvoices = $recieptVouchers->toArray();
 
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
-                                             sum(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
-                                                        ->where('bookingInvCodeSystem', $custInvoiceDirectAutoID)
-                                                        ->where('addedDocumentSystemID', 20)
-                                                        ->where('matchingDocID', 0)
-                                                        ->with(['master' => function($query) {
-                                                            $query->with(['currency']);
-                                                        }])
-                                                        ->groupBy('custReceivePaymentAutoID')
-                                                        ->get();
+                $invoice->payments = $totalInvoices;
 
-            $totalInvoices = $recieptVouchers->toArray();
+                $invoice = $invoice->toArray();
 
-            $invoice->payments = $totalInvoices;
+                
+                $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
+            }
 
-            $invoice = $invoice->toArray();
-
-            
-            $tracingData[] = $this->setCustomerInvoiceChainData($invoice, $type, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
         } 
 
         return $tracingData;
