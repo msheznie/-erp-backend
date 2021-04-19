@@ -1733,6 +1733,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        $decimalPlaces  = Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1833,7 +1835,7 @@ WHERE
 	AND erp_accountspayableledger.fullyInvoice <> 2
 	AND erp_accountspayableledger.companySystemID =  $matchDocumentMasterData->companySystemID
 	AND erp_accountspayableledger.supplierCodeSystem = $matchDocumentMasterData->BPVsupplierID
-	AND erp_accountspayableledger.supplierTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC";
+	AND erp_accountspayableledger.supplierTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID HAVING ROUND(paymentBalancedAmount,$decimalPlaces) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC";
 
         $invMaster = DB::select($qry);
 
