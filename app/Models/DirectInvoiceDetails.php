@@ -170,7 +170,13 @@ class DirectInvoiceDetails extends Model
         'vatMasterCategoryID',
         'vatSubCategoryID',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
     ];
 
     /**
@@ -203,7 +209,13 @@ class DirectInvoiceDetails extends Model
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
         'isExtraAddon' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

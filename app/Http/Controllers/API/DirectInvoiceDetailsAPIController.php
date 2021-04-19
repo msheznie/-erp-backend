@@ -13,6 +13,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\SupplierInvoice;
 use App\Http\Requests\API\CreateDirectInvoiceDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -337,7 +338,22 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
         $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
 
+        $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
+        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal' ]        = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt']        = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+        $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
+        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
+
+        $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
+        $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
+
+
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->update($input, $id);
+
+        SupplierInvoice::updateMaster($input['directInvoiceAutoID']);
 
         return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
     }

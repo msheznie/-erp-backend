@@ -183,7 +183,13 @@ class DirectInvoiceDetailsRefferedBack extends Model
         'budgetYear',
         'isExtraAddon',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt'
     ];
 
     /**
@@ -215,7 +221,13 @@ class DirectInvoiceDetailsRefferedBack extends Model
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
         'isExtraAddon' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**
