@@ -143,6 +143,44 @@ class TaxService
         return $data;
     }
 
+    public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1) {
+
+        $data = array('percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
+        $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
+                                        $q->where('companySystemID',$companySystemID)
+                                            ->where('isActive',1)
+                                            ->where('taxCategory',2);
+                                    })
+                                    ->where('isDefault', 1)
+                                    ->first();
+
+        if(!empty($taxDetails)){
+            $data['percentage']   = $taxDetails->percentage;
+            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
+        }else{
+            if ($isSupplier) {
+                $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
+                    ->where('supplierCodeSytem',$partyID)
+                    ->first();
+
+                if(!empty($supplier)){
+                    $data['percentage']   = $supplier->vatPercentage;
+                }
+            } else {
+                $customer = CustomerAssigned::where('companySystemID',$companySystemID)
+                    ->where('customerCodeSystem',$partyID)
+                    ->first();
+
+                if(!empty($customer)){
+                    $data['percentage']   = $customer->vatPercentage;
+                }
+            }
+        }
+
+        return $data;
+    }
+
     public static function updatePOVAT($id) {
 
         $purchaseOrder = ProcumentOrder::find($id);

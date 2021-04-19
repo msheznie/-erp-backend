@@ -19,6 +19,7 @@ use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\DeliveryOrder;
 use App\Models\CreditNoteDetails;
 use App\Models\DeliveryOrderDetail;
@@ -184,20 +185,20 @@ class TaxLedgerInsert implements ShouldQueue
                     case 20://Sales Invoice
                         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
 
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
+
+                        $ledgerData['documentCode'] = $masterData->bookingInvCode;
+                        $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['partyID'] = $masterData->customerID;
+                        $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+
+                        $ledgerData['documentTransAmount'] = floatval($masterData->bookingAmountTrans) + floatval($masterData->VATAmount);
+                        $ledgerData['documentLocalAmount'] = floatval($masterData->bookingAmountLocal) + floatval($masterData->VATAmountLocal);
+                        $ledgerData['documentReportingAmount'] = floatval($masterData->bookingAmountRpt) + floatval($masterData->VATAmountRpt);
                         if ($masterData->isPerforma == 2 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5 || $masterData->isPerforma == 3) {
-                            $masterDocumentDate = date('Y-m-d H:i:s');
-                            if (isset($masterData->finance_period_by->isActive) && $masterData->finance_period_by->isActive == -1) {
-                                $masterDocumentDate = $masterData->bookingDate;
-                            }
-
-                            $ledgerData['documentCode'] = $masterData->bookingInvCode;
-                            $ledgerData['documentDate'] = $masterDocumentDate;
-                            $ledgerData['partyID'] = $masterData->customerID;
-                            $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-
-                            $ledgerData['documentTransAmount'] = floatval($masterData->bookingAmountTrans) + floatval($masterData->VATAmount);
-                            $ledgerData['documentLocalAmount'] = floatval($masterData->bookingAmountLocal) + floatval($masterData->VATAmountLocal);
-                            $ledgerData['documentReportingAmount'] = floatval($masterData->bookingAmountRpt) + floatval($masterData->VATAmountRpt);
 
                             $details = CustomerInvoiceItemDetails::selectRaw('SUM(VATAmount*qtyIssuedDefaultMeasure) as transVATAmount,SUM(VATAmountLocal*qtyIssuedDefaultMeasure) as localVATAmount ,SUM(VATAmountRpt*qtyIssuedDefaultMeasure) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, localCurrencyER, reportingCurrencyID, reportingCurrencyER, sellingCurrencyID, sellingCurrencyER')
                                                     ->where('custInvoiceDirectAutoID', $masterModel["autoID"])
@@ -223,6 +224,34 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerData['localCurrencyID'] = $value->localCurrencyID;
                                 $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
                                 $ledgerData['transCurrencyID'] = $value->sellingCurrencyID;
+
+                                array_push($finalData, $ledgerData);
+                            }
+                        } else if ($masterData->isPerforma == 0) {
+                            $details = CustomerInvoiceDirectDetail::selectRaw('SUM(VATAmount*invoiceQty) as transVATAmount,SUM(VATAmountLocal*invoiceQty) as localVATAmount ,SUM(VATAmountRpt*invoiceQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency, localCurrencyER, comRptCurrency, comRptCurrencyER, invoiceAmountCurrency, invoiceAmountCurrencyER')
+                                                    ->where('custInvoiceDirectID', $masterModel["autoID"])
+                                                    ->whereNotNull('vatSubCategoryID')
+                                                    ->groupBy('vatSubCategoryID')
+                                                    ->get();
+
+                            foreach ($details as $key => $value) {
+                                $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
+
+                                if ($subCategoryData) {
+                                    $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                                }
+
+                                $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
+                                $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
+                                $ledgerData['localAmount'] = $value->localVATAmount;
+                                $ledgerData['rptAmount'] = $value->rptVATAmount;
+                                $ledgerData['transAmount'] = $value->transVATAmount;
+                                $ledgerData['transER'] = $value->invoiceAmountCurrencyER;
+                                $ledgerData['localER'] = $value->localCurrencyER;
+                                $ledgerData['comRptER'] = $value->comRptCurrencyER;
+                                $ledgerData['localCurrencyID'] = $value->localCurrency;
+                                $ledgerData['rptCurrencyID'] = $value->comRptCurrency;
+                                $ledgerData['transCurrencyID'] = $value->invoiceAmountCurrency;
 
                                 array_push($finalData, $ledgerData);
                             }
