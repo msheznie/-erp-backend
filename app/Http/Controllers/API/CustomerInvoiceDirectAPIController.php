@@ -2382,6 +2382,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
+
+        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
+
+        $customerInvoice->amountInWordsEnglish = (isset($customerInvoice->currency->CurrencyName) ? $customerInvoice->currency->CurrencyName : '') ." ".$amountInWordsEnglish.' Only';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
         $contractID = 0;
         if ($master->isPerforma == 1) {
@@ -2428,12 +2434,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
-        }  else if ($printTemplate['printTemplateID'] == 5) {
+        } else if ($printTemplate['printTemplateID'] == 5) {
             $html = view('print.customer_invoice_tax', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 6) {
+            $html = view('print.invoice_template.customer_invoice_hlb', $array);
+            $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
+
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
         } else if ($printTemplate['printTemplateID'] == 3) {
             $html = view('print.customer_invoice_with_po_detail', $array);
             $pdf = \App::make('dompdf.wrapper');
