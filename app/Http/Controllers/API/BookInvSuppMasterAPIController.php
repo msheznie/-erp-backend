@@ -884,11 +884,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 //if rcm activated
                 if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
                     if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                     }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
                         return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
                     }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
                     }
                 }
             }
