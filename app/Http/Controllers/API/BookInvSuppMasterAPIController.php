@@ -483,7 +483,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
-            $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            }
         }
 
         if (isset($input['bookingDate']) && $input['bookingDate']) {
@@ -601,12 +603,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             /*
-        * GWL-713
-         * documentType == 0  -   invoice type - PO
-        *  check policy 11 - Allow multiple GRV in One Invoice
-        * if policy 11 is 1 allow to add multiple different PO's
-        * if policy 11 is 0 do not allow multiple different PO's
-         */
+            * GWL-713
+             * documentType == 0  -   invoice type - PO
+            *  check policy 11 - Allow multiple GRV in One Invoice
+            * if policy 11 is 1 allow to add multiple different PO's
+            * if policy 11 is 0 do not allow multiple different PO's
+             */
             if($input['documentType'] == 0){
 
                 $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
@@ -921,6 +923,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($id);
