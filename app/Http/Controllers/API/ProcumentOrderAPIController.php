@@ -6549,8 +6549,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     foreach ($value1['payments'] as $key2 => $value2) {
                         $temp2 = [];
-                        $temp2['cssClass'] = "ngx-org-step-five";
                         if (isset($value2['payment_master'])) {
+                            if ($type == 'pv' && $PayMasterAutoId == $value2['payment_master']['PayMasterAutoId']) {
+                                $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
+                            } else {
+                                $temp2['cssClass'] = "ngx-org-step-five";
+                            }
                             $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                             $temp2['name'] = "Payment";
                             $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
@@ -6559,6 +6563,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         }
 
                         if (isset($value2['matching_master'])) {
+                            $temp2['cssClass'] = "ngx-org-step-five";
                             $temp2['name'] = "Debit Note";
                             $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                             $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
@@ -6597,31 +6602,37 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $tempPo['childs'][] = $temp;
             }
-            $tracingData['childs'][] = $tempPo;
 
             $tempAdPay = [];
 
             $advancePayments = AdvancePaymentDetails::selectRaw('PayMasterAutoId, supplierTransCurrencyID, SUM(supplierTransAmount) as transAmount')
                                                     ->with(['pay_invoice', 'supplier_currency'])
                                                     ->where('purchaseOrderID', $valuePo['order']['purchaseOrderID'])
-                                                    ->groupBy('purchaseOrderID')
-                                                    ->first();
+                                                    ->groupBy('purchaseOrderID');
 
-            if ($advancePayments) {
+            if (!is_null($PayMasterAutoId)) {
+                $advancePayments = $advancePayments->where('PayMasterAutoId', $PayMasterAutoId);
+            }
+
+            $advancePayments = $advancePayments->get();
+
+            foreach ($advancePayments as $keyAd => $valueAd) {
                 $tempAdPay['name'] = "Payment Voucher";
-                if ($type == 'pv' && ($advancePayments->PayMasterAutoId == $PayMasterAutoId)) {
+                if ($type == 'pv' && ($valueAd->PayMasterAutoId == $PayMasterAutoId)) {
                     $tempAdPay['cssClass'] = "ngx-org-step-three root-tracing-node";
                 } else {
                     $tempAdPay['cssClass'] = "ngx-org-step-three";
                 }
 
-                $tempAdPay['documentSystemID'] = $advancePayments->pay_invoice->documentSystemID;
-                $tempAdPay['docAutoID'] = $advancePayments->pay_invoice->PayMasterAutoId;
-                $tempAdPay['title'] = "{Doc Code :} " . $advancePayments->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($advancePayments->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $advancePayments->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($advancePayments->transAmount, $advancePayments->supplier_currency->DecimalPlaces);
+                $tempAdPay['documentSystemID'] = $valueAd->pay_invoice->documentSystemID;
+                $tempAdPay['docAutoID'] = $valueAd->pay_invoice->PayMasterAutoId;
+                $tempAdPay['title'] = "{Doc Code :} " . $valueAd->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
 
-                $tracingData['childs'][] = $tempAdPay;
-
+                $tempPo['childs'][] = $tempAdPay;
             }
+
+            $tracingData['childs'][] = $tempPo;
+
         }
 
         return $tracingData;
@@ -6639,8 +6650,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $poData = ProcumentOrder::whereIn('purchaseOrderID', $purchaseOrderID)
                                     ->get();
 
+            $poTrData = [];
             foreach ($poData as $key => $value) {
-                $tracingData[] = $this->singlePoTracingData($value->purchaseOrderID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
+                $poTrData[] = $this->singlePoTracingData($value->purchaseOrderID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
+            }
+
+            foreach ($poTrData as $key => $value) {
+                foreach ($value as $key1 => $value1) {
+                    $tracingData[] = $value1;
+                }
             }
 
             return $tracingData;
@@ -6714,8 +6732,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                         foreach ($value1['payments'] as $key2 => $value2) {
                             $temp2 = [];
-                            $temp2['cssClass'] = "ngx-org-step-five";
                             if (isset($value2['payment_master'])) {
+                                if ($type == 'pv' && $PayMasterAutoId == $value2['payment_master']['PayMasterAutoId']) {
+                                    $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
+                                } else {
+                                    $temp2['cssClass'] = "ngx-org-step-five";
+                                }
+
                                 $cancelStatus = ($value2['payment_master']['cancelYN'] == -1) ? " -- @Cancelled@" : "";
                                 $temp2['name'] = "Payment";
                                 $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
@@ -6724,6 +6747,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             }
 
                             if (isset($value2['matching_master'])) {
+                                $temp2['cssClass'] = "ngx-org-step-five";
                                 $temp2['name'] = "Debit Note";
                                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                                 $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
@@ -6764,12 +6788,40 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
             }
 
+            $tempAdPay = [];
+
+            $advancePayments = AdvancePaymentDetails::selectRaw('PayMasterAutoId, supplierTransCurrencyID, SUM(supplierTransAmount) as transAmount')
+                                                    ->with(['pay_invoice', 'supplier_currency'])
+                                                    ->where('purchaseOrderID', $procumentOrderData['purchaseOrderID'])
+                                                    ->groupBy('purchaseOrderID');
+
+            if (!is_null($PayMasterAutoId)) {
+                $advancePayments = $advancePayments->where('PayMasterAutoId', $PayMasterAutoId);
+            }
+
+            $advancePayments = $advancePayments->get();
+
+            foreach ($advancePayments as $keyAd => $valueAd) {
+                $tempAdPay['name'] = "Payment Voucher";
+                if ($type == 'pv' && ($valueAd->PayMasterAutoId == $PayMasterAutoId)) {
+                    $tempAdPay['cssClass'] = "ngx-org-step-three root-tracing-node";
+                } else {
+                    $tempAdPay['cssClass'] = "ngx-org-step-three";
+                }
+
+                $tempAdPay['documentSystemID'] = $valueAd->pay_invoice->documentSystemID;
+                $tempAdPay['docAutoID'] = $valueAd->pay_invoice->PayMasterAutoId;
+                $tempAdPay['title'] = "{Doc Code :} " . $valueAd->pay_invoice->BPVcode . " -- {Doc Date :} " . Carbon::parse($valueAd->pay_invoice->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->supplier_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->supplier_currency->DecimalPlaces);
+
+                $tempPo['childs'][] = $tempAdPay;
+            }
+
             $tracingData[] = $tempPo;
             return $tracingData;
         }
     }
 
-    function getPOtoPaymentChainForTracing($row, $grvAutoID = null, $bookingSuppMasInvAutoID = null)
+    public function getPOtoPaymentChainForTracing($row, $grvAutoID = null, $bookingSuppMasInvAutoID = null)
     {
         $grvMasters = GRVDetails::selectRaw('sum(noQty*GRVcostPerUnitLocalCur) as localAmount,
                                         sum(noQty*landingCost_RptCur) as rptAmount,
@@ -6845,13 +6897,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     }
 
 
-    public function getGrvTracingData($grvAutoID, $type = 'grv', $bookingSuppMasInvAutoID = null)
+    public function getGrvTracingData($grvAutoID, $type = 'grv', $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null)
     {
-        if (!is_array($grvAutoID)) {
-            $grvMasterData = GRVMaster::find($grvAutoID);
+        if (!is_array($grvAutoID) || (is_array($grvAutoID) && sizeof($grvAutoID) == 1)) {
+            $grvID = is_array($grvAutoID) ? $grvAutoID[0] : $grvAutoID;
+            $grvMasterData = GRVMaster::find($grvID);
 
             if ($grvMasterData->grvTypeID == 1) {
-                $res[] = $this->grvForwardTracing($grvAutoID);
+                $res[] = $this->grvForwardTracing($grvID, $type, $bookingSuppMasInvAutoID, $PayMasterAutoId);
 
                 return $res;
             }
@@ -6865,7 +6918,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $poIDS = $prDetails->pluck('purchaseOrderMastertID')->toArray();
 
 
-        return $this->getPurchaseOrderTracingData($poIDS, $type, $grvAutoID, $bookingSuppMasInvAutoID);
+        return $this->getPurchaseOrderTracingData($poIDS, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId);
     }
 
 
@@ -6904,10 +6957,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $grvIDS = $invoices->pluck('grvAutoID')->toArray();
 
-        return $this->getGrvTracingData($grvIDS, $type, $bookingSuppMasInvAutoID);
+        return $this->getGrvTracingData($grvIDS, $type, $bookingSuppMasInvAutoID, $PayMasterAutoId);
     }
 
-    public function grvForwardTracing($grvAutoID)
+    public function grvForwardTracing($grvAutoID, $type = 'grv', $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null)
     {
         $tracingData = [];
         $grvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
@@ -6973,8 +7026,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             foreach ($value1['payments'] as $key2 => $value2) {
                 $temp2 = [];
-                $temp2['cssClass'] = "ngx-org-step-three";
                 if (isset($value2['payment_master'])) {
+                    if ($type == 'pv' && $PayMasterAutoId == $value2['payment_master']['PayMasterAutoId']) {
+                        $temp2['cssClass'] = "ngx-org-step-three root-tracing-node";
+                    } else {
+                        $temp2['cssClass'] = "ngx-org-step-three";
+                    }
                     $temp2['name'] = "Payment";
                     $temp2['documentSystemID'] = $value2['payment_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
@@ -6982,6 +7039,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }
 
                 if (isset($value2['matching_master'])) {
+                    $temp2['cssClass'] = "ngx-org-step-three";
                     $temp2['name'] = "Debit Note";
                     $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                     $temp2['docAutoID'] = $value2['matching_master']['matchDocumentMasterAutoID'];
