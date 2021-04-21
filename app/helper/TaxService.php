@@ -9,6 +9,7 @@ use App\Models\CustomerAssigned;
 use App\Models\GRVDetails;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
+use App\Models\BookInvSuppDet;
 use App\Models\SupplierAssigned;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
@@ -253,6 +254,15 @@ class TaxService
 
         return GRVDetails::where('grvAutoID',$id)
                            ->whereHas('po_master',function ($q){
+                               $q->where('rcmActivated',1);
+                           })
+                          ->exists();
+    }
+
+    public static function isSupplierInvoiceRcmActivated($id = 0){
+
+        return BookInvSuppDet::where('bookingSuppMasInvAutoID',$id)
+                           ->whereHas('pomaster',function ($q){
                                $q->where('rcmActivated',1);
                            })
                           ->exists();

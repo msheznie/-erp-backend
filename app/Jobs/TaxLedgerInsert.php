@@ -480,13 +480,13 @@ class TaxLedgerInsert implements ShouldQueue
                         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
                             
 
-                        $details = DirectInvoiceDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DIAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DIAmountCurrencyER as transCurrencyER')
-                                                ->where('directInvoiceAutoID', $masterModel["autoID"])
-                                                ->whereNotNull('vatSubCategoryID')
-                                                ->groupBy('vatSubCategoryID')
-                                                ->get();
-
                         if ($masterData->documentType == 1) {
+                            $details = DirectInvoiceDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DIAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DIAmountCurrencyER as transCurrencyER')
+                                                    ->where('directInvoiceAutoID', $masterModel["autoID"])
+                                                    ->whereNotNull('vatSubCategoryID')
+                                                    ->groupBy('vatSubCategoryID')
+                                                    ->get();
+
                             foreach ($details as $key => $value) {
                                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
 
@@ -508,7 +508,7 @@ class TaxLedgerInsert implements ShouldQueue
 
                                 array_push($finalData, $ledgerData);
                             }
-                        }
+                        } 
 
                         break;
                     default:
