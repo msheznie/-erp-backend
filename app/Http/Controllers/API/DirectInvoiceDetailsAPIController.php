@@ -186,6 +186,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         if ($isVATEligible) {
             $defaultVAT = TaxService::getDefaultVAT($BookInvSuppMaster->companySystemID, $BookInvSuppMaster->supplierID);
             $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+            $input['VATPercentage'] = $defaultVAT['percentage'];
             $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
         }
 

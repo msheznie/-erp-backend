@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
+use App\helper\TaxService;
 use App\Models\CreditNote;
 use App\Models\ChartOfAccount;
 use App\Models\Contract;
@@ -341,6 +342,15 @@ class CreditNoteDetailsAPIController extends AppBaseController
         }
         $inputData['comRptAmount'] = 0;
 
+        $isVATEligible = TaxService::checkCompanyVATEligible($master->companySystemID);
+
+        if ($isVATEligible) {
+            $defaultVAT = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
+            $inputData['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+            $inputData['VATPercentage'] = $defaultVAT['percentage'];
+            $inputData['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
+        }
+
 
         DB::beginTransaction();
 
@@ -447,6 +457,22 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
         $input["netAmountRpt"] = $currencyNet['reportingAmount'];
         $input["netAmountLocal"] = $currencyNet['localAmount'];
+
+        if (isset($input['vatMasterCategoryAutoID'])) {
+            unset($input['vatMasterCategoryAutoID']);
+        }
+
+        if (isset($input['itemPrimaryCode'])) {
+            unset($input['itemPrimaryCode']);
+        }
+
+        if (isset($input['itemDescription'])) {
+            unset($input['itemDescription']);
+        }
+
+        if (isset($input['subCategoryArray'])) {
+            unset($input['subCategoryArray']);
+        }
 
         CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
 

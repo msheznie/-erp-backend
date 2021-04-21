@@ -14,6 +14,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateDebitNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteDetailsAPIRequest;
 use App\Models\ChartOfAccount;
@@ -208,6 +209,15 @@ class DebitNoteDetailsAPIController extends AppBaseController
             $input['budgetYear'] = $finYearExp[0];
         } else {
             $input['budgetYear'] = date("Y");
+        }
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($debitNote->companySystemID);
+
+        if ($isVATEligible) {
+            $defaultVAT = TaxService::getDefaultVAT($debitNote->companySystemID, $debitNote->supplierID);
+            $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+            $input['VATPercentage'] = $defaultVAT['percentage'];
+            $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
         }
 
         $debitNoteDetails = $this->debitNoteDetailsRepository->create($input);
