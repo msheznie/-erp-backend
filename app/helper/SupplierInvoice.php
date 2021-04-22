@@ -35,9 +35,9 @@ class SupplierInvoice
                 ->where('documentSystemID', 11)
                 ->delete();
             if(!empty($total)) {
-                $bookInvSuppMaster['bookingAmountTrans'] = \Helper::roundValue($total->DIAmount);
-                $bookInvSuppMaster['bookingAmountLocal'] = \Helper::roundValue($total->localAmount);
-                $bookInvSuppMaster['bookingAmountRpt'] = \Helper::roundValue($total->comRptAmount);
+                $bookInvSuppMaster['bookingAmountTrans'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->DIAmount) : \Helper::roundValue($total->DIAmount) + \Helper::roundValue($total->VATAmount);
+                $bookInvSuppMaster['bookingAmountLocal'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->localAmount) : \Helper::roundValue($total->localAmount) + \Helper::roundValue($total->VATAmountLocal);
+                $bookInvSuppMaster['bookingAmountRpt'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->comRptAmount) : \Helper::roundValue($total->comRptAmount) + \Helper::roundValue($total->VATAmountRpt);
                 $bookInvSuppMaster['netAmount'] = \Helper::roundValue($total->netAmount);
                 $bookInvSuppMaster['netAmountLocal'] = \Helper::roundValue($total->netAmountLocal);
                 $bookInvSuppMaster['netAmountRpt'] = \Helper::roundValue($total->netAmountRpt);

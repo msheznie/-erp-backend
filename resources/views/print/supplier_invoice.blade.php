@@ -552,17 +552,35 @@
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @if($isVATEligible)
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                    @else
+                        <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
-                     @if($isVATEligible)
-                            <td class="text-right"
-                        style="background-color: rgb(215,215,215)">{{number_format($directTotVAT, $transDecimal)}}</td>
-                        <td class="text-right"
-                        style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
-                    @endif
                 </tr>
+                @if($isVATEligible)
+                    <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td class="text-right" style="background-color: rgb(215,215,215)">VAT</td>
+                        <td class="text-right"
+                            style="background-color: rgb(215,215,215)">{{number_format($directTotVAT, $transDecimal)}}</td>
+                            
+                    </tr>
+                    <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td class="text-right" style="background-color: rgb(215,215,215)">Net Total</td>
+                        @if($masterdata->rcmActivated)
+                            <td class="text-right"
+                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
+                        @else
+                            <td class="text-right"
+                                style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT), $transDecimal)}}</td>
+                        @endif
+                    </tr>
+                @endif
                 </tbody>
             </table>
         </div>

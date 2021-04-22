@@ -116,10 +116,16 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         $taxRpt = 0;
                         $taxTrans = 0;
 
-                        if ($tax && $masterData->documentType != 1) {
+                        if ($tax) {
                             $taxLocal = $tax->localAmount;
                             $taxRpt = $tax->rptAmount;
                             $taxTrans = $tax->transAmount;
+                        }
+
+                        if ($masterData->documentType == 1 && $masterData->rcmActivated == 1) {
+                            $taxLocal = 0;
+                            $taxRpt = 0;
+                            $taxTrans = 0;
                         }
 
                         $poInvoiceDirectLocalExtCharge = 0;
