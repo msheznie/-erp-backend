@@ -132,6 +132,7 @@ use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use function PHPSTORM_META\type;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -4578,6 +4579,13 @@ ORDER BY
         );
         $html = view('print.purchase_order_print_pdf', $order);
         $pdf = \App::make('dompdf.wrapper');
+
+        $path = public_path().'/uploads/emailAttachment';
+
+        if (!file_exists($path)) {
+            File::makeDirectory($path, 0777, true, true);
+        }
+
 
         $pdf->loadHTML($html)->save('uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
 
