@@ -16,10 +16,12 @@ use App\Http\Requests\API\CreateCustomerInvoiceDirectDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectDetailAPIRequest;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirect;
+use App\helper\TaxService;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccount;
+use App\Models\Company;
 use App\Models\Taxdetail;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use Illuminate\Http\Request;
@@ -298,9 +300,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
 
         /* selectRaw*/
-
-
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->update($details);
+        
+        $resVat = $this->updateTotalVAT($customerInvoiceDirectDetail->custInvoiceDirectID);
+        if (!$resVat['status']) {
+           return $this->sendError($resVat['message']); 
+        } 
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
     }
@@ -361,7 +366,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             ->where('documentSystemID', $master->documentSystemiD)
             ->first();
         if (!empty($tax)) {
-            return $this->sendError('Please delete tax details to continue !');
+            // return $this->sendError('Please delete tax details to continue !');
         }
 
         $myCurr = $master->custTransactionCurrencyID;
@@ -403,6 +408,13 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         if($master->isPerforma==0){
             $addToCusInvDetails['unitOfMeasure'] = 7;
             $addToCusInvDetails['invoiceQty'] = 1;
+        }
+
+        if ($master->isVatEligible) {
+            $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
+            $addToCusInvDetails['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+            $addToCusInvDetails['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+            $addToCusInvDetails['VATPercentage'] = $vatDetails['percentage'];
         }
 
         /**/
@@ -453,7 +465,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             ->first();
 
         if (!empty($tax)) {
-            return $this->sendError('Please delete tax details to continue');
+            // return $this->sendError('Please delete tax details to continue');
         }
 
         if ($input['contractID'] != $detail->contractID) {
@@ -545,6 +557,44 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         }
 
+        if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
+            if ($input['by'] === 'VATPercentage') {
+              $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+            } else if ($input['by'] === 'VATAmount') {
+              $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+            }
+        } else {
+            if ($input['VATPercentage'] != 0) {
+              $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
+            } else if ($input['VATAmount'] != 0){
+              $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+            }
+        }
+
+        $currencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+        if (isset($input['by'])) {
+            unset($input['by']);
+        }
+
+        if (isset($input['vatMasterCategoryAutoID'])) {
+            unset($input['vatMasterCategoryAutoID']);
+        }
+
+        if (isset($input['itemPrimaryCode'])) {
+            unset($input['itemPrimaryCode']);
+        }
+        
+        if (isset($input['itemDescription'])) {
+            unset($input['itemDescription']);
+        }
+
+        if (isset($input['subCategoryArray'])) {
+            unset($input['subCategoryArray']);
+        }
 
         DB::beginTransaction();
 
@@ -554,6 +604,10 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
 
+            $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+               return $this->sendError($resVat['message']); 
+            } 
 
             DB::commit();
             return $this->sendResponse('s', 'successfully created');
@@ -564,5 +618,157 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
     }
 
+    public function updateTotalVAT($custInvoiceDirectAutoID)
+    {
+        $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
+                                                    ->get();
 
+        $totalVATAmount = 0;
+        $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+
+        foreach ($invoiceDetails as $key => $value) {
+            $totalVATAmount += $value->invoiceQty * $value->VATAmount;
+        }
+
+        $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+                              ->where('documentSystemID', 20)
+                              ->delete();
+
+        if ($totalVATAmount > 0) {
+            $res = $this->savecustomerInvoiceTaxDetails($custInvoiceDirectAutoID, $totalVATAmount);
+
+            if (!$res['status']) {
+               return ['status' => false, 'message' => $res['message']]; 
+            } 
+        } else {
+            $vatAmount['vatOutputGLCodeSystemID'] = null;
+            $vatAmount['vatOutputGLCode'] = null;
+            $vatAmount['VATPercentage'] = 0;
+            $vatAmount['VATAmount'] = 0;
+            $vatAmount['VATAmountLocal'] = 0;
+            $vatAmount['VATAmountRpt'] = 0;
+
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
+        }
+
+
+        return ['status' => true];
+    }
+
+     public function savecustomerInvoiceTaxDetails($custInvoiceDirectAutoID, $totalVATAmount)
+    {
+        $percentage = 0;
+        $taxMasterAutoID = 0;
+
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+
+        if (empty($master)) {
+            return ['status' => false, 'message' => 'Customer Invoice not found.'];
+        }
+
+        $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+      
+        if (empty($invoiceDetail)) {
+            return ['status' => false, 'message' => 'Invoice Details not found.'];
+        }
+
+        $totalAmount = 0;
+        $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+
+        $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        if (!empty($totalDetail)) {
+            $totalAmount = $totalDetail->amount;
+        }
+
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('documentSystemID', 20)
+            ->first();
+
+        if (!empty($Taxdetail)) {
+            return ['status' => false, 'message' => 'VAT Detail Already exist.'];
+        }
+
+        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
+
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
+        $_post['documentID'] = 'INV';
+        $_post['documentSystemID'] = $master->documentSystemiD;
+        $_post['documentSystemCode'] = $custInvoiceDirectAutoID;
+        $_post['documentCode'] = $master->bookingInvCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = $percentage; //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $master->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $master->custTransactionCurrencyID;
+        $_post['currencyER'] = $master->custTransactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $master->custTransactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $master->custTransactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $master->localCurrencyID;
+        $_post['localCurrencyER'] = $master->localCurrencyER;
+
+        $_post['rptCurrencyID'] = $master->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $master->companyReportingER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+       
+        Taxdetail::create($_post);
+        $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
+
+        $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+        $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
+        $vatAmount['VATPercentage'] = $percentage;
+        $vatAmount['VATAmount'] = $_post['amount'];
+        $vatAmount['VATAmountLocal'] = $_post["localAmount"];
+        $vatAmount['VATAmountRpt'] = $_post["rptAmount"];
+
+
+        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
+
+        return ['status' => true];
+    }
 }

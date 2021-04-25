@@ -159,6 +159,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
 
         Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
+        Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
         Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
@@ -1467,6 +1468,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('shift_details', 'ShiftDetailsAPIController');
         Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
         Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
+        Route::post('getItemsByMainCategoryAndSubCategory', 'ItemAssignedAPIController@getItemsByMainCategoryAndSubCategory');
         Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
         Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
@@ -2049,3 +2051,9 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+
+Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+
+Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+
+Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');

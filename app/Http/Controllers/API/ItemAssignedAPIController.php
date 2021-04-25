@@ -529,4 +529,35 @@ class ItemAssignedAPIController extends AppBaseController
 
     }
 
+    public function getItemsByMainCategoryAndSubCategory(Request $request)
+    {
+        $input = $request->all();
+
+        $isGroup = \Helper::checkIsCompanyGroup($input['selectedCompanyId']);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($input['selectedCompanyId']);
+        } else {
+            $childCompanies = [$input['selectedCompanyId']];
+        }
+
+        $mainCategoryIds = (isset($input['mainCategory'])) ? collect($input['mainCategory'])->pluck('id') : [];
+        $subCategoryIds = (isset($input['subCategory'])) ? collect($input['subCategory'])->pluck('id') : [];
+
+
+        $itemMasters = ItemAssigned::whereIn('companySystemID', $childCompanies)
+                                    ->where('isAssigned', -1)
+                                    ->where('isActive', 1)
+                                    ->when(sizeof($mainCategoryIds) > 0, function($query) use ($mainCategoryIds) {
+                                        $query->whereIn('financeCategoryMaster', $mainCategoryIds);
+                                    })
+                                    ->when(sizeof($subCategoryIds) > 0, function($query) use ($subCategoryIds) {
+                                        $query->whereIn('financeCategorySub', $subCategoryIds);
+                                    })
+                                    ->get();
+
+
+        return $this->sendResponse($itemMasters, 'Successfully items retrieved');
+
+    }
 }

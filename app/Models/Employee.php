@@ -13,7 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use App\helper\Helper;
 /**
  * Class Employee
  * @package App\Models
@@ -100,6 +100,8 @@ class Employee extends Model
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
 
+    // protected $attributes = $this->getAttributes();
+
 
     public $fillable = [
         'empID',
@@ -161,6 +163,7 @@ class Employee extends Model
         'isSupportAdmin',
         'isHSEadmin',
         'excludeObjectivesYN',
+        'empCompanySystemID',
         'machineID',
         'timestamp'
     ];
@@ -196,6 +199,7 @@ class Employee extends Model
         'empTelMobile' => 'string',
         'empLandLineNo' => 'string',
         'extNo' => 'integer',
+        'empCompanySystemID' => 'integer',
         'empFax' => 'string',
         'empEmail' => 'string',
         'empLocation' => 'integer',
@@ -266,9 +270,17 @@ class Employee extends Model
     public function manager(){
         return $this->belongsTo('App\Models\Employee', 'empManagerAttached','empID');
     }
-
+ 
+    public function manager_hrms(){
+        return $this->belongsTo('App\Models\HrmsEmployeeManager', 'employeeSystemID','empID');
+    }
+ 
     public function desi_master(){
         return $this->belongsTo('App\Models\EmployeeDetails', 'designation','designationID');
+    }
+
+     public function desi_master_hrms(){
+        return $this->belongsTo('App\Models\EmployeeDesignation', 'employeeSystemID','EmpID');
     }
 
     public function outlet()

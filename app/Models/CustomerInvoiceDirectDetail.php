@@ -213,6 +213,12 @@ class CustomerInvoiceDirectDetail extends Model
         'timesReferred',
         'timeStamp',
         'serviceLineSystemID',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
         'glSystemID'
     ];
 
@@ -224,6 +230,8 @@ class CustomerInvoiceDirectDetail extends Model
     protected $casts = [
         'custInvDirDetAutoID' => 'integer',
         'custInvoiceDirectID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
@@ -253,6 +261,10 @@ class CustomerInvoiceDirectDetail extends Model
         'timesReferred' => 'integer',
         'contractID' => 'integer',
         'serviceLineSystemID' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
         'glSystemID' => 'integer'
     ];
 

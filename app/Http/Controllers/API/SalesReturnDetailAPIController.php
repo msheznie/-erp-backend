@@ -629,30 +629,20 @@ class SalesReturnDetailAPIController extends AppBaseController
         $totalAmount = 0;
         $totalTaxAmount = 0;
         if ($salesReturnMasterData->returnType == 1) {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, deliveryOrderID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['delivery_order'])
-                                                ->groupBy('deliveryOrderID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['delivery_order_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->delivery_order->VATAmount / $value->delivery_order->transactionAmount) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                 $totalTaxAmount += $value->qtyReturned * ((isset($value->delivery_order_detail->VATAmount) && !is_null($value->delivery_order_detail->VATAmount)) ? $value->delivery_order_detail->VATAmount : 0);
             }
         } else {
-            $invoiceDetails = SalesReturnDetail::selectRaw('SUM(transactionAmount) as amount, custInvoiceDirectAutoID, salesReturnID')
-                                                ->where('salesReturnID', $salesReturnID)
-                                                ->with(['sales_invoice'])
-                                                ->groupBy('custInvoiceDirectAutoID')
+            $invoiceDetails = SalesReturnDetail::where('salesReturnID', $salesReturnID)
+                                                ->with(['sales_invoice_detail'])
                                                 ->get();
 
             foreach ($invoiceDetails as $key => $value) {
-                $totalAmount += $value->amount;
-                $tax = ($value->sales_invoice->VATAmount / $value->sales_invoice->bookingAmountTrans) * $value->amount;
-
-                $totalTaxAmount += $tax;
+                $totalTaxAmount += $value->qtyReturned * ((isset($value->sales_invoice_detail->VATAmount) && !is_null($value->sales_invoice_detail->VATAmount)) ? $value->sales_invoice_detail->VATAmount : 0);
             }
         }
 

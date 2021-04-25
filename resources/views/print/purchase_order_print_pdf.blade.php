@@ -366,6 +366,17 @@
                                 {!! nl2br($podata->supplierAddress) !!}
                             </td>
                         </tr>
+                        @if($podata->supplierVATEligible)
+                        <tr>
+                            <td><span class="font-weight-bold">VAT #</span></td>
+                            <td><span class="font-weight-bold">:</span></td>
+                            <td>
+                                @if ($podata->supplier)
+                                    {{$podata->supplier->vatNumber}}
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
                         <tr>
                             <td><span class="font-weight-bold">Contact</span></td>
                             <td><span class="font-weight-bold">:</span></td>

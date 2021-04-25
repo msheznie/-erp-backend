@@ -167,8 +167,17 @@ class DirectInvoiceDetails extends Model
         'comRptAmount',
         'budgetYear',
         'isExtraAddon',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATAmount',
+        'VATPercentage',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
     ];
 
     /**
@@ -180,6 +189,8 @@ class DirectInvoiceDetails extends Model
         'directInvoiceDetailsID' => 'integer',
         'directInvoiceAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
@@ -199,7 +210,14 @@ class DirectInvoiceDetails extends Model
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
         'isExtraAddon' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATPercentage' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float'
     ];
 
     /**

@@ -31,6 +31,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\helper\Helper;
+use App\helper\SupplierInvoice;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
@@ -299,7 +300,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
+            'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
@@ -311,6 +313,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
         }
 
         $bookInvSuppMasters = $this->bookInvSuppMasterRepository->create($input);
@@ -470,7 +473,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
@@ -480,6 +483,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
             $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            }
         }
 
         if (isset($input['bookingDate']) && $input['bookingDate']) {
@@ -597,12 +603,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             /*
-        * GWL-713
-         * documentType == 0  -   invoice type - PO
-        *  check policy 11 - Allow multiple GRV in One Invoice
-        * if policy 11 is 1 allow to add multiple different PO's
-        * if policy 11 is 0 do not allow multiple different PO's
-         */
+            * GWL-713
+             * documentType == 0  -   invoice type - PO
+            *  check policy 11 - Allow multiple GRV in One Invoice
+            * if policy 11 is 1 allow to add multiple different PO's
+            * if policy 11 is 0 do not allow multiple different PO's
+             */
             if($input['documentType'] == 0){
 
                 $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
@@ -878,11 +884,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 //if rcm activated
                 if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
                     if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                     }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
                         return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
                     }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
-                        return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
                     }
                 }
             }
@@ -895,6 +901,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
                     }else if( empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
                         return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }
+
+                    if (TaxService::isSupplierInvoiceRcmActivated($id)) {
+                        if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        }
                     }
                 }
             }
@@ -917,7 +931,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
+
+        SupplierInvoice::updateMaster($id);
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
     }
@@ -1694,6 +1711,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $directTotTra = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
 
+        $directTotVAT = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('VATAmount');
+
+        $directTotNet = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('netAmount');
+
         $directTotLoc = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('localAmount');
 
@@ -1706,6 +1729,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $grvTotRpt = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
             ->sum('totRptAmount');
 
+        $isVATEligible = TaxService::checkCompanyVATEligible($bookInvSuppMaster->companySystemID);
+
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
             'docRef' => $refernaceDoc,
@@ -1713,9 +1738,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'localDecimal' => $localDecimal,
             'rptDecimal' => $rptDecimal,
             'directTotTra' => $directTotTra,
+            'directTotVAT' => $directTotVAT,
+            'directTotNet' => $directTotNet,
             'directTotLoc' => $directTotLoc,
             'grvTotTra' => $grvTotTra,
             'grvTotLoc' => $grvTotLoc,
+            'isVATEligible' => $isVATEligible,
             'grvTotRpt' => $grvTotRpt
         );
 
@@ -1810,7 +1838,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('You cannot refer back this Supplier Invoice');
         }
 
-        $supplierInvoiceArray = $bookInvSuppMaster->toArray();
+        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable']);
 
         BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
 

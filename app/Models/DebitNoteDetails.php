@@ -167,11 +167,14 @@ class DebitNoteDetails extends Model
         'budgetYear',
         'timesReferred',
         'timeStamp',
+        'VATPercentage',
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'netAmountRpt'
     ];
 
@@ -184,6 +187,8 @@ class DebitNoteDetails extends Model
         'debitNoteDetailsID' => 'integer',
         'debitNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
@@ -205,6 +210,7 @@ class DebitNoteDetails extends Model
         'budgetYear' => 'integer',
         'timesReferred' => 'integer',
         'VATAmount' => 'float',
+        'VATPercentage' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',

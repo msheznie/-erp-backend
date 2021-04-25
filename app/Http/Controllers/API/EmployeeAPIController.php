@@ -289,6 +289,7 @@ class EmployeeAPIController extends AppBaseController
                 'employees.empUserName',
                 'employees.designation',
                 'employees.empCompanyID',
+                'employees.empCompanySystemID',
                 'employees.empEmail',
                 'employees.empManagerAttached',
                 'employees.isBasicUser',
@@ -325,8 +326,40 @@ class EmployeeAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('manager_name', function ($row){
+                return $this->getManagerName($row);
+            })
+            ->addColumn('designation_name', function ($row){
+                return $this->getDesignationName($row);
+            })
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getDesignationName($row)
+    {
+        if (Helper::checkHrmsIntergrated($row->empCompanySystemID)) {
+            $empData = Employee::with(['desi_master_hrms' => function ($query) {
+                                    $query->with('designation');
+                                }])
+                                ->where('employeeSystemID', $row->employeeSystemID)
+                                ->first();
+            return isset($empData->desi_master_hrms->designation->designation) ? $empData->desi_master_hrms->designation->designation : '';
+        } else {
+            return isset($row->desi_master->designation->designation) ? $row->desi_master->designation->designation : '';
+        }
+    }
+
+     public function getManagerName($row)
+    {
+        if (Helper::checkHrmsIntergrated($row->empCompanySystemID)) {
+            $empData = Employee::with(['manager'])
+                                ->where('employeeSystemID', $row->employeeSystemID)
+                                ->first();
+            return isset($empData->manager_hrms->empName) ? $empData->manager_hrms->empName : '';
+        } else {
+            return isset($row->manager->empName) ? $row->manager->empName : '';
+        }
     }
 
     public function confirmEmployeePasswordReset(Request $request)

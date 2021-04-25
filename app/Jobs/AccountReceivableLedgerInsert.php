@@ -89,10 +89,10 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['custDefaultAmount'] = 0;
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount + $taxLocal) * -1);
+                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount) * -1);
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount + $taxRpt) * -1);
+                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount) * -1);
                             $data['isInvoiceLockedYN'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['selectedToPaymentInv'] = 0;

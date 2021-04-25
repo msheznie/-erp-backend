@@ -376,7 +376,14 @@ class BookInvSuppMasterRefferedBack extends Model
         'canceledByEmpSystemID',
         'canceledByEmpID',
         'canceledByEmpName',
-        'timestamp'
+        'timestamp',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
+        'VATPercentage'
     ];
 
     /**
@@ -437,7 +444,14 @@ class BookInvSuppMasterRefferedBack extends Model
         'canceledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
-        'custInvoiceDirectAutoID' => 'integer'
+        'custInvoiceDirectAutoID' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float',
+        'VATPercentage' => 'float'
     ];
 
     /**

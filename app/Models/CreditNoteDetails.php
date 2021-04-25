@@ -170,7 +170,10 @@ class CreditNoteDetails extends Model
         'VATAmountLocal',
         'VATAmountRpt',
         'netAmount',
+        'VATPercentage',
         'netAmountLocal',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'netAmountRpt'
     ];
 
@@ -182,6 +185,8 @@ class CreditNoteDetails extends Model
     protected $casts = [
         'creditNoteDetailsID' => 'integer',
         'creditNoteAutoID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'customerID' => 'integer',
@@ -206,6 +211,7 @@ class CreditNoteDetails extends Model
         'timesReferred' => 'integer',
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
+        'VATPercentage' => 'float',
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',

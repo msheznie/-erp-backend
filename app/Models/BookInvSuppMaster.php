@@ -349,7 +349,15 @@ class BookInvSuppMaster extends Model
         'UnbilledGRVAccount',
         'vatRegisteredYN',
         'isLocalSupplier',
-        'rcmActivated'
+        'rcmActivated',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
+        'VATPercentage'
+
     ];
 
     /**
@@ -411,7 +419,14 @@ class BookInvSuppMaster extends Model
         'supplierGLCodeSystemID' => 'integer',
         'UnbilledGRVAccountSystemID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
-        'rcmActivated' => 'integer'
+        'rcmActivated' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float',
+        'VATPercentage' => 'float'
     ];
 
     /**
