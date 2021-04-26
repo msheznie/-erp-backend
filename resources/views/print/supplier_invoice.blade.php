@@ -517,7 +517,11 @@
                     <th class="text-center">GL Code Description</th>
                     <th class="text-center">Service Line</th>
                     <th class="text-center">Amount</th>
-                    <th class="text-center">Local Amt (
+                    @if($isVATEligible)
+                        <th class="text-center">VAT Amount</th>
+                        <th class="text-center">Net Amount</th>
+                    @endif
+                  <!--   <th class="text-center">Local Amt (
                         @if($masterdata->localcurrency)
                             {{$masterdata->localcurrency->CurrencyCode}}
                         @endif
@@ -526,7 +530,7 @@
                         @if($masterdata->rptcurrency)
                             {{$masterdata->rptcurrency->CurrencyCode}}
                         @endif
-                        )</th>
+                        )</th> -->
                 </tr>
                 </thead>
                 <tbody>
@@ -541,18 +545,42 @@
                             @endif
                         </td>
                         <td class="text-right">{{number_format($item->DIAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
+                         @if($isVATEligible)
+                            <td class="text-right">{{number_format($item->VATAmount, $transDecimal)}}</td>
+                            <td class="text-right">{{number_format($item->netAmount, $transDecimal)}}</td>
+                        @endif
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @if($isVATEligible)
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                    @else
+                        <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
                 </tr>
+                @if($isVATEligible)
+                    <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td class="text-right" style="background-color: rgb(215,215,215)">VAT</td>
+                        <td class="text-right"
+                            style="background-color: rgb(215,215,215)">{{number_format($directTotVAT, $transDecimal)}}</td>
+                            
+                    </tr>
+                    <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                        <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td class="text-right" style="background-color: rgb(215,215,215)">Net Total</td>
+                        @if($masterdata->rcmActivated)
+                            <td class="text-right"
+                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
+                        @else
+                            <td class="text-right"
+                                style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT), $transDecimal)}}</td>
+                        @endif
+                    </tr>
+                @endif
                 </tbody>
             </table>
         </div>

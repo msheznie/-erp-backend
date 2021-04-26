@@ -243,6 +243,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
         $bookingInvCode = ($company['CompanyID'] . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
+        $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+            ->where('companySystemID', $input['companyID'])
+            ->first();
+        if ($customerGLCodeUpdate) {
+            $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+        }
+
+        $company = Company::where('companySystemID', $input['companyID'])->first();
+
+        if ($company) {
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+        }
+
         $input['documentID'] = "INV";
         $input['documentSystemiD'] = 20;
         $input['bookingInvCode'] = $bookingInvCode;
@@ -404,6 +417,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
@@ -454,6 +469,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         }
+
+        if ($customerInvoiceDirect->customerCodeSystem != $input['customerID']) {
+            $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                                    ->first();
+            if ($customerGLCodeUpdate) {
+                $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+            }
+        }
+
+        $_post['customerVATEligible'] = $input['customerVATEligible'];
 
         $input['departmentSystemID'] = 4;
         /*financial Year check*/
@@ -591,11 +617,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-        $_post['serviceStartDate'] = $customerInvoiceDirect->serviceStartDate;
-        $_post['serviceEndDate'] = $customerInvoiceDirect->serviceEndDate;
-        if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
+        if(isset($input['serviceStartDate']) && $input['serviceStartDate'] != ''){
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+
+        if(isset($input['serviceEndDate']) && $input['serviceEndDate'] != ''){
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+
+        if (isset($input['serviceStartDate']) && isset($input['serviceEndDate']) && $input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             if (($_post['serviceStartDate'] > $_post['serviceEndDate'])) {
                 return $this->sendError('Service start date cannot be greater than service end date.', 500);
             }
@@ -1963,7 +1993,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $customerInvoice = (object)[];
-
         if ($master->isPerforma == 1) {
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
         } else if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
@@ -2353,6 +2382,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
+
+        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
+
+        $customerInvoice->amountInWordsEnglish = (isset($customerInvoice->currency->CurrencyName) ? $customerInvoice->currency->CurrencyName : '') ." ".$amountInWordsEnglish.' Only';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
         $contractID = 0;
         if ($master->isPerforma == 1) {
@@ -2399,12 +2434,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
-        }  else if ($printTemplate['printTemplateID'] == 5) {
+        } else if ($printTemplate['printTemplateID'] == 5) {
             $html = view('print.customer_invoice_tax', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 6) {
+            $html = view('print.invoice_template.customer_invoice_hlb', $array);
+            $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
+
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
         } else if ($printTemplate['printTemplateID'] == 3) {
             $html = view('print.customer_invoice_with_po_detail', $array);
             $pdf = \App::make('dompdf.wrapper');
@@ -3022,6 +3067,7 @@ WHERE
         }
 
         $customerInvoiceArray = $customerInvoiceDirectData->toArray();
+        unset($customerInvoiceArray['isVatEligible']);
 
         CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
 

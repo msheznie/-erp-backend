@@ -1170,6 +1170,16 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Selected segment is not active. Please select an active segment');
         }
 
+        $policy = 1;
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+            ->where('companySystemID', $companyID)
+            ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+        }
+
 
         $documentSystemID = $procumentOrder->documentSystemID;
         if ($documentSystemID == 2) {
@@ -1189,7 +1199,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('supplyChainOnGoing', 0)
             ->where('manuallyClosed', 0)
             ->where('documentSystemID', $documentSystemIDChanged);
-        if (isset($procumentOrder->financeCategory)) {
+        if (isset($procumentOrder->financeCategory) && $procumentOrder->financeCategory > 0 && $policy == 0) {
             $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);
         }
         $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $procumentOrder->serviceLineSystemID)
@@ -1403,7 +1413,28 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
+            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $purchaseRequest->companySystemID)
+                ->first();
 
+            if ($allowFinanceCategory) {
+                $policy = $allowFinanceCategory->isYesNO;
+
+                if ($policy == 0) {
+                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                        return $this->sendError('Category is not found.', 500);
+                    }
+
+                    //checking if item category is same or not
+                    $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                        ->get();
+
+                    if (sizeof($pRDetailExistSameItem) > 1) {
+                        return $this->sendError('You cannot add different category item', 500);
+                    }
+                }
+            }
 
             $checkItems = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->count();

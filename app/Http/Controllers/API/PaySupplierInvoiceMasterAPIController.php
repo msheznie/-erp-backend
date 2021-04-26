@@ -19,6 +19,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
+use App\helper\Helper;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -201,6 +202,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
             }
+
 
             unset($inputParam);
 
@@ -1476,6 +1478,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     function getPOPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        $decimalPlaces  = Helper::getCurrencyDecimalPlace($paySupplierInvoiceMaster->supplierTransCurrencyID);
+
         $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
         $sql = 'SELECT
 	erp_accountspayableledger.apAutoID,
@@ -1559,7 +1568,7 @@ WHERE
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
+	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
 
         $output = DB::select($sql);
         return $this->sendResponse($output, 'Record retrieved successfully');

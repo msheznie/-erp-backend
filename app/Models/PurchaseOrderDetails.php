@@ -195,6 +195,8 @@ class PurchaseOrderDetails extends Model
         'supplierCatalogDetailID',
         'timeStamp',
         'madeLocallyYN',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'VATApplicableOn'
     ];
 
@@ -207,6 +209,8 @@ class PurchaseOrderDetails extends Model
         'purchaseOrderDetailsID' => 'integer',
         'companyID' => 'string',
         'companySystemID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'departmentID' => 'string',
         'serviceLineCode' => 'string',
         'serviceLineSystemID' => 'integer',

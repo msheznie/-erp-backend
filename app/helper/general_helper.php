@@ -38,6 +38,7 @@ use App\Models\GRVDetails;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\Company;
 use App\Models\ProcumentOrder;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
@@ -5377,5 +5378,11 @@ class Helper
             'file' => $ex->getFile(),
             'line' => $ex->getLine()
         ];
+    }
+
+    public static function checkHrmsIntergrated($companySystemID)
+    {
+        $company = Company::find($companySystemID);
+        return ($company) ? $company->isHrmsIntergrated : 0;
     }
 }

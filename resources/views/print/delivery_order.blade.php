@@ -324,6 +324,9 @@
                 <th class="text-left">QTY</th>
                 <th class="text-left">Unit Price</th>
                 <th class="text-left">Discount</th>
+                @if($entity->isVatEligible)
+                <th class="text-left">VAT. Per Unit</th>
+                @endif
                 <th class="text-left">Net Unit</th>
                 <th class="text-left">Total {{empty($entity->transaction_currency) ? '' : '('.$entity->transaction_currency->CurrencyCode.')'}}</th>
             </tr>
@@ -349,12 +352,26 @@
                     <td class="text-right">{{number_format($item->qtyIssuedDefaultMeasure,2)}}</td>
                     <td class="text-right">{{number_format($item->unitTransactionAmount,$entity->currency)}}</td>
                     <td class="text-right">{{number_format($item->discountAmount,$entity->currency)}}</td>
+                    @if($entity->isVatEligible)
+                    <td class="text-right">{{number_format($item->VATAmount,$entity->currency)}}</td>
+                    @endif
                     <td class="text-right">{{number_format(($item->unitTransactionAmount-$item->discountAmount),$entity->currency)}}</td>
                     <td class="text-right">{{number_format($item->transactionAmount,$entity->currency)}}</td>
                 </tr>
                 {{$directTraSubTotal+=$item->transactionAmount}}
             @endforeach
             </tbody>
+            @if($entity->isVatEligible == 1)
+            <tr>
+                <td colspan="9" style="text-align: right; border-left: none !important;"><b>Total </b></td>
+                <td class="text-right">
+                    @if ($entity->detail)
+                        {{number_format($directTraSubTotal, $entity->currency)}}
+                    @endif
+                </td>
+            </tr>
+            @endif
+            @if($entity->isVatEligible == 0)
             <tr>
                 <td colspan="8" style="text-align: right; border-left: none !important;"><b>Total </b></td>
                 <td class="text-right">
@@ -363,22 +380,25 @@
                     @endif
                 </td>
             </tr>
-            @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
+            @endif
+            @if($entity->isVatEligible)
             <tr>
-                <td colspan="8" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
+                <td colspan="9" style="text-align: right; border-left: none !important;"><b>VAT </b></td>
                 <td class="text-right">
-                    @if ($entity->detail)
+                    @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format($entity->tax->amount, $entity->currency)}}
+                    @else
+                        {{number_format(0, $entity->currency)}}
                     @endif
                 </td>
             </tr>
-            @endif
-            @if(isset($entity->tax->amount) && $entity->tax->amount > 0)
             <tr>
-                <td colspan="8" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
+                <td colspan="9" style="text-align: right; border-left: none !important;"><b>Net Total </b></td>
                 <td class="text-right">
-                    @if ($entity->detail)
+                    @if ($entity->detail && $entity->tax && $entity->tax->amount)
                         {{number_format(($directTraSubTotal + $entity->tax->amount), $entity->currency)}}
+                    @else
+                        {{number_format(($directTraSubTotal), $entity->currency)}}
                     @endif
                 </td>
             </tr>

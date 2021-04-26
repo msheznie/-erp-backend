@@ -106,7 +106,7 @@ class hrCompany
     }
 
     public function store($det){
-        if( !self::isHRSysIntegrated() ){//if HR compnay not integrated
+        if( !self::isHRSysIntegrated() ){//if HR company not integrated
             return true;
         }
         $loc_cur = $this->currencyRepository->find($det['localCurrencyID']);
@@ -185,7 +185,7 @@ class hrCompany
             ];
         }
         if($country_arr){            
-            $this->sMECountryRepository->insert($country_arr);
+            //$this->sMECountryRepository->insert($country_arr);
         }
         if($nationality_arr){
             $this->sMENationalityRepository->insert($nationality_arr);

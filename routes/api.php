@@ -159,6 +159,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
 
         Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
+        Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
         Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
@@ -1426,6 +1427,8 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
         Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+        Route::post('getAllBankAccounts', 'BankAccountAPIController@getAllBankAccounts');
+        Route::post('exportBankAccountMaster', 'BankAccountAPIController@exportBankAccountMaster');
         Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
         Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
         Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
@@ -1465,6 +1468,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('shift_details', 'ShiftDetailsAPIController');
         Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
         Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany');
+        Route::post('getItemsByMainCategoryAndSubCategory', 'ItemAssignedAPIController@getItemsByMainCategoryAndSubCategory');
         Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
         Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
@@ -1733,6 +1737,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
         Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
+        Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
         Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
         Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
         Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
@@ -1895,6 +1900,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
         Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
         Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+        Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData');
 
         Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
 
@@ -1910,6 +1916,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign');
         Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem');
         Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory');
+        Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories');
 
         Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
@@ -2041,3 +2048,12 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+
+Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+
+Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+
+Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+
+Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');

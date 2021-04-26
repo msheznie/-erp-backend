@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
+use App\helper\TaxService;
 
 /**
  * @SWG\Definition(
@@ -352,6 +353,7 @@ class DeliveryOrder extends Model
 
     protected $primaryKey = 'deliveryOrderID';
 
+    protected $appends = ['isVatEligible'];
 
     public $fillable = [
         'orderType',
@@ -429,6 +431,8 @@ class DeliveryOrder extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'vatRegisteredYN',
+        'customerVATEligible',
         'timestamp'
     ];
 
@@ -442,6 +446,8 @@ class DeliveryOrder extends Model
         'vatOutputGLCodeSystemID' => 'integer',
         'vatOutputGLCode' => 'string',
         'VATPercentage' => 'float',
+        'vatRegisteredYN' => 'integer',
+        'customerVATEligible' => 'integer',
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
@@ -525,6 +531,11 @@ class DeliveryOrder extends Model
     public static $rules = [
         
     ];
+
+     public function getIsVatEligibleAttribute()
+    {
+        return TaxService::checkPOVATEligible($this->customerVATEligible,$this->vatRegisteredYN,$this->documentSystemID);
+    }
 
     public function detail()
     {

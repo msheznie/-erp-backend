@@ -469,6 +469,122 @@ class BankAccountAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAllBankAccounts(Request $request)
+    {
+        
+        $bankAccounts = $this->allBankAccountQry($request);
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        return \DataTables::eloquent($bankAccounts)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankAccountAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function allBankAccountQry($request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
+                                   ->with(['currency', 'bank', 'company']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankAccounts = $bankAccounts->where(function ($query) use ($search) {
+                $query->where('AccountNo', 'LIKE', "%{$search}%")
+                    ->orWhere('bankBranch', 'LIKE', "%{$search}%")
+                    ->orWhere('glCodeLinked', 'LIKE', "%{$search}%")
+                    ->orWhere('accountSwiftCode', 'LIKE', "%{$search}%")
+                    ->orWhereHas('bank', function ($query) use ($search) {
+                        $query->where('bankShortCode', 'LIKE', "%{$search}%")
+                              ->orWhere('bankName', 'LIKE', "%{$search}%");
+                    })->orWhereHas('company', function ($query) use ($search) {
+                        $query->where('CompanyID', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $bankAccounts;
+    }
+
+     public function exportBankAccountMaster(Request $request)
+    {
+        $bankAccounts = $this->allBankAccountQry($request)->get();
+        $data = array();
+        $x = 0;
+        foreach ($bankAccounts as $val) {
+            $x++;
+            $data[$x]['Company ID'] = (isset($val->company->CompanyID)) ? $val->company->CompanyID : "";
+            $data[$x]['Bank Short Code'] = (isset($val->bank->bankShortCode)) ? $val->bank->bankShortCode : "";
+            $data[$x]['Bank Name'] =  (isset($val->bank->bankName)) ? $val->bank->bankName : "";
+            $data[$x]['Account No'] = $val->AccountNo;
+            $data[$x]['Currency'] = (isset($val->currency->CurrencyCode)) ? $val->currency->CurrencyCode : "";
+            $data[$x]['GL Code'] = $val->glCodeLinked;
+            $data[$x]['Branch'] = $val->bankBranch;
+            $data[$x]['Swift'] = $val->accountSwiftCode;
+            $data[$x]['Is Temporary Acc'] = ($val->isTempBank == 1) ? "Yes" : "No";
+            $data[$x]['Is Active'] = ($val->isAccountActive == 1) ? "Yes" : "No";
+            $data[$x]['Is Default'] = ($val->isDefault == 1) ? "Yes" : "No";
+
+            $status = "";
+            if ($val->CancelledYN == -1) {
+                $status = "Cancelled";
+            } else if ($val->confirmedYN == 0 && $val->approvedYN == 0) {
+                $status = " Not Confirmed";
+            }
+            else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == 0) {
+                $status = "Pending Approval";
+            } else if ($val->confirmedYN == 1 && $val->approvedYN == 0 && $val->refferedBackYN == -1) {
+                $status = "Referred Back";
+            }
+            else if ($val->confirmedYN == 1 && ($val->approvedYN == -1 || $val->approvedYN == 1 )) {
+                $status = "Fully Approved";
+            }
+
+            $data[$x]['Status'] = $status;
+        }
+
+         \Excel::create('bank_accounts', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('csv');
+
+        return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
+    }
+
     function getBankAccountBalanceSummery($row)
     {
         $bankBalance = BankLedger::where('companySystemID', $row->companySystemID)

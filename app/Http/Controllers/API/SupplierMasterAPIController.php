@@ -203,6 +203,9 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['SME'] = ($val->isSMEYN==1)?'Yes':'No';
             $data[$x]['JSRS Number'] = $val->jsrsNo;
             $data[$x]['JSRS Expiry'] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
+            $data[$x]['VAT Eligible'] = ($val->vatEligible) ? "Yes" : "No";
+            $data[$x]['VAT Number'] = $val->vatNumber;
+            $data[$x]['VAT Percentage'] = $val->vatPercentage;
         }
 
          \Excel::create('supplier_master', function ($excel) use ($data) {

@@ -194,7 +194,7 @@ class CustomerMasterAPIController extends AppBaseController
                     });
                 });
         })->where('erp_documentapproved.approvedYN', 0)
-            ->join('countrymaster', 'customerCountry', '=', 'countryID')
+            ->leftJoin('countrymaster', 'customerCountry', '=', 'countryID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 58)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
@@ -371,6 +371,22 @@ class CustomerMasterAPIController extends AppBaseController
             if ($unbilled) {
                 $input['custUnbilledAccount'] = $unbilled->AccountCode;
             }
+        }
+
+        $commonValidorMessages = [
+            'customerCountry.required' => 'Country field is required.'
+        ];
+
+        $commonValidator = \Validator::make($input, [
+            'customerCountry' => 'required',
+        ], $commonValidorMessages);
+
+        if ($commonValidator->fails()) {
+            return $this->sendError($commonValidator->messages(), 422);
+        }
+
+        if($input['customerCountry']==0 || $input['customerCountry']==''){
+            return $this->sendError('Country field is required',500);
         }
 
 

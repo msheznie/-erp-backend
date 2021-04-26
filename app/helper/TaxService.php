@@ -9,6 +9,7 @@ use App\Models\CustomerAssigned;
 use App\Models\GRVDetails;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
+use App\Models\BookInvSuppDet;
 use App\Models\SupplierAssigned;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
@@ -90,7 +91,7 @@ class TaxService
 
     public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$partyID=0 , $isSupplier = 1) {
 
-        $data = array('applicableOn' => 2,'percentage' => 0);
+        $data = array('applicableOn' => 2,'percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
         $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
                 $q->where('companySystemID',$companySystemID)
                     ->where('isActive',1)
@@ -108,9 +109,58 @@ class TaxService
         if(!empty($taxDetails)){
             $data['applicableOn'] = $taxDetails->applicableOn; // 1 - Gross , 2 - Net
             $data['percentage']   = $taxDetails->percentage;
+            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
         }else{
+            $defaultVAT = TaxVatCategories::where('isDefault', 1)
+                                          ->first();
 
-            if($isSupplier){
+            if ($defaultVAT) {
+                $data['vatSubCategoryID']   = $defaultVAT->taxVatSubCategoriesAutoID;
+                $data['vatMasterCategoryID']   = $defaultVAT->mainCategory;
+                $data['percentage']   = $defaultVAT->percentage;
+            } else {
+                 if($isSupplier){
+                    $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
+                        ->where('supplierCodeSytem',$partyID)
+                        ->first();
+
+                    if(!empty($supplier)){
+                        $data['percentage']   = $supplier->vatPercentage;
+                    }
+                }else{
+                    $customer = CustomerAssigned::where('companySystemID',$companySystemID)
+                        ->where('customerCodeSystem',$partyID)
+                        ->first();
+
+                    if(!empty($customer)){
+                        $data['percentage']   = $customer->vatPercentage;
+                    }
+                }
+            }
+
+        }
+
+        return $data;
+    }
+
+    public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1) {
+
+        $data = array('percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
+        $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
+                                        $q->where('companySystemID',$companySystemID)
+                                            ->where('isActive',1)
+                                            ->where('taxCategory',2);
+                                    })
+                                    ->where('isDefault', 1)
+                                    ->first();
+
+        if(!empty($taxDetails)){
+            $data['percentage']   = $taxDetails->percentage;
+            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
+        }else{
+            if ($isSupplier) {
                 $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
                     ->where('supplierCodeSytem',$partyID)
                     ->first();
@@ -118,7 +168,7 @@ class TaxService
                 if(!empty($supplier)){
                     $data['percentage']   = $supplier->vatPercentage;
                 }
-            }else{
+            } else {
                 $customer = CustomerAssigned::where('companySystemID',$companySystemID)
                     ->where('customerCodeSystem',$partyID)
                     ->first();
@@ -171,7 +221,10 @@ class TaxService
                     'VATAmountRpt' => 0
                 ]);
         }
-        ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
+
+        if (!is_null($poMasterSum['budgetYear'])) {
+            ProcumentOrder::find($id)->update(['budgetYear' => $poMasterSum['budgetYear']]);
+        }
         return true;
     }
 
@@ -188,10 +241,28 @@ class TaxService
         return false;
     }
 
+    public static function getRCMAvailability($isLocalSupplier,$vatRegisteredYN) {
+
+        if(!$isLocalSupplier && $vatRegisteredYN == 1){
+            return true;
+        }
+
+        return false;
+    }
+
     public static function isGRVRCMActivation($id = 0){
 
         return GRVDetails::where('grvAutoID',$id)
                            ->whereHas('po_master',function ($q){
+                               $q->where('rcmActivated',1);
+                           })
+                          ->exists();
+    }
+
+    public static function isSupplierInvoiceRcmActivated($id = 0){
+
+        return BookInvSuppDet::where('bookingSuppMasInvAutoID',$id)
+                           ->whereHas('pomaster',function ($q){
                                $q->where('rcmActivated',1);
                            })
                           ->exists();

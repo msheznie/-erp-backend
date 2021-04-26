@@ -347,7 +347,17 @@ class BookInvSuppMaster extends Model
         'supplierGLCodeSystemID',
         'UnbilledGRVAccountSystemID',
         'UnbilledGRVAccount',
-        'rcmActivated'
+        'vatRegisteredYN',
+        'isLocalSupplier',
+        'rcmActivated',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
+        'VATPercentage'
+
     ];
 
     /**
@@ -358,6 +368,8 @@ class BookInvSuppMaster extends Model
     protected $casts = [
         'bookingSuppMasInvAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'vatRegisteredYN' => 'integer',
+        'isLocalSupplier' => 'integer',
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
@@ -407,7 +419,14 @@ class BookInvSuppMaster extends Model
         'supplierGLCodeSystemID' => 'integer',
         'UnbilledGRVAccountSystemID' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
-        'rcmActivated' => 'integer'
+        'rcmActivated' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'netAmount' => 'float',
+        'netAmountLocal' => 'float',
+        'netAmountRpt' => 'float',
+        'VATPercentage' => 'float'
     ];
 
     /**
@@ -525,6 +544,6 @@ class BookInvSuppMaster extends Model
 
     public function getRcmAvailableAttribute()
     {
-        return TaxService::getRCMAvailable($this->companySystemID,$this->supplierID);
+        return TaxService::getRCMAvailability($this->isLocalSupplier,$this->vatRegisteredYN);
     }
 }

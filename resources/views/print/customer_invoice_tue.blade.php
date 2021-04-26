@@ -231,14 +231,17 @@
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
                     
-                        <b>QUOTE TUE : 
+                        {{--<b>QUOTE TUE :
                             @if($request->line_poNumber)
                                 {{$request->PONumber}}
                             @endif
-                        </b><br>
+                        </b><br>--}}
                         <b>Contract / PO No : 
                              @if(!empty($request->invoicedetails) )
                                 {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
+                            @endif
+                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                                {{$request->PONumber}}
                             @endif
                         </b>
                 </td>
@@ -247,15 +250,18 @@
                     <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
-                        <b>رقم التسعيرة : @if($request->line_poNumber)
+                        {{--<b>رقم التسعيرة : @if($request->line_poNumber)
                                 {{$request->PONumber}}
                             @endif 
                             
-                        </b><br>
+                        </b><br>--}}
                         <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
                                 {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
                             @endif
-                             
+                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                                {{$request->PONumber}}
+                            @endif
+
                         </b>
 
                 </td>
@@ -265,15 +271,16 @@
     <div class="row">
         <br>
     </div>
-    @if(!empty($request->serviceStartDate) && !empty($request->serviceEndDate))
+    {{--@if(!empty($request->serviceStartDate) && !empty($request->serviceEndDate))
     <div class="row" style="text-decoration: underline; text-align: center;">
         <b>RENTAL INVOICE FOR THE PERIOD FROM  
                                     {{\App\helper\Helper::dateFormat($request->serviceStartDate) }}
                                  TO 
                                     {{\App\helper\Helper::dateFormat($request->serviceEndDate) }}
-                            </b>
-    @endif
-    </div>
+
+    </div>                  </b>
+    @endif--}}
+
     <div class="row">
         <br>
     </div>
@@ -494,13 +501,14 @@
                                 {{number_format($directTraSubTotal, $numberFormatting)}}
                             @endif</td>
                     </tr>
-                    @if ($request->tax)
-                        {{$directTraSubTotal+=$request->tax->amount}}
+                    @if ($request->isVATEligible)
+                        {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                        {{$directTraSubTotal+=$totalVATAmount}}
                         <tr>
                             <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                            <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
+                            <td class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                         </tr>
 
                         <tr>

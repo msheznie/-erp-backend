@@ -178,6 +178,7 @@ class Company extends Model
         'createdDateTime',
         'vatRegisteredYN',
         'vatRegistratonNumber',
+        'isHrmsIntergrated',
         'logoPath',
         'qhseApiKey',
         'timeStamp'
@@ -261,6 +262,7 @@ class Company extends Model
         'vatRegisteredYN' => 'integer',
         'vatRegistratonNumber' => 'string',
         'logoPath' => 'string',
+        'isHrmsIntergrated' => 'boolean',
         'qhseApiKey' => 'string'
     ];
 
