@@ -291,7 +291,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->where('confirmedYN', 1)
             ->where('isAdvancePaymentYN', 1)
             ->where('approvedYN', -1)
-            ->with(['category_by', 'grv_by', 'currency', 'supplier_by' => function ($query) {
+            ->with(['category_by', 'vat_sub_category','grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
@@ -415,6 +415,19 @@ ORDER BY
         $input['isAdvancePaymentYN'] = 1;
         $input['selectedToPayment'] = 0;
         $input['fullyPaid'] = 0;
+        
+
+        $input['vatSubCategoryID'] = isset($input['detail']['vatSubCategoryID']) ? $input['detail']['vatSubCategoryID'] : null;
+        $input['VATPercentage'] = isset($input['detail']['VATPercentage']) ? $input['detail']['VATPercentage'] : 0;
+        $input['addVatOnPO'] = isset($input['detail']['addVatOnPO']) ? $input['detail']['addVatOnPO'] : 0;
+
+        if (isset($input['detail']['VATAmount']) && $input['detail']['VATAmount'] > 0) {
+            $companyCurrencyConversionVAT = \Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $currencyID, $input['detail']['VATAmount']);
+
+            $input['VATAmount'] = $input['detail']['VATAmount'];
+            $input['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
+        }
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 

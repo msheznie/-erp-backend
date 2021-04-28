@@ -97,6 +97,12 @@ class PoAdvancePayment extends Model
         'reqAmountInPOLocalCur',
         'reqAmountInPORptCur',
         'createdDateTime',
+        'vatSubCategoryID',
+        'VATAmount',
+        'VATPercentage',
+        'VATAmountLocal',
+        'addVatOnPO',
+        'VATAmountRpt',
         'timestamp'
     ];
 
@@ -137,6 +143,12 @@ class PoAdvancePayment extends Model
         'reqAmountInPOTransCur' => 'float',
         'reqAmountInPOLocalCur' => 'float',
         'reqAmountInPORptCur' => 'float',
+        'vatSubCategoryID' => 'integer',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATPercentage' => 'float',
+        'VATAmountRpt' => 'float',
+        'addVatOnPO' => 'boolean',
         'sum_payment' => 'float'
     ];
 
@@ -210,6 +222,11 @@ class PoAdvancePayment extends Model
     public function setSumPaymentAttribute($value)
     {
         $this->attributes['sum_payment'] = $this->details->sum('paymentAmount');
+    }
+
+    public function vat_sub_category()
+    {
+        return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategoryID', 'taxVatSubCategoriesAutoID');
     }
 
 }

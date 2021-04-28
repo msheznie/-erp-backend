@@ -607,7 +607,7 @@ class GRVMasterAPIController extends AppBaseController
 
 
             // get the logistic charges from PO table which is linked to the grv
-            $poLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOLocalCur),0) as poLocal, COALESCE(SUM(reqAmountInPORptCur),0) as poReport'))
+            $poLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOLocalCur),0) as poLocal, COALESCE(SUM(reqAmountInPORptCur),0) as poReport, COALESCE(SUM(VATAmount),0) as logisticVAT'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->groupBy('grvAutoID')
                 ->first();
@@ -628,7 +628,7 @@ class GRVMasterAPIController extends AppBaseController
 
             //check Input Vat Transfer GL Account if vat exist
             $totalVAT = GRVDetails::where('grvAutoID',$id)->selectRaw('SUM(VATAmount*noQty) as totalVAT')->first();
-            if(TaxService::checkGRVVATEligible($gRVMaster->companySystemID,$gRVMaster->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0){
+            if((TaxService::checkGRVVATEligible($gRVMaster->companySystemID,$gRVMaster->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0) || $poLogisticAmount->logisticVAT > 0){
                 if(empty(TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                 }
