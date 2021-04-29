@@ -2414,6 +2414,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice->profomaDetailData = $proformaBreifData;
         }
 
+
+        if (($printTemplate['printTemplateID'] == 7 || $printTemplate['printTemplateID'] == 8) && $master->isPerforma == 1) {
+            $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master, $customerInvoice->customer->CutomerCode);
+            $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
+        }
+
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
@@ -3328,6 +3334,8 @@ WHERE
 	item_description,
 	qty,
 	unit_price,
+    VATAmount,
+    VATPercentage,
 	amount 
 FROM
 	(
@@ -3338,6 +3346,8 @@ FROM
 				prod_serv.TicketNo as TicketNo,
 				qty,
 				unit_price,
+                erp_custinvoicedirectdet.VATAmount as VATAmount,
+                erp_custinvoicedirectdet.VATPercentage as VATPercentage,
 				amount
 			FROM
 			erp_custinvoicedirect 

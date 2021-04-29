@@ -654,8 +654,8 @@
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->linePdoinvoiceDetails as $item)
                     {{$directTraSubTotal +=$item->amount}}
-                    {{$vatPecentage = 0}}
-                    {{$vatAmount = 0}}
+                    {{$vatPecentage = $item->VATPercentage}}
+                    {{$vatAmount = $item->VATAmount * $item->qty}}
                     {{$vatAmountSubTotal +=$vatAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td>{{$x}}</td>
@@ -800,7 +800,7 @@
         </table>
     </div>
     <br>
-    @if($request->custTransactionCurrencyID == 2)
+    @if($request->custTransactionCurrencyID != $request->localCurrencyID)
         <br>
         <div class="row">
             <table style="width:100%;" class="table table-bordered">

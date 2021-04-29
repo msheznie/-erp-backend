@@ -186,14 +186,7 @@
                 </td>
                 <td style="width: 30%" valign="bottom">
                                          <span class="font-weight-bold">
-{{--                         <h4 class="text-muted" style="opacity: 0.6;">
-                             @if($request->confirmedYN == 0 && $request->approved == 0)
-                                 Not Confirmed & Not Approved <br> Draft Copy
-                             @endif
-                             @if($request->confirmedYN == 1 && $request->approved == 0)
-                                 Confirmed & Not Approved <br> Draft Copy
-                             @endif
-                         </h4>--}}
+
  `             </span>
                 </td>
             </tr>
@@ -305,14 +298,14 @@
         <table class="table">
             <thead>
                 <tr style="background-color: #6798da;">
-                    <th style="width:6%;font-size: 15px">Item No</th>
-                    <th style=" text-align: center; font-size: 15px">Rationale for adjustment</th>
-                    <th style="text-align: center; font-size: 15px">Taxable amount after discount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(excluding tax)</th>
-                    <th style="text-align: center; font-size: 15px">Tax Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="text-align: center; font-size: 15px">Adjustment to Taxable Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(excluding tax)</th>
-                    <th style="text-align: center; font-size: 15px">Adjustment to Tax Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="text-align: center; font-size: 15px">VAT Rate (%)</th>
-                    <th style="text-align: center; font-size: 15px">Adjusted Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(incl. tax)</th>
+                    <th style="font-size: 15px">Item No</th>
+                    <th style=" text-align: center;">Rationale for adjustment</th>
+                    <th style="text-align: center;">Taxable amount after discount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(excluding tax)</th>
+                    <th style="text-align: center;">Tax Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center;">Adjustment to Taxable Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(excluding tax)</th>
+                    <th style="text-align: center;">Adjustment to Tax Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center;">VAT Rate (%)</th>
+                    <th style="text-align: center;">Adjusted Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})<br>(incl. tax)</th>
                 </tr>
             </thead>
             <tbody>
@@ -327,17 +320,15 @@
                     {{$directNetSubTotal +=$item->netAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                         <td>
-                            {{$item->comments}}
+                            {{$item->glCode}}
                         </td>
                         <td>
-                            @if($item->segment)
-                                {{$item->segment->ServiceLineDes}}
-                            @endif
+                            {{$item->comments}}
                         </td>
                         <td class="text-right">{{number_format($item->netAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->netAmount,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format($item->netAmount,$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{$item->VATPercentage}}</td>
                         <td class="text-right">{{number_format($item->creditAmount,$numberFormatting)}}</td>
                     </tr>
