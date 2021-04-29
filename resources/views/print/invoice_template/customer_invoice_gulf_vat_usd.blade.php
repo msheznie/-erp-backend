@@ -636,7 +636,7 @@
                 <tr class="">
                     <th style="width:1%"></th>
                     <th style="text-align: center">Client Ref No</th>
-                    <th style="text-align: center">PO DLine Item No</th>
+                    <th style="text-align: center">PO Line Item No</th>
                     <th style="text-align: center">Description of Goods/ Services</th>
                     <th style="text-align: right">Quantity</th>
                     <th style="text-align: right">Unit Price (Excluding Tax)</th>
