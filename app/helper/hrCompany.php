@@ -171,26 +171,6 @@ class hrCompany
             ['companypolicymasterID' => '6', 'value' => 'General', 'systemValue' => '0', 'companyID' => $company_id]
         ]);
 
-        $country_arr = [];
-        $nationality_arr = [];
-        $countryMaster = $this->sMECountryMasterRepository->get()->toArray();
-        foreach ($countryMaster as $value) {
-            $nationality_arr[] = [
-                'countryID' => $value['countryID'], 'Nationality' => $value['Nationality'], 'Erp_companyID' => $company_id
-            ];
-            
-            $country_arr[] = [
-                'countryShortCode' => $value['countryShortCode'], 'CountryDes' => $value['CountryDes'],
-                'countryMasterID' => $value['countryID'], 'Erp_companyID' => $company_id,
-            ];
-        }
-        if($country_arr){            
-            //$this->sMECountryRepository->insert($country_arr);
-        }
-        if($nationality_arr){
-            $this->sMENationalityRepository->insert($nationality_arr);
-        }
-
         $this->sMEReligionRepository->insert([
             ['Religion' => 'Christianity', 'ReligionAr' => 'ؤاقهسفهشى','Erp_companyID' => $company_id],
             ['Religion' => 'Islam', 'ReligionAr' => 'ةعسخمهة','Erp_companyID' => $company_id],
