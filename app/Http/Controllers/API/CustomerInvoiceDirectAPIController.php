@@ -2456,6 +2456,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $pdf->loadHTML($html);
 
             return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 7) {
+            $html = view('print.invoice_template.customer_invoice_gulf_vat', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        } else if ($printTemplate['printTemplateID'] == 8) {
+            $html = view('print.invoice_template.customer_invoice_gulf_vat_usd', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
         } else if ($printTemplate['printTemplateID'] == 4) {
             $html = view('print.customer_invoice_tue_product_service', $array);
             $htmlFooter = view('print.customer_invoice_tue_footer', $array);

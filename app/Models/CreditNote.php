@@ -442,6 +442,12 @@ class CreditNote extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'customerCurrencyID', 'currencyID');
     }
 
+     public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+
     public function customer()
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');

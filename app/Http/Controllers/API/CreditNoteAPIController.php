@@ -33,6 +33,7 @@ use App\Models\Taxdetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
+use App\Models\ErpDocumentTemplate;
 use App\Models\CustomerAssigned;
 use App\Models\DocumentMaster;
 use App\Models\DocumentApproved;
@@ -984,11 +985,29 @@ class CreditNoteAPIController extends AppBaseController
         $array = array('request' => $creditNote);
         $time = strtotime("now");
         $fileName = 'credit_note_' . $id . '_' . $time . '.pdf';
-        $html = view('print.credit_note', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $printTemplate = ErpDocumentTemplate::with('printTemplate')
+                                            ->where('companyID', $creditNote->companySystemID)
+                                            ->where('documentID', 19)
+                                            ->first();
 
-        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        if ($printTemplate && $printTemplate->printTemplateID == 9) {
+            $html = view('print.credit_note_template.credit_note_gulf', $array);
+            $htmlFooter = view('print.credit_note_template.credit_note_gulf_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
+
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } else {
+            $html = view('print.credit_note', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+        }
+
+
     }
 
     public function getCreditNoteApprovedByUser(Request $request)
