@@ -3334,8 +3334,8 @@ WHERE
 	item_description,
 	qty,
 	unit_price,
-    VATAmount,
-    VATPercentage,
+    percentage,
+    vatAmount,
 	amount 
 FROM
 	(
@@ -3346,8 +3346,8 @@ FROM
 				prod_serv.TicketNo as TicketNo,
 				qty,
 				unit_price,
-                erp_custinvoicedirectdet.VATAmount as VATAmount,
-                erp_custinvoicedirectdet.VATPercentage as VATPercentage,
+                prod_serv.percentage,
+                prod_serv.vatAmount,
 				amount
 			FROM
 			erp_custinvoicedirect 
@@ -3360,6 +3360,8 @@ FROM
 									mubbadrahop.productdetails.TicketNo as TicketNo,
 									mubbadrahop.productdetails.Qty AS qty,
 									mubbadrahop.productdetails.UnitRate AS unit_price,
+                                    mubbadrahop.productdetails.vatAmount AS vatAmount,
+                                    mubbadrahop.productdetails.percentage AS percentage,
 									mubbadrahop.productdetails.TotalCharges AS amount 
 								FROM
 									mubbadrahop.productdetails 
@@ -3372,6 +3374,8 @@ FROM
 									mubbadrahop.servicedetails.TicketNo as TicketNo,
 									mubbadrahop.servicedetails.Qty AS qty,
 									mubbadrahop.servicedetails.UnitRate AS unit_price,
+                                    mubbadrahop.servicedetails.vatAmount AS vatAmount,
+                                    mubbadrahop.servicedetails.percentage AS percentage,
 									mubbadrahop.servicedetails.TotalCharges AS amount 
 								FROM 
 									mubbadrahop.servicedetails 

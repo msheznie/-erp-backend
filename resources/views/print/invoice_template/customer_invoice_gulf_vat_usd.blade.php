@@ -654,8 +654,8 @@
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->linePdoinvoiceDetails as $item)
                     {{$directTraSubTotal +=$item->amount}}
-                    {{$vatPecentage = $item->VATPercentage}}
-                    {{$vatAmount = $item->VATAmount * $item->qty}}
+                    {{$vatPecentage = $item->percentage}}
+                    {{$vatAmount = $item->vatAmount * $item->qty}}
                     {{$vatAmountSubTotal +=$vatAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td>{{$x}}</td>
