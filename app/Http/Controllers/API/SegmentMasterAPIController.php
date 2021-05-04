@@ -28,6 +28,7 @@ use Response;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class SegmentMasterController
@@ -116,7 +117,7 @@ class SegmentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->findWithoutFail($id);
+        $segmentMaster = $this->segmentMasterRepository->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -167,15 +168,47 @@ class SegmentMasterAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->findWithoutFail($id);
+        $segmentMaster = $this->segmentMasterRepository->with(['sub_levels'])->findWithoutFail($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
         }
 
-        $segmentMaster->delete();
+        //delete validation 
 
-        return $this->sendResponse($id, 'Segment Master deleted successfully');
+        DB::beginTransaction();
+        try {
+            if (sizeof($segmentMaster->sub_levels) > 0) {
+                $this->deleteSubLevels($segmentMaster->sub_levels);
+            }
+
+            $segmentMaster->isDeleted = 1;
+            $segmentMaster->save();
+            DB::commit();
+            return $this->sendResponse($id, 'Segment Master deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Error occred while deleting segments'.$e->getMessage());
+        }
+    }
+
+    public function deleteSubLevels($sub_levels)
+    {
+        foreach ($sub_levels as $key => $value) {
+            if (sizeof($value->sub_levels) > 0) {
+                $this->deleteSubLevels($value->sub_levels);
+            }
+
+            $segmentMaster = $this->segmentMasterRepository->with(['sub_levels'])->findWithoutFail($value->serviceLineSystemID);
+
+            if (empty($segmentMaster)) {
+                return $this->sendError('Segment Master not found');
+            }
+
+            $segmentMaster->isDeleted = 1;
+            $segmentMaster->save();
+        }
     }
 
     /**
@@ -296,16 +329,74 @@ class SegmentMasterAPIController extends AppBaseController
         if (is_array($input['isMaster']))
             $input['isMaster'] = $input['isMaster'][0];
 
+
+        if ($segmentMaster->isFinalLevel != $input['isFinalLevel']) {
+            //validate
+        }
+
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
         $empId = $user->employee['empID'];
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
 
-        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
+        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count']);
 
         $segmentMaster = $this->segmentMasterRepository->update($data, $input['serviceLineSystemID']);
 
         return $this->sendResponse($segmentMaster->toArray(), 'Segment master updated successfully');
+    }
+
+    public function getOrganizationStructure(Request $request)
+    {
+        $input = $request->all();
+
+        $selectedCompanyId = $input['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+
+            $companyData = Company::find($selectedCompanyId);
+            $segmenntData = [];
+            foreach ($subCompanies as $key => $value) {
+                $segmenntData[] = $this->getNonGroupCompanyOrganizationStructure($value, true);
+            }
+
+            $companyData->subCompanies = $segmenntData;
+
+            return $this->sendResponse(['orgData' => $companyData, 'isGroup' => true], 'Organization Levels retrieved successfully');
+        }else{
+            return $this->getNonGroupCompanyOrganizationStructure($selectedCompanyId);
+        }
+    }
+
+    public function getNonGroupCompanyOrganizationStructure($companySystemID, $dataReturn = false)
+    {
+         $orgStructure = Company::withcount(['segments'])
+                             ->with(['segments' => function ($q) {
+                                $q->where(function($query) {
+                                        $query->whereNull('masterID')
+                                              ->orWhere('masterID', 0);
+                                    })
+                                  ->where('isDeleted', 0)
+                                  ->withcount(['sub_levels' => function($query) {
+                                        $query->where('isDeleted', 0);
+                                  }])
+                                  ->with(['sub_levels' => function($query) {
+                                        $query->where('isDeleted', 0);
+                                  }]);
+                             }])
+                             ->find($companySystemID);
+
+        if ($dataReturn) {
+            return $orgStructure;
+        }
+
+        if (empty($orgStructure)) {
+            return $this->sendError('Warehouse not found');
+        }
+
+        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully');
     }
 }

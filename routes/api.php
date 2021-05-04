@@ -235,6 +235,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::post('getAllSegmentMaster', 'SegmentMasterAPIController@getAllSegmentMaster');
         Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
+        Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure');
         Route::resource('segment/masters', 'SegmentMasterAPIController');
 
         Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');

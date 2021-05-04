@@ -292,7 +292,7 @@ class ServiceLineAPIController extends AppBaseController
     public function getServiceLineByCompany(Request $request)
     {
         $companyID = $request->companyID;
-        $serviceline = ServiceLine::where('companySystemID', $companyID)->where('isActive',1)->get();
+        $serviceline = ServiceLine::where('companySystemID', $companyID)->where('isActive',1)->where('isFinalLevel',1)->where('isDeleted',0)->get();
         return $this->sendResponse($serviceline, 'Service Line retrieved successfully');
     }
 }

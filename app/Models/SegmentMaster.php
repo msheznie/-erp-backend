@@ -66,11 +66,14 @@ class SegmentMaster extends Model
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
+        'isDeleted',
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
         'consoleCode',
+        'isFinalLevel',
+        'masterID',
         'consoleDescription'
     ];
 
@@ -91,6 +94,9 @@ class SegmentMaster extends Model
         'isMaster' => 'integer',
         'isPublic' => 'integer',
         'isServiceLine' => 'integer',
+        'masterID' => 'integer',
+        'isFinalLevel' => 'boolean',
+        'isDeleted' => 'boolean',
         'isDepartment' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
@@ -161,5 +167,9 @@ class SegmentMaster extends Model
         return $this->hasMany('App\Models\HrmsDepartmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
-    
+
+    public function sub_levels()
+    {
+        return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_levels')->where('isDeleted', 0);
+    }
 }

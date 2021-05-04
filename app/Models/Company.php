@@ -353,4 +353,9 @@ class Company extends Model
     {
         return $this->hasMany('App\Models\BankAssign', 'companySystemID','companySystemID');
     }
+
+    public function segments()
+    {
+        return $this->hasMany('App\Models\SegmentMaster', 'companySystemID','companySystemID');
+    }
 }
