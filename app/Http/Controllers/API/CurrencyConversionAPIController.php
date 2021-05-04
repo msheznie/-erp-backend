@@ -266,4 +266,12 @@ class CurrencyConversionAPIController extends AppBaseController
             return $this->sendError($e->getMessage(), 500);
         }
     }
+
+    public function currencyConvert(Request $request)
+    {
+        $input = $request->all();
+        $currencyConversion = Helper::currencyConversion(null, $input['transactionCurrencyID'], $input['documentCurrencyID'], $input['transactionAmount']);
+
+        return $this->sendResponse($currencyConversion, 'Cross exchange updated successfully');
+    }
 }

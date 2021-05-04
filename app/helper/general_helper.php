@@ -2918,6 +2918,15 @@ class Helper
 
     }
 
+    public static function amountInWords($amount)
+    {
+       $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+       $amountInWordsEnglish = ucwords($numFormatterEn->format($amount));
+
+       return $amountInWordsEnglish;
+    }
+
     public static function dateAddTime($date)
     {
         if ($date) {

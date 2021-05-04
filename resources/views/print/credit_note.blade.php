@@ -282,11 +282,11 @@
         <b>Comments : </b> {{$request->comments}}
     </div>
 
-    @if($request->isVATApplicable)
+   <!--  @if($request->isVATApplicable)
         <div class="row">
             <b>VAT Percentage (%) : </b> {{$request->VATPercentage}}
         </div>
-    @endif
+    @endif -->
     <div class="row">
         <div style="text-align: right"><b>Currency
                 : {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} </b></div>
