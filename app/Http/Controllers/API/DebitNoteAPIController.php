@@ -31,6 +31,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DebitNoteDetailsRefferedback;
+use App\Models\ErpDocumentTemplate;
 use App\Models\DebitNoteMasterRefferedback;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -1201,11 +1202,30 @@ class DebitNoteAPIController extends AppBaseController
         $array = array('entity' => $debitNote);
         $time = strtotime("now");
         $fileName = 'debit_note_' . $id . '_' . $time . '.pdf';
-        $html = view('print.debit_note', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+         $printTemplate = ErpDocumentTemplate::with('printTemplate')
+                                            ->where('companyID', $debitNote->companySystemID)
+                                            ->where('documentID', 15)
+                                            ->first();
+
+        if ($printTemplate && $printTemplate->printTemplateID == 10) {
+            $html = view('print.debit_note_template.debit_note_gulf', $array);
+            $htmlFooter = view('print.debit_note_template.debit_note_gulf_footer', $array);
+            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+            $mpdf->AddPage('P');
+            $mpdf->setAutoBottomMargin = 'stretch';
+            $mpdf->SetHTMLFooter($htmlFooter);
+
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } else {
+
+            $html = view('print.debit_note', $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        }
     }
 
     public function getDebitNotePaymentStatusHistory(Request $request)

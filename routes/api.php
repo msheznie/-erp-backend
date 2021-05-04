@@ -329,6 +329,7 @@ Route::group(['middleware' => 'tenant'], function () {
 
         Route::resource('currency_conversions', 'CurrencyConversionAPIController');
         Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
+        Route::post('currencyConvert', 'CurrencyConversionAPIController@currencyConvert');
 
         Route::resource('bank_accounts', 'BankAccountAPIController');
         Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');

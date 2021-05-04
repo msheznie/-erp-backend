@@ -116,9 +116,15 @@ class GeneralLedgerInsert implements ShouldQueue
                         $pl = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodePLSystemID,financeGLcodePL,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->WHERE('includePLForGRVYN', -1)->groupBy('financeGLcodePLSystemID')->get();
 
                         //unbilledGRV for logistic
-                        $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,SUM(reqAmountTransCur_amount) as transAmount,SUM(reqAmountInPOLocalCur) as localAmount, SUM(reqAmountInPORptCur) as rptAmount,'POG' as grvType,NOW() as timeStamp,erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID,erp_purchaseorderadvpayment.UnbilledGRVAccount")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                        $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,SUM(reqAmountTransCur_amount + erp_purchaseorderadvpayment.VATAmount) as transAmount,SUM(reqAmountInPOLocalCur + erp_purchaseorderadvpayment.VATAmountLocal) as localAmount, SUM(reqAmountInPORptCur + erp_purchaseorderadvpayment.VATAmountRpt) as rptAmount,'POG' as grvType,NOW() as timeStamp,erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID,erp_purchaseorderadvpayment.UnbilledGRVAccount")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
                             ->where('erp_purchaseorderadvpayment.grvAutoID', $masterModel["autoID"])
                             ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID', 'erp_purchaseorderadvpayment.supplierID')->get();
+
+                        $unbilledGRVVAT = PoAdvancePayment::selectRaw("erp_purchaseorderadvpayment.grvAutoID, SUM(erp_purchaseorderadvpayment.VATAmount) as transVATAmount, SUM(erp_purchaseorderadvpayment.VATAmountLocal) as localVATAmount, SUM(erp_purchaseorderadvpayment.VATAmountRpt) as rptVATAmount")
+                                                          ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                                                           ->where('erp_purchaseorderadvpayment.grvAutoID', $masterModel["autoID"])
+                                                           ->groupBy('erp_purchaseorderadvpayment.grvAutoID')
+                                                           ->first();
 
                         if ($masterData) {
 
@@ -168,7 +174,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
-                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0) {
+                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0 || ($unbilledGRVVAT->transVATAmount > 0)) {
                                 Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
@@ -183,9 +189,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                        $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount);
-                                        $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount);
+                                        $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount + $unbilledGRVVAT->transVATAmount);
+                                        $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount + $unbilledGRVVAT->localVATAmount);
+                                        $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount + $unbilledGRVVAT->rptVATAmount);
 
                                         array_push($finalData, $data);
 
