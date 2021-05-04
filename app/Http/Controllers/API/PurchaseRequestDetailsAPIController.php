@@ -34,6 +34,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 /**
@@ -633,5 +634,83 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $result['item'] = ItemAssigned::whereIn('companySystemID',$childCompanies)->where('itemCodeSystem',$itemCode)->first();
 
         return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
+    }
+
+
+    public function prItemsUpload(request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->first()->toArray();
+
+            if (count($formatChk) > 0) {
+                if (!isset($formatChk['item_code']) || !isset($formatChk['item_description']) || !isset($formatChk['comment']) || !isset($formatChk['qty'])) {
+                    return $this->sendError('Uploaded data format is invalid', 500);
+                }
+            }
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'item_description', 'comment', 'qty'))->get()->toArray();
+
+            $uploadSerialNumber = array_filter(collect($record)->toArray());
+
+            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestID'])
+                                               ->first();
+
+
+            if (empty($purchaseRequest)) {
+                return $this->sendError('Purchase Request not found', 500);
+            }
+
+
+            if ($purchaseRequest->cancelledYN == -1) {
+                return $this->sendError('This Purchase Request already closed. You can not add.', 500);
+            }
+
+            if ($purchaseRequest->approved == 1) {
+                return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
+            }
+
+
+            if (count($record) > 0) {
+                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID']);             
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            Storage::disk($disk)->delete('app/' . $originalFileName);
+            DB::commit();
+            return $this->sendResponse([], $res);
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

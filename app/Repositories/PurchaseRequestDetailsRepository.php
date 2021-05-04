@@ -3,7 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\PurchaseRequestDetails;
+use App\Models\ItemAssigned;
+use App\Models\PurchaseRequest;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ProcumentOrder;
+use App\Models\CompanyPolicyMaster;
+use App\Models\PurchaseOrderDetails;
+use App\Models\GRVDetails;
+use App\Models\ErpItemLedger;
+use App\helper\Helper;
 use InfyOm\Generator\Common\BaseRepository;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class PurchaseRequestDetailsRepository
@@ -66,5 +76,354 @@ class PurchaseRequestDetailsRepository extends BaseRepository
     public function model()
     {
         return PurchaseRequestDetails::class;
+    }
+
+    public function storePrDetails($prDetailsArray, $purchaseRequestID)
+    {
+
+        $totalItemsToUpload = sizeof(array_filter(collect($prDetailsArray)->pluck('item_code')->toArray()));
+        $successCount = 0;
+        $duplicateCount = 0;
+        $notFoundCount = 0;
+        $notUploadCount = [];
+        $finalData = [];
+        $nullValuesGlobal = false;
+
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequestID)
+                                          ->first();
+
+        $companySystemID = $purchaseRequest->companySystemID;
+
+        foreach ($prDetailsArray as $key => $input) {
+            $lineError = false;
+            $nullValues = false;
+            if (isset($input['item_code'])) {
+                
+                $item = ItemAssigned::where('itemPrimaryCode', $input['item_code'])
+                                    ->where('companySystemID', $companySystemID)
+                                    ->first();
+
+                if ($item) {
+                    $insertData['budgetYear'] = $purchaseRequest->budgetYear;
+                    $insertData['itemPrimaryCode'] = $item->itemPrimaryCode;
+                    $insertData['itemCodeSystem'] = $item->itemCodeSystem;
+                    $insertData['itemDescription'] = isset($input['item_description']) ? $input['item_description'] : $item->itemDescription;
+                    $insertData['partNumber'] = $item->secondaryItemCode;
+                    $insertData['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+                    $insertData['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+                    $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+
+                    $insertData['estimatedCost'] = $currencyConversion['documentAmount'];
+
+                    $insertData['companySystemID'] = $item->companySystemID;
+                    $insertData['companyID'] = $item->companyID;
+                    $insertData['unitOfMeasure'] = $item->itemUnitOfMeasure;
+                    $insertData['maxQty'] = $item->maximunQty;
+                    $insertData['minQty'] = $item->minimumQty;
+
+                    $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+                                                                                    ->where('mainItemCategoryID', $item->financeCategoryMaster)
+                                                                                    ->where('itemCategorySubID', $item->financeCategorySub)
+                                                                                    ->first();
+
+                    if (empty($financeItemCategorySubAssigned)) {
+                        $notUploadCount[] = $input['item_code'];
+                        $lineError = true;
+                    } else {
+                        if ($item->financeCategoryMaster == 1) {
+                            $alreadyAdded = PurchaseRequest::where('purchaseRequestID', $purchaseRequestID)
+                                ->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                                    $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                                })
+                                ->first();
+
+                            if ($alreadyAdded) {
+                                $duplicateCount = $duplicateCount + 1;
+                                $lineError = true;
+                            }
+                        }
+
+                        $insertData['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                        $insertData['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                        $insertData['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                        $insertData['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                        $insertData['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+                        $insertData['itemCategoryID'] = 0;
+
+
+                        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                                                                ->where('companySystemID', $purchaseRequest->companySystemID)
+                                                                ->first();
+
+                        if ($allowFinanceCategory) {
+                            $policy = $allowFinanceCategory->isYesNO;
+
+                            if ($policy == 0) {
+                                if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                                    $notUploadCount[] = $input['item_code'];
+                                    $lineError = true;
+                                }
+
+                                //checking if item category is same or not
+                                $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                                                                                ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                                                                                ->first();
+
+                                if ($pRDetailExistSameItem) {
+                                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                                        $notUploadCount[] = $input['item_code'];
+                                        $lineError = true;
+                                    }
+                                }
+                            }
+                        }
+
+
+                        // check policy 18
+
+                        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+                                                                    ->where('companySystemID', $companySystemID)
+                                                                    ->first();
+
+                        if ($allowPendingApproval && $item->financeCategoryMaster == 1) {
+
+                            if ($allowPendingApproval->isYesNO == 0) {
+
+                                $checkWhether = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                                    ->where('companySystemID', $companySystemID)
+                                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                                    ->select([
+                                        'erp_purchaserequest.purchaseRequestID',
+                                        'erp_purchaserequest.companySystemID',
+                                        'erp_purchaserequest.serviceLineCode',
+                                        'erp_purchaserequest.purchaseRequestCode',
+                                        'erp_purchaserequest.PRConfirmedYN',
+                                        'erp_purchaserequest.approved',
+                                        'erp_purchaserequest.cancelledYN'
+                                    ])
+                                    ->groupBy(
+                                        'erp_purchaserequest.purchaseRequestID',
+                                        'erp_purchaserequest.companySystemID',
+                                        'erp_purchaserequest.serviceLineCode',
+                                        'erp_purchaserequest.purchaseRequestCode',
+                                        'erp_purchaserequest.PRConfirmedYN',
+                                        'erp_purchaserequest.approved',
+                                        'erp_purchaserequest.cancelledYN'
+                                    );
+
+                                $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                                                                    $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                                                          ->where('manuallyClosed', 0);
+                                                                    })
+                                                                    ->where('approved', 0)
+                                                                    ->where('cancelledYN', 0)
+                                                                    ->first();
+
+                                if (!empty($anyPendingApproval)) {
+                                     $notUploadCount[] = $input['item_code'];
+                                     $lineError = true;
+                                }
+
+                                $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                                                                                ->where('companySystemID', $companySystemID)
+                                                                                ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                                                                                ->select([
+                                                                                    'erp_purchaserequest.purchaseRequestID',
+                                                                                    'erp_purchaserequest.companySystemID',
+                                                                                    'erp_purchaserequest.serviceLineCode',
+                                                                                    'erp_purchaserequest.purchaseRequestCode',
+                                                                                    'erp_purchaserequest.PRConfirmedYN',
+                                                                                    'erp_purchaserequest.approved',
+                                                                                    'erp_purchaserequest.cancelledYN'
+                                                                                ])
+                                                                                ->groupBy(
+                                                                                    'erp_purchaserequest.purchaseRequestID',
+                                                                                    'erp_purchaserequest.companySystemID',
+                                                                                    'erp_purchaserequest.serviceLineCode',
+                                                                                    'erp_purchaserequest.purchaseRequestCode',
+                                                                                    'erp_purchaserequest.PRConfirmedYN',
+                                                                                    'erp_purchaserequest.approved',
+                                                                                    'erp_purchaserequest.cancelledYN'
+                                                                                )
+                                                                                ->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                                                                                    $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                                                                        ->where('selectedForPO', 0)
+                                                                                        ->where('prClosedYN', 0)
+                                                                                        ->where('fullyOrdered', 0)
+                                                                                        ->where('manuallyClosed', 0);
+                                                                                })
+                                                                                ->where('approved', -1)
+                                                                                ->where('cancelledYN', 0)
+                                                                                ->first();
+
+                                if (!empty($anyApprovedPRButPONotProcessed)) {
+                                     $notUploadCount[] = $input['item_code'];
+                                     $lineError = true;
+                                }
+
+                                $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                                    ->where('companySystemID', $companySystemID)
+                                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                                    ->select([
+                                        'erp_purchaserequest.purchaseRequestID',
+                                        'erp_purchaserequest.companySystemID',
+                                        'erp_purchaserequest.serviceLineCode',
+                                        'erp_purchaserequest.purchaseRequestCode',
+                                        'erp_purchaserequest.PRConfirmedYN',
+                                        'erp_purchaserequest.approved',
+                                        'erp_purchaserequest.cancelledYN'
+                                    ])
+                                    ->groupBy(
+                                        'erp_purchaserequest.purchaseRequestID',
+                                        'erp_purchaserequest.companySystemID',
+                                        'erp_purchaserequest.serviceLineCode',
+                                        'erp_purchaserequest.purchaseRequestCode',
+                                        'erp_purchaserequest.PRConfirmedYN',
+                                        'erp_purchaserequest.approved',
+                                        'erp_purchaserequest.cancelledYN'
+                                    )->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                                        $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                            ->where('selectedForPO', 0)
+                                            ->where('prClosedYN', 0)
+                                            ->where('fullyOrdered', 1)
+                                            ->where('manuallyClosed', 0);
+                                    })
+                                    ->where('approved', -1)
+                                    ->where('cancelledYN', 0)
+                                    ->first();
+                                /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=1*/
+
+                                if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
+                                     $notUploadCount[] = $input['item_code'];
+                                     $lineError = true;
+                                }
+
+                                /* PO check*/
+
+                                $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
+                                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                                    ->whereHas('detail', function ($query) use ($item) {
+                                        $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                               ->where('manuallyClosed', 0);
+                                    })
+                                    ->where('approved', 0)
+                                    ->where('poCancelledYN', 0)
+                                    ->first();
+
+                                if (!empty($checkPOPending)) {
+                                    $notUploadCount[] = $input['item_code'];
+                                    $lineError = true;
+                                }
+                                /* PO --> approved=-1 And cancelledYN=0 */
+
+                            }
+                        }
+
+                        $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
+                        $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
+                                                    $query->whereIn('companySystemID', $group_companies)
+                                                        ->where('approved', -1)
+                                                        ->where('poType_N', '!=',5)// poType_N = 5 =>work order
+                                                        ->where('poCancelledYN', 0)
+                                                        ->where('manuallyClosed', 0);
+                                                     })
+                                                    ->where('itemCode', $item->itemCodeSystem)
+                                                    ->where('manuallyClosed',0)
+                                                    ->groupBy('erp_purchaseorderdetails.itemCode')
+                                                    ->select(
+                                                        [
+                                                            'erp_purchaseorderdetails.companySystemID',
+                                                            'erp_purchaseorderdetails.itemCode',
+                                                            'erp_purchaseorderdetails.itemPrimaryCode'
+                                                        ]
+                                                    )
+                                                    ->sum('noQty');
+
+                        $quantityInHand = ErpItemLedger::where('itemSystemCode', $item->itemCodeSystem)
+                                                    ->where('companySystemID', $companySystemID)
+                                                    ->groupBy('itemSystemCode')
+                                                    ->sum('inOutQty');
+
+                        $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
+                            $query->whereIn('companySystemID', $group_companies)
+                                ->where('grvTypeID', 2)
+                                ->where('approved', -1)
+                                ->groupBy('erp_grvmaster.companySystemID');
+                        })->whereHas('po_detail', function ($query){
+                            $query->where('manuallyClosed',0)
+                            ->whereHas('order', function ($query){
+                                $query->where('manuallyClosed',0);
+                            });
+                        })
+                            ->where('itemCode', $item->itemCodeSystem)
+                            ->groupBy('erp_grvdetails.itemCode')
+                            ->select(
+                                [
+                                    'erp_grvdetails.companySystemID',
+                                    'erp_grvdetails.itemCode'
+                                ])
+                            ->sum('noQty');
+
+                        $quantityOnOrder = $poQty - $grvQty;
+                        $insertData['poQuantity'] = $poQty;
+                        $insertData['quantityOnOrder'] = $quantityOnOrder;
+                        $insertData['quantityInHand'] = $quantityInHand;
+                        $insertData['purchaseRequestID'] = $purchaseRequestID;
+
+                        if (isset($input['qty'])) {
+                            $insertData['quantityRequested'] = $input['qty'];
+                        } else {
+                            $nullValues = true;
+                        }
+
+                        if (isset($input['comment'])) {
+                            $insertData['comments'] = $input['comment'];
+                        } else {
+                            $nullValues = true;
+                        }
+
+                        if (!$lineError && !$nullValues) {
+                            $purchaseRequestDetails = $this->model->create($insertData);
+                            $successCount = $successCount +1;
+                        }
+
+                        if ($nullValues) {
+                            $nullValuesGlobal = true;
+                        }
+                    }
+
+                } else {
+                    $notFoundCount = $notFoundCount + 1;                
+                }
+            }
+        }
+     
+        $notUploadCountUnique = sizeof(array_unique($notUploadCount));
+
+        if ($successCount == $totalItemsToUpload) {
+            $message = "Upload successful";
+        } else {
+            $message = "Successfully uploaded ".$successCount." items out of ".$totalItemsToUpload.".";
+            
+            if ($notFoundCount > 0) {
+                $message = $message." ".$notFoundCount." items cannot be found.";    
+            }
+
+            if ($duplicateCount > 0) {
+                $message = $message." ".$duplicateCount." items is/are duplicated.";    
+            }
+
+            if ($nullValuesGlobal) {
+                $message = $message." some items cannot be uploaded, Because there are some null values";    
+            } else {
+                if ($notUploadCountUnique > 0) {
+                    $message = $message." ".$notUploadCountUnique." items cannot be uploaded.";    
+                }
+            }
+                        
+        }
+
+        return $message;
     }
 }

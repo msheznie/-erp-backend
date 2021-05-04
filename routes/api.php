@@ -1251,6 +1251,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
+        Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
 
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
@@ -1633,6 +1634,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
         Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
+        Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
 
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
 

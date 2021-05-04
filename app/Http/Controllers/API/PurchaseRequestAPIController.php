@@ -40,6 +40,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\GRVDetails;
@@ -2510,6 +2511,18 @@ class PurchaseRequestAPIController extends AppBaseController
         $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
 
         return $this->sendResponse($output,'Success');
+    }
+
+
+     public function downloadPrItemUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx', 'purchase_request_item_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
     }
 
 }
