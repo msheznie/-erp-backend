@@ -131,6 +131,19 @@ class ChartOfAccountAPIController extends AppBaseController
             $input['primaryCompanyID'] = $company->CompanyID;
         }
 
+        if (isset($input['interCompanySystemID'])) {
+              $interCompanySystemID = Company::where('companySystemID',$input['interCompanySystemID'])->first();
+
+            if($interCompanySystemID){
+                $input['interCompanyID'] = $interCompanySystemID->CompanyID;
+            }
+        }
+
+        if ((isset($input['relatedPartyYN']) && !$input['relatedPartyYN']) || !isset($input['relatedPartyYN'])) {
+            $input['interCompanyID'] = null;
+            $input['interCompanySystemID'] = null;
+        }
+
         $isMasterAc = (isset($input['isMasterAccount']) && ($input['isMasterAccount'] == true || $input['isMasterAccount'] == 1)) ? 1 : 0; 
         if (isset($input['masterAccount']) && $input['masterAccount'] != null && !$isMasterAc) {
             $checkMasterAccountValidity = ChartOfAccount::where('isMasterAccount', 1)
@@ -315,6 +328,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
             $input['createdPcID']   = gethostname();
             $input['createdUserID'] = $empId;
+
             $chartOfAccount         = $this->chartOfAccountRepository->create($input);
         }
 
@@ -633,7 +647,6 @@ class ChartOfAccountAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-
            // $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
             $subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
         }else{
@@ -654,10 +667,22 @@ class ChartOfAccountAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getInterComanies(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $allCompanies = Company::where('isGroup', 0)
+                                ->where('isActive', 1)
+                                ->where('companySystemID', '!=',$input['primaryCompanySystemID'])
+                                ->get();
+
+        return $this->sendResponse($allCompanies, 'Record retrieved successfully');
+    }
+
     public function getMasterChartOfAccountData(Request $request)
     {
         $input = $request->all();
-
         $masterAccounts = [];
         if ((isset($input['primaryCompanySystemID']) && $input['primaryCompanySystemID'] > 0) && (isset($input['catogaryBLorPLID']) && $input['catogaryBLorPLID'] > 0) && (isset($input['controlAccountsSystemID']) && $input['controlAccountsSystemID'] > 0)) {
             $masterAccounts = ChartOfAccount::where('isMasterAccount', 1)
