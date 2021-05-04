@@ -219,7 +219,7 @@ Route::group(['middleware' => 'tenant'], function () {
         Route::resource('control_accounts', 'ControlAccountAPIController');
         Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
         Route::post('getMasterChartOfAccountData', 'ChartOfAccountAPIController@getMasterChartOfAccountData');
-        Route::post('getInterComanies', 'ChartOfAccountAPIController@getInterComanies');
+        Route::post('getInterCompanies', 'ChartOfAccountAPIController@getInterCompanies');
         Route::resource('chart_of_account', 'ChartOfAccountAPIController');
         Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
         Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');

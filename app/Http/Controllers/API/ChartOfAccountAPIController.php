@@ -667,7 +667,7 @@ class ChartOfAccountAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public function getInterComanies(Request $request)
+    public function getInterCompanies(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
