@@ -6753,7 +6753,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (!is_array($purchaseOrderID) || (is_array($purchaseOrderID) && sizeof($purchaseOrderID) == 1)) {
             $poID = is_array($purchaseOrderID) ? $purchaseOrderID[0] : $purchaseOrderID;
-            return $this->singlePoTracingData($poID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID);
+
+            $poSelectId = !is_array($purchaseOrderID) ? $purchaseOrderID : null;
+            return $this->singlePoTracingData($poID, $type, $grvAutoID, $bookingSuppMasInvAutoID, $PayMasterAutoId, $debitNoteID, $poSelectId);
         } else {
             $poData = ProcumentOrder::whereIn('purchaseOrderID', $purchaseOrderID)
                                     ->get();
@@ -6774,7 +6776,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
     }
 
-    public function singlePoTracingData($poID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null, $debitNoteID = null)
+    public function singlePoTracingData($poID, $type = 'po', $grvAutoID = null, $bookingSuppMasInvAutoID = null, $PayMasterAutoId = null, $debitNoteID = null, $purchaseOrderID = null)
     {
         $procumentOrder = ProcumentOrder::find($poID);
         if ($procumentOrder->poTypeID == 1) {
