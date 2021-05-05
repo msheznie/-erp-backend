@@ -11,7 +11,7 @@
 |
 */
 
-Route::group(['middleware' => 'tenant'], function () {
+Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
 
