@@ -1253,7 +1253,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -2095,6 +2095,7 @@ HAVING
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
+                'erp_expenseclaimtype.expenseClaimTypeDescription',
                 'erp_documentapproved.documentSystemCode',
                 'erp_bankmemosupplier.memoHeaderSupplier',
                 'erp_bankmemosupplier.memoDetailSupplier',
@@ -2134,7 +2135,8 @@ HAVING
                     ->on('erp_paysupplierinvoicemaster.documentSystemID', '=', 'erp_bankmemopayee.documentSystemID');
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('employees', 'erp_paysupplierinvoicemaster.createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_expenseclaimtype', 'expenseClaimOrPettyCash', 'erp_expenseclaimtype.expenseClaimTypeID')
             ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
             ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
             ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')
