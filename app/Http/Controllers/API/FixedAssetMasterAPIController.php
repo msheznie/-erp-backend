@@ -960,7 +960,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $subCategory = GRVDetails::with(['grv_master' => function($query){
             $query->with(['segment_by','supplier_by']);
-        }])->find($request->grvDetailsID);
+        }, 'item_by'])->find($request->grvDetailsID);
         return $this->sendResponse($subCategory, 'Record retrieved successfully');
     }
 
