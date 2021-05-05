@@ -60,6 +60,7 @@ use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
+use App\helper\SupplierAssignService;
 use App\helper\IvmsDeliveryOrderService;
 use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\Schema;
@@ -1976,9 +1977,11 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
-                                $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,markupPercentage,isMarkupPercentage,NOW() as timeStamp,jsrsNo,jsrsExpiry')->find($input["documentSystemCode"]);
-                                $supData = array_except($supplierMaster->toArray(),'isSUPDAmendAccess');
-                                $supplierAssign = Models\SupplierAssigned::insert($supData);
+                               $supplierAssignRes = SupplierAssignService::assignSupplier($input["documentSystemCode"], $docApproved->companySystemID);
+                               if (!$supplierAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => "Error occured while assign supplier"];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 86) { //insert data to supplier table
