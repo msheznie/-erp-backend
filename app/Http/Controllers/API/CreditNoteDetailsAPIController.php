@@ -365,7 +365,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
             return $this->sendResponse('s', 'successfully created');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error Occured !');
+            return $this->sendError($exception->getMessage(),500);
         }
 
     }

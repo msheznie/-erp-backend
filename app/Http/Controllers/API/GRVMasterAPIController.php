@@ -1001,7 +1001,7 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher not found');
         }
 
-        return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
+        return $this->sendResponse($gRVMaster->toArray(), trans('custom.record_retrieve', ['attribute' => trans('custom.grv')]));
     }
 
     public function getGRVMasterApproval(Request $request)
