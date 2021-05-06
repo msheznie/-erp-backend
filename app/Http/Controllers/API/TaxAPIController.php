@@ -136,14 +136,19 @@ class TaxAPIController extends AppBaseController
 
         if($taxCategory == 2 || $taxCategory == 3){
             $input['isDefault'] = 1;
-            $alreadyTaxDefined = Tax::where('taxCategory',2)->exists();
-            if($alreadyTaxDefined){
-                return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
-            }
+            $alreadyTaxDefined = Tax::where('taxCategory',$taxCategory)
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->exists();
 
-            $alreadyWHTDefined = Tax::where('taxCategory',3)->exists();
-            if($alreadyWHTDefined){
-                return $this->sendError('WHT is already defined. You cannot create more than one active WHT', 500);
+            if(!empty($alreadyTaxDefined)){
+
+                if($taxCategory == 2){
+                    return $this->sendError('VAT is already defined. You cannot create more than one active VAT', 500);
+                }
+
+                if($taxCategory == 3){
+                    return $this->sendError('WHT is already defined. You cannot create more than one active WHT', 500);
+                }
             }
         }
 

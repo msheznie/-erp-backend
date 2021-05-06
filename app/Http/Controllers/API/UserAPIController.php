@@ -250,6 +250,6 @@ class UserAPIController extends AppBaseController
             $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
         }
         $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
-        return $this->sendResponse($output, 'User retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieve', ['attribute' => trans('custom.user')]));
     }
 }
