@@ -43,6 +43,7 @@ use App\Models\Company;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerMasterCategory;
 use App\Models\CustomerMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\GeneralLedger;
@@ -1907,6 +1908,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
     public function getAcountReceivableFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
+        $customerCategoryID = $request['customerCategoryID'];
         $companiesByGroup = "";
         if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
@@ -1924,13 +1926,30 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $customerMaster = '';
 
         if ($request['reportID'] == 'CR') {
-            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->WhereNotNull('customerCodeSystem')->get();
+            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
+                                              ->groupBy('customerCodeSystem')
+                                              ->orderBy('CustomerName', 'ASC')
+                                              ->WhereNotNull('customerCodeSystem');
+
+            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                        $query->where('customerCategoryID', $customerCategoryID);
+                                                });
+            }
+            $customerMaster = $customerMaster->get();
         } else {
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
-            ->groupBy('customerCodeSystem')
-            ->orderBy('CustomerName', 'ASC')
-            ->WhereNotNull('customerCodeSystem')
-            ->get();
+                                            ->groupBy('customerCodeSystem')
+                                            ->orderBy('CustomerName', 'ASC')
+                                            ->WhereNotNull('customerCodeSystem');
+
+            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                        $query->where('customerCategoryID', $customerCategoryID);
+                                                });
+            }
+
+            $customerMaster = $customerMaster->get();
         }
         $years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
             ->whereNotNull('documentDate')
@@ -1938,9 +1957,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get(['year']);
 
+        $customerCategories = CustomerMasterCategory::all();
+
         $output = array(
             'controlAccount' => $controlAccount,
             'customers' => $customerMaster,
+            'customerCategories' => $customerCategories,
             'departments' => $departments,
             'years' => $years,
         );
@@ -5952,6 +5974,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
 
     public function getInvoiceTrackerReportFilterData(Request $request){
         $companyId = $request['selectedCompanyId'];
+        $customerCategoryID = $request['customerCategoryID'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -5961,11 +5984,18 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             $childCompanies = [$companyId];
         }
 
-        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
             ->whereIN('companySystemID', $childCompanies)
             ->where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->get();
+            ->where('isAssigned', -1);
+
+        if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+            $customers = $customers->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                    $query->where('customerCategoryID', $customerCategoryID);
+                                            });
+        }
+
+        $output['customer'] = $customers->get();
 
         $output['years'] = FreeBillingMasterPerforma::select(DB::raw("YEAR(rentalStartDate) as year"))
             ->whereNotNull('rentalStartDate')
@@ -5973,6 +6003,8 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
+
+        $output['customerCategories'] = CustomerMasterCategory::all();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }

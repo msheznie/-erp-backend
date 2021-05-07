@@ -28,6 +28,7 @@ use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\CustomerMasterCategory;
 use App\Models\CustomerMasterRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -283,6 +284,18 @@ class CustomerMasterAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getCustomerCatgeoryByCompany(Request $request)
+    {
+        $input = $request->all();
+
+        $customerCategories = CustomerMasterCategory::whereHas('category_assigned', function ($query) use ($input) {
+                                                        $query->where('companySystemID', $input['companySystemID']);
+                                                    })
+                                                    ->get();
+
+        return $this->sendResponse($customerCategories, 'Record retrieved successfully');
     }
 
     /**

@@ -358,4 +358,9 @@ class Company extends Model
     {
         return $this->hasMany('App\Models\SegmentMaster', 'companySystemID','companySystemID');
     }
+
+    public function customerCategoryAssigned()
+    {
+        return $this->hasMany('App\Models\CustomerMasterCategoryAssigned', 'companySystemID','companySystemID');
+    }
 }

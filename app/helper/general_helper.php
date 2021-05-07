@@ -4876,6 +4876,12 @@ class Helper
                     return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
                 }
                 break;
+            case 'customerCategory':
+                $customerAssigned = Models\CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!is_null($customerAssigned)) {
+                    return ['success' => false, 'message' => 'This is customer catgeory is already assign to this company.'];
+                }
+                break;
             case 'chartofaccounts':
                 $chartOfAccountAssigned = Models\ChartOfAccountsAssigned::where('chartOfAccountSystemID', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($chartOfAccountAssigned)) {

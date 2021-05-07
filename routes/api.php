@@ -254,6 +254,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getCustomerCatgeoryByCompany', 'CustomerMasterAPIController@getCustomerCatgeoryByCompany');
         Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
         Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
         Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
@@ -1480,6 +1481,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
         Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
         Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
+        Route::get('getNotAssignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAPIController@getNotAssignedCompaniesByCustomerCategory');
+        
         Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
         Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
         Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
@@ -1981,6 +1984,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
         Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
+
+        Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
+        Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
     });
 
