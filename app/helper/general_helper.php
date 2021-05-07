@@ -61,6 +61,7 @@ use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\SupplierAssignService;
+use App\helper\CustomerAssignService;
 use App\helper\IvmsDeliveryOrderService;
 use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\Schema;
@@ -1981,6 +1982,14 @@ class Helper
                                if (!$supplierAssignRes['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => "Error occured while assign supplier"];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 58) { //Auto assign customer
+                               $supplierAssignRes = CustomerAssignService::assignCustomer($input["documentSystemCode"], $docApproved->companySystemID);
+                               if (!$supplierAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => "Error occured while assign customer"];
                                 }
                             }
 
