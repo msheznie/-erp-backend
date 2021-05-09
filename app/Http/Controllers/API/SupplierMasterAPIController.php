@@ -1463,7 +1463,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.removedYN', 0);
             })
-            ->join('registeredSupplier', function ($query) use ($companyID, $empID, $search) {
+            ->join('registeredsupplier', function ($query) use ($companyID, $empID, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('registeredSupplier.approvedYN', 0)
