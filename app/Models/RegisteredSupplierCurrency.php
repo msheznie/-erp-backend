@@ -43,7 +43,7 @@ use Eloquent as Model;
 class RegisteredSupplierCurrency extends Model
 {
 
-    public $table = 'registeredSupplierCurrency';
+    public $table = 'registeredsuppliercurrency';
     
     const CREATED_AT = null;
     const UPDATED_AT = null;
