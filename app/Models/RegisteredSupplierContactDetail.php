@@ -57,7 +57,7 @@ use Eloquent as Model;
 class RegisteredSupplierContactDetail extends Model
 {
 
-    public $table = 'registeredSupplierContactDetails';
+    public $table = 'registeredsuppliercontactdetails';
     
     const CREATED_AT = null;
     const UPDATED_AT = null;
