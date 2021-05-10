@@ -764,6 +764,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
         Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController',['except' => ['index']]);
         Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController',['except' => ['index','store']]);
+        Route::post('addPVDetailsByInterCompany', 'DirectPaymentDetailsAPIController@addPVDetailsByInterCompany');
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
