@@ -235,7 +235,7 @@ class Helper
                     $docInforArr["confirmedByEmpID"] = 'supplierConfirmedEmpID';
                     $docInforArr["confirmedBySystemID"] = 'supplierConfirmedEmpSystemID';
                     $docInforArr["confirmedDate"] = 'supplierConfirmedDate';
-                    $docInforArr["tableName"] = 'registeredSupplier';
+                    $docInforArr["tableName"] = 'registeredsupplier';
                     $docInforArr["modelName"] = 'RegisteredSupplier';
                     $docInforArr["primarykey"] = 'id';
                     break;
@@ -1165,7 +1165,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
                 break;
              case 86:
-                $docInforArr["tableName"] = 'registeredSupplier';
+                $docInforArr["tableName"] = 'registeredsupplier';
                 $docInforArr["modelName"] = 'RegisteredSupplier';
                 $docInforArr["primarykey"] = 'supplierName';
                 $docInforArr["approvedColumnName"] = 'approvedYN';
@@ -2710,7 +2710,7 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 case 86: // Supplier master
-                    $docInforArr["tableName"] = 'registeredSupplier';
+                    $docInforArr["tableName"] = 'registeredsupplier';
                     $docInforArr["modelName"] = 'RegisteredSupplier';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';

@@ -170,7 +170,7 @@ class ReopenDocument
                 $docInforArr["confirmedBySystemID"] = 'supplierConfirmedEmpSystemID';
                 $docInforArr["confirmedByID"] = 'supplierConfirmedEmpID';
                 $docInforArr["confirmedDate"] = 'supplierConfirmedDate';
-                $docInforArr["tableName"] = 'registeredSupplier';
+                $docInforArr["tableName"] = 'registeredsupplier';
                 $docInforArr["modelName"] = 'RegisteredSupplier';
                 $docInforArr["approvedColumnName"] = 'approvedYN';
                 $docInforArr["primarykey"] = 'id';

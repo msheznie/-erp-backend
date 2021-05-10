@@ -57,7 +57,7 @@ use Eloquent as Model;
 class RegisteredSupplierAttachment extends Model
 {
 
-    public $table = 'registeredSupplierAttachment';
+    public $table = 'registeredsupplierattachment';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
