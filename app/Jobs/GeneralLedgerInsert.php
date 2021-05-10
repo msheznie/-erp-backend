@@ -189,9 +189,19 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                        $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount + $unbilledGRVVAT->transVATAmount);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount + $unbilledGRVVAT->localVATAmount);
-                                        $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount + $unbilledGRVVAT->rptVATAmount);
+                                        $unbilledTransVATAmount = 0;
+                                        $unbilledLocalVATAmount = 0;
+                                        $unbilledRptVATAmount = 0;
+
+                                        if(!empty($unbilledGRVVAT)){
+                                            $unbilledTransVATAmount = $unbilledGRVVAT->transVATAmount;
+                                            $unbilledLocalVATAmount = $unbilledGRVVAT->localVATAmount;
+                                            $unbilledRptVATAmount   = $unbilledGRVVAT->rptVATAmount;
+                                        }
+
+                                        $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount + $unbilledTransVATAmount);
+                                        $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount + $unbilledLocalVATAmount);
+                                        $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount + $unbilledRptVATAmount);
 
                                         array_push($finalData, $data);
 
