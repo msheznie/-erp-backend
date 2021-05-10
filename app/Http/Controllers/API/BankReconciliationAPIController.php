@@ -968,19 +968,19 @@ class BankReconciliationAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'BRC':
+            case 'TCS':
                 $reportTypeID = '';
                 if (isset($request->reportTypeID)) {
                     $reportTypeID = $request->reportTypeID;
                 }
-                if ($reportTypeID == 'BRC') {
-                    $validator = \Validator::make($request->all(), [
-                        'fromDate' => 'required|date',
-                        'toDate' => 'required|date|after_or_equal:fromDate',
-                        'bankAccountID' => 'required',
-                        'bankID' => 'required',
-                        'reportTypeID' => 'required',
-                    ]);
-                }
+
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required|date',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'bankAccountID' => 'required',
+                    'bankID' => 'required',
+                    'reportTypeID' => 'required',
+                ]);
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -996,6 +996,7 @@ class BankReconciliationAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'BRC': // Bank Reconciliation
+            case 'TCS': // Bank Reconciliation
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('bankID', 'bankAccountID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getBankReconciliationReportQry($request);
@@ -1044,6 +1045,56 @@ class BankReconciliationAPIController extends AppBaseController
                         $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
                         $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
                         $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
+                        $x++;
+                    }
+                }
+
+                 \Excel::create('bank_reconciliation', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+             case 'TCS': //// Treasury Cleared Report
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('bankID', 'bankAccountID'));
+                $data = array();
+                $output = $this->getBankReconciliationReportQry($request);
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Narration'] = $val->documentNarration;
+                        $data[$x]['Payee Name'] = $val->payeeName;
+                        $decimal = 3;
+                        if ($val['bank_account']) {
+                            if ($val['bank_account']['currency']) {
+                                $data[$x]['Bank Currency'] = $val['bank_account']['currency']['CurrencyCode'];
+                                $decimal = $val['bank_account']['currency']['DecimalPlaces'];
+                            } else {
+                                $data[$x]['Bank Currency'] = '';
+                            }
+                        } else {
+                            $data[$x]['Bank Currency'] = '';
+                        }
+                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $decimal);
+                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
+                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
+                        $data[$x]['Treasury Cleared Status'] = ($val->trsClearedYN == -1) ? "Yes" : "No";
+                        $data[$x]['Treasury Cleared Date'] = \Helper::dateFormat($val->trsClearedDate);
+                        $data[$x]['Treasury Cleared By'] = $val->trsClearedByEmpName;
                         $x++;
                     }
                 }
