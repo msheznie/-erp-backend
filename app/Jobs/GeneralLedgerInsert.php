@@ -174,7 +174,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
-                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0 || ($unbilledGRVVAT->transVATAmount > 0)) {
+                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0 || (!empty($unbilledGRVVAT) && $unbilledGRVVAT->transVATAmount > 0)) {
                                 Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
