@@ -106,12 +106,31 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
+        $allowItemToTypePolicy = false;
+        $itemNotound = false;
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+                                            ->where('companySystemID', $companySystemID)
+                                            ->first();
+
+        if ($allowItemToType) {
+            $allowItemToTypePolicy = true;
+        }
+
+
+        if ($allowItemToTypePolicy) {
+            $input['itemCode'] = isset($input['itemCode']['id']) ? $input['itemCode']['id'] : $input['itemCode'];
+        }
+
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            if (!$allowItemToTypePolicy) {
+                return $this->sendError('Item not found');
+            } else {
+                $itemNotound = true;
+            }
         }
 
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
@@ -131,23 +150,378 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         $input['budgetYear'] = $purchaseRequest->budgetYear;
+        $input['itemPrimaryCode'] = (!$itemNotound) ? $item->itemPrimaryCode : null;
+        $input['itemDescription'] = (!$itemNotound) ? $item->itemDescription : $input['itemCode'];
+        $input['partNumber'] = (!$itemNotound) ? $item->secondaryItemCode : null;
+        $input['itemFinanceCategoryID'] = (!$itemNotound) ? $item->financeCategoryMaster : null;
+        $input['itemFinanceCategorySubID'] = (!$itemNotound) ? $item->financeCategorySub : null;
+        //$input['estimatedCost'] = $item->wacValueLocal;
+
+        if (!$itemNotound) {
+            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $input['estimatedCost'] = $currencyConversion['documentAmount'];
+            $input['companySystemID'] = $item->companySystemID;
+            $input['companyID'] = $item->companyID;
+            $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+            $input['maxQty'] = $item->maximunQty;
+            $input['minQty'] = $item->minimumQty;
+            
+            $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+                ->where('mainItemCategoryID', $item->financeCategoryMaster)
+                ->where('itemCategorySubID', $item->financeCategorySub)
+                ->first();
+
+            if (empty($financeItemCategorySubAssigned)) {
+                return $this->sendError('Finance category not assigned for the selected item.');
+            }
+
+            if ($item->financeCategoryMaster == 1) {
+
+                $alreadyAdded = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
+                    ->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                        $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                    })
+                    ->first();
+
+                if ($alreadyAdded) {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+            }
+
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+            
+            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                    ->where('companySystemID', $purchaseRequest->companySystemID)
+                    ->first();
+
+            if ($allowFinanceCategory) {
+                $policy = $allowFinanceCategory->isYesNO;
+
+                if ($policy == 0) {
+                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                        return $this->sendError('Category is not found.', 500);
+                    }
+
+                    //checking if item category is same or not
+                    $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                        ->first();
+
+                    if ($pRDetailExistSameItem) {
+                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                            return $this->sendError('You cannot add different category item', 500);
+                        }
+                    }
+                }
+            }
+
+              // check policy 18
+
+            $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+            if ($allowPendingApproval && $item->financeCategoryMaster == 1) {
+
+                if ($allowPendingApproval->isYesNO == 0) {
+
+                    $checkWhether = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                        ->select([
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        ])
+                        ->groupBy(
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        );
+
+                    $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                        $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                       ->where('manuallyClosed', 0);
+                        /* $query->groupBy(
+                             'erp_purchaserequestdetails.itemCode',
+                             'erp_purchaserequestdetails.itemPrimaryCode',
+                             'erp_purchaserequestdetails.selectedForPO',
+                             'erp_purchaserequestdetails.prClosedYN',
+                             'erp_purchaserequestdetails.fullyOrdered'
+                         )->select([
+                         'erp_purchaserequestdetails.itemCode',
+                         'erp_purchaserequestdetails.itemPrimaryCode',
+                         'erp_purchaserequestdetails.selectedForPO',
+                         'erp_purchaserequestdetails.prClosedYN',
+                         'erp_purchaserequestdetails.fullyOrdered'
+                      ]);*/
+                    })
+                        ->where('approved', 0)
+                        ->where('cancelledYN', 0)
+                        ->first();
+                    /* approved=0 And cancelledYN=0*/
+
+                    if (!empty($anyPendingApproval)) {
+                        return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    }
+
+                    $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                        ->select([
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        ])
+                        ->groupBy(
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        )
+                        ->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                            $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                ->where('selectedForPO', 0)
+                                ->where('prClosedYN', 0)
+                                ->where('fullyOrdered', 0)
+                                ->where('manuallyClosed', 0);
+
+                            /* $query->groupBy(
+                                 'erp_purchaserequestdetails.itemCode',
+                                 'erp_purchaserequestdetails.itemPrimaryCode',
+                                 'erp_purchaserequestdetails.selectedForPO',
+                                 'erp_purchaserequestdetails.prClosedYN',
+                                 'erp_purchaserequestdetails.fullyOrdered'
+                             )->select([
+                             'erp_purchaserequestdetails.itemCode',
+                             'erp_purchaserequestdetails.itemPrimaryCode',
+                             'erp_purchaserequestdetails.selectedForPO',
+                             'erp_purchaserequestdetails.prClosedYN',
+                             'erp_purchaserequestdetails.fullyOrdered'
+                          ]);*/
+                        })
+                        ->where('approved', -1)
+                        ->where('cancelledYN', 0)
+                        ->first();
+                    /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
+
+                    if (!empty($anyApprovedPRButPONotProcessed)) {
+                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
+                    }
+
+                    $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                        ->select([
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        ])
+                        ->groupBy(
+                            'erp_purchaserequest.purchaseRequestID',
+                            'erp_purchaserequest.companySystemID',
+                            'erp_purchaserequest.serviceLineCode',
+                            'erp_purchaserequest.purchaseRequestCode',
+                            'erp_purchaserequest.PRConfirmedYN',
+                            'erp_purchaserequest.approved',
+                            'erp_purchaserequest.cancelledYN'
+                        )->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                            $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                ->where('selectedForPO', 0)
+                                ->where('prClosedYN', 0)
+                                ->where('fullyOrdered', 1)
+                                ->where('manuallyClosed', 0);
+                            /* $query->groupBy(
+                                 'erp_purchaserequestdetails.itemCode',
+                                 'erp_purchaserequestdetails.itemPrimaryCode',
+                                 'erp_purchaserequestdetails.selectedForPO',
+                                 'erp_purchaserequestdetails.prClosedYN',
+                                 'erp_purchaserequestdetails.fullyOrdered'
+                             )->select([
+                             'erp_purchaserequestdetails.itemCode',
+                             'erp_purchaserequestdetails.itemPrimaryCode',
+                             'erp_purchaserequestdetails.selectedForPO',
+                             'erp_purchaserequestdetails.prClosedYN',
+                             'erp_purchaserequestdetails.fullyOrdered'
+                          ]);*/
+                        })
+                        ->where('approved', -1)
+                        ->where('cancelledYN', 0)
+                        ->first();
+                    /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=1*/
+
+                    if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
+                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
+                    }
+
+                    /* PO check*/
+
+                    $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
+                        ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                        ->whereHas('detail', function ($query) use ($item) {
+                            $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                   ->where('manuallyClosed', 0);
+                        })
+                        ->where('approved', 0)
+                        ->where('poCancelledYN', 0)
+                        ->first();
+
+                    if (!empty($checkPOPending)) {
+                        return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    }
+                    /* PO --> approved=-1 And cancelledYN=0 */
+
+                }
+            }
+
+
+            $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
+            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
+                $query->whereIn('companySystemID', $group_companies)
+                    ->where('approved', -1)
+                    ->where('poType_N', '!=',5)// poType_N = 5 =>work order
+                    ->where('poCancelledYN', 0)
+                    ->where('manuallyClosed', 0);
+                 })
+                ->where('itemCode', $input['itemCode'])
+                ->where('manuallyClosed',0)
+                ->groupBy('erp_purchaseorderdetails.itemCode')
+                ->select(
+                    [
+                        'erp_purchaseorderdetails.companySystemID',
+                        'erp_purchaseorderdetails.itemCode',
+                        'erp_purchaseorderdetails.itemPrimaryCode'
+                    ]
+                )
+                ->sum('noQty');
+
+            $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                ->where('companySystemID', $companySystemID)
+                ->groupBy('itemSystemCode')
+                ->sum('inOutQty');
+
+            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
+                $query->whereIn('companySystemID', $group_companies)
+                    ->where('grvTypeID', 2)
+                    ->where('approved', -1)
+                    ->groupBy('erp_grvmaster.companySystemID');
+            })->whereHas('po_detail', function ($query){
+                $query->where('manuallyClosed',0)
+                ->whereHas('order', function ($query){
+                    $query->where('manuallyClosed',0);
+                });
+            })
+                ->where('itemCode', $input['itemCode'])
+                ->groupBy('erp_grvdetails.itemCode')
+                ->select(
+                    [
+                        'erp_grvdetails.companySystemID',
+                        'erp_grvdetails.itemCode'
+                    ])
+                ->sum('noQty');
+
+            $quantityOnOrder = $poQty - $grvQty;
+            $input['poQuantity'] = $poQty;
+            $input['quantityOnOrder'] = $quantityOnOrder;
+            $input['quantityInHand'] = $quantityInHand;
+
+
+        } else {
+            $input['estimatedCost'] = 0;
+            $input['companySystemID'] = $companySystemID;
+            $input['companyID'] = $purchaseRequest->companyID;
+            $input['unitOfMeasure'] = null;
+            $input['maxQty'] = 0;
+            $input['minQty'] = 0;
+            $input['poQuantity'] = 0;
+            $input['quantityOnOrder'] = 0;
+            $input['quantityInHand'] = 0;
+            $input['itemCode'] = null;
+        }
+
+        $input['itemCategoryID'] = 0;
+
+        $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
+
+        return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');
+    }
+
+
+    public function mapLineItemPr(Request $request)
+    {
+        $input = $request->all();
+
+        $checkItem = PurchaseOrderDetails::where('itemCode', $input['itemCodeNew'])
+                                         ->where('purchaseRequestDetailsID', '!=', $input['purchaseRequestDetailsID'])
+                                         ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                                         ->first();
+
+        if ($checkItem) {
+            return $this->sendError('This item has already maped with another item of this purchase request');
+        }
+
+        $checkForPoItem = PurchaseOrderDetails::where('purchaseRequestDetailsID', $input['purchaseRequestDetailsID'])
+                                         ->first();
+
+        if ($checkForPoItem) {
+            $input['itemCodeNew'] = $checkForPoItem->itemCode;
+        }
+
+        $companySystemID = $input['companySystemID'];
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeNew'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
+            ->first();
+
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request Details not found');
+        }
+
+
+        $input['itemCode'] = $input['itemCodeNew'];
+
         $input['itemPrimaryCode'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
         $input['partNumber'] = $item->secondaryItemCode;
-        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategoryID'] =  $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
-        //$input['estimatedCost'] = $item->wacValueLocal;
-
-        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-
-        $input['estimatedCost'] = $currencyConversion['documentAmount'];
 
         $input['companySystemID'] = $item->companySystemID;
         $input['companyID'] = $item->companyID;
         $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
         $input['maxQty'] = $item->maximunQty;
         $input['minQty'] = $item->minimumQty;
-
+        
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
             ->where('mainItemCategoryID', $item->financeCategoryMaster)
             ->where('itemCategorySubID', $item->financeCategorySub)
@@ -156,7 +530,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if (empty($financeItemCategorySubAssigned)) {
             return $this->sendError('Finance category not assigned for the selected item.');
         }
-
 
         if ($item->financeCategoryMaster == 1) {
 
@@ -176,10 +549,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
         $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
-
-        $input['itemCategoryID'] = 0;
-
-
+        
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $purchaseRequest->companySystemID)
                 ->first();
@@ -205,8 +575,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         }
 
-
-        // check policy 18
+          // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
             ->where('companySystemID', $companySystemID)
@@ -239,26 +608,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     );
 
                 $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
-                    $query->where('itemPrimaryCode', $item->itemPrimaryCode)
-                                   ->where('manuallyClosed', 0);
-                    /* $query->groupBy(
-                         'erp_purchaserequestdetails.itemCode',
-                         'erp_purchaserequestdetails.itemPrimaryCode',
-                         'erp_purchaserequestdetails.selectedForPO',
-                         'erp_purchaserequestdetails.prClosedYN',
-                         'erp_purchaserequestdetails.fullyOrdered'
-                     )->select([
-                     'erp_purchaserequestdetails.itemCode',
-                     'erp_purchaserequestdetails.itemPrimaryCode',
-                     'erp_purchaserequestdetails.selectedForPO',
-                     'erp_purchaserequestdetails.prClosedYN',
-                     'erp_purchaserequestdetails.fullyOrdered'
-                  ]);*/
+                    $query->where('itemPrimaryCode', $item->itemPrimaryCode);
                 })
                     ->where('approved', 0)
                     ->where('cancelledYN', 0)
                     ->first();
-                /* approved=0 And cancelledYN=0*/
 
                 if (!empty($anyPendingApproval)) {
                     return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
@@ -291,20 +645,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 0)
                             ->where('manuallyClosed', 0);
-
-                        /* $query->groupBy(
-                             'erp_purchaserequestdetails.itemCode',
-                             'erp_purchaserequestdetails.itemPrimaryCode',
-                             'erp_purchaserequestdetails.selectedForPO',
-                             'erp_purchaserequestdetails.prClosedYN',
-                             'erp_purchaserequestdetails.fullyOrdered'
-                         )->select([
-                         'erp_purchaserequestdetails.itemCode',
-                         'erp_purchaserequestdetails.itemPrimaryCode',
-                         'erp_purchaserequestdetails.selectedForPO',
-                         'erp_purchaserequestdetails.prClosedYN',
-                         'erp_purchaserequestdetails.fullyOrdered'
-                      ]);*/
                     })
                     ->where('approved', -1)
                     ->where('cancelledYN', 0)
@@ -341,19 +681,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 1)
                             ->where('manuallyClosed', 0);
-                        /* $query->groupBy(
-                             'erp_purchaserequestdetails.itemCode',
-                             'erp_purchaserequestdetails.itemPrimaryCode',
-                             'erp_purchaserequestdetails.selectedForPO',
-                             'erp_purchaserequestdetails.prClosedYN',
-                             'erp_purchaserequestdetails.fullyOrdered'
-                         )->select([
-                         'erp_purchaserequestdetails.itemCode',
-                         'erp_purchaserequestdetails.itemPrimaryCode',
-                         'erp_purchaserequestdetails.selectedForPO',
-                         'erp_purchaserequestdetails.prClosedYN',
-                         'erp_purchaserequestdetails.fullyOrdered'
-                      ]);*/
                     })
                     ->where('approved', -1)
                     ->where('cancelledYN', 0)
@@ -383,6 +710,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             }
         }
+
 
         $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
         $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
@@ -433,11 +761,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['poQuantity'] = $poQty;
         $input['quantityOnOrder'] = $quantityOnOrder;
         $input['quantityInHand'] = $quantityInHand;
+        unset($input['itemCodeNew']);
 
-       
-        $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
-
-        return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');
+        return $this->sendResponse($input, 'Purchase Request item maped successfully');
     }
 
     /**

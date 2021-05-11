@@ -1466,6 +1466,10 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+            ->where('companySystemID', $companyId)
+            ->first();
+
         $addressTypeShippings = DB::table("erp_address")
             ->select('addressID', 'addressTypeDescription')
             ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
@@ -1503,7 +1507,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $poAddonCategoryDrop = AddonCostCategories::all();
 
-        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0, 'allowItemToType' => 0);
 
         $grvRecieved = array(['id' => 0, 'value' => 'Not Received'], ['id' => 1, 'value' => 'Partial Received'], ['id' => 2, 'value' => 'Fully Received']);
 
@@ -1519,6 +1523,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if ($allowPRinPO) {
             $conditions['pullPRPolicy'] = $allowPRinPO->isYesNO;
+        }
+
+         if ($allowItemToType) {
+            $conditions['allowItemToType'] = $allowItemToType->isYesNO;
         }
 
         if (!empty($purchaseOrderID)) {

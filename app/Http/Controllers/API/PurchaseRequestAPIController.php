@@ -234,7 +234,12 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0);
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -242,6 +247,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($allowFinanceCategory) {
             $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
+        }
+
+        if ($allowItemToType) {
+            $conditions['allowItemToType'] = $allowItemToType->isYesNO;
         }
 
 
