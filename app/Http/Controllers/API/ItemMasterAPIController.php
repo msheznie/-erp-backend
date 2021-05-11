@@ -1111,19 +1111,18 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemCode = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
 
-        $supplierCatalog = SupplierCatalogMaster::where('isActive',1)
-            ->with(['supplier','company','data'=> function($query) use($itemCode){
-                $query->with(['uom_default','local_currency'])
-                    ->where('itemCodeSystem',$itemCode);
-            }])
-            ->whereHas('details', function ($query) use($itemCode){
-                $query->where('itemCodeSystem',$itemCode)
-                    ->where(function ($q){
-                        $q->whereNull('isDeleted')
-                            ->orWhere('isDeleted',0);
-                    });
-            })
-        ->paginate(15);
+        $supplierCatalog = SupplierCatalogMaster::with(['supplier','company','data'=> function($query) use($itemCode){
+                                                    $query->with(['uom_default','local_currency'])
+                                                        ->where('itemCodeSystem',$itemCode);
+                                                }])
+                                                ->whereHas('details', function ($query) use($itemCode){
+                                                    $query->where('itemCodeSystem',$itemCode)
+                                                        ->where(function ($q){
+                                                            $q->whereNull('isDeleted')
+                                                                ->orWhere('isDeleted',0);
+                                                        });
+                                                })
+                                                ->paginate(15);
         return $this->sendResponse($supplierCatalog, 'Data retrieved successfully');
 
 //        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
