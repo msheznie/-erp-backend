@@ -770,7 +770,8 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.approved',
                 'erp_grvmaster.grvLocation',
                 'erp_grvmaster.refferedBackYN',
-                'erp_grvmaster.grvTypeID'
+                'erp_grvmaster.grvTypeID',
+                'erp_grvmaster.companySystemID'
             ]);
 
         $search = $request->input('search.value');
