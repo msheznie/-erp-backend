@@ -226,24 +226,40 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             if($financeBS){
                 $input['financeGLcodebBS'] = $financeBS->AccountCode ;
+            }else{
+                $input['financeGLcodebBSSystemID'] = null;
+                $input['financeGLcodebBS'] = null;
             }
 
+        }else{
+            $input['financeGLcodebBSSystemID'] = null;
+            $input['financeGLcodebBS'] = null;
         }
 
         if(array_key_exists ('financeGLcodePLSystemID' , $input )){
             $financePL = ChartOfAccount::where('chartOfAccountSystemID',$input['financeGLcodePLSystemID'])->first();
             if($financePL){
                 $input['financeGLcodePL'] = $financePL->AccountCode ;
+            }else{
+                $input['financeGLcodePLSystemID'] = null;
+                $input['financeGLcodePL'] = null;
             }
-
+        }else{
+            $input['financeGLcodePLSystemID'] = null;
+            $input['financeGLcodePL'] = null;
         }
 
         if(array_key_exists ('financeGLcodeRevenueSystemID' , $input )){
             $financePL = ChartOfAccount::where('chartOfAccountSystemID',$input['financeGLcodeRevenueSystemID'])->first();
             if($financePL){
                 $input['financeGLcodeRevenue'] = $financePL->AccountCode ;
+            }else{
+                $input['financeGLcodeRevenueSystemID'] = null;
+                $input['financeGLcodeRevenue'] = null;
             }
-
+        }else{
+            $input['financeGLcodeRevenueSystemID'] = null;
+            $input['financeGLcodeRevenue'] = null;
         }
 
         if(isset($input['includePLForGRVYN']) && $input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN'] == true){
