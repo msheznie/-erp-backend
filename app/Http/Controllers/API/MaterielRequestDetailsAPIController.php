@@ -21,6 +21,7 @@ use App\Models\GRVDetails;
 use App\Models\ItemAssigned;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\Unit;
 use App\Models\UnitConversion;
@@ -134,12 +135,31 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
+        $allowItemToTypePolicy = false;
+        $itemNotound = false;
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 54)
+                                            ->where('companySystemID', $companySystemID)
+                                            ->first();
+
+        if ($allowItemToType) {
+            $allowItemToTypePolicy = true;
+        }
+
+
+        if ($allowItemToTypePolicy) {
+            $input['itemCode'] = isset($input['itemCode']['id']) ? $input['itemCode']['id'] : $input['itemCode'];
+        }
+
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
                             ->where('companySystemID', $companySystemID)
                             ->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            if (!$allowItemToTypePolicy) {
+                return $this->sendError('Item not found');
+            } else {
+                $itemNotound = true;
+            }
         }
 
         $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->first();
@@ -157,62 +177,55 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             return $this->sendError('This Materiel Request fully approved. You can not add.',500);
         }
 
-        $input['itemCode'] = $item->itemCodeSystem;
-        $input['itemDescription'] = $item->itemDescription;
-        $input['partNumber'] = $item->secondaryItemCode;
-        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
-        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
-        $input['estimatedCost'] = 0;
-        $input['quantityRequested'] = 0;
         $input['qtyIssuedDefaultMeasure'] = 0;
-        $input['ClosedYN'] = 0;
-        $input['selectedForIssue'] = 0;
-        $input['comments'] = null;
-        $input['convertionMeasureVal'] = 1;
-        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
-        $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
-        if($item->maximunQty){
-            $input['maxQty'] = $item->maximunQty;
-        }else{
-            $input['maxQty'] = 0;
-        }
+        if (!$itemNotound) {
+            $input['itemCode'] = $item->itemCodeSystem;
+            $input['itemDescription'] = $item->itemDescription;
+            $input['partNumber'] = $item->secondaryItemCode;
+            $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+            $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+            $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+            $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
+            if($item->maximunQty){
+                $input['maxQty'] = $item->maximunQty;
+            }else{
+                $input['maxQty'] = 0;
+            }
 
-        if($item->minimumQty){
-            $input['minQty'] = $item->minimumQty;
-        }else{
-            $input['minQty'] = 0;
-        }
+            if($item->minimumQty){
+                $input['minQty'] = $item->minimumQty;
+            }else{
+                $input['minQty'] = 0;
+            }
 
-        $input['allowCreatePR']      = 0;
-        $input['selectedToCreatePR'] = 0;
-
-        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+            $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
             ->where('mainItemCategoryID', $item->financeCategoryMaster)
             ->where('itemCategorySubID', $item->financeCategorySub)
             ->first();
 
-        if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance Category not found');
-        }
-
-        if ($item->financeCategoryMaster == 1) {
-
-            $alreadyAdded = MaterielRequest::where('RequestID', $input['RequestID'])
-                ->whereHas('details', function ($query) use ($item) {
-                    $query->where('itemCode', $item->itemCodeSystem);
-                })
-                ->first();
-
-            if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+            if (empty($financeItemCategorySubAssigned)) {
+                return $this->sendError('Finance Category not found');
             }
-        }
 
-        $input['financeGLcodebBS']  = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
-        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+            if ($item->financeCategoryMaster == 1) {
 
-        $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
+                $alreadyAdded = MaterielRequest::where('RequestID', $input['RequestID'])
+                    ->whereHas('details', function ($query) use ($item) {
+                        $query->where('itemCode', $item->itemCodeSystem);
+                    })
+                    ->first();
+
+                if ($alreadyAdded) {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+            }
+
+            $input['financeGLcodebBS']  = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+
+             $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
                                                 $query->where('companySystemID', $companySystemID)
                                                     ->where('approved', -1)
                                                     ->where('poCancelledYN', 0);
@@ -229,32 +242,58 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                         )
                                         ->sum('noQty');
 
-        $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-                                ->where('companySystemID', $companySystemID)
-                                ->groupBy('itemSystemCode')
-                                ->sum('inOutQty');
+            $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                                    ->where('companySystemID', $companySystemID)
+                                    ->groupBy('itemSystemCode')
+                                    ->sum('inOutQty');
 
-        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
-                            $query->where('companySystemID', $companySystemID)
-                                ->where('grvTypeID', 2)
-                                ->groupBy('erp_grvmaster.companySystemID');
-                             })
-                            ->where('itemCode', $input['itemCode'])
-                            ->groupBy('erp_grvdetails.itemCode')
-                            ->select(
-                                [
-                                    'erp_grvdetails.companySystemID',
-                                    'erp_grvdetails.itemCode'
-                                ])
-                            ->sum('noQty');
+            $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+                                $query->where('companySystemID', $companySystemID)
+                                    ->where('grvTypeID', 2)
+                                    ->groupBy('erp_grvmaster.companySystemID');
+                                 })
+                                ->where('itemCode', $input['itemCode'])
+                                ->groupBy('erp_grvdetails.itemCode')
+                                ->select(
+                                    [
+                                        'erp_grvdetails.companySystemID',
+                                        'erp_grvdetails.itemCode'
+                                    ])
+                                ->sum('noQty');
 
-        $quantityOnOrder = $poQty - $grvQty;
-        $input['quantityOnOrder'] = $quantityOnOrder;
-        $input['quantityInHand']  = $quantityInHand;
+            $quantityOnOrder = $poQty - $grvQty;
+            $input['quantityOnOrder'] = $quantityOnOrder;
+            $input['quantityInHand']  = $quantityInHand;
 
-        if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
-            return $this->sendError("No stock Qty. Please check again.", 500);
+            if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
+                return $this->sendError("No stock Qty. Please check again.", 500);
+            }
+        } else {
+            $input['itemDescription'] = $input['itemCode'];
+            $input['itemCode'] = null;
+            $input['partNumber'] = null;
+            $input['itemFinanceCategoryID'] = null;
+            $input['itemFinanceCategorySubID'] = null;
+            $input['unitOfMeasure'] = null;
+            $input['unitOfMeasureIssued'] = null;
+            $input['maxQty'] = 0;
+            $input['minQty'] = 0;
+            $input['quantityOnOrder'] = 0;
+            $input['quantityInHand'] = 0;
+
         }
+
+        $input['estimatedCost'] = 0;
+        $input['quantityRequested'] = 0;
+        
+        $input['ClosedYN'] = 0;
+        $input['selectedForIssue'] = 0;
+        $input['comments'] = null;
+        $input['convertionMeasureVal'] = 1;
+
+        $input['allowCreatePR']      = 0;
+        $input['selectedToCreatePR'] = 0;
+
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->create($input);
 
@@ -374,24 +413,25 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             return $this->sendError('This Materiel Request fully approved. You can not edit.', 500);
         }
 
-        if ($input['unitOfMeasure'] != $input['unitOfMeasureIssued']) {
-            $unitConvention = UnitConversion::where('masterUnitID', $input['unitOfMeasure'])
-                ->where('subUnitID', $input['unitOfMeasureIssued'])
-                ->first();
+        if ($input['itemCode'] != null) {
+            if ($input['unitOfMeasure'] != $input['unitOfMeasureIssued']) {
+                $unitConvention = UnitConversion::where('masterUnitID', $input['unitOfMeasure'])
+                    ->where('subUnitID', $input['unitOfMeasureIssued'])
+                    ->first();
 
-            if (empty($unitConvention)) {
-                return $this->sendError('Unit Convention not found', 500);
-            }
-
-            if ($unitConvention) {
-                $convention = $unitConvention->conversion;
-                $input['convertionMeasureVal'] = $convention;
-                if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
-                } else {
-                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] * $convention;
+                if (empty($unitConvention)) {
+                    return $this->sendError('Unit Convention not found', 500);
                 }
-            }
+
+                if ($unitConvention) {
+                    $convention = $unitConvention->conversion;
+                    $input['convertionMeasureVal'] = $convention;
+                    if ($convention > 0) {
+                        $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
+                    } else {
+                        $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] * $convention;
+                    }
+                }
             } else {
                 $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
             }
@@ -401,11 +441,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                 return $this->sendError("No stock Qty. Please check again.", 500);
             }
 
-          if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
-                   $input['allowCreatePR'] =  -1;
-          }else{
-                   $input['allowCreatePR']   =  0;
-          }
+            if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
+                $input['allowCreatePR'] =  -1;
+            }else{
+                $input['allowCreatePR']   =  0;
+            }
+        }
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->update($input, $id);
 
@@ -483,11 +524,13 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         foreach ($items as $item){
 
             $issueUnit = Unit::where('UnitID',$item['unitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
-
             $issueUnits = array();
-            foreach ($issueUnit->unitConversion as $unit){
-                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
-                array_push($issueUnits,$temArray);
+
+            if ($issueUnit) {
+                foreach ($issueUnit->unitConversion as $unit){
+                    $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
+                    array_push($issueUnits,$temArray);
+                }
             }
 
             $item->issueUnits = $issueUnits;

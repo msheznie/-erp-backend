@@ -731,6 +731,16 @@ class MaterielRequestAPIController extends AppBaseController
             $wareHouses = $wareHouses->where('isActive', 1);
         }
 
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 54)
+                                            ->where('companySystemID', $companyId)
+                                            ->first();
+
+        $allowItemToTypePolicy = 0;
+        if ($allowItemToType) {
+            $allowItemToTypePolicy = $allowItemToType->isYesNO;
+        }
+
+
         $segments = $segments->get();
         $wareHouses = $wareHouses->get();
 
@@ -754,6 +764,7 @@ class MaterielRequestAPIController extends AppBaseController
             'priorities' => $priorities,
             'locations' => $locations,
             'wareHouses' => $wareHouses,
+            'allowItemToTypePolicy' => $allowItemToTypePolicy,
             'units' => $units
         );
 

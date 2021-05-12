@@ -18,13 +18,16 @@ use App\Http\Requests\API\UpdateItemIssueDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\PurchaseOrderDetails;
 use App\Models\DeliveryOrder;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueDetails;
+use App\Models\ItemMaster;
 use App\Models\ItemIssueMaster;
+use App\Models\GRVDetails;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
 use App\Models\PurchaseReturn;
@@ -189,6 +192,19 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     ->first();
             } else if ($input['issueType'] == 2) {
                 $item = MaterielRequestDetails::where('RequestDetailsID', $input['itemCode'])->with(['item_by'])->first();
+
+                if ($item && is_null($item->itemCode)) {
+                    if (isset($input['mappingItemCode']) && $input['mappingItemCode'] > 0) {
+                        $itemMap = $this->matchRequestItem($item->RequestID, $input['mappingItemCode'], $companySystemID, $item->toArray());
+                        if (!$itemMap['status']) {
+                            return $this->sendError($itemMap['message'], 500);
+                        } else {
+                            $item = $itemMap['data'];
+                        }
+                    } else {
+                        return $this->sendError('Item not found, Please map this item with a original item', 500, ["type" => 'itemMap']);
+                    }
+                }
             }
         } else {
             return $this->sendError('Please select Issue Type', 500);
@@ -540,6 +556,119 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
         return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details saved successfully');
+    }
+
+
+    public function matchRequestItem($requestID, $itemCode, $companySystemID, $input)
+    {
+        $item = ItemAssigned::where('itemCodeSystem', $itemCode)
+                            ->where('companySystemID', $companySystemID)
+                            ->first();
+
+        if (empty($item)) {
+            return ['status' => false, 'message' => 'Item not found'];
+        }
+
+        $materielRequest = MaterielRequest::where('RequestID', $requestID)->first();
+
+
+        if (empty($materielRequest)) {
+            return ['status' => false, 'message' => 'Materiel Request Details not found'];
+        }
+
+
+        $input['itemCode'] = $item->itemCodeSystem;
+        $input['item_by'] = ItemMaster::find($item->itemCodeSystem);
+        $input['itemDescription'] = $item->itemDescription;
+        $input['partNumber'] = $item->secondaryItemCode;
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+        $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
+        if($item->maximunQty){
+            $input['maxQty'] = $item->maximunQty;
+        }else{
+            $input['maxQty'] = 0;
+        }
+
+        if($item->minimumQty){
+            $input['minQty'] = $item->minimumQty;
+        }else{
+            $input['minQty'] = 0;
+        }
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+        ->where('mainItemCategoryID', $item->financeCategoryMaster)
+        ->where('itemCategorySubID', $item->financeCategorySub)
+        ->first();
+
+        if (empty($financeItemCategorySubAssigned)) {
+            return ['status' => false, 'message' => 'Finance Category not found'];
+        }
+
+        if ($item->financeCategoryMaster == 1) {
+
+            $alreadyAdded = MaterielRequest::where('RequestID', $input['RequestID'])
+                ->whereHas('details', function ($query) use ($item) {
+                    $query->where('itemCode', $item->itemCodeSystem);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return ['status' => false, 'message' => 'Selected item is already added to above material request. Please check again'];
+            }
+        }
+
+        $input['financeGLcodebBS']  = $financeItemCategorySubAssigned->financeGLcodebBS;
+        $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
+        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+
+         $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
+                                            $query->where('companySystemID', $companySystemID)
+                                                ->where('approved', -1)
+                                                ->where('poCancelledYN', 0);
+                                     })
+                                    ->where('itemCode', $input['itemCode'])
+                                    ->groupBy('erp_purchaseorderdetails.companySystemID',
+                                        'erp_purchaseorderdetails.itemCode')
+                                    ->select(
+                                        [
+                                            'erp_purchaseorderdetails.companySystemID',
+                                            'erp_purchaseorderdetails.itemCode',
+                                            'erp_purchaseorderdetails.itemPrimaryCode'
+                                        ]
+                                    )
+                                    ->sum('noQty');
+
+        $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                                ->where('companySystemID', $companySystemID)
+                                ->groupBy('itemSystemCode')
+                                ->sum('inOutQty');
+
+        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+                            $query->where('companySystemID', $companySystemID)
+                                ->where('grvTypeID', 2)
+                                ->groupBy('erp_grvmaster.companySystemID');
+                             })
+                            ->where('itemCode', $input['itemCode'])
+                            ->groupBy('erp_grvdetails.itemCode')
+                            ->select(
+                                [
+                                    'erp_grvdetails.companySystemID',
+                                    'erp_grvdetails.itemCode'
+                                ])
+                            ->sum('noQty');
+
+        $quantityOnOrder = $poQty - $grvQty;
+        $input['quantityOnOrder'] = $quantityOnOrder;
+        $input['quantityInHand']  = $quantityInHand;
+
+        if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
+            return ['status' => false, 'message' => 'No stock Qty. Please check again'];
+        }
+       
+        return ['status' => true, 'data' => (object)$input];
     }
 
     /**
@@ -967,8 +1096,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
                             $temp = array(
                                 'itemDescription' => $item->itemDescription,
                                 'RequestDetailsID' => $item->RequestDetailsID,
-                                'itemPrimaryCode' => $item->item_by->primaryCode,
-                                'secondaryItemCode' => $item->item_by->secondaryItemCode
+                                'itemPrimaryCode' => isset($item->item_by->primaryCode) ? $item->item_by->primaryCode : "",
+                                'secondaryItemCode' => isset($item->item_by->secondaryItemCode) ? $item->item_by->secondaryItemCode : ""
                             );
 
                             array_push($temArray, $temp);
