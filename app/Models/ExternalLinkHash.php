@@ -48,7 +48,7 @@ use Eloquent as Model;
 class ExternalLinkHash extends Model
 {
 
-    public $table = 'externalLinkHash';
+    public $table = 'externallinkhash';
     
     const CREATED_AT = 'genratedDate';
     const UPDATED_AT = null;

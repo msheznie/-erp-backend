@@ -47,7 +47,7 @@ use Eloquent as Model;
 class RegisteredBankMemoSupplier extends Model
 {
 
-    public $table = 'registeredBankMemoSupplier';
+    public $table = 'registeredbankmemosupplier';
     
     const CREATED_AT = null;
     const UPDATED_AT = null;

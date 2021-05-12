@@ -628,7 +628,7 @@ class GRVMasterAPIController extends AppBaseController
 
             //check Input Vat Transfer GL Account if vat exist
             $totalVAT = GRVDetails::where('grvAutoID',$id)->selectRaw('SUM(VATAmount*noQty) as totalVAT')->first();
-            if((TaxService::checkGRVVATEligible($gRVMaster->companySystemID,$gRVMaster->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0) || $poLogisticAmount->logisticVAT > 0){
+            if((TaxService::checkGRVVATEligible($gRVMaster->companySystemID,$gRVMaster->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0) || (!empty($poLogisticAmount) && $poLogisticAmount->logisticVAT > 0)){
                 if(empty(TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                 }
@@ -770,7 +770,8 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.approved',
                 'erp_grvmaster.grvLocation',
                 'erp_grvmaster.refferedBackYN',
-                'erp_grvmaster.grvTypeID'
+                'erp_grvmaster.grvTypeID',
+                'erp_grvmaster.companySystemID'
             ]);
 
         $search = $request->input('search.value');

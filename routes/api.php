@@ -1666,6 +1666,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');
 
         Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData');
+        Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries');
         Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL');
         Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate');
         Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
