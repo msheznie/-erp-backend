@@ -31,7 +31,7 @@ use Eloquent as Model;
 class ReportColumnTemplateDetail extends Model
 {
 
-    public $table = 'reportcolumntemplateDetails';
+    public $table = 'reportcolumntemplatedetails';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';

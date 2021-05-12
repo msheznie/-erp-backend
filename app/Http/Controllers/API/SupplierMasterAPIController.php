@@ -1450,7 +1450,7 @@ class SupplierMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         $registeredSupplier = DB::table('erp_documentapproved')
-            ->select('registeredSupplier.*', 'erp_documentapproved.documentApprovedID',
+            ->select('registeredsupplier.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
                 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
@@ -1463,11 +1463,11 @@ class SupplierMasterAPIController extends AppBaseController
                     ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.removedYN', 0);
             })
-            ->join('registeredSupplier', function ($query) use ($companyID, $empID, $search) {
+            ->join('registeredsupplier', function ($query) use ($companyID, $empID, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                    ->where('registeredSupplier.approvedYN', 0)
-                    ->where('registeredSupplier.supplierConfirmedYN', 1)
+                    ->where('registeredsupplier.approvedYN', 0)
+                    ->where('registeredsupplier.supplierConfirmedYN', 1)
                     ->when($search != "", function ($q) use ($search) {
                         $q->where(function ($query) use ($search) {
                             $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
@@ -1475,7 +1475,7 @@ class SupplierMasterAPIController extends AppBaseController
                         });
                     });
             })
-            ->leftJoin('currencymaster', 'registeredSupplier.currency', '=', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster', 'registeredsupplier.currency', '=', 'currencymaster.currencyID')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 86)

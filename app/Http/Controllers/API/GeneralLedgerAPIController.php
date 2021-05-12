@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
+use App\Jobs\GeneralLedgerInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankLedger;
@@ -791,4 +793,48 @@ class GeneralLedgerAPIController extends AppBaseController
             return $this->sendError($e->getMessage());
         }
     }
+
+    public function updateGLEntries(Request $request){
+
+        $input = $request->all();
+        $messages = [
+            'documentSystemID.required' => 'Document system ID is required',
+            'documentSystemCode.required' => 'Document system code is required.',
+            'companySystemID.required' => 'Company system ID is required.'
+        ];
+        $validator = \Validator::make($input, [
+            'documentSystemID' => 'required',
+            'documentSystemCode' => 'required',
+            'companySystemID' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $empInfo = Helper::getEmployeeInfo();
+            $count = GeneralLedger::where('documentSystemID', $input['documentSystemID'])
+                ->where('documentSystemCode', $input['documentSystemCode'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->count();
+
+            if($count > 0){
+                return $this->sendError('GL entries are already passed for this document',500);
+            }
+            $masterData = ['documentSystemID' => $input['documentSystemID'],
+                           'autoID' => $input['documentSystemCode'],
+                           'companySystemID' => $input['companySystemID'],
+                           'employeeSystemID' => $empInfo->employeeSystemID];
+            GeneralLedgerInsert::dispatch($masterData);
+            DB::commit();
+            return $this->sendResponse([],'GL posted successfully');
+        }catch (\Exception $e){
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+    }
+
 }

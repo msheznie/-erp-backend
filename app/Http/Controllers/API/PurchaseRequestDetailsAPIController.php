@@ -573,7 +573,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $pr = PurchaseRequest::where('purchaseRequestID',$input['requestId'])->first();
         if(empty($pr)){
-            return $this->sendError('Purchase Request Detail Not Found',404);
+            return $this->sendError('Purchase Request Not Found',404);
         }
 
         $companySystemID = $input['companySystemID'];
@@ -590,8 +590,18 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $childCompanies = Helper::getSimilarGroupCompanies($companySystemID);
 
 
-        $itemCode = $input['itemCode'];
-        $PRRequestedDate = $pr->PRRequestedDate;
+        $itemCode = isset($input['itemCode']) ? $input['itemCode'] : 0;
+
+        $detail = PurchaseRequestDetails::where('purchaseRequestID',$input['requestId'])
+                                       ->where('itemCode',$itemCode)
+                                       ->first();
+
+        if(empty($detail)){
+            return $this->sendError('Purchase Request Detail Not Found',404);
+        }
+
+
+        $PRRequestedDate = $pr->timeStamp;
         $result['history'] = PurchaseOrderDetails::whereHas('order', function ($query) use ($childCompanies,$PRRequestedDate) {
             $query->whereIn('companySystemID', $childCompanies)
                 ->where('approved', -1)
