@@ -196,6 +196,10 @@ class ItemMaster extends Model
         return $this->hasOne('App\Models\FinanceItemCategorySub','itemCategorySubID','financeCategorySub');
     }
 
+    public function asset_category(){
+        return $this->hasOne('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
+    }
+
     public function documentapproved(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
     }
