@@ -1924,7 +1924,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if (isset($input['customers']) && count($input['customers']) != 1) {
+        if (isset($input['customers']) && count($input['customers']) != 1 && $request->reportTypeID == 'CBS') {
             return $this->sendError("customer Statement cannot be sent to multiple customers",500);
         }
 
@@ -1940,7 +1940,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
         $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_statement_' . $nowTime . '.pdf');
 
-        $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];
+        $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
                                                ->get();
