@@ -1671,6 +1671,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
 
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
+                $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
                 /*define input*/
 
@@ -1690,6 +1691,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
                 $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
+                $addToCusInvDetails[$x]['VATAmount'] = round($updateInvoice->totalVatAmount, $transDecimalPlace);
+                $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
+                $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
                 $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
@@ -2416,8 +2420,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         if (($printTemplate['printTemplateID'] == 7 || $printTemplate['printTemplateID'] == 8) && $master->isPerforma == 1) {
-            $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master, $customerInvoice->customer->CutomerCode);
-            $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
+            if (isset($customerInvoice->invoicedetail->contract->contractType) && $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED) {
+                $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master, $customerInvoice->customer->CutomerCode);
+                $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
+            } else {
+                $customerInvoice->linePdoinvoiceDetails = false;
+            }
         }
 
         $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
