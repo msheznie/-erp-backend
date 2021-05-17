@@ -1992,6 +1992,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
         Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
+        Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
 
     });
 
