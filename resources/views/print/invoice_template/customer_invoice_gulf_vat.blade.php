@@ -860,9 +860,10 @@
                 <th style="width:10%;text-align: center">GL Code</th>
                 <th style="width:60%;text-align: center">GL Code Description</th>
                 <th style="width:10%;text-align: center">QTY</th>
+                <th style="width:10%;text-align: center">Taxable Amount</th>
                 <th style="width:10%;text-align: center">VAT Amount</th>
                 <th style="width:10%;text-align: center">Unit Rate</th>
-                <th style="width:10%;text-align: right">Amount</th>
+                <th style="width:10%;text-align: right">Total Amount Inclusive of VAT</th>
             </tr>
             </thead>
             <tbody>
@@ -877,6 +878,7 @@
                     <td>{{$item->glCode}}</td>
                     <td>{{$item->glCodeDes}}</td>
                     <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
+                    <td class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
@@ -890,7 +892,7 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                     <tr>
-                        <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                        <td style="border-bottom: none !important;border-left: none !important;width: 80%;">&nbsp;</td>
                         <td class="text-right" style="width: 20%;border-bottom: none !important"><span
                                     class="font-weight-bold"
                                     style="border-bottom: none !important;font-size: 11.5px">Total:</span>
