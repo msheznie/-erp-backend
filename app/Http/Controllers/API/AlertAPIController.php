@@ -49,7 +49,7 @@ class AlertAPIController extends AppBaseController
         $this->alertRepository->pushCriteria(new LimitOffsetCriteria($request));
         $alerts = $this->alertRepository->all();
 
-        return $this->sendResponse($alerts->toArray(), 'Alerts retrieved successfully');
+        return $this->sendResponse($alerts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.alerts')]));
     }
 
     /**
@@ -66,7 +66,7 @@ class AlertAPIController extends AppBaseController
 
         $alerts = $this->alertRepository->create($input);
 
-        return $this->sendResponse($alerts->toArray(), 'Alert saved successfully');
+        return $this->sendResponse($alerts->toArray(), trans('custom.save', ['attribute' => trans('custom.alerts')]));
     }
 
     /**
@@ -83,10 +83,10 @@ class AlertAPIController extends AppBaseController
         $alert = $this->alertRepository->findWithoutFail($id);
 
         if (empty($alert)) {
-            return $this->sendError('Alert not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.alerts')]));
         }
 
-        return $this->sendResponse($alert->toArray(), 'Alert retrieved successfully');
+        return $this->sendResponse($alert->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.alerts')]));
     }
 
     /**
@@ -106,12 +106,12 @@ class AlertAPIController extends AppBaseController
         $alert = $this->alertRepository->findWithoutFail($id);
 
         if (empty($alert)) {
-            return $this->sendError('Alert not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.alerts')]));
         }
 
         $alert = $this->alertRepository->update($input, $id);
 
-        return $this->sendResponse($alert->toArray(), 'Alert updated successfully');
+        return $this->sendResponse($alert->toArray(), trans('custom.update', ['attribute' => trans('custom.alerts')]));
     }
 
     /**
@@ -128,11 +128,11 @@ class AlertAPIController extends AppBaseController
         $alert = $this->alertRepository->findWithoutFail($id);
 
         if (empty($alert)) {
-            return $this->sendError('Alert not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.alerts')]));
         }
 
         $alert->delete();
 
-        return $this->sendResponse($id, 'Alert deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.alerts')]));
     }
 }

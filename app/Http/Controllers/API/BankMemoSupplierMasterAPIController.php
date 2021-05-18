@@ -49,7 +49,7 @@ class BankMemoSupplierMasterAPIController extends AppBaseController
         $this->bankMemoSupplierMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankMemoSupplierMasters = $this->bankMemoSupplierMasterRepository->all();
 
-        return $this->sendResponse($bankMemoSupplierMasters->toArray(), 'Bank Memo Supplier Masters retrieved successfully');
+        return $this->sendResponse($bankMemoSupplierMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
     }
 
     /**
@@ -66,7 +66,7 @@ class BankMemoSupplierMasterAPIController extends AppBaseController
 
         $bankMemoSupplierMasters = $this->bankMemoSupplierMasterRepository->create($input);
 
-        return $this->sendResponse($bankMemoSupplierMasters->toArray(), 'Bank Memo Supplier Master saved successfully');
+        return $this->sendResponse($bankMemoSupplierMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
     }
 
     /**
@@ -83,10 +83,10 @@ class BankMemoSupplierMasterAPIController extends AppBaseController
         $bankMemoSupplierMaster = $this->bankMemoSupplierMasterRepository->findWithoutFail($id);
 
         if (empty($bankMemoSupplierMaster)) {
-            return $this->sendError('Bank Memo Supplier Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
         }
 
-        return $this->sendResponse($bankMemoSupplierMaster->toArray(), 'Bank Memo Supplier Master retrieved successfully');
+        return $this->sendResponse($bankMemoSupplierMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
     }
 
     /**
@@ -106,12 +106,12 @@ class BankMemoSupplierMasterAPIController extends AppBaseController
         $bankMemoSupplierMaster = $this->bankMemoSupplierMasterRepository->findWithoutFail($id);
 
         if (empty($bankMemoSupplierMaster)) {
-            return $this->sendError('Bank Memo Supplier Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
         }
 
         $bankMemoSupplierMaster = $this->bankMemoSupplierMasterRepository->update($input, $id);
 
-        return $this->sendResponse($bankMemoSupplierMaster->toArray(), 'BankMemoSupplierMaster updated successfully');
+        return $this->sendResponse($bankMemoSupplierMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
     }
 
     /**
@@ -128,11 +128,11 @@ class BankMemoSupplierMasterAPIController extends AppBaseController
         $bankMemoSupplierMaster = $this->bankMemoSupplierMasterRepository->findWithoutFail($id);
 
         if (empty($bankMemoSupplierMaster)) {
-            return $this->sendError('Bank Memo Supplier Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
         }
 
         $bankMemoSupplierMaster->delete();
 
-        return $this->sendResponse($id, 'Bank Memo Supplier Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_memo_supplier_masters')]));
     }
 }

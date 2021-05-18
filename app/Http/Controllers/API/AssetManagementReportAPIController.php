@@ -66,7 +66,7 @@ class AssetManagementReportAPIController extends AppBaseController
             'assetType' => $aasetType
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function validateReport(Request $request)
@@ -161,7 +161,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -543,7 +543,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1119,7 +1119,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 }
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'AMAA': //Asset Additions
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
@@ -1164,7 +1164,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'AMAD': //Asset Disposal
 
@@ -1210,7 +1210,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
 
                 break;
             case 'AMADR': //Asset Depreciation Register
@@ -1317,7 +1317,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
@@ -1347,10 +1347,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 

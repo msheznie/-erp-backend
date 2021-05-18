@@ -93,7 +93,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $this->budgetTransferFormRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetTransferForms = $this->budgetTransferFormRepository->all();
 
-        return $this->sendResponse($budgetTransferForms->toArray(), 'Budget Transfer Forms retrieved successfully');
+        return $this->sendResponse($budgetTransferForms->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budget_transfer_form')]));
     }
 
     /**
@@ -169,7 +169,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]), 500);
         }
 
         $input['companyID'] = $company->CompanyID;
@@ -232,10 +232,10 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransferForm = $this->budgetTransferFormRepository->with(['company.reportingcurrency','created_by','confirmed_by'])->findWithoutFail($id);
 
         if (empty($budgetTransferForm)) {
-            return $this->sendError('Budget Transfer Form not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
         }
 
-        return $this->sendResponse($budgetTransferForm->toArray(), 'Budget Transfer Form retrieved successfully');
+        return $this->sendResponse($budgetTransferForm->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budget_transfer_form')]));
     }
 
     /**
@@ -293,7 +293,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransferForm = $this->budgetTransferFormRepository->findWithoutFail($id);
 
         if (empty($budgetTransferForm)) {
-            return $this->sendError('Budget Transfer Form not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -313,7 +313,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             $checkItems = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every budget transfer should have at least one item', 500);
+                return $this->sendError(trans('custom.every_budget_transfer_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
@@ -325,7 +325,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                return $this->sendError(trans('custom.amount_should_be_greater_than_0_for_every_items'), 500);
             }
 
             $debitNoteDetails = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)->get();
@@ -383,7 +383,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $budgetTransferForm = $this->budgetTransferFormRepository->update(array_only($input, ['comments','year','templatesMasterAutoID','modifiedPc','modifiedUser','modifiedUserSystemID']), $id);
 
-        return $this->sendResponse($budgetTransferForm->toArray(), 'Budget Transfer updated successfully');
+        return $this->sendResponse($budgetTransferForm->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_transfer')]));
     }
 
     /**
@@ -430,12 +430,12 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransferForm = $this->budgetTransferFormRepository->findWithoutFail($id);
 
         if (empty($budgetTransferForm)) {
-            return $this->sendError('Budget Transfer Form not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
         }
 
         $budgetTransferForm->delete();
 
-        return $this->sendResponse($id, 'Budget Transfer Form deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.budget_transfer_form')]));
     }
 
     public function getBudgetTransferMasterByCompany(Request $request)
@@ -550,7 +550,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             'financeYear' => $financeYear
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getBudgetTransferAudit(Request $request)
@@ -559,10 +559,10 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransfer = $this->budgetTransferFormRepository->getAudit($id);
 
         if (empty($budgetTransfer)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer')]));
         }
 
-        return $this->sendResponse($budgetTransfer, 'Budget Transfer audit retrieved successfully');
+        return $this->sendResponse($budgetTransfer, trans('custom.retrieve', ['attribute' => trans('custom.budget_transfer_audit')]));
     }
 
     public function budgetTransferReopen(Request $request)
@@ -573,19 +573,19 @@ class BudgetTransferFormAPIController extends AppBaseController
         $budgetTransfer = $this->budgetTransferFormRepository->findWithoutFail($id);
         $emails = array();
         if (empty($budgetTransfer)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer')]));
         }
 
         if ($budgetTransfer->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Budget Transfer it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_transfer_it_is_already_fully_approved'));
         }
 
         if ($budgetTransfer->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Budget Transfer it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_transfer_it_is_already_partially_approved'));
         }
 
         if ($budgetTransfer->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Budget Transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_budget_transfer_it_is_not_confirmed'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -617,7 +617,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -655,7 +655,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($budgetTransfer->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($budgetTransfer->toArray(), 'Budget Transfer reopened successfully');
+        return $this->sendResponse($budgetTransfer->toArray(), trans('custom.reopened', ['attribute' => trans('custom.budget_transfer')]));
     }
 
 

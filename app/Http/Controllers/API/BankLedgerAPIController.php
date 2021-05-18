@@ -123,7 +123,7 @@ class BankLedgerAPIController extends AppBaseController
         $this->bankLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankLedgers = $this->bankLedgerRepository->all();
 
-        return $this->sendResponse($bankLedgers->toArray(), 'Bank Ledgers retrieved successfully');
+        return $this->sendResponse($bankLedgers->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_ledgers')]));
     }
 
     /**
@@ -170,7 +170,7 @@ class BankLedgerAPIController extends AppBaseController
 
         $bankLedgers = $this->bankLedgerRepository->create($input);
 
-        return $this->sendResponse($bankLedgers->toArray(), 'Bank Ledger saved successfully');
+        return $this->sendResponse($bankLedgers->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_ledgers')]));
     }
 
     /**
@@ -217,10 +217,10 @@ class BankLedgerAPIController extends AppBaseController
         $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
 
         if (empty($bankLedger)) {
-            return $this->sendError('Bank Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_ledgers')]));
         }
 
-        return $this->sendResponse($bankLedger->toArray(), 'Bank Ledger retrieved successfully');
+        return $this->sendResponse($bankLedger->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_ledgers')]));
     }
 
     /**
@@ -277,7 +277,7 @@ class BankLedgerAPIController extends AppBaseController
         $bankLedger = $this->bankLedgerRepository->with(['bank_account'])->findWithoutFail($id);
 
         if (empty($bankLedger)) {
-            return $this->sendError('Bank Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_ledgers')]));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -290,11 +290,11 @@ class BankLedgerAPIController extends AppBaseController
                 $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($input['bankRecAutoID']);
 
                 if (empty($bankReconciliation)) {
-                    return $this->sendError('Bank Reconciliation not found');
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
                 }
 
                 if ($bankReconciliation->confirmedYN == 1) {
-                    return $this->sendError('You cannot edit, This document already confirmed.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
                 if ($input['bankClearedYN']) {
@@ -344,7 +344,7 @@ class BankLedgerAPIController extends AppBaseController
             } else if ($input['editType'] == 2) {
 
                 if ($bankLedger->bankClearedYN == -1) {
-                    return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_item_already_added_to_bank_reconciliation'), 500);
                 }
 
                 if ($input['trsCollectedYN']) {
@@ -369,11 +369,11 @@ class BankLedgerAPIController extends AppBaseController
             } else if ($input['editType'] == 3) {
 
                 if ($bankLedger->pulledToBankTransferYN == -1) {
-                    return $this->sendError('You cannot edit, This payment already added to bank transfer.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_payment_already_added_to_bank_transfer'), 500);
                 }
 
                 if ($bankLedger->bankClearedYN == -1) {
-                    return $this->sendError('You cannot edit, This document is already added to bank reconciliation.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_document_is_already_added_to_bank_reconciliation'), 500);
                 }
 
                 if ($input['trsClearedYN']) {
@@ -404,10 +404,10 @@ class BankLedgerAPIController extends AppBaseController
                             $glAmount = $checkGLAmount->documentRptAmount;
                         }
                         if (abs($bankLedger->payAmountBank) != abs($glAmount)) {
-                            return $this->sendError('Bank amount is not matching with GL amount.', 500);
+                            return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
                         }
                     } else {
-                        return $this->sendError('GL data cannot be found for this document.', 500);
+                        return $this->sendError(trans('custom.gl_data_cannot_be_found_for_this_document'), 500);
                     }
                 }
 
@@ -583,11 +583,11 @@ class BankLedgerAPIController extends AppBaseController
                 $bankTransfer = $this->paymentBankTransferRepository->with(['bank_account'])->findWithoutFail($input['paymentBankTransferID']);
 
                 if (empty($bankTransfer)) {
-                    return $this->sendError('Bank Transfer not found');
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_transfer')]));
                 }
 
                 if ($bankTransfer->confirmedYN == 1) {
-                    return $this->sendError('You cannot edit, This document already confirmed.', 500);
+                    return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed'), 500);
                 }
 
                 $bankId = 0;
@@ -598,7 +598,7 @@ class BankLedgerAPIController extends AppBaseController
                 $bankLedger = BankLedger::where('bankLedgerAutoID', $id)->first();
 
                 if(empty($bankLedger)){
-                    return $this->sendError('Payment not found.', 500);
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment')]), 500);
                 }
 
                 $checkBankAccount = BankLedger::where('bankLedgerAutoID', $id);
@@ -622,7 +622,7 @@ class BankLedgerAPIController extends AppBaseController
 
 
                 if (empty($checkBankAccount) && $input['pulledToBankTransferYN']) {
-                    return $this->sendError('Supplier account is not updated. You cannot add this payment to the transfer.', 500);
+                    return $this->sendError(trans('custom.supplier_account_is_not_updated_you_cannot_add_this_payment_to_the_transfer'), 500);
                 }
 
                 if ($input['pulledToBankTransferYN']) {
@@ -641,7 +641,7 @@ class BankLedgerAPIController extends AppBaseController
             }
         }
         $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
-        return $this->sendResponse($bankLedger->toArray(), 'BankLedger updated successfully');
+        return $this->sendResponse($bankLedger->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_ledgers')]));
     }
 
     public function pvSupplierPrint(Request $request)
@@ -660,7 +660,7 @@ class BankLedgerAPIController extends AppBaseController
                 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by'])->first();
 
         if (empty($output)) {
-            return $this->sendError('Customer Receive Payment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_receive_payment')]));
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($output->companySystemID, $output->documentSystemID);
@@ -728,14 +728,14 @@ class BankLedgerAPIController extends AppBaseController
                 $entity = $this->customerReceivePaymentRepository->find($id);
 
                 if (empty($entity)) {
-                    return $this->sendError('Payment not found');
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment')]));
                 }
             } else if ($input['editType'] == 2) {
                 $id = $input['PayMasterAutoId'];
                 $entity = $this->paySupplierInvoiceMasterRepository->find($id);
 
                 if (empty($entity)) {
-                    return $this->sendError('Receipt not found');
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.receipt')]));
                 }
             } else {
                 return $this->sendError('Error', 500);
@@ -745,11 +745,11 @@ class BankLedgerAPIController extends AppBaseController
             $employee = \Helper::getEmployeeInfo();
 
             if ($entity->confirmedYN != 1) {
-                return $this->sendError('You cannot edit, it is not confirmed.', 500);
+                return $this->sendError(trans('custom.you_cannot_edit_it_is_not_confirmed'), 500);
             }
 
             if ($entity->approved == -1) {
-                return $this->sendError('You cannot edit, it is already approved.', 500);
+                return $this->sendError(trans('custom.you_cannot_edit_it_is_already_approved'), 500);
             }
 
             if ($input['trsCollectedYN']) {
@@ -781,7 +781,7 @@ class BankLedgerAPIController extends AppBaseController
             }
             return $this->sendResponse($entity->toArray(), 'Successfully updated');
         } else {
-            return $this->sendError('Error.', 500);
+            return $this->sendError(trans('custom.error'), 500);
         }
     }
 
@@ -829,12 +829,12 @@ class BankLedgerAPIController extends AppBaseController
         $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
 
         if (empty($bankLedger)) {
-            return $this->sendError('Bank Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_ledgers')]));
         }
 
         $bankLedger->delete();
 
-        return $this->sendResponse($id, 'Bank Ledger deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_ledgers')]));
     }
 
     public function getBankReconciliationsByType(Request $request)
@@ -1374,7 +1374,7 @@ class BankLedgerAPIController extends AppBaseController
                 $supplierCountArray = collect($pv)->groupBy('BPVsupplierID');
                 $supplierArrayKeys = array_keys($supplierCountArray->toArray());
                 if(count($supplierCountArray->toArray())>1){
-                    return $this->sendError('Different suppliers found. You can not select different suppliers vouchers',500);
+                    return $this->sendError(trans('custom.different_suppliers_found_you_can_not_select_different_suppliers_vouchers'),500);
                 }
 //                if(in_array('',$supplierArrayKeys) || in_array(null,$supplierArrayKeys)){
 //                    return $this->sendError('supplier ID field is can not be empty on db',500);
@@ -1383,19 +1383,19 @@ class BankLedgerAPIController extends AppBaseController
                 $accountCountArray = collect($pv)->groupBy('BPVAccount');
                 $accountArrayKeys = array_keys($accountCountArray->toArray());
                 if(count($accountCountArray->toArray())>1){
-                    return $this->sendError('Different accounts found. You can not select different suppliers vouchers',500);
+                    return $this->sendError(trans('custom.different_accounts_found_you_can_not_select_different_suppliers_vouchers'),500);
                 }
                 if(in_array(null,$accountArrayKeys) || in_array('',$accountArrayKeys)){
-                    return $this->sendError('Account field is can not be empty on db',500);
+                    return $this->sendError(trans('custom.account_field_is_can_not_be_empty_on_db'),500);
                 }
 
                 $currencyCountArray = collect($pv)->groupBy('supplierTransCurrencyID');
                 $currencyArrayKeys = array_keys($currencyCountArray->toArray());
                 if(count($currencyCountArray->toArray())>1){
-                    return $this->sendError('Different currencies found. You can not select different accounts vouchers',500);
+                    return $this->sendError(trans('custom.different_currencies_found_you_can_not_select_different_accounts_vouchers'),500);
                 }
                 if(in_array(null,$currencyArrayKeys) || in_array('',$currencyArrayKeys)){
-                    return $this->sendError('Null currency field is found',500);
+                    return $this->sendError(trans('custom.null_currency_field_is_found'),500);
                 }
                 ////////////
 
@@ -1405,11 +1405,11 @@ class BankLedgerAPIController extends AppBaseController
                  *
                  * */
                 if($chequeCount ==0 && $transferCount ==0){
-                    return $this->sendError('Please select an item to print',500);
+                    return $this->sendError(trans('custom.please_select_an_item_to_print'),500);
                 }elseif ($chequeCount >0 && $transferCount >0){
-                    return $this->sendError('You can not print cheque payment and bank transfer at a time',500);
+                    return $this->sendError(trans('custom.you_can_not_print_cheque_payment_and_bank_transfer_at_a_time'),500);
                 }elseif ($chequeCount >1){
-                    return $this->sendError('You can print only one cheque payment at a time',500);
+                    return $this->sendError(trans('custom.you_can_print_only_one_cheque_payment_at_a_time'),500);
                 }
                 //////////////
                 if($chequeCount>0){
@@ -1470,7 +1470,7 @@ class BankLedgerAPIController extends AppBaseController
                 ->get();
 
             if (count($bankLedger) == 0) {
-                return $this->sendError('No items found for print', 500);
+                return $this->sendError(trans('custom.no_items_found_for_print'), 500);
             }
 
             DB::beginTransaction();
@@ -1596,21 +1596,21 @@ class BankLedgerAPIController extends AppBaseController
                     $html = view('print.' . $htmlName, $array)->render();
                     DB::commit();
                     if(isset($input['isPrint']) && $input['isPrint']) {
-                        return $this->sendResponse($html, 'Print successfully');
+                        return $this->sendResponse($html, trans('custom.print_successfully'));
                     }else{
-                        return $this->sendResponse($array, 'Retrieved successfully');
+                        return $this->sendResponse($array, trans('custom.retrieved_successfully'));
                     }
 
                 } else {
-                    return $this->sendError('Error', 500);
+                    return $this->sendError(trans('custom.error'), 500);
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                return ['success' => false, 'message' => $e . 'Error'];
+                return ['success' => false, 'message' => $e . trans('custom.error')];
             }
 
         }else{
-            return $this->sendError('Please select an item to print',500);
+            return $this->sendError(trans('custom.please_select_an_item_to_print'),500);
         }
 
     }
@@ -1628,7 +1628,7 @@ class BankLedgerAPIController extends AppBaseController
 
         $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::where('PayMasterAutoId',$input['id'])->first();
         if(empty($paySupplierInvoiceMaster)){
-            return $this->sendError('Pay Supplier Invoice Master Not Found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_master')]),500);
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -1665,7 +1665,7 @@ class BankLedgerAPIController extends AppBaseController
                 ->update($check_registry);
         }
 
-        return $this->sendResponse([],'Print reverted Successfully');
+        return $this->sendResponse([],trans('custom.print_reverted_successfully'));
     }
 
     public function updatePrintChequeItemsBacksUp(Request $request)
@@ -1696,7 +1696,7 @@ class BankLedgerAPIController extends AppBaseController
             ->get();
 
         if (count($bankLedger) == 0) {
-            return $this->sendError('No items found for print', 500);
+            return $this->sendError(trans('custom.no_items_found_for_print'), 500);
         }
         DB::beginTransaction();
         try {
@@ -1795,13 +1795,13 @@ class BankLedgerAPIController extends AppBaseController
                 //'landscape'
                 DB::commit();
                 // return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
-                return $this->sendResponse($html, 'Print successfully');
+                return $this->sendResponse($html, trans('custom.print_successfully'));
             } else {
-                return $this->sendError('Error', 500);
+                return $this->sendError(trans('custom.error'), 500);
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error'];
+            return ['success' => false, 'message' => $e . trans('custom.error')];
         }
         // return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
     }
@@ -1825,7 +1825,7 @@ class BankLedgerAPIController extends AppBaseController
             ->get();
 
         if (count($bankLedger) == 0) {
-            return $this->sendError('Not found', 500);
+            return $this->sendError(trans('custom.error_not_found'), 500);
         }
         $time = strtotime("now");
         $fileName = 'cheque' . $time . '.pdf';
@@ -1897,7 +1897,7 @@ class BankLedgerAPIController extends AppBaseController
             //'landscape'
             return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
         } else {
-            return $this->sendError('Error', 500);
+            return $this->sendError(trans('custom.error'), 500);
         }
     }
 
@@ -1924,7 +1924,7 @@ class BankLedgerAPIController extends AppBaseController
             'accounts' => $accounts
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 
@@ -1940,7 +1940,7 @@ class BankLedgerAPIController extends AppBaseController
         $masterData = PaymentBankTransfer::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Bank transfer not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_transfer')]));
         }
 
 
@@ -1951,11 +1951,11 @@ class BankLedgerAPIController extends AppBaseController
                                                          ->first();
 
         if ($checkBankTransferGenerated) {
-            return $this->sendError("You cannot return back to amend this bank transfer, upcoming month's bank transfer is already created");
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_bank_transfer_upcoming_months_bank_transfer_is_already_created'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this bank transfer, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_bank_transfer_it_is_not_confirmed'));
         }
 
 
@@ -2022,7 +2022,7 @@ class BankLedgerAPIController extends AppBaseController
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Bank transfer amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_transfer_amend')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -2038,12 +2038,12 @@ class BankLedgerAPIController extends AppBaseController
         $masterData = PaymentBankTransfer::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Bank transfer not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_transfer')]));
         }
 
         $masterData->exportedYN = 0;
         $masterData->save();
 
-        return $this->sendResponse($masterData->toArray(), 'Bank transfer updated successfully');
+        return $this->sendResponse($masterData->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_transfer')]));
     }
 }

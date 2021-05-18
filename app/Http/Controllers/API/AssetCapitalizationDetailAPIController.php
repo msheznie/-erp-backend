@@ -69,7 +69,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         $this->assetCapitalizationDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->all();
 
-        return $this->sendResponse($assetCapitalizationDetails->toArray(), 'Asset Capitalization Details retrieved successfully');
+        return $this->sendResponse($assetCapitalizationDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization_details')]));
     }
 
     /**
@@ -120,21 +120,21 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
             $master = AssetCapitalization::find($input["capitalizationID"]);
 
             if (empty($master)) {
-                return $this->sendError('Asset Capitalization not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
             }
 
             $company = Company::find($input['companySystemID']);
             if (empty($company)) {
-                return $this->sendError('Company not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]));
             }
 
             if ($master->faID == $input['faID']) {
-                return $this->sendError('Cannot add same item which is selected in header.');
+                return $this->sendError(trans('custom.cannot_add_same_item_which_is_selected_in_header'));
             }
 
             $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $input['capitalizationID'], 'faID' => $input['faID']]);
             if (count($detail) > 0) {
-                return $this->sendError('Cannot add same item.');
+                return $this->sendError(trans('custom.cannot_add_same_item'));
             }
 
             $input['companyID'] = $company->CompanyID;
@@ -161,7 +161,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
             $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->create($input);
             DB::commit();
-            return $this->sendResponse($assetCapitalizationDetails->toArray(), 'Asset Capitalization Detail saved successfully');
+            return $this->sendResponse($assetCapitalizationDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_capitalization_details')]));
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -216,7 +216,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
             return $this->sendError('Asset Capitalization Detail not found');
         }
 
-        return $this->sendResponse($assetCapitalizationDetail->toArray(), 'Asset Capitalization Detail retrieved successfully');
+        return $this->sendResponse($assetCapitalizationDetail->toArray(), trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_details')]));
     }
 
     /**
@@ -278,7 +278,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($input, $id);
 
-        return $this->sendResponse($assetCapitalizationDetail->toArray(), 'AssetCapitalizationDetail updated successfully');
+        return $this->sendResponse($assetCapitalizationDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_capitalization_details')]));
     }
 
     /**
@@ -326,11 +326,11 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         try {
             $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->findWithoutFail($id);
             if (empty($assetCapitalizationDetail)) {
-                return $this->sendError('Asset Capitalization Detail not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_details')]));
             }
             $assetCapitalizationDetail->delete();
             DB::commit();
-            return $this->sendResponse($id, 'Asset Capitalization Detail deleted successfully');
+            return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_capitalization_details')]));
 
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -342,16 +342,16 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
     {
         $id = $request->capitalizationID;
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->with(['segment'])->findWhere(['capitalizationID' => $id]);
-        return $this->sendResponse($assetCapitalizationDetail, 'Details retrieved successfully');
+        return $this->sendResponse($assetCapitalizationDetail, trans('custom.retrieve', ['attribute' => trans('custom.details')]));
     }
 
     public function deleteAllAssetCapitalizationDet(Request $request)
     {
         $assetCapitalizationDetail = AssetCapitalizationDetail::where('capitalizationID',$request->capitalizationID)->get();
         if (empty($assetCapitalizationDetail)) {
-            return $this->sendError('Asset Capitalization Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_details')]));
         }
         $assetCapitalizationDetail = AssetCapitalizationDetail::where('capitalizationID',$request->capitalizationID)->delete();
-        return $this->sendResponse($assetCapitalizationDetail, 'Asset Capitalization Detail deleted successfully');
+        return $this->sendResponse($assetCapitalizationDetail, trans('custom.delete', ['attribute' => trans('custom.asset_capitalization_details')]));
     }
 }

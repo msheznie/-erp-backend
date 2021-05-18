@@ -67,7 +67,7 @@ class BankAccountAPIController extends AppBaseController
         $this->bankAccountRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankAccounts = $this->bankAccountRepository->all();
 
-        return $this->sendResponse($bankAccounts->toArray(), 'Bank Accounts retrieved successfully');
+        return $this->sendResponse($bankAccounts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     /**
@@ -110,7 +110,7 @@ class BankAccountAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->with(['localcurrency', 'reportingcurrency'])->first();
         if (empty($company)) {
-            return $this->sendError('Company not found', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]), 500);
         }
         $input['companyID'] = $company->CompanyID;
 
@@ -130,7 +130,7 @@ class BankAccountAPIController extends AppBaseController
             ->where('AccountNo', $input['AccountNo'])
             ->first();
         if (!empty($checkDuplicateAccountNo)) {
-            return $this->sendError('Account No ' . $checkDuplicateAccountNo->AccountNo . ' already exists', 500);
+            return $this->sendError(trans('custom.account_no') .' '. $checkDuplicateAccountNo->AccountNo .' '. trans('custom.already_exists'), 500);
         }
 
         if (isset($input['isDefault']) && $input['isDefault']) {
@@ -140,7 +140,7 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError(trans('custom.you_cannot_make_this_account_as_default_account_this_bank_already_has_a_default_account') . $checkDefaultAccount->AccountNo . trans('custom.for_selected_currency'), 500);
             }
         }
 
@@ -155,11 +155,11 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (empty($chartOfAccount)) {
-                return $this->sendError('GL Code not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.gl_code')]));
             }
 
             if ($chartOfAccount->isActive == 0) {
-                return $this->sendError('Please select a active GL Code', 500);
+                return $this->sendError(trans('custom.please_select_a_active_gl_code'), 500);
             }
 
             if ($input['isTempBank'] != 1) {
@@ -167,7 +167,7 @@ class BankAccountAPIController extends AppBaseController
                     ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
                     ->first();
                 if (!empty($checkAlreadyAssignGl)) {
-                    return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
+                    return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
                 }
             }
 
@@ -176,7 +176,7 @@ class BankAccountAPIController extends AppBaseController
 
         $bankAccounts = $this->bankAccountRepository->create($input);
 
-        return $this->sendResponse($bankAccounts->toArray(), 'Bank Account saved successfully');
+        return $this->sendResponse($bankAccounts->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     /**
@@ -193,13 +193,13 @@ class BankAccountAPIController extends AppBaseController
         $bankAccount = $this->bankAccountRepository->with(['currency', 'confirmed_by', 'chart_of_account'])->findWithoutFail($id);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         $bankAccount->amounts = $this->getBankAccountBalanceSummery($bankAccount);
         $bankAccount->accountIBAN = $bankAccount['accountIBAN#'];
 
-        return $this->sendResponse($bankAccount->toArray(), 'Bank Account retrieved successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     /**
@@ -229,15 +229,15 @@ class BankAccountAPIController extends AppBaseController
         $bankAccount = $this->bankAccountRepository->findWithoutFail($id);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         if ($bankAccount->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed'), 500);
         }
 
         if ($bankAccount->approvedYN == 1) {
-            return $this->sendError('This document already approved.', 500);
+            return $this->sendError(trans('custom.this_document_already_approved'), 500);
         }
 
         $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)
@@ -247,7 +247,7 @@ class BankAccountAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkDuplicateAccountNo)) {
-            return $this->sendError('Account No ' . $checkDuplicateAccountNo->AccountNo . ' already exists', 500);
+            return $this->sendError(trans('custom.account_no') .' '. $checkDuplicateAccountNo->AccountNo .' '. trans('custom.already_exists'), 500);
         }
 
         if (isset($input['isDefault']) && $input['isDefault']) {
@@ -258,7 +258,7 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (!empty($checkDefaultAccount)) {
-                return $this->sendError('You cannot make this account as default account. This bank already has a default account(' . $checkDefaultAccount->AccountNo . ') for selected currency.', 500);
+                return $this->sendError(trans('custom.you_cannot_make_this_account_as_default_account_this_bank_already_has_a_default_account') .' '. $checkDefaultAccount->AccountNo .' '. trans('custom.for_selected_currency'), 500);
             }
         }
 
@@ -273,11 +273,11 @@ class BankAccountAPIController extends AppBaseController
                 ->first();
 
             if (empty($chartOfAccount)) {
-                return $this->sendError('GL Code not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.gl_code')]));
             }
 
             if ($chartOfAccount->isActive == 0) {
-                return $this->sendError('Please select a active GL Code', 500);
+                return $this->sendError(trans('custom.please_select_a_active_gl_code'), 500);
             }
 
             if (($bankAccount->isTempBank == $input['isTempBank']) && $input['isTempBank'] != 1) {
@@ -286,7 +286,7 @@ class BankAccountAPIController extends AppBaseController
                     ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
                     ->first();
                 if (!empty($checkAlreadyAssignGl)) {
-                    return $this->sendError('Selected chart of account code is already linked in ' . $checkAlreadyAssignGl->AccountNo . '.', 500);
+                    return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
                 }
             } 
             
@@ -314,7 +314,7 @@ class BankAccountAPIController extends AppBaseController
             }
 
             if ($input['isAccountActive'] == 0) {
-                return $this->sendError('Bank Account should be activated before confirm.', 500);
+                return $this->sendError(trans('custom.bank_account_should_be_activated_before_confirm'), 500);
             }
 
             $params = array('autoID' => $id,
@@ -333,7 +333,7 @@ class BankAccountAPIController extends AppBaseController
 
         $bankAccount = $this->bankAccountRepository->update($input, $id);
 
-        return $this->sendResponse($bankAccount->toArray(), 'BankAccount updated successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     /**
@@ -350,12 +350,12 @@ class BankAccountAPIController extends AppBaseController
         $bankAccount = $this->bankAccountRepository->findWithoutFail($id);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         $bankAccount->delete();
 
-        return $this->sendResponse($id, 'Bank Account deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_accounts')]));
     }
 
 
@@ -582,7 +582,7 @@ class BankAccountAPIController extends AppBaseController
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download('csv');
 
-        return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
+        return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }
 
     function getBankAccountBalanceSummery($row)
@@ -644,7 +644,7 @@ class BankAccountAPIController extends AppBaseController
             'currencies' => $currencies,
             'company' => $company
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
 
     }
 
@@ -805,12 +805,12 @@ class BankAccountAPIController extends AppBaseController
         $bankAccount = $this->bankAccountRepository->getAudit($id);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         $bankAccount->docRefNo = \Helper::getCompanyDocRefNo($bankAccount->companySystemID, $bankAccount->documentSystemID);
 
-        return $this->sendResponse($bankAccount->toArray(), 'Bank Account retrieved successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     public function bankAccountReopen(Request $request)
@@ -821,19 +821,19 @@ class BankAccountAPIController extends AppBaseController
         $bankAccount = $this->bankAccountRepository->findWithoutFail($id);
         $emails = array();
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         if ($bankAccount->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Bank Account it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_account_it_is_already_fully_approved'));
         }
 
         if ($bankAccount->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Bank Account it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_account_it_is_already_partially_approved'));
         }
 
         if ($bankAccount->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Bank Account, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_account_it_is_not_confirmed'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -865,7 +865,7 @@ class BankAccountAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -904,7 +904,7 @@ class BankAccountAPIController extends AppBaseController
             ->where('documentSystemID', $bankAccount->documentSystemID)
             ->delete();
 
-        return $this->sendResponse($bankAccount->toArray(), 'Bank Account reopened successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.reopened', ['attribute' => trans('custom.bank_accounts')]));
     }
 
     public function bankAccountReferBack(Request $request)
@@ -915,11 +915,11 @@ class BankAccountAPIController extends AppBaseController
 
         $bankAccount = $this->bankAccountRepository->find($id);
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         if ($bankAccount->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this bank account');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_bank_account'));
         }
 
         $bankAccountArray = $bankAccount->toArray();
@@ -953,7 +953,7 @@ class BankAccountAPIController extends AppBaseController
             $this->bankAccountRepository->update($updateArray, $id);
         }
 
-        return $this->sendResponse($bankAccount->toArray(), 'Bank Account Amend successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.bank_account_amend_successfully'));
     }
 
     public function getBankAccountsByBankID(Request $request)
@@ -973,6 +973,6 @@ class BankAccountAPIController extends AppBaseController
                                    ->where('bankmasterAutoID', $input['id'])
                                    ->get();
 
-        return $this->sendResponse($bankAccounts, 'Bank Accounts retrived  successfully');
+        return $this->sendResponse($bankAccounts, trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 }

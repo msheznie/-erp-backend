@@ -64,7 +64,7 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
         $this->bookInvSuppDetRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppDetRefferedBacks = $this->bookInvSuppDetRefferedBackRepository->all();
 
-        return $this->sendResponse($bookInvSuppDetRefferedBacks->toArray(), 'Book Inv Supp Det Reffered Backs retrieved successfully');
+        return $this->sendResponse($bookInvSuppDetRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
     }
 
     /**
@@ -111,7 +111,7 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
 
         $bookInvSuppDetRefferedBacks = $this->bookInvSuppDetRefferedBackRepository->create($input);
 
-        return $this->sendResponse($bookInvSuppDetRefferedBacks->toArray(), 'Book Inv Supp Det Reffered Back saved successfully');
+        return $this->sendResponse($bookInvSuppDetRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
     }
 
     /**
@@ -158,10 +158,10 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
         $bookInvSuppDetRefferedBack = $this->bookInvSuppDetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDetRefferedBack)) {
-            return $this->sendError('Book Inv Supp Det Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
         }
 
-        return $this->sendResponse($bookInvSuppDetRefferedBack->toArray(), 'Book Inv Supp Det Reffered Back retrieved successfully');
+        return $this->sendResponse($bookInvSuppDetRefferedBack->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
     }
 
     /**
@@ -218,12 +218,12 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
         $bookInvSuppDetRefferedBack = $this->bookInvSuppDetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDetRefferedBack)) {
-            return $this->sendError('Book Inv Supp Det Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
         }
 
         $bookInvSuppDetRefferedBack = $this->bookInvSuppDetRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($bookInvSuppDetRefferedBack->toArray(), 'BookInvSuppDetRefferedBack updated successfully');
+        return $this->sendResponse($bookInvSuppDetRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
     }
 
     /**
@@ -270,12 +270,12 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
         $bookInvSuppDetRefferedBack = $this->bookInvSuppDetRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDetRefferedBack)) {
-            return $this->sendError('Book Inv Supp Det Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
         }
 
         $bookInvSuppDetRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Book Inv Supp Det Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.book_inv_supp_det_reffered_backs')]));
     }
 
     public function getSIDetailGRVAmendHistory(Request $request)
@@ -289,6 +289,6 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
             ->with(['pomaster', 'grvmaster', 'suppinvmaster'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.purchase_order_details_reffered_history')]));
     }
 }

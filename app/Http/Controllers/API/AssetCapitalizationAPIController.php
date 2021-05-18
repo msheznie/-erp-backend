@@ -96,7 +96,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $this->assetCapitalizationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetCapitalizations = $this->assetCapitalizationRepository->all();
 
-        return $this->sendResponse($assetCapitalizations->toArray(), 'Asset Capitalizations retrieved successfully');
+        return $this->sendResponse($assetCapitalizations->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization')]));
     }
 
     /**
@@ -157,7 +157,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->first();
 
             if ($assetCapitalizations) {
-                return $this->sendError('Selected asset is already added for capitalization', 500);
+                return $this->sendError(trans('custom.selected_asset_is_already_added_for_capitalization'), 500);
             }
 
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -187,7 +187,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
             } else {
-                return $this->sendError('Capitalization date is not within financial period!', 500);
+                return $this->sendError(trans('custom.capitalization_date_is_not_within_financial_period'), 500);
             }
 
             $company = Company::find($input['companySystemID']);
@@ -245,7 +245,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $assetCapitalizations = $this->assetCapitalizationRepository->create($input);
             DB::commit();
-            return $this->sendResponse($assetCapitalizations->toArray(), 'Asset Capitalization saved successfully');
+            return $this->sendResponse($assetCapitalizations->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_capitalization')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -303,10 +303,10 @@ class AssetCapitalizationAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
-            return $this->sendError('Asset Capitalization not found');
+            return $this->sendError(rans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
         }
 
-        return $this->sendResponse($assetCapitalization->toArray(), 'Asset Capitalization retrieved successfully');
+        return $this->sendResponse($assetCapitalization->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization')]));
     }
 
     /**
@@ -366,13 +366,13 @@ class AssetCapitalizationAPIController extends AppBaseController
             $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
 
             if (empty($assetCapitalization)) {
-                return $this->sendError('Asset Capitalization not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
             }
 
             $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('capitalizationID', '<>', $id)->first();
 
             if ($assetCapitalizations) {
-                return $this->sendError('Selected asset is already added for capitalization', 500);
+                return $this->sendError(trans('custom.selected_asset_is_already_added_for_capitalization'), 500);
             }
 
             $companySystemID = $assetCapitalization->companySystemID;
@@ -411,18 +411,18 @@ class AssetCapitalizationAPIController extends AppBaseController
 
                 if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
                 } else {
-                    return $this->sendError('Capitalization date is not within financial period!', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.capitalization_date_is_not_within_financial_period'), 500, ['type' => 'confirm']);
                 }
 
                 $acDetailExist = AssetCapitalizationDetail::where('capitalizationID', $id)->get();
 
                 if (empty($acDetailExist)) {
-                    return $this->sendError('Asset capitalization document cannot confirm without details', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.asset_capitalization_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                 }
 
                 foreach ($acDetailExist as $val) {
                     if ($val->allocatedAmountRpt == 0) {
-                        return $this->sendError('Asset capitalization document cannot confirm with zero allocated amount', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.asset_capitalization_document_cannot_confirm_with_zero_allocated_amount'), 500, ['type' => 'confirm']);
                     }
                 }
 
@@ -450,7 +450,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $assetCapitalization = $this->assetCapitalizationRepository->update($input, $id);
             DB::commit();
-            return $this->sendResponse($assetCapitalization->toArray(), 'AssetCapitalization updated successfully');
+            return $this->sendResponse($assetCapitalization->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_capitalization')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -501,16 +501,16 @@ class AssetCapitalizationAPIController extends AppBaseController
         $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
-            return $this->sendError('Asset Capitalization not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.assetCapitalization')]));
         }
 
         if ($assetCapitalization->confirmedYN == 1) {
-            return $this->sendError('You cannot delete confirmed document');
+            return $this->sendError(trans('custom.you_cannot_delete_confirmed_document'));
         }
 
         $assetCapitalization->delete();
 
-        return $this->sendResponse($id, 'Asset Capitalization deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.assetCapitalization')]));
     }
 
     public function getCapitalizationFormData(Request $request)
@@ -554,7 +554,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             'assetCategoryType' => $assetCategoryType,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 
@@ -654,7 +654,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         }
 
         $assets = FixedAssetMaster::OfCompany($subCompanies)->isDisposed()->OfCategory($request['faCatID'])->isApproved()->get();
-        return $this->sendResponse($assets, 'Record retrieved successfully');
+        return $this->sendResponse($assets, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     function getAssetNBV(Request $request)
@@ -674,7 +674,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
         $nbv = $assets->costUnitRpt - $depreciation;
 
-        return $this->sendResponse(['nbv' => $nbv], 'Record retrieved successfully');
+        return $this->sendResponse(['nbv' => $nbv], trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     function getCapitalizationFixedAsset(Request $request)
@@ -693,7 +693,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.data')]));
     }
 
     function capitalizationReopen(Request $request)
@@ -706,19 +706,19 @@ class AssetCapitalizationAPIController extends AppBaseController
             $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
             $emails = array();
             if (empty($assetCapitalization)) {
-                return $this->sendError('Asset reclassification not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_reclassification')]));
             }
 
             if ($assetCapitalization->approved == -1) {
-                return $this->sendError('You cannot reopen this Asset reclassification it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_reclassification_it_is_already_fully_approved'));
             }
 
             if ($assetCapitalization->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this Asset reclassification it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_reclassification_it_is_already_partially_approved'));
             }
 
             if ($assetCapitalization->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this Asset reclassification, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_reclassification_it_is_not_confirmed'));
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -750,7 +750,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                        return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -789,7 +789,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             AuditTrial::createAuditTrial($assetCapitalization->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
-            return $this->sendResponse($assetCapitalization->toArray(), 'Asset capitalization reopened successfully');
+            return $this->sendResponse($assetCapitalization->toArray(), trans('custom.reopened', ['attribute' => trans('custom.asset_capitalization')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -808,7 +808,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $query->where('documentSystemID', 63);
             }, 'created_by', 'modified_by','audit_trial.modified_by'])->findWithoutFail($input['capitalizationID']);
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.data')]));
 
     }
 
@@ -953,7 +953,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $id = $request['capitalizationID'];
         $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
         if (empty($assetCapitalization)) {
-            return $this->sendError('Asset Capitalization not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
         }
 
         $assetDisposalDetail = AssetDisposalDetail::with('master_by')->OfAsset($assetCapitalization->faID)->first();
@@ -961,7 +961,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $fixedAsset = FixedAssetMaster::OfCompany([$request->companySystemID])->where('docOriginDocumentSystemID', $assetCapitalization->documentSystemID)->where('docOriginSystemCode', $id)->get();
 
         $output = ['disposal' => $assetDisposalDetail, 'assets' => $fixedAsset];
-        return $this->sendResponse($output, 'Record successfully');
+        return $this->sendResponse($output, trans('custom.record_successfully'));
     }
 
     function referBackCapitalization(Request $request){
@@ -972,11 +972,11 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $capitalization = $this->assetCapitalizationRepository->findWithoutFail($capitalizationID);
             if (empty($capitalization)) {
-                return $this->sendError('Asset Capitalization not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
             }
 
             if ($capitalization->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
             }
 
             $capitalizationArray = $capitalization->toArray();
@@ -1028,7 +1028,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($capitalization->toArray(), 'Asset Capitalization amended successfully');
+            return $this->sendResponse($capitalization->toArray(), trans('custom.asset_capitalization_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

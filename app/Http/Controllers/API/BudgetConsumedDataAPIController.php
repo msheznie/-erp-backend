@@ -65,7 +65,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $this->budgetConsumedDataRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetConsumedDatas = $this->budgetConsumedDataRepository->all();
 
-        return $this->sendResponse($budgetConsumedDatas->toArray(), 'Budget Consumed Datas retrieved successfully');
+        return $this->sendResponse($budgetConsumedDatas->toArray(), trans('custom.not_found', ['attribute' => trans('custom.budget_consumed_data')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
 
         $budgetConsumedDatas = $this->budgetConsumedDataRepository->create($input);
 
-        return $this->sendResponse($budgetConsumedDatas->toArray(), 'Budget Consumed Data saved successfully');
+        return $this->sendResponse($budgetConsumedDatas->toArray(), trans('custom.save', ['attribute' => trans('custom.budget_consumed_data')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $budgetConsumedData = $this->budgetConsumedDataRepository->findWithoutFail($id);
 
         if (empty($budgetConsumedData)) {
-            return $this->sendError('Budget Consumed Data not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_consumed_data')]));
         }
 
-        return $this->sendResponse($budgetConsumedData->toArray(), 'Budget Consumed Data retrieved successfully');
+        return $this->sendResponse($budgetConsumedData->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budget_consumed_data')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $budgetConsumedData = $this->budgetConsumedDataRepository->findWithoutFail($id);
 
         if (empty($budgetConsumedData)) {
-            return $this->sendError('Budget Consumed Data not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_consumed_data')]));
         }
 
         $budgetConsumedData = $this->budgetConsumedDataRepository->update($input, $id);
 
-        return $this->sendResponse($budgetConsumedData->toArray(), 'BudgetConsumedData updated successfully');
+        return $this->sendResponse($budgetConsumedData->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_consumed_data')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $budgetConsumedData = $this->budgetConsumedDataRepository->findWithoutFail($id);
 
         if (empty($budgetConsumedData)) {
-            return $this->sendError('Budget Consumed Data not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_consumed_data')]));
         }
 
         $budgetConsumedData->delete();
 
-        return $this->sendResponse($id, 'Budget Consumed Data deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.budget_consumed_data')]));
     }
 }

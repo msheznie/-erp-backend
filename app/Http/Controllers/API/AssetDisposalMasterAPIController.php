@@ -97,7 +97,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $this->assetDisposalMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetDisposalMasters = $this->assetDisposalMasterRepository->all();
 
-        return $this->sendResponse($assetDisposalMasters->toArray(), 'Asset Disposal Masters retrieved successfully');
+        return $this->sendResponse($assetDisposalMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_master')]));
     }
 
     /**
@@ -182,7 +182,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
         } else {
-            return $this->sendError('Disposal date is not within financial period!', 500);
+            return $this->sendError(trans('custom.disposal_date_is_not_within_financial_period'), 500);
         }
 
         $checkDisposalType = AssetDisposalType::where('disposalTypesID',$input['disposalType'])
@@ -190,7 +190,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                                                 ->first();
 
         if (empty($checkDisposalType)) {
-            return $this->sendError('Please select an active Disposal Type ', 500);
+            return $this->sendError(trans('custom.please_select_an_active_disposal_type'), 500);
         }
 
         $company = Company::find($input['companySystemID']);
@@ -236,7 +236,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         $assetDisposalMasters = $this->assetDisposalMasterRepository->create($input);
 
-        return $this->sendResponse($assetDisposalMasters->toArray(), 'Asset Disposal Master saved successfully');
+        return $this->sendResponse($assetDisposalMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_disposal_master')]));
     }
 
     /**
@@ -290,10 +290,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
         },'audit_trial.modified_by','customer'])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
-            return $this->sendError('Asset Disposal Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
 
-        return $this->sendResponse($assetDisposalMaster->toArray(), 'Asset Disposal Master retrieved successfully');
+        return $this->sendResponse($assetDisposalMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_master')]));
     }
 
     /**
@@ -353,7 +353,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
 
             if (empty($assetDisposalMaster)) {
-                return $this->sendError('Asset Disposal Master not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
             }
 
             $companySystemID = $assetDisposalMaster->companySystemID;
@@ -393,7 +393,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
                 } else {
-                    return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.asset_disposal_date_is_not_within_financial_period'), 500, ['type' => 'confirm']);
                 }
 
                 $input['disposalType'] = isset($input['disposalType'])?$input['disposalType']:0;
@@ -402,7 +402,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                                                        ->first();
 
                 if (empty($checkDisposalType)) {
-                    return $this->sendError('Please select an active Disposal Type ', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.please_select_an_active_disposal_type'), 500, ['type' => 'confirm']);
                 }
 
                 $disposalDetailExist = AssetDisposalDetail::with(['asset_by' => function ($query) {
@@ -410,7 +410,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }])->where('assetdisposalMasterAutoID', $id)->get();
 
                 if (empty($disposalDetailExist)) {
-                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
+                    return $this->sendError(trans('custom.asset_disposal_document_cannot_confirm_without_details'), 500, ['type' => 'confirm']);
                 }
 
                 if ($assetDisposalMaster->disposalType == 1) {
@@ -418,41 +418,41 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
 
                     if (empty($customermaster)) {
-                        return $this->sendError('There is no customer created to the selected company. Please create a customer', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.there_is_no_customer_created_to_the_selected_company_please_create_a_customer'), 500, ['type' => 'confirm']);
                     }
 
                     //if the customer is assigned
                     $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
                     if (empty($customer)) {
-                        return $this->sendError('There is no customer assigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.there_is_no_customer_assigned_to_the_selected_company_please_assign_the_customer'), 500, ['type' => 'confirm']);
                     }
                     //checking selected customer is active
                     $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
                     if (empty($customer)) {
-                        return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.assigned_customer')]), 500, ['type' => 'confirm']);
                     }
 
                     //For supplier companySystemID
                     $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
 
                     if (empty($suppliermaster)) {
-                        return $this->sendError('There is no supplier created to the selected company. Please create a supplier', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.there_is_no_supplier_created_to_the_selected_company_please_create_a_supplier'), 500, ['type' => 'confirm']);
                     }
 
                     //If the supplier is not assigned
                     $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
-                        return $this->sendError('There is no supplier assigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.there_is_no_supplier_assigned_to_the_selected_company_please_assign_the_supplier'), 500, ['type' => 'confirm']);
                     }
 
                     //checking selected supplier is active
                     $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
-                        return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
+                        return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.assigned_supplier')]), 500, ['type' => 'confirm']);
                     }
                 }
 
@@ -480,7 +480,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                     $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
                     if ($error_count > 0) {
-                        return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                        return $this->sendError(trans('custom.there_are_few_assets_not_linked_to_an_item_code_please_link_it_before_you_confirm'), 500, $confirm_error);
                     }
                 }
 
@@ -498,7 +498,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                     $confirm_error = array('type' => 'asset_group_to', 'data' => $finalError);
                     if ($error_count > 0) {
-                        return $this->sendError("There is/are asset/s Grouped", 500, $confirm_error);
+                        return $this->sendError(trans('custom.there_is_are_asset_s_grouped'), 500, $confirm_error);
                     }
                 }
 
@@ -517,7 +517,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
             DB::commit();
-            return $this->sendResponse($assetDisposalMaster->toArray(), 'AssetDisposalMaster updated successfully');
+            return $this->sendResponse($assetDisposalMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_master')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -568,16 +568,16 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
-            return $this->sendError('Asset Disposal Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
 
         if ($assetDisposalMaster->confirmedYN == 1) {
-            return $this->sendError('You cannot delete confirmed document');
+            return $this->sendError(trans('custom.you_cannot_delete_confirmed_document'));
         }
 
         $assetDisposalMaster->delete();
 
-        return $this->sendResponse($id, 'Asset Disposal Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_master')]));
     }
 
 
@@ -693,7 +693,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             'customer' => $customer,
             'companies' => $companies,
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     function getAllAssetsForDisposal(Request $request)
@@ -746,19 +746,19 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $assetDisposal = $this->assetDisposalMasterRepository->findWithoutFail($id);
             $emails = array();
             if (empty($assetDisposal)) {
-                return $this->sendError('Asset disposal not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal')]));
             }
 
             if ($assetDisposal->approved == -1) {
-                return $this->sendError('You cannot reopen this Asset disposal it is already fully approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_disposal_it_is_already_fully_approved'));
             }
 
             if ($assetDisposal->RollLevForApp_curr > 1) {
-                return $this->sendError('You cannot reopen this Asset disposal it is already partially approved');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_disposal_it_is_already_partially_approved'));
             }
 
             if ($assetDisposal->confirmedYN == 0) {
-                return $this->sendError('You cannot reopen this Asset disposal, it is not confirmed');
+                return $this->sendError(trans('custom.you_cannot_reopen_this_asset_disposal_it_is_not_confirmed'));
             }
 
             $updateInput = ['confirmedYN' => 0, 'confimedByEmpSystemID' => null, 'confimedByEmpID' => null,
@@ -790,7 +790,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         ->first();
 
                     if (empty($companyDocument)) {
-                        return $this->sendError('Policy not found for this document');
+                        return $this->sendError(trans('custom.policy_not_found_for_this_document'));
                     }
 
                     $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -829,7 +829,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($assetDisposal->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
             DB::commit();
-            return $this->sendResponse($assetDisposal->toArray(), 'Asset disposal reopened successfully');
+            return $this->sendResponse($assetDisposal->toArray(), trans('custom.asset_disposal_reopened_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -985,11 +985,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $assetdisposal = $this->assetDisposalMasterRepository->findWithoutFail($assetdisposalMasterAutoID);
             if (empty($assetdisposal)) {
-                return $this->sendError('Asset Disposal not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal')]));
             }
 
             if ($assetdisposal->refferedBackYN != -1) {
-                return $this->sendError('You cannot amend this document');
+                return $this->sendError(trans('custom.you_cannot_amend_this_document'));
             }
 
             $assetdisposalArray = $assetdisposal->toArray();
@@ -1041,7 +1041,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($assetdisposal->toArray(), 'Asset Disposal amended successfully');
+            return $this->sendResponse($assetdisposal->toArray(), trans('custom.asset_disposal_amended_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1059,11 +1059,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         $masterData = $this->assetDisposalMasterRepository->findWithoutFail($id);
         if (empty($masterData)) {
-            return $this->sendError('Asset disposal not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal')]));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this asset disposal, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_asset_disposal_it_is_not_confirmed'));
         }
 
 
@@ -1133,7 +1133,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Asset disposal amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_disposal_amend')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
