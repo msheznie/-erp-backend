@@ -510,50 +510,76 @@
                                     @endif
                             </span></td>
                         </tr>
-                         @if ($request->line_poNumber)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">PO Number</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td>{{$request->PONumber}}</td>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">PO Number</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                @if ($request->PONumber)
+                                    {{$request->PONumber}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span
+                                        class="font-weight-bold">Contract No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if (isset($request->invoicedetails[0]->clientContractID))
+                                        {{$request->invoicedetails[0]->clientContractID}}
+                                    @endif
+                                 </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Payment Terms</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
 
-                            </tr>
-                        @endif
-                         @if ($request->line_contractNo)
-                            <tr>
-                                <td width="120px"><span
-                                            class="font-weight-bold">Contract @if($request->line_paymentTerms) Ref
-                                        No @endif </span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
-                            </tr>
-                        @endif
-                          @if($request->line_paymentTerms)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">Payment Terms</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td>{{$request->paymentInDaysForJob}} Days</td>
+                                @if($request->paymentInDaysForJob)
+                                    {{$request->paymentInDaysForJob}} Days
 
-                            </tr>
-                        @endif
-                         @if($request->line_dueDate)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">Invoice Due Date</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>
-                                     @if(!empty($request->invoiceDueDate))
-                                            {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
-                                        @endif
-                            </span></td>
-                            </tr>
-                        @endif
-                        @if($request->line_seNo)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">SE No</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->wanNO}}</span></td>
-                            </tr>
-                        @endif
-                       
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Invoice Due Date</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                 @if(!empty($request->invoiceDueDate))
+                                        {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">SE No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if($request->wanNO)
+                                        {{$request->wanNO}}
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Date of Supply/Service</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if($request->serviceStartDate)
+                                         {{\App\helper\Helper::dateFormat($request->serviceStartDate) }}
+                                    @endif
+                                    -
+                                     @if($request->serviceEndDate)
+                                        {{\App\helper\Helper::dateFormat($request->serviceEndDate) }}
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                      <!--  
                         @if($request->line_performaCode)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Proforma Invoice No</span></td>
@@ -562,9 +588,9 @@
                             </tr>
                         @endif
 
-                       
+                        -->
                       
-                        @if ($request->line_unit)
+                        <!-- @if ($request->line_unit)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Unit</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -591,19 +617,28 @@
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td><span>-</span></td>
                             </tr>
-                        @endif
+                        @endif -->
                         <tr>
                             <td width="120px"><span class="font-weight-bold">Invoice Currency</span></td>
                             <td width="10px"><span class="font-weight-bold">-</span></td>
                             <td><span>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</span></td>
                         </tr>
-                        @if ($request->is_pdo_vendor)
-                            <tr>
-                                <td width="120px"><span class="font-weight-bold">VAT Number</span></td>
-                                <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->vatNumber}}</span></td>
-                            </tr>
-                        @endif
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">VATIN</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td><span>{{$request->vatNumber}}</span></td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">JSRS No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if(isset($request->company->jsrsNumber))
+                                    {{$request->company->jsrsNumber}}
+                                    @endif()
+                                </span>
+                            </td>
+                        </tr>
                     </table>
                 </fieldset>
             </td>
@@ -713,7 +748,7 @@
                                  </span>
                             </td>
                             <td style="text-align: right;">
-                                {{$request->localCurrencyER}}
+                                {{$request->custTransactionCurrencyER}}
                             </td>
                             <td colspan="2">
                             </td>
@@ -731,19 +766,19 @@
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format(($directTraSubTotal*$request->localCurrencyER), $numberFormatting)}}@endif</span>
+                                            {{number_format(($directTraSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
                             </td>
                             <td>
                             </td>
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format(($vatAmountSubTotal*$request->localCurrencyER), $numberFormatting)}}@endif</span>
+                                            {{number_format(($vatAmountSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
                             </td>
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format((($directTraSubTotal*$request->localCurrencyER) + ($vatAmountSubTotal*$request->localCurrencyER)), $numberFormatting)}}@endif</span>
+                                            {{number_format((($directTraSubTotal*$request->custTransactionCurrencyER) + ($vatAmountSubTotal*$request->custTransactionCurrencyER)), $numberFormatting)}}@endif</span>
                             </td>
                         </tr>
                     </tbody>
@@ -813,7 +848,7 @@
                         </td>
                         <td class="text-right"
                             style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
-                        <span class="font-weight-bold">@if ($request->linePdoinvoiceDetails){{number_format(($directTraSubTotal*$request->localCurrencyER), $numberFormatting)}}@endif</span>
+                        <span class="font-weight-bold">@if ($request->linePdoinvoiceDetails){{number_format(($directTraSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
                         </td>
                     </tr>
 
@@ -827,7 +862,7 @@
                                 </span></td>
                         <td class="text-right"
                             style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                    class="font-weight-bold">{{number_format(($vatAmountSubTotal*$request->localCurrencyER), $numberFormatting)}}</span>
+                                    class="font-weight-bold">{{number_format(($vatAmountSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}</span>
                         </td>
                     </tr>
 
@@ -843,7 +878,7 @@
                             style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                                 <span class="font-weight-bold">
 
-                                        {{number_format((($directTraSubTotal*$request->localCurrencyER) + ($vatAmountSubTotal*$request->localCurrencyER)), $numberFormatting)}}</span>
+                                        {{number_format((($directTraSubTotal*$request->custTransactionCurrencyER) + ($vatAmountSubTotal*$request->custTransactionCurrencyER)), $numberFormatting)}}</span>
                         </td>
                     </tr>
                     </tbody>
