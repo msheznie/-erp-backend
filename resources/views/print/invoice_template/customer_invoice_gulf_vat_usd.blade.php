@@ -473,17 +473,17 @@
                             </td>
                         </tr>
                         @endif
-                        @if (isset($request->customer->vatNumber) && !is_null($request->customer->vatNumber))
                         <tr>
-                            <td width="110px"><span class="font-weight-bold">VATIN</span></td>
+                            <td width="110px"><span class="font-weight-bold">Customer VATIN</span></td>
                             <td width="10px"><span class="font-weight-bold">-</span></td>
                             <td>
                                 <span>
-                                {{$request->customer->vatNumber}}
+                                    @if (isset($request->customer->vatNumber) && !is_null($request->customer->vatNumber))
+                                            {{$request->customer->vatNumber}}
+                                    @endif
                                 </span>
                             </td>
                         </tr>
-                        @endif
                     </table>
                 </fieldset>
             </td>
@@ -748,7 +748,7 @@
                                  </span>
                             </td>
                             <td style="text-align: right;">
-                                {{$request->custTransactionCurrencyER}}
+                                {{$request->localCurrencyER}}
                             </td>
                             <td colspan="2">
                             </td>
@@ -766,19 +766,19 @@
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format(($directTraSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
+                                            {{number_format(($directTraSubTotal/$request->localCurrencyER), $numberFormatting)}}@endif</span>
                             </td>
                             <td>
                             </td>
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format(($vatAmountSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
+                                            {{number_format(($vatAmountSubTotal/$request->localCurrencyER), $numberFormatting)}}@endif</span>
                             </td>
                             <td style="text-align: right">
                                  <span class="font-weight-bold">
                                     @if ($request->linePdoinvoiceDetails)
-                                            {{number_format((($directTraSubTotal*$request->custTransactionCurrencyER) + ($vatAmountSubTotal*$request->custTransactionCurrencyER)), $numberFormatting)}}@endif</span>
+                                            {{number_format((($directTraSubTotal/$request->localCurrencyER) + ($vatAmountSubTotal/$request->localCurrencyER)), $numberFormatting)}}@endif</span>
                             </td>
                         </tr>
                     </tbody>
@@ -848,7 +848,7 @@
                         </td>
                         <td class="text-right"
                             style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
-                        <span class="font-weight-bold">@if ($request->linePdoinvoiceDetails){{number_format(($directTraSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}@endif</span>
+                        <span class="font-weight-bold">@if ($request->linePdoinvoiceDetails){{number_format(($directTraSubTotal/$request->localCurrencyER), $numberFormatting)}}@endif</span>
                         </td>
                     </tr>
 
@@ -862,7 +862,7 @@
                                 </span></td>
                         <td class="text-right"
                             style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                    class="font-weight-bold">{{number_format(($vatAmountSubTotal*$request->custTransactionCurrencyER), $numberFormatting)}}</span>
+                                    class="font-weight-bold">{{number_format(($vatAmountSubTotal/$request->localCurrencyER), $numberFormatting)}}</span>
                         </td>
                     </tr>
 
@@ -878,7 +878,7 @@
                             style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                                 <span class="font-weight-bold">
 
-                                        {{number_format((($directTraSubTotal*$request->custTransactionCurrencyER) + ($vatAmountSubTotal*$request->custTransactionCurrencyER)), $numberFormatting)}}</span>
+                                        {{number_format((($directTraSubTotal/$request->localCurrencyER) + ($vatAmountSubTotal/$request->localCurrencyER)), $numberFormatting)}}</span>
                         </td>
                     </tr>
                     </tbody>
