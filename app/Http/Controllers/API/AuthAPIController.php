@@ -27,27 +27,27 @@ class AuthAPIController extends PassportAccessTokenController
             $employees = Employee::find($user->employee_id);
 
             if(empty($employees)){
-                return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.not_found', ['attribute' => trans('custom.user')]),array('type' => '')), 401);
             }
 
             if($employees->discharegedYN){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_discharged_please_contact_admin'),array('type' => '')), 401);
             }
 
             if(!$employees->ActivationFlag){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
             }
 
             if($employees->isLock == 4){
-                return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.your_account_is_blocked'),array('type' => '')), 401);
             }
 
             if($employees->empLoginActive != 1){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
             }
 
             if($employees->empActive != 1){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
             }
         }
         try {
@@ -65,23 +65,23 @@ class AuthAPIController extends PassportAccessTokenController
                 $employees = Employee::find($user->employee_id);
 
                 if(empty($employees)){
-                    return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.not_found', ['attribute' => trans('custom.user')]),array('type' => '')), 401);
                 }
 
                 if($employees->discharegedYN){
-                    return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_discharged_please_contact_admin'),array('type' => '')), 401);
                 }
 
                 if(!$employees->ActivationFlag){
-                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
                 }
 
                 if($employees->empLoginActive != 1){
-                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
                 }
 
                 if($employees->empActive != 1){
-                    return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
                 }
 
                  Employee::find($user->employee_id)->increment('isLock');
@@ -92,12 +92,12 @@ class AuthAPIController extends PassportAccessTokenController
                     $employees = Employee::find($user->employee_id);
                     $totalAttempt = 4 - $employees->isLock;
                     if ($totalAttempt == 0) {
-                        return Response::json(ResponseUtil::makeError('Your account is blocked', array('type' => '')), 401);
+                        return Response::json(ResponseUtil::makeError(trans('custom.your_account_is_blocked'), array('type' => '')), 401);
                     } else {
-                        return response(["message" => 'Invalid username or password. You have ' . $totalAttempt . ' more attempt'], 401);
+                        return response(["message" => trans('custom.invalid_username_or_password_you_have') .'  '. $totalAttempt .' '. trans('custom.more_attempt')], 401);
                     }
                 }else{
-                    return response(["message" => 'Invalid username or password.'], 401);
+                    return response(["message" => trans('custom.invalid_username_or_password')], 401);
                 }
             });
         }
@@ -117,26 +117,26 @@ class AuthAPIController extends PassportAccessTokenController
         }
         $user = User::where(['login_token' => $input['token']])->first();
         if (empty($user)) {
-            return Response::json(ResponseUtil::makeError('Token expired', array('type' => '')), 500);
+            return Response::json(ResponseUtil::makeError(trans('custom.token_expired'), array('type' => '')), 500);
         }
 
         if($user){
             $employees = Employee::find($user->employee_id);
 
             if(empty($employees)){
-                return Response::json(ResponseUtil::makeError('User not found',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.not_found', ['attribute' => trans('custom.user')]),array('type' => '')), 401);
             }
 
             if($employees->discharegedYN){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is discharged. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_discharged_please_contact_admin'),array('type' => '')), 401);
             }
 
             if(!$employees->ActivationFlag){
-                return Response::json(ResponseUtil::makeError('Login failed! The user is not activated. Please contact admin.',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
             }
 
             if($employees->isLock == 4){
-                return Response::json(ResponseUtil::makeError('Your account is blocked',array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.your_account_is_blocked'),array('type' => '')), 401);
             }
         }
         try {
@@ -145,7 +145,7 @@ class AuthAPIController extends PassportAccessTokenController
             return  $user->createToken('personal');
         } catch (OAuthServerException $exception) {
             return $this->withErrorHandling(function () use($exception) {
-                return response(["message" => 'Error'], 401);
+                return response(["message" => trans('custom.error')], 401);
             });
         }
     }

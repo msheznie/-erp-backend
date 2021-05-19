@@ -57,7 +57,7 @@ class ApprovalLevelAPIController extends AppBaseController
         $this->approvalLevelRepository->pushCriteria(new LimitOffsetCriteria($request));
         $approvalLevels = $this->approvalLevelRepository->all();
 
-        return $this->sendResponse($approvalLevels->toArray(), 'Approval Levels retrieved successfully');
+        return $this->sendResponse($approvalLevels->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_levels')]));
     }
 
     /**
@@ -95,7 +95,7 @@ class ApprovalLevelAPIController extends AppBaseController
             $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
 
             if (empty($approvalLevel)) {
-                return $this->sendError('Approval Level not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
             }
             $approvalLevel = $this->approvalLevelRepository->update($input, $id);
 
@@ -103,7 +103,7 @@ class ApprovalLevelAPIController extends AppBaseController
             $approvalLevel = $this->approvalLevelRepository->create($input);
         }
 
-        return $this->sendResponse($approvalLevel->toArray(), 'Approval Level saved successfully');
+        return $this->sendResponse($approvalLevel->toArray(), trans('custom.save', ['attribute' => trans('custom.approval_levels')]));
     }
 
     /**
@@ -120,10 +120,10 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
 
         if (empty($approvalLevel)) {
-            return $this->sendError('Approval Level not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
-        return $this->sendResponse($approvalLevel->toArray(), 'Approval Level retrieved successfully');
+        return $this->sendResponse($approvalLevel->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_levels')]));
     }
 
     /**
@@ -158,12 +158,12 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
 
         if (empty($approvalLevel)) {
-            return $this->sendError('Approval Level not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
         $approvalLevel = $this->approvalLevelRepository->update($input, $id);
 
-        return $this->sendResponse($approvalLevel->toArray(), 'ApprovalLevel updated successfully');
+        return $this->sendResponse($approvalLevel->toArray(), trans('custom.update', ['attribute' => trans('custom.approval_levels')]));
     }
 
     /**
@@ -180,14 +180,14 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
 
         if (empty($approvalLevel)) {
-            return $this->sendError('Approval Level not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
         $approvalLevel->approvalRole()->delete();
 
         $approvalLevel->delete();
 
-        return $this->sendResponse($id, 'Approval Level deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.approval_levels')]));
     }
 
 
@@ -224,7 +224,7 @@ class ApprovalLevelAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getCompanyServiceLine(Request $request)
@@ -234,7 +234,7 @@ class ApprovalLevelAPIController extends AppBaseController
         $serviceline = \Helper::getCompanyServiceline($selectedCompanyId);
         $output = array('serviceline' => $serviceline
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function activateApprovalLevel(Request $request)
@@ -242,7 +242,7 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($request->approvalLevelID);
 
         if (empty($approvalLevel)) {
-            return $this->sendError('Approval Level not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
         if ($request->isActive) {
             $approvalLevel->isActive = -1;
@@ -274,7 +274,7 @@ class ApprovalLevelAPIController extends AppBaseController
             //$query->select('ServiceLineDes');
         }])->where('approvalLevelID', $request->approvalLevelID)->orderBy('rollLevel', 'asc')->get();
 
-        return $this->sendResponse($approvalRole->toArray(), 'Record updated successfully');
+        return $this->sendResponse($approvalRole->toArray(), trans('custom.update', ['attribute' => trans('custom.record')]));
 
     }
 

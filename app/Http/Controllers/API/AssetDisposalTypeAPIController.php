@@ -65,7 +65,7 @@ class AssetDisposalTypeAPIController extends AppBaseController
         $this->assetDisposalTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetDisposalTypes = $this->assetDisposalTypeRepository->all();
 
-        return $this->sendResponse($assetDisposalTypes->toArray(), 'Asset Disposal Types retrieved successfully');
+        return $this->sendResponse($assetDisposalTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_types')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AssetDisposalTypeAPIController extends AppBaseController
 
         $assetDisposalTypes = $this->assetDisposalTypeRepository->create($input);
 
-        return $this->sendResponse($assetDisposalTypes->toArray(), 'Asset Disposal Type saved successfully');
+        return $this->sendResponse($assetDisposalTypes->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_disposal_types')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AssetDisposalTypeAPIController extends AppBaseController
         $assetDisposalType = $this->assetDisposalTypeRepository->findWithoutFail($id);
 
         if (empty($assetDisposalType)) {
-            return $this->sendError('Asset Disposal Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
         }
 
-        return $this->sendResponse($assetDisposalType->toArray(), 'Asset Disposal Type retrieved successfully');
+        return $this->sendResponse($assetDisposalType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_types')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AssetDisposalTypeAPIController extends AppBaseController
         $assetDisposalType = $this->assetDisposalTypeRepository->findWithoutFail($id);
 
         if (empty($assetDisposalType)) {
-            return $this->sendError('Asset Disposal Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
         }
 
         $assetDisposalType = $this->assetDisposalTypeRepository->update($input, $id);
 
-        return $this->sendResponse($assetDisposalType->toArray(), 'AssetDisposalType updated successfully');
+        return $this->sendResponse($assetDisposalType->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_types')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AssetDisposalTypeAPIController extends AppBaseController
         $assetDisposalType = $this->assetDisposalTypeRepository->findWithoutFail($id);
 
         if (empty($assetDisposalType)) {
-            return $this->sendError('Asset Disposal Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
         }
 
         $assetDisposalType->delete();
 
-        return $this->sendResponse($id, 'Asset Disposal Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_types')]));
     }
 }

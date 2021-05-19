@@ -49,7 +49,7 @@ class AccountsTypeAPIController extends AppBaseController
         $this->accountsTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $accountsTypes = $this->accountsTypeRepository->all();
 
-        return $this->sendResponse($accountsTypes->toArray(), 'Accounts Types retrieved successfully');
+        return $this->sendResponse($accountsTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.accounts_types')]));
     }
 
     /**
@@ -66,7 +66,7 @@ class AccountsTypeAPIController extends AppBaseController
 
         $accountsTypes = $this->accountsTypeRepository->create($input);
 
-        return $this->sendResponse($accountsTypes->toArray(), 'Accounts Type saved successfully');
+        return $this->sendResponse($accountsTypes->toArray(), trans('custom.save', ['attribute' => trans('custom.accounts_types')]));
     }
 
     /**
@@ -83,10 +83,10 @@ class AccountsTypeAPIController extends AppBaseController
         $accountsType = $this->accountsTypeRepository->findWithoutFail($id);
 
         if (empty($accountsType)) {
-            return $this->sendError('Accounts Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accounts_types')]));
         }
 
-        return $this->sendResponse($accountsType->toArray(), 'Accounts Type retrieved successfully');
+        return $this->sendResponse($accountsType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.accounts_types')]));
     }
 
     /**
@@ -106,12 +106,12 @@ class AccountsTypeAPIController extends AppBaseController
         $accountsType = $this->accountsTypeRepository->findWithoutFail($id);
 
         if (empty($accountsType)) {
-            return $this->sendError('Accounts Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accounts_types')]));
         }
 
         $accountsType = $this->accountsTypeRepository->update($input, $id);
 
-        return $this->sendResponse($accountsType->toArray(), 'AccountsType updated successfully');
+        return $this->sendResponse($accountsType->toArray(), trans('custom.update', ['attribute' => trans('custom.accounts_types')]));
     }
 
     /**
@@ -128,12 +128,12 @@ class AccountsTypeAPIController extends AppBaseController
         $accountsType = $this->accountsTypeRepository->findWithoutFail($id);
 
         if (empty($accountsType)) {
-            return $this->sendError('Accounts Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accounts_types')]));
         }
 
         $accountsType->delete();
 
-        return $this->sendResponse($id, 'Accounts Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.accounts_types')]));
     }
 
 

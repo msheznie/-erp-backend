@@ -65,7 +65,7 @@ class AccruavalFromOPMasterAPIController extends AppBaseController
         $this->accruavalFromOPMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $accruavalFromOPMasters = $this->accruavalFromOPMasterRepository->all();
 
-        return $this->sendResponse($accruavalFromOPMasters->toArray(), 'Accruaval From O P Masters retrieved successfully');
+        return $this->sendResponse($accruavalFromOPMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AccruavalFromOPMasterAPIController extends AppBaseController
 
         $accruavalFromOPMasters = $this->accruavalFromOPMasterRepository->create($input);
 
-        return $this->sendResponse($accruavalFromOPMasters->toArray(), 'Accruaval From O P Master saved successfully');
+        return $this->sendResponse($accruavalFromOPMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AccruavalFromOPMasterAPIController extends AppBaseController
         $accruavalFromOPMaster = $this->accruavalFromOPMasterRepository->findWithoutFail($id);
 
         if (empty($accruavalFromOPMaster)) {
-            return $this->sendError('Accruaval From O P Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
         }
 
-        return $this->sendResponse($accruavalFromOPMaster->toArray(), 'Accruaval From O P Master retrieved successfully');
+        return $this->sendResponse($accruavalFromOPMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AccruavalFromOPMasterAPIController extends AppBaseController
         $accruavalFromOPMaster = $this->accruavalFromOPMasterRepository->findWithoutFail($id);
 
         if (empty($accruavalFromOPMaster)) {
-            return $this->sendError('Accruaval From O P Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
         }
 
         $accruavalFromOPMaster = $this->accruavalFromOPMasterRepository->update($input, $id);
 
-        return $this->sendResponse($accruavalFromOPMaster->toArray(), 'AccruavalFromOPMaster updated successfully');
+        return $this->sendResponse($accruavalFromOPMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AccruavalFromOPMasterAPIController extends AppBaseController
         $accruavalFromOPMaster = $this->accruavalFromOPMasterRepository->findWithoutFail($id);
 
         if (empty($accruavalFromOPMaster)) {
-            return $this->sendError('Accruaval From O P Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
         }
 
         $accruavalFromOPMaster->delete();
 
-        return $this->sendResponse($id, 'Accruaval From O P Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.accruaval_from_o_p_masters')]));
     }
 }

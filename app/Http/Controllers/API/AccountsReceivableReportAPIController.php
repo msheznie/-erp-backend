@@ -129,7 +129,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $fromDate = $fromDate->format('d/m/Y');
                     $year = explode("/", $fromDate);
                     if ($year['2'] != $request->year) {
-                        return $this->sendError('As of date is not in selected year');
+                        return $this->sendError(trans('custom.not_in_selected_year'));
                     }
                 }
 
@@ -206,7 +206,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $fromDate = $fromDate->format('d/m/Y');
                     $year = explode("/", $fromDate);
                     if ($year['2'] != $request->year) {
-                        return $this->sendError('As of date is not in selected year');
+                        return $this->sendError(trans('custom.not_in_selected_year'));
                     }
                 }
 
@@ -247,7 +247,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 if ($year['2'] != $request->year) {
-                    return $this->sendError('As of date is not in selected year');
+                    return $this->sendError(trans('custom.not_in_selected_year'));
                 }
 
                 break;
@@ -263,7 +263,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
 
     }
@@ -301,13 +301,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
 
                     if (empty($checkIsGroup)) {
-                        return $this->sendError('Company not found');
+                        return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]));
                     }
 
                     $customerName = CustomerMaster::find($request->singleCustomer);
 
                     if (empty($customerName)) {
-                        return $this->sendError('Customer not found');
+                        return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer')]));
                     }
 
                     $output = $this->getCustomerStatementAccountQRY($request);
@@ -890,7 +890,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName);
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -969,7 +969,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
@@ -1050,7 +1050,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'CL': //Customer Ledger
                 $reportTypeID = $request->reportTypeID;
@@ -1118,7 +1118,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'CBSUM': //Customer Balance Summery
                 $reportTypeID = $request->reportTypeID;
@@ -1197,7 +1197,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    return $this->sendResponse(array(), trans('custom.success_export'));
                 }
                 break;
             case 'CSR': //Customer Sales Register
@@ -1246,7 +1246,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
 
             case 'CC': //Customer Collection
@@ -1348,7 +1348,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'CR': //Customer Revenue
                 $reportTypeID = $request->reportTypeID;
@@ -1555,7 +1555,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'INVTRACK': //Customer Invoice Tracker
                 $type = 'csv';
@@ -1612,10 +1612,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1900,7 +1900,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1945,7 +1945,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             'years' => $years,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     function getCustomerStatementAccountQRY($request)
@@ -5974,7 +5974,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->orderby('year', 'desc')
             ->get();
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getContractByCustomer(Request $request){
@@ -5994,7 +5994,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             $output['contracts'] = Contract::whereIN('companySystemID', $childCompanies)->whereIN('clientID', $customerIDArray)->get();
         }
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function generateInvoiceTrackingReport(Request $request)
@@ -6020,7 +6020,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             $finalResult[$value->clientID.'-'.$value->CustomerName][] = $value;
         }
 
-        return $this->sendResponse($finalResult, 'Record retrieved successfully');
+        return $this->sendResponse($finalResult, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getInvoiceTrackerQRY($request)

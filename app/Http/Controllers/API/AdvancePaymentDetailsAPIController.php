@@ -78,7 +78,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         $this->advancePaymentDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $advancePaymentDetails = $this->advancePaymentDetailsRepository->all();
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details retrieved successfully');
+        return $this->sendResponse($advancePaymentDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_payment_details')]));
     }
 
     /**
@@ -125,7 +125,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         $advancePaymentDetails = $this->advancePaymentDetailsRepository->create($input);
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details saved successfully');
+        return $this->sendResponse($advancePaymentDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.advance_payment_details')]));
     }
 
     /**
@@ -172,10 +172,10 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         $advancePaymentDetails = $this->advancePaymentDetailsRepository->with('purchaseorder_by')->findWithoutFail($id);
 
         if (empty($advancePaymentDetails)) {
-            return $this->sendError('Advance Payment Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_details')]));
         }
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details retrieved successfully');
+        return $this->sendResponse($advancePaymentDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_payment_details')]));
     }
 
     /**
@@ -234,7 +234,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
 
             if (empty($advancePaymentDetails)) {
-                return $this->sendError('Advance Payment Details not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_details')]));
             }
 
             $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
@@ -242,13 +242,13 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
             if (empty($bankMaster)) {
-                return $this->sendError('Selected Bank is not active', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.selected_bank')]), 500, ['type' => 'amountmismatch']);
             }
 
             $bankAccount = \App\Models\BankAccount::isActive()->find($payMaster->BPVAccount);
 
             if (empty($bankAccount)) {
-                return $this->sendError('Selected Bank Account is not active', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.selected_bank_account')]), 500, ['type' => 'amountmismatch']);
             }
 
             $advancePayment = PoAdvancePayment::find($input['poAdvPaymentID']);
@@ -267,7 +267,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $balanceAmount = $advancePayment->reqAmount - $advancePaymentDetailsSum->SumOfpaymentAmount;
 
             if ($input["paymentAmount"] > $balanceAmount) {
-                return $this->sendError('Payment amount cannot be greater than requested amount', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
             }
 
             $conversion = \Helper::convertAmountToLocalRpt(201, $id, $input["paymentAmount"]);
@@ -301,7 +301,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($advancePaymentDetails->toArray(), 'AdvancePaymentDetails updated successfully');
+            return $this->sendResponse($advancePaymentDetails->toArray(), trans('custom.update', ['attribute' => trans('custom.advance_payment_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 500);
@@ -354,11 +354,11 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
             $advancePaymentDetails2 = $this->advancePaymentDetailsRepository->findWithoutFail($id);
             if (empty($advancePaymentDetails)) {
-                return $this->sendError('Advance Payment Details not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_details')]));
             }
 
             if($advancePaymentDetails->pay_invoice && $advancePaymentDetails->pay_invoice->confirmedYN){
-                return $this->sendError('You cannot delete Advance Payment Detail, this document already confirmed',500);
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
 
 
@@ -388,10 +388,10 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($id, 'Advance Payment Details deleted successfully');
+            return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.advance_payment_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 
@@ -406,18 +406,18 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $payMaster = PaySupplierInvoiceMaster::find($payMasterAutoId);
 
             if (empty($payMaster)) {
-                return $this->sendError('Payment voucher not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
             }
 
             if($payMaster->confirmedYN){
-                return $this->sendError('You cannot delete Advance Payment Detail, this document already confirmed',500);
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
 
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
             if (empty($advancePaymentDetails)) {
-                return $this->sendError('Pay Supplier Invoice Detail not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
             }
 
             foreach ($advancePaymentDetails as $val) {
@@ -459,10 +459,10 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $this->paySupplierInvoiceMasterRepository->update($input, $payMasterAutoId);
 
             DB::commit();
-            return $this->sendResponse($payMasterAutoId, 'Pay Supplier Invoice Detail deleted successfully');
+            return $this->sendResponse($payMasterAutoId, trans('custom.delete', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 
@@ -470,7 +470,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     public function getADVPaymentDetails(Request $request)
     {
         $advancePaymentDetails = $this->advancePaymentDetailsRepository->with('purchaseorder_by')->findWhere(['PayMasterAutoId' => $request->PayMasterAutoId]);
-        return $this->sendResponse($advancePaymentDetails, 'Payment details saved successfully');
+        return $this->sendResponse($advancePaymentDetails, trans('custom.save', ['attribute' => trans('custom.payment_details')]));
     }
 
     public function addADVPaymentDetail(Request $request)
@@ -483,11 +483,11 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
         if (empty($payMaster)) {
-            return $this->sendError('Payment voucher not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
         }
 
         if($payMaster->confirmedYN){
-            return $this->sendError('You cannot add Advance Payment Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_add_advance_payment_detail_this_document_already_confirmed'),500);
         }
 
         DB::beginTransaction();
@@ -537,7 +537,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
                     $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
                     if ($error_count > 0) {
-                        return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
+                        return $this->sendError(trans('custom.selected_order_has_been_already_paid_more_than_the_order_amount_please_check_the_payment_status_for_this_order'), 500, $confirm_error);
                     }
 
                     $tempArray = $new;
@@ -601,7 +601,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse('', 'Payment details saved successfully');
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

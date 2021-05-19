@@ -70,7 +70,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $this->assetFinanceCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetFinanceCategories = $this->assetFinanceCategoryRepository->all();
 
-        return $this->sendResponse($assetFinanceCategories->toArray(), 'Asset Finance Categories retrieved successfully');
+        return $this->sendResponse($assetFinanceCategories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
     /**
@@ -136,7 +136,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input['sortOrder'] = AssetFinanceCategory::max('sortOrder') + 1;
         $assetFinanceCategories = $this->assetFinanceCategoryRepository->create($input);
 
-        return $this->sendResponse($assetFinanceCategories->toArray(), 'Asset Finance Category saved successfully');
+        return $this->sendResponse($assetFinanceCategories->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
     private function getAccountCode($id){
@@ -193,10 +193,10 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->findOrFail($id);
 
         if (empty($assetFinanceCategory)) {
-            return $this->sendError('Asset Finance Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_finance_categories')]));
         }
 
-        return $this->sendResponse($assetFinanceCategory->toArray(), 'Asset Finance Category retrieved successfully');
+        return $this->sendResponse($assetFinanceCategory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
     /**
@@ -255,7 +255,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->findOrFail($input['faFinanceCatID']);
 
         if (empty($assetFinanceCategory)) {
-            return $this->sendError('Asset Finance Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_finance_categories')]));
         }
 
         $validator = \Validator::make($input, [
@@ -280,7 +280,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID',$input['faFinanceCatID'])->update($input);
 
-        return $this->sendResponse($assetFinanceCategory, 'Asset Finance Category updated successfully');
+        return $this->sendResponse($assetFinanceCategory, trans('custom.update', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
     /**
@@ -327,12 +327,12 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $assetFinanceCategory = $this->assetFinanceCategoryRepository->findWithoutFail($id);
 
         if (empty($assetFinanceCategory)) {
-            return $this->sendError('Asset Finance Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_finance_categories')]));
         }
 
         $assetFinanceCategory->delete();
 
-        return $this->sendResponse($id, 'Asset Finance Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
     public function getAllAssetFinanceCategory(Request $request){
@@ -381,7 +381,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             'chartOfAccounts' => $chartOfAccounts,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 }

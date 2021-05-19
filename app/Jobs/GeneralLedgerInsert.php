@@ -1235,7 +1235,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         else {
                             $detOne = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"])->first();
-                            $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
+                            $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
                             $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
                             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
 
@@ -1336,14 +1336,14 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
                                     $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                                    $data['documentTransAmount'] = $item->invoiceAmount * -1;
+                                    $data['documentTransAmount'] = (($masterData->isPerforma == 1) ? ($item->invoiceAmount - $item->VATAmount) : $item->invoiceAmount) * -1;
                                     $data['documentLocalCurrencyID'] = $item->localCurrency;
 
                                     $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                                    $data['documentLocalAmount'] = $item->localAmount * -1;
+                                    $data['documentLocalAmount'] = (($masterData->isPerforma == 1) ? ($item->localAmount - $item->VATAmountLocal) : $item->localAmount) * -1;
                                     $data['documentRptCurrencyID'] = $item->comRptCurrency;
                                     $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                                    $data['documentRptAmount'] = $item->comRptAmount * -1;
+                                    $data['documentRptAmount'] = (($masterData->isPerforma == 1) ? ($item->comRptAmount - $item->VATAmountRpt) : $item->comRptAmount) * -1;
                                     array_push($finalData, $data);
                                 }
                             }

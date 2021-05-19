@@ -68,7 +68,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
         $this->assetDisposalDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetDisposalDetails = $this->assetDisposalDetailRepository->all();
 
-        return $this->sendResponse($assetDisposalDetails->toArray(), 'Asset Disposal Details retrieved successfully');
+        return $this->sendResponse($assetDisposalDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details')]));
     }
 
     /**
@@ -194,7 +194,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse('', 'Asset Disposal Detail saved successfully');
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.asset_disposal_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -245,10 +245,10 @@ class AssetDisposalDetailAPIController extends AppBaseController
         $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
 
         if (empty($assetDisposalDetail)) {
-            return $this->sendError('Asset Disposal Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
         }
 
-        return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
+        return $this->sendResponse($assetDisposalDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details')]));
     }
 
     /**
@@ -307,20 +307,20 @@ class AssetDisposalDetailAPIController extends AppBaseController
         $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
 
         if (empty($assetDisposalDetail)) {
-            return $this->sendError('Asset Disposal Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
         }
 
         $disposalMaster = AssetDisposalMaster::find($assetDisposalDetail->assetdisposalMasterAutoID);
 
         if (empty($disposalMaster)) {
-            return $this->sendError('Asset Disposal Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_master')]));
         }
 
         if($input['isFromAssign']) {
             if ($disposalMaster->disposalType == 1) {
                 $itemAssign = ItemAssigned::where('companySystemID', $disposalMaster->toCompanySystemID)->where('itemCodeSystem', $input['itemCode'])->where('isActive', 1)->where('isAssigned', -1)->first();
                 if (empty($itemAssign)) {
-                    return $this->sendError('This item is not assigned to ' . $disposalMaster->toCompanyID . ' Company', 500);
+                    return $this->sendError(trans('custom.this_item_is_not_assigned_to') .' '. $disposalMaster->toCompanyID .' '. trans('custom.company'), 500);
                 }
             }
         }else{
@@ -333,7 +333,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
 
         $assetDisposalDetail = $this->assetDisposalDetailRepository->update($input, $id);
 
-        return $this->sendResponse($assetDisposalDetail->toArray(), 'AssetDisposalDetail updated successfully');
+        return $this->sendResponse($assetDisposalDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_details')]));
     }
 
     /**
@@ -383,7 +383,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
             $assetDisposalDetail2 = $this->assetDisposalDetailRepository->findWithoutFail($id);
 
             if (empty($assetDisposalDetail)) {
-                return $this->sendError('Asset Disposal Detail not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
             }
 
             $assetDisposalDetail->delete();
@@ -391,7 +391,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
             FixedAssetMaster::find($assetDisposalDetail2->faID)
                 ->update(['DIPOSED' => 0, 'selectedForDisposal' => 0, 'disposedDate' => null, 'assetdisposalMasterAutoID' => null]);
             DB::commit();
-            return $this->sendResponse($id, 'Asset Disposal Detail deleted successfully');
+            return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -403,9 +403,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
     {
         $assetDisposalDetail = AssetDisposalDetail::OfMaster($request->assetdisposalMasterAutoID)->with('segment_by', 'item_by')->get();
         if (empty($assetDisposalDetail)) {
-            return $this->sendError('Asset Disposal Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
         }
-        return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
+        return $this->sendResponse($assetDisposalDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details')]));
     }
 
     public function deleteAllDisposalDetail(Request $request)
@@ -417,7 +417,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
             $assetDisposalDetail = $this->assetDisposalDetailRepository->findWhere(['assetdisposalMasterAutoID' => $assetdisposalMasterAutoID]);
 
             if (empty($assetDisposalDetail)) {
-                return $this->sendError('Asset Disposal Detail not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
             }
 
             foreach ($assetDisposalDetail as $val) {
@@ -429,10 +429,10 @@ class AssetDisposalDetailAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($assetdisposalMasterAutoID, 'Asset Disposal Detail deleted successfully');
+            return $this->sendResponse($assetdisposalMasterAutoID, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 }
