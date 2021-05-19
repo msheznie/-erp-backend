@@ -114,7 +114,7 @@ return [
     'asset_types' => 'Asset Types',
     'audit_trails' => 'Audit Trails',
     'login_failed_the_user_is_discharged_please_contact_admin' => 'Login failed! The user is discharged. Please contact admin',
-    'login_failed_the_user_is_not_activated_please_contact_admin' => 'Login failed! The user is not activated. Please contact admin.'
+    'login_failed_the_user_is_not_activated_please_contact_admin' => 'Login failed! The user is not activated. Please contact admin.',
     'your_account_is_blocked' => 'Your account is blocked',
     'token_expired' => 'Token expired',
     'error' => 'Error',
@@ -145,7 +145,7 @@ return [
     'bank_reconciliation' => 'Bank Reconciliation',
     'you_cannot_edit_this_document_already_confirmed' => 'You cannot edit, This document already confirmed',
     'you_cannot_edit_this_item_already_added_to_bank_reconciliation' => 'You cannot edit, This item already added to bank reconciliation.',
-    'you_cannot_edit_this_payment_already_added_to_bank_transfer' => 'You cannot edit, This payment already added to bank transfer.'
+    'you_cannot_edit_this_payment_already_added_to_bank_transfer' => 'You cannot edit, This payment already added to bank transfer.',
     'you_cannot_edit_this_document_is_already_added_to_bank_reconciliation' => 'You cannot edit, This document is already added to bank reconciliation.',
     'bank_amount_is_not_matching_with_gl_amount' => 'Bank amount is not matching with GL amount.',
     'gl_data_cannot_be_found_for_this_document' => 'GL data cannot be found for this document',
