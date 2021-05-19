@@ -75,7 +75,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
         $this->advanceReceiptDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->all();
 
-        return $this->sendResponse($advanceReceiptDetails->toArray(), 'Advance Receipt Details retrieved successfully');
+        return $this->sendResponse($advanceReceiptDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_receipt_details')]));
     }
 
     /**
@@ -125,11 +125,11 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
         $advanceReceipt = CustomerReceivePayment::find($input["custReceivePaymentAutoID"]);
 
         if (empty($advanceReceipt)) {
-            return $this->sendError('Advance receipt voucher not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_receipt_voucher')]));
         }
 
         if ($advanceReceipt->confirmedYN) {
-            return $this->sendError('You cannot add Advance Payment Detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_add_advance_payment_detail_this_document_already_confirmed'), 500);
         }
 
         DB::beginTransaction();
@@ -192,7 +192,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
                         $confirm_error = array('type' => 'so_amount_not_matching', 'data' => $finalError);
                         if ($error_count > 0) {
-                            return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
+                            return $this->sendError(trans('custom.selected_order_has_been_already_paid_more_than_the_order_amount_please_check_the_payment_status_for_this_order'), 500, $confirm_error);
                         }
 
                         $tempArray = $new;
@@ -207,7 +207,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                         $advancePayment = SalesOrderAdvPayment::find($new['soAdvPaymentID']);
 
                         if (empty($advancePayment)) {
-                            return $this->sendError('Advance payment not found');
+                            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment')]));
                         }
 
                         // vat calculation
@@ -228,7 +228,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                         $company = Company::where('companySystemID', $new['companySystemID'])->first();
 
                         if(empty($company)){
-                            return $this->sendError("Company not found",500);
+                            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]),500);
                         }
 
                         $tempArray["localCurrencyID"] = $company->localCurrencyID;
@@ -261,10 +261,10 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                     }
                 }
             } else {
-                return $this->sendError('Details  not found', 500);
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.details')]), 500);
             }
             DB::commit();
-            return $this->sendResponse('', 'Advance Receipt Details saved successfully');
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.advance_receipt_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -315,10 +315,10 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
         $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWithoutFail($id);
 
         if (empty($advanceReceiptDetails)) {
-            return $this->sendError('Advance Receipt Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_receipt_details')]));
         }
 
-        return $this->sendResponse($advanceReceiptDetails->toArray(), 'Advance Receipt Details retrieved successfully');
+        return $this->sendResponse($advanceReceiptDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_receipt_details')]));
     }
 
     /**
@@ -379,13 +379,13 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
             $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWithoutFail($id);
 
             if (empty($advanceReceiptDetails)) {
-                return $this->sendError('Advance Receipt Details not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_receipt_details')]));
             }
 
             $receiptMaster = CustomerReceivePayment::find($input["custReceivePaymentAutoID"]);
 
             if(empty($receiptMaster)){
-                return $this->sendError('Advance Receipt not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_receipt')]));
             }
 
             $bankMaster = BankAssign::ofCompany($receiptMaster->companySystemID)
@@ -394,19 +394,19 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                                    ->first();
 
             if (empty($bankMaster)) {
-                return $this->sendError('Selected Bank is not active', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.selected_bank')]), 500, ['type' => 'amountmismatch']);
             }
 
             $bankAccount = BankAccount::isActive()->find($receiptMaster->bankAccount);
 
             if (empty($bankAccount)) {
-                return $this->sendError('Selected Bank Account is not active', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.selected_bank_account')]), 500, ['type' => 'amountmismatch']);
             }
 
             $advancePayment = SalesOrderAdvPayment::find($input['soAdvPaymentID']);
 
             if (empty($advancePayment)) {
-                return $this->sendError('Sales order payment not found', 500);
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.sales_order_payment')]), 500);
             }
 
             if (!$input["paymentAmount"]) {
@@ -429,7 +429,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
 
             if ($input["paymentAmount"] > $balanceAmount) {
-                return $this->sendError('Payment amount cannot be greater than requested amount', 500, ['type' => 'amountmismatch']);
+                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
             }
 
             $conversion = \Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $input["paymentAmount"]);
@@ -457,7 +457,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($advanceReceiptDetails->toArray(), 'AdvancePaymentDetails updated successfully');
+            return $this->sendResponse($advanceReceiptDetails->toArray(), trans('custom.update', ['attribute' => trans('custom.advance_payment_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 500);
@@ -510,11 +510,11 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
             $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWithoutFail($id);
             $advanceReceiptDetails2 = $this->advanceReceiptDetailsRepository->findWithoutFail($id);
             if (empty($advanceReceiptDetails)) {
-                return $this->sendError('Advance Receipt Details not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_receipt_details')]));
             }
 
             if($advanceReceiptDetails->pay_invoice && $advanceReceiptDetails->pay_invoice->confirmedYN){
-                return $this->sendError('You cannot delete Advance Receipt Detail, this document already confirmed',500);
+                return $this->sendError(trans('custom.you_cannot_delete_advance_receipt_detail_this_document_already_confirmed'),500);
             }
 
 
@@ -523,10 +523,10 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
             $this->updateSalesOrderAdvPayment($advanceReceiptDetails2->soAdvPaymentID);
 
             DB::commit();
-            return $this->sendResponse($id, 'Advance Receipt Details deleted successfully');
+            return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.advance_receipt_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 
@@ -535,7 +535,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
         $request->custReceivePaymentAutoID = isset($request->custReceivePaymentAutoID) ? $request->custReceivePaymentAutoID : 0;
         $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->with('sales_order')
             ->findWhere(['custReceivePaymentAutoID' => $request->custReceivePaymentAutoID]);
-        return $this->sendResponse($advanceReceiptDetails, 'Receipt details saved successfully');
+        return $this->sendResponse($advanceReceiptDetails, trans('custom.save', ['attribute' => trans('custom.receipt_details')]));
     }
 
     public function deleteAllADVReceiptDetail(Request $request)
@@ -548,17 +548,17 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
             $receiptMaster = CustomerReceivePayment::find($id);
 
             if (empty($receiptMaster)) {
-                return $this->sendError('Receipt voucher not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.receipt_voucher')]));
             }
 
             if($receiptMaster->confirmedYN){
-                return $this->sendError('You cannot delete Advance Receipt Detail, this document already confirmed',500);
+                return $this->sendError(trans('custom.you_cannot_delete_advance_receipt_detail_this_document_already_confirmed'),500);
             }
 
             $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWhere(['custReceivePaymentAutoID' => $id]);
 
             if (empty($advanceReceiptDetails)) {
-                return $this->sendError('Receipt Detail not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.receipt_details')]));
             }
 
             foreach ($advanceReceiptDetails as $val) {
@@ -579,11 +579,11 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
             $this->customerReceivePaymentRepository->update($input, $id);
 
             DB::commit();
-            return $this->sendResponse($id, 'Pay Supplier Invoice Detail deleted successfully');
+            return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
-            return $this->sendError('Error Occurred');
+            return $this->sendError(trans('custom.error_occurred'));
         }
     }
 

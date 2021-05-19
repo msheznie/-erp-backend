@@ -77,7 +77,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $this->accountsReceivableLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $accountsReceivableLedgers = $this->accountsReceivableLedgerRepository->all();
 
-        return $this->sendResponse($accountsReceivableLedgers->toArray(), 'Accounts Receivable Ledgers retrieved successfully');
+        return $this->sendResponse($accountsReceivableLedgers->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.acc_receivable_ledger')]));
     }
 
     /**
@@ -124,7 +124,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
 
         $accountsReceivableLedgers = $this->accountsReceivableLedgerRepository->create($input);
 
-        return $this->sendResponse($accountsReceivableLedgers->toArray(), 'Accounts Receivable Ledger saved successfully');
+        return $this->sendResponse($accountsReceivableLedgers->toArray(), trans('custom.save', ['attribute' => trans('custom.acc_receivable_ledger')]));
     }
 
     /**
@@ -171,10 +171,10 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsReceivableLedger)) {
-            return $this->sendError('Accounts Receivable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_receivable_ledger')]));
         }
 
-        return $this->sendResponse($accountsReceivableLedger->toArray(), 'Accounts Receivable Ledger retrieved successfully');
+        return $this->sendResponse($accountsReceivableLedger->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.acc_receivable_ledger')]));
     }
 
     /**
@@ -231,12 +231,12 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsReceivableLedger)) {
-            return $this->sendError('Accounts Receivable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_receivable_ledger')]));
         }
 
         $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($accountsReceivableLedger->toArray(), 'AccountsReceivableLedger updated successfully');
+        return $this->sendResponse($accountsReceivableLedger->toArray(), trans('custom.update', ['attribute' => trans('custom.acc_receivable_ledger')]));
     }
 
     /**
@@ -283,12 +283,12 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsReceivableLedger)) {
-            return $this->sendError('Accounts Receivable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_receivable_ledger')]));
         }
 
         $accountsReceivableLedger->delete();
 
-        return $this->sendResponse($id, 'Accounts Receivable Ledger deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.acc_receivable_ledger')]));
     }
 
     public function getCustomerReceiptInvoices(Request $request){

@@ -65,7 +65,7 @@ class BankMemoTypesAPIController extends AppBaseController
         $this->bankMemoTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankMemoTypes = $this->bankMemoTypesRepository->all();
 
-        return $this->sendResponse($bankMemoTypes->toArray(), 'Bank Memo Types retrieved successfully');
+        return $this->sendResponse($bankMemoTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_types')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class BankMemoTypesAPIController extends AppBaseController
 
         $bankMemoTypes = $this->bankMemoTypesRepository->create($input);
 
-        return $this->sendResponse($bankMemoTypes->toArray(), 'Bank Memo Types saved successfully');
+        return $this->sendResponse($bankMemoTypes->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_memo_types')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class BankMemoTypesAPIController extends AppBaseController
         $bankMemoTypes = $this->bankMemoTypesRepository->findWithoutFail($id);
 
         if (empty($bankMemoTypes)) {
-            return $this->sendError('Bank Memo Types not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_types')]));
         }
 
-        return $this->sendResponse($bankMemoTypes->toArray(), 'Bank Memo Types retrieved successfully');
+        return $this->sendResponse($bankMemoTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_types')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class BankMemoTypesAPIController extends AppBaseController
         $bankMemoTypes = $this->bankMemoTypesRepository->findWithoutFail($id);
 
         if (empty($bankMemoTypes)) {
-            return $this->sendError('Bank Memo Types not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_types')]));
         }
 
         $bankMemoTypes = $this->bankMemoTypesRepository->update($input, $id);
 
-        return $this->sendResponse($bankMemoTypes->toArray(), 'BankMemoTypes updated successfully');
+        return $this->sendResponse($bankMemoTypes->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_memo_types')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class BankMemoTypesAPIController extends AppBaseController
         $bankMemoTypes = $this->bankMemoTypesRepository->findWithoutFail($id);
 
         if (empty($bankMemoTypes)) {
-            return $this->sendError('Bank Memo Types not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_types')]));
         }
 
         $bankMemoTypes->delete();
 
-        return $this->sendResponse($id, 'Bank Memo Types deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_memo_types')]));
     }
 }

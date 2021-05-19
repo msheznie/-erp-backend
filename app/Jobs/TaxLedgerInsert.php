@@ -229,7 +229,7 @@ class TaxLedgerInsert implements ShouldQueue
 
                                 array_push($finalData, $ledgerData);
                             }
-                        } else if ($masterData->isPerforma == 0) {
+                        } else if ($masterData->isPerforma == 0 || $masterData->isPerforma == 1) {
                             $details = CustomerInvoiceDirectDetail::selectRaw('SUM(VATAmount*invoiceQty) as transVATAmount,SUM(VATAmountLocal*invoiceQty) as localVATAmount ,SUM(VATAmountRpt*invoiceQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency, localCurrencyER, comRptCurrency, comRptCurrencyER, invoiceAmountCurrency, invoiceAmountCurrencyER')
                                                     ->where('custInvoiceDirectID', $masterModel["autoID"])
                                                     ->whereNotNull('vatSubCategoryID')

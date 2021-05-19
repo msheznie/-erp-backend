@@ -77,7 +77,7 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
         $this->bookInvSuppMasterRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppMasterRefferedBacks = $this->bookInvSuppMasterRefferedBackRepository->all();
 
-        return $this->sendResponse($bookInvSuppMasterRefferedBacks->toArray(), 'Book Inv Supp Master Reffered Backs retrieved successfully');
+        return $this->sendResponse($bookInvSuppMasterRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
     }
 
     /**
@@ -124,7 +124,7 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
 
         $bookInvSuppMasterRefferedBacks = $this->bookInvSuppMasterRefferedBackRepository->create($input);
 
-        return $this->sendResponse($bookInvSuppMasterRefferedBacks->toArray(), 'Book Inv Supp Master Reffered Back saved successfully');
+        return $this->sendResponse($bookInvSuppMasterRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
     }
 
     /**
@@ -175,10 +175,10 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMasterRefferedBack)) {
-            return $this->sendError('Book Inv Supp Master Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
         }
 
-        return $this->sendResponse($bookInvSuppMasterRefferedBack->toArray(), 'Book Inv Supp Master Reffered Back retrieved successfully');
+        return $this->sendResponse($bookInvSuppMasterRefferedBack->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
     }
 
     /**
@@ -240,7 +240,7 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
 
         $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($bookInvSuppMasterRefferedBack->toArray(), 'BookInvSuppMasterRefferedBack updated successfully');
+        return $this->sendResponse($bookInvSuppMasterRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
     }
 
     /**
@@ -287,12 +287,12 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
         $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMasterRefferedBack)) {
-            return $this->sendError('Book Inv Supp Master Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
         }
 
         $bookInvSuppMasterRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Book Inv Supp Master Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.book_inv_supp_master_reffered_backs')]));
     }
 
     public function getSIMasterAmendHistory(Request $request)
@@ -303,7 +303,7 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
             ->with(['created_by','confirmed_by','modified_by','supplier','approved_by', 'cancelled_by', 'transactioncurrency'])
             ->get();
 
-        return $this->sendResponse($supplierInvoiceHistory, 'Invoice detail retrieved successfully');
+        return $this->sendResponse($supplierInvoiceHistory, trans('custom.retrieve', ['attribute' => trans('custom.invoice_detail')]));
     }
 
 }

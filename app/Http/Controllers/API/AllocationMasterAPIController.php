@@ -65,7 +65,7 @@ class AllocationMasterAPIController extends AppBaseController
         $this->allocationMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $allocationMasters = $this->allocationMasterRepository->all();
 
-        return $this->sendResponse($allocationMasters->toArray(), 'Allocation Masters retrieved successfully');
+        return $this->sendResponse($allocationMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.allocation_masters')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AllocationMasterAPIController extends AppBaseController
 
         $allocationMaster = $this->allocationMasterRepository->create($input);
 
-        return $this->sendResponse($allocationMaster->toArray(), 'Allocation Master saved successfully');
+        return $this->sendResponse($allocationMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.allocation_masters')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AllocationMasterAPIController extends AppBaseController
         $allocationMaster = $this->allocationMasterRepository->findWithoutFail($id);
 
         if (empty($allocationMaster)) {
-            return $this->sendError('Allocation Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.allocation_masters')]));
         }
 
-        return $this->sendResponse($allocationMaster->toArray(), 'Allocation Master retrieved successfully');
+        return $this->sendResponse($allocationMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.allocation_masters')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AllocationMasterAPIController extends AppBaseController
         $allocationMaster = $this->allocationMasterRepository->findWithoutFail($id);
 
         if (empty($allocationMaster)) {
-            return $this->sendError('Allocation Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.allocation_masters')]));
         }
 
         $allocationMaster = $this->allocationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($allocationMaster->toArray(), 'AllocationMaster updated successfully');
+        return $this->sendResponse($allocationMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.allocation_masters')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AllocationMasterAPIController extends AppBaseController
         $allocationMaster = $this->allocationMasterRepository->findWithoutFail($id);
 
         if (empty($allocationMaster)) {
-            return $this->sendError('Allocation Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.allocation_masters')]));
         }
 
         $allocationMaster->delete();
 
-        return $this->sendResponse($id, 'Allocation Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.allocation_masters')]));
     }
 }

@@ -57,7 +57,7 @@ class BankAssignAPIController extends AppBaseController
         $this->bankAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankAssigns = $this->bankAssignRepository->all();
 
-        return $this->sendResponse($bankAssigns->toArray(), 'Bank Assigns retrieved successfully');
+        return $this->sendResponse($bankAssigns->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_assigns')]));
     }
 
     /**
@@ -92,7 +92,7 @@ class BankAssignAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($bankAssigns->toArray(), 'Bank Assign saved successfully');
+        return $this->sendResponse($bankAssigns->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_assigns')]));
     }
 
     /**
@@ -121,10 +121,10 @@ class BankAssignAPIController extends AppBaseController
         $bankAssign = $this->bankAssignRepository->findWithoutFail($id);
 
         if (empty($bankAssign)) {
-            return $this->sendError('Bank Assign not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_assigns')]));
         }
 
-        return $this->sendResponse($bankAssign->toArray(), 'Bank Assign retrieved successfully');
+        return $this->sendResponse($bankAssign->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_assigns')]));
     }
 
     /**
@@ -144,12 +144,12 @@ class BankAssignAPIController extends AppBaseController
         $bankAssign = $this->bankAssignRepository->findWithoutFail($id);
 
         if (empty($bankAssign)) {
-            return $this->sendError('Bank Assign not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_assigns')]));
         }
 
         $bankAssign = $this->bankAssignRepository->update($input, $id);
 
-        return $this->sendResponse($bankAssign->toArray(), 'BankAssign updated successfully');
+        return $this->sendResponse($bankAssign->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_assigns')]));
     }
 
     /**
@@ -166,12 +166,12 @@ class BankAssignAPIController extends AppBaseController
         $bankAssign = $this->bankAssignRepository->findWithoutFail($id);
 
         if (empty($bankAssign)) {
-            return $this->sendError('Bank Assign not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_assigns')]));
         }
 
         $bankAssign->delete();
 
-        return $this->sendResponse($id, 'Bank Assign deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_assigns')]));
     }
 
 
@@ -198,7 +198,7 @@ class BankAssignAPIController extends AppBaseController
 
         $bankAssignUpdated = BankAssign::where('bankAssignedAutoID', $request['bankAssignedAutoID'])->update($data);
 
-        return $this->sendResponse($bankAssignUpdated, 'Bank Assign updated successfully');
+        return $this->sendResponse($bankAssignUpdated, trans('custom.update', ['attribute' => trans('custom.bank_assigns')]));
     }
 
 

@@ -75,7 +75,7 @@ class BankMemoPayeeAPIController extends AppBaseController
         $this->bankMemoPayeeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankMemoPayees = $this->bankMemoPayeeRepository->all();
 
-        return $this->sendResponse($bankMemoPayees->toArray(), 'Bank Memo Payees retrieved successfully');
+        return $this->sendResponse($bankMemoPayees->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class BankMemoPayeeAPIController extends AppBaseController
 
         $bankMemoPayees = $this->bankMemoPayeeRepository->create($input);
 
-        return $this->sendResponse($bankMemoPayees->toArray(), 'Bank Memo Payee saved successfully');
+        return $this->sendResponse($bankMemoPayees->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class BankMemoPayeeAPIController extends AppBaseController
         $bankMemoPayee = $this->bankMemoPayeeRepository->findWithoutFail($id);
 
         if (empty($bankMemoPayee)) {
-            return $this->sendError('Bank Memo Payee not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_payees')]));
         }
 
-        return $this->sendResponse($bankMemoPayee->toArray(), 'Bank Memo Payee retrieved successfully');
+        return $this->sendResponse($bankMemoPayee->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     /**
@@ -229,14 +229,14 @@ class BankMemoPayeeAPIController extends AppBaseController
         $bankMemoPayee = $this->bankMemoPayeeRepository->findWithoutFail($id);
 
         if (empty($bankMemoPayee)) {
-            return $this->sendError('Bank Memo Payee not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_payees')]));
         }
 
         $updateArray = ['memoDetail' => $input['memoDetail']];
 
         $bankMemoPayee = $this->bankMemoPayeeRepository->update($updateArray, $id);
 
-        return $this->sendResponse($bankMemoPayee->toArray(), 'BankMemoPayee updated successfully');
+        return $this->sendResponse($bankMemoPayee->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     /**
@@ -283,12 +283,12 @@ class BankMemoPayeeAPIController extends AppBaseController
         $bankMemoPayee = $this->bankMemoPayeeRepository->findWithoutFail($id);
 
         if (empty($bankMemoPayee)) {
-            return $this->sendError('Bank Memo Payee not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_memo_payees')]));
         }
 
         $bankMemoPayee->delete();
 
-        return $this->sendResponse($id, 'Bank Memo Payee deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     public function payeeBankMemosByDocument(Request $request)
@@ -303,7 +303,7 @@ class BankMemoPayeeAPIController extends AppBaseController
             ->get();
 
         $data = array('bankMemos' => $bankMemoByDocument->toArray(), 'count' => $count);
-        return $this->sendResponse($data, 'Bank Memos retrieved successfully');
+        return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_payees')]));
     }
 
     public function addBulkPayeeMemos(Request $request)
@@ -317,7 +317,7 @@ class BankMemoPayeeAPIController extends AppBaseController
         $document = PaySupplierInvoiceMaster::find($request->get('id'));
 
         if (empty($document)) {
-            return $this->sendError('Payment Voucher not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
         }
 
         foreach ($companyDefaultBankMemos as $value) {
@@ -339,7 +339,7 @@ class BankMemoPayeeAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($createdArray, 'Bank Memo Suppliers saved successfully');
+        return $this->sendResponse($createdArray, trans('custom.save', ['attribute' => trans('custom.bank_memo_suppliers')]));
     }
 
     public function payeeBankMemoDeleteAll(Request $request)
@@ -348,7 +348,7 @@ class BankMemoPayeeAPIController extends AppBaseController
         $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $request['id'])
                                             ->delete();
 
-        return $this->sendResponse($bankMemoSupplier, 'Bank Memos deleted successfully');
+        return $this->sendResponse($bankMemoSupplier, trans('custom.delete', ['attribute' => trans('custom.bank_memos')]);
     }
 
 
