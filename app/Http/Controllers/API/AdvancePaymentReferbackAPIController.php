@@ -65,7 +65,7 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
         $this->advancePaymentReferbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $advancePaymentReferbacks = $this->advancePaymentReferbackRepository->all();
 
-        return $this->sendResponse($advancePaymentReferbacks->toArray(), 'Advance Payment Referbacks retrieved successfully');
+        return $this->sendResponse($advancePaymentReferbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
 
         $advancePaymentReferbacks = $this->advancePaymentReferbackRepository->create($input);
 
-        return $this->sendResponse($advancePaymentReferbacks->toArray(), 'Advance Payment Referback saved successfully');
+        return $this->sendResponse($advancePaymentReferbacks->toArray(), trans('custom.save', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
         $advancePaymentReferback = $this->advancePaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($advancePaymentReferback)) {
-            return $this->sendError('Advance Payment Referback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_referbacks')]));
         }
 
-        return $this->sendResponse($advancePaymentReferback->toArray(), 'Advance Payment Referback retrieved successfully');
+        return $this->sendResponse($advancePaymentReferback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
         $advancePaymentReferback = $this->advancePaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($advancePaymentReferback)) {
-            return $this->sendError('Advance Payment Referback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_referbacks')]));
         }
 
         $advancePaymentReferback = $this->advancePaymentReferbackRepository->update($input, $id);
 
-        return $this->sendResponse($advancePaymentReferback->toArray(), 'AdvancePaymentReferback updated successfully');
+        return $this->sendResponse($advancePaymentReferback->toArray(), trans('custom.update', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 
     /**
@@ -271,16 +271,16 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
         $advancePaymentReferback = $this->advancePaymentReferbackRepository->findWithoutFail($id);
 
         if (empty($advancePaymentReferback)) {
-            return $this->sendError('Advance Payment Referback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_referbacks')]));
         }
 
         $advancePaymentReferback->delete();
 
-        return $this->sendResponse($id, 'Advance Payment Referback deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 
     public function getADVPaymentHistoryDetails(Request $request){
         $advancePaymentDetails = $this->advancePaymentReferbackRepository->with('purchaseorder_by')->findWhere(['PayMasterAutoId' => $request->PayMasterAutoId, 'timesReferred' => $request->timesReferred]);
-        return $this->sendResponse($advancePaymentDetails, 'Payment details retrieved successfully');
+        return $this->sendResponse($advancePaymentDetails, trans('custom.retrieve', ['attribute' => trans('custom.advance_payment_referbacks')]));
     }
 }

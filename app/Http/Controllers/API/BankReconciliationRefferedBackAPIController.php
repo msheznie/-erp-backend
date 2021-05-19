@@ -76,7 +76,7 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
         $this->bankReconciliationRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankReconciliationRefferedBacks = $this->bankReconciliationRefferedBackRepository->all();
 
-        return $this->sendResponse($bankReconciliationRefferedBacks->toArray(), 'Bank Reconciliation Reffered Backs retrieved successfully');
+        return $this->sendResponse($bankReconciliationRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
     }
 
     /**
@@ -123,7 +123,7 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
 
         $bankReconciliationRefferedBacks = $this->bankReconciliationRefferedBackRepository->create($input);
 
-        return $this->sendResponse($bankReconciliationRefferedBacks->toArray(), 'Bank Reconciliation Reffered Back saved successfully');
+        return $this->sendResponse($bankReconciliationRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
     }
 
     /**
@@ -170,7 +170,7 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRefferedBackRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         if (!empty($bankReconciliation)) {
@@ -238,7 +238,7 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
         $bankReconciliation->totalPaymentAmount = $totalPaymentAmount;
         $bankReconciliation->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation Reffered Back retrieved successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
     }
 
     /**
@@ -295,12 +295,12 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
         $bankReconciliationRefferedBack = $this->bankReconciliationRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationRefferedBack)) {
-            return $this->sendError('Bank Reconciliation Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
         }
 
         $bankReconciliationRefferedBack = $this->bankReconciliationRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliationRefferedBack->toArray(), 'BankReconciliationRefferedBack updated successfully');
+        return $this->sendResponse($bankReconciliationRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
     }
 
     /**
@@ -347,12 +347,12 @@ class BankReconciliationRefferedBackAPIController extends AppBaseController
         $bankReconciliationRefferedBack = $this->bankReconciliationRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bankReconciliationRefferedBack)) {
-            return $this->sendError('Bank Reconciliation Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
         }
 
         $bankReconciliationRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Bank Reconciliation Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_reconciliation_reffered_backs')]));
     }
 
     public function getReferBackHistoryByBankRec(Request $request)

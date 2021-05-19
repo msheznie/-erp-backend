@@ -65,7 +65,7 @@ class AddonCostCategoriesAPIController extends AppBaseController
         $this->addonCostCategoriesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $addonCostCategories = $this->addonCostCategoriesRepository->all();
 
-        return $this->sendResponse($addonCostCategories->toArray(), 'Addon Cost Categories retrieved successfully');
+        return $this->sendResponse($addonCostCategories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.addon_cost_categories')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AddonCostCategoriesAPIController extends AppBaseController
 
         $addonCostCategories = $this->addonCostCategoriesRepository->create($input);
 
-        return $this->sendResponse($addonCostCategories->toArray(), 'Addon Cost Categories saved successfully');
+        return $this->sendResponse($addonCostCategories->toArray(), trans('custom.save', ['attribute' => trans('custom.addon_cost_categories')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AddonCostCategoriesAPIController extends AppBaseController
         $addonCostCategories = $this->addonCostCategoriesRepository->findWithoutFail($id);
 
         if (empty($addonCostCategories)) {
-            return $this->sendError('Addon Cost Categories not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addon_cost_categories')]));
         }
 
-        return $this->sendResponse($addonCostCategories->toArray(), 'Addon Cost Categories retrieved successfully');
+        return $this->sendResponse($addonCostCategories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.addon_cost_categories')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AddonCostCategoriesAPIController extends AppBaseController
         $addonCostCategories = $this->addonCostCategoriesRepository->findWithoutFail($id);
 
         if (empty($addonCostCategories)) {
-            return $this->sendError('Addon Cost Categories not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addon_cost_categories')]));
         }
 
         $addonCostCategories = $this->addonCostCategoriesRepository->update($input, $id);
 
-        return $this->sendResponse($addonCostCategories->toArray(), 'AddonCostCategories updated successfully');
+        return $this->sendResponse($addonCostCategories->toArray(), trans('custom.update', ['attribute' => trans('custom.addon_cost_categories')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AddonCostCategoriesAPIController extends AppBaseController
         $addonCostCategories = $this->addonCostCategoriesRepository->findWithoutFail($id);
 
         if (empty($addonCostCategories)) {
-            return $this->sendError('Addon Cost Categories not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addon_cost_categories')]));
         }
 
         $addonCostCategories->delete();
 
-        return $this->sendResponse($id, 'Addon Cost Categories deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.addon_cost_categories')]));
     }
 }

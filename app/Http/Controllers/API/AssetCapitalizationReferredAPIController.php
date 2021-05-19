@@ -76,7 +76,7 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         $this->assetCapitalizationReferredRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetCapitalizationReferreds = $this->assetCapitalizationReferredRepository->all();
 
-        return $this->sendResponse($assetCapitalizationReferreds->toArray(), 'Asset Capitalization Referreds retrieved successfully');
+        return $this->sendResponse($assetCapitalizationReferreds->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization_referred')]));
     }
 
     /**
@@ -123,7 +123,7 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
 
         $assetCapitalizationReferreds = $this->assetCapitalizationReferredRepository->create($input);
 
-        return $this->sendResponse($assetCapitalizationReferreds->toArray(), 'Asset Capitalization Referred saved successfully');
+        return $this->sendResponse($assetCapitalizationReferreds->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_capitalization_referred')]));
     }
 
     /**
@@ -170,10 +170,10 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         $assetCapitalizationReferred = $this->assetCapitalizationReferredRepository->findWithoutFail($id);
 
         if (empty($assetCapitalizationReferred)) {
-            return $this->sendError('Asset Capitalization Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_referred')]));
         }
 
-        return $this->sendResponse($assetCapitalizationReferred->toArray(), 'Asset Capitalization Referred retrieved successfully');
+        return $this->sendResponse($assetCapitalizationReferred->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization_referred')]));
     }
 
     /**
@@ -230,12 +230,12 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         $assetCapitalizationReferred = $this->assetCapitalizationReferredRepository->findWithoutFail($id);
 
         if (empty($assetCapitalizationReferred)) {
-            return $this->sendError('Asset Capitalization Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_referred')]));
         }
 
         $assetCapitalizationReferred = $this->assetCapitalizationReferredRepository->update($input, $id);
 
-        return $this->sendResponse($assetCapitalizationReferred->toArray(), 'AssetCapitalizationReferred updated successfully');
+        return $this->sendResponse($assetCapitalizationReferred->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_capitalization_referred')]));
     }
 
     /**
@@ -282,12 +282,12 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         $assetCapitalizationReferred = $this->assetCapitalizationReferredRepository->findWithoutFail($id);
 
         if (empty($assetCapitalizationReferred)) {
-            return $this->sendError('Asset Capitalization Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_referred')]));
         }
 
         $assetCapitalizationReferred->delete();
 
-        return $this->sendResponse($id, 'Asset Capitalization Referred deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_capitalization_referred')]));
     }
 
 
@@ -349,9 +349,9 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         }])->findWithoutFail($request['capitalizationID']);
 
         if (empty($assetCapitalization)) {
-            return $this->sendError('Asset Capitalization not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization')]));
         }
 
-        return $this->sendResponse($assetCapitalization->toArray(), 'Asset Capitalization retrieved successfully');
+        return $this->sendResponse($assetCapitalization->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_capitalization')]));
     }
 }

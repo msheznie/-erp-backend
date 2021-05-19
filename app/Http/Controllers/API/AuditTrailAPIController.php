@@ -74,7 +74,7 @@ class AuditTrailAPIController extends AppBaseController
         $this->auditTrailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $auditTrails = $this->auditTrailRepository->all();
 
-        return $this->sendResponse($auditTrails->toArray(), 'Audit Trails retrieved successfully');
+        return $this->sendResponse($auditTrails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.audit_trails')]));
     }
 
     /**
@@ -121,7 +121,7 @@ class AuditTrailAPIController extends AppBaseController
 
         $auditTrails = $this->auditTrailRepository->create($input);
 
-        return $this->sendResponse($auditTrails->toArray(), 'Audit Trail saved successfully');
+        return $this->sendResponse($auditTrails->toArray(), trans('custom.save', ['attribute' => trans('custom.audit_trails')]));
     }
 
     /**
@@ -168,10 +168,10 @@ class AuditTrailAPIController extends AppBaseController
         $auditTrail = $this->auditTrailRepository->findWithoutFail($id);
 
         if (empty($auditTrail)) {
-            return $this->sendError('Audit Trail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.audit_trails')]));
         }
 
-        return $this->sendResponse($auditTrail->toArray(), 'Audit Trail retrieved successfully');
+        return $this->sendResponse($auditTrail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.audit_trails')]));
     }
 
     /**
@@ -228,12 +228,12 @@ class AuditTrailAPIController extends AppBaseController
         $auditTrail = $this->auditTrailRepository->findWithoutFail($id);
 
         if (empty($auditTrail)) {
-            return $this->sendError('Audit Trail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.audit_trails')]));
         }
 
         $auditTrail = $this->auditTrailRepository->update($input, $id);
 
-        return $this->sendResponse($auditTrail->toArray(), 'AuditTrail updated successfully');
+        return $this->sendResponse($auditTrail->toArray(), trans('custom.update', ['attribute' => trans('custom.audit_trails')]));
     }
 
     /**
@@ -280,11 +280,11 @@ class AuditTrailAPIController extends AppBaseController
         $auditTrail = $this->auditTrailRepository->findWithoutFail($id);
 
         if (empty($auditTrail)) {
-            return $this->sendError('Audit Trail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.audit_trails')]));
         }
 
         $auditTrail->delete();
 
-        return $this->sendResponse($id, 'Audit Trail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.audit_trails')]));
     }
 }

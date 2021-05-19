@@ -65,7 +65,7 @@ class AccountsPayableLedgerAPIController extends AppBaseController
         $this->accountsPayableLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $accountsPayableLedgers = $this->accountsPayableLedgerRepository->all();
 
-        return $this->sendResponse($accountsPayableLedgers->toArray(), 'Accounts Payable Ledgers retrieved successfully');
+        return $this->sendResponse($accountsPayableLedgers->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.acc_payable_ledger')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AccountsPayableLedgerAPIController extends AppBaseController
 
         $accountsPayableLedgers = $this->accountsPayableLedgerRepository->create($input);
 
-        return $this->sendResponse($accountsPayableLedgers->toArray(), 'Accounts Payable Ledger saved successfully');
+        return $this->sendResponse($accountsPayableLedgers->toArray(), trans('custom.save', ['attribute' => trans('custom.acc_payable_ledger')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AccountsPayableLedgerAPIController extends AppBaseController
         $accountsPayableLedger = $this->accountsPayableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsPayableLedger)) {
-            return $this->sendError('Accounts Payable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_payable_ledger')]));
         }
 
-        return $this->sendResponse($accountsPayableLedger->toArray(), 'Accounts Payable Ledger retrieved successfully');
+        return $this->sendResponse($accountsPayableLedger->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.acc_payable_ledger')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class AccountsPayableLedgerAPIController extends AppBaseController
         $accountsPayableLedger = $this->accountsPayableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsPayableLedger)) {
-            return $this->sendError('Accounts Payable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_payable_ledger')]));
         }
 
         $accountsPayableLedger = $this->accountsPayableLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($accountsPayableLedger->toArray(), 'AccountsPayableLedger updated successfully');
+        return $this->sendResponse($accountsPayableLedger->toArray(), trans('custom.update', ['attribute' => trans('custom.acc_payable_ledger')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AccountsPayableLedgerAPIController extends AppBaseController
         $accountsPayableLedger = $this->accountsPayableLedgerRepository->findWithoutFail($id);
 
         if (empty($accountsPayableLedger)) {
-            return $this->sendError('Accounts Payable Ledger not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.acc_payable_ledger')]));
         }
 
         $accountsPayableLedger->delete();
 
-        return $this->sendResponse($id, 'Accounts Payable Ledger deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.acc_payable_ledger')]));
     }
 }

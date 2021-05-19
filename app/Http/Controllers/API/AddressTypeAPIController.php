@@ -75,7 +75,7 @@ class AddressTypeAPIController extends AppBaseController
         $this->addressTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $addressTypes = $this->addressTypeRepository->all();
 
-        return $this->sendResponse($addressTypes->toArray(), 'Address Types retrieved successfully');
+        return $this->sendResponse($addressTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.address_types')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class AddressTypeAPIController extends AppBaseController
 
         $addressTypes = $this->addressTypeRepository->create($input);
 
-        return $this->sendResponse($addressTypes->toArray(), 'Address Type saved successfully');
+        return $this->sendResponse($addressTypes->toArray(), trans('custom.save', ['attribute' => trans('custom.address_types')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class AddressTypeAPIController extends AppBaseController
         $addressType = $this->addressTypeRepository->findWithoutFail($id);
 
         if (empty($addressType)) {
-            return $this->sendError('Address Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.address_types')]));
         }
 
-        return $this->sendResponse($addressType->toArray(), 'Address Type retrieved successfully');
+        return $this->sendResponse($addressType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.address_types')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class AddressTypeAPIController extends AppBaseController
         $addressType = $this->addressTypeRepository->findWithoutFail($id);
 
         if (empty($addressType)) {
-            return $this->sendError('Address Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.address_types')]));
         }
 
         $addressType = $this->addressTypeRepository->update($input, $id);
 
-        return $this->sendResponse($addressType->toArray(), 'AddressType updated successfully');
+        return $this->sendResponse($addressType->toArray(), trans('custom.update', ['attribute' => trans('custom.address_types')]));
     }
 
     /**
@@ -281,11 +281,11 @@ class AddressTypeAPIController extends AppBaseController
         $addressType = $this->addressTypeRepository->findWithoutFail($id);
 
         if (empty($addressType)) {
-            return $this->sendError('Address Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.address_types')]));
         }
 
         $addressType->delete();
 
-        return $this->sendResponse($id, 'Address Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.address_types')]));
     }
 }

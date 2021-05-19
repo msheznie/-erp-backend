@@ -80,7 +80,7 @@ class AddressAPIController extends AppBaseController
         $this->addressRepository->pushCriteria(new LimitOffsetCriteria($request));
         $addresses = $this->addressRepository->all();
 
-        return $this->sendResponse($addresses->toArray(), 'Addresses retrieved successfully');
+        return $this->sendResponse($addresses->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.addresses')]));
     }
 
     /**
@@ -149,7 +149,7 @@ class AddressAPIController extends AppBaseController
         }
         $addresses = $this->addressRepository->create($input);
 
-        return $this->sendResponse($addresses->toArray(), 'Address saved successfully');
+        return $this->sendResponse($addresses->toArray(), trans('custom.save', ['attribute' => trans('custom.addresses')]));
     }
 
     /**
@@ -168,7 +168,7 @@ class AddressAPIController extends AppBaseController
             'types' => $types
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     /**
@@ -271,10 +271,10 @@ class AddressAPIController extends AppBaseController
         $address = $this->addressRepository->findWithoutFail($id);
 
         if (empty($address)) {
-            return $this->sendError('Address not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addresses')]));
         }
 
-        return $this->sendResponse($address->toArray(), 'Address retrieved successfully');
+        return $this->sendResponse($address->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.addresses')]));
     }
 
     /**
@@ -333,7 +333,7 @@ class AddressAPIController extends AppBaseController
         $address = $this->addressRepository->findWithoutFail($id);
 
         if (empty($address)) {
-            return $this->sendError('Address not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addresses')]));
         }
 
         $company = Company::where('companySystemID',$input['companySystemID'])->first();
@@ -361,7 +361,7 @@ class AddressAPIController extends AppBaseController
 
         $address = $this->addressRepository->update($input, $id);
 
-        return $this->sendResponse($address->toArray(), 'Address updated successfully');
+        return $this->sendResponse($address->toArray(), trans('custom.update', ['attribute' => trans('custom.addresses')]));
     }
 
     /**
@@ -408,11 +408,11 @@ class AddressAPIController extends AppBaseController
         $address = $this->addressRepository->findWithoutFail($id);
 
         if (empty($address)) {
-            return $this->sendError('Address not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.addresses')]));
         }
 
         $address->delete();
 
-        return $this->sendResponse($id, 'Address deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.addresses')]));
     }
 }

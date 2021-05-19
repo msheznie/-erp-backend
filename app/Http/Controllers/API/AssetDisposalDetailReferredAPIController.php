@@ -75,7 +75,7 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
         $this->assetDisposalDetailReferredRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetDisposalDetailReferreds = $this->assetDisposalDetailReferredRepository->all();
 
-        return $this->sendResponse($assetDisposalDetailReferreds->toArray(), 'Asset Disposal Detail Referreds retrieved successfully');
+        return $this->sendResponse($assetDisposalDetailReferreds->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
 
         $assetDisposalDetailReferreds = $this->assetDisposalDetailReferredRepository->create($input);
 
-        return $this->sendResponse($assetDisposalDetailReferreds->toArray(), 'Asset Disposal Detail Referred saved successfully');
+        return $this->sendResponse($assetDisposalDetailReferreds->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
         $assetDisposalDetailReferred = $this->assetDisposalDetailReferredRepository->findWithoutFail($id);
 
         if (empty($assetDisposalDetailReferred)) {
-            return $this->sendError('Asset Disposal Detail Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
         }
 
-        return $this->sendResponse($assetDisposalDetailReferred->toArray(), 'Asset Disposal Detail Referred retrieved successfully');
+        return $this->sendResponse($assetDisposalDetailReferred->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
         $assetDisposalDetailReferred = $this->assetDisposalDetailReferredRepository->findWithoutFail($id);
 
         if (empty($assetDisposalDetailReferred)) {
-            return $this->sendError('Asset Disposal Detail Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
         }
 
         $assetDisposalDetailReferred = $this->assetDisposalDetailReferredRepository->update($input, $id);
 
-        return $this->sendResponse($assetDisposalDetailReferred->toArray(), 'AssetDisposalDetailReferred updated successfully');
+        return $this->sendResponse($assetDisposalDetailReferred->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
     }
 
     /**
@@ -281,20 +281,20 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
         $assetDisposalDetailReferred = $this->assetDisposalDetailReferredRepository->findWithoutFail($id);
 
         if (empty($assetDisposalDetailReferred)) {
-            return $this->sendError('Asset Disposal Detail Referred not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
         }
 
         $assetDisposalDetailReferred->delete();
 
-        return $this->sendResponse($id, 'Asset Disposal Detail Referred deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_details_referreds')]));
     }
 
     function getAssetDisposalDetailHistory(Request $request)
     {
         $assetDisposalDetail = AssetDisposalDetailReferred::OfMaster($request->assetdisposalMasterAutoID)->where('timesReferred', $request->timesReferred)->with('segment_by', 'item_by')->get();
         if (empty($assetDisposalDetail)) {
-            return $this->sendError('Asset Disposal Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]);
         }
-        return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
+        return $this->sendResponse($assetDisposalDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details')]));
     }
 }

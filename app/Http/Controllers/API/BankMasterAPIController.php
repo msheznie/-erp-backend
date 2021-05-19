@@ -59,7 +59,7 @@ class BankMasterAPIController extends AppBaseController
         $this->bankMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankMasters = $this->bankMasterRepository->all();
 
-        return $this->sendResponse($bankMasters->toArray(), 'Bank Masters retrieved successfully');
+        return $this->sendResponse($bankMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -94,7 +94,7 @@ class BankMasterAPIController extends AppBaseController
 
         $bankMasters = $this->bankMasterRepository->create($input);
 
-        return $this->sendResponse($bankMasters->toArray(), 'Bank Master saved successfully');
+        return $this->sendResponse($bankMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -111,10 +111,10 @@ class BankMasterAPIController extends AppBaseController
         $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
 
         if (empty($bankMaster)) {
-            return $this->sendError('Bank Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_masters')]));
         }
 
-        return $this->sendResponse($bankMaster->toArray(), 'Bank Master retrieved successfully');
+        return $this->sendResponse($bankMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -134,12 +134,12 @@ class BankMasterAPIController extends AppBaseController
         $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
 
         if (empty($bankMaster)) {
-            return $this->sendError('Bank Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_masters')]));
         }
 
         $bankMaster = $this->bankMasterRepository->update($input, $id);
 
-        return $this->sendResponse($bankMaster->toArray(), 'BankMaster updated successfully');
+        return $this->sendResponse($bankMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -156,12 +156,12 @@ class BankMasterAPIController extends AppBaseController
         $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
 
         if (empty($bankMaster)) {
-            return $this->sendError('Bank Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_masters')]));
         }
 
         $bankMaster->delete();
 
-        return $this->sendResponse($id, 'Bank Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -228,7 +228,7 @@ class BankMasterAPIController extends AppBaseController
 
         $bankMaster = $this->bankMasterRepository->update($data, $input['bankmasterAutoID']);
 
-        return $this->sendResponse($bankMaster->toArray(), 'Bank master updated successfully');
+        return $this->sendResponse($bankMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_masters')]));
     }
 
     /**
@@ -304,7 +304,7 @@ class BankMasterAPIController extends AppBaseController
             'allCompanies' => $allCompanies,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.bank_masters')]));
 
     }
 }

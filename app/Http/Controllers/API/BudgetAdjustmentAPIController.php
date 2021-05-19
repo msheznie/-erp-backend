@@ -74,7 +74,7 @@ class BudgetAdjustmentAPIController extends AppBaseController
         $this->budgetAdjustmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetAdjustments = $this->budgetAdjustmentRepository->all();
 
-        return $this->sendResponse($budgetAdjustments->toArray(), 'Budget Adjustments retrieved successfully');
+        return $this->sendResponse($budgetAdjustments->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budget_adjustments')]));
     }
 
     /**
@@ -121,7 +121,7 @@ class BudgetAdjustmentAPIController extends AppBaseController
 
         $budgetAdjustments = $this->budgetAdjustmentRepository->create($input);
 
-        return $this->sendResponse($budgetAdjustments->toArray(), 'Budget Adjustment saved successfully');
+        return $this->sendResponse($budgetAdjustments->toArray(), trans('custom.save', ['attribute' => trans('custom.budget_adjustments')]));
     }
 
     /**
@@ -168,10 +168,10 @@ class BudgetAdjustmentAPIController extends AppBaseController
         $budgetAdjustment = $this->budgetAdjustmentRepository->findWithoutFail($id);
 
         if (empty($budgetAdjustment)) {
-            return $this->sendError('Budget Adjustment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_adjustments')]));
         }
 
-        return $this->sendResponse($budgetAdjustment->toArray(), 'Budget Adjustment retrieved successfully');
+        return $this->sendResponse($budgetAdjustment->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budget_adjustments')]));
     }
 
     /**
@@ -228,12 +228,12 @@ class BudgetAdjustmentAPIController extends AppBaseController
         $budgetAdjustment = $this->budgetAdjustmentRepository->findWithoutFail($id);
 
         if (empty($budgetAdjustment)) {
-            return $this->sendError('Budget Adjustment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_adjustments')]));
         }
 
         $budgetAdjustment = $this->budgetAdjustmentRepository->update($input, $id);
 
-        return $this->sendResponse($budgetAdjustment->toArray(), 'BudgetAdjustment updated successfully');
+        return $this->sendResponse($budgetAdjustment->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_adjustments')]));
     }
 
     /**
@@ -280,11 +280,11 @@ class BudgetAdjustmentAPIController extends AppBaseController
         $budgetAdjustment = $this->budgetAdjustmentRepository->findWithoutFail($id);
 
         if (empty($budgetAdjustment)) {
-            return $this->sendError('Budget Adjustment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_adjustments')]));
         }
 
         $budgetAdjustment->delete();
 
-        return $this->sendResponse($id, 'Budget Adjustment deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.budget_adjustments')]));
     }
 }
