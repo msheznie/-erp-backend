@@ -69,7 +69,7 @@ class CustomReportTypeAPIController extends AppBaseController
             ->with(['templates'])
             ->get();
 
-        return $this->sendResponse($customReportTypes->toArray(), 'Custom Report Types retrieved successfully');
+        return $this->sendResponse($customReportTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_types')]);
     }
 
     /**
@@ -116,7 +116,7 @@ class CustomReportTypeAPIController extends AppBaseController
 
         $customReportType = $this->customReportTypeRepository->create($input);
 
-        return $this->sendResponse($customReportType->toArray(), 'Custom Report Type saved successfully');
+        return $this->sendResponse($customReportType->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_report_types')]));
     }
 
     /**
@@ -163,10 +163,10 @@ class CustomReportTypeAPIController extends AppBaseController
         $customReportType = $this->customReportTypeRepository->findWithoutFail($id);
 
         if (empty($customReportType)) {
-            return $this->sendError('Custom Report Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_types')]));
         }
 
-        return $this->sendResponse($customReportType->toArray(), 'Custom Report Type retrieved successfully');
+        return $this->sendResponse($customReportType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_types')]));
     }
 
     /**
@@ -223,12 +223,12 @@ class CustomReportTypeAPIController extends AppBaseController
         $customReportType = $this->customReportTypeRepository->findWithoutFail($id);
 
         if (empty($customReportType)) {
-            return $this->sendError('Custom Report Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_types')]));
         }
 
         $customReportType = $this->customReportTypeRepository->update($input, $id);
 
-        return $this->sendResponse($customReportType->toArray(), 'CustomReportType updated successfully');
+        return $this->sendResponse($customReportType->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_report_types')]));
     }
 
     /**
@@ -275,11 +275,11 @@ class CustomReportTypeAPIController extends AppBaseController
         $customReportType = $this->customReportTypeRepository->findWithoutFail($id);
 
         if (empty($customReportType)) {
-            return $this->sendError('Custom Report Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_types')]));
         }
 
         $customReportType->delete();
 
-        return $this->sendSuccess('Custom Report Type deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.custom_report_types')]));
     }
 }

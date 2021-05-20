@@ -77,7 +77,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $this->companyFinancePeriodRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyFinancePeriods = $this->companyFinancePeriodRepository->all();
 
-        return $this->sendResponse($companyFinancePeriods->toArray(), 'Company Finance Periods retrieved successfully');
+        return $this->sendResponse($companyFinancePeriods->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_periods')]));
     }
 
     /**
@@ -124,7 +124,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
 
         $companyFinancePeriods = $this->companyFinancePeriodRepository->create($input);
 
-        return $this->sendResponse($companyFinancePeriods->toArray(), 'Company Finance Period saved successfully');
+        return $this->sendResponse($companyFinancePeriods->toArray(), trans('custom.save', ['attribute' => trans('custom.company_finance_periods')]));
     }
 
     /**
@@ -171,10 +171,10 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $companyFinancePeriod = $this->companyFinancePeriodRepository->findWithoutFail($id);
 
         if (empty($companyFinancePeriod)) {
-            return $this->sendError('Company Finance Period not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_periods')]));
         }
 
-        return $this->sendResponse($companyFinancePeriod->toArray(), 'Company Finance Period retrieved successfully');
+        return $this->sendResponse($companyFinancePeriod->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_periods')]));
     }
 
     /**
@@ -231,7 +231,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $companyFinancePeriod = $this->companyFinancePeriodRepository->findWithoutFail($id);
 
         if (empty($companyFinancePeriod)) {
-            return $this->sendError('Company Finance Period not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_periods')]));
         }
 
         if ($input['isActive']) {
@@ -245,7 +245,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                                                         ->count();
 
                 if ($checkGlAccount == 0) {
-                    return $this->sendError('General Ledger financial period is not active. You cannot activate financial period.');
+                    return $this->sendError(trans('custom.general_ledger_financial_period_is_not_active_you_cannot_activate_financial_period'));
                 }
             }
         } else if ($companyFinancePeriod->isActive && !$input['isActive'] && $companyFinancePeriod->departmentSystemID == 5) {
@@ -271,7 +271,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                                                                     ->count();
 
                 if ($checkCurrentFinancePeriod > 0) {
-                    return $this->sendError('Company already has a current financial period for this department.');
+                    return $this->sendError(trans('custom.company_already_has_a_current_financial_period_for_this_department'));
                 }
             }
         }
@@ -288,7 +288,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                                                             ->count();
 
                 if ($checkOtherDepartments > 0 && $input['closeAllPeriods'] == 0) {
-                    return $this->sendError('There are some department has active financial period.',500,array('type' => 'active_period_exist'));
+                    return $this->sendError(trans('custom.there_are_some_department_has_active_financial_period'),500,array('type' => 'active_period_exist'));
                 }
 
                 //if($input['closeAllPeriods'] == 1){
@@ -308,7 +308,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
 
         $companyFinancePeriod = $this->companyFinancePeriodRepository->update($input, $id);
 
-        return $this->sendResponse($companyFinancePeriod->toArray(), 'Company Financial Period updated successfully');
+        return $this->sendResponse($companyFinancePeriod->toArray(), trans('custom.update', ['attribute' => trans('custom.company_finance_periods')]));
     }
 
     /**
@@ -355,12 +355,12 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $companyFinancePeriod = $this->companyFinancePeriodRepository->findWithoutFail($id);
 
         if (empty($companyFinancePeriod)) {
-            return $this->sendError('Company Finance Period not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_periods')]));
         }
 
         $companyFinancePeriod->delete();
 
-        return $this->sendResponse($id, 'Company Finance Period deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_periods')]));
     }
 
     public function getAllFinancePeriod(Request $request)
@@ -371,7 +371,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
 
         $companyFinancePeriod = \Helper::companyFinancePeriod($companyId, $companyFinanceYearID, $departmentSystemID);
 
-        return $this->sendResponse($companyFinancePeriod, 'Finance periods retrieved successfully');
+        return $this->sendResponse($companyFinancePeriod, trans('custom.retrieve', ['attribute' => trans('custom.finance_periods')]));
 
     }
 
@@ -390,7 +390,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
             ->where('isActive', -1)
             ->get();
 
-        return $this->sendResponse($output, 'Finance periods retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.finance_periods')]));
 
     }
 
@@ -406,7 +406,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
             ->where('departmentSystemID', $departmentSystemID)
             ->get();
 
-        return $this->sendResponse($output, 'Finance periods retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.finance_periods')]));
     }
 
     public function getFinancialPeriodsByYear(Request $request)

@@ -76,7 +76,7 @@ class CreditNoteReferredbackAPIController extends AppBaseController
         $this->creditNoteReferredbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $creditNoteReferredbacks = $this->creditNoteReferredbackRepository->all();
 
-        return $this->sendResponse($creditNoteReferredbacks->toArray(), 'Credit Note Referredbacks retrieved successfully');
+        return $this->sendResponse($creditNoteReferredbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_referredbacks')]));
     }
 
     /**
@@ -123,7 +123,7 @@ class CreditNoteReferredbackAPIController extends AppBaseController
 
         $creditNoteReferredbacks = $this->creditNoteReferredbackRepository->create($input);
 
-        return $this->sendResponse($creditNoteReferredbacks->toArray(), 'Credit Note Referredback saved successfully');
+        return $this->sendResponse($creditNoteReferredbacks->toArray(), trans('custom.save', ['attribute' => trans('custom.credit_note_referredbacks')]));
     }
 
     /**
@@ -174,10 +174,10 @@ class CreditNoteReferredbackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($creditNoteReferredback)) {
-            return $this->sendError('Credit Note Referredback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_referredbacks')]));
         }
 
-        return $this->sendResponse($creditNoteReferredback->toArray(), 'Credit Note Referredback retrieved successfully');
+        return $this->sendResponse($creditNoteReferredback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_referredbacks')]));
     }
 
     /**
@@ -234,12 +234,12 @@ class CreditNoteReferredbackAPIController extends AppBaseController
         $creditNoteReferredback = $this->creditNoteReferredbackRepository->findWithoutFail($id);
 
         if (empty($creditNoteReferredback)) {
-            return $this->sendError('Credit Note Referredback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_referredbacks')]));
         }
 
         $creditNoteReferredback = $this->creditNoteReferredbackRepository->update($input, $id);
 
-        return $this->sendResponse($creditNoteReferredback->toArray(), 'CreditNoteReferredback updated successfully');
+        return $this->sendResponse($creditNoteReferredback->toArray(), trans('custom.update', ['attribute' => trans('custom.credit_note_referredbacks')]));
     }
 
     /**
@@ -286,12 +286,12 @@ class CreditNoteReferredbackAPIController extends AppBaseController
         $creditNoteReferredback = $this->creditNoteReferredbackRepository->findWithoutFail($id);
 
         if (empty($creditNoteReferredback)) {
-            return $this->sendError('Credit Note Referredback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_referredbacks')]));
         }
 
         $creditNoteReferredback->delete();
 
-        return $this->sendResponse($id, 'Credit Note Referredback deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.credit_note_referredbacks')]));
     }
 
 
@@ -303,6 +303,6 @@ class CreditNoteReferredbackAPIController extends AppBaseController
             ->with(['created_by','confirmed_by','modified_by','customer','approved_by', 'currency'])
             ->get();
 
-        return $this->sendResponse($supplierInvoiceHistory, 'Invoice detail retrieved successfully');
+        return $this->sendResponse($supplierInvoiceHistory, trans('custom.retrieve', ['attribute' => trans('custom.invoice_detail')]));
     }
 }

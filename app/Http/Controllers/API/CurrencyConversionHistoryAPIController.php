@@ -65,7 +65,7 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
         $this->currencyConversionHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyConversionHistories = $this->currencyConversionHistoryRepository->all();
 
-        return $this->sendResponse($currencyConversionHistories->toArray(), 'Currency Conversion Histories retrieved successfully');
+        return $this->sendResponse($currencyConversionHistories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
 
         $currencyConversionHistory = $this->currencyConversionHistoryRepository->create($input);
 
-        return $this->sendResponse($currencyConversionHistory->toArray(), 'Currency Conversion History saved successfully');
+        return $this->sendResponse($currencyConversionHistory->toArray(), trans('custom.save', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
         $currencyConversionHistory = $this->currencyConversionHistoryRepository->findWithoutFail($id);
 
         if (empty($currencyConversionHistory)) {
-            return $this->sendError('Currency Conversion History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_conversion_histories')]));
         }
 
-        return $this->sendResponse($currencyConversionHistory->toArray(), 'Currency Conversion History retrieved successfully');
+        return $this->sendResponse($currencyConversionHistory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
         $currencyConversionHistory = $this->currencyConversionHistoryRepository->findWithoutFail($id);
 
         if (empty($currencyConversionHistory)) {
-            return $this->sendError('Currency Conversion History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_conversion_histories')]));
         }
 
         $currencyConversionHistory = $this->currencyConversionHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($currencyConversionHistory->toArray(), 'CurrencyConversionHistory updated successfully');
+        return $this->sendResponse($currencyConversionHistory->toArray(), trans('custom.update', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
         $currencyConversionHistory = $this->currencyConversionHistoryRepository->findWithoutFail($id);
 
         if (empty($currencyConversionHistory)) {
-            return $this->sendError('Currency Conversion History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_conversion_histories')]));
         }
 
         $currencyConversionHistory->delete();
 
-        return $this->sendResponse($id, 'Currency Conversion History deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
 }

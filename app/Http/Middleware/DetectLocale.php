@@ -14,7 +14,7 @@ class DetectLocale
      * @return mixed
      */
     public function handle($request, Closure $next,...$locales)
-    {//add language
+    {
         $local = ($request->hasHeader('Accept-Language')) ? $request->header('Accept-Language') : 'en';
         app()->setLocale($local);
         return $next($request);

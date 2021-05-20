@@ -75,7 +75,7 @@ class CustomerMasterRefferedBackAPIController extends AppBaseController
         $this->customerMasterRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerMasterRefferedBacks = $this->customerMasterRefferedBackRepository->all();
 
-        return $this->sendResponse($customerMasterRefferedBacks->toArray(), 'Customer Master Reffered Backs retrieved successfully');
+        return $this->sendResponse($customerMasterRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_master_reffered_backs')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class CustomerMasterRefferedBackAPIController extends AppBaseController
 
         $customerMasterRefferedBacks = $this->customerMasterRefferedBackRepository->create($input);
 
-        return $this->sendResponse($customerMasterRefferedBacks->toArray(), 'Customer Master Reffered Back saved successfully');
+        return $this->sendResponse($customerMasterRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_master_reffered_backs')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class CustomerMasterRefferedBackAPIController extends AppBaseController
         $customerMasterRefferedBack = $this->customerMasterRefferedBackRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($customerMasterRefferedBack)) {
-            return $this->sendError('Customer Master Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_reffered_backs')]));
         }
 
-        return $this->sendResponse($customerMasterRefferedBack->toArray(), 'Customer Master Reffered Back retrieved successfully');
+        return $this->sendResponse($customerMasterRefferedBack->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_master_reffered_backs')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class CustomerMasterRefferedBackAPIController extends AppBaseController
         $customerMasterRefferedBack = $this->customerMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($customerMasterRefferedBack)) {
-            return $this->sendError('Customer Master Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_reffered_backs')]));
         }
 
         $customerMasterRefferedBack = $this->customerMasterRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($customerMasterRefferedBack->toArray(), 'CustomerMasterRefferedBack updated successfully');
+        return $this->sendResponse($customerMasterRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_master_reffered_backs')]));
     }
 
     /**
@@ -281,12 +281,12 @@ class CustomerMasterRefferedBackAPIController extends AppBaseController
         $customerMasterRefferedBack = $this->customerMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($customerMasterRefferedBack)) {
-            return $this->sendError('Customer Master Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_reffered_backs')]));
         }
 
         $customerMasterRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Customer Master Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_master_reffered_backs')]));
     }
 
     public function referBackHistoryByCustomerMaster(Request $request)

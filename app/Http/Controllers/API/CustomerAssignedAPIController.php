@@ -56,7 +56,7 @@ class CustomerAssignedAPIController extends AppBaseController
         $this->customerAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerAssigneds = $this->customerAssignedRepository->all();
 
-        return $this->sendResponse($customerAssigneds->toArray(), 'Customer Assigneds retrieved successfully');
+        return $this->sendResponse($customerAssigneds->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_assigneds')]));
     }
 
     /**
@@ -106,7 +106,7 @@ class CustomerAssignedAPIController extends AppBaseController
             $customerAssigneds = $this->customerAssignedRepository->create($input);
         }
 
-        return $this->sendResponse($customerAssigneds->toArray(), 'Customer Assigned saved successfully');
+        return $this->sendResponse($customerAssigneds->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_assigneds')]));
     }
 
     /**
@@ -138,7 +138,7 @@ class CustomerAssignedAPIController extends AppBaseController
             })->where('isGroup',0)
             ->get(['companySystemID','CompanyID','CompanyName']);
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.companies')]));
     }
 
     /**
@@ -155,10 +155,10 @@ class CustomerAssignedAPIController extends AppBaseController
         $customerAssigned = $this->customerAssignedRepository->findWithoutFail($id);
 
         if (empty($customerAssigned)) {
-            return $this->sendError('Customer Assigned not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_assigneds')]));
         }
 
-        return $this->sendResponse($customerAssigned->toArray(), 'Customer Assigned retrieved successfully');
+        return $this->sendResponse($customerAssigned->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_assigneds')]));
     }
 
     /**
@@ -178,12 +178,12 @@ class CustomerAssignedAPIController extends AppBaseController
         $customerAssigned = $this->customerAssignedRepository->findWithoutFail($id);
 
         if (empty($customerAssigned)) {
-            return $this->sendError('Customer Assigned not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_assigneds')]));
         }
 
         $customerAssigned = $this->customerAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($customerAssigned->toArray(), 'CustomerAssigned updated successfully');
+        return $this->sendResponse($customerAssigned->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_assigneds')]));
     }
 
     /**
@@ -200,12 +200,12 @@ class CustomerAssignedAPIController extends AppBaseController
         $customerAssigned = $this->customerAssignedRepository->findWithoutFail($id);
 
         if (empty($customerAssigned)) {
-            return $this->sendError('Customer Assigned not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_assigneds')]));
         }
 
         $customerAssigned->delete();
 
-        return $this->sendResponse($id, 'Customer Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_assigneds')]));
     }
 
     /**

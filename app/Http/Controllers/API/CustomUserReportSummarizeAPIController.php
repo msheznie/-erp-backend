@@ -65,7 +65,7 @@ class CustomUserReportSummarizeAPIController extends AppBaseController
         $this->customUserReportSummarizeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customUserReportSummarizes = $this->customUserReportSummarizeRepository->all();
 
-        return $this->sendResponse($customUserReportSummarizes->toArray(), 'Custom User Report Summarizes retrieved successfully');
+        return $this->sendResponse($customUserReportSummarizes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_report_summarizes')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomUserReportSummarizeAPIController extends AppBaseController
 
         $customUserReportSummarize = $this->customUserReportSummarizeRepository->create($input);
 
-        return $this->sendResponse($customUserReportSummarize->toArray(), 'Custom User Report Summarize saved successfully');
+        return $this->sendResponse($customUserReportSummarize->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_user_report_summarizes')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomUserReportSummarizeAPIController extends AppBaseController
         $customUserReportSummarize = $this->customUserReportSummarizeRepository->findWithoutFail($id);
 
         if (empty($customUserReportSummarize)) {
-            return $this->sendError('Custom User Report Summarize not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_summarizes')]));
         }
 
-        return $this->sendResponse($customUserReportSummarize->toArray(), 'Custom User Report Summarize retrieved successfully');
+        return $this->sendResponse($customUserReportSummarize->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_report_summarizes')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomUserReportSummarizeAPIController extends AppBaseController
         $customUserReportSummarize = $this->customUserReportSummarizeRepository->findWithoutFail($id);
 
         if (empty($customUserReportSummarize)) {
-            return $this->sendError('Custom User Report Summarize not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_summarizes')]));
         }
 
         $customUserReportSummarize = $this->customUserReportSummarizeRepository->update($input, $id);
 
-        return $this->sendResponse($customUserReportSummarize->toArray(), 'CustomUserReportSummarize updated successfully');
+        return $this->sendResponse($customUserReportSummarize->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_user_report_summarizes')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomUserReportSummarizeAPIController extends AppBaseController
         $customUserReportSummarize = $this->customUserReportSummarizeRepository->findWithoutFail($id);
 
         if (empty($customUserReportSummarize)) {
-            return $this->sendError('Custom User Report Summarize not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_summarizes')]));
         }
 
         $customUserReportSummarize->delete();
 
-        return $this->sendSuccess('Custom User Report Summarize deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans(custom_user_report_summarizes)]));
     }
 }

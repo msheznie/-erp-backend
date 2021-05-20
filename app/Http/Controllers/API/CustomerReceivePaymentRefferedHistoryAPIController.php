@@ -76,7 +76,7 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
         $this->customerReceivePaymentRefferedHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerReceivePaymentRefferedHistories = $this->customerReceivePaymentRefferedHistoryRepository->all();
 
-        return $this->sendResponse($customerReceivePaymentRefferedHistories->toArray(), 'Customer Receive Payment Reffered Histories retrieved successfully');
+        return $this->sendResponse($customerReceivePaymentRefferedHistories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
     }
 
     /**
@@ -123,7 +123,7 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
 
         $customerReceivePaymentRefferedHistories = $this->customerReceivePaymentRefferedHistoryRepository->create($input);
 
-        return $this->sendResponse($customerReceivePaymentRefferedHistories->toArray(), 'Customer Receive Payment Reffered History saved successfully');
+        return $this->sendResponse($customerReceivePaymentRefferedHistories->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
     }
 
     /**
@@ -174,10 +174,10 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
         }])->findWithoutFail($id);
 
         if (empty($customerReceivePaymentRefferedHistory)) {
-            return $this->sendError('Customer Receive Payment Reffered History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
         }
 
-        return $this->sendResponse($customerReceivePaymentRefferedHistory->toArray(), 'Customer Receive Payment Reffered History retrieved successfully');
+        return $this->sendResponse($customerReceivePaymentRefferedHistory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
     }
 
     /**
@@ -234,12 +234,12 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
         $customerReceivePaymentRefferedHistory = $this->customerReceivePaymentRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($customerReceivePaymentRefferedHistory)) {
-            return $this->sendError('Customer Receive Payment Reffered History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
         }
 
         $customerReceivePaymentRefferedHistory = $this->customerReceivePaymentRefferedHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($customerReceivePaymentRefferedHistory->toArray(), 'CustomerReceivePaymentRefferedHistory updated successfully');
+        return $this->sendResponse($customerReceivePaymentRefferedHistory->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
     }
 
     /**
@@ -286,12 +286,12 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
         $customerReceivePaymentRefferedHistory = $this->customerReceivePaymentRefferedHistoryRepository->findWithoutFail($id);
 
         if (empty($customerReceivePaymentRefferedHistory)) {
-            return $this->sendError('Customer Receive Payment Reffered History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
         }
 
         $customerReceivePaymentRefferedHistory->delete();
 
-        return $this->sendResponse($id, 'Customer Receive Payment Reffered History deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_receive_payment_reffered_historie')]));
     }
 
     public function getReceiptVoucherAmendHistory(Request $request)
@@ -302,6 +302,6 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
             ->with(['created_by','confirmed_by','modified_by','approved_by', 'currency', 'bankcurrency'])
             ->get();
 
-        return $this->sendResponse($customerReceivePaymentHistory, 'Invoice detail retrieved successfully');
+        return $this->sendResponse($customerReceivePaymentHistory, trans('custom.retrieve', ['attribute' => trans('custom.invoice_details')]));
     }
 }

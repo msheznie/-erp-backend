@@ -68,7 +68,7 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         $this->customerCatalogDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerCatalogDetails = $this->customerCatalogDetailRepository->all();
 
-        return $this->sendResponse($customerCatalogDetails->toArray(), 'Customer Catalog Details retrieved successfully');
+        return $this->sendResponse($customerCatalogDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_catalog_details')]));
     }
 
     /**
@@ -123,7 +123,7 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         }
         $catalogMaster = CustomerCatalogMaster::find($input['customerCatalogMasterID']);
         if(empty($catalogMaster)){
-            return $this->sendError('Catalog Master Not Found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.catalog_master')]),500);
         }
 
         $isAlreadyAdded = CustomerCatalogDetail::where('customerCatalogMasterID',$input['customerCatalogMasterID'])
@@ -135,12 +135,12 @@ class CustomerCatalogDetailAPIController extends AppBaseController
             ->first();
 
         if(!empty($isAlreadyAdded)){
-            return $this->sendError('Item already added',500);
+            return $this->sendError(trans('custom.item_already_added'),500);
         }
 
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
-            return $this->sendError('Item not found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.item')]),500);
         }
 
         $customer = CustomerMaster::find($catalogMaster->customerID);
@@ -152,7 +152,7 @@ class CustomerCatalogDetailAPIController extends AppBaseController
 
         $customerCatalogDetail = $this->customerCatalogDetailRepository->create($input);
 
-        return $this->sendResponse($customerCatalogDetail->toArray(), 'Customer Catalog Detail saved successfully');
+        return $this->sendResponse($customerCatalogDetail->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_catalog_details')]));
     }
 
     /**
@@ -199,10 +199,10 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         $customerCatalogDetail = $this->customerCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($customerCatalogDetail)) {
-            return $this->sendError('Customer Catalog Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_details')]));
         }
 
-        return $this->sendResponse($customerCatalogDetail->toArray(), 'Customer Catalog Detail retrieved successfully');
+        return $this->sendResponse($customerCatalogDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_catalog_details')]));
     }
 
     /**
@@ -270,19 +270,19 @@ class CustomerCatalogDetailAPIController extends AppBaseController
 
         $catalogMaster = CustomerCatalogMaster::find($input['customerCatalogMasterID']);
         if(empty($catalogMaster)){
-            return $this->sendError('Catalog Master Not Found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.catalog_master')]),500);
         }
 
         /** @var CustomerCatalogDetail $customerCatalogDetail */
         $customerCatalogDetail = $this->customerCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($customerCatalogDetail)) {
-            return $this->sendError('Customer Catalog Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_details')]));
         }
 
         $customerCatalogDetail = $this->customerCatalogDetailRepository->update($input, $id);
 
-        return $this->sendResponse($customerCatalogDetail->toArray(), 'Customer Catalog Detail updated successfully');
+        return $this->sendResponse($customerCatalogDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_catalog_details')]));
     }
 
     /**
@@ -329,11 +329,11 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         $customerCatalogDetail = $this->customerCatalogDetailRepository->findWithoutFail($id);
 
         if (empty($customerCatalogDetail)) {
-            return $this->sendError('Customer Catalog Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_details')]));
         }
 
 //        $customerCatalogDetail->delete();
         $this->customerCatalogDetailRepository->update(['isDeleted'=>1], $id);
-        return $this->sendResponse($id, 'Customer Catalog Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_catalog_details')]));
     }
 }

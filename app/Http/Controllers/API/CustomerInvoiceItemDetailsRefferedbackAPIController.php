@@ -65,7 +65,7 @@ class CustomerInvoiceItemDetailsRefferedbackAPIController extends AppBaseControl
         $this->customerInvoiceItemDetailsRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceItemDetailsRefferedbacks = $this->customerInvoiceItemDetailsRefferedbackRepository->all();
 
-        return $this->sendResponse($customerInvoiceItemDetailsRefferedbacks->toArray(), 'Customer Invoice Item Details Refferedbacks retrieved successfully');
+        return $this->sendResponse($customerInvoiceItemDetailsRefferedbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomerInvoiceItemDetailsRefferedbackAPIController extends AppBaseControl
 
         $customerInvoiceItemDetailsRefferedback = $this->customerInvoiceItemDetailsRefferedbackRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), 'Customer Invoice Item Details Refferedback saved successfully');
+        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomerInvoiceItemDetailsRefferedbackAPIController extends AppBaseControl
         $customerInvoiceItemDetailsRefferedback = $this->customerInvoiceItemDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceItemDetailsRefferedback)) {
-            return $this->sendError('Customer Invoice Item Details Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
         }
 
-        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), 'Customer Invoice Item Details Refferedback retrieved successfully');
+        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomerInvoiceItemDetailsRefferedbackAPIController extends AppBaseControl
         $customerInvoiceItemDetailsRefferedback = $this->customerInvoiceItemDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceItemDetailsRefferedback)) {
-            return $this->sendError('Customer Invoice Item Details Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
         }
 
         $customerInvoiceItemDetailsRefferedback = $this->customerInvoiceItemDetailsRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), 'CustomerInvoiceItemDetailsRefferedback updated successfully');
+        return $this->sendResponse($customerInvoiceItemDetailsRefferedback->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomerInvoiceItemDetailsRefferedbackAPIController extends AppBaseControl
         $customerInvoiceItemDetailsRefferedback = $this->customerInvoiceItemDetailsRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceItemDetailsRefferedback)) {
-            return $this->sendError('Customer Invoice Item Details Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
         }
 
         $customerInvoiceItemDetailsRefferedback->delete();
 
-        return $this->sendSuccess('Customer Invoice Item Details Refferedback deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.customer_invoice_item_details_refferedbacks')]));
     }
 }

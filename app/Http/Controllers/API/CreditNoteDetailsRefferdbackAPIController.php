@@ -75,7 +75,7 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
         $this->creditNoteDetailsRefferdbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $creditNoteDetailsRefferdbacks = $this->creditNoteDetailsRefferdbackRepository->all();
 
-        return $this->sendResponse($creditNoteDetailsRefferdbacks->toArray(), 'Credit Note Details Refferdbacks retrieved successfully');
+        return $this->sendResponse($creditNoteDetailsRefferdbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
 
         $creditNoteDetailsRefferdbacks = $this->creditNoteDetailsRefferdbackRepository->create($input);
 
-        return $this->sendResponse($creditNoteDetailsRefferdbacks->toArray(), 'Credit Note Details Refferdback saved successfully');
+        return $this->sendResponse($creditNoteDetailsRefferdbacks->toArray(), trans('custom.save', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
         $creditNoteDetailsRefferdback = $this->creditNoteDetailsRefferdbackRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetailsRefferdback)) {
-            return $this->sendError('Credit Note Details Refferdback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
         }
 
-        return $this->sendResponse($creditNoteDetailsRefferdback->toArray(), 'Credit Note Details Refferdback retrieved successfully');
+        return $this->sendResponse($creditNoteDetailsRefferdback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
         $creditNoteDetailsRefferdback = $this->creditNoteDetailsRefferdbackRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetailsRefferdback)) {
-            return $this->sendError('Credit Note Details Refferdback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
         }
 
         $creditNoteDetailsRefferdback = $this->creditNoteDetailsRefferdbackRepository->update($input, $id);
 
-        return $this->sendResponse($creditNoteDetailsRefferdback->toArray(), 'CreditNoteDetailsRefferdback updated successfully');
+        return $this->sendResponse($creditNoteDetailsRefferdback->toArray(), trans('custom.update', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
     }
 
     /**
@@ -281,12 +281,12 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
         $creditNoteDetailsRefferdback = $this->creditNoteDetailsRefferdbackRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetailsRefferdback)) {
-            return $this->sendError('Credit Note Details Refferdback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
         }
 
         $creditNoteDetailsRefferdback->delete();
 
-        return $this->sendResponse($id, 'Credit Note Details Refferdback deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.credit_note_details_refferdbacks')]));
     }
 
     public function getCNDetailAmendHistory(Request $request)
@@ -300,6 +300,6 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
             ->with(['segment'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Credit Note Details History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_details_history')]));
     }
 }

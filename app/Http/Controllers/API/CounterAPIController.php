@@ -76,7 +76,7 @@ class CounterAPIController extends AppBaseController
         $this->counterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $counters = $this->counterRepository->all();
 
-        return $this->sendResponse($counters->toArray(), 'Counters retrieved successfully');
+        return $this->sendResponse($counters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.counters')]));
     }
 
     /**
@@ -143,7 +143,7 @@ class CounterAPIController extends AppBaseController
                                      ->count();
 
         if($checkCounterCode > 0){
-            return $this->sendError('Counter code already exists in selected outlet', 500 );
+            return $this->sendError(trans('custom.counter_code_already_exists_in_selected_outlet'), 500 );
         }
 
         $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
@@ -153,7 +153,7 @@ class CounterAPIController extends AppBaseController
         $input['createdUserSystemID'] = $employee->employeeSystemID;
         $input['createdUserName'] = $employee->empName;
         $counters = $this->counterRepository->create($input);
-        return $this->sendResponse($counters->toArray(), 'Counter saved successfully');
+        return $this->sendResponse($counters->toArray(), trans('custom.save', ['attribute' => trans('custom.counters')]));
     }
 
     /**
@@ -200,10 +200,10 @@ class CounterAPIController extends AppBaseController
         $counter = $this->counterRepository->findWithoutFail($id);
 
         if (empty($counter)) {
-            return $this->sendError('Counter not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.counters')]));
         }
 
-        return $this->sendResponse($counter->toArray(), 'Counter retrieved successfully');
+        return $this->sendResponse($counter->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.counters')]));
     }
 
     /**
@@ -261,7 +261,7 @@ class CounterAPIController extends AppBaseController
         $counter = $this->counterRepository->findWithoutFail($id);
 
         if (empty($counter)) {
-            return $this->sendError('Counter not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.counters')]));
         }
 
         $messages = array(
@@ -286,7 +286,7 @@ class CounterAPIController extends AppBaseController
             ->count();
 
         if($checkCounterCode > 0){
-            return $this->sendError('Counter code already exists in selected outlet', 500 );
+            return $this->sendError(trans('custom.counter_code_already_exists_in_selected_outlet'), 500 );
         }
 
         $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
@@ -299,7 +299,7 @@ class CounterAPIController extends AppBaseController
 
         $counter = $this->counterRepository->update($input, $id);
 
-        return $this->sendResponse($counter->toArray(), 'Counter updated successfully');
+        return $this->sendResponse($counter->toArray(), trans('custom.update', ['attribute' => trans('custom.counters')]));
     }
 
     /**
@@ -346,14 +346,14 @@ class CounterAPIController extends AppBaseController
         $counter = $this->counterRepository->findWithoutFail($id);
 
         if (empty($counter)) {
-            return $this->sendError('Counter not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.counters')]));
         }
 
         // Have to check counter shift
 
         $counter->delete();
 
-        return $this->sendResponse($id, 'Counter deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.counters')]));
     }
 
     public function getCountersByCompany(Request $request)
@@ -428,7 +428,7 @@ class CounterAPIController extends AppBaseController
             'outlets' => $outlets
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 }

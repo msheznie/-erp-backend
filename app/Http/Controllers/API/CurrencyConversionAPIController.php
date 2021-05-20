@@ -57,7 +57,7 @@ class CurrencyConversionAPIController extends AppBaseController
         $this->currencyConversionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyConversions = $this->currencyConversionRepository->all();
 
-        return $this->sendResponse($currencyConversions->toArray(), 'Currency Conversions retrieved successfully');
+        return $this->sendResponse($currencyConversions->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_conversions')]));
     }
 
     /**
@@ -74,7 +74,7 @@ class CurrencyConversionAPIController extends AppBaseController
 
         $currencyConversions = $this->currencyConversionRepository->create($input);
 
-        return $this->sendResponse($currencyConversions->toArray(), 'Currency Conversion saved successfully');
+        return $this->sendResponse($currencyConversions->toArray(), trans('custom.save', ['attribute' => trans('custom.currency_conversions')]));
     }
 
     /**
@@ -91,10 +91,10 @@ class CurrencyConversionAPIController extends AppBaseController
         $currencyConversion = $this->currencyConversionRepository->findWithoutFail($id);
 
         if (empty($currencyConversion)) {
-            return $this->sendError('Currency Conversion not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_conversions')]));
         }
 
-        return $this->sendResponse($currencyConversion->toArray(), 'Currency Conversion retrieved successfully');
+        return $this->sendResponse($currencyConversion->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_conversions')]));
     }
 
     /**
@@ -114,7 +114,7 @@ class CurrencyConversionAPIController extends AppBaseController
         $currencyConversion = $this->currencyConversionRepository->findWithoutFail($id);
 
         if (empty($currencyConversion)) {
-            return $this->sendError('Base currency Conversion not found', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.base_currency_conversion')]), 500);
         }
         $validator = \Validator::make($input, [
             'conversion' => 'required|numeric',
@@ -141,7 +141,7 @@ class CurrencyConversionAPIController extends AppBaseController
                 ->first();
 
             if (empty($subCurrency)) {
-                return $this->sendError('Sub currency Conversion not found', 500);
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.sub_currency_conversion')]), 500);
             }
 
             $this->currencyConversionRepository->update(['conversion' => $subConversion], $subCurrency->currencyConversionAutoID);
@@ -175,7 +175,7 @@ class CurrencyConversionAPIController extends AppBaseController
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
         }
-        return $this->sendResponse($currencyConversion->toArray(), 'Currency conversion updated successfully');
+        return $this->sendResponse($currencyConversion->toArray(), trans('custom.update', ['attribute' => trans('custom.currency_conversions')]));
     }
 
     /**
@@ -192,12 +192,12 @@ class CurrencyConversionAPIController extends AppBaseController
         $currencyConversion = $this->currencyConversionRepository->findWithoutFail($id);
 
         if (empty($currencyConversion)) {
-            return $this->sendError('Currency Conversion not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_conversions')]));
         }
 
         $currencyConversion->delete();
 
-        return $this->sendResponse($id, 'Currency Conversion deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.currency_conversions')]));
     }
 
     public function updateCrossExchange(Request $request)
@@ -209,13 +209,13 @@ class CurrencyConversionAPIController extends AppBaseController
         $currencyMaster = CurrencyMaster::find($currency);
 
         if (empty($currencyMaster)) {
-            return $this->sendError('Currency Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_master')]));
         }
 
         $checkExchanges = $this->currencyConversionRepository->findWhere(['masterCurrencyID' => $currency, ['conversion', '<=', 0]]);
 
         if ($checkExchanges->count() > 0) {
-            return $this->sendError('This currency has pending currency exchange rate to update. please contact IT Team to update.', 500);
+            return $this->sendError(trans('custom.this_currency_has_pending_currency_exchange_rate_to_update_please_contact_it_team_to_update'), 500);
         }
         DB::beginTransaction();
         try {
@@ -260,7 +260,7 @@ class CurrencyConversionAPIController extends AppBaseController
                array_push($arrayNew,$new);
             }
             DB::commit();
-            return $this->sendResponse($arrayNew, 'Cross exchange updated successfully');
+            return $this->sendResponse($arrayNew, trans('custom.update', ['attribute' => trans('custom.cross_exchange')]));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
@@ -272,6 +272,6 @@ class CurrencyConversionAPIController extends AppBaseController
         $input = $request->all();
         $currencyConversion = Helper::currencyConversion(null, $input['transactionCurrencyID'], $input['documentCurrencyID'], $input['transactionAmount']);
 
-        return $this->sendResponse($currencyConversion, 'Cross exchange updated successfully');
+        return $this->sendResponse($currencyConversion, trans('custom.update', ['attribute' => trans('custom.cross_exchange')]));
     }
 }
