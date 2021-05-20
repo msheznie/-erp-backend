@@ -67,7 +67,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
         $this->chartOfAccountAllocationDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccountAllocationDetails = $this->chartOfAccountAllocationDetailRepository->all();
 
-        return $this->sendResponse($chartOfAccountAllocationDetails->toArray(), 'Chart Of Account Allocation Details retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
     }
 
     /**
@@ -148,7 +148,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
 
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->create($input);
 
-        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), 'Chart Of Account Allocation Detail saved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), trans('custom.save', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
     }
 
     /**
@@ -195,10 +195,10 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetail)) {
-            return $this->sendError('Chart Of Account Allocation Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
         }
 
-        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), 'Chart Of Account Allocation Detail retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
     }
 
     /**
@@ -255,12 +255,12 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetail)) {
-            return $this->sendError('Chart Of Account Allocation Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
         }
 
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), 'ChartOfAccountAllocationDetail updated successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
     }
 
     /**
@@ -307,11 +307,11 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetail)) {
-            return $this->sendError('Chart Of Account Allocation Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
         }
 
         $chartOfAccountAllocationDetail->delete();
 
-        return $this->sendResponse($id, 'Chart Of Account Allocation Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
     }
 }

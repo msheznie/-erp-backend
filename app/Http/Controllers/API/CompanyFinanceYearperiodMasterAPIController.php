@@ -74,7 +74,7 @@ class CompanyFinanceYearperiodMasterAPIController extends AppBaseController
         $this->companyFinanceYearperiodMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyFinanceYearperiodMasters = $this->companyFinanceYearperiodMasterRepository->all();
 
-        return $this->sendResponse($companyFinanceYearperiodMasters->toArray(), 'Company Finance Yearperiod Masters retrieved successfully');
+        return $this->sendResponse($companyFinanceYearperiodMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_year_period_masters')]));
     }
 
     /**
@@ -121,7 +121,7 @@ class CompanyFinanceYearperiodMasterAPIController extends AppBaseController
 
         $companyFinanceYearperiodMasters = $this->companyFinanceYearperiodMasterRepository->create($input);
 
-        return $this->sendResponse($companyFinanceYearperiodMasters->toArray(), 'Company Finance Yearperiod Master saved successfully');
+        return $this->sendResponse($companyFinanceYearperiodMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.company_finance_year_period_masters')]));
     }
 
     /**
@@ -168,10 +168,10 @@ class CompanyFinanceYearperiodMasterAPIController extends AppBaseController
         $companyFinanceYearperiodMaster = $this->companyFinanceYearperiodMasterRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYearperiodMaster)) {
-            return $this->sendError('Company Finance Yearperiod Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_year_period_masters')]));
         }
 
-        return $this->sendResponse($companyFinanceYearperiodMaster->toArray(), 'Company Finance Yearperiod Master retrieved successfully');
+        return $this->sendResponse($companyFinanceYearperiodMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_year_period_masters')]));
     }
 
     /**
@@ -228,12 +228,12 @@ class CompanyFinanceYearperiodMasterAPIController extends AppBaseController
         $companyFinanceYearperiodMaster = $this->companyFinanceYearperiodMasterRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYearperiodMaster)) {
-            return $this->sendError('Company Finance Yearperiod Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_year_period_masters')]));
         }
 
         $companyFinanceYearperiodMaster = $this->companyFinanceYearperiodMasterRepository->update($input, $id);
 
-        return $this->sendResponse($companyFinanceYearperiodMaster->toArray(), 'CompanyFinanceYearperiodMaster updated successfully');
+        return $this->sendResponse($companyFinanceYearperiodMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.company_finance_year_period_masters')]));
     }
 
     /**
@@ -280,11 +280,11 @@ class CompanyFinanceYearperiodMasterAPIController extends AppBaseController
         $companyFinanceYearperiodMaster = $this->companyFinanceYearperiodMasterRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYearperiodMaster)) {
-            return $this->sendError('Company Finance Yearperiod Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_year_period_masters')]));
         }
 
         $companyFinanceYearperiodMaster->delete();
 
-        return $this->sendResponse($id, 'Company Finance Yearperiod Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_year_period_masters')]));
     }
 }

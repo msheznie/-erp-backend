@@ -65,7 +65,7 @@ class CustomUserReportColumnsAPIController extends AppBaseController
         $this->customUserReportColumnsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customUserReportColumns = $this->customUserReportColumnsRepository->all();
 
-        return $this->sendResponse($customUserReportColumns->toArray(), 'Custom User Report Columns retrieved successfully');
+        return $this->sendResponse($customUserReportColumns->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_report_columns')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomUserReportColumnsAPIController extends AppBaseController
 
         $customUserReportColumns = $this->customUserReportColumnsRepository->create($input);
 
-        return $this->sendResponse($customUserReportColumns->toArray(), 'Custom User Report Columns saved successfully');
+        return $this->sendResponse($customUserReportColumns->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_user_report_columns')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomUserReportColumnsAPIController extends AppBaseController
         $customUserReportColumns = $this->customUserReportColumnsRepository->findWithoutFail($id);
 
         if (empty($customUserReportColumns)) {
-            return $this->sendError('Custom User Report Columns not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_columns')]));
         }
 
-        return $this->sendResponse($customUserReportColumns->toArray(), 'Custom User Report Columns retrieved successfully');
+        return $this->sendResponse($customUserReportColumns->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_report_columns')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomUserReportColumnsAPIController extends AppBaseController
         $customUserReportColumns = $this->customUserReportColumnsRepository->findWithoutFail($id);
 
         if (empty($customUserReportColumns)) {
-            return $this->sendError('Custom User Report Columns not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_columns')]));
         }
 
         $customUserReportColumns = $this->customUserReportColumnsRepository->update($input, $id);
 
-        return $this->sendResponse($customUserReportColumns->toArray(), 'CustomUserReportColumns updated successfully');
+        return $this->sendResponse($customUserReportColumns->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_user_report_columns')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomUserReportColumnsAPIController extends AppBaseController
         $customUserReportColumns = $this->customUserReportColumnsRepository->findWithoutFail($id);
 
         if (empty($customUserReportColumns)) {
-            return $this->sendError('Custom User Report Columns not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_report_columns')]));
         }
 
         $customUserReportColumns->delete();
 
-        return $this->sendSuccess('Custom User Report Columns deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.custom_user_report_columns')]));
     }
 }

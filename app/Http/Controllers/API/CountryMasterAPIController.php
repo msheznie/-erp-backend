@@ -52,7 +52,7 @@ class CountryMasterAPIController extends AppBaseController
         $this->countryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $countryMasters = $this->countryMasterRepository->all();
 
-        return $this->sendResponse($countryMasters->toArray(), 'Country Masters retrieved successfully');
+        return $this->sendResponse($countryMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.country_masters')]));
     }
 
 
@@ -70,7 +70,7 @@ class CountryMasterAPIController extends AppBaseController
 
         $countryMasters = $this->countryMasterRepository->create($input);
 
-        return $this->sendResponse($countryMasters->toArray(), 'Country Master saved successfully');
+        return $this->sendResponse($countryMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.country_masters')]));
     }
 
     /**
@@ -87,10 +87,10 @@ class CountryMasterAPIController extends AppBaseController
         $countryMaster = $this->countryMasterRepository->findWithoutFail($id);
 
         if (empty($countryMaster)) {
-            return $this->sendError('Country Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.country_masters')]));
         }
 
-        return $this->sendResponse($countryMaster->toArray(), 'Country Master retrieved successfully');
+        return $this->sendResponse($countryMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.country_masters')]));
     }
 
     /**
@@ -110,12 +110,12 @@ class CountryMasterAPIController extends AppBaseController
         $countryMaster = $this->countryMasterRepository->findWithoutFail($id);
 
         if (empty($countryMaster)) {
-            return $this->sendError('Country Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.country_masters')]));
         }
 
         $countryMaster = $this->countryMasterRepository->update($input, $id);
 
-        return $this->sendResponse($countryMaster->toArray(), 'CountryMaster updated successfully');
+        return $this->sendResponse($countryMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.country_masters')]));
     }
 
     /**
@@ -132,11 +132,11 @@ class CountryMasterAPIController extends AppBaseController
         $countryMaster = $this->countryMasterRepository->findWithoutFail($id);
 
         if (empty($countryMaster)) {
-            return $this->sendError('Country Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.country_masters')]));
         }
 
         $countryMaster->delete();
 
-        return $this->sendResponse($id, 'Country Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.country_masters')]));
     }
 }

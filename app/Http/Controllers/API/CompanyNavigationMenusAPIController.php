@@ -51,7 +51,7 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $this->companyNavigationMenusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyNavigationMenuses = $this->companyNavigationMenusRepository->all();
 
-        return $this->sendResponse($companyNavigationMenuses->toArray(), 'Company Navigation Menuses retrieved successfully');
+        return $this->sendResponse($companyNavigationMenuses->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_navigation_menus')]));
     }
 
     /**
@@ -91,7 +91,7 @@ class CompanyNavigationMenusAPIController extends AppBaseController
             }
         }
         $companyNavigationMenuses = CompanyNavigationMenus::insert($navigation);
-        return $this->sendResponse(array(), 'Company Navigation Menus saved successfully');
+        return $this->sendResponse(array(), trans('custom.save', ['attribute' => trans('custom.company_navigation_menus')]));
     }
 
     /**
@@ -108,10 +108,10 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $companyNavigationMenus = $this->companyNavigationMenusRepository->findWithoutFail($id);
 
         if (empty($companyNavigationMenus)) {
-            return $this->sendError('Company Navigation Menus not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_navigation_menus')]));
         }
 
-        return $this->sendResponse($companyNavigationMenus->toArray(), 'Company Navigation Menus retrieved successfully');
+        return $this->sendResponse($companyNavigationMenus->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_navigation_menus')]));
     }
 
     /**
@@ -131,12 +131,12 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $companyNavigationMenus = $this->companyNavigationMenusRepository->findWithoutFail($id);
 
         if (empty($companyNavigationMenus)) {
-            return $this->sendError('Company Navigation Menus not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_navigation_menus')]));
         }
 
         $companyNavigationMenus = $this->companyNavigationMenusRepository->update($input, $id);
 
-        return $this->sendResponse($companyNavigationMenus->toArray(), 'CompanyNavigationMenus updated successfully');
+        return $this->sendResponse($companyNavigationMenus->toArray(), trans('custom.update', ['attribute' => trans('custom.company_navigation_menus')]));
     }
 
     /**
@@ -153,12 +153,12 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $companyNavigationMenus = $this->companyNavigationMenusRepository->findWithoutFail($id);
 
         if (empty($companyNavigationMenus)) {
-            return $this->sendError('Company Navigation Menus not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_navigation_menus')]));
         }
 
         $companyNavigationMenus->delete();
 
-        return $this->sendResponse($id, 'Company Navigation Menus deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_navigation_menus')]));
     }
 
     public function getGroupCompany(Request $request)
@@ -171,7 +171,7 @@ class CompanyNavigationMenusAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
         $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->get();
-        return $this->sendResponse($groupCompany, 'Record retrieved successfully');
+        return $this->sendResponse($groupCompany, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getCompanyNavigation(Request $request)
@@ -193,7 +193,7 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         //dd(DB::getQueryLog());
         $tree = buildTree($navigationMenu);
         //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-        return $this->sendResponse($tree, 'Record retrieved successfully');
+        return $this->sendResponse($tree, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 

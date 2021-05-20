@@ -79,7 +79,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
         $this->customerInvoiceCollectionDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceCollectionDetails = $this->customerInvoiceCollectionDetailRepository->all();
 
-        return $this->sendResponse($customerInvoiceCollectionDetails->toArray(), 'Customer Invoice Collection Details retrieved successfully');
+        return $this->sendResponse($customerInvoiceCollectionDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 
     /**
@@ -128,7 +128,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
 
         $invoiceMasterData = CustomerInvoiceDirect::find($customerInvoiceID);
         if (empty($invoiceMasterData)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.invoice')]));
         }
 
         if (isset($input['collectionDate']) && $input['collectionDate']) {
@@ -146,7 +146,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
 
         $customerInvoiceCollectionDetails = $this->customerInvoiceCollectionDetailRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceCollectionDetails->toArray(), 'Customer Invoice Collection Detail saved successfully');
+        return $this->sendResponse($customerInvoiceCollectionDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 
     /**
@@ -193,10 +193,10 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceCollectionDetail)) {
-            return $this->sendError('Customer Invoice Collection Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_collection_details')]));
         }
 
-        return $this->sendResponse($customerInvoiceCollectionDetail->toArray(), 'Customer Invoice Collection Detail retrieved successfully');
+        return $this->sendResponse($customerInvoiceCollectionDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 
     /**
@@ -254,12 +254,12 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceCollectionDetail)) {
-            return $this->sendError('Customer Invoice Collection Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_collection_details')]));
         }
 
         $invoiceMasterData = CustomerInvoiceDirect::find($input['customerInvoiceID']);
         if (empty($invoiceMasterData)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.invoice')]));
         }
 
         if (isset($input['collectionDate']) && $input['collectionDate']) {
@@ -272,7 +272,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
 
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceCollectionDetail->toArray(), 'CustomerInvoiceCollectionDetail updated successfully');
+        return $this->sendResponse($customerInvoiceCollectionDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 
     /**
@@ -319,12 +319,12 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceCollectionDetail)) {
-            return $this->sendError('Customer Invoice Collection Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_collection_details')]));
         }
 
         $customerInvoiceCollectionDetail->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice Collection Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 
     public function getCustomerCollectionItems(Request $request)
@@ -336,6 +336,6 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
             ->with(['modified_by'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Customer invoice collection details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_collection_details')]));
     }
 }

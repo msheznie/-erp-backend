@@ -65,7 +65,7 @@ class ClientPerformaAppTypeAPIController extends AppBaseController
         $this->clientPerformaAppTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $clientPerformaAppTypes = $this->clientPerformaAppTypeRepository->all();
 
-        return $this->sendResponse($clientPerformaAppTypes->toArray(), 'Client Performa App Types retrieved successfully');
+        return $this->sendResponse($clientPerformaAppTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.client_performa_app_types')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class ClientPerformaAppTypeAPIController extends AppBaseController
 
         $clientPerformaAppType = $this->clientPerformaAppTypeRepository->create($input);
 
-        return $this->sendResponse($clientPerformaAppType->toArray(), 'Client Performa App Type saved successfully');
+        return $this->sendResponse($clientPerformaAppType->toArray(), trans('custom.save', ['attribute' => trans('custom.client_performa_app_types')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class ClientPerformaAppTypeAPIController extends AppBaseController
         $clientPerformaAppType = $this->clientPerformaAppTypeRepository->findWithoutFail($id);
 
         if (empty($clientPerformaAppType)) {
-            return $this->sendError('Client Performa App Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.client_performa_app_types')]));
         }
 
-        return $this->sendResponse($clientPerformaAppType->toArray(), 'Client Performa App Type retrieved successfully');
+        return $this->sendResponse($clientPerformaAppType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.client_performa_app_types')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class ClientPerformaAppTypeAPIController extends AppBaseController
         $clientPerformaAppType = $this->clientPerformaAppTypeRepository->findWithoutFail($id);
 
         if (empty($clientPerformaAppType)) {
-            return $this->sendError('Client Performa App Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.client_performa_app_types')]));
         }
 
         $clientPerformaAppType = $this->clientPerformaAppTypeRepository->update($input, $id);
 
-        return $this->sendResponse($clientPerformaAppType->toArray(), 'ClientPerformaAppType updated successfully');
+        return $this->sendResponse($clientPerformaAppType->toArray(), trans('custom.update', ['attribute' => trans('custom.client_performa_app_types')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class ClientPerformaAppTypeAPIController extends AppBaseController
         $clientPerformaAppType = $this->clientPerformaAppTypeRepository->findWithoutFail($id);
 
         if (empty($clientPerformaAppType)) {
-            return $this->sendError('Client Performa App Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.client_performa_app_types')]));
         }
 
         $clientPerformaAppType->delete();
 
-        return $this->sendResponse($id, 'Client Performa App Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.client_performa_app_types')]));
     }
 }

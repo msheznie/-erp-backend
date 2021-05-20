@@ -78,7 +78,7 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
         $this->customerInvoiceDirectDetRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceDirectDetRefferedbacks = $this->customerInvoiceDirectDetRefferedbackRepository->all();
 
-        return $this->sendResponse($customerInvoiceDirectDetRefferedbacks->toArray(), 'Customer Invoice Direct Det Refferedbacks retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetRefferedbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
     }
 
     /**
@@ -125,7 +125,7 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
 
         $customerInvoiceDirectDetRefferedbacks = $this->customerInvoiceDirectDetRefferedbackRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceDirectDetRefferedbacks->toArray(), 'Customer Invoice Direct Det Refferedback saved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetRefferedbacks->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
     }
 
     /**
@@ -172,10 +172,10 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
         $customerInvoiceDirectDetRefferedback = $this->customerInvoiceDirectDetRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Det Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
         }
 
-        return $this->sendResponse($customerInvoiceDirectDetRefferedback->toArray(), 'Customer Invoice Direct Det Refferedback retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectDetRefferedback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
     }
 
     /**
@@ -232,12 +232,12 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
         $customerInvoiceDirectDetRefferedback = $this->customerInvoiceDirectDetRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Det Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
         }
 
         $customerInvoiceDirectDetRefferedback = $this->customerInvoiceDirectDetRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceDirectDetRefferedback->toArray(), 'CustomerInvoiceDirectDetRefferedback updated successfully');
+        return $this->sendResponse($customerInvoiceDirectDetRefferedback->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
     }
 
     /**
@@ -284,12 +284,12 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
         $customerInvoiceDirectDetRefferedback = $this->customerInvoiceDirectDetRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectDetRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Det Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
         }
 
         $customerInvoiceDirectDetRefferedback->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice Direct Det Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice_direct_det_refferedbacks')]));
     }
 
     public function getCIDetailsForAmendHistory(Request $request)
@@ -313,6 +313,6 @@ class CustomerInvoiceDirectDetRefferedbackAPIController extends AppBaseControlle
 
 
 
-        return $this->sendResponse($items->toArray(), 'Customer Invoice Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_details_reffered_history')]));
     }
 }

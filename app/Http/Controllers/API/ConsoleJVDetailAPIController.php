@@ -80,7 +80,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $this->consoleJVDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $consoleJVDetails = $this->consoleJVDetailRepository->all();
 
-        return $this->sendResponse($consoleJVDetails->toArray(), 'Console J V Details retrieved successfully');
+        return $this->sendResponse($consoleJVDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     /**
@@ -129,7 +129,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $jvMaster = ConsoleJVMaster::find($input['consoleJvMasterAutoId']);
 
         if (empty($jvMaster)) {
-            return $this->sendError('Console JV master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_details')]));
         }
 
         $company = Company::find($input['companySystemID']);
@@ -150,7 +150,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
 
         $consoleJVDetails = $this->consoleJVDetailRepository->create($input);
 
-        return $this->sendResponse($consoleJVDetails->toArray(), 'Console J V Detail saved successfully');
+        return $this->sendResponse($consoleJVDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     /**
@@ -197,10 +197,10 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $consoleJVDetail = $this->consoleJVDetailRepository->findWithoutFail($id);
 
         if (empty($consoleJVDetail)) {
-            return $this->sendError('Console J V Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_details')]));
         }
 
-        return $this->sendResponse($consoleJVDetail->toArray(), 'Console J V Detail retrieved successfully');
+        return $this->sendResponse($consoleJVDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     /**
@@ -259,7 +259,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $consoleJVDetail = $this->consoleJVDetailRepository->findWithoutFail($id);
 
         if (empty($consoleJVDetail)) {
-            return $this->sendError('Console J V Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_details')]));
         }
 
         $company = Company::find($input['companySystemID']);
@@ -296,7 +296,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
 
         $consoleJVDetail = $this->consoleJVDetailRepository->update($input, $id);
 
-        return $this->sendResponse($consoleJVDetail->toArray(), 'ConsoleJVDetail updated successfully');
+        return $this->sendResponse($consoleJVDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     /**
@@ -343,12 +343,12 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $consoleJVDetail = $this->consoleJVDetailRepository->findWithoutFail($id);
 
         if (empty($consoleJVDetail)) {
-            return $this->sendError('Console J V Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_details')]));
         }
 
         $consoleJVDetail->delete();
 
-        return $this->sendResponse($id, 'Console J V Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     public function getConsoleJVDetailByMaster(Request $request)
@@ -356,14 +356,14 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $consoleJVDetail = ConsoleJVDetail::with(['segment','company'])->ofMaster($request->consoleJvMasterAutoId)->get();
 
         if (empty($consoleJVDetail)) {
-            return $this->sendError('Console JV Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_details')]));
         }
 
-        return $this->sendResponse($consoleJVDetail->toArray(), 'Console JV Detail retrieved successfully');
+        return $this->sendResponse($consoleJVDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.console_j_v_details')]));
     }
 
     public function deleteAllConsoleJVDet(Request $request){
         $consoleJVDetail = ConsoleJVDetail::ofMaster($request->consoleJvMasterAutoId)->delete();
-        return $this->sendResponse($consoleJVDetail, 'Console JV Detail deleted successfully');
+        return $this->sendResponse($consoleJVDetail, trans('custom.delete', ['attribute' => trans('custom.console_j_v_details')]));
     }
 }

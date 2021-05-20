@@ -74,7 +74,7 @@ class CustomerInvoiceAPIController extends AppBaseController
         $this->customerInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoices = $this->customerInvoiceRepository->all();
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoices retrieved successfully');
+        return $this->sendResponse($customerInvoices->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     /**
@@ -121,7 +121,7 @@ class CustomerInvoiceAPIController extends AppBaseController
 
         $customerInvoices = $this->customerInvoiceRepository->create($input);
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoice saved successfully');
+        return $this->sendResponse($customerInvoices->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     /**
@@ -168,10 +168,10 @@ class CustomerInvoiceAPIController extends AppBaseController
         $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
 
         if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice')]));
         }
 
-        return $this->sendResponse($customerInvoice->toArray(), 'Customer Invoice retrieved successfully');
+        return $this->sendResponse($customerInvoice->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     /**
@@ -228,12 +228,12 @@ class CustomerInvoiceAPIController extends AppBaseController
         $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
 
         if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice')]));
         }
 
         $customerInvoice = $this->customerInvoiceRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoice->toArray(), 'CustomerInvoice updated successfully');
+        return $this->sendResponse($customerInvoice->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     /**
@@ -280,11 +280,11 @@ class CustomerInvoiceAPIController extends AppBaseController
         $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
 
         if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice')]));
         }
 
         $customerInvoice->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice')]));
     }
 }

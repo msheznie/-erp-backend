@@ -53,7 +53,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $this->companyPolicyMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyPolicyMasters = $this->companyPolicyMasterRepository->all();
 
-        return $this->sendResponse($companyPolicyMasters->toArray(), 'Company Policy Masters retrieved successfully');
+        return $this->sendResponse($companyPolicyMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_policy_masters')]));
     }
 
     /**
@@ -153,7 +153,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
                         'emailPolicyCategories' => $emailPolicyCategories
                        );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
 
     }
 
@@ -189,10 +189,10 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $companyPolicyMaster = $this->companyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($companyPolicyMaster)) {
-            return $this->sendError('Company Policy Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_masters')]));
         }
 
-        return $this->sendResponse($companyPolicyMaster->toArray(), 'Company Policy Master retrieved successfully');
+        return $this->sendResponse($companyPolicyMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_policy_masters')]));
     }
 
     /**
@@ -228,12 +228,12 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $companyPolicyMaster = $this->companyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($companyPolicyMaster)) {
-            return $this->sendError('Company Policy Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_masters')]));
         }
 
         $companyPolicyMaster = $this->companyPolicyMasterRepository->update($input, $id);
 
-        return $this->sendResponse($companyPolicyMaster->toArray(), 'CompanyPolicyMaster updated successfully');
+        return $this->sendResponse($companyPolicyMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.company_policy_masters')]));
     }
 
     /**
@@ -250,12 +250,12 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $companyPolicyMaster = $this->companyPolicyMasterRepository->findWithoutFail($id);
 
         if (empty($companyPolicyMaster)) {
-            return $this->sendError('Company Policy Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_masters')]));
         }
 
         $companyPolicyMaster->delete();
 
-        return $this->sendResponse($id, 'Company Policy Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_policy_masters')]));
     }
 
 }

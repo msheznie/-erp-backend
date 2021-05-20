@@ -49,7 +49,7 @@ class ControlAccountAPIController extends AppBaseController
         $this->controlAccountRepository->pushCriteria(new LimitOffsetCriteria($request));
         $controlAccounts = $this->controlAccountRepository->all();
 
-        return $this->sendResponse($controlAccounts->toArray(), 'Control Accounts retrieved successfully');
+        return $this->sendResponse($controlAccounts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.control_accounts')]));
     }
 
     /**
@@ -66,7 +66,7 @@ class ControlAccountAPIController extends AppBaseController
 
         $controlAccounts = $this->controlAccountRepository->create($input);
 
-        return $this->sendResponse($controlAccounts->toArray(), 'Control Account saved successfully');
+        return $this->sendResponse($controlAccounts->toArray(), trans('custom.save', ['attribute' => trans('custom.control_accounts')]));
     }
 
     /**
@@ -83,10 +83,10 @@ class ControlAccountAPIController extends AppBaseController
         $controlAccount = $this->controlAccountRepository->findWithoutFail($id);
 
         if (empty($controlAccount)) {
-            return $this->sendError('Control Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.control_accounts')]));
         }
 
-        return $this->sendResponse($controlAccount->toArray(), 'Control Account retrieved successfully');
+        return $this->sendResponse($controlAccount->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.control_accounts')]));
     }
 
     /**
@@ -106,12 +106,12 @@ class ControlAccountAPIController extends AppBaseController
         $controlAccount = $this->controlAccountRepository->findWithoutFail($id);
 
         if (empty($controlAccount)) {
-            return $this->sendError('Control Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.control_accounts')]));
         }
 
         $controlAccount = $this->controlAccountRepository->update($input, $id);
 
-        return $this->sendResponse($controlAccount->toArray(), 'ControlAccount updated successfully');
+        return $this->sendResponse($controlAccount->toArray(), trans('custom.update', ['attribute' => trans('custom.control_accounts')]));
     }
 
     /**
@@ -128,11 +128,11 @@ class ControlAccountAPIController extends AppBaseController
         $controlAccount = $this->controlAccountRepository->findWithoutFail($id);
 
         if (empty($controlAccount)) {
-            return $this->sendError('Control Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.control_accounts')]));
         }
 
         $controlAccount->delete();
 
-        return $this->sendResponse($id, 'Control Account deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.control_accounts')]));
     }
 }
