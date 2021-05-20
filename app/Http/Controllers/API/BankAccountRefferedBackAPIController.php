@@ -75,7 +75,7 @@ class BankAccountRefferedBackAPIController extends AppBaseController
         $this->bankAccountRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankAccountRefferedBacks = $this->bankAccountRefferedBackRepository->all();
 
-        return $this->sendResponse($bankAccountRefferedBacks->toArray(), 'Bank Account Reffered Backs retrieved successfully');
+        return $this->sendResponse($bankAccountRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_account_reffered_backs')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class BankAccountRefferedBackAPIController extends AppBaseController
 
         $bankAccountRefferedBacks = $this->bankAccountRefferedBackRepository->create($input);
 
-        return $this->sendResponse($bankAccountRefferedBacks->toArray(), 'Bank Account Reffered Back saved successfully');
+        return $this->sendResponse($bankAccountRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_account_reffered_backs')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class BankAccountRefferedBackAPIController extends AppBaseController
         $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->with(['currency','confirmed_by','chart_of_account'])->findWithoutFail($id);
 
         if (empty($bankAccountRefferedBack)) {
-            return $this->sendError('Bank Account Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_account_reffered_backs')]));
         }
         $bankAccountRefferedBack->accountIBAN = $bankAccountRefferedBack['accountIBAN#'];
-        return $this->sendResponse($bankAccountRefferedBack->toArray(), 'Bank Account Reffered Back retrieved successfully');
+        return $this->sendResponse($bankAccountRefferedBack->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_account_reffered_backs')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class BankAccountRefferedBackAPIController extends AppBaseController
         $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bankAccountRefferedBack)) {
-            return $this->sendError('Bank Account Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_account_reffered_backs')]));
         }
 
         $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($bankAccountRefferedBack->toArray(), 'BankAccountRefferedBack updated successfully');
+        return $this->sendResponse($bankAccountRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_account_reffered_backs')]));
     }
 
     /**
@@ -281,12 +281,12 @@ class BankAccountRefferedBackAPIController extends AppBaseController
         $bankAccountRefferedBack = $this->bankAccountRefferedBackRepository->findWithoutFail($id);
 
         if (empty($bankAccountRefferedBack)) {
-            return $this->sendError('Bank Account Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_account_reffered_backs')]));
         }
 
         $bankAccountRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Bank Account Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_account_reffered_backs')]));
     }
 
     public function getAccountsReferBackHistory(Request $request)

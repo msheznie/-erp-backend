@@ -65,7 +65,7 @@ class AssetTypeAPIController extends AppBaseController
         $this->assetTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $assetTypes = $this->assetTypeRepository->all();
 
-        return $this->sendResponse($assetTypes->toArray(), 'Asset Types retrieved successfully');
+        return $this->sendResponse($assetTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_types')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class AssetTypeAPIController extends AppBaseController
 
         $assetTypes = $this->assetTypeRepository->create($input);
 
-        return $this->sendResponse($assetTypes->toArray(), 'Asset Type saved successfully');
+        return $this->sendResponse($assetTypes->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_types')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class AssetTypeAPIController extends AppBaseController
         $assetType = $this->assetTypeRepository->findWithoutFail($id);
 
         if (empty($assetType)) {
-            return $this->sendError('Asset Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_types')]));
         }
 
-        return $this->sendResponse($assetType->toArray(), 'Asset Type retrieved successfully');
+        return $this->sendResponse($assetType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_types')]));
     }
 
     /**
@@ -224,7 +224,7 @@ class AssetTypeAPIController extends AppBaseController
 
         $assetType = $this->assetTypeRepository->update($input, $id);
 
-        return $this->sendResponse($assetType->toArray(), 'AssetType updated successfully');
+        return $this->sendResponse($assetType->toArray(), trans('custom.not_found', ['attribute' => trans('custom.asset_types')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class AssetTypeAPIController extends AppBaseController
         $assetType = $this->assetTypeRepository->findWithoutFail($id);
 
         if (empty($assetType)) {
-            return $this->sendError('Asset Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_types')]));
         }
 
         $assetType->delete();
 
-        return $this->sendResponse($id, 'Asset Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_types')]));
     }
 }

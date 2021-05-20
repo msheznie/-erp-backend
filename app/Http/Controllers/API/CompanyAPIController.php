@@ -44,6 +44,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class CompanyController
@@ -296,7 +297,10 @@ class CompanyAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
 
-       
+        if (isset($input['jsrsExpiryDate'])) {
+            $input['jsrsExpiryDate'] = Carbon::parse($input['jsrsExpiryDate']);
+        }
+
         DB::beginTransaction();
         try {
             $companies = $this->companyRepository->create($input);
@@ -389,6 +393,10 @@ class CompanyAPIController extends AppBaseController
 
         $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
         $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
+
+        if (isset($input['jsrsExpiryDate'])) {
+            $input['jsrsExpiryDate'] = Carbon::parse($input['jsrsExpiryDate']);
+        }
 
         /*image upload*/
         $attachment = $input['nextAttachment'];

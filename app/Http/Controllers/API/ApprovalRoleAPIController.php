@@ -50,7 +50,7 @@ class ApprovalRoleAPIController extends AppBaseController
         $this->approvalRoleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $approvalRoles = $this->approvalRoleRepository->all();
 
-        return $this->sendResponse($approvalRoles->toArray(), 'Approval Roles retrieved successfully');
+        return $this->sendResponse($approvalRoles->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_roles')]));
     }
 
     /**
@@ -67,7 +67,7 @@ class ApprovalRoleAPIController extends AppBaseController
 
         $approvalRoles = $this->approvalRoleRepository->create($input);
 
-        return $this->sendResponse($approvalRoles->toArray(), 'Approval Role saved successfully');
+        return $this->sendResponse($approvalRoles->toArray(), trans('custom.save', ['attribute' => trans('custom.approval_roles')]));
     }
 
     /**
@@ -84,10 +84,10 @@ class ApprovalRoleAPIController extends AppBaseController
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($id);
 
         if (empty($approvalRole)) {
-            return $this->sendError('Approval Role not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_roles')]));
         }
 
-        return $this->sendResponse($approvalRole->toArray(), 'Approval Role retrieved successfully');
+        return $this->sendResponse($approvalRole->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_roles')]));
     }
 
     /**
@@ -107,12 +107,12 @@ class ApprovalRoleAPIController extends AppBaseController
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($id);
 
         if (empty($approvalRole)) {
-            return $this->sendError('Approval Role not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_roles')]));
         }
 
         $approvalRole = $this->approvalRoleRepository->update($input, $id);
 
-        return $this->sendResponse($approvalRole->toArray(), 'ApprovalRole updated successfully');
+        return $this->sendResponse($approvalRole->toArray(), trans('custom.update', ['attribute' => trans('custom.approval_roles')]));
     }
 
     /**
@@ -129,12 +129,12 @@ class ApprovalRoleAPIController extends AppBaseController
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($id);
 
         if (empty($approvalRole)) {
-            return $this->sendError('Approval Role not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_roles')]));
         }
 
         $approvalRole->delete();
 
-        return $this->sendResponse($id, 'Approval Role deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.approval_roles')]));
     }
 
     public function getApprovalRollByLevel(Request $request){
@@ -147,17 +147,17 @@ class ApprovalRoleAPIController extends AppBaseController
         },'serviceline' => function($query) {
             //$query->select('ServiceLineDes');
         }])->where('approvalLevelID', $request->approvalLevelID)->orderBy('rollLevel', 'asc')->get();
-        return $this->sendResponse($approvalRole->toArray(), 'Record retrieved successfully');
+        return $this->sendResponse($approvalRole->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function assignApprovalGroup(Request $request){
         $approvalRole = $this->approvalRoleRepository->findWithoutFail($request->rollMasterID);
         if (empty($approvalRole)) {
-            return $this->sendError('Approval Groups not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
         }
         $approvalRole->approvalGroupID = $request->approvalGroupID;
         $approvalRole->save();
 
-        return $this->sendResponse($approvalRole->toArray(), 'ApprovalRole updated successfully');
+        return $this->sendResponse($approvalRole->toArray(), trans('custom.update', ['attribute' => trans('custom.approval_roles')]));
     }
 }

@@ -54,7 +54,7 @@ class ApprovalGroupsAPIController extends AppBaseController
         $this->approvalGroupsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $approvalGroups = $this->approvalGroupsRepository->all();
 
-        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups retrieved successfully');
+        return $this->sendResponse($approvalGroups->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_groups')]));
     }
 
     /**
@@ -77,7 +77,7 @@ class ApprovalGroupsAPIController extends AppBaseController
             $id = $request->rightsGroupId;
             $approvalGroups = $this->approvalGroupsRepository->findWithoutFail($id);
             if (empty($approvalGroups)) {
-                return $this->sendError('Approval Group not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
             }
             $approvalGroups->documentSystemID = $input["documentSystemID"];
             $approvalGroups->rightsGroupDes = $input["rightsGroupDes"];
@@ -92,7 +92,7 @@ class ApprovalGroupsAPIController extends AppBaseController
             $input["documentID"] = $document->documentID;
             $approvalGroups = $this->approvalGroupsRepository->create($input);
         }
-        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups saved successfully');
+        return $this->sendResponse($approvalGroups->toArray(), trans('custom.save', ['attribute' => trans('custom.approval_groups')]));
     }
 
     /**
@@ -109,10 +109,10 @@ class ApprovalGroupsAPIController extends AppBaseController
         $approvalGroups = $this->approvalGroupsRepository->findWithoutFail($id);
 
         if (empty($approvalGroups)) {
-            return $this->sendError('Approval Groups not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
         }
 
-        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups retrieved successfully');
+        return $this->sendResponse($approvalGroups->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_groups')]));
     }
 
     /**
@@ -132,12 +132,12 @@ class ApprovalGroupsAPIController extends AppBaseController
         $approvalGroups = $this->approvalGroupsRepository->findWithoutFail($id);
 
         if (empty($approvalGroups)) {
-            return $this->sendError('Approval Groups not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
         }
 
         $approvalGroups = $this->approvalGroupsRepository->update($input, $id);
 
-        return $this->sendResponse($approvalGroups->toArray(), 'ApprovalGroups updated successfully');
+        return $this->sendResponse($approvalGroups->toArray(), trans('custom.update', ['attribute' => trans('custom.approval_groups')]));
     }
 
     /**
@@ -154,17 +154,17 @@ class ApprovalGroupsAPIController extends AppBaseController
         $approvalGroups = $this->approvalGroupsRepository->findWithoutFail($id);
 
         if (empty($approvalGroups)) {
-            return $this->sendError('Approval Groups not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_groups')]));
         }
 
         $approvalGroups->delete();
 
-        return $this->sendResponse($id, 'Approval Groups deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.approval_groups')]));
     }
 
     public function getAllApprovalGroup(){
         $approvalGroups = ApprovalGroups::all();
-        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups retrieved successfully');
+        return $this->sendResponse($approvalGroups->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_groups')]));
     }
 
     public function getApprovalGroupByCompanyDatatable(Request $request){
@@ -206,8 +206,8 @@ class ApprovalGroupsAPIController extends AppBaseController
     {
         $approvalGroups = ApprovalGroups::where('documentSystemID', $request['documentSystemID'])->get();
         if (empty($approvalGroups)) {
-            return $this->sendError('Document not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.document')]));
         }
-        return $this->sendResponse($approvalGroups, 'Document retrieved successfully');
+        return $this->sendResponse($approvalGroups, trans('custom.retrieve', ['attribute' => trans('custom.document')]));
     }
 }

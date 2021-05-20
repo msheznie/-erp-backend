@@ -49,7 +49,7 @@ class AccessTokensAPIController extends AppBaseController
         $this->accessTokensRepository->pushCriteria(new LimitOffsetCriteria($request));
         $accessTokens = $this->accessTokensRepository->all();
 
-        return $this->sendResponse($accessTokens->toArray(), 'Access Tokens retrieved successfully');
+        return $this->sendResponse($accessTokens->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.access_token')]));
     }
 
     /**
@@ -66,7 +66,7 @@ class AccessTokensAPIController extends AppBaseController
 
         $accessTokens = $this->accessTokensRepository->create($input);
 
-        return $this->sendResponse($accessTokens->toArray(), 'Access Tokens saved successfully');
+        return $this->sendResponse($accessTokens->toArray(), trans('custom.save', ['attribute' => trans('custom.access_token')]));
     }
 
     /**
@@ -83,10 +83,10 @@ class AccessTokensAPIController extends AppBaseController
         $accessTokens = $this->accessTokensRepository->findWithoutFail($id);
 
         if (empty($accessTokens)) {
-            return $this->sendError('Access Tokens not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.access_token')]));
         }
 
-        return $this->sendResponse($accessTokens->toArray(), 'Access Tokens retrieved successfully');
+        return $this->sendResponse($accessTokens->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.access_token')]));
     }
 
     /**
@@ -106,12 +106,12 @@ class AccessTokensAPIController extends AppBaseController
         $accessTokens = $this->accessTokensRepository->findWithoutFail($id);
 
         if (empty($accessTokens)) {
-            return $this->sendError('Access Tokens not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.access_token')]));
         }
 
         $accessTokens = $this->accessTokensRepository->update($input, $id);
 
-        return $this->sendResponse($accessTokens->toArray(), 'AccessTokens updated successfully');
+        return $this->sendResponse($accessTokens->toArray(), trans('custom.update', ['attribute' => trans('custom.access_token')]));
     }
 
     /**
@@ -128,11 +128,11 @@ class AccessTokensAPIController extends AppBaseController
         $accessTokens = $this->accessTokensRepository->findWithoutFail($id);
 
         if (empty($accessTokens)) {
-            return $this->sendError('Access Tokens not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.access_token')]));
         }
 
         $accessTokens->delete();
 
-        return $this->sendResponse($id, 'Access Tokens deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.access_token')]));
     }
 }

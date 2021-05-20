@@ -110,7 +110,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             'segment' => $segment
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function validateAPReport(Request $request)
@@ -191,7 +191,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'currencyID' => 'required'
                     ]);
                 } else {
-                    return $this->sendError('No report type found');
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_type')]));
                 }
 
                 if ($validator->fails()) {
@@ -279,7 +279,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -708,7 +708,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'count' => count($output));
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -875,11 +875,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $status = "";
 
                                 if ($val->approved == -1) {
-                                    $status = "Fully Approved";
+                                    $status = trans('custom.fully_approved');
                                 } else if (($val->chequeSentToTreasury) == -1) {
-                                    $status = "Payment Sent to Treasury";
+                                    $status = trans('custom.payment_sent_treasury');
                                 } else if (($val->chequeSentToTreasury == 0) && ($val->chequePaymentYN == 0)) {
-                                    $status = "Payment Not Printed and Not Sent to Treasury";
+                                    $status = trans('custom.payment_not_print');
                                 }
 
                                 $data[$x]['Approval Status'] = $status;
@@ -897,7 +897,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSS':
                 $type = $request->type;
@@ -977,7 +977,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     })->download($type);
                 }
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSL':
                 $type = $request->type;
@@ -1012,7 +1012,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSBS':
                 $type = $request->type;
@@ -1042,7 +1042,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSA':// Supplier Aging
                 $reportTypeID = $request->reportTypeID;
@@ -1162,7 +1162,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'TS':// Top Suppliers
                 $reportTypeID = $request->reportTypeID;
@@ -1205,7 +1205,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APUGRV':// Unbilled GRV
                 $reportTypeID = $request->reportTypeID;
@@ -1376,7 +1376,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APITP':
                 $type = $request->type;
@@ -1425,7 +1425,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -5149,6 +5149,7 @@ ORDER BY
             return $this->sendResponse($emailSentTo, 'Supplier email is not updated. report is not sent');
         } else {
             return $this->sendResponse($emailSentTo, 'Supplier statement report sent');
+
         }
     }
 
