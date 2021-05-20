@@ -297,7 +297,7 @@ return [
     'customer_master_categories' => 'فئات العملاء الرئيسية',
     'category_description_already_exists' => 'وصف الفئة موجود بالفعل',
     'customer_master_reffered_backs' => 'ظهور العميل الرئيسي المُحال',
-    'customer_receive_payment_reffered_historie' => 'العميل يستلم تاريخ الدفع المرسل'
+    'customer_receive_payment_reffered_historie' => 'العميل يستلم تاريخ الدفع المرسل',
     'invoice_details' => 'تفاصيل الفاتورة',
     'custom_filters_columns' => 'أعمدة المرشحات المخصصة',
     'custom_report_columns' => 'أعمدة التقارير المخصصة',
@@ -305,11 +305,11 @@ return [
     'report_template' => 'نموذج التقرير',
     'custom_report_masters' => 'إعداد التقارير المخصصة الرئيسية',
     'custom_report_types' => 'أنواع التقارير المخصصة',
-    'custom_user_report_columns' => 'Custom User Report Columns'،
+    'custom_user_report_columns' => 'عمود تقرير المستخدم المخصص',
     'custom_user_reports' => 'تقارير المستخدم المخصصة',
     'Reports_master' => 'التقارير الرئيسية',
     'custom_report' => 'تقارير مخصصة',
     'reports' => 'تقارير',
     'no_records_found' => 'لم يتم العثور على سجلات',
-    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered History History',
+    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered History History'
 ];

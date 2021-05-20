@@ -311,5 +311,5 @@ return [
     'custom_report' => 'Custom Reports',
     'reports' => 'Reports',
     'no_records_found' => 'No Records Found',
-    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered Histories',
+    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered Histories'
 ];
