@@ -20,7 +20,7 @@ class TaxService
 
     public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0,$documentSystemID = 0) {
         //$vatRegisteredYN == 1 &
-        if($supplierVATEligible == 1 && $documentSystemID != 67){ // 67 Quotation
+        if(($supplierVATEligible == 1  || $vatRegisteredYN == 1 )&& $documentSystemID != 67){ // 67 Quotation
             return true;
         }
         return false;
@@ -34,7 +34,7 @@ class TaxService
             ->where('companySystemID', $companySystemID)
             ->first();
 
-        if (!empty($company) && !empty($supplierAssignedDetail) && $company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+        if ((!empty($company) && $company->vatRegisteredYN == 1) || (!empty($supplierAssignedDetail) && $supplierAssignedDetail->vatEligible == 1)) {
             $valEligible = true;
         }
         return $valEligible;

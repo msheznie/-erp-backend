@@ -264,7 +264,7 @@ return [
     'customer_invoice_direct_detail' => 'Customer Invoice Direct Detail',
     'credit_note_details_refferdbacks' => 'Credit Note Details Refferdbacks',
     'credit_note_details_history' => 'Credit Note Details History',
-    'currency_conversions' => 'currency_conversions';
+    'currency_conversions' => 'currency_conversions',
     'base_currency_conversion' => 'Base currency Conversion',
     'sub_currency_conversion' => 'Sub currency Conversion',
     'currency_master' => 'Currency Master',
@@ -272,7 +272,7 @@ return [
     'cross_exchange' => 'Cross exchange',
     'currency_conversion_histories' => 'Currency Conversion History',
     'currency_denominations' => 'Currency Denominations',
-    'customer_assigneds' => 'Customer Assigneds'
+    'customer_assigneds' => 'Customer Assigneds',
     'companies' => 'Companies',
     'customer_catalog_details' => 'customer_catalog_details',
     'catalog_master' => 'Catalog Master',
@@ -297,7 +297,7 @@ return [
     'customer_master_categories' => 'Customer Master Categories',
     'category_description_already_exists' => 'category description already exists',
     'customer_master_reffered_backs' => 'Customer Master Reffered Backs',
-    'customer_receive_payment_reffered_historie' => 'Customer Receive Payment Reffered Historie'
+    'customer_receive_payment_reffered_historie' => 'Customer Receive Payment Reffered Historie',
     'invoice_details' => 'Invoice detail',
     'custom_filters_columns' => 'Custom Filters Columns',
     'custom_report_columns' => 'Custom Report Columns',
