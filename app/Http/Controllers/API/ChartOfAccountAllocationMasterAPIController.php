@@ -69,7 +69,7 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         $this->chartOfAccountAllocationMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccountAllocationMasters = $this->chartOfAccountAllocationMasterRepository->all();
 
-        return $this->sendResponse($chartOfAccountAllocationMasters->toArray(), 'Chart Of Account Allocation Masters retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
     }
 
     /**
@@ -134,26 +134,26 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         if(!empty($company)){
             $input['companyID'] = $company->CompanyID;
         }else{
-            return $this->sendError('Company Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_data')]));
         }
 
         $serviceLine = SegmentMaster::find($input['serviceLineSystemID']);
         if(!empty($serviceLine)){
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
         }else{
-            return $this->sendError('ServiceLine Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.service_line_data')]));
         }
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if(!empty($chartOfAccount)){
             $input['chartOfAccountCode'] = $chartOfAccount->AccountCode;
         }else{
-            return $this->sendError('Chart Of Account Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.service_line_data')]));
         }
         $input['timestamp'] = now();
         $chartOfAccountAllocationMaster = $this->chartOfAccountAllocationMasterRepository->create($input);
 
-        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), 'Chart Of Account Allocation Master saved successfully');
+        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
     }
 
     /**
@@ -203,7 +203,7 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
             return $this->sendError('Chart Of Account Allocation Master not found');
         }
 
-        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), 'Chart Of Account Allocation Master retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
     }
 
     /**
@@ -260,32 +260,32 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         if(!empty($company)){
             $input['companyID'] = $company->CompanyID;
         }else{
-            return $this->sendError('Company Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_data')]));
         }
 
         $serviceLine = SegmentMaster::find($input['serviceLineSystemID']);
         if(!empty($serviceLine)){
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
         }else{
-            return $this->sendError('ServiceLine Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.service_line_data')]));
         }
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if(!empty($chartOfAccount)){
             $input['chartOfAccountCode'] = $chartOfAccount->AccountCode;
         }else{
-            return $this->sendError('Chart Of Account Data Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_data')]));
         }
         /** @var ChartOfAccountAllocationMaster $chartOfAccountAllocationMaster */
         $chartOfAccountAllocationMaster = $this->chartOfAccountAllocationMasterRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationMaster)) {
-            return $this->sendError('Chart Of Account Allocation Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
         }
 
         $chartOfAccountAllocationMaster = $this->chartOfAccountAllocationMasterRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), 'ChartOfAccountAllocationMaster updated successfully');
+        return $this->sendResponse($chartOfAccountAllocationMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
     }
 
     /**
@@ -332,12 +332,12 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
         $chartOfAccountAllocationMaster = $this->chartOfAccountAllocationMasterRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationMaster)) {
-            return $this->sendError('Chart Of Account Allocation Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
         }
 
         $chartOfAccountAllocationMaster->delete();
 
-        return $this->sendResponse($id, 'Chart Of Account Allocation Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.chart_of_account_allocation_masters')]));
     }
 
     public function getAllocationConfigurationAssignFormData(Request $request) {
@@ -354,7 +354,7 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
         if(empty($chartOfAccount)){
-            return $this->sendError('Chart of Account Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account')]));
         }
 
         $companyId = $input['companyId'];
@@ -381,6 +381,6 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
                                         ->with(['detail','segment','detail.segment'])
                                         ->first();
         $output['chartOfAccount'] = (!empty($chartOfAccount))?$chartOfAccount:[];
-        return $this->sendResponse($output, 'Chart Of Account Allocation Form Data Retrieved Successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_form_data')]));
     }
 }

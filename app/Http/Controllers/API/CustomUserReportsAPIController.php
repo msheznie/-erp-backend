@@ -86,7 +86,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $this->customUserReportsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customUserReports = $this->customUserReportsRepository->all();
 
-        return $this->sendResponse($customUserReports->toArray(), 'Custom User Reports retrieved successfully');
+        return $this->sendResponse($customUserReports->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_reports')]));
     }
 
     /**
@@ -141,7 +141,7 @@ class CustomUserReportsAPIController extends AppBaseController
             ->where('is_active', 1)
             ->first();
         if (empty($reportMaster)) {
-            return $this->sendError('Reports Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.reports_master')]));
         }
 
         $input['user_id'] = Helper::getEmployeeSystemID();
@@ -170,7 +170,7 @@ class CustomUserReportsAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse($customUserReports->toArray(), 'Custom User Reports saved successfully');
+            return $this->sendResponse($customUserReports->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_user_reports')]));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
@@ -225,10 +225,10 @@ class CustomUserReportsAPIController extends AppBaseController
         }, 'filter_columns','summarize'])->find($id);
 
         if (empty($customUserReports)) {
-            return $this->sendError('Custom User Reports not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_user_reports')]));
         }
 
-        return $this->sendResponse($customUserReports->toArray(), 'Custom User Reports retrieved successfully');
+        return $this->sendResponse($customUserReports->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_user_reports')]));
     }
 
     /**
@@ -285,7 +285,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $customUserReports = $this->customUserReportsRepository->findWithoutFail($id);
 
         if (empty($customUserReports)) {
-            return $this->sendError('Custom Reports not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report')]));
         }
 
         $validator = Validator::make($request->all(), [
@@ -334,7 +334,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $customUserReports = $this->customUserReportsRepository->update(array_only($input, ['name', 'is_private']), $id);
 
             DB::commit();
-            return $this->sendResponse($customUserReports->toArray(), 'Custom Reports updated successfully');
+            return $this->sendResponse($customUserReports->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_report')]));
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage(), 500);
@@ -385,7 +385,7 @@ class CustomUserReportsAPIController extends AppBaseController
         $customUserReports = $this->customUserReportsRepository->findWithoutFail($id);
 
         if (empty($customUserReports)) {
-            return $this->sendError('Reports not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.reports')]));
         }
         DB::beginTransaction();
         try{
@@ -395,7 +395,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $this->customUserReportSummarizeRepository->where('user_report_id', $id)->delete();
             $customUserReports->delete();
             DB::commit();
-            return $this->sendResponse($id,'Report deleted successfully');
+            return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.reports')]));
         }catch(\Exception $e){
             DB::rollBack();
             return $this->sendError($e->getMessage(), 500);
@@ -592,7 +592,7 @@ class CustomUserReportsAPIController extends AppBaseController
             'summarize' => $result['summarize']
         );
 
-        return $this->sendResponse($output, 'Custom Report retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.custom_report')]));
 
     }
 
@@ -1173,6 +1173,6 @@ class CustomUserReportsAPIController extends AppBaseController
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
         }
-        return $this->sendError('No Records Found', 500);
+        return $this->sendError(trans('custom.no_records_found'), 500);
     }
 }

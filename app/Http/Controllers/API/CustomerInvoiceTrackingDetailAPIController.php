@@ -70,7 +70,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
         $this->customerInvoiceTrackingDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceTrackingDetails = $this->customerInvoiceTrackingDetailRepository->all();
 
-        return $this->sendResponse($customerInvoiceTrackingDetails->toArray(), 'Customer Invoice Tracking Details retrieved successfully');
+        return $this->sendResponse($customerInvoiceTrackingDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
     }
 
     /**
@@ -117,7 +117,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
 
         $customerInvoiceTrackingDetail = $this->customerInvoiceTrackingDetailRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), 'Customer Invoice Tracking Detail saved successfully');
+        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
     }
 
     /**
@@ -164,10 +164,10 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
         $customerInvoiceTrackingDetail = $this->customerInvoiceTrackingDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceTrackingDetail)) {
-            return $this->sendError('Customer Invoice Tracking Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
         }
 
-        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), 'Customer Invoice Tracking Detail retrieved successfully');
+        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
     }
 
     /**
@@ -252,12 +252,12 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
         $customerInvoiceTrackingDetail = $this->customerInvoiceTrackingDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceTrackingDetail)) {
-            return $this->sendError('Customer Invoice Tracking Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
         }
 
         $customerInvoiceTrackingDetail = $this->customerInvoiceTrackingDetailRepository->update($input, $id);
         $this->updateMasterPayment($customerInvoiceTrackingDetail->customerInvoiceTrackingID);
-        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), 'CustomerInvoiceTrackingDetail updated successfully');
+        return $this->sendResponse($customerInvoiceTrackingDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
     }
 
     /**
@@ -304,14 +304,14 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
         $customerInvoiceTrackingDetail = $this->customerInvoiceTrackingDetailRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceTrackingDetail)) {
-            return $this->sendError('Customer Invoice Tracking Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
         }
         $master_id = $customerInvoiceTrackingDetail->customerInvoiceTrackingID;
         CustomerInvoiceDirect::find($customerInvoiceTrackingDetail->custInvoiceDirectAutoID)->update(['selectedForTracking' => 0,'customerInvoiceTrackingID' => null]);
         $customerInvoiceTrackingDetail->delete();
         $this->updateMasterPayment($master_id);
 
-        return $this->sendResponse($id, 'Customer Invoice Tracking Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice_tracking_details')]));
     }
 
     public function addBatchSubmitDetails(Request $request)
@@ -382,7 +382,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
             $total_amount = $total_amount+$current_total;
             $masterData->update(['totalBatchAmount' => $total_amount]);
             DB::commit();
-            return $this->sendResponse('', 'Details saved successfully');
+            return $this->sendResponse('', trans('custom.retrieve', ['attribute' => trans('custom.details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getLine().' - '. $exception->getMessage());
@@ -399,7 +399,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
             ->with(['approved_by', 'rejected_by'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.request_details')]));
     }
 
     public function updateMasterPayment($id){

@@ -75,7 +75,7 @@ class CompanyPolicyCategoryAPIController extends AppBaseController
         $this->companyPolicyCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyPolicyCategories = $this->companyPolicyCategoryRepository->all();
 
-        return $this->sendResponse($companyPolicyCategories->toArray(), 'Company Policy Categories retrieved successfully');
+        return $this->sendResponse($companyPolicyCategories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_policy_categories')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class CompanyPolicyCategoryAPIController extends AppBaseController
 
         $companyPolicyCategories = $this->companyPolicyCategoryRepository->create($input);
 
-        return $this->sendResponse($companyPolicyCategories->toArray(), 'Company Policy Category saved successfully');
+        return $this->sendResponse($companyPolicyCategories->toArray(), trans('custom.save', ['attribute' => trans('custom.company_policy_categories')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class CompanyPolicyCategoryAPIController extends AppBaseController
         $companyPolicyCategory = $this->companyPolicyCategoryRepository->findWithoutFail($id);
 
         if (empty($companyPolicyCategory)) {
-            return $this->sendError('Company Policy Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_categories')]));
         }
 
-        return $this->sendResponse($companyPolicyCategory->toArray(), 'Company Policy Category retrieved successfully');
+        return $this->sendResponse($companyPolicyCategory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_policy_categories')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class CompanyPolicyCategoryAPIController extends AppBaseController
         $companyPolicyCategory = $this->companyPolicyCategoryRepository->findWithoutFail($id);
 
         if (empty($companyPolicyCategory)) {
-            return $this->sendError('Company Policy Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_categories')]));
         }
 
         $companyPolicyCategory = $this->companyPolicyCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($companyPolicyCategory->toArray(), 'CompanyPolicyCategory updated successfully');
+        return $this->sendResponse($companyPolicyCategory->toArray(), trans('custom.update', ['attribute' => trans('custom.company_policy_categories')]));
     }
 
     /**
@@ -281,11 +281,11 @@ class CompanyPolicyCategoryAPIController extends AppBaseController
         $companyPolicyCategory = $this->companyPolicyCategoryRepository->findWithoutFail($id);
 
         if (empty($companyPolicyCategory)) {
-            return $this->sendError('Company Policy Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_categories')]));
         }
 
         $companyPolicyCategory->delete();
 
-        return $this->sendResponse($id, 'Company Policy Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_policy_categories')]));
     }
 }

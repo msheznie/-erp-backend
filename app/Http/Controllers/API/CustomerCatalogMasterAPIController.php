@@ -75,7 +75,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $this->customerCatalogMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerCatalogMasters = $this->customerCatalogMasterRepository->all();
 
-        return $this->sendResponse($customerCatalogMasters->toArray(), 'Customer Catalog Masters retrieved successfully');
+        return $this->sendResponse($customerCatalogMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_catalog_masters')]));
     }
 
     /**
@@ -143,7 +143,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             ->exists();
 
         if($hasCatalogID){
-            return $this->sendError('Duplicate Catalog Code Found',500);
+            return $this->sendError(trans('custom.duplicate_catalog_code_found'),500);
         }
 
         if(isset($input['fromDate'])){
@@ -158,7 +158,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $input['createdBy'] = $employee->employeeSystemID;
         $customerCatalogMaster = $this->customerCatalogMasterRepository->create($input);
 
-        return $this->sendResponse($customerCatalogMaster->toArray(), 'Customer Catalog Master saved successfully');
+        return $this->sendResponse($customerCatalogMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_catalog_masters')]));
     }
 
     /**
@@ -210,10 +210,10 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($customerCatalogMaster)) {
-            return $this->sendError('Customer Catalog Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_masters')]));
         }
 
-        return $this->sendResponse($customerCatalogMaster->toArray(), 'Customer Catalog Master retrieved successfully');
+        return $this->sendResponse($customerCatalogMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_catalog_masters')]));
     }
 
     /**
@@ -289,14 +289,14 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             ->exists();
 
         if($hasCatalogID){
-            return $this->sendError('Duplicate Catalog Code Found', 500);
+            return $this->sendError(trans('custom.duplicate_catalog_code_found'), 500);
         }
 
         /** @var customerCatalogMaster $v */
         $customerCatalogMaster = $this->customerCatalogMasterRepository->findWithoutFail($id);
 
         if (empty($customerCatalogMaster)) {
-            return $this->sendError('Customer Catalog Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_masters')]));
         }
 
         if(isset($input['fromDate'])){
@@ -316,7 +316,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
 
         $customerCatalogMaster = $this->customerCatalogMasterRepository->update($input, $id);
 
-        return $this->sendResponse($customerCatalogMaster->toArray(), 'Customer Catalog Master updated successfully');
+        return $this->sendResponse($customerCatalogMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_catalog_masters')]));
     }
 
     /**
@@ -363,12 +363,12 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $customerCatalogMaster = $this->customerCatalogMasterRepository->findWithoutFail($id);
 
         if (empty($customerCatalogMaster)) {
-            return $this->sendError('Customer Catalog Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_catalog_masters')]));
         }
 
         $customerCatalogMaster->delete();
 
-        return $this->sendResponse($id, 'Customer Catalog Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_catalog_masters')]));
     }
 
     public function getAllCustomerCatalogsByCompany(Request $request){
@@ -438,7 +438,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             });
         }
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.data')]));
     }
 
     function getCustomerCatalogDetailByCustomerItem(Request $request){
@@ -455,7 +455,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($invoice_id);
 
         if (empty($invoice)) {
-            return $this->sendError('Customer Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice')]));
         }
 
         $invoiceDate = Carbon::parse($invoice->bookingDate)->format('y-m-d');
@@ -501,7 +501,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             $output = $catalog->toArray();
         }
 
-        return $this->sendResponse($output,'Catalog retrieved successfully');
+        return $this->sendResponse($output,trans('custom.retrieve', ['attribute' => trans('custom.catalog')]));
 
     }
 
@@ -519,6 +519,6 @@ class CustomerCatalogMasterAPIController extends AppBaseController
             $customerCurrencies = [];
         }
 
-        return $this->sendResponse($customerCurrencies, 'customer currencies retrieved successfully');
+        return $this->sendResponse($customerCurrencies, trans('custom.retrieve', ['attribute' => trans('custom.customer_currencies')]));
     }
 }

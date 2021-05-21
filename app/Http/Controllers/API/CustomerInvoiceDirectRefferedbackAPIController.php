@@ -75,7 +75,7 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
         $this->customerInvoiceDirectRefferedbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceDirectRefferedbacks = $this->customerInvoiceDirectRefferedbackRepository->all();
 
-        return $this->sendResponse($customerInvoiceDirectRefferedbacks->toArray(), 'Customer Invoice Direct Refferedbacks retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectRefferedbacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
 
         $customerInvoiceDirectRefferedbacks = $this->customerInvoiceDirectRefferedbackRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceDirectRefferedbacks->toArray(), 'Customer Invoice Direct Refferedback saved successfully');
+        return $this->sendResponse($customerInvoiceDirectRefferedbacks->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
     }
 
     /**
@@ -173,10 +173,10 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
         },'serviceline','warehouse','report_currency','local_currency'])->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
         }
 
-        return $this->sendResponse($customerInvoiceDirectRefferedback->toArray(), 'Customer Invoice Direct Refferedback retrieved successfully');
+        return $this->sendResponse($customerInvoiceDirectRefferedback->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
     }
 
     /**
@@ -233,12 +233,12 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
         $customerInvoiceDirectRefferedback = $this->customerInvoiceDirectRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
         }
 
         $customerInvoiceDirectRefferedback = $this->customerInvoiceDirectRefferedbackRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceDirectRefferedback->toArray(), 'CustomerInvoiceDirectRefferedback updated successfully');
+        return $this->sendResponse($customerInvoiceDirectRefferedback->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
     }
 
     /**
@@ -285,12 +285,12 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
         $customerInvoiceDirectRefferedback = $this->customerInvoiceDirectRefferedbackRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceDirectRefferedback)) {
-            return $this->sendError('Customer Invoice Direct Refferedback not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
         }
 
         $customerInvoiceDirectRefferedback->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice Direct Refferedback deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_invoice_direct_refferedbacks')]));
     }
 
     public function getCIMasterAmendHistory(Request $request)
@@ -301,6 +301,6 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
             ->with(['createduser', 'confirmed_by', 'modified_by', 'customer', 'approved_by', 'cancelled_by', 'currency'])
             ->get();
 
-        return $this->sendResponse($customerInvoiceHistory, 'Invoice detail retrieved successfully');
+        return $this->sendResponse($customerInvoiceHistory, trans('custom.retrieve', ['attribute' => trans('custom.invoice_detail')]));
     }
 }

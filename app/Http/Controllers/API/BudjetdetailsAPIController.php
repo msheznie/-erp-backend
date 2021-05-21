@@ -82,7 +82,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $this->budjetdetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budjetdetails = $this->budjetdetailsRepository->all();
 
-        return $this->sendResponse($budjetdetails->toArray(), 'Budjetdetails retrieved successfully');
+        return $this->sendResponse($budjetdetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
     /**
@@ -129,7 +129,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $budjetdetails = $this->budjetdetailsRepository->create($input);
 
-        return $this->sendResponse($budjetdetails->toArray(), 'Budjetdetails saved successfully');
+        return $this->sendResponse($budjetdetails->toArray(), trans('custom.save', ['attribute' => trans('custom.budjet_details')]));
     }
 
     /**
@@ -176,10 +176,10 @@ class BudjetdetailsAPIController extends AppBaseController
         $budjetdetails = $this->budjetdetailsRepository->findWithoutFail($id);
 
         if (empty($budjetdetails)) {
-            return $this->sendError('Budjetdetails not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budjet_details')]));
         }
 
-        return $this->sendResponse($budjetdetails->toArray(), 'Budjetdetails retrieved successfully');
+        return $this->sendResponse($budjetdetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
     /**
@@ -244,7 +244,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $budjetdetails = $this->budjetdetailsRepository->findWithoutFail($id);
 
         if (empty($budjetdetails)) {
-            return $this->sendError('Budget details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budjet_details')]));
         }
 
         if(!$input['budjetAmtRpt']){
@@ -256,7 +256,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
         $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
 
-        return $this->sendResponse($budjetdetails->toArray(), 'Budjetdetails updated successfully');
+        return $this->sendResponse($budjetdetails->toArray(), trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
     }
 
     /**
@@ -303,12 +303,12 @@ class BudjetdetailsAPIController extends AppBaseController
         $budjetdetails = $this->budjetdetailsRepository->findWithoutFail($id);
 
         if (empty($budjetdetails)) {
-            return $this->sendError('Budjetdetails not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budjet_details')]));
         }
 
         $budjetdetails->delete();
 
-        return $this->sendResponse($id, 'Budjetdetails deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.budjet_details')]));
     }
 
     public function getDetailsByBudget(Request $request)
@@ -324,7 +324,7 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($input['id']);
 
         if (empty($budgetMaster)) {
-            return $this->sendError('Budget Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
         }
 
         // Incomes
@@ -433,7 +433,7 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $finalArray = array('income' => $finalIncomeArray, 'expense' => $finalExpenseArray);
 
-        return $this->sendResponse($finalArray, 'Budget details retrieved successfully');
+        return $this->sendResponse($finalArray, trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
     public function bulkUpdateBudgetDetails(Request $request)
@@ -457,7 +457,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $this->budjetdetailsRepository->update(array_only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
         }
 
-        return $this->sendResponse([], 'Budjetdetails updated successfully');
+        return $this->sendResponse([], trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
     }
 
     public function removeBudgetDetails(Request $request)
@@ -485,10 +485,10 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($input['id']);
 
         if (empty($budgetMaster)) {
-            return $this->sendError('Budget Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
         }
         $total = array();
-        return $this->sendResponse($total, 'Budjet details summary updated successfully');
+        return $this->sendResponse($total, trans('custom.update', ['attribute' => trans('custom.budjet_details_summery')]));
     }
 
 

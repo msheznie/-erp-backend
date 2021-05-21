@@ -76,7 +76,7 @@ class CustomerContactDetailsAPIController extends AppBaseController
         $this->customerContactDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerContactDetails = $this->customerContactDetailsRepository->all();
 
-        return $this->sendResponse($customerContactDetails->toArray(), 'Customer Contact Details retrieved successfully');
+        return $this->sendResponse($customerContactDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
     /**
@@ -168,7 +168,7 @@ class CustomerContactDetailsAPIController extends AppBaseController
             $customerContactDetails = $this->customerContactDetailsRepository->create($input);
         }
         
-        return $this->sendResponse($customerContactDetails->toArray(), 'Customer Contact Details saved successfully');
+        return $this->sendResponse($customerContactDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
     /**
@@ -215,10 +215,10 @@ class CustomerContactDetailsAPIController extends AppBaseController
         $customerContactDetails = $this->customerContactDetailsRepository->findWithoutFail($id);
 
         if (empty($customerContactDetails)) {
-            return $this->sendError('Customer Contact Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_contact_details')]));
         }
 
-        return $this->sendResponse($customerContactDetails->toArray(), 'Customer Contact Details retrieved successfully');
+        return $this->sendResponse($customerContactDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
     /**
@@ -275,12 +275,12 @@ class CustomerContactDetailsAPIController extends AppBaseController
         $customerContactDetails = $this->customerContactDetailsRepository->findWithoutFail($id);
 
         if (empty($customerContactDetails)) {
-            return $this->sendError('Customer Contact Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_contact_details')]));
         }
 
         $customerContactDetails = $this->customerContactDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($customerContactDetails->toArray(), 'CustomerContactDetails updated successfully');
+        return $this->sendResponse($customerContactDetails->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
     /**
@@ -327,12 +327,12 @@ class CustomerContactDetailsAPIController extends AppBaseController
         $customerContactDetails = $this->customerContactDetailsRepository->findWithoutFail($id);
 
         if (empty($customerContactDetails)) {
-            return $this->sendError('Customer Contact Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_contact_details')]));
         }
 
         $customerContactDetails->delete();
 
-        return $this->sendResponse($id, 'Customer Contact Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
     /**
@@ -352,7 +352,7 @@ class CustomerContactDetailsAPIController extends AppBaseController
             ->orderBy('customerContactID', 'DESC')
             ->get();
 
-        return $this->sendResponse($details->toArray(), 'Customer Contact Details retrieved successfully');
+        return $this->sendResponse($details->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_contact_details')]));
     }
 
 }

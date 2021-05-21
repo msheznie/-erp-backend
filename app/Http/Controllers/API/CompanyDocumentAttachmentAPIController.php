@@ -55,7 +55,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $this->companyDocumentAttachmentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyDocumentAttachments = $this->companyDocumentAttachmentRepository->all();
 
-        return $this->sendResponse($companyDocumentAttachments->toArray(), 'Company Document Attachments retrieved successfully');
+        return $this->sendResponse($companyDocumentAttachments->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_document_attachments')]));
     }
 
     /**
@@ -72,7 +72,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         $companyDocumentAttachments = $this->companyDocumentAttachmentRepository->create($input);
 
-        return $this->sendResponse($companyDocumentAttachments->toArray(), 'Company Document Attachment saved successfully');
+        return $this->sendResponse($companyDocumentAttachments->toArray(), trans('custom.save', ['attribute' => trans('custom.company_document_attachments')]));
     }
 
     /**
@@ -89,10 +89,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachment)) {
-            return $this->sendError('Company Document Attachment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        return $this->sendResponse($companyDocumentAttachment->toArray(), 'Company Document Attachment retrieved successfully');
+        return $this->sendResponse($companyDocumentAttachment->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_document_attachments')]));
     }
 
     /**
@@ -115,12 +115,12 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachment)) {
-            return $this->sendError('Company Document Attachment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);
 
-        return $this->sendResponse($companyDocumentAttachment->toArray(), 'Company Document Attachment updated successfully');
+        return $this->sendResponse($companyDocumentAttachment->toArray(), trans('custom.update', ['attribute' => trans('custom.company_document_attachments')]));
     }
 
     /**
@@ -137,12 +137,12 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->findWithoutFail($id);
 
         if (empty($companyDocumentAttachment)) {
-            return $this->sendError('Company Document Attachment not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
         $companyDocumentAttachment->delete();
 
-        return $this->sendResponse($id, 'Company Document Attachment deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_document_attachments')]));
     }
 
 
@@ -218,7 +218,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         /**  Companies by group  Drop Down */
         $output['companies'] = Company::whereIn("companySystemID",$subCompanies)->get();
         $output['documents'] = DocumentMaster::select('documentSystemID','documentID','documentDescription')->get();
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function checkDocumentAttachmentPolicy(Request $request){
@@ -232,9 +232,9 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             ->first();
 
         if(empty($result)){
-            return $this->sendError('Policy Not Found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.policy')]));
         }
 
-        return $this->sendResponse($result, 'Record retrieved successfully');
+        return $this->sendResponse($result, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 }

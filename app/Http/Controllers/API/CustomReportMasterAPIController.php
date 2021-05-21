@@ -65,7 +65,7 @@ class CustomReportMasterAPIController extends AppBaseController
         $this->customReportMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customReportMasters = $this->customReportMasterRepository->all();
 
-        return $this->sendResponse($customReportMasters->toArray(), 'Custom Report Masters retrieved successfully');
+        return $this->sendResponse($customReportMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_masters')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomReportMasterAPIController extends AppBaseController
 
         $customReportMaster = $this->customReportMasterRepository->create($input);
 
-        return $this->sendResponse($customReportMaster->toArray(), 'Custom Report Master saved successfully');
+        return $this->sendResponse($customReportMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_report_masters')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomReportMasterAPIController extends AppBaseController
         $customReportMaster = $this->customReportMasterRepository->findWithoutFail($id);
 
         if (empty($customReportMaster)) {
-            return $this->sendError('Custom Report Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_masters')]));
         }
 
-        return $this->sendResponse($customReportMaster->toArray(), 'Custom Report Master retrieved successfully');
+        return $this->sendResponse($customReportMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_masters')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomReportMasterAPIController extends AppBaseController
         $customReportMaster = $this->customReportMasterRepository->findWithoutFail($id);
 
         if (empty($customReportMaster)) {
-            return $this->sendError('Custom Report Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_masters')]));
         }
 
         $customReportMaster = $this->customReportMasterRepository->update($input, $id);
 
-        return $this->sendResponse($customReportMaster->toArray(), 'CustomReportMaster updated successfully');
+        return $this->sendResponse($customReportMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_report_masters')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomReportMasterAPIController extends AppBaseController
         $customReportMaster = $this->customReportMasterRepository->findWithoutFail($id);
 
         if (empty($customReportMaster)) {
-            return $this->sendError('Custom Report Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_masters')]));
         }
 
         $customReportMaster->delete();
 
-        return $this->sendSuccess('Custom Report Master deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.custom_report_masters')]));
     }
 }
