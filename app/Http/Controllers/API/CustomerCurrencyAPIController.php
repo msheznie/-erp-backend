@@ -55,7 +55,7 @@ class CustomerCurrencyAPIController extends AppBaseController
         $this->customerCurrencyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerCurrencies = $this->customerCurrencyRepository->all();
 
-        return $this->sendResponse($customerCurrencies->toArray(), 'Customer Currencies retrieved successfully');
+        return $this->sendResponse($customerCurrencies->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_currencies')]));
     }
 
     /**
@@ -79,7 +79,7 @@ class CustomerCurrencyAPIController extends AppBaseController
             $customerCurrencies = [];
         }
 
-        return $this->sendResponse($customerCurrencies, 'customer currencies retrieved successfully');
+        return $this->sendResponse($customerCurrencies, trans('custom.retrieve', ['attribute' => trans('custom.customer_currencies')]));
     }
 
     /**
@@ -99,7 +99,7 @@ class CustomerCurrencyAPIController extends AppBaseController
                                     })->get(['currencyID',
                                             'CurrencyName']);
 
-        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+        return $this->sendResponse($companies->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.companies')]));
     }
 
     /**
@@ -128,7 +128,7 @@ class CustomerCurrencyAPIController extends AppBaseController
             $customerCurrencies = CustomerCurrency::where('custCurrencyAutoID', $input['custCurrencyAutoID'])->first();
 
             if (empty($customerCurrencies)) {
-                return $this->sendError('customer currency not found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_currencies')]));
             }
 
             if($input['isAssigned'] == true || $input['isAssigned'] == 1){
@@ -164,7 +164,7 @@ class CustomerCurrencyAPIController extends AppBaseController
             $customerCurrencies = $this->customerCurrencyRepository->create($input);
         }
 
-        return $this->sendResponse($customerCurrencies->toArray(), 'Customer currency saved successfully');
+        return $this->sendResponse($customerCurrencies->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_currencies')]));
 
 
     }
@@ -186,7 +186,7 @@ class CustomerCurrencyAPIController extends AppBaseController
             return $this->sendError('Customer Currency not found');
         }
 
-        return $this->sendResponse($customerCurrency->toArray(), 'Customer Currency retrieved successfully');
+        return $this->sendResponse($customerCurrency->toArray(), trans('custom.not_found', ['attribute' => trans('custom.customer_currencies')]));
     }
 
     /**
@@ -206,12 +206,12 @@ class CustomerCurrencyAPIController extends AppBaseController
         $customerCurrency = $this->customerCurrencyRepository->findWithoutFail($id);
 
         if (empty($customerCurrency)) {
-            return $this->sendError('Customer Currency not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_currencies')]));
         }
 
         $customerCurrency = $this->customerCurrencyRepository->update($input, $id);
 
-        return $this->sendResponse($customerCurrency->toArray(), 'CustomerCurrency updated successfully');
+        return $this->sendResponse($customerCurrency->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_currencies')]));
     }
 
     /**
@@ -228,11 +228,11 @@ class CustomerCurrencyAPIController extends AppBaseController
         $customerCurrency = $this->customerCurrencyRepository->findWithoutFail($id);
 
         if (empty($customerCurrency)) {
-            return $this->sendError('Customer Currency not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_currencies')]));
         }
 
         $customerCurrency->delete();
 
-        return $this->sendResponse($id, 'Customer Currency deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_currencies')]));
     }
 }

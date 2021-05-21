@@ -83,7 +83,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $this->companyFinanceYearRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyFinanceYears = $this->companyFinanceYearRepository->all();
 
-        return $this->sendResponse($companyFinanceYears->toArray(), 'Company Finance Years retrieved successfully');
+        return $this->sendResponse($companyFinanceYears->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     /**
@@ -140,7 +140,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]));
         }
 
         $input['companyID'] = $company->CompanyID;
@@ -157,14 +157,14 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $lastDate  = $lastDate->format('Y-m-d');
 
             if($lastDate >= $input['bigginingDate']){
-                return $this->sendError('You cannot create financial year, Please select the beginning date after ' . (new Carbon($lastDate))->format('d/m/Y'));
+                return $this->sendError(trans('custom.you_cannot_create_financial_year_please_select_the_beginning_date_after') .' '. (new Carbon($lastDate))->format('d/m/Y'));
             }
         }
 
         $diffMonth = (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
 
         if($diffMonth != 11){
-            return  $this->sendError('Financial year must contain 12 months.');
+            return  $this->sendError(trans('custom.financial_year_must_contain_12_months'));
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -190,7 +190,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $companyFinanceYears = $this->companyFinanceYearRepository->create($input);
         CreateFinancePeriod::dispatch($companyFinanceYears);
 
-        return $this->sendResponse($companyFinanceYears->toArray(), 'Company Finance Year saved successfully');
+        return $this->sendResponse($companyFinanceYears->toArray(), trans('custom.save', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     /**
@@ -237,10 +237,10 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Company Finance Year not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
 
-        return $this->sendResponse($companyFinanceYear->toArray(), 'Company Finance Year retrieved successfully');
+        return $this->sendResponse($companyFinanceYear->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     /**
@@ -297,7 +297,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Company Finance Year not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
 
         $checkFinancePeriod = CompanyFinancePeriod::where('companySystemID', $companyFinanceYear->companySystemID)
@@ -308,7 +308,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         if ($input['isActive']) {
             $input['isActive'] = -1;
         } else if ($companyFinanceYear->isActive && !$input['isActive'] && $checkFinancePeriod > 0) {
-            return $this->sendError('Cannot deactivate, There are some active finance periods for this finance year.');
+            return $this->sendError(trans('custom.cannot_deactivate_there_are_some_active_finance_periods_for_this_finance_year'));
         }
 
         if ($input['isCurrent']) {
@@ -319,7 +319,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
                     ->count();
 
                 if ($checkCurrentFinanceYear > 0) {
-                    return $this->sendError('Company already has a current financial year.');
+                    return $this->sendError(trans('custom.company_already_has_a_current_financial_year'));
                 }
             }
         }
@@ -328,7 +328,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $input['isClosed']  = -1;
 
             if(!$companyFinanceYear->isClosed && $checkFinancePeriod > 0 && $input['closeAllPeriods'] == 0){
-                return $this->sendError('Cannot close, There are some open financial periods for the selected financial year. Do you want to close all the financial periods?',500,array('type' => 'active_period_exist' ));
+                return $this->sendError(trans('custom.cannot_close_there_are_some_open_financial_periods_for_the_selected_financial_year_do_you_want_to_close_all_the_financial_periods'),500,array('type' => 'active_period_exist' ));
             }
 
             //if($input['closeAllPeriods'] == 1){
@@ -349,7 +349,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $input['closedByEmpName']     = $employee->empName;
             $input['closedDate']          = now();
         }else if($companyFinanceYear->isClosed == -1 && $input['isClosed'] == 0){
-            return $this->sendError('Cannot open this finance year.');
+            return $this->sendError(trans('custom.cannot_open_this_finance_year'));
         }
 
 
@@ -359,7 +359,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
 
         $companyFinanceYear = $this->companyFinanceYearRepository->update($input, $id);
 
-        return $this->sendResponse($companyFinanceYear->toArray(), 'Company financial Year updated successfully');
+        return $this->sendResponse($companyFinanceYear->toArray(), trans('custom.update', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     /**
@@ -406,12 +406,12 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
         if (empty($companyFinanceYear)) {
-            return $this->sendError('Company Finance Year not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
 
         $companyFinanceYear->delete();
 
-        return $this->sendResponse($id, 'Company Finance Year deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     public function getFinancialYearsByCompany(Request $request)
@@ -483,7 +483,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             'departments' => $departments
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 }

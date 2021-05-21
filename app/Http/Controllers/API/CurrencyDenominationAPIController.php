@@ -75,7 +75,7 @@ class CurrencyDenominationAPIController extends AppBaseController
         $this->currencyDenominationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $currencyDenominations = $this->currencyDenominationRepository->all();
 
-        return $this->sendResponse($currencyDenominations->toArray(), 'Currency Denominations retrieved successfully');
+        return $this->sendResponse($currencyDenominations->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_denominations')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class CurrencyDenominationAPIController extends AppBaseController
 
         $currencyDenominations = $this->currencyDenominationRepository->create($input);
 
-        return $this->sendResponse($currencyDenominations->toArray(), 'Currency Denomination saved successfully');
+        return $this->sendResponse($currencyDenominations->toArray(), trans('custom.save', ['attribute' => trans('custom.currency_denominations')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class CurrencyDenominationAPIController extends AppBaseController
         $currencyDenomination = $this->currencyDenominationRepository->findWithoutFail($id);
 
         if (empty($currencyDenomination)) {
-            return $this->sendError('Currency Denomination not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_denominations')]));
         }
 
-        return $this->sendResponse($currencyDenomination->toArray(), 'Currency Denomination retrieved successfully');
+        return $this->sendResponse($currencyDenomination->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.currency_denominations')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class CurrencyDenominationAPIController extends AppBaseController
         $currencyDenomination = $this->currencyDenominationRepository->findWithoutFail($id);
 
         if (empty($currencyDenomination)) {
-            return $this->sendError('Currency Denomination not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_denominations')]));
         }
 
         $currencyDenomination = $this->currencyDenominationRepository->update($input, $id);
 
-        return $this->sendResponse($currencyDenomination->toArray(), 'CurrencyDenomination updated successfully');
+        return $this->sendResponse($currencyDenomination->toArray(), trans('custom.update', ['attribute' => trans('custom.currency_denominations')]));
     }
 
     /**
@@ -281,11 +281,11 @@ class CurrencyDenominationAPIController extends AppBaseController
         $currencyDenomination = $this->currencyDenominationRepository->findWithoutFail($id);
 
         if (empty($currencyDenomination)) {
-            return $this->sendError('Currency Denomination not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.currency_denominations')]));
         }
 
         $currencyDenomination->delete();
 
-        return $this->sendResponse($id, 'Currency Denomination deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.currency_denominations')]));
     }
 }

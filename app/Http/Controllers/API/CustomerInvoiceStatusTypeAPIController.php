@@ -65,7 +65,7 @@ class CustomerInvoiceStatusTypeAPIController extends AppBaseController
         $this->customerInvoiceStatusTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerInvoiceStatusTypes = $this->customerInvoiceStatusTypeRepository->all();
 
-        return $this->sendResponse($customerInvoiceStatusTypes->toArray(), 'Customer Invoice Status Types retrieved successfully');
+        return $this->sendResponse($customerInvoiceStatusTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_status_types')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomerInvoiceStatusTypeAPIController extends AppBaseController
 
         $customerInvoiceStatusType = $this->customerInvoiceStatusTypeRepository->create($input);
 
-        return $this->sendResponse($customerInvoiceStatusType->toArray(), 'Customer Invoice Status Type saved successfully');
+        return $this->sendResponse($customerInvoiceStatusType->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_invoice_status_types')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomerInvoiceStatusTypeAPIController extends AppBaseController
         $customerInvoiceStatusType = $this->customerInvoiceStatusTypeRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceStatusType)) {
-            return $this->sendError('Customer Invoice Status Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_status_types')]));
         }
 
-        return $this->sendResponse($customerInvoiceStatusType->toArray(), 'Customer Invoice Status Type retrieved successfully');
+        return $this->sendResponse($customerInvoiceStatusType->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_invoice_status_types')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomerInvoiceStatusTypeAPIController extends AppBaseController
         $customerInvoiceStatusType = $this->customerInvoiceStatusTypeRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceStatusType)) {
-            return $this->sendError('Customer Invoice Status Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_status_types')]));
         }
 
         $customerInvoiceStatusType = $this->customerInvoiceStatusTypeRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoiceStatusType->toArray(), 'CustomerInvoiceStatusType updated successfully');
+        return $this->sendResponse($customerInvoiceStatusType->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_invoice_status_types')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomerInvoiceStatusTypeAPIController extends AppBaseController
         $customerInvoiceStatusType = $this->customerInvoiceStatusTypeRepository->findWithoutFail($id);
 
         if (empty($customerInvoiceStatusType)) {
-            return $this->sendError('Customer Invoice Status Type not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_status_types')]));
         }
 
         $customerInvoiceStatusType->delete();
 
-        return $this->sendSuccess('Customer Invoice Status Type deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.customer_invoice_status_types')]));
     }
 }

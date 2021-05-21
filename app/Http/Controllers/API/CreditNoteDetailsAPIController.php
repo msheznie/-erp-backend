@@ -70,7 +70,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $this->creditNoteDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $creditNoteDetails = $this->creditNoteDetailsRepository->all();
 
-        return $this->sendResponse($creditNoteDetails->toArray(), 'Credit Note Details retrieved successfully');
+        return $this->sendResponse($creditNoteDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     /**
@@ -117,7 +117,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         $creditNoteDetails = $this->creditNoteDetailsRepository->create($input);
 
-        return $this->sendResponse($creditNoteDetails->toArray(), 'Credit Note Details saved successfully');
+        return $this->sendResponse($creditNoteDetails->toArray(), trans('custom.save', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     /**
@@ -164,10 +164,10 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $creditNoteDetails = $this->creditNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetails)) {
-            return $this->sendError('Credit Note Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details')]));
         }
 
-        return $this->sendResponse($creditNoteDetails->toArray(), 'Credit Note Details retrieved successfully');
+        return $this->sendResponse($creditNoteDetails->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     /**
@@ -224,12 +224,12 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $creditNoteDetails = $this->creditNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetails)) {
-            return $this->sendError('Credit Note Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details')]));
         }
 
         $creditNoteDetails = $this->creditNoteDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($creditNoteDetails->toArray(), 'CreditNoteDetails updated successfully');
+        return $this->sendResponse($creditNoteDetails->toArray(), trans('custom.update', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     /**
@@ -276,11 +276,11 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $creditNoteDetails = $this->creditNoteDetailsRepository->findWithoutFail($id);
 
         if (empty($creditNoteDetails)) {
-            return $this->sendError('Credit Note Details not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.credit_note_details')]));
         }
         $creditNoteDetails->delete();
 
-        return $this->sendResponse($id, 'Credit Note Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     public function addcreditNoteDetails(Request $request)
@@ -362,7 +362,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse('s', 'successfully created');
+            return $this->sendResponse('s', trans('custom.successfully_created'));
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
@@ -375,7 +375,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input = $request->all();
         $id = $input['id'];
         $data = CreditNoteDetails::with(['segment'])->where('creditNoteAutoID', $id)->get();
-        return $this->sendResponse($data, 'Credit Note Details deleted successfully');
+        return $this->sendResponse($data, trans('custom.delete', ['attribute' => trans('custom.credit_note_details')]));
     }
 
     public function getAllcontractbyclientbase(Request $request)
@@ -387,7 +387,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $companySystemID AND clientID = $customerID";
         $contract = DB::select($qry);
 
-        return $this->sendResponse($contract, 'Record retrieved successfully');
+        return $this->sendResponse($contract, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 
@@ -403,7 +403,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
 
         if (empty($detail)) {
-            return $this->sendError('Customer Invoice Direct Detail not found', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_invoice_direct_detail')]), 500);
         }
 
         $master = CreditNote::select('*')->where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
@@ -476,7 +476,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
 
-        return $this->sendResponse('s', 'Credit note detail updated successfully');
+        return $this->sendResponse('s', trans('custom.update', ['attribute' => trans('custom.credit_note_details')]));
 
     }
 

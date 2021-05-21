@@ -111,7 +111,7 @@ class ContractAPIController extends AppBaseController
 
         $contracts = $this->contractRepository->create($input);
 
-        return $this->sendResponse($contracts->toArray(), 'Contract saved successfully');
+        return $this->sendResponse($contracts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.contract')]));
     }
 
     /**
@@ -158,10 +158,10 @@ class ContractAPIController extends AppBaseController
         $contract = $this->contractRepository->findWithoutFail($id);
 
         if (empty($contract)) {
-            return $this->sendError('Contract not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contract')]));
         }
 
-        return $this->sendResponse($contract->toArray(), 'Contract retrieved successfully');
+        return $this->sendResponse($contract->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.contract')]));
     }
 
     /**
@@ -218,12 +218,12 @@ class ContractAPIController extends AppBaseController
         $contract = $this->contractRepository->findWithoutFail($id);
 
         if (empty($contract)) {
-            return $this->sendError('Contract not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contract')]));
         }
 
         $contract = $this->contractRepository->update($input, $id);
 
-        return $this->sendResponse($contract->toArray(), 'Contract updated successfully');
+        return $this->sendResponse($contract->toArray(), trans('custom.update', ['attribute' => trans('custom.contract')]));
     }
 
     /**
@@ -270,12 +270,12 @@ class ContractAPIController extends AppBaseController
         $contract = $this->contractRepository->findWithoutFail($id);
 
         if (empty($contract)) {
-            return $this->sendError('Contract not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contract')]));
         }
 
         $contract->delete();
 
-        return $this->sendResponse($id, 'Contract deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.contract')]));
     }
 
 

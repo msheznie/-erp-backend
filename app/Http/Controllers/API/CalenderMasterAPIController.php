@@ -65,7 +65,7 @@ class CalenderMasterAPIController extends AppBaseController
         $this->calenderMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $calenderMasters = $this->calenderMasterRepository->all();
 
-        return $this->sendResponse($calenderMasters->toArray(), 'Calender Masters retrieved successfully');
+        return $this->sendResponse($calenderMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.calender_masters')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CalenderMasterAPIController extends AppBaseController
 
         $calenderMaster = $this->calenderMasterRepository->create($input);
 
-        return $this->sendResponse($calenderMaster->toArray(), 'Calender Master saved successfully');
+        return $this->sendResponse($calenderMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.calender_masters')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CalenderMasterAPIController extends AppBaseController
         $calenderMaster = $this->calenderMasterRepository->findWithoutFail($id);
 
         if (empty($calenderMaster)) {
-            return $this->sendError('Calender Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.calender_masters')]));
         }
 
-        return $this->sendResponse($calenderMaster->toArray(), 'Calender Master retrieved successfully');
+        return $this->sendResponse($calenderMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.calender_masters')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CalenderMasterAPIController extends AppBaseController
         $calenderMaster = $this->calenderMasterRepository->findWithoutFail($id);
 
         if (empty($calenderMaster)) {
-            return $this->sendError('Calender Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.calender_masters')]));
         }
 
         $calenderMaster = $this->calenderMasterRepository->update($input, $id);
 
-        return $this->sendResponse($calenderMaster->toArray(), 'CalenderMaster updated successfully');
+        return $this->sendResponse($calenderMaster->toArray(), trans('custom.update', ['attribute' => trans('custom.calender_masters')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CalenderMasterAPIController extends AppBaseController
         $calenderMaster = $this->calenderMasterRepository->findWithoutFail($id);
 
         if (empty($calenderMaster)) {
-            return $this->sendError('Calender Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.calender_masters')]));
         }
 
         $calenderMaster->delete();
 
-        return $this->sendResponse($id, 'Calender Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.calender_masters')]));
     }
 }
