@@ -75,7 +75,7 @@ class ChartOfAccountsRefferedBackAPIController extends AppBaseController
         $this->chartOfAccountsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccountsRefferedBacks = $this->chartOfAccountsRefferedBackRepository->all();
 
-        return $this->sendResponse($chartOfAccountsRefferedBacks->toArray(), 'Chart Of Accounts Reffered Backs retrieved successfully');
+        return $this->sendResponse($chartOfAccountsRefferedBacks->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
     }
 
     /**
@@ -122,7 +122,7 @@ class ChartOfAccountsRefferedBackAPIController extends AppBaseController
 
         $chartOfAccountsRefferedBacks = $this->chartOfAccountsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($chartOfAccountsRefferedBacks->toArray(), 'Chart Of Accounts Reffered Back saved successfully');
+        return $this->sendResponse($chartOfAccountsRefferedBacks->toArray(), trans('custom.save', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
     }
 
     /**
@@ -169,10 +169,10 @@ class ChartOfAccountsRefferedBackAPIController extends AppBaseController
         $chartOfAccountsRefferedBack = $this->chartOfAccountsRefferedBackRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($chartOfAccountsRefferedBack)) {
-            return $this->sendError('Chart Of Accounts Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
         }
 
-        return $this->sendResponse($chartOfAccountsRefferedBack->toArray(), 'Chart Of Accounts Reffered Back retrieved successfully');
+        return $this->sendResponse($chartOfAccountsRefferedBack->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
     }
 
     /**
@@ -229,12 +229,12 @@ class ChartOfAccountsRefferedBackAPIController extends AppBaseController
         $chartOfAccountsRefferedBack = $this->chartOfAccountsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountsRefferedBack)) {
-            return $this->sendError('Chart Of Accounts Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
         }
 
         $chartOfAccountsRefferedBack = $this->chartOfAccountsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccountsRefferedBack->toArray(), 'ChartOfAccountsRefferedBack updated successfully');
+        return $this->sendResponse($chartOfAccountsRefferedBack->toArray(), trans('custom.update', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
     }
 
     /**
@@ -281,12 +281,12 @@ class ChartOfAccountsRefferedBackAPIController extends AppBaseController
         $chartOfAccountsRefferedBack = $this->chartOfAccountsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountsRefferedBack)) {
-            return $this->sendError('Chart Of Accounts Reffered Back not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
         }
 
         $chartOfAccountsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Chart Of Accounts Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.chart_of_accounts_reffered_backs')]));
     }
 
     public function referBackHistoryByChartOfAccount(Request $request)

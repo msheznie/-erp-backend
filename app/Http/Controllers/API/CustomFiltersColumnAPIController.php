@@ -65,7 +65,7 @@ class CustomFiltersColumnAPIController extends AppBaseController
         $this->customFiltersColumnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customFiltersColumns = $this->customFiltersColumnRepository->all();
 
-        return $this->sendResponse($customFiltersColumns->toArray(), 'Custom Filters Columns retrieved successfully');
+        return $this->sendResponse($customFiltersColumns->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_filters_columns')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class CustomFiltersColumnAPIController extends AppBaseController
 
         $customFiltersColumn = $this->customFiltersColumnRepository->create($input);
 
-        return $this->sendResponse($customFiltersColumn->toArray(), 'Custom Filters Column saved successfully');
+        return $this->sendResponse($customFiltersColumn->toArray(), trans('custom.save', ['attribute' => trans('custom.custom_filters_columns')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class CustomFiltersColumnAPIController extends AppBaseController
         $customFiltersColumn = $this->customFiltersColumnRepository->findWithoutFail($id);
 
         if (empty($customFiltersColumn)) {
-            return $this->sendError('Custom Filters Column not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_filters_columns')]));
         }
 
-        return $this->sendResponse($customFiltersColumn->toArray(), 'Custom Filters Column retrieved successfully');
+        return $this->sendResponse($customFiltersColumn->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_filters_columns')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class CustomFiltersColumnAPIController extends AppBaseController
         $customFiltersColumn = $this->customFiltersColumnRepository->findWithoutFail($id);
 
         if (empty($customFiltersColumn)) {
-            return $this->sendError('Custom Filters Column not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_filters_columns')]));
         }
 
         $customFiltersColumn = $this->customFiltersColumnRepository->update($input, $id);
 
-        return $this->sendResponse($customFiltersColumn->toArray(), 'CustomFiltersColumn updated successfully');
+        return $this->sendResponse($customFiltersColumn->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_filters_columns')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class CustomFiltersColumnAPIController extends AppBaseController
         $customFiltersColumn = $this->customFiltersColumnRepository->findWithoutFail($id);
 
         if (empty($customFiltersColumn)) {
-            return $this->sendError('Custom Filters Column not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_filters_columns')]));
         }
 
         $customFiltersColumn->delete();
 
-        return $this->sendSuccess('Custom Filters Column deleted successfully');
+        return $this->sendSuccess(trans('custom.delete', ['attribute' => trans('custom.custom_filters_columns')]));
     }
 }

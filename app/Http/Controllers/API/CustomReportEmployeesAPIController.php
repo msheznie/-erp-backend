@@ -66,7 +66,7 @@ class CustomReportEmployeesAPIController extends AppBaseController
         $this->customReportEmployeesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customReportEmployees = $this->customReportEmployeesRepository->all();
 
-        return $this->sendResponse($customReportEmployees->toArray(), 'Custom Report Employees retrieved successfully');
+        return $this->sendResponse($customReportEmployees->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_employees')]));
     }
 
     /**
@@ -126,7 +126,7 @@ class CustomReportEmployeesAPIController extends AppBaseController
             $this->customReportEmployeesRepository->create($data);
         }
 
-        return $this->sendResponse([], 'Custom Report Employees saved successfully');
+        return $this->sendResponse([], trans('custom.save', ['attribute' => trans('custom.custom_report_employees')]));
     }
 
     /**
@@ -173,10 +173,10 @@ class CustomReportEmployeesAPIController extends AppBaseController
         $customReportEmployees = $this->customReportEmployeesRepository->findWithoutFail($id);
 
         if (empty($customReportEmployees)) {
-            return $this->sendError('Custom Report Employees not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_employees')]));
         }
 
-        return $this->sendResponse($customReportEmployees->toArray(), 'Custom Report Employees retrieved successfully');
+        return $this->sendResponse($customReportEmployees->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_employees')]));
     }
 
     /**
@@ -233,12 +233,12 @@ class CustomReportEmployeesAPIController extends AppBaseController
         $customReportEmployees = $this->customReportEmployeesRepository->findWithoutFail($id);
 
         if (empty($customReportEmployees)) {
-            return $this->sendError('Custom Report Employees not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_employees')]));
         }
 
         $customReportEmployees = $this->customReportEmployeesRepository->update($input, $id);
 
-        return $this->sendResponse($customReportEmployees->toArray(), 'CustomReportEmployees updated successfully');
+        return $this->sendResponse($customReportEmployees->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_report_employees')]));
     }
 
     /**
@@ -285,11 +285,11 @@ class CustomReportEmployeesAPIController extends AppBaseController
         $customReportEmployees = $this->customReportEmployeesRepository->findWithoutFail($id);
 
         if (empty($customReportEmployees)) {
-            return $this->sendError('Custom Report Employees not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.custom_report_employees')]));
         }
 
         $customReportEmployees->delete();
-        return $this->sendResponse($id, 'Custom Report Employees deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.custom_report_employees')]));
     }
 
     function getEmployees(Request $request)
@@ -304,7 +304,7 @@ class CustomReportEmployeesAPIController extends AppBaseController
                             ->where('discharegedYN', 0)
                             ->get();
 
-        return $this->sendResponse($employees, 'Report Template retrieved successfully');
+        return $this->sendResponse($employees, trans('custom.retrieve', ['attribute' => trans('custom.report_template')]));
     }
 
     public function getCustomReportAssignedEmployee(Request $request){

@@ -100,7 +100,7 @@ class BankReconciliationAPIController extends AppBaseController
         $this->bankReconciliationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bankReconciliations = $this->bankReconciliationRepository->all();
 
-        return $this->sendResponse($bankReconciliations->toArray(), 'Bank Reconciliations retrieved successfully');
+        return $this->sendResponse($bankReconciliations->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     /**
@@ -179,7 +179,7 @@ class BankReconciliationAPIController extends AppBaseController
             $input['companySystemID'] = $bankAccount->companySystemID;
             $input['bankMasterID'] = $bankAccount->bankmasterAutoID;
         } else {
-            return $this->sendError('bank Account not found.!', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]), 500);
         }
 
 
@@ -189,14 +189,14 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-            return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.there_is_a_bank_reconciliation') .' '. $checkPending->bankRecPrimaryCode .' '. trans('custom.pending_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again'), 500);
         }
 
         $maxAsOfDate = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
             ->max('bankRecAsOf');
 
         if ($maxAsOfDate >= $input['bankRecAsOf']) {
-            return $this->sendError('You cannot create bank reconciliation, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
+            return $this->sendError(trans('custom.pending_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again') .' '. (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -240,7 +240,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $bankReconciliations = $this->bankReconciliationRepository->create($input);
 
-        return $this->sendResponse($bankReconciliations->toArray(), 'Bank Reconciliation saved successfully');
+        return $this->sendResponse($bankReconciliations->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     /**
@@ -287,7 +287,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         if (!empty($bankReconciliation)) {
@@ -351,7 +351,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation->totalPaymentAmount = $totalPaymentAmount;
         $bankReconciliation->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation retrieved successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     /**
@@ -409,10 +409,10 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
         if ($bankReconciliation->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed.', 500);
+            return $this->sendError(trans('custom.this_document_already_confirmed'), 500);
         }
 
         if ($bankReconciliation->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -441,7 +441,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         //$bankReconciliation = $this->bankReconciliationRepository->update($input, $id);
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     /**
@@ -488,7 +488,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         $bankLedgerData = BankLedger::where('bankAccountID', $bankReconciliation->bankAccountAutoID)
@@ -506,7 +506,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $bankReconciliation->delete();
 
-        return $this->sendResponse($id, 'Bank Reconciliation deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     public function getAllBankReconciliationByBankAccount(Request $request)
@@ -640,7 +640,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankAccount = BankAccount::find($input['bankAccountAutoID']);
 
         if (empty($bankAccount)) {
-            return $this->sendError('Bank Account not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
         $checkPending = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
@@ -649,10 +649,10 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-            return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.there_is_a_bank_reconciliation') .' '. $checkPending->bankRecPrimaryCode .' '. trans('custom.pending_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again'), 500);
         }
 
-        return $this->sendResponse($bankAccount->toArray(), 'successfully');
+        return $this->sendResponse($bankAccount->toArray(), trans('custom.successfully'));
     }
 
     public function getBankReconciliationFormData(Request $request)
@@ -666,7 +666,7 @@ class BankReconciliationAPIController extends AppBaseController
             'bankMasters' => $bankMasters
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function getBankReconciliationApprovalByUser(Request $request)
@@ -823,12 +823,12 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         $bankReconciliation = $this->getUnClearReceiptPayment($bankReconciliation);
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     public function printBankReconciliation(Request $request)
@@ -837,7 +837,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
 
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         $bankReconciliation->docRefNo = \Helper::getCompanyDocRefNo($bankReconciliation->companySystemID, $bankReconciliation->documentSystemID);
@@ -959,7 +959,7 @@ class BankReconciliationAPIController extends AppBaseController
             'accounts' => $accounts
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     /*validate each report*/
@@ -987,7 +987,7 @@ class BankReconciliationAPIController extends AppBaseController
                 }
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1005,7 +1005,7 @@ class BankReconciliationAPIController extends AppBaseController
                 );
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1059,7 +1059,7 @@ class BankReconciliationAPIController extends AppBaseController
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
              case 'TCS': //// Treasury Cleared Report
                 $reportTypeID = $request->reportTypeID;
@@ -1112,7 +1112,7 @@ class BankReconciliationAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
-                return $this->sendError('No report ID found');
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
     }
 
@@ -1153,19 +1153,19 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);
         $emails = array();
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         if ($bankReconciliation->approvedYN == -1) {
-            return $this->sendError('You cannot reopen this Bank Reconciliation it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_reconciliation_it_is_already_fully_approved'));
         }
 
         if ($bankReconciliation->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Bank Reconciliation it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_reconciliation_it_is_already_partially_approved'));
         }
 
         if ($bankReconciliation->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Bank Reconciliation, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_bank_reconciliation_it_is_not_confirmed'));
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -1197,7 +1197,7 @@ class BankReconciliationAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1239,7 +1239,7 @@ class BankReconciliationAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($bankReconciliation->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation reopened successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.reopened', ['attribute' => trans('custom.bank_reconciliation')]));
     }
 
     public function bankReconciliationReferBack(Request $request)
@@ -1250,11 +1250,11 @@ class BankReconciliationAPIController extends AppBaseController
 
         $bankReconciliation = $this->bankReconciliationRepository->find($id);
         if (empty($bankReconciliation)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
         if ($bankReconciliation->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this bank reconciliation');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_bank_reconciliation'));
         }
 
         $bankReconciliationArray = $bankReconciliation->toArray();
@@ -1300,7 +1300,7 @@ class BankReconciliationAPIController extends AppBaseController
             $this->bankReconciliationRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation Amend successfully');
+        return $this->sendResponse($bankReconciliation->toArray(), trans('custom.bank_reconciliation_amend_successfully'));
     }
 
     public function amendBankReconciliationReview(Request $request)
@@ -1315,7 +1315,7 @@ class BankReconciliationAPIController extends AppBaseController
         $masterData = BankReconciliation::find($id);
 
         if (empty($masterData)) {
-            return $this->sendError('Bank Reconciliation not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliations')]));
         }
 
 
@@ -1326,11 +1326,11 @@ class BankReconciliationAPIController extends AppBaseController
                                                          ->first();
 
         if ($checkBankReconcileGenerated) {
-            return $this->sendError("You cannot return back to amend this bank reconciliation, upcoming month's bank reconciliation is already created");
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_bank_reconciliation_upcoming_months_bank_reconciliation_is_already_created'));
         }
 
         if ($masterData->confirmedYN == 0) {
-            return $this->sendError('You cannot return back to amend this bank reconciliation, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_bank_reconciliation_it_is_not_confirmed'));
         }
 
 
@@ -1396,7 +1396,7 @@ class BankReconciliationAPIController extends AppBaseController
             $masterData->save();
 
             DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Bank reconciliation amend saved successfully');
+            return $this->sendResponse($masterData->toArray(), trans('custom.save', ['attribute' => trans('custom.bank_reconciliation_amend')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

@@ -84,7 +84,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         $this->bookInvSuppDetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bookInvSuppDets = $this->bookInvSuppDetRepository->all();
 
-        return $this->sendResponse($bookInvSuppDets->toArray(), 'Supplier Invoice Details retrieved successfully');
+        return $this->sendResponse($bookInvSuppDets->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
 
     /**
@@ -131,7 +131,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $bookInvSuppDets = $this->bookInvSuppDetRepository->create($input);
 
-        return $this->sendResponse($bookInvSuppDets->toArray(), 'Supplier Invoice Detail saved successfully');
+        return $this->sendResponse($bookInvSuppDets->toArray(), trans('custom.save', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
 
     /**
@@ -178,10 +178,10 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
         }
 
-        return $this->sendResponse($bookInvSuppDet->toArray(), 'Supplier Invoice Detail retrieved successfully');
+        return $this->sendResponse($bookInvSuppDet->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
 
     /**
@@ -239,18 +239,18 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            return $this->sendError('You cannot update Supplier Invoice Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_update_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
         $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
             ->first();
 
         if (empty($unbilledGrvGroupByMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
         }
 
         if ($input['supplierInvoAmount'] == "") {
@@ -317,7 +317,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $updateUnbilledGrvGroupByMaster->save();
 
-        return $this->sendResponse($bookInvSuppDet->toArray(), 'BookInvSuppDet updated successfully');
+        return $this->sendResponse($bookInvSuppDet->toArray(), trans('custom.update', ['attribute' => trans('custom.book_inv_supp_det')]));
     }
 
     /**
@@ -364,17 +364,17 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Supplier Invoice Detail not found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]),500);
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            return $this->sendError('You cannot delete Supplier Invoice Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
         $unbilledSum = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID);
 
         if (empty($unbilledSum)) {
-            return $this->sendError('Un billed Grv id not found',500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.un_billed_grv_id')]),500);
         }
 
         $unbilledgrvAutoID = $bookInvSuppDet->unbilledgrvAutoID;
@@ -420,7 +420,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
-        return $this->sendResponse($id, 'Supplier Invoice Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
 
     public function deleteReturnUnbilledGrvs($grvAutoID, $bookingSuppMasInvAutoID)
@@ -458,17 +458,17 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
-            return $this->sendError("No GRV selected to add.");
+            return $this->sendError(trans('custom.no_grv_selected_to_add'));
         }
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice')]));
         }
 
         if($bookInvSuppMaster->confirmedYN){
-            return $this->sendError('You cannot add Supplier Invoice Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_add_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
 
@@ -532,7 +532,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                     $poIdArray = $details->pluck('purchaseOrderID')->toArray();
 
                     if (count(array_unique($poIdArray)) > 1) {
-                        return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                        return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_saved_details'));
                     }
                     $poId = $poIdArray[0];
                 }
@@ -540,12 +540,12 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $inputDetails = $input['detailTable'];
                 $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();
                 if (count(array_unique($inputPoIdArray)) > 1) {
-                    return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected details');
+                    return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_selected_details'));
                 }
                 $inputPoId = $inputPoIdArray[0];
 
                 if($poId != 0 && $poId != $inputPoId){
-                    return $this->sendError('Multiple PO\'s cannot be added. Different PO found on selected and already saved details');
+                    return $this->sendError('multiple_pos_cannot_be_added_different_po_found_on_selected_and_already_saved_details');
                 }
             }
         }
@@ -666,7 +666,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse('', 'Purchase Order Details saved successfully');
+        return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
 
     }
 
@@ -720,18 +720,18 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError('Supplier Invoice Detail not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            return $this->sendError('You cannot update Supplier Invoice Detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_update_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
         $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
             ->first();
 
         if (empty($unbilledGrvGroupByMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice')]));
         }
 
         $input['supplierInvoAmount'] = $totTransactionAmount;
@@ -783,6 +783,6 @@ class BookInvSuppDetAPIController extends AppBaseController
             ->with(['grvmaster', 'pomaster'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'GRV Invoice Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.grv_invoice_details')]));
     }
 }

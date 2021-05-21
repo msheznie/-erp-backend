@@ -65,7 +65,7 @@ class ChartOfAccountAllocationDetailHistoryAPIController extends AppBaseControll
         $this->chartOfAccountAllocationDetailHistoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $chartOfAccountAllocationDetailHistories = $this->chartOfAccountAllocationDetailHistoryRepository->all();
 
-        return $this->sendResponse($chartOfAccountAllocationDetailHistories->toArray(), 'Chart Of Account Allocation Detail Histories retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetailHistories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
     }
 
     /**
@@ -112,7 +112,7 @@ class ChartOfAccountAllocationDetailHistoryAPIController extends AppBaseControll
 
         $chartOfAccountAllocationDetailHistory = $this->chartOfAccountAllocationDetailHistoryRepository->create($input);
 
-        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), 'Chart Of Account Allocation Detail History saved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), trans('custom.save', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
     }
 
     /**
@@ -159,10 +159,10 @@ class ChartOfAccountAllocationDetailHistoryAPIController extends AppBaseControll
         $chartOfAccountAllocationDetailHistory = $this->chartOfAccountAllocationDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetailHistory)) {
-            return $this->sendError('Chart Of Account Allocation Detail History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
         }
 
-        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), 'Chart Of Account Allocation Detail History retrieved successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
     }
 
     /**
@@ -219,12 +219,12 @@ class ChartOfAccountAllocationDetailHistoryAPIController extends AppBaseControll
         $chartOfAccountAllocationDetailHistory = $this->chartOfAccountAllocationDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetailHistory)) {
-            return $this->sendError('Chart Of Account Allocation Detail History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
         }
 
         $chartOfAccountAllocationDetailHistory = $this->chartOfAccountAllocationDetailHistoryRepository->update($input, $id);
 
-        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), 'ChartOfAccountAllocationDetailHistory updated successfully');
+        return $this->sendResponse($chartOfAccountAllocationDetailHistory->toArray(), trans('custom.update', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
     }
 
     /**
@@ -271,11 +271,11 @@ class ChartOfAccountAllocationDetailHistoryAPIController extends AppBaseControll
         $chartOfAccountAllocationDetailHistory = $this->chartOfAccountAllocationDetailHistoryRepository->findWithoutFail($id);
 
         if (empty($chartOfAccountAllocationDetailHistory)) {
-            return $this->sendError('Chart Of Account Allocation Detail History not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
         }
 
         $chartOfAccountAllocationDetailHistory->delete();
 
-        return $this->sendResponse($id, 'Chart Of Account Allocation Detail History deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.chart_of_account_allocation_detail_histories')]));
     }
 }

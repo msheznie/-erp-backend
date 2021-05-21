@@ -88,7 +88,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $this->consoleJVMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $consoleJVMasters = $this->consoleJVMasterRepository->all();
 
-        return $this->sendResponse($consoleJVMasters->toArray(), 'Console J V Masters retrieved successfully');
+        return $this->sendResponse($consoleJVMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.console_j_v_masters')]));
     }
 
     /**
@@ -188,7 +188,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $consoleJVMasters = $this->consoleJVMasterRepository->create($input);
 
-        return $this->sendResponse($consoleJVMasters->toArray(), 'Console JV Master saved successfully');
+        return $this->sendResponse($consoleJVMasters->toArray(), trans('custom.save', ['attribute' => trans('custom.console_j_v_masters')]));
     }
 
     /**
@@ -235,10 +235,10 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $consoleJVMaster = $this->consoleJVMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
 
         if (empty($consoleJVMaster)) {
-            return $this->sendError('Console J V Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_masters')]));
         }
 
-        return $this->sendResponse($consoleJVMaster->toArray(), 'Console J V Master retrieved successfully');
+        return $this->sendResponse($consoleJVMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.console_j_v_masters')]));
     }
 
     /**
@@ -307,7 +307,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $consoleJVMaster = $this->consoleJVMasterRepository->findWithoutFail($id);
 
         if (empty($consoleJVMaster)) {
-            return $this->sendError('Console JV Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_masters')]));
         }
 
         $input['consoleJVdate'] = new Carbon($input['consoleJVdate']);
@@ -390,7 +390,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             $jvDetail = ConsoleJVDetail::selectRAW('SUM(debitAmount) as debitAmount,SUM(creditAmount) as creditAmount,SUM(debitAmount) - SUM(creditAmount) as balance')->ofMaster($id)->first();
@@ -417,7 +417,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $consoleJVMaster = $this->consoleJVMasterRepository->update($input, $id);
 
-        return $this->sendResponse($consoleJVMaster->toArray(), 'ConsoleJVMaster updated successfully');
+        return $this->sendResponse($consoleJVMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.console_j_v_masters')]));
     }
 
     /**
@@ -464,12 +464,12 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $consoleJVMaster = $this->consoleJVMasterRepository->findWithoutFail($id);
 
         if (empty($consoleJVMaster)) {
-            return $this->sendError('Console J V Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.console_j_v_masters')]));
         }
 
         $consoleJVMaster->delete();
 
-        return $this->sendResponse($id, 'Console J V Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.console_j_v_masters')]));
     }
 
 
@@ -548,7 +548,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         }
 
         $items = $items->take(20)->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.data')]));
 
     }
 
@@ -583,7 +583,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             'segments' => $segment,
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 }

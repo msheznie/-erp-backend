@@ -78,7 +78,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $this->customerMasterCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
         $customerMasterCategories = $this->customerMasterCategoryRepository->all();
 
-        return $this->sendResponse($customerMasterCategories->toArray(), 'Customer Master Categories retrieved successfully');
+        return $this->sendResponse($customerMasterCategories->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_master_categories')]));
     }
 
     /**
@@ -133,7 +133,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 ->exists();
 
             if ($validate) {
-                return $this->sendError('category description already exists');
+                return $this->sendError(trans('custom.category_description_already_exists'));
             } else {
 
                 $categosryMasterUpdate = CustomerMasterCategory::find($request->categoryID);
@@ -150,7 +150,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 ->exists();
 
             if ($validate) {
-                return $this->sendError('category description already exists');
+                return $this->sendError(trans('custom.category_description_already_exists'));
             } else {
                 $input['companyID'] = $companyMaster->CompanyID;
                 $input['createdPCID'] = gethostname();
@@ -158,7 +158,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 $customerMasterCategories = $this->customerMasterCategoryRepository->create($input);
             }
         }
-        return $this->sendResponse($input, 'Customer Master Category saved successfully');
+        return $this->sendResponse($input, trans('custom.save', ['attribute' => trans('custom.customer_master_categories')]));
     }
 
     /**
@@ -205,10 +205,10 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $customerMasterCategory = $this->customerMasterCategoryRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategory)) {
-            return $this->sendError('Customer Master Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_categories')]));
         }
 
-        return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category retrieved successfully');
+        return $this->sendResponse($customerMasterCategory->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.customer_master_categories')]));
     }
 
     /**
@@ -265,12 +265,12 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $customerMasterCategory = $this->customerMasterCategoryRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategory)) {
-            return $this->sendError('Customer Master Category not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_categories')]));
         }
 
         $customerMasterCategory = $this->customerMasterCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($customerMasterCategory->toArray(), 'CustomerMasterCategory updated successfully');
+        return $this->sendResponse($customerMasterCategory->toArray(), trans('custom.update', ['attribute' => trans('custom.customer_master_categories')]));
     }
 
     /**
@@ -323,7 +323,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $checkCustomerMaster = CustomerMaster::where('customerCategoryID', $id)->first();
 
         if ($checkCustomerMaster) {
-            return $this->sendError('Customer Master Category has been assigned to customer, therefore you cannot delete', 500);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_categories')]));
         }
 
         CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $id)
@@ -331,7 +331,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
 
         $customerMasterCategory->delete();
 
-        return $this->sendResponse($id, 'Customer Master Category deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.customer_master_categories')]));
     }
 
     public function getAllCustomerCategories(Request $request)
