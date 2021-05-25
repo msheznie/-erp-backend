@@ -7,6 +7,7 @@ namespace App\helper;
 use App\Models\Company;
 use App\Models\CustomerAssigned;
 use App\Models\GRVDetails;
+use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BookInvSuppDet;
@@ -14,19 +15,22 @@ use App\Models\SupplierAssigned;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TaxService
 {
 
-    public static function checkPOVATEligible($supplierVATEligible = 0,$vatRegisteredYN = 0,$documentSystemID = 0) {
+    public static function checkPOVATEligible($supplierVATEligible = 0, $vatRegisteredYN = 0, $documentSystemID = 0)
+    {
         //$vatRegisteredYN == 1 &
-        if(($supplierVATEligible == 1  || $vatRegisteredYN == 1 )&& $documentSystemID != 67){ // 67 Quotation
+        if (($supplierVATEligible == 1 || $vatRegisteredYN == 1) && $documentSystemID != 67) { // 67 Quotation
             return true;
         }
         return false;
     }
 
-    public static function checkGRVVATEligible($companySystemID = 0,$supplierID = 0){
+    public static function checkGRVVATEligible($companySystemID = 0, $supplierID = 0)
+    {
 
         $valEligible = false;
         $company = Company::where('companySystemID', $companySystemID)->first();
@@ -40,101 +44,107 @@ class TaxService
         return $valEligible;
     }
 
-    public  static function getInputVATTransferGLAccount($companySystemID = 0){
+    public static function getInputVATTransferGLAccount($companySystemID = 0)
+    {
 
-        return Tax::where('companySystemID',$companySystemID)
-                //->where('isActive',1)
-                ->where('taxCategory',2)
-                ->whereNotNull('inputVatTransferGLAccountAutoID')
-                ->first();
+        return Tax::where('companySystemID', $companySystemID)
+            //->where('isActive',1)
+            ->where('taxCategory', 2)
+            ->whereNotNull('inputVatTransferGLAccountAutoID')
+            ->first();
     }
 
-    public  static function getInputVATGLAccount($companySystemID = 0){
+    public static function getInputVATGLAccount($companySystemID = 0)
+    {
 
-        return Tax::where('companySystemID',$companySystemID)
+        return Tax::where('companySystemID', $companySystemID)
             //->where('isActive',1)
-            ->where('taxCategory',2)
+            ->where('taxCategory', 2)
             ->whereNotNull('inputVatGLAccountAutoID')
             ->first();
     }
 
-    public  static function getOutputVATGLAccount($companySystemID = 0){
+    public static function getOutputVATGLAccount($companySystemID = 0)
+    {
 
-        return Tax::where('companySystemID',$companySystemID)
+        return Tax::where('companySystemID', $companySystemID)
             //->where('isActive',1)
-            ->where('taxCategory',2)
+            ->where('taxCategory', 2)
             ->whereNotNull('outputVatGLAccountAutoID')
             ->first();
     }
 
-    public  static function getOutputVATTransferGLAccount($companySystemID = 0){
+    public static function getOutputVATTransferGLAccount($companySystemID = 0)
+    {
 
-        return Tax::where('companySystemID',$companySystemID)
+        return Tax::where('companySystemID', $companySystemID)
             //->where('isActive',1)
-            ->where('taxCategory',2)
+            ->where('taxCategory', 2)
             ->whereNotNull('outputVatTransferGLAccountAutoID')
             ->first();
     }
 
-    public static function checkCompanyVATEligible($companySystemID = 0) {
+    public static function checkCompanyVATEligible($companySystemID = 0)
+    {
 
-        $vatConfig = Tax::where('companySystemID',$companySystemID)
-                            ->where('isActive',1)
-                            ->where('taxCategory',2)
-                            ->count();
+        $vatConfig = Tax::where('companySystemID', $companySystemID)
+            ->where('isActive', 1)
+            ->where('taxCategory', 2)
+            ->count();
 
-        if($vatConfig == 1 ){
+        if ($vatConfig == 1) {
             return true;
         }
         return false;
     }
 
-    public static function getVATDetailsByItem($companySystemID = 0 ,$itemCode = 0,$partyID=0 , $isSupplier = 1) {
+    public static function getVATDetailsByItem($companySystemID = 0, $itemCode = 0, $partyID = 0, $isSupplier = 1)
+    {
 
-        $data = array('applicableOn' => 2,'percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
-        $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
-                $q->where('companySystemID',$companySystemID)
-                    ->where('isActive',1)
-                    ->where('taxCategory',2);
+        $data = array('applicableOn' => 2, 'percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
+        $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+            $q->where('companySystemID', $companySystemID)
+                ->where('isActive', 1)
+                ->where('taxCategory', 2);
+        })
+            ->whereHas('main', function ($q) {
+                $q->where('isActive', 1);
             })
-            ->whereHas('main',function ($q){
-                $q->where('isActive',1);
+            ->whereHas('items', function ($q) use ($itemCode) {
+                $q->where('itemCodeSystem', $itemCode);
             })
-            ->whereHas('items',function ($q) use($itemCode){
-                $q->where('itemCodeSystem',$itemCode);
-            })
-            ->where('isActive',1)
+            ->where('isActive', 1)
             ->first();
 
-        if(!empty($taxDetails)){
+        if (!empty($taxDetails)) {
             $data['applicableOn'] = $taxDetails->applicableOn; // 1 - Gross , 2 - Net
-            $data['percentage']   = $taxDetails->percentage;
-            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
-            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
-        }else{
+            $data['percentage'] = $taxDetails->percentage;
+            $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
+        } else {
             $defaultVAT = TaxVatCategories::where('isDefault', 1)
-                                          ->first();
+                ->first();
 
             if ($defaultVAT) {
-                $data['vatSubCategoryID']   = $defaultVAT->taxVatSubCategoriesAutoID;
-                $data['vatMasterCategoryID']   = $defaultVAT->mainCategory;
-                $data['percentage']   = $defaultVAT->percentage;
+                $data['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                $data['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                $data['percentage'] = $defaultVAT->percentage;
             } else {
-                 if($isSupplier){
-                    $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
-                        ->where('supplierCodeSytem',$partyID)
+                if ($isSupplier) {
+                    $supplier = SupplierAssigned::where('companySystemID', $companySystemID)
+                        ->where('supplierCodeSytem', $partyID)
                         ->first();
 
-                    if(!empty($supplier)){
-                        $data['percentage']   = $supplier->vatPercentage;
+                    if (!empty($supplier)) {
+                        $data['percentage'] = $supplier->vatPercentage;
                     }
-                }else{
-                    $customer = CustomerAssigned::where('companySystemID',$companySystemID)
-                        ->where('customerCodeSystem',$partyID)
+                } else {
+                    $customer = CustomerAssigned::where('companySystemID', $companySystemID)
+                        ->where('customerCodeSystem', $partyID)
                         ->first();
 
-                    if(!empty($customer)){
-                        $data['percentage']   = $customer->vatPercentage;
+                    if (!empty($customer)) {
+                        $data['percentage'] = $customer->vatPercentage;
                     }
                 }
             }
@@ -144,37 +154,38 @@ class TaxService
         return $data;
     }
 
-    public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1) {
+    public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1)
+    {
 
         $data = array('percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
-        $taxDetails = TaxVatCategories::whereHas('tax',function($q) use($companySystemID){
-                                        $q->where('companySystemID',$companySystemID)
-                                            ->where('isActive',1)
-                                            ->where('taxCategory',2);
-                                    })
-                                    ->where('isDefault', 1)
-                                    ->first();
+        $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+            $q->where('companySystemID', $companySystemID)
+                ->where('isActive', 1)
+                ->where('taxCategory', 2);
+        })
+            ->where('isDefault', 1)
+            ->first();
 
-        if(!empty($taxDetails)){
-            $data['percentage']   = $taxDetails->percentage;
-            $data['vatSubCategoryID']   = $taxDetails->taxVatSubCategoriesAutoID;
-            $data['vatMasterCategoryID']   = $taxDetails->mainCategory;
-        }else{
+        if (!empty($taxDetails)) {
+            $data['percentage'] = $taxDetails->percentage;
+            $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
+            $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
+        } else {
             if ($isSupplier) {
-                $supplier = SupplierAssigned::where('companySystemID',$companySystemID)
-                    ->where('supplierCodeSytem',$partyID)
+                $supplier = SupplierAssigned::where('companySystemID', $companySystemID)
+                    ->where('supplierCodeSytem', $partyID)
                     ->first();
 
-                if(!empty($supplier)){
-                    $data['percentage']   = $supplier->vatPercentage;
+                if (!empty($supplier)) {
+                    $data['percentage'] = $supplier->vatPercentage;
                 }
             } else {
-                $customer = CustomerAssigned::where('companySystemID',$companySystemID)
-                    ->where('customerCodeSystem',$partyID)
+                $customer = CustomerAssigned::where('companySystemID', $companySystemID)
+                    ->where('customerCodeSystem', $partyID)
                     ->first();
 
-                if(!empty($customer)){
-                    $data['percentage']   = $customer->vatPercentage;
+                if (!empty($customer)) {
+                    $data['percentage'] = $customer->vatPercentage;
                 }
             }
         }
@@ -182,37 +193,38 @@ class TaxService
         return $data;
     }
 
-    public static function updatePOVAT($id) {
+    public static function updatePOVAT($id)
+    {
 
         $purchaseOrder = ProcumentOrder::find($id);
 
-        if(empty($purchaseOrder)){
+        if (empty($purchaseOrder)) {
             return false;
         }
 
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum,COALESCE(SUM(VATAmount * noQty),0) as totalVAT'),'budgetYear')
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum,COALESCE(SUM(VATAmount * noQty),0) as totalVAT'), 'budgetYear')
             ->where('purchaseOrderMasterID', $id)
             ->first();
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         //if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
         $poVATPercentage = 0;
-        if($poMasterSum && ($purchaseOrder->isVatEligible || $purchaseOrder->rcmActivated)){
+        if ($poMasterSum && ($purchaseOrder->isVatEligible || $purchaseOrder->rcmActivated)) {
             // $calculateVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
             $calculateVatAmount = $poMasterSum['totalVAT'];
-            if($poMasterSum['masterTotalSum'] > 0){
-                $poVATPercentage = ($poMasterSum['totalVAT']/($poMasterSum['masterTotalSum'])) * 100;
+            if ($poMasterSum['masterTotalSum'] > 0) {
+                $poVATPercentage = ($poMasterSum['totalVAT'] / ($poMasterSum['masterTotalSum'])) * 100;
             }
 
             $currencyConversionVatAmount = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateVatAmount);
 
             ProcumentOrder::find($id)
                 ->update([
-                    'VATPercentage' => round($poVATPercentage,2),
-                    'VATAmount' =>  Helper::roundValue($calculateVatAmount),
+                    'VATPercentage' => round($poVATPercentage, 2),
+                    'VATAmount' => Helper::roundValue($calculateVatAmount),
                     'VATAmountLocal' => Helper::roundValue($currencyConversionVatAmount['localAmount']),
                     'VATAmountRpt' => Helper::roundValue($currencyConversionVatAmount['reportingAmount'])
                 ]);
-        }else{
+        } else {
             ProcumentOrder::find($id)
                 ->update([
                     'VATPercentage' => 0,
@@ -228,12 +240,13 @@ class TaxService
         return true;
     }
 
-    public static function getRCMAvailable($companySystemID,$supplierID) {
+    public static function getRCMAvailable($companySystemID, $supplierID)
+    {
 
-        if(!Helper::isLocalSupplier($supplierID, $companySystemID)){
+        if (!Helper::isLocalSupplier($supplierID, $companySystemID)) {
             $company = Company::find($companySystemID);
 
-            if(!empty($company) && $company->vatRegisteredYN == 1){
+            if (!empty($company) && $company->vatRegisteredYN == 1) {
                 return true;
             }
         }
@@ -241,30 +254,126 @@ class TaxService
         return false;
     }
 
-    public static function getRCMAvailability($isLocalSupplier,$vatRegisteredYN) {
+    public static function getRCMAvailability($isLocalSupplier, $vatRegisteredYN)
+    {
 
-        if(!$isLocalSupplier && $vatRegisteredYN == 1){
+        if (!$isLocalSupplier && $vatRegisteredYN == 1) {
             return true;
         }
 
         return false;
     }
 
-    public static function isGRVRCMActivation($id = 0){
+    public static function isGRVRCMActivation($id = 0)
+    {
 
-        return GRVDetails::where('grvAutoID',$id)
-                           ->whereHas('po_master',function ($q){
-                               $q->where('rcmActivated',1);
-                           })
-                          ->exists();
+        return GRVDetails::where('grvAutoID', $id)
+            ->whereHas('po_master', function ($q) {
+                $q->where('rcmActivated', 1);
+            })
+            ->exists();
     }
 
-    public static function isSupplierInvoiceRcmActivated($id = 0){
+    public static function isSupplierInvoiceRcmActivated($id = 0)
+    {
 
-        return BookInvSuppDet::where('bookingSuppMasInvAutoID',$id)
-                           ->whereHas('pomaster',function ($q){
-                               $q->where('rcmActivated',1);
-                           })
-                          ->exists();
+        return BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+            ->whereHas('pomaster', function ($q) {
+                $q->where('rcmActivated', 1);
+            })
+            ->exists();
+    }
+
+    public static function poLogisticVATDistributionForGRV($grvId = 0, $isPoWise = 1,$supplierID = 0 )
+    {
+        $output = array(
+            'vatOnPOTotalAmountTrans' => 0,
+            'vatOnPOTotalAmountLocal' => 0,
+            'vatOnPOTotalAmountRpt' => 0
+        );
+
+        $unbilledGRVVATAddVatOnPO = PoAdvancePayment::selectRaw("erp_purchaseorderadvpayment.grvAutoID, 
+                                                                erp_purchaseorderadvpayment.poID,
+                                                                erp_purchaseorderadvpayment.VATPercentage,
+                                                                erp_purchaseorderadvpayment.reqAmount,
+                                                                erp_purchaseorderadvpayment.VATAmount,
+                                                                erp_purchaseorderadvpayment.VATAmountLocal,
+                                                                erp_purchaseorderadvpayment.reqAmountInPOLocalCur,
+                                                                erp_purchaseorderadvpayment.VATAmountRpt,
+                                                                erp_purchaseorderadvpayment.reqAmountInPORptCur,
+                                                                erp_purchaseorderadvpayment.addVatOnPO")
+            ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+            ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+            ->where('erp_purchaseorderadvpayment.grvAutoID', $grvId);
+
+            if($supplierID){
+               $unbilledGRVVATAddVatOnPO = $unbilledGRVVATAddVatOnPO->where('erp_purchaseorderadvpayment.supplierID',$supplierID)
+                                                                    ->get();
+            }else{
+                $unbilledGRVVATAddVatOnPO = $unbilledGRVVATAddVatOnPO->get();
+            }
+
+        Log::info('poLogisticVATDistributionForGRV function count:' . count($unbilledGRVVATAddVatOnPO));
+
+        foreach ($unbilledGRVVATAddVatOnPO as $advPayment) {
+
+            $data = self::poLogisticForLineWise($advPayment);
+            // PO Total VAT Amount trans currency
+            $output['vatOnPOTotalAmountTrans'] = $output['vatOnPOTotalAmountTrans']  + $data['vatOnPOTotalAmountTrans'] ;
+
+            // PO Total VAT Amount Local currency
+            $output['vatOnPOTotalAmountLocal'] =  $output['vatOnPOTotalAmountLocal'] + $data['vatOnPOTotalAmountLocal'] ;
+
+            // PO Total VAT Amount Rpt currency
+            $output['vatOnPOTotalAmountRpt']   =   $output['vatOnPOTotalAmountRpt'] + $data['vatOnPOTotalAmountRpt'] ;
+
+        }
+
+        return $output;
+    }
+
+    public static function logisticVATAmountCalculationForGRV($VATAmount = 0 ,$reqAmount = 0,$VATPercentage = 0,$percentage = 0){
+        $vatOnPOTotalAmount =  $VATAmount - ($reqAmount * ($VATPercentage/100)) ;
+        return $vatOnPOTotalAmount * $percentage + ($VATAmount - $vatOnPOTotalAmount);
+    }
+
+    public static function  poLogisticForLineWise($advPayment){
+        $output = array(
+            'vatOnPOTotalAmountTrans' => 0,
+            'vatOnPOTotalAmountLocal' => 0,
+            'vatOnPOTotalAmountRpt' => 0
+        );
+
+        if($advPayment->addVatOnPO){
+                $totalPoAmount = PurchaseOrderDetails::selectRaw("SUM(GRVcostPerUnitSupTransCur * noQty) as totalPOAmount")
+                    ->where('purchaseOrderMasterID', $advPayment->poID)
+                    ->first();
+
+                $totalGRVAmountByPO = GRVDetails::selectRaw("SUM(GRVcostPerUnitSupTransCur * noQty) as totalGRVAmount")
+                    ->where('grvAutoID', $advPayment->grvAutoID)
+                    ->where('purchaseOrderMastertID', $advPayment->poID)
+                    ->first();
+
+                $percentage = 0;
+                if (!empty($totalGRVAmountByPO) && !empty($totalPoAmount) && $totalPoAmount->totalPOAmount != 0) {
+                    $percentage = ($totalGRVAmountByPO->totalGRVAmount / $totalPoAmount->totalPOAmount);
+                }
+
+            // PO Total VAT Amount trans currency
+            $output['vatOnPOTotalAmountTrans'] =  self::logisticVATAmountCalculationForGRV($advPayment->VATAmount, $advPayment->reqAmount, $advPayment->VATPercentage, $percentage);
+
+            // PO Total VAT Amount Local currency
+            $output['vatOnPOTotalAmountLocal'] =  self::logisticVATAmountCalculationForGRV($advPayment->VATAmountLocal, $advPayment->reqAmountInPOLocalCur, $advPayment->VATPercentage, $percentage);
+
+            // PO Total VAT Amount Rpt currency
+            $output['vatOnPOTotalAmountRpt']   =  self::logisticVATAmountCalculationForGRV($advPayment->VATAmountRpt, $advPayment->reqAmountInPORptCur, $advPayment->VATPercentage, $percentage);
+
+        }else{
+            $output['vatOnPOTotalAmountTrans'] = $advPayment->VATAmount;
+            $output['vatOnPOTotalAmountLocal'] = $advPayment->VATAmountLocal;
+            $output['vatOnPOTotalAmountRpt']   = $advPayment->VATAmountRpt;
+        }
+
+        return $output;
     }
 }

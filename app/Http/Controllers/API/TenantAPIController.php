@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateTenantAPIRequest;
 use App\Http\Requests\API\UpdateTenantAPIRequest;
+use App\Models\GRVDetails;
+use App\Models\PoAdvancePayment;
+use App\Models\PurchaseOrderDetails;
 use App\Models\Tenant;
 use App\Repositories\TenantRepository;
 use Illuminate\Http\Request;
@@ -283,6 +287,9 @@ class TenantAPIController extends AppBaseController
     public function test()
     {
         $data = env('IS_MULTI_TENANCY');
-        return $this->sendResponse($data, 'retrieved successfully');
+
+        $output = TaxService::poLogisticVATDistributionForGRV(58732);
+
+        return $this->sendResponse($output, 'retrieved successfully');
     }
 }
