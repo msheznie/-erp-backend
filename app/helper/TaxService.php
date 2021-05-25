@@ -106,7 +106,7 @@ class TaxService
             $q->where('companySystemID', $companySystemID)
                 ->where('isActive', 1)
                 ->where('taxCategory', 2);
-        })
+            })
             ->whereHas('main', function ($q) {
                 $q->where('isActive', 1);
             })
@@ -122,7 +122,16 @@ class TaxService
             $data['vatSubCategoryID'] = $taxDetails->taxVatSubCategoriesAutoID;
             $data['vatMasterCategoryID'] = $taxDetails->mainCategory;
         } else {
-            $defaultVAT = TaxVatCategories::where('isDefault', 1)
+            $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                    $q->where('companySystemID', $companySystemID)
+                        ->where('isActive', 1)
+                        ->where('taxCategory', 2);
+                })
+                ->whereHas('main', function ($q) {
+                    $q->where('isActive', 1);
+                })
+                ->where('isActive', 1)
+                ->where('isDefault', 1)
                 ->first();
 
             if ($defaultVAT) {
@@ -148,7 +157,6 @@ class TaxService
                     }
                 }
             }
-
         }
 
         return $data;
@@ -162,7 +170,11 @@ class TaxService
             $q->where('companySystemID', $companySystemID)
                 ->where('isActive', 1)
                 ->where('taxCategory', 2);
-        })
+             })
+            ->whereHas('main', function ($q) {
+                $q->where('isActive', 1);
+            })
+            ->where('isActive', 1)
             ->where('isDefault', 1)
             ->first();
 
