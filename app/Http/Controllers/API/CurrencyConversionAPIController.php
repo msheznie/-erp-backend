@@ -272,6 +272,8 @@ class CurrencyConversionAPIController extends AppBaseController
         $input = $request->all();
         $currencyConversion = Helper::currencyConversion(null, $input['transactionCurrencyID'], $input['documentCurrencyID'], $input['transactionAmount']);
 
+        $currencyConversion['DecimalPlaces'] = Helper::getCurrencyDecimalPlace($input['documentCurrencyID']);
+
         return $this->sendResponse($currencyConversion, trans('custom.update', ['attribute' => trans('custom.cross_exchange')]));
     }
 }
