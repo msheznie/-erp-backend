@@ -506,9 +506,9 @@
                     {{$vatAmountSubTotal=0}}
                     {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                     @foreach ($request->linePdoinvoiceDetails as $item)
-                        {{$directTraSubTotal +=$item->amount}}
                         {{$vatPecentage = $item->percentage}}
                         {{$vatAmount = $item->vatAmount * $item->qty}}
+                        {{$directTraSubTotal +=($item->amount - $vatAmount)}}
                         {{$vatAmountSubTotal +=$vatAmount}}
                         <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                             <td>{{$x}}</td>
@@ -516,11 +516,11 @@
                             <td>{{$item->po_detail_id}}</td>
                             <td>{{$item->item_description}}</td>
                             <td style="text-align: right">{{number_format($item->qty,2)}}</td>
-                            <td style="text-align: right">{{number_format($item->unit_price,$numberFormatting)}}</td>
-                            <td style="text-align: right">{{number_format($item->amount,$numberFormatting)}}</td>
+                            <td style="text-align: right">{{number_format(($item->unit_price - $item->vatAmount),$numberFormatting)}}</td>
+                            <td style="text-align: right">{{number_format(($item->amount - $vatAmount),$numberFormatting)}}</td>
                             <td style="text-align: right">{{$vatPecentage}}</td>
                             <td style="text-align: right">{{$vatAmount}}</td>
-                            <td style="text-align: right" class="text-right">{{number_format(($item->amount + $vatAmount),$numberFormatting)}}</td>
+                            <td style="text-align: right" class="text-right">{{number_format(($item->amount),$numberFormatting)}}</td>
                         </tr>
                         {{ $x++ }}
                     @endforeach
@@ -555,7 +555,7 @@
                         @if ($request->linePdoinvoiceDetails)
                         <tr>
                             <td colspan="10">
-                                (Total Amount in {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} : {{\App\helper\Helper::amountInWords($directTraSubTotal)}} Only)
+                                (Total Amount in {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} : {{\App\helper\Helper::amountInWords(($directTraSubTotal + $vatAmountSubTotal))}} Only)
                             </td>
                         </tr>
                         @endif
@@ -711,11 +711,12 @@
             <tr class="theme-tr-head">
                 <th style="width:3%"></th>
                 <th style="width:10%;text-align: center">GL Code</th>
-                <th style="width:60%;text-align: center">GL Code Description</th>
+                <th style="width:60%;text-align: center">GL Description</th>
                 <th style="width:10%;text-align: center">QTY</th>
-                <th style="width:10%;text-align: center">Taxable Amount</th>
+                <th style="width:10%;text-align: center">Unit Price</th>
+                <th style="width:10%;text-align: center">Total Taxable Amount</th>
+                <th style="width:10%;text-align: center">VAT %</th>
                 <th style="width:10%;text-align: center">VAT Amount</th>
-                <th style="width:10%;text-align: center">Unit Rate</th>
                 <th style="width:10%;text-align: right">Total Amount Inclusive of VAT</th>
             </tr>
             </thead>
@@ -734,14 +735,15 @@
                     <td>{{$item->glCodeDes}}</td>
                     <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                     <td class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format($item->VATPercentage,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
-                    <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
                 <tr>
-                    <td colspan="4" style="text-align: right;">
+                    <td colspan="5" style="text-align: right;">
                          <span class="font-weight-bold">
                             Conversion Rate
                          </span>
@@ -759,13 +761,13 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                    <td class="text-right" style="width: 20%;border-bottom: none !important"><span
+                    <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td class="text-right" style="width: 15%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                        style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
                     <span class="font-weight-bold">@if ($request->invoicedetails){{number_format(($directTraSubTotal - $vatTraSubTotal), $numberFormatting)}}@endif</span>
                     </td>
                 </tr>
@@ -810,13 +812,13 @@
                 <table style="width:100%;" class="table table-bordered">
                     <tbody>
                     <tr>
-                        <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                        <td class="text-right" style="width: 20%;border-bottom: none !important"><span
+                        <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                        <td class="text-right" style="width: 15%;border-bottom: none !important"><span
                                     class="font-weight-bold"
                                     style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) </span>
                         </td>
                         <td class="text-right"
-                            style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                            style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
                         <span class="font-weight-bold">@if ($request->invoicedetails){{number_format((($directTraSubTotal - $vatTraSubTotal)/$request->localCurrencyER), $numberFormatting)}}@endif</span>
                         </td>
                     </tr>
