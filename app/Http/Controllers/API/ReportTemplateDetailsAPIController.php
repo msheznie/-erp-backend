@@ -265,6 +265,36 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
+        $firstLevels = ReportTemplateDetails::where('masterID', $id)->get();
+
+        foreach ($firstLevels as $key1 => $value1) {
+            $secondLevels = ReportTemplateDetails::where('masterID', $value1->detID)->get();
+            
+            foreach ($secondLevels as $key2 => $value2) {
+                $secondLevels = ReportTemplateDetails::where('masterID', $value2->detID)->get();
+
+                foreach ($secondLevels as $key3 => $value3) {
+                    $thirdLevels = ReportTemplateDetails::where('masterID', $value3->detID)->get();
+
+                    foreach ($thirdLevels as $key4 => $value4) {
+                        $fouthLevels = ReportTemplateDetails::where('masterID', $value3->detID)->get();
+
+                        foreach ($fouthLevels as $key5 => $value5) {
+                            ReportTemplateDetails::where('detID', $value5->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                        }
+                        
+                        ReportTemplateDetails::where('detID', $value4->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                    }
+
+                    ReportTemplateDetails::where('detID', $value3->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                }
+                ReportTemplateDetails::where('detID', $value2->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+            }
+
+            ReportTemplateDetails::where('detID', $value1->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+        }
+
+
         /** @var ReportTemplateDetails $reportTemplateDetails */
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
 
@@ -503,6 +533,12 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             unset($input['subCategory']);
             if(count($subCategory) > 0){
                 foreach ($subCategory as $val) {
+                    $masterDetails = ReportTemplateDetails::find($input['masterID']);
+
+                    if ($masterDetails) {
+                        $input['controlAccountType'] = $masterDetails->controlAccountType;
+                    }
+
                     $input['description'] = $val['description'];
                     $input['itemType'] = $val['itemType'];
                     $input['sortOrder'] = $val['sortOrder'];
@@ -779,6 +815,30 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                ->where('isFinalLevel', 1)
                                                ->whereNotNull('masterID')
                                                ->get();
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
+    public function getDefaultTemplateCategories(Request $request)
+    {
+        $input = $request->all();
+
+        if (isset($input['controlAccountsSystemID'])) {
+            $reportTemplate = ReportTemplateDetails::where('itemType', 2)
+                                                   ->where('controlAccountType', $input['controlAccountsSystemID'])
+                                                   ->where(function($query) {
+                                                        $query->where('isFinalLevel', 1)
+                                                             ->orWhereDoesntHave('subcategory');
+                                                   })
+                                                   ->whereHas('master', function($query) use ($input){
+                                                        $query->where('reportID', $input['catogaryBLorPLID'])
+                                                              ->where('isDefault', 1);
+                                                   })
+                                                   ->whereNotNull('masterID')
+                                                   ->get();
+            
+        } else {
+            $reportTemplate = [];
+        }
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
 

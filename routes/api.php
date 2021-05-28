@@ -1417,6 +1417,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getAssignedReportTemplatesByGl', 'ReportTemplateAPIController@getAssignedReportTemplatesByGl');
         Route::get('getReportTemplatesByCategory', 'ReportTemplateAPIController@getReportTemplatesByCategory');
         Route::get('getReportTemplatesCategoryByTemplate', 'ReportTemplateDetailsAPIController@getReportTemplatesCategoryByTemplate');
+        Route::post('getDefaultTemplateCategories', 'ReportTemplateDetailsAPIController@getDefaultTemplateCategories');
         Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
         Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
         Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');

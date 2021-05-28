@@ -95,6 +95,7 @@ class ChartOfAccount extends Model
         'modifiedUser',
         'timestamp',
         'refferedBackYN',
+        'reportTemplateCategory',
         'isMasterAccount',
         'timesReferred'
     ];
@@ -107,6 +108,7 @@ class ChartOfAccount extends Model
     protected $casts = [
         'chartOfAccountSystemID' => 'integer',
         'primaryCompanySystemID' => 'integer',
+        'reportTemplateCategory' => 'integer',
         'primaryCompanyID' => 'string',
         'documentSystemID' => 'integer',
         'isMasterAccount' => 'integer',

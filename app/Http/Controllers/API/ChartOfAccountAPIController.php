@@ -672,10 +672,15 @@ class ChartOfAccountAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $allCompanies = Company::where('isGroup', 0)
-                                ->where('isActive', 1)
-                                ->where('companySystemID', '!=',$input['primaryCompanySystemID'])
-                                ->get();
+        if (isset($input['primaryCompanySystemID'])) {
+            $allCompanies = Company::where('isGroup', 0)
+                                    ->where('isActive', 1)
+                                    ->where('companySystemID', '!=',$input['primaryCompanySystemID'])
+                                    ->get();
+        } else {
+            $allCompanies = [];
+        }
+
 
         return $this->sendResponse($allCompanies, 'Record retrieved successfully');
     }

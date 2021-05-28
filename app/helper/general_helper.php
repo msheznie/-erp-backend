@@ -2009,6 +2009,12 @@ class Helper
                                     DB::rollback();
                                     return ['success' => false, 'message' => $assignResp['message']];
                                 }
+
+                                $templateAssignRes = ChartOfAccountDependency::assignToTemplateCategory($input["documentSystemCode"], $docApproved->companySystemID);
+                                if (!$templateAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $templateAssignRes['message']];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 63) { //Create Asset Disposal
