@@ -1694,8 +1694,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['VATAmount'] = round($updateInvoice->totalVatAmount, $transDecimalPlace);
                 $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
                 $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
-
-                if ($updateInvoice->totalVatAmount > 0) {
+                $vatPercentage = 0;
+                if ($updateInvoice->totalVatAmount > 0 && ($updateInvoice->totAmount - $updateInvoice->totalVatAmount) != 0) {
                     $vatPercentage = ($updateInvoice->totalVatAmount * 100)/ ($updateInvoice->totAmount - $updateInvoice->totalVatAmount);
                 }
                 $addToCusInvDetails[$x]['VATPercentage'] = round($vatPercentage, $transDecimalPlace);
