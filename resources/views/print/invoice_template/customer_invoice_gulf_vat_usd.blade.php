@@ -203,10 +203,7 @@
                         </h3>
 
                         <h3 class="font-weight-bold">
-                            @if($request->is_pdo_vendor)
-                                Tax
-                            @endif
-                            Invoice
+                                Tax Invoice
                         </h3>
                     </div>
 
