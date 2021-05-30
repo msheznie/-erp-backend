@@ -202,7 +202,7 @@
                             </span>
                         </h3>
 
-                        <h3 class="font-weight-bold">
+                        <h3 class="font-weight-bold">$vatAmount
                                 Tax Invoice
                         </h3>
                     </div>
@@ -515,8 +515,8 @@
                             <td style="text-align: right">{{number_format($item->qty,2)}}</td>
                             <td style="text-align: right">{{number_format(($item->unit_price - $item->vatAmount),$numberFormatting)}}</td>
                             <td style="text-align: right">{{number_format(($item->amount - $vatAmount),$numberFormatting)}}</td>
-                            <td style="text-align: right">{{$vatPecentage}}</td>
-                            <td style="text-align: right">{{$vatAmount}}</td>
+                            <td style="text-align: right">{{number_format($vatPecentage,2)}}</td>
+                            <td style="text-align: right">{{number_format($vatAmount,$numberFormatting)}}</td>
                             <td style="text-align: right" class="text-right">{{number_format(($item->amount),$numberFormatting)}}</td>
                         </tr>
                         {{ $x++ }}
