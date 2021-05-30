@@ -202,7 +202,7 @@
                             </span>
                         </h3>
 
-                        <h3 class="font-weight-bold">$vatAmount
+                        <h3 class="font-weight-bold">
                                 Tax Invoice
                         </h3>
                     </div>
