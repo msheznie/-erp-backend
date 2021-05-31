@@ -454,6 +454,17 @@
                                 </span>
                             </td>
                         </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Tax Card No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if(isset($request->company->taxCardNo))
+                                    {{$request->company->taxCardNo}}
+                                    @endif()
+                                </span>
+                            </td>
+                        </tr>
                     </table>
                 </fieldset>
             </td>
