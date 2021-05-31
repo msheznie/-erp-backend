@@ -2,22 +2,27 @@
 
 namespace App\Http\Controllers\API;
 
+use Response;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Controllers\Controller;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\MaterielRequestRepository;
-use App\Http\Controllers\AppBaseController;
-use Response;
+use App\Repositories\ItemIssueMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
     private $gRVMasterRepository;
     private $materielRequestRepository;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, MaterielRequestRepository $materielRequestRepo)
+    public function __construct(
+        GRVMasterRepository $gRVMasterRepo, 
+        MaterielRequestRepository $materielRequestRepo, 
+        ItemIssueMasterRepository $itemIssueMasterRepo)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->materielRequestRepository = $materielRequestRepo;
+        $this->itemIssueMasterRepository = $itemIssueMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -31,6 +36,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry );
+                break;
+
+            case '8':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+                $dataQry = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search);
+                $data = $this->itemIssueMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '9':
