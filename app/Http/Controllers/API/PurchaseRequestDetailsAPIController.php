@@ -1007,7 +1007,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             })->first()->toArray();
 
             if (count($formatChk) > 0) {
-                if (!isset($formatChk['item_code']) || !isset($formatChk['item_description']) || !isset($formatChk['comment']) || !isset($formatChk['qty'])) {
+                if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
                     return $this->sendError('Uploaded data format is invalid', 500);
                 }
             }

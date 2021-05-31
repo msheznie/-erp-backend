@@ -106,7 +106,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                 if ($item) {
                     $insertData['budgetYear'] = $purchaseRequest->budgetYear;
                     $insertData['itemPrimaryCode'] = $item->itemPrimaryCode;
-                    $insertData['itemCodeSystem'] = $item->itemCodeSystem;
+                    $insertData['itemCode'] = $item->itemCodeSystem;
                     $insertData['itemDescription'] = isset($input['item_description']) ? $input['item_description'] : $item->itemDescription;
                     $insertData['partNumber'] = $item->secondaryItemCode;
                     $insertData['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -379,8 +379,6 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
                         if (isset($input['comment'])) {
                             $insertData['comments'] = $input['comment'];
-                        } else {
-                            $nullValues = true;
                         }
 
                         if (!$lineError && !$nullValues) {
