@@ -311,5 +311,10 @@ return [
     'custom_report' => 'تقارير مخصصة',
     'reports' => 'تقارير',
     'no_records_found' => 'لم يتم العثور على سجلات',
-    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered History History'
+    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered History History',
+    'not_confirmed' => 'غير مؤكد',
+    'pending_approval' => 'ما زال يحتاج بتصدير',
+    'fully_approved' => 'تمت الموافقة عليه بالكامل',
+    'cancelled' => 'ألغيت',
+    'referred_back' => 'تمت الإشارة إليه مرة أخرى'
 ];
