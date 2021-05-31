@@ -10,6 +10,7 @@ use App\Repositories\GRVMasterRepository;
 use App\Repositories\MaterielRequestRepository;
 use App\Repositories\ItemIssueMasterRepository;
 use App\Repositories\ItemReturnMasterRepository;
+use App\Repositories\StockTransferRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -17,18 +18,21 @@ class TransactionsExportExcel extends AppBaseController
     private $materielRequestRepository;
     private $itemIssueMasterRepository;
     private $itemReturnMasterRepository;
+    private $stockTransferRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
         MaterielRequestRepository $materielRequestRepo, 
         ItemIssueMasterRepository $itemIssueMasterRepo,
-        ItemReturnMasterRepository $itemReturnMasterRepo
+        ItemReturnMasterRepository $itemReturnMasterRepo,
+        StockTransferRepository $stockTransferRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->materielRequestRepository = $materielRequestRepo;
         $this->itemIssueMasterRepository = $itemIssueMasterRepo;
         $this->itemReturnMasterRepository = $itemReturnMasterRepo;
+        $this->stockTransferRepository = $stockTransferRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -60,6 +64,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input =  $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseLocation', 'month', 'year'));
                 $dataQry = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search);
                 $data = $this->itemReturnMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '13':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'confirmedYN', 'approved', 'month', 'year', 'interCompanyTransferYN'));
+                $dataQry = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
+                $data = $this->stockTransferRepository->setExportExcelData($dataQry);
                 break;
 
             default:
