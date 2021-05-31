@@ -191,12 +191,6 @@ class GRVMasterRepository extends BaseRepository
     }
 
     public function grvListQuery($request, $input, $search = '') {
- 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
