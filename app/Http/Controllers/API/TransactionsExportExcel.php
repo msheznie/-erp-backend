@@ -9,20 +9,26 @@ use App\Http\Controllers\Controller;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\MaterielRequestRepository;
 use App\Repositories\ItemIssueMasterRepository;
+use App\Repositories\ItemReturnMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
     private $gRVMasterRepository;
     private $materielRequestRepository;
+    private $itemIssueMasterRepository;
+    private $itemReturnMasterRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
         MaterielRequestRepository $materielRequestRepo, 
-        ItemIssueMasterRepository $itemIssueMasterRepo)
+        ItemIssueMasterRepository $itemIssueMasterRepo,
+        ItemReturnMasterRepository $itemReturnMasterRepo
+    )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->materielRequestRepository = $materielRequestRepo;
         $this->itemIssueMasterRepository = $itemIssueMasterRepo;
+        $this->itemReturnMasterRepository = $itemReturnMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -48,6 +54,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
                 $dataQry = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
                 $data = $this->materielRequestRepository->setExportExcelData($dataQry);
+                break;
+
+            case '12':
+                $input =  $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseLocation', 'month', 'year'));
+                $dataQry = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search);
+                $data = $this->itemReturnMasterRepository->setExportExcelData($dataQry);
                 break;
 
             default:

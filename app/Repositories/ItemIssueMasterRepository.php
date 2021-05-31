@@ -172,8 +172,6 @@ class ItemIssueMasterRepository extends BaseRepository
                 'erp_itemissuemaster.refferedBackYN'
             ]);
 
-        $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
