@@ -113,7 +113,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                             ->first();
 
         if ($allowItemToType) {
-            $allowItemToTypePolicy = true;
+            if ($allowItemToType->isYesNO) {
+                $allowItemToTypePolicy = true;
+            }
         }
 
 
@@ -1004,13 +1006,35 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $finalData = [];
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->first()->toArray();
+            })->get()->toArray();
 
-            if (count($formatChk) > 0) {
-                if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
-                    return $this->sendError('Uploaded data format is invalid', 500);
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $totalItemCount = 0;
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code'])) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['comment']) && !is_null($value['comment']) || isset($value['qty']) && !is_null($value['qty'])) {
+                    $totalItemCount = $totalItemCount + 1;
                 }
             }
+
+            if (!$validateHeaderCode || !$validateHeaderCode) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+            // if (count($formatChk) > 0) {
+            //     if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
+            //     }
+            // }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'item_description', 'comment', 'qty'))->get()->toArray();
@@ -1036,7 +1060,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             if (count($record) > 0) {
-                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID']);             
+                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);             
             } else {
                 return $this->sendError('No Records found!', 500);
             }
