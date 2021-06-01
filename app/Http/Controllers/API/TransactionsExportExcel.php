@@ -12,6 +12,7 @@ use App\Repositories\ItemIssueMasterRepository;
 use App\Repositories\ItemReturnMasterRepository;
 use App\Repositories\StockTransferRepository;
 use App\Repositories\StockReceiveRepository;
+use App\Repositories\StockAdjustmentRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -21,6 +22,7 @@ class TransactionsExportExcel extends AppBaseController
     private $itemReturnMasterRepository;
     private $stockTransferRepository;
     private $stockReceiveRepository;
+    private $stockAdjustmentRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -28,7 +30,8 @@ class TransactionsExportExcel extends AppBaseController
         ItemIssueMasterRepository $itemIssueMasterRepo,
         ItemReturnMasterRepository $itemReturnMasterRepo,
         StockTransferRepository $stockTransferRepo,
-        StockReceiveRepository $stockReceiveRepo
+        StockReceiveRepository $stockReceiveRepo,
+        StockAdjustmentRepository $stockAdjustmentRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -37,6 +40,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->itemReturnMasterRepository = $itemReturnMasterRepo;
         $this->stockTransferRepository = $stockTransferRepo;
         $this->stockReceiveRepository = $stockReceiveRepo;
+        $this->stockAdjustmentRepository = $stockAdjustmentRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -50,6 +54,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry );
+                break;
+
+            case '7':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search);
+                $data = $this->stockAdjustmentRepository->setExportExcelData($dataQry);
                 break;
 
             case '8':
