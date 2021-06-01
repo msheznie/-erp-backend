@@ -11,6 +11,7 @@ use App\Repositories\MaterielRequestRepository;
 use App\Repositories\ItemIssueMasterRepository;
 use App\Repositories\ItemReturnMasterRepository;
 use App\Repositories\StockTransferRepository;
+use App\Repositories\StockReceiveRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -19,13 +20,15 @@ class TransactionsExportExcel extends AppBaseController
     private $itemIssueMasterRepository;
     private $itemReturnMasterRepository;
     private $stockTransferRepository;
+    private $stockReceiveRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
         MaterielRequestRepository $materielRequestRepo, 
         ItemIssueMasterRepository $itemIssueMasterRepo,
         ItemReturnMasterRepository $itemReturnMasterRepo,
-        StockTransferRepository $stockTransferRepo
+        StockTransferRepository $stockTransferRepo,
+        StockReceiveRepository $stockReceiveRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -33,6 +36,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->itemIssueMasterRepository = $itemIssueMasterRepo;
         $this->itemReturnMasterRepository = $itemReturnMasterRepo;
         $this->stockTransferRepository = $stockTransferRepo;
+        $this->stockReceiveRepository = $stockReceiveRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -58,6 +62,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
                 $dataQry = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
                 $data = $this->materielRequestRepository->setExportExcelData($dataQry);
+                break;
+
+            case '10':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+                $dataQry = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search);
+                $data = $this->stockReceiveRepository->setExportExcelData($dataQry);
                 break;
 
             case '12':
