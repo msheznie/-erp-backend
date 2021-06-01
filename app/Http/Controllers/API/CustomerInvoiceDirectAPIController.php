@@ -2472,7 +2472,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         if (($printTemplate['printTemplateID'] == 7 || $printTemplate['printTemplateID'] == 8) && $master->isPerforma == 1) {
-            if (isset($customerInvoice->invoicedetail->contract->contractType) && $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED) {
+            if (isset($customerInvoice->invoicedetail->contract->contractType) && ($customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_BASED || $customerInvoice->invoicedetail->contract->contractType == ContractMasterType::SERVICE_PRODUCT_ISSUE_BASED)) {
                 $linePdoinvoiceDetails = $this->getPerformaPDOInvoiceDetail($master, $customerInvoice->customer->CutomerCode);
                 $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
             } else {
