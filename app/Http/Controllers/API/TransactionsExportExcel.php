@@ -13,6 +13,7 @@ use App\Repositories\ItemReturnMasterRepository;
 use App\Repositories\StockTransferRepository;
 use App\Repositories\StockReceiveRepository;
 use App\Repositories\StockAdjustmentRepository;
+use App\Repositories\PurchaseReturnRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -23,6 +24,7 @@ class TransactionsExportExcel extends AppBaseController
     private $stockTransferRepository;
     private $stockReceiveRepository;
     private $stockAdjustmentRepository;
+    private $purchaseReturnRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -31,7 +33,8 @@ class TransactionsExportExcel extends AppBaseController
         ItemReturnMasterRepository $itemReturnMasterRepo,
         StockTransferRepository $stockTransferRepo,
         StockReceiveRepository $stockReceiveRepo,
-        StockAdjustmentRepository $stockAdjustmentRepo
+        StockAdjustmentRepository $stockAdjustmentRepo,
+        PurchaseReturnRepository $purchaseReturnRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -41,6 +44,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->stockTransferRepository = $stockTransferRepo;
         $this->stockReceiveRepository = $stockReceiveRepo;
         $this->stockAdjustmentRepository = $stockAdjustmentRepo;
+        $this->purchaseReturnRepository = $purchaseReturnRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -90,6 +94,13 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'confirmedYN', 'approved', 'month', 'year', 'interCompanyTransferYN'));
                 $dataQry = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
                 $data = $this->stockTransferRepository->setExportExcelData($dataQry);
+                break;
+
+            case '24':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID',
+                'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
+                $dataQry = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
+                $data = $this->purchaseReturnRepository->setExportExcelData($dataQry);
                 break;
 
             default:
