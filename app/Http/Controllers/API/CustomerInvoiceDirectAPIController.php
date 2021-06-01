@@ -3387,66 +3387,132 @@ WHERE
     public function getPerformaPDOInvoiceDetail($master, $customerCode)
     {
 
-        $output = DB::select("
-                            SELECT
-	client_referance,
-	po_detail_id,
-	item_description,
-	qty,
-	unit_price,
-    percentage,
-    vatAmount,
-	amount 
-FROM
-	(
-			SELECT
-				poLineNo as po_detail_id,
-				ClientRef as client_referance,
-				ItemDescrip as item_description,
-				prod_serv.TicketNo as TicketNo,
-				qty,
-				unit_price,
-                prod_serv.percentage,
-                prod_serv.vatAmount,
-				amount
-			FROM
-			erp_custinvoicedirect 
-			JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID=erp_custinvoicedirectdet.custInvoiceDirectID  AND custInvoiceDirectAutoID=" . $master->custInvoiceDirectAutoID . "  AND erp_custinvoicedirectdet.customerID=" . $master->customerID . " 
-				JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
+//         $output = DB::select("
+//                             SELECT
+// 	client_referance,
+// 	po_detail_id,
+// 	item_description,
+// 	qty,
+// 	unit_price,
+//     percentage,
+//     vatAmount,
+// 	amount 
+// FROM
+// 	(
+// 			SELECT
+// 				poLineNo as po_detail_id,
+// 				ClientRef as client_referance,
+// 				ItemDescrip as item_description,
+// 				prod_serv.TicketNo as TicketNo,
+// 				qty,
+// 				unit_price,
+//                 prod_serv.percentage,
+//                 prod_serv.vatAmount,
+// 				amount
+// 			FROM
+// 			erp_custinvoicedirect 
+// 			JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID=erp_custinvoicedirectdet.custInvoiceDirectID  AND custInvoiceDirectAutoID=" . $master->custInvoiceDirectAutoID . "  AND erp_custinvoicedirectdet.customerID=" . $master->customerID . " 
+// 				JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
 
-				JOIN (
-								SELECT
-									mubbadrahop.productdetails.contractDetailID as contractDetailID,
-									mubbadrahop.productdetails.TicketNo as TicketNo,
-									mubbadrahop.productdetails.Qty AS qty,
-									mubbadrahop.productdetails.UnitRate AS unit_price,
-                                    mubbadrahop.productdetails.vatAmount AS vatAmount,
-                                    mubbadrahop.productdetails.percentage AS percentage,
-									mubbadrahop.productdetails.TotalCharges AS amount 
-								FROM
-									mubbadrahop.productdetails 
-									WHERE mubbadrahop.productdetails.companyID = '" . $master->companyID . "' AND mubbadrahop.productdetails.CustomerID='" . $customerCode . "'
+// 				JOIN (
+// 								SELECT
+// 									mubbadrahop.productdetails.contractDetailID as contractDetailID,
+// 									mubbadrahop.productdetails.TicketNo as TicketNo,
+// 									mubbadrahop.productdetails.Qty AS qty,
+// 									mubbadrahop.productdetails.UnitRate AS unit_price,
+//                                     mubbadrahop.productdetails.vatAmount AS vatAmount,
+//                                     mubbadrahop.productdetails.percentage AS percentage,
+// 									mubbadrahop.productdetails.TotalCharges AS amount 
+// 								FROM
+// 									mubbadrahop.productdetails 
+// 									WHERE mubbadrahop.productdetails.companyID = '" . $master->companyID . "' AND mubbadrahop.productdetails.CustomerID='" . $customerCode . "'
 									
-									UNION
+// 									UNION
 									
-								SELECT
-									mubbadrahop.servicedetails.contractDetailID as contractDetailID,
-									mubbadrahop.servicedetails.TicketNo as TicketNo,
-									mubbadrahop.servicedetails.Qty AS qty,
-									mubbadrahop.servicedetails.UnitRate AS unit_price,
-                                    mubbadrahop.servicedetails.vatAmount AS vatAmount,
-                                    mubbadrahop.servicedetails.percentage AS percentage,
-									mubbadrahop.servicedetails.TotalCharges AS amount 
-								FROM 
-									mubbadrahop.servicedetails 
-									WHERE mubbadrahop.servicedetails .companyID = '" . $master->companyID . "' AND mubbadrahop.servicedetails.CustomerID='" . $customerCode . "'
+// 								SELECT
+// 									mubbadrahop.servicedetails.contractDetailID as contractDetailID,
+// 									mubbadrahop.servicedetails.TicketNo as TicketNo,
+// 									mubbadrahop.servicedetails.Qty AS qty,
+// 									mubbadrahop.servicedetails.UnitRate AS unit_price,
+//                                     mubbadrahop.servicedetails.vatAmount AS vatAmount,
+//                                     mubbadrahop.servicedetails.percentage AS percentage,
+// 									mubbadrahop.servicedetails.TotalCharges AS amount 
+// 								FROM 
+// 									mubbadrahop.servicedetails 
+// 									WHERE mubbadrahop.servicedetails .companyID = '" . $master->companyID . "' AND mubbadrahop.servicedetails.CustomerID='" . $customerCode . "'
 									
-				) as prod_serv ON performatemp.TicketNo=prod_serv.TicketNo 
-				JOIN contractdetails ON prod_serv.contractDetailID=contractdetails.ContractDetailID
-				WHERE contractdetails.CompanyID='" . $master->companyID . "' AND contractdetails.CustomerID='" . $customerCode . "'
-				GROUP BY contractdetails.ContractDetailID
-	) AS temp
-                            ");
+// 				) as prod_serv ON performatemp.TicketNo=prod_serv.TicketNo 
+// 				JOIN contractdetails ON prod_serv.contractDetailID=contractdetails.ContractDetailID
+// 				WHERE contractdetails.CompanyID='" . $master->companyID . "' AND contractdetails.CustomerID='" . $customerCode . "'
+// 				GROUP BY contractdetails.ContractDetailID
+// 	) AS temp
+//                             ");
+
+
+        $output = DB::select("SELECT
+                                client_referance,
+                                po_detail_id,
+                                item_description,
+                                qty,
+                                unit_price,
+                                percentage,
+                                vatAmount,
+                                amount 
+                            FROM
+                                (
+                                SELECT
+                                    poLineNo AS po_detail_id,
+                                    ClientRef AS client_referance,
+                                    ItemDescrip AS item_description,
+                                    prod_serv.TicketNo AS TicketNo,
+                                    qty,
+                                    unit_price,
+                                    prod_serv.percentage,
+                                    prod_serv.vatAmount,
+                                    amount 
+                                FROM
+                                    erp_custinvoicedirect
+                                    JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
+                                    AND custInvoiceDirectAutoID = " . $master->custInvoiceDirectAutoID . "  
+                                    AND erp_custinvoicedirectdet.customerID = " . $master->customerID . " 
+                                    JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo AND erp_custinvoicedirectdet.glCode=performatemp.stdGlCode
+                                    JOIN (
+                                    SELECT
+                                        mubbadrahop.productdetails.TicketproductID,
+                                        mubbadrahop.productdetails.contractDetailID AS contractDetailID,
+                                        mubbadrahop.productdetails.TicketNo AS TicketNo,
+                                        mubbadrahop.productdetails.Qty AS qty,
+                                        mubbadrahop.productdetails.UnitRate AS unit_price,
+                                        mubbadrahop.productdetails.vatAmount AS vatAmount,
+                                        mubbadrahop.productdetails.percentage AS percentage,
+                                        mubbadrahop.productdetails.TotalCharges AS amount,
+                                        mubbadrahop.productdetails.glCodeProduct AS glCodeService
+                                    FROM
+                                        mubbadrahop.productdetails 
+                                    WHERE
+                                        mubbadrahop.productdetails.companyID = '" . $master->companyID . "'
+                                        AND mubbadrahop.productdetails.CustomerID = '" . $customerCode . "' UNION
+                                    SELECT
+                                        mubbadrahop.servicedetails.TicketServiceID,
+                                        mubbadrahop.servicedetails.contractDetailID AS contractDetailID,
+                                        mubbadrahop.servicedetails.TicketNo AS TicketNo,
+                                        mubbadrahop.servicedetails.Qty AS qty,
+                                        mubbadrahop.servicedetails.UnitRate AS unit_price,
+                                        mubbadrahop.servicedetails.vatAmount AS vatAmount,
+                                        mubbadrahop.servicedetails.percentage AS percentage,
+                                        mubbadrahop.servicedetails.TotalCharges AS amount,
+                                        mubbadrahop.servicedetails.glCodeService AS glCodeService
+                                    FROM
+                                        mubbadrahop.servicedetails 
+                                    WHERE
+                                        mubbadrahop.servicedetails.companyID = '" . $master->companyID . "'
+                                        AND mubbadrahop.servicedetails.CustomerID = '" . $customerCode . "'
+                                    ) AS prod_serv ON performatemp.TicketNo = prod_serv.TicketNo AND performatemp.stdGLCode=prod_serv.glCodeService
+                                    JOIN contractdetails ON prod_serv.contractDetailID = contractdetails.ContractDetailID
+                                WHERE
+                                    contractdetails.CompanyID ='" . $master->companyID . "'
+                                    AND contractdetails.CustomerID = '" . $customerCode . "'
+                                ) AS temp");
 
         return $output;
     }
