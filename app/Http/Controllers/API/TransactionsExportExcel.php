@@ -14,6 +14,7 @@ use App\Repositories\StockTransferRepository;
 use App\Repositories\StockReceiveRepository;
 use App\Repositories\StockAdjustmentRepository;
 use App\Repositories\PurchaseReturnRepository;
+use App\Repositories\InventoryReclassificationRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -25,6 +26,7 @@ class TransactionsExportExcel extends AppBaseController
     private $stockReceiveRepository;
     private $stockAdjustmentRepository;
     private $purchaseReturnRepository;
+    private $inventoryReclassificationRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -34,7 +36,8 @@ class TransactionsExportExcel extends AppBaseController
         StockTransferRepository $stockTransferRepo,
         StockReceiveRepository $stockReceiveRepo,
         StockAdjustmentRepository $stockAdjustmentRepo,
-        PurchaseReturnRepository $purchaseReturnRepo
+        PurchaseReturnRepository $purchaseReturnRepo,
+        InventoryReclassificationRepository $inventoryReclassificationRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -45,6 +48,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->stockReceiveRepository = $stockReceiveRepo;
         $this->stockAdjustmentRepository = $stockAdjustmentRepo;
         $this->purchaseReturnRepository = $purchaseReturnRepo;
+        $this->inventoryReclassificationRepository = $inventoryReclassificationRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -101,6 +105,12 @@ class TransactionsExportExcel extends AppBaseController
                 'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
                 $dataQry = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
                 $data = $this->purchaseReturnRepository->setExportExcelData($dataQry);
+                break;
+
+            case '61':
+                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
+                $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
+                $data = $this->inventoryReclassificationRepository->setExportExcelData($dataQry);
                 break;
 
             default:
