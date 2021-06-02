@@ -707,10 +707,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         'customerInvoiceNo' => 'required',
                         'customerInvoiceDate' => 'required',
-                        'PONumber' => 'required',
-                        'servicePeriod' => 'required',
-                        'serviceStartDate' => 'required',
-                        'serviceEndDate' => 'required',
+                        // 'PONumber' => 'required',
+                        // 'servicePeriod' => 'required',
+                        // 'serviceStartDate' => 'required',
+                        // 'serviceEndDate' => 'required',
                         'bookingDate' => 'required'
                     ], $messages);
 
