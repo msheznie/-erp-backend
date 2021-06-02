@@ -291,11 +291,19 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             return $this->sendError('Duplicate Catalog Code Found', 500);
         }
 
+
+
         /** @var SupplierCatalogMaster $supplierCatalogMaster */
         $supplierCatalogMaster = $this->supplierCatalogMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCatalogMaster)) {
             return $this->sendError('Supplier Catalog Master not found');
+        }
+
+        if (isset($input['isDeleted']) && $input['isDeleted'] == 1 && $supplierCatalogMaster->isDeleted == 0) {
+            if ($supplierCatalogMaster->isActive == 1) {
+                return $this->sendError('Active catalog cannot delete', 406);
+            }
         }
 
         if(isset($input['fromDate'])){
@@ -384,9 +392,11 @@ class SupplierCatalogMasterAPIController extends AppBaseController
             $companies = [$companyId];
         }
 
-        $supplierCatalog = SupplierCatalogMaster::where(function ($query){
-                $query->whereNull('isDeleted')
-                    ->orWhere('isDeleted',0);
+        $supplierCatalog = SupplierCatalogMaster::when($input['deletedFlag'] == false, function($query) {
+                $query->where(function ($query){
+                            $query->whereNull('isDeleted')
+                                ->orWhere('isDeleted',0);
+                        });
             })
             ->where('documentSystemID',$documentId)
             ->where('supplierID',$supplierID)
