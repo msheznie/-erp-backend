@@ -16,6 +16,7 @@ use App\Repositories\StockAdjustmentRepository;
 use App\Repositories\PurchaseReturnRepository;
 use App\Repositories\InventoryReclassificationRepository;
 use App\Repositories\PurchaseRequestRepository;
+use App\Repositories\BookInvSuppMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -29,6 +30,7 @@ class TransactionsExportExcel extends AppBaseController
     private $purchaseReturnRepository;
     private $inventoryReclassificationRepository;
     private $purchaseRequestRepository;
+    private $bookInvSuppMasterRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -40,7 +42,8 @@ class TransactionsExportExcel extends AppBaseController
         StockAdjustmentRepository $stockAdjustmentRepo,
         PurchaseReturnRepository $purchaseReturnRepo,
         InventoryReclassificationRepository $inventoryReclassificationRepo,
-        PurchaseRequestRepository $purchaseRequestRepo
+        PurchaseRequestRepository $purchaseRequestRepo,
+        BookInvSuppMasterRepository $bookInvSuppMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -53,6 +56,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->purchaseReturnRepository = $purchaseReturnRepo;
         $this->inventoryReclassificationRepository = $inventoryReclassificationRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
+        $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -97,6 +101,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
                 $dataQry = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search);
                 $data = $this->stockReceiveRepository->setExportExcelData($dataQry);
+                break;
+
+            case '11':
+                $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
+                $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
+                $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '12':

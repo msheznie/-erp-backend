@@ -1102,94 +1102,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        \DB::enableQueryLog();
-        $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
-        $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with('created_by', 'transactioncurrency', 'supplier');
-
-        if (array_key_exists('cancelYN', $input)) {
-            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
-                $invMaster->where('cancelYN', $input['cancelYN']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('documentType', $input)) {
-            if (($input['documentType'] == 0 || $input['documentType'] == 1) && !is_null($input['documentType'])) {
-                $invMaster->where('documentType', $input['documentType']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $invMaster->whereMonth('bookingDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $invMaster->whereYear('bookingDate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('supplierID', $input)) {
-            if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $invMaster->where('supplierID', $input['supplierID']);
-            }
-        }
-
-        $invMaster = $invMaster->select(
-            ['erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
-                'erp_bookinvsuppmaster.bookingInvCode',
-                'erp_bookinvsuppmaster.documentSystemID',
-                'erp_bookinvsuppmaster.supplierInvoiceNo',
-                'erp_bookinvsuppmaster.secondaryRefNo',
-                'erp_bookinvsuppmaster.createdDateTime',
-                'erp_bookinvsuppmaster.createdDateAndTime',
-                'erp_bookinvsuppmaster.createdUserSystemID',
-                'erp_bookinvsuppmaster.comments',
-                'erp_bookinvsuppmaster.bookingDate',
-                'erp_bookinvsuppmaster.supplierID',
-                'erp_bookinvsuppmaster.confirmedDate',
-                'erp_bookinvsuppmaster.approvedDate',
-                'erp_bookinvsuppmaster.supplierTransactionCurrencyID',
-                'erp_bookinvsuppmaster.bookingAmountTrans',
-                'erp_bookinvsuppmaster.cancelYN',
-                'erp_bookinvsuppmaster.timesReferred',
-                'erp_bookinvsuppmaster.refferedBackYN',
-                'erp_bookinvsuppmaster.confirmedYN',
-                'erp_bookinvsuppmaster.documentType',
-                'erp_bookinvsuppmaster.approved',
-                'erp_bookinvsuppmaster.supplierInvoiceNo',
-                'erp_bookinvsuppmaster.supplierInvoiceDate'
-            ]);
 
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $search_without_comma = str_replace(",", "", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
-                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierInvoiceNo', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%")
-                    ->orWhere('bookingAmountTrans', 'LIKE', "%{$search_without_comma}%")
-                    ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%")
-                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+        
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")
