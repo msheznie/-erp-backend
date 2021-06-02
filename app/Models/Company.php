@@ -183,6 +183,7 @@ class Company extends Model
         'isHrmsIntergrated',
         'logoPath',
         'qhseApiKey',
+        'taxCardNo',
         'timeStamp'
     ];
 
@@ -265,6 +266,7 @@ class Company extends Model
         'modifiedUser' => 'string',
         'vatRegisteredYN' => 'integer',
         'vatRegistratonNumber' => 'string',
+        'taxCardNo' => 'string',
         'logoPath' => 'string',
         'isHrmsIntergrated' => 'boolean',
         'qhseApiKey' => 'string'
