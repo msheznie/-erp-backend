@@ -375,7 +375,8 @@ class SegmentMasterAPIController extends AppBaseController
     {
          $orgStructure = Company::withcount(['segments'])
                              ->with(['segments' => function ($q) {
-                                $q->where(function($query) {
+                                $q->withoutGlobalScope('final_level')
+                                  ->where(function($query) {
                                         $query->whereNull('masterID')
                                               ->orWhere('masterID', 0);
                                     })
