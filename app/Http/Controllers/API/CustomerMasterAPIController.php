@@ -116,6 +116,10 @@ class CustomerMasterAPIController extends AppBaseController
             //->whereIn('primaryCompanySystemID',$childCompanies)
             ->select('customermaster.*');
 
+        if (isset($input['customerCategoryID']) && $input['customerCategoryID'] > 0) {
+            $customerMasters = $customerMasters->where('customerCategoryID', $input['customerCategoryID']);
+        }
+
         $search = $request->input('search.value');
         if ($search) {
             $customerMasters = $customerMasters->where(function ($query) use ($search) {
@@ -291,7 +295,22 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $customerCategories = CustomerMasterCategory::whereHas('category_assigned', function ($query) use ($input) {
-                                                        $query->where('companySystemID', $input['companySystemID']);
+                                                        $query->when(isset($input['companySystemID']), function($query) use ($input){
+                                                                $query->where('companySystemID', $input['companySystemID']);
+                                                            })
+                                                            ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
+                                                                $companyId = $input['companySystemIDFilter'];
+
+                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+                                                                if ($isGroup) {
+                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                } else {
+                                                                    $childCompanies = [$companyId];
+                                                                }
+
+                                                                $query->whereIn('companySystemID', $childCompanies);
+                                                            });
                                                     })
                                                     ->get();
 
