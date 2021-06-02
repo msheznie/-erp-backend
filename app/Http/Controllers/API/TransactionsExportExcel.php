@@ -15,6 +15,7 @@ use App\Repositories\StockReceiveRepository;
 use App\Repositories\StockAdjustmentRepository;
 use App\Repositories\PurchaseReturnRepository;
 use App\Repositories\InventoryReclassificationRepository;
+use App\Repositories\PurchaseRequestRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -27,6 +28,7 @@ class TransactionsExportExcel extends AppBaseController
     private $stockAdjustmentRepository;
     private $purchaseReturnRepository;
     private $inventoryReclassificationRepository;
+    private $purchaseRequestRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -37,7 +39,8 @@ class TransactionsExportExcel extends AppBaseController
         StockReceiveRepository $stockReceiveRepo,
         StockAdjustmentRepository $stockAdjustmentRepo,
         PurchaseReturnRepository $purchaseReturnRepo,
-        InventoryReclassificationRepository $inventoryReclassificationRepo
+        InventoryReclassificationRepository $inventoryReclassificationRepo,
+        PurchaseRequestRepository $purchaseRequestRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -49,6 +52,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->stockAdjustmentRepository = $stockAdjustmentRepo;
         $this->purchaseReturnRepository = $purchaseReturnRepo;
         $this->inventoryReclassificationRepository = $inventoryReclassificationRepo;
+        $this->purchaseRequestRepository = $purchaseRequestRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -58,10 +62,17 @@ class TransactionsExportExcel extends AppBaseController
         $search = $request->input('search.value');
 
         switch($input['documentId']) {
+
+            case '1':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
+                break;
+
             case '3':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
-                $data = $this->gRVMasterRepository->setExportExcelData($dataQry );
+                $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '7':
