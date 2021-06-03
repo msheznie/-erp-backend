@@ -248,6 +248,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
     public function update($id, UpdateAssetFinanceCategoryAPIRequest $request)
     {
         $input = $request->all();
+        $formula = isset($input['formula']) ? $input['formula'] : null;
         $input = $this->convertArrayToValue($input);
 
         $input['faFinanceCatID'] = isset($input['faFinanceCatID'])?$input['faFinanceCatID']:0;
@@ -256,6 +257,17 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
         if (empty($assetFinanceCategory)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_finance_categories')]));
+        }
+
+
+        if (!is_null($formula)) {
+            if (is_array(($formula))) {
+                if ($formula) {
+                    $input['formula'] = implode('~', $formula);
+                } else {
+                    $input['formula'] = null;
+                }
+            }
         }
 
         $validator = \Validator::make($input, [
@@ -278,6 +290,14 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = Helper::getEmployeeID();
 
+        if (isset($input['Actions'])) {
+            unset($input['Actions']);
+        }
+
+        if (isset($input['DT_Row_Index'])) {
+            unset($input['DT_Row_Index']);
+        }
+        
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID',$input['faFinanceCatID'])->update($input);
 
         return $this->sendResponse($assetFinanceCategory, trans('custom.update', ['attribute' => trans('custom.asset_finance_categories')]));

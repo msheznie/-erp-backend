@@ -108,6 +108,8 @@ class AssetFinanceCategory extends Model
         'createdUserID',
         'lifeTimeInYears',
         'createdDateTime',
+        'formula',
+        'currentSerialNumber',
         'modifiedPc',
         'modifiedUser',
         'timestamp'
@@ -132,8 +134,10 @@ class AssetFinanceCategory extends Model
         'DISPOGLCODE' => 'string',
         'isActive' => 'integer',
         'sortOrder' => 'integer',
+        'currentSerialNumber' => 'integer',
         'createdPcID' => 'string',
         'createdUserGroup' => 'string',
+        'formula' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string'

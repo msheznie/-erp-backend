@@ -15,6 +15,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\DocumentCodeGenerate;
 use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
@@ -169,10 +170,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
                 'assetSerialNo.*.required' => 'Asset Serial No is required',
                 'assetSerialNo.*.unique' => 'The FA Serial-No has already been taken',
+                'AUDITCATOGARY.required' => 'Audit Category is required',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
+                'AUDITCATOGARY' => 'required',
                 'assetSerialNo.*.faUnitSerialNo' => 'required|unique:erp_fa_asset_master,faUnitSerialNo',
             ], $messages);
 
@@ -242,9 +245,27 @@ class FixedAssetMasterAPIController extends AppBaseController
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
 
+
+                $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
                 if ($grvDetails["noQty"]) {
                     if ($grvDetails->noQty < 1) {
-                        $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                        // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                        $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
+
+                        if ($documentCodeData['status']) {
+                            $documentCode = $documentCodeData['documentCode'];
+                            $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                            $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
+                                                                     ->first();
+
+                            if ($checkForDuplicateCode) {
+                                return $this->sendError("Asset code is already found.", 500);
+                            }
+
+                        } else {
+                            return $this->sendError("Asset code is not configured.", 500);
+                        }
 
                         if ($input['assetSerialNo'][0]['faUnitSerialNo']) {
                             $input["faUnitSerialNo"] = $input['assetSerialNo'][0]['faUnitSerialNo'];
@@ -312,7 +333,23 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
-                                $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
+
+                                if ($documentCodeData['status']) {
+                                    $documentCode = $documentCodeData['documentCode'];
+                                    $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                                    $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
+                                                                             ->first();
+
+                                    if ($checkForDuplicateCode) {
+                                        return $this->sendError("Asset code is already found.", 500);
+                                    }
+
+                                } else {
+                                    return $this->sendError("Asset code is not configured.", 500);
+                                }
                                 if ($qty <= $assetSerialNoCount) {
                                     if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
                                         $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
@@ -402,9 +439,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
                 'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
                 'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
+                'AUDITCATOGARY.required' => 'Audit Category is required',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
+                'AUDITCATOGARY' => 'required',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
                 'documentDate' => 'required|date|before_or_equal:dateDEP',
                 'faUnitSerialNo' => 'required|unique:erp_fa_asset_master',
@@ -483,9 +522,26 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $lastSerialNumber = intval($lastSerial->serialNo) + 1;
             }
 
-            $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+            $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
+            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
 
-            $input["serialNo"] = $lastSerialNumber;
+            if ($documentCodeData['status']) {
+                $documentCode = $documentCodeData['documentCode'];
+                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
+                                                         ->first();
+
+                if ($checkForDuplicateCode) {
+                    return $this->sendError("Asset code is already found.", 500);
+                }
+
+                $input["serialNo"] = null;
+            } else {
+                return $this->sendError("Asset code is not configured.", 500);
+                // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                // $input["serialNo"] = $lastSerialNumber;
+            }
+
             $input["faCode"] = $documentCode;
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
@@ -498,6 +554,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
+
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {
