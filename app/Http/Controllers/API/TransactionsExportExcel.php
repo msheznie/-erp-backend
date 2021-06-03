@@ -19,6 +19,7 @@ use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MatchDocumentMasterRepository;
+use App\Repositories\MonthlyAdditionsMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -35,6 +36,7 @@ class TransactionsExportExcel extends AppBaseController
     private $bookInvSuppMasterRepository;
     private $expenseClaimRepository;
     private $matchDocumentMasterRepository;
+    private $monthlyAdditionsMasterRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -49,7 +51,8 @@ class TransactionsExportExcel extends AppBaseController
         PurchaseRequestRepository $purchaseRequestRepo,
         BookInvSuppMasterRepository $bookInvSuppMasterRepo,
         ExpenseClaimRepository $expenseClaimRepo,
-        MatchDocumentMasterRepository $matchDocumentMasterRepo
+        MatchDocumentMasterRepository $matchDocumentMasterRepo,
+        MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -65,6 +68,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->expenseClaimRepository = $expenseClaimRepo;
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
+        $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -146,6 +150,12 @@ class TransactionsExportExcel extends AppBaseController
                 'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
                 $dataQry = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
                 $data = $this->purchaseReturnRepository->setExportExcelData($dataQry);
+                break;
+
+            case '28':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN'));
+                $dataQry = $this->monthlyAdditionsMasterRepository->monthlyAdditionsListQuery($request, $input, $search);
+                $data = $this->monthlyAdditionsMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '61':

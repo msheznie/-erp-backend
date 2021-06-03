@@ -457,39 +457,9 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $monthlyAdditions = MonthlyAdditionsMaster::whereIn('companySystemID', $subCompanies)
-            ->with('currency_by')
-            ->where('expenseClaimAdditionYN', 1)
-            ->where('documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $monthlyAdditions = $monthlyAdditions->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
-                $monthlyAdditions = $monthlyAdditions->where('approvedYN', $input['approvedYN']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $monthlyAdditions = $monthlyAdditions->where(function ($query) use ($search) {
-                $query->where('monthlyAdditionsCode', 'LIKE', "%{$search}%");
-            });
-        }
+
+        $monthlyAdditions = $this->monthlyAdditionsMasterRepository->monthlyAdditionsListQuery($request, $input, $search);
 
         return \DataTables::of($monthlyAdditions)
             ->order(function ($query) use ($input) {
