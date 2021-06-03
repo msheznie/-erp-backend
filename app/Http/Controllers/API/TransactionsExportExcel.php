@@ -18,6 +18,7 @@ use App\Repositories\InventoryReclassificationRepository;
 use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\ExpenseClaimRepository;
+use App\Repositories\MatchDocumentMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -33,6 +34,7 @@ class TransactionsExportExcel extends AppBaseController
     private $purchaseRequestRepository;
     private $bookInvSuppMasterRepository;
     private $expenseClaimRepository;
+    private $matchDocumentMasterRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -46,7 +48,8 @@ class TransactionsExportExcel extends AppBaseController
         InventoryReclassificationRepository $inventoryReclassificationRepo,
         PurchaseRequestRepository $purchaseRequestRepo,
         BookInvSuppMasterRepository $bookInvSuppMasterRepo,
-        ExpenseClaimRepository $expenseClaimRepo
+        ExpenseClaimRepository $expenseClaimRepo,
+        MatchDocumentMasterRepository $matchDocumentMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -61,6 +64,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->expenseClaimRepository = $expenseClaimRepo;
+        $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -129,6 +133,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'confirmedYN', 'approved', 'month', 'year', 'interCompanyTransferYN'));
                 $dataQry = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
                 $data = $this->stockTransferRepository->setExportExcelData($dataQry);
+                break;
+
+            case '15':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
+                $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
+                $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '24':
