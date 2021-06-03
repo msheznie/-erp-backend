@@ -20,6 +20,7 @@ use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -37,6 +38,7 @@ class TransactionsExportExcel extends AppBaseController
     private $expenseClaimRepository;
     private $matchDocumentMasterRepository;
     private $monthlyAdditionsMasterRepository;
+    private $paySupplierInvoiceMasterRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -52,7 +54,8 @@ class TransactionsExportExcel extends AppBaseController
         BookInvSuppMasterRepository $bookInvSuppMasterRepo,
         ExpenseClaimRepository $expenseClaimRepo,
         MatchDocumentMasterRepository $matchDocumentMasterRepo,
-        MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo
+        MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
+        PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -69,6 +72,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->expenseClaimRepository = $expenseClaimRepo;
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
+        $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -89,6 +93,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '4':
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury'));
+                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search);
+                $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '6':
