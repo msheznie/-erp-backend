@@ -316,6 +316,8 @@ return [
     'pending_approval' => 'Pending Approval',
     'fully_approved' => 'Fully Approved',
     'cancelled' => 'Cancelled',
-    'referred_back' => 'Referred back'
-
+    'referred_back' => 'Referred back',
+    'supplier_po_payment' => 'Supplier PO payment',
+    'direct_payment' => 'Direct Payment',
+    'supplier_advance_payment' => 'Supplier Advance Payment'
 ];

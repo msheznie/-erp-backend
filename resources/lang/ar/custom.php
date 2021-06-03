@@ -316,5 +316,8 @@ return [
     'pending_approval' => 'ما زال يحتاج بتصدير',
     'fully_approved' => 'تمت الموافقة عليه بالكامل',
     'cancelled' => 'ألغيت',
-    'referred_back' => 'تمت الإشارة إليه مرة أخرى'
+    'referred_back' => 'تمت الإشارة إليه مرة أخرى',
+    'supplier_po_payment' => 'دفع PO المورد',
+    'direct_payment' => 'دفع مباشر',
+    'supplier_advance_payment' => 'الدفع المسبق للمورد'
 ];

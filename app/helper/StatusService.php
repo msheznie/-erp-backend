@@ -25,4 +25,19 @@ class StatusService
 
 		return $status;
 	}
+
+	public static function getInvoiceType($id)
+	{
+		$type = "";
+
+		if ($id == 2) {
+			$type = trans('custom.supplier_po_payment');
+		} else if ($id == 3) {
+			$type = trans('custom.direct_payment');
+		} else if ($id == 5) {
+			$type = trans('custom.supplier_advance_payment');
+		}
+
+		return $type;
+	}
 }
