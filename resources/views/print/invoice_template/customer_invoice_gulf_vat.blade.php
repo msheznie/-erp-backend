@@ -1,12 +1,13 @@
 <style type="text/css">
     <!--
     @page {
-        margin: 20px 30px 220px;
+        margin: 20px 30px 0px;
     }
 
     #footer {
-        position: absolute;
-        bottom: -190px;
+        /*bottom: 0;*/
+        /*position: absolute;*/
+        /*bottom: -190px;*/
         font-size: 12px;
     }
     body {
@@ -113,7 +114,7 @@
     }
 
     .content {
-        margin-bottom: 30px;
+        margin-bottom: 10px;
     }
 
     #watermark {
@@ -454,6 +455,17 @@
                                 </span>
                             </td>
                         </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Tax Card No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td>
+                                <span>
+                                    @if(isset($request->company->taxCardNo))
+                                    {{$request->company->taxCardNo}}
+                                    @endif()
+                                </span>
+                            </td>
+                        </tr>
                     </table>
                 </fieldset>
             </td>
@@ -702,17 +714,18 @@
         @endif
     @endif
 
-    @if (!$request->linePdoinvoiceDetails && $request->invoicedetails)
+    @if (!$request->linePdoinvoiceDetails && $request->invoicedetails && $request->isPerforma == 1)
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
                 <th style="width:3%"></th>
                 <th style="width:10%;text-align: center">GL Code</th>
-                <th style="width:60%;text-align: center">GL Code Description</th>
+                <th style="width:60%;text-align: center">GL Description</th>
                 <th style="width:10%;text-align: center">QTY</th>
-                <th style="width:10%;text-align: center">Taxable Amount</th>
+                <th style="width:10%;text-align: center">Unit Price</th>
+                <th style="width:10%;text-align: center">Total Taxable Amount</th>
+                <th style="width:10%;text-align: center">VAT %</th>
                 <th style="width:10%;text-align: center">VAT Amount</th>
-                <th style="width:10%;text-align: center">Unit Rate</th>
                 <th style="width:10%;text-align: right">Total Amount Inclusive of VAT</th>
             </tr>
             </thead>
@@ -731,14 +744,15 @@
                     <td>{{$item->glCodeDes}}</td>
                     <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                     <td class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format($item->VATPercentage,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
-                    <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                     <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
                 <tr>
-                    <td colspan="4" style="text-align: right;">
+                    <td colspan="5" style="text-align: right;">
                          <span class="font-weight-bold">
                             Conversion Rate
                          </span>
@@ -756,13 +770,13 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                    <td class="text-right" style="width: 20%;border-bottom: none !important"><span
+                    <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td class="text-right" style="width: 15%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                        style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
                     <span class="font-weight-bold">@if ($request->invoicedetails){{number_format(($directTraSubTotal - $vatTraSubTotal), $numberFormatting)}}@endif</span>
                     </td>
                 </tr>
@@ -807,13 +821,13 @@
                 <table style="width:100%;" class="table table-bordered">
                     <tbody>
                     <tr>
-                        <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                        <td class="text-right" style="width: 20%;border-bottom: none !important"><span
+                        <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                        <td class="text-right" style="width: 15%;border-bottom: none !important"><span
                                     class="font-weight-bold"
                                     style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) </span>
                         </td>
                         <td class="text-right"
-                            style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                            style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
                         <span class="font-weight-bold">@if ($request->invoicedetails){{number_format((($directTraSubTotal - $vatTraSubTotal)/$request->localCurrencyER), $numberFormatting)}}@endif</span>
                         </td>
                     </tr>
@@ -852,9 +866,161 @@
             </div>
         @endif
     @endif
+
+    @if (!$request->linePdoinvoiceDetails && $request->invoicedetails && $request->isPerforma == 0)
+        <table class="table table-bordered" style="width: 100%;">
+            <thead>
+            <tr class="theme-tr-head">
+                <th style="width:3%"></th>
+                <th style="width:10%;text-align: center">GL Code</th>
+                <th style="width:60%;text-align: center">GL Description</th>
+                <th style="width:10%;text-align: center">QTY</th>
+                <th style="width:10%;text-align: center">Unit Price</th>
+                <th style="width:10%;text-align: center">Total Taxable Amount</th>
+                <th style="width:10%;text-align: center">VAT %</th>
+                <th style="width:10%;text-align: center">VAT Amount</th>
+                <th style="width:10%;text-align: right">Total Amount Inclusive of VAT</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{$decimal = 2}}
+            {{$x=1}}
+            {{$directTraSubTotal=0}}
+            {{$vatTraSubTotal=0}}
+            {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+            @foreach ($request->invoicedetails as $item)
+                {{$directTraSubTotal +=$item->invoiceAmount}}
+                {{$vatTraSubTotal +=($item->VATAmount * $item->invoiceQty)}}
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td>{{$x}}</td>
+                    <td>{{$item->glCode}}</td>
+                    <td>{{$item->glCodeDes}}</td>
+                    <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
+                    <td class="text-right">{{number_format(($item->unitCost),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format(($item->unitCost * $item->invoiceQty),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format($item->VATPercentage,$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format(($item->VATAmount * $item->invoiceQty),$numberFormatting)}}</td>
+                    <td class="text-right">{{number_format(($item->invoiceAmount + ($item->VATAmount * $item->invoiceQty)),$numberFormatting)}}</td>
+                </tr>
+                {{ $x++ }}
+            @endforeach
+                <tr>
+                    <td colspan="5" style="text-align: right;">
+                         <span class="font-weight-bold">
+                            Conversion Rate
+                         </span>
+                    </td>
+                    <td style="text-align: right;">
+                        {{$request->localCurrencyER}}
+                    </td>
+                    <td colspan="3">
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+        <div class="row">
+            <table style="width:100%;" class="table table-bordered">
+                <tbody>
+                <tr>
+                    <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td class="text-right" style="width: 15%;border-bottom: none !important"><span
+                                class="font-weight-bold"
+                                style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                    <span class="font-weight-bold">@if ($request->invoicedetails){{number_format(($directTraSubTotal), $numberFormatting)}}@endif</span>
+                    </td>
+                </tr>
+
+               
+                <tr>
+                    <td style="border:none !important;">
+                        &nbsp;
+                    </td>
+                    <td class="text-right" style="border:none !important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11.5px">VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) 
+                            </span></td>
+                    <td class="text-right"
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                                class="font-weight-bold">{{number_format($vatTraSubTotal, $numberFormatting)}}</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;
+                    </td>
+                    <td class="text-right" style="border:none !important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11.5px">Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})   </span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
+                            <span class="font-weight-bold">
+
+                                    {{number_format(($directTraSubTotal + $vatTraSubTotal), $numberFormatting)}}</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <br>
+        @if($request->custTransactionCurrencyID != $request->localCurrencyID)
+            <br>
+            <div class="row">
+                <table style="width:100%;" class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <td style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                        <td class="text-right" style="width: 15%;border-bottom: none !important"><span
+                                    class="font-weight-bold"
+                                    style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) </span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;width: 15%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                        <span class="font-weight-bold">@if ($request->invoicedetails){{number_format(($directTraSubTotal/$request->localCurrencyER), $numberFormatting)}}@endif</span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="border:none !important;">
+                            &nbsp;
+                        </td>
+                        <td class="text-right" style="border:none !important;"><span
+                                    class="font-weight-bold"
+                                    style="font-size: 11.5px">VAT ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) 
+                                </span></td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                                    class="font-weight-bold">{{number_format(($vatTraSubTotal/$request->localCurrencyER), $numberFormatting)}}</span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                            &nbsp;
+                        </td>
+                        <td class="text-right" style="border:none !important;"><span
+                                    class="font-weight-bold"
+                                    style="font-size: 11.5px">Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}})   </span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
+                                <span class="font-weight-bold">
+
+                                        {{number_format((($directTraSubTotal/$request->localCurrencyER) + ($vatTraSubTotal/$request->localCurrencyER)), $numberFormatting)}}</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    @endif
+
 </div>
-
-
 <div id="footer">
     @if($request->line_invoiceDetails)
         <div class="" style="">
@@ -1039,6 +1205,9 @@
                 </table>
         </div>
 </div>
+
+
+
 
 
 
