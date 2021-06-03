@@ -148,8 +148,14 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $insertData['comments'] = $input['comment'];
                         }
 
-                        $purchaseRequestDetails = $this->model->create($insertData);
-                        $successCount = $successCount +1;
+                        if (!$nullValues) {
+                            $purchaseRequestDetails = $this->model->create($insertData);
+                            $successCount = $successCount +1;
+                        }
+
+                        if ($nullValues) {
+                            $nullValuesGlobal = true;
+                        }
                     } else {
                         if ($item) {
                             $insertData['budgetYear'] = $purchaseRequest->budgetYear;
