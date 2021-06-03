@@ -439,44 +439,9 @@ class ExpenseClaimAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $expenseClaims = ExpenseClaim::whereIn('companySystemID', $subCompanies)
-            ->with('created_by')
-            ->where('documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $expenseClaims = $expenseClaims->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $expenseClaims = $expenseClaims->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('glCodeAssignedYN', $input)) {
-            if (($input['glCodeAssignedYN'] == 0 || $input['glCodeAssignedYN'] == -1) && !is_null($input['glCodeAssignedYN'])) {
-                $expenseClaims = $expenseClaims->where('glCodeAssignedYN', '=', $input['glCodeAssignedYN']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $expenseClaims = $expenseClaims->where(function ($query) use ($search) {
-                $query->where('expenseClaimCode', 'LIKE', "%{$search}%");
-            });
-        }
+
+        $expenseClaims = $this->expenseClaimRepository->expenseClaimListQuery($request, $input, $search);
 
         return \DataTables::of($expenseClaims)
             ->order(function ($query) use ($input) {

@@ -17,6 +17,7 @@ use App\Repositories\PurchaseReturnRepository;
 use App\Repositories\InventoryReclassificationRepository;
 use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\BookInvSuppMasterRepository;
+use App\Repositories\ExpenseClaimRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -31,6 +32,7 @@ class TransactionsExportExcel extends AppBaseController
     private $inventoryReclassificationRepository;
     private $purchaseRequestRepository;
     private $bookInvSuppMasterRepository;
+    private $expenseClaimRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -43,7 +45,8 @@ class TransactionsExportExcel extends AppBaseController
         PurchaseReturnRepository $purchaseReturnRepo,
         InventoryReclassificationRepository $inventoryReclassificationRepo,
         PurchaseRequestRepository $purchaseRequestRepo,
-        BookInvSuppMasterRepository $bookInvSuppMasterRepo
+        BookInvSuppMasterRepository $bookInvSuppMasterRepo,
+        ExpenseClaimRepository $expenseClaimRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -57,6 +60,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->inventoryReclassificationRepository = $inventoryReclassificationRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
+        $this->expenseClaimRepository = $expenseClaimRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -77,6 +81,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '6':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'glCodeAssignedYN', 'approved', 'year'));
+                $dataQry = $this->expenseClaimRepository->expenseClaimListQuery($request, $input, $search);
+                $data = $this->expenseClaimRepository->setExportExcelData($dataQry);
                 break;
 
             case '7':
