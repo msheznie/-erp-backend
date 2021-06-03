@@ -138,7 +138,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
                         $insertData['purchaseRequestID'] = $purchaseRequestID;
 
-                        if (isset($input['qty'])) {
+                        if (isset($input['qty']) && $input['qty'] > 0) {
                             $insertData['quantityRequested'] = $input['qty'];
                         } else {
                             $nullValues = true;
@@ -425,7 +425,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                                 $insertData['quantityInHand'] = $quantityInHand;
                                 $insertData['purchaseRequestID'] = $purchaseRequestID;
 
-                                if (isset($input['qty'])) {
+                                if (isset($input['qty']) && $input['qty'] > 0) {
                                     $insertData['quantityRequested'] = $input['qty'];
                                 } else {
                                     $nullValues = true;
