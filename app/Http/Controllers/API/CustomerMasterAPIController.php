@@ -290,6 +290,25 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getChartOfAccountsByCompanyForCustomer(Request $request)
+    {
+        $input = $request->all();
+
+        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+                                         ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                  ->where('isAssigned', -1)    
+                                                  ->where('isActive', 1);    
+                                         })
+                                        ->where('controlAccountsSystemID',3)
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                        ->orderBy('AccountDescription', 'asc')
+                                        ->get();
+
+        return $this->sendResponse($chartOfAccounts, 'Record retrieved successfully');
+
+    }
+
     public function getCustomerCatgeoryByCompany(Request $request)
     {
         $input = $request->all();
@@ -363,6 +382,15 @@ class CustomerMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+
+        if (isset($input['gl_account'])) {
+            unset($input['gl_account']);
+        }
+
+        if (isset($input['unbilled_account'])) {
+            unset($input['unbilled_account']);
+        }
+
 
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
@@ -521,7 +549,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomerMaster $customerMaster */
-        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
+        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy', 'gl_account', 'unbilled_account'])->findWithoutFail($id);
         // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');

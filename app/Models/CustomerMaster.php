@@ -212,6 +212,17 @@ class CustomerMaster extends Model
         return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
 
+    public function gl_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','custGLAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function unbilled_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','custUnbilledAccountSystemID','chartOfAccountSystemID');
+    }
+
+
     public function customerCurrency(){
         return $this->hasMany('App\Models\CustomerCurrency','customerCodeSystem','customerCodeSystem');
     }
