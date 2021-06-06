@@ -40,4 +40,26 @@ class StatusService
 
 		return $type;
 	}
-}
+
+
+	public static function getCustomerInvoiceType($id)
+	{
+		$type = "";
+
+		if($id == 0){
+			$type = trans('custom.direct_invoice');
+		} else if ($id == 1) {
+			$type = trans('custom.proforma_invoice');
+		} else if ($id == 2) {
+			$type = trans('custom.item_sales_invoice');
+		} else if ($id == 3) {
+			$type = trans('custom.from_delivery_note');
+		} else if ($id == 4) {
+			$type = trans('custom.from_sales_order');
+		} else if ($id == 5) {
+			$type = trans('custom.from_quotation');
+		}
+
+		return $type;
+	}
+}    

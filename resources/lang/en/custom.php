@@ -319,5 +319,11 @@ return [
     'referred_back' => 'Referred back',
     'supplier_po_payment' => 'Supplier PO payment',
     'direct_payment' => 'Direct Payment',
-    'supplier_advance_payment' => 'Supplier Advance Payment'
+    'supplier_advance_payment' => 'Supplier Advance Payment',
+    'proforma_invoice' => 'Proforma Invoice',
+    'direct_invoice' => 'Direct Invoice',
+    'item_sales_invoice' => 'Item Sales Invoice',
+    'from_delivery_note' => 'From Delivery Note',
+    'from_sales_order' => 'From Sales Order',
+    'from_quotation' => 'From Quotation'
 ];

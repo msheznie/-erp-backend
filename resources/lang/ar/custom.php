@@ -319,5 +319,11 @@ return [
     'referred_back' => 'تمت الإشارة إليه مرة أخرى',
     'supplier_po_payment' => 'دفع PO المورد',
     'direct_payment' => 'دفع مباشر',
-    'supplier_advance_payment' => 'الدفع المسبق للمورد'
+    'supplier_advance_payment' => 'الدفع المسبق للمورد',
+    'proforma_invoice' => 'الفاتورة الأولية',
+    'direct_invoice' => 'الفاتورة المباشرة',
+    'item_sales_invoice' => 'فاتورة مبيعات الصنف',
+    'from_delivery_note' => 'من مذكرة التسليم',
+    'from_sales_order' => 'من طلب المبيعات',
+    'from_quotation' => 'من الاقتباس'
 ];

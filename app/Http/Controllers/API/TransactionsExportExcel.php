@@ -21,6 +21,7 @@ use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\CustomerInvoiceDirectRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -39,6 +40,7 @@ class TransactionsExportExcel extends AppBaseController
     private $matchDocumentMasterRepository;
     private $monthlyAdditionsMasterRepository;
     private $paySupplierInvoiceMasterRepository;
+    private $customerInvoiceDirectRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -55,7 +57,8 @@ class TransactionsExportExcel extends AppBaseController
         ExpenseClaimRepository $expenseClaimRepo,
         MatchDocumentMasterRepository $matchDocumentMasterRepo,
         MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
-        PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo
+        PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
+        CustomerInvoiceDirectRepository $customerInvoiceDirectRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -73,6 +76,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
+        $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -153,6 +157,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
                 $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
                 $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '20':
+                $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
+                $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
+                $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry);
                 break;
 
             case '24':
