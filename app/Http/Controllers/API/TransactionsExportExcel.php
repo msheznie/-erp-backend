@@ -22,6 +22,7 @@ use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Repositories\CreditNoteRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -41,6 +42,7 @@ class TransactionsExportExcel extends AppBaseController
     private $monthlyAdditionsMasterRepository;
     private $paySupplierInvoiceMasterRepository;
     private $customerInvoiceDirectRepository;
+    private $creditNoteRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -58,7 +60,8 @@ class TransactionsExportExcel extends AppBaseController
         MatchDocumentMasterRepository $matchDocumentMasterRepo,
         MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
         PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
-        CustomerInvoiceDirectRepository $customerInvoiceDirectRepo
+        CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,
+        CreditNoteRepository $creditNoteRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -77,6 +80,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
         $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
+        $this->creditNoteRepository = $creditNoteRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -157,6 +161,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
                 $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
                 $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '19':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+                $dataQry = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
+                $data = $this->creditNoteRepository->setExportExcelData($dataQry);
                 break;
 
             case '20':
