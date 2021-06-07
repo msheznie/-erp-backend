@@ -235,5 +235,8 @@ class CustomerMaster extends Model
         return $this->hasOne('App\Models\CustomerContactDetails','customerID','customerCodeSystem');
     }
 
+    public function customer_contacts(){
+        return $this->hasMany('App\Models\CustomerContactDetails','customerID','customerCodeSystem');
+    }
 
 }

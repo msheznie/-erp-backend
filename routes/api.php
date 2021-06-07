@@ -2056,8 +2056,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-
-
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
