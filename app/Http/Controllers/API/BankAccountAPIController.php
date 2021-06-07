@@ -370,36 +370,9 @@ class BankAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $logistics = BankAccount::whereIn('companySystemID', $subCompanies)
-            ->when(request('bankmasterAutoID',false), function ($q) use ($input) {
-                $q->where('bankmasterAutoID', $input['bankmasterAutoID']);
-            })
-            ->with(['currency']);
-
-        if (array_key_exists('isAccountActive', $input)) {
-            if (($input['isAccountActive'] == 0 || $input['isAccountActive'] == 1) && !is_null($input['isAccountActive'])) {
-                $logistics->where('isAccountActive', $input['isAccountActive']);
-            }
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $logistics = $logistics->where(function ($query) use ($search) {
-                $query->where('bankShortCode', 'LIKE', "%{$search}%")
-                    ->orWhere('bankName', 'LIKE', "%{$search}%");
-            });
-        }
+        $logistics = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search);
 
         return \DataTables::eloquent($logistics)
             ->addColumn('Actions', 'Actions', "Actions")

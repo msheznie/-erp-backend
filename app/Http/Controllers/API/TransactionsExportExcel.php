@@ -21,7 +21,7 @@ use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
-use App\Repositories\CustomerInvoiceDirectRepository;
+// use App\Repositories\CustomerInvoiceDirectRepository;
 use App\Repositories\CreditNoteRepository;
 use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\CustomerInvoiceTrackingRepository;
@@ -31,6 +31,9 @@ use App\Repositories\SalesReturnRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\BudgetTransferFormRepository;
 use App\Repositories\ConsoleJVMasterRepository;
+use App\Repositories\BankAccountRepository;
+use App\Repositories\BankReconciliationRepository;
+use App\Repositories\PaymentBankTransferRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -49,7 +52,7 @@ class TransactionsExportExcel extends AppBaseController
     private $matchDocumentMasterRepository;
     private $monthlyAdditionsMasterRepository;
     private $paySupplierInvoiceMasterRepository;
-    private $customerInvoiceDirectRepository;
+    // private $customerInvoiceDirectRepository;
     private $creditNoteRepository;
     private $customerReceivePaymentRepository;
     private $customerInvoiceTrackingRepository;
@@ -59,6 +62,9 @@ class TransactionsExportExcel extends AppBaseController
     private $jvMasterRepository;
     private $budgetTransferFormRepository;
     private $consoleJVMasterRepository;
+    private $bankAccountRepository;
+    private $bankReconciliationRepository;
+    private $paymentBankTransferRepository;
     
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -76,7 +82,7 @@ class TransactionsExportExcel extends AppBaseController
         MatchDocumentMasterRepository $matchDocumentMasterRepo,
         MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
         PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
-        CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,
+        // CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,
         CreditNoteRepository $creditNoteRepo,
         CustomerReceivePaymentRepository $customerReceivePaymentRepo,
         CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo,
@@ -85,7 +91,10 @@ class TransactionsExportExcel extends AppBaseController
         SalesReturnRepository $salesReturnRepo,
         JvMasterRepository $jvMasterRepo,
         BudgetTransferFormRepository $budgetTransferFormRepo,
-        ConsoleJVMasterRepository $consoleJVMasterRepo
+        ConsoleJVMasterRepository $consoleJVMasterRepo,
+        BankAccountRepository $bankAccountRepo,
+        BankReconciliationRepository $bankReconciliationRepo,
+        PaymentBankTransferRepository $paymentBankTransferRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -103,7 +112,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
-        $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
+        // $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
         $this->creditNoteRepository = $creditNoteRepo;
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
         $this->customerInvoiceTrackingRepository = $customerInvoiceTrackingRepo;
@@ -113,6 +122,9 @@ class TransactionsExportExcel extends AppBaseController
         $this->jvMasterRepository = $jvMasterRepo;
         $this->budgetTransferFormRepository = $budgetTransferFormRepo;
         $this->consoleJVMasterRepository = $consoleJVMasterRepo;
+        $this->bankAccountRepository = $bankAccountRepo;
+        $this->bankReconciliationRepository = $bankReconciliationRepo;
+        $this->paymentBankTransferRepository = $paymentBankTransferRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -213,11 +225,11 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->creditNoteRepository->setExportExcelData($dataQry);
                 break;
 
-            case '20':
-                $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
-                $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
-                $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry);
-                break;
+            // case '20':
+            //     $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
+            //     $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
+            //     $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry);
+            //     break;
 
             case '21':
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN'));
@@ -254,6 +266,24 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
                 $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
                 $data = $this->inventoryReclassificationRepository->setExportExcelData($dataQry);
+                break;
+                
+            case '62':
+                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
+                $dataQry = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search);
+                $data = $this->bankReconciliationRepository->setExportExcelData($dataQry);
+                break;
+
+            case '64':
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+                $dataQry = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search);
+                $data = $this->paymentBankTransferRepository->setExportExcelData($dataQry);
+                break;
+
+            case '66':
+                $input = $this->convertArrayToSelectedValue($input, array('bankmasterAutoID', 'isAccountActive'));
+                $dataQry = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search);
+                $data = $this->bankAccountRepository->setExportExcelData($dataQry);
                 break;
 
             case '67':
