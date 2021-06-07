@@ -6,6 +6,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Company;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceCategorySerial;
+use App\Models\ReportTemplateDetails;
 use App\Models\SegmentMaster;
 
 class DocumentCodeGenerate
@@ -82,4 +83,33 @@ class DocumentCodeGenerate
 			return ['status' => false];
 		}
 	}
+
+	public static function generateAccountCode($detID)
+	{
+		$reportCategoryDetail = ReportTemplateDetails::where('detID', $detID)->first();
+
+        if (!$reportCategoryDetail) {
+        	return ['status' => false, 'message' => "Category not found", 'data' => ""];
+        }
+
+        $code = "";
+        if ($reportCategoryDetail->prefix != "") {
+            $code = $reportCategoryDetail->prefix.str_pad($reportCategoryDetail->lastSerialNo + 1, $reportCategoryDetail->serialLength, '0', STR_PAD_LEFT);
+        }
+
+
+        return ['status' => true, 'data' => $code];
+	}
+
+	public static function updateChartOfAccountSerailNumber($detID)
+	{
+		$reportCategoryDetail = ReportTemplateDetails::where('detID', $detID)->first();
+
+		$newSerial = $reportCategoryDetail->lastSerialNo + 1;
+
+		$reportCategoryDetail->lastSerialNo = $newSerial;
+
+		$reportCategoryDetail->save();
+	}
+
 }
