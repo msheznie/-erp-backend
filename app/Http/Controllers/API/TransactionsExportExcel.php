@@ -27,6 +27,7 @@ use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\CustomerInvoiceTrackingRepository;
 use App\Repositories\QuotationMasterRepository;
 use App\Repositories\DeliveryOrderRepository;
+use App\Repositories\SalesReturnRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -51,6 +52,7 @@ class TransactionsExportExcel extends AppBaseController
     private $customerInvoiceTrackingRepository;
     private $quotationMasterRepository;
     private $deliveryOrderRepository;
+    private $salesReturnRepository;
     
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -73,7 +75,8 @@ class TransactionsExportExcel extends AppBaseController
         CustomerReceivePaymentRepository $customerReceivePaymentRepo,
         CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo,
         QuotationMasterRepository $quotationMasterRepo,
-        DeliveryOrderRepository $deliveryOrderRepo
+        DeliveryOrderRepository $deliveryOrderRepo,
+        SalesReturnRepository $salesReturnRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -97,6 +100,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->customerInvoiceTrackingRepository = $customerInvoiceTrackingRepo;
         $this->quotationMasterRepository = $quotationMasterRepo;
         $this->deliveryOrderRepository = $deliveryOrderRepo;
+        $this->salesReturnRepository = $salesReturnRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -244,6 +248,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $request->all();
                 $dataQry = $this->deliveryOrderRepository->deliveryOrderListQuery($request, $input, $search);
                 $data = $this->deliveryOrderRepository->setExportExcelData($dataQry);
+                break;
+
+            case '87':
+                $input = $request->all();
+                $dataQry = $this->salesReturnRepository->salesReturnListQuery($request, $input, $search);
+                $data = $this->salesReturnRepository->setExportExcelData($dataQry);
                 break;
 
             default:

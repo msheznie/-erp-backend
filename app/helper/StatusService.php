@@ -94,4 +94,17 @@ class StatusService
 
 		return $type;
 	}
+
+	public static function getSalesReturnType($returnType)
+	{
+		$type = "";
+
+		if ($returnType == 1) {
+			$type = trans('custom.from_delivery_order');
+		} else if ($returnType == 2) {
+			$type = trans('custom.from_sales_invoice');
+		}
+
+		return $type;
+	}
 }    

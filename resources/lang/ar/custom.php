@@ -332,5 +332,7 @@ return [
     'from_quotation' => 'من الاقتباس',
     'quotation_based' => 'أمر مباشر',
     'quotation_based' => 'بناء على الاقتباس',
-    'sales Order_based' => 'بناء على طلب المبيعات'
+    'sales Order_based' => 'بناء على طلب المبيعات',
+    'from_delivery_order' => 'من أمر التسليم',
+    'from_sales_invoice' => 'من فاتورة المبيعات'
 ];

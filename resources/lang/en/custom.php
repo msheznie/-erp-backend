@@ -332,5 +332,7 @@ return [
     'from_quotation' => 'From Quotation',
     'quotation_based' => 'Direct Order',
     'quotation_based' => 'Quotation Based',
-    'sales Order_based' => 'Sales Order Based'
+    'sales Order_based' => 'Sales Order Based',
+    'from_delivery_order' => 'From Delivery Order',
+    'from_sales_invoice' => 'From Sales Invoice'
 ];
